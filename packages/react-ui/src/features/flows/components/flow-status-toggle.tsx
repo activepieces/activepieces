@@ -2,8 +2,8 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
+import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   FlowOperationType,
@@ -21,7 +21,6 @@ import {
 } from '../../../components/ui/tooltip';
 import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;

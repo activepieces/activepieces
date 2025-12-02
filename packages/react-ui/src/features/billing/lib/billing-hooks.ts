@@ -1,8 +1,9 @@
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
-
 import { toast } from 'sonner';
+
+import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
@@ -14,7 +15,6 @@ import {
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
@@ -103,8 +103,7 @@ export const billingMutations = {
         queryClient.invalidateQueries({
           queryKey: billingKeys.platformSubscription(data.platformId),
         });
-        toast.success(t('AI credits overage updated successfully'), {
-        });
+        toast.success(t('AI credits overage updated successfully'), {});
       },
       onError: (error) => {
         if (api.isError(error)) {

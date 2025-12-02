@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash, User } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -13,7 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
@@ -22,7 +22,6 @@ import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
-
   const { data, isLoading, refetch } = platformUserHooks.useUsers();
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
@@ -51,7 +50,11 @@ export default function UsersPage() {
       },
       onSuccess: (data) => {
         refetch();
-        toast.success(data.status === UserStatus.ACTIVE ? t('User activated successfully') : t('User deactivated successfully'), {
+        toast.success(
+          data.status === UserStatus.ACTIVE
+            ? t('User activated successfully')
+            : t('User deactivated successfully'),
+          {
             duration: 3000,
           },
         );

@@ -18,8 +18,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
+import { userHooks } from '@/hooks/user-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { FlowTemplate, TemplateType } from '@activepieces/shared';
+import { FlowTemplateScope } from '@activepieces/ee-shared';
+import { PopulatedTemplate } from '@activepieces/shared';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),
@@ -39,8 +42,9 @@ const ShareTemplateDialog: React.FC<{
     resolver: typeboxResolver(ShareTemplateSchema),
   });
   const openNewIndow = useNewWindow();
+  const { data: currentUser } = userHooks.useCurrentUser();
   const { mutate, isPending } = useMutation<
-    FlowTemplate,
+    PopulatedTemplate,
     Error,
     { flowId: string; description: string }
   >({
@@ -49,12 +53,22 @@ const ShareTemplateDialog: React.FC<{
         versionId: flowVersionId,
       });
 
+      const projectId = authenticationSession.getProjectId();
+      const author = currentUser
+        ? `${currentUser.firstName} ${currentUser.lastName}`
+        : 'Someone in platform';
+
       const flowTemplate = await templatesApi.create({
-        template: template.template,
-        type: TemplateType.PROJECT,
-        blogUrl: template.blogUrl,
-        tags: template.tags,
+        template: template.flowTemplate.template,
+        scope: FlowTemplateScope.PROJECT,
+        projectId: projectId!,
+        name: template.name,
         description: shareTemplateForm.getValues().description,
+        tags: template.tags,
+        blogUrl: template.blogUrl ?? undefined,
+        metadata: null,
+        author,
+        categories: template.categories,
       });
 
       return flowTemplate;

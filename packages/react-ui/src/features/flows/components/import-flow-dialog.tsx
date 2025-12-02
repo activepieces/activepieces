@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -26,20 +27,19 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
-  FlowTemplate,
   isNil,
   PopulatedFlow,
   TelemetryEventName,
   UncategorizedFolderId,
+  PopulatedTemplate,
 } from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
@@ -58,15 +58,21 @@ export type ImportFlowDialogProps =
 
 const readTemplateJson = async (
   templateFile: File,
-): Promise<FlowTemplate | null> => {
+): Promise<PopulatedTemplate | null> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
 
     reader.onload = () => {
       try {
-        const template = JSON.parse(reader.result as string) as FlowTemplate;
-        const { template: tmpl, name } = template;
-        if (!tmpl || !name || !tmpl.trigger) {
+        const template = JSON.parse(
+          reader.result as string,
+        ) as PopulatedTemplate;
+        const { flowTemplate, name } = template;
+        if (
+          !flowTemplate?.template ||
+          !name ||
+          !flowTemplate.template.trigger
+        ) {
           resolve(null);
         } else {
           resolve(template);
@@ -83,7 +89,7 @@ const ImportFlowDialog = (
   props: ImportFlowDialogProps & { children: React.ReactNode },
 ) => {
   const { capture } = useTelemetry();
-  const [templates, setTemplates] = useState<FlowTemplate[]>([]);
+  const [templates, setTemplates] = useState<PopulatedTemplate[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -100,9 +106,9 @@ const ImportFlowDialog = (
   const { mutate: importFlows, isPending } = useMutation<
     PopulatedFlow[],
     Error,
-    FlowTemplate[]
+    PopulatedTemplate[]
   >({
-    mutationFn: async (templates: FlowTemplate[]) => {
+    mutationFn: async (templates: PopulatedTemplate[]) => {
       const importPromises = templates.map(async (template) => {
         let flow: PopulatedFlow | null = null;
         if (props.insideBuilder) {
@@ -123,8 +129,8 @@ const ImportFlowDialog = (
           type: FlowOperationType.IMPORT_FLOW,
           request: {
             displayName: template.name,
-            trigger: template.template.trigger,
-            schemaVersion: template.template.schemaVersion,
+            trigger: template.flowTemplate!.template.trigger,
+            schemaVersion: template.flowTemplate!.template.schemaVersion,
           },
         });
       });
@@ -143,9 +149,11 @@ const ImportFlowDialog = (
         },
       });
 
-      toast.success(t(`flowsImported`, {
-        flowsCount: flows.length,
-      }));
+      toast.success(
+        t(`flowsImported`, {
+          flowsCount: flows.length,
+        }),
+      );
 
       if (flows.length === 1) {
         navigate(`/flows/${flows[0].id}`);
@@ -197,7 +205,7 @@ const ImportFlowDialog = (
     setFailedFiles([]);
     setErrorMessage('');
     const file = files[0];
-    const newTemplates: FlowTemplate[] = [];
+    const newTemplates: PopulatedTemplate[] = [];
     const isZipFile =
       file.type === 'application/zip' ||
       file.type === 'application/x-zip-compressed';

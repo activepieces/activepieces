@@ -1,21 +1,20 @@
 import { t } from 'i18next';
-
-import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+
 import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
+import { GetFlowTemplateRequestQuery } from '@activepieces/ee-shared';
 import {
   CreateFlowRequest,
   ErrorCode,
   FlowOperationRequest,
-  FlowTemplate,
   FlowVersion,
   FlowVersionMetadata,
   GetFlowQueryParamsRequest,
-  GetFlowTemplateRequestQuery,
   ListFlowVersionRequest,
   ListFlowsRequest,
   PopulatedFlow,
+  PopulatedFlowTemplateMetadata,
   SeekPage,
 } from '@activepieces/shared';
 
@@ -61,9 +60,12 @@ export const flowsApi = {
       });
   },
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
-    return api.get<FlowTemplate>(`/v1/flows/${flowId}/template`, {
-      params: request,
-    });
+    return api.get<PopulatedFlowTemplateMetadata>(
+      `/v1/flows/${flowId}/template`,
+      {
+        params: request,
+      },
+    );
   },
   get(
     flowId: string,

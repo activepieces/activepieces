@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -17,7 +18,6 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
 import { PiecesFilterType } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../../components/custom/multi-select-piece-property';
@@ -67,8 +67,7 @@ export const ManagePiecesDialog = React.memo(
       },
       onSuccess: () => {
         onSuccess();
-        toast.success(t('Pieces list updated'), {
-        });
+        toast.success(t('Pieces list updated'), {});
         setOpen(false);
       },
     });

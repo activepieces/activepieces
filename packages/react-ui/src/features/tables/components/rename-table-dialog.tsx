@@ -3,8 +3,9 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import * as z from 'zod';
 import { toast } from 'sonner';
+import * as z from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -22,6 +23,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+
 import { tablesApi } from '../lib/tables-api';
 
 type RenameTableDialogProps = {
@@ -54,7 +56,9 @@ const RenameTableDialog = ({
       setShowRenameTableDialog(false);
       onRename();
       toast.success(t('Table renamed'), {
-        description: `${tableName} ${t('renamed to')} ${form.getValues('name')}`,
+        description: `${tableName} ${t('renamed to')} ${form.getValues(
+          'name',
+        )}`,
         duration: 3000,
       });
     },

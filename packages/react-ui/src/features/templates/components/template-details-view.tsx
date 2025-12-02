@@ -3,10 +3,10 @@ import { t } from 'i18next';
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { FlowTemplate, MarkdownVariant } from '@activepieces/shared';
+import { PopulatedTemplate, MarkdownVariant } from '@activepieces/shared';
 
 type TemplateDetailsViewProps = {
-  template: FlowTemplate;
+  template: PopulatedTemplate;
 };
 
 export const TemplateDetailsView = ({ template }: TemplateDetailsViewProps) => {
@@ -15,7 +15,7 @@ export const TemplateDetailsView = ({ template }: TemplateDetailsViewProps) => {
       <div className="mb-4 p-8 flex items-center justify-center gap-2 width-full bg-green-300 rounded-lg">
         <PieceIconList
           size="xxl"
-          trigger={template.template.trigger}
+          trigger={template.flowTemplate!.template.trigger}
           maxNumberOfIconsToShow={3}
         />
       </div>

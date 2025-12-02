@@ -1,4 +1,5 @@
-import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
+import { FlowVersionTemplate } from '@activepieces/ee-shared'
+import { FlowVersion, FlowVersionState } from '@activepieces/shared'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'

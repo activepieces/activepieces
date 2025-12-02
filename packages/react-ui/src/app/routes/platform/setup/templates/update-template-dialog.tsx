@@ -5,6 +5,15 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
+import {
+  MultiSelect,
+  MultiSelectTrigger,
+  MultiSelectValue,
+  MultiSelectContent,
+  MultiSelectList,
+  MultiSelectItem,
+  MultiSelectSearch,
+} from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,67 +26,74 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { TagInput } from '@/components/ui/tag-input';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
+import { formatUtils } from '@/lib/utils';
 import {
-  FlowTemplate,
   FlowVersionTemplate,
-  TemplateType,
-} from '@activepieces/shared';
+  FlowTemplate,
+  TemplateCategory,
+} from '@activepieces/ee-shared';
+import { PopulatedTemplate, TemplateTags } from '@activepieces/shared';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 
-const UpsertFlowTemplateSchema = Type.Object({
+import { TemplateTag } from './template-tag';
+
+const UpdateFlowTemplateSchema = Type.Object({
   displayName: Type.String({
     minLength: 1,
     errorMessage: t('Name is required'),
   }),
   description: Type.String(),
   blogUrl: Type.String(),
-  //avoid validating template because we need to migrate the template to the latest schema version in the backend
-  template: Type.Unknown(),
-  tags: Type.Optional(Type.Array(Type.String())),
+  template: Type.Optional(Type.Unknown()),
+  tags: Type.Optional(Type.Array(TemplateTags)),
+  categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
 });
-type UpsertFlowTemplateSchema = Static<typeof UpsertFlowTemplateSchema>;
-export const UpsertTemplateDialog = ({
+type UpdateFlowTemplateSchema = Static<typeof UpdateFlowTemplateSchema>;
+
+export const UpdateTemplateDialog = ({
   children,
   onDone,
   template,
 }: {
   children: React.ReactNode;
   onDone: () => void;
-  template?: CreateFlowTemplateRequest;
+  template: PopulatedTemplate;
 }) => {
   const [open, setOpen] = useState(false);
-  const form = useForm<UpsertFlowTemplateSchema>({
+  const form = useForm<UpdateFlowTemplateSchema>({
     defaultValues: {
-      displayName: template?.template.displayName || '',
-      blogUrl: template?.blogUrl || '',
-      description: template?.description || '',
-      tags: template?.tags || [],
-      template: template?.template,
+      displayName: template.name,
+      blogUrl: template.blogUrl || '',
+      description: template.description,
+      tags: template.tags || [],
+      categories: template.categories || [],
+      template: undefined,
     },
-    resolver: typeboxResolver(UpsertFlowTemplateSchema),
+    resolver: typeboxResolver(UpdateFlowTemplateSchema),
   });
 
   const { mutate, isPending } = useMutation({
-    mutationKey: ['create-template'],
+    mutationKey: ['update-template', template.id],
     mutationFn: () => {
       const formValue = form.getValues();
-      return templatesApi.create({
-        template: {
-          ...(formValue.template as FlowVersionTemplate),
-          displayName: formValue.displayName,
-          valid: (formValue.template as FlowVersionTemplate).valid ?? true,
-        },
-        type: TemplateType.PLATFORM,
-        blogUrl: formValue.blogUrl,
+
+      return templatesApi.update(template.id, {
+        name: formValue.displayName,
         description: formValue.description,
-        id: template?.id,
         tags: formValue.tags,
-        metadata: template?.metadata,
+        blogUrl: formValue.blogUrl,
+        metadata: template.metadata,
+        categories: formValue.categories || [],
+        template: formValue.template
+          ? {
+              ...(formValue.template as FlowVersionTemplate),
+              displayName: formValue.displayName,
+              valid: (formValue.template as FlowVersionTemplate).valid ?? true,
+            }
+          : undefined,
       });
     },
     onSuccess: () => {
@@ -94,13 +110,6 @@ export const UpsertTemplateDialog = ({
   });
 
   const onSubmit = () => {
-    if (!form.getValues().template) {
-      form.setError('template', {
-        message: t('Template is required'),
-      });
-      return;
-    }
-
     mutate();
   };
 
@@ -109,15 +118,15 @@ export const UpsertTemplateDialog = ({
       open={open}
       onOpenChange={(open) => {
         setOpen(open);
-        form.reset();
+        if (!open) {
+          form.reset();
+        }
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {template ? t('Update New Template') : t('Create New Template')}
-          </DialogTitle>
+          <DialogTitle>{t('Update Template')}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
@@ -178,12 +187,7 @@ export const UpsertTemplateDialog = ({
               name="template"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
-                  <Label htmlFor="template">
-                    {t('Template')}
-                    {!template && (
-                      <span className="text-destructive-300">{' *'} </span>
-                    )}
-                  </Label>
+                  <Label htmlFor="template">{t('Template')}</Label>
                   <Input
                     type="file"
                     accept=".json"
@@ -202,7 +206,6 @@ export const UpsertTemplateDialog = ({
                           }
                         });
                     }}
-                    required
                     id="template"
                     placeholder={t('Template')}
                     className="rounded-sm"
@@ -216,10 +219,42 @@ export const UpsertTemplateDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="tags">{t('Tags')}</Label>
-                  <TagInput
+                  <TemplateTag
                     onChange={(tags) => field.onChange(tags)}
                     value={field.value}
                   />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="categories"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="categories">{t('Categories')}</Label>
+                  <MultiSelect
+                    modal={true}
+                    value={(field.value as string[]) || []}
+                    onValueChange={(value) =>
+                      field.onChange(value as TemplateCategory[])
+                    }
+                  >
+                    <MultiSelectTrigger>
+                      <MultiSelectValue placeholder={t('Select categories')} />
+                    </MultiSelectTrigger>
+                    <MultiSelectContent>
+                      <MultiSelectSearch
+                        placeholder={t('Search categories...')}
+                      />
+                      <MultiSelectList>
+                        {Object.values(TemplateCategory).map((category) => (
+                          <MultiSelectItem key={category} value={category}>
+                            {formatUtils.convertEnumToHumanReadable(category)}
+                          </MultiSelectItem>
+                        ))}
+                      </MultiSelectList>
+                    </MultiSelectContent>
+                  </MultiSelect>
                   <FormMessage />
                 </FormItem>
               )}

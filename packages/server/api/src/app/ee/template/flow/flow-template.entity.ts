@@ -1,28 +1,23 @@
-import { FlowTemplate, Platform, Project, User } from '@activepieces/shared'
+import { FlowTemplate } from '@activepieces/ee-shared'
+import { Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,
     JSONB_COLUMN_TYPE,
-} from '../../database/database-common'
+} from '../../../database/database-common'
 
 type FlowTemplateSchema = FlowTemplate & {
     project: Project
     platform: Platform
-    user: User | null
 }
 
 export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
     name: 'flow_template',
     columns: {
         ...BaseColumnSchemaPart,
-        name: {
+        scope: {
             type: String,
-        },
-        description: {
-            type: String,
-        },
-        type: {
-            type: String,
+            nullable: false,
         },
         platformId: {
             type: String,
@@ -35,29 +30,12 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
         template: {
             type: JSONB_COLUMN_TYPE,
         },
-        tags: {
-            type: String,
-            array: true,
-        },
         pieces: {
             type: String,
             array: true,
         },
-        blogUrl: {
-            type: String,
-            nullable: true,
-        },
-        metadata: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
-        },
     },
     indices: [
-        {
-            name: 'idx_flow_template_tags',
-            columns: ['tags'],
-            unique: false,
-        },
         {
             name: 'idx_flow_template_pieces',
             columns: ['pieces'],

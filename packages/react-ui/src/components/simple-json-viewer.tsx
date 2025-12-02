@@ -2,10 +2,10 @@ import { t } from 'i18next';
 import { Copy, Check } from 'lucide-react';
 import React, { useState } from 'react';
 import ReactJson from 'react-json-view';
+import { toast } from 'sonner';
 
 import { useTheme } from './theme-provider';
 import { Button } from './ui/button';
-import { toast } from 'sonner';
 
 interface SimpleJsonViewerProps {
   data: any;

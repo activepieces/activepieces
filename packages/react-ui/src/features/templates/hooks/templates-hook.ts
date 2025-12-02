@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { FlowTemplate } from '@activepieces/shared';
+import { PopulatedTemplate } from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 
 export const useTemplates = () => {
   const [search, setSearch] = useState<string>('');
 
-  const { data: templates, isLoading } = useQuery<FlowTemplate[], Error>({
+  const { data: templates, isLoading } = useQuery<PopulatedTemplate[], Error>({
     queryKey: ['templates'],
     queryFn: async () => {
       const templates = await templatesApi.list();

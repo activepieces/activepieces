@@ -1,9 +1,10 @@
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { useSocket } from '@/components/socket-provider';
-import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
@@ -26,7 +27,6 @@ import {
 
 import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
 export const flowsHooks = {
@@ -83,7 +83,7 @@ export const flowsHooks = {
         setIsPublishing(false);
       },
       onError: (err: Error) => {
-        internalErrorToast()
+        internalErrorToast();
         console.error('Failed to publish flow', err);
         setIsPublishing(false);
       },

@@ -1,22 +1,32 @@
 import { api } from '@/lib/api';
-import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 import {
-  FlowTemplate,
-  ListFlowTemplatesRequest,
+  CreateTemplateRequestBody,
+  ListTemplatesRequestQuery,
+  PopulatedTemplate,
   SeekPage,
+  UpdateTemplateRequestBody,
 } from '@activepieces/shared';
 
 export const templatesApi = {
   getTemplate(templateId: string) {
-    return api.get<FlowTemplate>(`/v1/flow-templates/${templateId}`);
+    return api.get<PopulatedTemplate>(`/v1/templates/custom/${templateId}`);
   },
-  create(request: CreateFlowTemplateRequest) {
-    return api.post<FlowTemplate>(`/v1/flow-templates`, request);
+  create(request: CreateTemplateRequestBody) {
+    return api.post<PopulatedTemplate>(`/v1/templates/custom`, request);
   },
-  list(request?: ListFlowTemplatesRequest) {
-    return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates`, request ?? {});
+  update(templateId: string, request: UpdateTemplateRequestBody) {
+    return api.post<PopulatedTemplate>(
+      `/v1/templates/custom/${templateId}`,
+      request,
+    );
+  },
+  list(request?: ListTemplatesRequestQuery) {
+    return api.get<SeekPage<PopulatedTemplate>>(
+      `/v1/templates/custom`,
+      request ?? {},
+    );
   },
   delete(templateId: string) {
-    return api.delete<void>(`/v1/flow-templates/${templateId}`);
+    return api.delete<void>(`/v1/templates/custom/${templateId}`);
   },
 };

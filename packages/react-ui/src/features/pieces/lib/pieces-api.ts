@@ -1,5 +1,6 @@
 import { t } from 'i18next';
 
+import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import {
   PieceMetadataModel,
@@ -16,7 +17,6 @@ import {
   PackageType,
   PieceOptionRequest,
 } from '@activepieces/shared';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {

@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { CheckCircle2, Mailbox } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -32,13 +33,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
-import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { platformApi } from '@/lib/platforms-api';
@@ -79,7 +79,6 @@ export const SmtpSection = () => {
     },
     resolver: typeboxResolver(FromSchema),
   });
-
 
   const smtpConfigured = !isNil(platform?.smtp);
   const queryClient = useQueryClient();

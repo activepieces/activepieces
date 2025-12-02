@@ -1,5 +1,4 @@
-
-import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
+import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -10,15 +9,14 @@ import {
     FlowOperationType,
     FlowStatus,
     flowStructureUtil,
-    FlowTemplateWithoutProjectInformation,
     FlowTrigger,
     GetFlowQueryParamsRequest,
-    GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
     PlatformUsageMetric,
     PopulatedFlow,
+    PopulatedFlowTemplateMetadata,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -301,7 +299,7 @@ const GetFlowTemplateRequestOptions = {
         }),
         querystring: GetFlowTemplateRequestQuery,
         response: {
-            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+            [StatusCodes.OK]: PopulatedFlowTemplateMetadata,
         },
     },
 }

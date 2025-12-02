@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
-
 import { toast } from 'sonner';
+
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
   AppConnectionWithoutSensitiveData,

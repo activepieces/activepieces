@@ -12,7 +12,6 @@ import {
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
-    FlowTemplateWithoutProjectInformation,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -20,6 +19,7 @@ import {
     Metadata,
     PlatformId,
     PopulatedFlow,
+    PopulatedFlowTemplateMetadata,
     ProjectId,
     SeekPage,
     TelemetryEventName,
@@ -570,7 +570,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         flowId,
         versionId,
         projectId,
-    }: GetTemplateParams): Promise<FlowTemplateWithoutProjectInformation> {
+    }: GetTemplateParams): Promise<PopulatedFlowTemplateMetadata> {
         const flow = await this.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
@@ -578,17 +578,28 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeConnectionsName: true,
             removeSampleData: true,
         })
+        const created = Date.now().toString()
+        const updated = Date.now().toString()
 
-        return {
+        const template: PopulatedFlowTemplateMetadata = {
             name: flow.version.displayName,
             description: '',
-            pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
-            template: flow.version,
+            flowTemplate: {
+                pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
+                template: flow.version,
+                created,
+                updated,
+            },
             tags: [],
-            created: Date.now().toString(),
-            updated: Date.now().toString(),
+            created,
+            updated,
             blogUrl: '',
+            metadata: null,
+            usageCount: 0,
+            author: '',
+            categories: [],
         }
+        return template
     },
 
     async count({ projectId, folderId, status }: CountParams): Promise<number> {

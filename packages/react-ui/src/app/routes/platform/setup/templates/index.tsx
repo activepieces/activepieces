@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { FileText, Pencil, Plus, Trash } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -21,18 +22,17 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { FlowTemplate } from '@activepieces/shared';
+import { PopulatedTemplate } from '@activepieces/shared';
 
-import { UpsertTemplateDialog } from './upsert-template-dialog';
+import { CreateTemplateDialog } from './create-template-dialog';
+import { UpdateTemplateDialog } from './update-template-dialog';
 
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-
 
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
@@ -43,7 +43,7 @@ export default function TemplatesPage() {
     },
   });
 
-  const [selectedRows, setSelectedRows] = useState<FlowTemplate[]>([]);
+  const [selectedRows, setSelectedRows] = useState<PopulatedTemplate[]>([]);
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -57,7 +57,9 @@ export default function TemplatesPage() {
     },
   });
 
-  const columnsWithCheckbox: ColumnDef<RowDataWithActions<FlowTemplate>>[] = [
+  const columnsWithCheckbox: ColumnDef<
+    RowDataWithActions<PopulatedTemplate>
+  >[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -131,9 +133,11 @@ export default function TemplatesPage() {
         <DataTableColumnHeader column={column} title={t('Pieces')} />
       ),
       cell: ({ row }) => {
+        const trigger = row.original.flowTemplate?.template.trigger;
+        if (!trigger) return null;
         return (
           <PieceIconList
-            trigger={row.original.template.trigger}
+            trigger={trigger}
             maxNumberOfIconsToShow={2}
           />
         );
@@ -141,7 +145,7 @@ export default function TemplatesPage() {
     },
   ];
 
-  const bulkActions: BulkAction<FlowTemplate>[] = useMemo(
+  const bulkActions: BulkAction<PopulatedTemplate>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => (
@@ -192,7 +196,7 @@ export default function TemplatesPage() {
           )}
           title={t('Templates')}
         >
-          <UpsertTemplateDialog onDone={() => refetch()}>
+          <CreateTemplateDialog onDone={() => refetch()}>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
@@ -200,7 +204,7 @@ export default function TemplatesPage() {
               <Plus className="size-4" />
               {t('New Template')}
             </Button>
-          </UpsertTemplateDialog>
+          </CreateTemplateDialog>
         </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No templates found')}
@@ -219,14 +223,14 @@ export default function TemplatesPage() {
                 <div className="flex items-end justify-end">
                   <Tooltip>
                     <TooltipTrigger>
-                      <UpsertTemplateDialog
+                      <UpdateTemplateDialog
                         onDone={() => refetch()}
                         template={row}
                       >
                         <Button variant="ghost" className="size-8 p-0">
                           <Pencil className="size-4" />
                         </Button>
-                      </UpsertTemplateDialog>
+                      </UpdateTemplateDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {t('Edit template')}

@@ -1,40 +1,27 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
-    FlowTemplate,
     isNil,
-    ListFlowTemplatesRequest,
+    ListTemplatesRequestQuery,
+    PopulatedTemplate,
     SeekPage,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
+import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { system } from '../helper/system/system'
 
-export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (
-    app,
-) => {
-    await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
+export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
+    await app.register(flowTemplateController, { prefix: '/v1/templates/official' })
 }
 
 const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.get(
-        '/',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                querystring: ListFlowTemplatesRequest,
-            },
-        },
-        async (request) => {
-            return communityTemplates.get(request.query)
-        },
-    )
+    fastify.get('/', ListTemplatesRequest, async (request) => {
+        return communityTemplates.get(request.query)
+    })
 }
 
 export const communityTemplates = {
-    get: async (request: ListFlowTemplatesRequest): Promise<SeekPage<FlowTemplate>> => {
+    get: async (request: ListTemplatesRequestQuery): Promise<SeekPage<PopulatedTemplate>> => {
 
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {
@@ -54,7 +41,7 @@ export const communityTemplates = {
 }
 
 
-function convertToQueryString(params: ListFlowTemplatesRequest): string {
+function convertToQueryString(params: ListTemplatesRequestQuery): string {
     const searchParams = new URLSearchParams()
 
     Object.entries(params).forEach(([key, value]) => {
@@ -71,4 +58,13 @@ function convertToQueryString(params: ListFlowTemplatesRequest): string {
     })
 
     return searchParams.toString()
+}
+
+const ListTemplatesRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        querystring: ListTemplatesRequestQuery,
+    },
 }
