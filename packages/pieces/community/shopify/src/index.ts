@@ -131,7 +131,7 @@ export const shopify = createPiece({
     uploadProductImageAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return getBaseUrl(auth.props.shopName);
+        return auth ? getBaseUrl(auth.props.shopName) : '';
       },
       auth: shopifyAuth,
       authMapping: async (auth) => {

@@ -16,14 +16,14 @@ export const mailingListDropdown = Property.Dropdown({
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
-    const typedAuth = auth as { clientId?: string; clientSecret?: string };
-    if (!typedAuth.clientId || !typedAuth.clientSecret) {
+    if (!auth) {
       return {
         disabled: true,
         options: [],
         placeholder: 'Please connect your SendPulse account.',
       };
     }
+    const typedAuth = auth.props
 
     try {
       const lists = await sendpulseApiCall<SendpulseMailingList[]>({

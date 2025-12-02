@@ -8,7 +8,7 @@ const ContentModel = Property.Dropdown({
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
-    if (isEmpty(auth)) {
+    if (!auth) {
       return {
         disabled: true,
         options: [],

@@ -15,7 +15,7 @@ const SelectFields = Property.MultiSelectDropdown({
       placeholder: '',
     };
 
-    if (isEmpty(auth) || isNil(model)) return searchFields;
+    if (isEmpty(auth) || !auth || isNil(model)) return searchFields;
 
     try {
       const { client } = makeClient(auth);

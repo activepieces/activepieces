@@ -8,7 +8,7 @@ const Locale = Property.Dropdown({
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
-    if (isEmpty(auth)) {
+    if (isEmpty(auth) || !auth) {
       return {
         disabled: true,
         options: [],

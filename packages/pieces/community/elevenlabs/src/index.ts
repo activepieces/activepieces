@@ -5,7 +5,6 @@ import { textToSpeech } from './lib/actions/text-to-speech-action';
 import {
   createClient,
   ELEVEN_RESIDENCY,
-  ElevenAuthType,
   ElevenResidency,
   getApiKey,
   getRegionApiUrl
@@ -82,13 +81,13 @@ export const elevenlabs = createPiece({
       // missing propsValue to not override url when credentials are changed
       // @see packages/pieces/community/common/src/lib/helpers/index.ts:65
       baseUrl: (auth) => {
-        return getRegionApiUrl((auth as ElevenAuthType)?.region)
+        return getRegionApiUrl(auth?.props.region)
       },
       auth: elevenlabsAuth,
       authMapping: async (auth) => {
         return ({
           // keep old plain value for bc
-          'xi-api-key': `${getApiKey(auth as ElevenAuthType)}`,
+          'xi-api-key': `${getApiKey(auth.props.apiKey)}`,
         })
       },
     }),

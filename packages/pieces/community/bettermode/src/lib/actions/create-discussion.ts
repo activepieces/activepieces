@@ -16,7 +16,7 @@ export const createDiscussionAction = createAction({
       required: true,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildMemberSpacesDropdown(auth.props),
+        await buildMemberSpacesDropdown(auth?.props),
     }),
     title: Property.ShortText({
       displayName: 'Title',

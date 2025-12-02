@@ -15,7 +15,7 @@ const DynamicFields = Property.DynamicProperties({
     [PropertyKeys.CONTENT_MODEL]: model,
     [PropertyKeys.LOCALE]: locale,
   }) => {
-    if (isEmpty(auth) || isNil(model)) return {};
+    if (isEmpty(auth) || !auth || isNil(model)) return {};
     const dynamicFields: DynamicPropsValue = {};
     const { client } = makeClient(auth);
     try {
