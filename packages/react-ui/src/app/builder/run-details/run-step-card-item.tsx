@@ -34,6 +34,8 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
     selectStepByName,
     run,
     flowVersion,
+    expandedSteps,
+    setStepExpanded,
   ] = useBuilderStateContext((state) => {
     const step = flowStructureUtil.getStepOrThrow(
       stepName,
@@ -51,6 +53,8 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
       state.selectStepByName,
       state.run,
       state.flowVersion,
+      state.expandedSteps,
+      state.setStepExpanded,
     ];
   });
   const { fitView } = useReactFlow();
@@ -83,7 +87,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step: step,
   });
-  const [isOpen, setIsOpen] = React.useState(true);
+  const isOpen = expandedSteps[stepName] ?? true;
 
   const isLoopStep =
     stepOutput && stepOutput.type === FlowActionType.LOOP_ON_ITEMS;
@@ -98,9 +102,9 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
             if (!isStepSelected) {
               selectStepByName(stepName);
               fitView(flowCanvasUtils.createFocusStepInGraphParams(stepName));
-              setIsOpen(true);
+              setStepExpanded(stepName, true);
             } else {
-              setIsOpen(!isOpen);
+              setStepExpanded(stepName, !isOpen);
             }
           }}
           className={cn('cursor-pointer select-none px-4 py-3 h-14', {
@@ -120,7 +124,7 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
                 size={'icon'}
                 className="w-4 h-4"
                 onClick={(e) => {
-                  setIsOpen(!isOpen);
+                  setStepExpanded(stepName, !isOpen);
                   e.stopPropagation();
                 }}
               >

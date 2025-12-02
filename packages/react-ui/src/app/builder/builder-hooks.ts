@@ -99,6 +99,7 @@ export type BuilderState = {
   outputSampleData: Record<string, unknown>;
   inputSampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
+  expandedSteps: Record<string, boolean>;
   run: FlowRun | null;
   leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
@@ -140,6 +141,7 @@ export type BuilderState = {
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
   setLoopIndex: (stepName: string, index: number) => void;
+  setStepExpanded: (stepName: string, isExpanded: boolean) => void;
   operationListeners: Array<
     (flowVersion: FlowVersion, operation: FlowOperationRequest) => void
   >;
@@ -232,6 +234,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               {},
             )
           : {},
+      expandedSteps: {},
       outputSampleData: initialState.outputSampleData,
       inputSampleData: initialState.inputSampleData,
       flow: initialState.flow,
@@ -369,6 +372,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           run: null,
           readonly: !userHasPermissionToEditFlow,
           loopsIndexes: {},
+          expandedSteps: {},
           leftSidebar: LeftSideBarType.NONE,
           selectedBranchIndex: null,
         }),
@@ -399,6 +403,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               run,
               state.loopsIndexes,
             ),
+            expandedSteps: state.expandedSteps,
             run,
             flowVersion,
             leftSidebar: LeftSideBarType.RUN_DETAILS,
@@ -464,6 +469,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           });
           return {
             loopsIndexes,
+          };
+        });
+      },
+      setStepExpanded: (stepName: string, expanded: boolean) => {
+        set((state) => {
+          return {
+            expandedSteps: {
+              ...state.expandedSteps,
+              [stepName]: expanded,
+            },
           };
         });
       },
