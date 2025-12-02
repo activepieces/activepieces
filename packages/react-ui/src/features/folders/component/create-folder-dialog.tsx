@@ -10,6 +10,7 @@ import { t } from 'i18next';
 import { FolderPlus } from 'lucide-react';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -22,13 +23,12 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';

@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { validationUtils } from '@/lib/utils';
 import { Folder } from '@activepieces/shared';

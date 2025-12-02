@@ -4,11 +4,11 @@ import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
+import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
 
 import { api } from '../../../lib/api';
 import { userInvitationApi } from '../lib/user-invitation';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 const AcceptInvitation = () => {
   const [isInvitationLinkValid, setIsInvitationLinkValid] = useState(true);

@@ -9,9 +9,9 @@ import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';

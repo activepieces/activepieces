@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-
 import { toast } from 'sonner';
+
 import { UpsertOAuth2AppRequest } from '@activepieces/ee-shared';
 import { ApEdition, AppConnectionType } from '@activepieces/shared';
 

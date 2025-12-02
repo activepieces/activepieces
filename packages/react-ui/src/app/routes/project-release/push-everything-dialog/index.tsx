@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { Info } from 'lucide-react';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,7 +28,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';

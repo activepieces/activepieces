@@ -3,6 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { ColorPicker } from '@/components/ui/color-picker';
@@ -15,7 +16,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 
@@ -41,7 +41,6 @@ export const AppearanceSection = () => {
     },
     resolver: typeboxResolver(FromSchema),
   });
-
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {

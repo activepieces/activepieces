@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -135,7 +135,7 @@ export const BuilderHeader = () => {
                       },
                     },
                     () => {
-                      flowsHooks.invalidateFlowsQuery(queryClient);
+                      flowHooks.invalidateFlowsQuery(queryClient);
                     },
                   );
                 }}

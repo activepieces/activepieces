@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Check, Copy } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 import {
@@ -10,7 +11,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
 
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;

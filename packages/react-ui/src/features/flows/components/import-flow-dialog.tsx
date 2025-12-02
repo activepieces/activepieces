@@ -5,6 +5,7 @@ import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { Button } from '@/components/ui/button';
@@ -26,9 +27,8 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
-import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { LoadingSpinner } from '@/components/ui/spinner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { api } from '@/lib/api';
@@ -143,9 +143,11 @@ const ImportFlowDialog = (
         },
       });
 
-      toast.success(t(`flowsImported`, {
-        flowsCount: flows.length,
-      }));
+      toast.success(
+        t(`flowsImported`, {
+          flowsCount: flows.length,
+        }),
+      );
 
       if (flows.length === 1) {
         navigate(`/flows/${flows[0].id}`);

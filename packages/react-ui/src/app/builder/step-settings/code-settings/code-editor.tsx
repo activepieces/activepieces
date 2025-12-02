@@ -8,7 +8,6 @@ import { useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';

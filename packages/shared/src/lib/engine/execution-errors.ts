@@ -1,4 +1,4 @@
-import { STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
+import { STORE_KEY_MAX_LENGTH } from '../store-entry/dto/store-entry-request'
 
 export enum ExecutionErrorType {
     ENGINE = 'ENGINE',
@@ -20,6 +20,8 @@ function formatMessage(message: string) {
         message,
     }, null, 2)
 }
+
+
 
 export class ConnectionNotFoundError extends ExecutionError {
     constructor(connectionName: string, cause?: unknown) {
@@ -86,6 +88,12 @@ export class FileSizeError extends ExecutionError {
 export class FetchError extends ExecutionError {
     constructor(url: string, cause?: unknown) {
         super('FetchError', formatMessage(`Failed to fetch from ${url}`), ExecutionErrorType.ENGINE, cause)
+    }
+}
+
+export class InvalidCronExpressionError extends ExecutionError {
+    constructor(cronExpression: string, cause?: unknown) {
+        super('InvalidCronExpressionError', formatMessage(`Invalid cron expression: ${cronExpression}`), ExecutionErrorType.USER, cause)
     }
 }
 

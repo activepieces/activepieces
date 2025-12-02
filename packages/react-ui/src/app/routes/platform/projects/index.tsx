@@ -5,6 +5,7 @@ import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -23,7 +24,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';

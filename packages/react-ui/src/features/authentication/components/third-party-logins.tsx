@@ -2,7 +2,6 @@ import { t } from 'i18next';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 import {
   ApFlagId,

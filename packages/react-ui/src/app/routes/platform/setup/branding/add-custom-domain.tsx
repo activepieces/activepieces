@@ -6,6 +6,7 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,6 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from 'sonner';
 import { customDomainApi } from '@/features/platform-admin/lib/custom-domain-api';
 import { api } from '@/lib/api';
 import { CustomDomain } from '@activepieces/ee-shared';

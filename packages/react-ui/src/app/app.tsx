@@ -13,6 +13,7 @@ import { useTranslation } from 'react-i18next';
 import { EmbeddingProvider } from '@/components/embed-provider';
 import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
+import { internalErrorToast, Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/components/refresh-analytics-provider';
@@ -22,7 +23,6 @@ import { ErrorCode, isNil } from '@activepieces/shared';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
 import { ApRouter } from './router';
-import { internalErrorToast, Toaster } from '@/components/ui/sonner';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -59,7 +59,7 @@ export function App() {
                   <React.Fragment key={i18n.language}>
                     <ThemeProvider storageKey="vite-ui-theme">
                       <ApRouter />
-                      <Toaster position='bottom-right' />
+                      <Toaster position="bottom-right" />
                     </ThemeProvider>
                   </React.Fragment>
                 </TooltipProvider>

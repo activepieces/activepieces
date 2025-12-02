@@ -2,11 +2,12 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -20,7 +21,6 @@ import {
 import { LoadingSpinner } from '../../../components/ui/spinner';
 import { PieceIconList } from '../../pieces/components/piece-icon-list';
 import { templatesApi } from '../lib/templates-api';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
   const navigate = useNavigate();

@@ -2,8 +2,7 @@ import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { Result, tryCatch } from '@activepieces/shared'
-import { ExecutionError, ExecutionErrorType } from './helper/execution-errors'
+import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
 import { createConnectionService } from './services/connections.service'
 
 export type FileEntry = {
@@ -42,6 +41,17 @@ export const utils = {
 
         await walkRecursive(dirPath)
         return entries
+    },
+    formatExecutionError(value: ExecutionError): string {
+        try {
+            return JSON.stringify({
+                ...value,
+                ...JSON.parse(value.message),
+            }, null, 2)
+        }
+        catch (e) {
+            return inspect(value)
+        }
     },
     formatError(value: Error): string {
         try {

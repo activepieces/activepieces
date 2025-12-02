@@ -12,6 +12,7 @@ import {
 import {
     BasicAuthConnectionValue,
     CustomAuthConnectionValue,
+    EngineGenericError,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
@@ -24,7 +25,6 @@ import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
-import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
