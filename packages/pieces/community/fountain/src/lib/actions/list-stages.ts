@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
 import { getFunnelsDropdown } from '../common/dropdowns';
 
 export const fountainListStages = createAction({
@@ -27,7 +27,7 @@ export const fountainListStages = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.fountain.com/v2/funnels/${funnelId}/stages`,
+      url: getApiUrl(context.auth, `/funnels/${funnelId}/stages`),
       headers: getAuthHeaders(context.auth),
     });
 

@@ -1,9 +1,27 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
-import { AppConnectionType } from '@activepieces/shared';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
+import { PiecePropValueSchema } from '@activepieces/pieces-framework';
 
+async function getApplicantsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<{ label: string; value: string }[]> {
+  try {
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: getApiUrl(auth, '/applicants'),
+      headers: getAuthHeaders(auth),
+      queryParams: { per_page: '50' },
+    });
+
+    const applicants = response.body?.applicants || [];
+    return applicants.map((applicant: any) => ({
+      label: `${applicant.name} (${applicant.email})`,
+      value: applicant.id,
+    }));
+  } catch (error) {
+    return [];
+  }
+}
 
 export const fountainGetApplicantDetails = createAction({
   name: 'get_applicant_details',
@@ -19,19 +37,7 @@ export const fountainGetApplicantDetails = createAction({
       auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        const response = await httpClient.sendRequest({
-          method: HttpMethod.GET,
-          url: 'https://api.fountain.com/v2/applicants',
-          headers: getAuthHeaders(auth),
-          queryParams: { per_page: '50' },
-        });
-    
-        const applicants = response.body?.applicants || [];
-        const options = applicants.map((applicant: any) => ({
-          label: `${applicant.name} (${applicant.email})`,
-          value: applicant.id,
-        }));
-        return { disabled: false, options };
+        return { disabled: false, options: await getApplicantsDropdown(auth as any) };
       },
     }),
   },
@@ -40,7 +46,7 @@ export const fountainGetApplicantDetails = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.fountain.com/v2/applicants/${applicantId}`,
+      url: getApiUrl(context.auth, `/applicants/${applicantId}`),
       headers: getAuthHeaders(context.auth),
     });
 

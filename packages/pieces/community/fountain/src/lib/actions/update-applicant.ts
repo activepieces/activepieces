@@ -1,13 +1,13 @@
 import { AppConnectionValueForAuthProperty, createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
 
-  async function getApplicantsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<{ label: string; value: string }[]> {
+async function getApplicantsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<{ label: string; value: string }[]> {
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/applicants',
+      url: getApiUrl(auth, '/applicants'),
       headers: getAuthHeaders(auth),
       queryParams: { per_page: '50' },
     });
@@ -36,7 +36,7 @@ export const fountainUpdateApplicant = createAction({
       auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getApplicantsDropdown(auth) };
+        return { disabled: false, options: await getApplicantsDropdown(auth as any) };
       },
     }),
     name: Property.ShortText({
@@ -84,7 +84,7 @@ export const fountainUpdateApplicant = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: `https://api.fountain.com/v2/applicants/${applicantId}`,
+      url: getApiUrl(context.auth, `/applicants/${applicantId}`),
       headers: getAuthHeaders(context.auth),
       body: requestBody,
     });
