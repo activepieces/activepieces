@@ -103,6 +103,12 @@ export class FetchError extends ExecutionError {
     }
 }
 
+export class InvalidCronExpressionError extends ExecutionError {
+    constructor(cronExpression: string, cause?: unknown) {
+        super('InvalidCronExpressionError', formatMessage(`Invalid cron expression: ${cronExpression}`), ExecutionErrorType.USER, cause)
+    }
+}
+
 export class EngineGenericError extends ExecutionError {
     constructor(name: string, message: string, cause?: unknown) {
         super(name, formatMessage(message), ExecutionErrorType.ENGINE, cause)
