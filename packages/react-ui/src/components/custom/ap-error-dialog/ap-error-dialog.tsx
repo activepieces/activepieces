@@ -1,9 +1,3 @@
-import { DialogDescription } from '@radix-ui/react-dialog';
-import { t } from 'i18next';
-import { AlertCircleIcon } from 'lucide-react';
-
-import { JsonViewer } from '@/components/json-viewer';
-import { Button } from '@/components/ui/button';
 import {
   ExecutionError,
   ErrorCode,
@@ -12,6 +6,9 @@ import {
   ExecutionErrorType,
   isNil,
 } from '@activepieces/shared';
+import { DialogDescription } from '@radix-ui/react-dialog';
+import { t } from 'i18next';
+import { AlertCircleIcon } from 'lucide-react';
 
 import {
   Dialog,
@@ -22,6 +19,9 @@ import {
 } from '../../ui/dialog';
 
 import { useApErrorDialogStore } from './ap-error-dialog-store';
+
+import { JsonViewer } from '@/components/json-viewer';
+import { Button } from '@/components/ui/button';
 
 const ApErrorDialog = () => {
   const { params, closeDialog } = useApErrorDialogStore();

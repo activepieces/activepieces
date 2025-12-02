@@ -347,13 +347,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     }
 
                     case FlowOperationType.CHANGE_STATUS: {
+                        await flowRepo().update(id, {
+                            operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
+                        })
                         await this.addUpdateStatusJob({
                             id,
                             projectId,
                             newStatus: operation.request.status,
-                        })
-                        await flowRepo().update(id, {
-                            operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
                         })
                         break
                     }
