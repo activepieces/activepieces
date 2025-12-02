@@ -5,10 +5,10 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 
 import { api } from '../../../lib/api';
 import { userInvitationApi } from '../lib/user-invitation';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 const AcceptInvitation = () => {
   const [isInvitationLinkValid, setIsInvitationLinkValid] = useState(true);
@@ -37,7 +37,7 @@ const AcceptInvitation = () => {
         switch (error.response?.status) {
           case HttpStatusCode.InternalServerError: {
             console.log(error);
-            toast(INTERNAL_ERROR_TOAST);
+            internalErrorToast();
             break;
           }
           default: {

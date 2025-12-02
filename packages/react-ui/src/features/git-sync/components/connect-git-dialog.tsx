@@ -24,7 +24,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_MESSAGE, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -37,6 +36,8 @@ import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 type ConnectGitProps = {
   open?: boolean;
@@ -71,9 +72,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
     },
     onSuccess: (repo) => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Connected successfully'),
+      toast.success(t('Connected successfully'), {
         duration: 3000,
       });
     },

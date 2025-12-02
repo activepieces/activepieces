@@ -21,7 +21,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import {
@@ -170,9 +170,7 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
             handleDownloadFile(formResult.value as FileResponseInterface);
             break;
           default:
-            toast({
-              title: t('Success'),
-              description: t('Your submission was successfully received.'),
+            toast.success(t('Your submission was successfully received.'), {
               duration: 3000,
             });
             break;
@@ -182,17 +180,14 @@ const ApForm = ({ form, useDraft }: ApFormProps) => {
         if (api.isError(error)) {
           const status = error.response?.status;
           if (status === 404) {
-            toast({
-              title: t('Flow not found'),
+            toast.error(t('Flow not found'), {
               description: t(
                 'The flow you are trying to submit to does not exist.',
               ),
               duration: 3000,
             });
           } else {
-            toast({
-              title: t('Error'),
-              description: t('The flow failed to execute.'),
+            toast.error(t('The flow failed to execute.'), {
               duration: 3000,
             });
           }

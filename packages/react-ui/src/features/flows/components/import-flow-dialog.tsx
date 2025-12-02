@@ -27,7 +27,8 @@ import {
   SelectItem,
 } from '@/components/ui/select';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { api } from '@/lib/api';
@@ -142,12 +143,9 @@ const ImportFlowDialog = (
         },
       });
 
-      toast({
-        title: t(`flowsImported`, {
-          flowsCount: flows.length,
-        }),
-        variant: 'default',
-      });
+      toast.success(t(`flowsImported`, {
+        flowsCount: flows.length,
+      }));
 
       if (flows.length === 1) {
         navigate(`/flows/${flows[0].id}`);
@@ -169,7 +167,7 @@ const ImportFlowDialog = (
         setErrorMessage(t('Template file is invalid'));
         console.log(err);
       } else {
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       }
     },
   });

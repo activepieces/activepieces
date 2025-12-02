@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
@@ -29,6 +29,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission, UserInvitation } from '@activepieces/shared';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 export type MemberRowData =
   | {
@@ -79,16 +80,11 @@ const RoleCell = ({
       return Promise.resolve();
     },
     onSuccess: () => {
-      toast({
-        title: t('Role updated successfully'),
-      });
+      toast.success(t('Role updated successfully'));
       refetch();
     },
     onError: () => {
-      toast({
-        title: t('Error updating role'),
-        description: t('Please try again later'),
-      });
+      internalErrorToast();
     },
   });
 

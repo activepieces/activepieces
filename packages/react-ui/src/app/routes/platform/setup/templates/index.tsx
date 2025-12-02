@@ -21,7 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -33,7 +33,6 @@ import { UpsertTemplateDialog } from './upsert-template-dialog';
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const { toast } = useToast();
 
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
@@ -52,9 +51,7 @@ export default function TemplatesPage() {
     },
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Templates deleted successfully'),
+      toast.success(t('Templates deleted successfully'), {
         duration: 3000,
       });
     },

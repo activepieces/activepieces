@@ -27,7 +27,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -69,9 +69,7 @@ const PushEverythingDialog = (props: PushEverythingDialogProps) => {
       });
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Everything is pushed successfully'),
+      toast.success(t('Everything is pushed successfully'), {
         duration: 3000,
       });
       setOpen(false);

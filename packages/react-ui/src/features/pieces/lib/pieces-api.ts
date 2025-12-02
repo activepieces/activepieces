@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 
-import { toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import {
   PieceMetadataModel,
@@ -17,6 +16,7 @@ import {
   PackageType,
   PieceOptionRequest,
 } from '@activepieces/shared';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 export const piecesApi = {
   list(request: ListPiecesRequestQuery): Promise<PieceMetadataModelSummary[]> {
@@ -44,13 +44,7 @@ export const piecesApi = {
       .post<ExecutePropsResult<T>>(`/v1/pieces/options`, request)
       .catch((error) => {
         console.error(error);
-        toast({
-          title: t('Error'),
-          description: t(
-            'An internal error occurred while fetching data, please contact support',
-          ),
-          variant: 'destructive',
-        });
+        internalErrorToast();
         const defaultStateForDynamicProperty: ExecutePropsResult<PropertyType.DYNAMIC> =
           {
             options: {} as InputPropertyMap,

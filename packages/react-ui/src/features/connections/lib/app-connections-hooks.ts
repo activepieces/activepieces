@@ -3,7 +3,8 @@ import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -142,7 +143,7 @@ export const appConnectionsMutations = {
 
             default: {
               setErrorMessage('Unexpected error, please contact support');
-              toast(INTERNAL_ERROR_TOAST);
+              internalErrorToast();
               console.error(err);
             }
           }
@@ -160,10 +161,7 @@ export const appConnectionsMutations = {
         refetch();
       },
       onError: () => {
-        toast({
-          title: t('Error deleting connections'),
-          variant: 'destructive',
-        });
+        internalErrorToast();
       },
     });
   },
@@ -193,8 +191,7 @@ export const appConnectionsMutations = {
       },
       onSuccess: () => {
         refetch();
-        toast({
-          title: t('Success'),
+        toast.success(t('Success'), {
           description: t('Connection has been renamed.'),
           duration: 3000,
         });
@@ -206,7 +203,7 @@ export const appConnectionsMutations = {
             message: error.message,
           });
         } else {
-          toast(INTERNAL_ERROR_TOAST);
+          internalErrorToast();
         }
       },
     });
@@ -221,18 +218,15 @@ export const appConnectionsMutations = {
         await appConnectionsApi.replace(request);
       },
       onSuccess: () => {
-        toast({
-          title: t('Success'),
+        toast.success(t('Success'), {
           description: t('Connections replaced successfully'),
         });
         setDialogOpen(false);
         refetch();
       },
       onError: () => {
-        toast({
-          title: t('Error'),
+        toast.error(t('Error'), {
           description: t('Failed to replace connections'),
-          variant: 'destructive',
         });
       },
     });

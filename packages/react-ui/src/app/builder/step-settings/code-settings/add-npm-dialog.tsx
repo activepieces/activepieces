@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
 
 const formSchema = Type.Object({
@@ -66,9 +66,7 @@ const AddNpmDialog = ({ children, onAdd }: AddNpmDialogProps) => {
     onSuccess: (response) => {
       onAdd(response);
       setOpen(false);
-      toast({
-        title: t('Success'),
-        description: t('Package added successfully'),
+      toast.success(t('Package added successfully'), {
         duration: 3000,
       });
     },
