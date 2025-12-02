@@ -204,6 +204,9 @@
       ],
       "@activepieces/piece-hystruct": [
         "packages/pieces/community/hystruct/src/index.ts"
+      ],
+      "@activepieces/piece-bursty-ai": [
+        "packages/pieces/community/bursty-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
