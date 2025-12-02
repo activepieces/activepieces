@@ -1,6 +1,12 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { Eye, EyeOff, RefreshCw } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  RefreshCw,
+} from 'lucide-react';
 import { useState } from 'react';
 
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
@@ -14,7 +20,9 @@ import { mcpHooks } from './utils/mcp-hooks';
 
 export function McpCredentials({ mcpServer }: McpCredentialsProps) {
   const [showToken, setShowToken] = useState(false);
+  const [showJson, setShowJson] = useState(false);
   const toggleTokenVisibility = () => setShowToken(!showToken);
+  const toggleJsonVisibility = () => setShowJson(!showJson);
   const currentProjectId = authenticationSession.getProjectId();
 
   const { checkAccess } = useAuthorization();
@@ -27,6 +35,17 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
   const maskToken = (tokenValue: string) => {
     if (tokenValue.length <= 8) return '••••••••';
     return '••••••••' + tokenValue.slice(-4);
+  };
+
+  const jsonConfiguration = {
+    mcpServers: {
+      activepieces: {
+        url: serverUrl,
+        headers: {
+          Authorization: `Bearer ${mcpServer?.token ?? ''}`,
+        },
+      },
+    },
   };
 
   return (
@@ -92,6 +111,41 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
             'Use this token with the Authorization header (Bearer) for requests to this server.',
           )}
         </p>
+      </div>
+
+      {/* JSON Configuration */}
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={toggleJsonVisibility}
+          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {showJson ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+          {t('MCP Client Configuration (JSON)')}
+        </button>
+
+        {showJson && (
+          <div className="flex flex-col gap-2">
+            <div className="relative">
+              <pre className="bg-muted/50 whitespace-pre-wrap rounded-md px-4 py-4 text-xs overflow-x-auto">
+                <code>{JSON.stringify(jsonConfiguration, null, 2)}</code>
+              </pre>
+              <div className="absolute top-2 right-2">
+                <CopyButton
+                  textToCopy={JSON.stringify(jsonConfiguration, null, 2)}
+                />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                'Copy this configuration to your MCP client settings file (e.g., Cursor).',
+              )}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
