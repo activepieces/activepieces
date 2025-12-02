@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { EllipsisVertical, Folder, FolderOpen, Shapes } from 'lucide-react';
 import { useMemo, useEffect, useRef, useState } from 'react';
