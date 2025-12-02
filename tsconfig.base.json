@@ -199,6 +199,9 @@
       "@activepieces/piece-image-router": [
         "packages/pieces/community/image-router/src/index.ts"
       ],
+      "@activepieces/piece-documerge": [
+        "packages/pieces/community/documerge/src/index.ts"
+      ],
       "@activepieces/piece-letta": [
         "packages/pieces/community/letta/src/index.ts"
       ],
