@@ -1,6 +1,8 @@
 import { URL } from 'url'
-import { ActionContext, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, ConstructToolParams, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
+import { LanguageModelV2 } from '@ai-sdk/provider'
+import { ToolSet } from 'ai'
 import dayjs from 'dayjs'
 import { continueIfFailureHandler, runWithExponentialBackoff } from '../helper/error-handling'
 import { EngineGenericError, PausedFlowTimeoutError } from '../helper/execution-errors'
@@ -9,6 +11,7 @@ import { createFlowsContext } from '../services/flows.service'
 import { progressService } from '../services/progress.service'
 import { createFilesService } from '../services/step-files.service'
 import { createContextStore } from '../services/storage.service'
+import { agentTools } from '../tools'
 import { HookResponse, utils } from '../utils'
 import { propsProcessor } from '../variables/props-processor'
 import { workerSocket } from '../worker-socket'
@@ -116,6 +119,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 apiUrl: constants.internalApiUrl,
                 publicUrl: constants.publicApiUrl,
             },
+            agent: {
+                tools: async (params: ConstructToolParams): Promise<ToolSet> => agentTools.tools({
+                    engineConstants: constants,
+                    tools: params.tools,
+                    model: params.model as LanguageModelV2,
+                }),
+            },
             propsValue: processedInput,
             tags: createTagsManager(params),
             connections: utils.createConnectionManager({
@@ -198,11 +208,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
 
         return executionState
             .upsertStep(action.name, failedStepOutput)
-            .setVerdict({ status: FlowRunStatus.FAILED, failedStep: {
-                name: action.name,
-                displayName: action.displayName,
-                message: utils.formatError(executionStateError),
-            } })
+            .setVerdict({
+                status: FlowRunStatus.FAILED, failedStep: {
+                    name: action.name,
+                    displayName: action.displayName,
+                    message: utils.formatError(executionStateError),
+                },
+            })
     }
 
     return executionStateResult

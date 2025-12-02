@@ -35,7 +35,10 @@ export const googleProvider: AIProviderStrategy = {
         const providerConfig = getProviderConfig(provider)!
         const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
         const videoModelConfig = providerConfig.videoModels.find((m) => m.instance.modelId === model)
-        const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
+        const imageModelConfig = providerConfig.imageModels.find((m) => {
+            const instanceModelId = typeof m.instance === 'string' ? m.instance : m.instance.modelId
+            return instanceModelId === model
+        })
         let cost = 0
  
         if ('usageMetadata' in apiResponse) {
