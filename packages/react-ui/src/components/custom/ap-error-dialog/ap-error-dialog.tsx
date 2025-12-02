@@ -1,69 +1,49 @@
-import { DialogDescription } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
-import { AlertCircleIcon } from 'lucide-react';
+import { isNil } from '@activepieces/shared';
 
-import { JsonViewer } from '@/components/json-viewer';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../../ui/dialog';
 import { Button } from '@/components/ui/button';
-import {
-  ExecutionError,
-  ErrorCode,
-  getApErrorParams,
-  getExecutionError,
-  ExecutionErrorType,
-  isNil,
-} from '@activepieces/shared';
-
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogHeader,
-  DialogFooter,
-} from '../../ui/dialog';
-
+import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { useApErrorDialogStore } from './ap-error-dialog-store';
+import { AlertCircleIcon } from 'lucide-react';
 
 const ApErrorDialog = () => {
   const { params, closeDialog } = useApErrorDialogStore();
 
-  const getExecutionUserError = (error: unknown): ExecutionError | null => {
-    if (isNil(error)) return null;
-    const apError = getApErrorParams(error, ErrorCode.TRIGGER_UPDATE_STATUS);
-    if (!apError) return null;
-    const executionError = getExecutionError(apError.standardError);
-    if (!executionError) return null;
-    if (executionError.type !== ExecutionErrorType.USER) return null;
-    return executionError;
-  };
-
-  const executionUserError = getExecutionUserError(params?.error);
+  if (isNil(params)) return null;
 
   return (
-    <Dialog open={!isNil(params)} onOpenChange={closeDialog}>
-      <DialogContent
-        className="flex flex-col max-h-[45vh]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog open={!!params} onOpenChange={closeDialog}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>{params?.title}</DialogTitle>
-          <DialogDescription>{params?.description}</DialogDescription>
-        </DialogHeader>
-        {executionUserError ? (
-          <div className="flex items-start gap-2 text-destructive-300 border-destructive-300 border rounded-md p-4">
-            <AlertCircleIcon className="w-4 h-4 mt-1" />
-            <div className="flex flex-col gap-1">
-              <p className="font-medium">{executionUserError.name}</p>
-              <p>{executionUserError.message}</p>
+          <div className="flex flex-col items-center">
+            <span
+              className="rounded-full bg-red-100 flex items-center justify-center mb-2 mt-1"
+              style={{ width: 48, height: 48 }}
+            >
+              <AlertCircleIcon className="h-8 w-8 text-red-500" />
+            </span>
+            <div className="flex flex-col items-center text-center w-full gap-2">
+              <DialogTitle className="text-lg font-semibold">
+                {params?.title}
+              </DialogTitle>
+              {params?.description && (
+                <DialogDescription className="mt-0.5 text-sm text-muted-foreground">
+                  {params.description}
+                </DialogDescription>
+              )}
             </div>
           </div>
-        ) : (
-          <JsonViewer
-            className="max-h-56 overflow-y-scroll"
+        </DialogHeader>
+        <div className="w-full flex flex-col items-stretch mt-2">
+          <CollapsibleJson
             json={params?.error}
-            title={t('Issue details')}
+            label={t('Technical Details')}
+            defaultOpen={true}
+            className="w-full text-left"
           />
-        )}
-        <DialogFooter>
+        </div>
+        <DialogFooter className="mt-2">
           <Button variant="outline" onClick={closeDialog}>
             {t('Close')}
           </Button>

@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, FlowOperationStatus, FlowStatusUpdatedResponse, isNil, tryCatch, WebsocketClientEvent } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, ErrorCode, FlowOperationStatus, FlowStatusUpdatedResponse, isNil, tryCatch, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
@@ -8,7 +8,6 @@ import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
 import { flowRepo } from './flow.repo'
 import { flowService } from './flow.service'
-import { system } from '../../helper/system/system'
 
 export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
 
@@ -33,7 +32,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 dbDeleteDone: true,
             })
         }
-        await flowExecutionCache(log).delete(flow.id)
+        await flowExecutionCache(log).invalidate(flow.id)
     },
 
     updateStatusHandler: async (data: SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>) => {
@@ -41,7 +40,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         const job = await systemJobsSchedule(log).getJob(`update-flow-status-${id}`)
         assertNotNullOrUndefined(job, 'job')
 
-        const { error } = await tryCatch(async () => {
+        const { error } = await tryCatch<unknown, ActivepiecesError>(async () => {
             const flowToUpdate = await flowService(log).getOneOrThrow({
                 id,
                 projectId,
@@ -73,7 +72,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                     operationStatus: FlowOperationStatus.NONE,
                     publishedVersionId: publishedFlowVersion.id,
                 })
-                await flowExecutionCache(log).delete(id)
+                await flowExecutionCache(log).invalidate(id)
 
             }
         })
@@ -83,8 +82,8 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
             projectId,
         })
         const response: FlowStatusUpdatedResponse = {
-            flow: flow,
-            error: isNil(error) ? undefined : error?.message,
+            flow,
+            error: isNil(error) || error?.error.code !== ErrorCode.TRIGGER_UPDATE_STATUS ? undefined : error?.error,
         }
         websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, response)
 

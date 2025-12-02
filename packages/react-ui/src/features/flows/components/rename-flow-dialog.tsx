@@ -60,7 +60,6 @@ const RenameFlowDialog: React.FC<RenameFlowDialogProps> = ({
       setIsRenameDialogOpen(false);
       onRename(renameFlowForm.getValues().displayName);
       toast.success(t('Flow has been renamed.'), {
-        description: t('Flow has been renamed.'),
         duration: 3000,
       });
     },
