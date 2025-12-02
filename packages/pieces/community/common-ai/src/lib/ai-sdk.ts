@@ -17,10 +17,13 @@ export function createAIModel<T extends LanguageModelV2 | ImageModel>({
     metadata,
     openaiResponsesModel = false,
 }: CreateAIModelParams<T>): T {
-    const modelId = modelInstance.modelId
+    const modelId = typeof modelInstance === 'string' ? modelInstance : modelInstance.modelId
     const isImageModel = SUPPORTED_AI_PROVIDERS
         .flatMap(provider => provider.imageModels)
-        .some(model => model.instance.modelId === modelId)
+        .some(model => {
+            const instanceModelId = typeof model.instance === 'string' ? model.instance : model.instance.modelId
+            return instanceModelId === modelId
+        })
 
     const getMetadataId = (): string | undefined => {
         switch (metadata.feature) {
@@ -138,7 +141,7 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
                     ...spreadIfDefined('allowedDomains', allowedDomains),
                     ...spreadIfDefined('blockedDomains', blockedDomains),
                 }),
-            }
+            } as any
         }
 
         case 'openai': {
@@ -150,7 +153,7 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
                     ...spreadIfDefined('searchContextSize', openaiOptions.searchContextSize),
                     ...spreadIfDefined('userLocation', buildUserLocation(openaiOptions)),
                 }),
-            }
+            } as any
         }
 
         case 'google': {
@@ -158,7 +161,7 @@ export function createWebSearchTool(provider: string, options: WebSearchOptions 
 
             return {
                 google_search: googleProvider.tools.googleSearch({}),
-            }
+            } as any
         }
 
         default:

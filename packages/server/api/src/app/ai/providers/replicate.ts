@@ -10,7 +10,12 @@ export const replicateProvider: AIProviderStrategy = {
         if (body.version) {
             // e.g. replicate/hello-world:5c7d5dc6
             const version = body.version.split(':')[1]
-            return getProviderConfig('replicate')?.imageModels.find((m) => m.instance.modelId.split(':')[1] === version)?.instance.modelId ?? null
+            const foundModel = getProviderConfig('replicate')?.imageModels.find((m) => {
+                const instanceModelId = typeof m.instance === 'string' ? m.instance : m.instance.modelId
+                return instanceModelId.split(':')[1] === version
+            })
+            if (!foundModel) return null
+            return typeof foundModel.instance === 'string' ? foundModel.instance : foundModel.instance.modelId
         }
         else {
             // Extract model from URL pattern: /v1/models/{owner}/{model-name}/predictions
@@ -28,7 +33,10 @@ export const replicateProvider: AIProviderStrategy = {
         const imageCount = parseInt(body.input.num_outputs as string ?? '1')
         const model = apiResponse.model
 
-        const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId.split(':')[0] === model)
+        const imageModelConfig = providerConfig.imageModels.find((m) => {
+            const instanceModelId = typeof m.instance === 'string' ? m.instance : m.instance.modelId
+            return instanceModelId.split(':')[0] === model
+        })
         if (!imageModelConfig) {
             throw new ActivepiecesError({
                 code: ErrorCode.AI_MODEL_NOT_SUPPORTED,

@@ -20,7 +20,7 @@ import {
     SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
@@ -28,11 +28,17 @@ import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, devPieces, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
-        const property = await pieceLoader.getPropOrThrow({
-            params,
-            devPieces,
+    async executeProps( operation: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
+        const constants = EngineConstants.fromExecutePropertyInput(operation)
+        const executionState = await testExecutionContext.stateFromFlowVersion({
+            apiUrl: operation.internalApiUrl,
+            flowVersion: operation.flowVersion,
+            projectId: operation.projectId,
+            engineToken: operation.engineToken,
+            sampleData: operation.sampleData,
         })
+        const property = await pieceLoader.getPropOrThrow({ pieceName: operation.pieceName, pieceVersion: operation.pieceVersion, actionOrTriggerName: operation.actionOrTriggerName, propertyName: operation.propertyName, devPieces: EngineConstants.DEV_PIECES })
+    
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
             throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property.type} for ${property.displayName}`)
         }
@@ -40,32 +46,32 @@ export const pieceHelper = {
         const { data: executePropsResult, error: executePropsError } = await utils.tryCatchAndThrowOnEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
-                projectId: params.projectId,
-                engineToken: params.engineToken,
+                projectId: constants.projectId,
+                engineToken: constants.engineToken,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
-                unresolvedInput: params.input,
+                unresolvedInput: operation.input,
                 executionState,
             })
             const ctx = {
-                searchValue,
+                searchValue: operation.searchValue,
                 server: {
-                    token: params.engineToken,
+                    token: constants.engineToken,
                     apiUrl: constants.internalApiUrl,
-                    publicUrl: params.publicApiUrl,
+                    publicUrl: operation.publicApiUrl,
                 },
                 project: {
-                    id: params.projectId,
+                    id: constants.projectId,
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
                 step: {
-                    name: params.actionOrTriggerName,
+                    name: operation.actionOrTriggerName,
                 },
                 connections: utils.createConnectionManager({
-                    projectId: params.projectId,
-                    engineToken: params.engineToken,
+                    projectId: constants.projectId,
+                    engineToken: constants.engineToken,
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
                 }),
@@ -191,5 +197,5 @@ export const pieceHelper = {
     },
 }
 
-type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, devPieces: string[], constants: EngineConstants }
+type ExecutePropsParams = Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }
 
