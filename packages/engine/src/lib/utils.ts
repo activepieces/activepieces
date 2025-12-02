@@ -2,8 +2,7 @@ import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
 import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { Result, tryCatch } from '@activepieces/shared'
-import { ExecutionError, ExecutionErrorType } from '../../../shared/src/lib/engine/execution-errors'
+import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
 import { createConnectionService } from './services/connections.service'
 
 export type FileEntry = {

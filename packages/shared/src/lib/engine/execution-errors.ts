@@ -1,4 +1,4 @@
-import { STORE_KEY_MAX_LENGTH } from '@activepieces/shared'
+import { STORE_KEY_MAX_LENGTH } from '../store-entry/dto/store-entry-request'
 
 export enum ExecutionErrorType {
     ENGINE = 'ENGINE',

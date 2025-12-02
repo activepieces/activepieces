@@ -1,4 +1,4 @@
-import { ExecutionMode, isNil, EngineGenericError } from '@activepieces/shared'
+import { EngineGenericError, ExecutionMode, isNil } from '@activepieces/shared'
 import { CodeSandbox } from '../../core/code/code-sandbox-common'
 export const EXECUTION_MODE = (process.env.AP_EXECUTION_MODE as ExecutionMode)
 
