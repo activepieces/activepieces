@@ -218,7 +218,10 @@
         "packages/pieces/community/bursty-ai/src/index.ts"
       ],
       "@activepieces/piece-tl-dv": [
-        "packages/pieces/community/tl-dv/src/index.ts"
+        "packages/pieces/community/tl-dv/src/index.ts
+      ],
+      "@activepieces/piece-parser-expert": [
+        "packages/pieces/community/parser-expert/src/index.ts"
       ]
     },
     "resolveJsonModule": true
