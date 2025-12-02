@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 
 interface CopyButtonProps extends ButtonProps {
   textToCopy: string;
@@ -34,8 +34,7 @@ export const CopyButton = ({
       setTimeout(() => setIsCopied(false), 1500);
     },
     onError: () => {
-      toast({
-        title: t('Failed to copy to clipboard'),
+      toast.error(t('Failed to copy to clipboard'), {
         duration: 3000,
       });
     },

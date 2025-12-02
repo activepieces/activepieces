@@ -3,7 +3,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -14,6 +14,7 @@ import {
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
 import { ErrorCode } from '@activepieces/shared';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 const RedirectPage: React.FC = React.memo(() => {
   const location = useLocation();
@@ -45,18 +46,13 @@ const RedirectPage: React.FC = React.memo(() => {
             (e.response?.data as { code: ErrorCode })?.code ===
               ErrorCode.INVITATION_ONLY_SIGN_UP
           ) {
-            toast({
-              title: t('Invitation only sign up'),
+            toast(t('Invitation only sign up'), {
               description: t(
                 'Please ask your administrator to add you to the organization.',
               ),
             });
           } else {
-            toast({
-              title: t('Something went wrong, please try again.'),
-              description: t('Please try again.'),
-              variant: 'destructive',
-            });
+            internalErrorToast();
           }
           console.error(e);
 

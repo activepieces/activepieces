@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { customDomainApi } from '@/features/platform-admin/lib/custom-domain-api';
 import { api } from '@/lib/api';
 import { CustomDomain } from '@activepieces/ee-shared';
@@ -56,9 +56,7 @@ const AddCustomDomainDialog = React.memo(
       },
       onSuccess: (data) => {
         onAdd(data);
-        toast({
-          title: t('Success'),
-          description: t('Your changes have been saved.'),
+        toast.success(t('Your changes have been saved.'), {
           duration: 3000,
         });
         setOpen(false);

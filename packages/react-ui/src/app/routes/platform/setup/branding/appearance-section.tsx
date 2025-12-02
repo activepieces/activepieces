@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 
@@ -42,7 +42,6 @@ export const AppearanceSection = () => {
     resolver: typeboxResolver(FromSchema),
   });
 
-  const { toast } = useToast();
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
@@ -59,9 +58,7 @@ export const AppearanceSection = () => {
       window.location.reload();
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
+      toast.success(t('Your changes have been saved.'), {
         duration: 3000,
       });
       form.reset(form.getValues());

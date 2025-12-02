@@ -1,32 +1,61 @@
-'use client';
+"use client"
 
-import { useTheme } from 'next-themes';
-import { Toaster as Sonner } from 'sonner';
+import {
+  CircleCheckIcon,
+  InfoIcon,
+  Loader2Icon,
+  OctagonXIcon,
+  TriangleAlertIcon,
+} from "lucide-react"
+import { useTheme } from "next-themes"
+import { Toaster as Sonner, toast, type ToasterProps } from "sonner"
 
-type SonnerToasterProps = React.ComponentProps<typeof Sonner>;
+export const INTERNAL_ERROR_MESSAGE =
+  'An unexpected error occurred. Please try again in a moment.';
 
-const SonnerToaster = ({ ...props }: SonnerToasterProps) => {
-  const { theme = 'system' } = useTheme();
+
+export function internalErrorToast() {
+  toast.error('Something went wrong', {
+    description: INTERNAL_ERROR_MESSAGE,
+    duration: 3000,
+  });
+}
+
+export const UNSAVED_CHANGES_TOAST = {
+  id: 'unsaved-changes',
+  title: 'Unsaved Changes',
+  description:
+    'Something went wrong and there are unsaved changes, please refresh and contact support if the problem persists.',
+  variant: 'destructive',
+  duration: Infinity,
+};
+
+
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = "system" } = useTheme()
 
   return (
     <Sonner
-      theme={theme as SonnerToasterProps['theme']}
-      expand={false}
+      theme={theme as ToasterProps["theme"]}
       className="toaster group"
-      toastOptions={{
-        classNames: {
-          toast:
-            'group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg',
-          description: 'group-[.toast]:text-muted-foreground',
-          actionButton:
-            'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
-          cancelButton:
-            'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
-        },
+      icons={{
+        success: <CircleCheckIcon className="size-4" />,
+        info: <InfoIcon className="size-4" />,
+        warning: <TriangleAlertIcon className="size-4" />,
+        error: <OctagonXIcon className="size-4" />,
+        loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
+      style={
+        {
+          "--normal-bg": "var(--popover)",
+          "--normal-text": "var(--popover-foreground)",
+          "--normal-border": "var(--border)",
+          "--border-radius": "var(--radius)",
+        } as React.CSSProperties
+      }
       {...props}
     />
-  );
-};
+  )
+}
 
-export { SonnerToaster };
+export { Toaster }

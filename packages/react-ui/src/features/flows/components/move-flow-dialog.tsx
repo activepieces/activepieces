@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 
@@ -69,9 +69,7 @@ const MoveFlowDialog = ({ children, flows, onMoveTo }: MoveFlowDialogProps) => {
     onSuccess: () => {
       onMoveTo(form.getValues().folder);
       setIsDialogOpened(false);
-      toast({
-        title: t('Moved flows successfully'),
-      });
+      toast.success(t('Moved flows successfully'));
     },
   });
 

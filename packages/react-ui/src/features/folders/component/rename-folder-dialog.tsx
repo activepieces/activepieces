@@ -16,7 +16,8 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { validationUtils } from '@/lib/utils';
 import { Folder } from '@activepieces/shared';
 
@@ -56,9 +57,7 @@ const RenameFolderDialog = ({
     onSuccess: () => {
       setIsOpen(false);
       onRename();
-      toast({
-        title: t('Renamed flow successfully'),
-      });
+      toast.success(t('Renamed flow successfully'));
     },
     onError: (err) => {
       if (validationUtils.isValidationError(err)) {
@@ -66,7 +65,7 @@ const RenameFolderDialog = ({
           message: t('Folder name already used'),
         });
       } else {
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       }
     },
   });

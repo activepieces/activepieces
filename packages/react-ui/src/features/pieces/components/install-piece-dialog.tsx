@@ -33,7 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
@@ -142,9 +142,7 @@ const InstallPieceDialog = ({
       setIsOpen(false);
       form.reset();
       onInstallPiece();
-      toast({
-        title: t('Success'),
-        description: t('Piece installed'),
+      toast.success(t('Piece installed'), {
         duration: 3000,
       });
     },
