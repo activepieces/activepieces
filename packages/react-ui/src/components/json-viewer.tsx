@@ -12,7 +12,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { isStepFileUrl } from '@/lib/utils';
+import { cn, isStepFileUrl } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { Button } from './ui/button';
@@ -21,6 +21,7 @@ type JsonViewerProps = {
   json: any;
   title: string;
   hideDownload?: boolean;
+  className?: string;
 };
 
 type FileButtonProps = {
@@ -66,7 +67,12 @@ const removeUndefined = (obj: any): any => {
 };
 
 const JsonViewer = React.memo(
-  ({ json: unclearJson, title, hideDownload = false }: JsonViewerProps) => {
+  ({
+    json: unclearJson,
+    title,
+    hideDownload = false,
+    className,
+  }: JsonViewerProps) => {
     const { theme } = useTheme();
     const json = useMemo(() => {
       return removeUndefined(unclearJson);
@@ -154,20 +160,47 @@ const JsonViewer = React.memo(
     }
 
     return (
-      <div className="rounded-lg border border-solid border-dividers overflow-hidden relative">
+      <div
+        className={cn(
+          'rounded-lg border border-solid border-dividers overflow-hidden relative',
+          className,
+        )}
+      >
         <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
           <div className="flex-grow justify-center items-center">
             <span className="text-md">{title}</span>
           </div>
           <div className="flex items-center gap-0">
             {!hideDownload && (
-              <Button variant={'ghost'} size={'sm'} onClick={handleDownload}>
-                <Download className="w-4 h-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={'ghost'}
+                      size={'sm'}
+                      onClick={handleDownload}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('Download JSON')}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
-            <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-              <Copy className="w-4 h-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Copy to clipboard')}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
