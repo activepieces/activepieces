@@ -4,8 +4,6 @@ import { z } from 'zod'
 import { processors } from './processors'
 import { arrayZipperProcessor } from './processors/array-zipper'
 
-
-
 type PropsValidationError = {
     [key: string]: string[] | PropsValidationError | PropsValidationError[]
 }
@@ -59,7 +57,7 @@ export const propsProcessor = {
                 }
             }
             if (property.type === PropertyType.ARRAY && property.properties) {
-                const arrayOfObjects = arrayZipperProcessor(property, value)
+                const arrayOfObjects = arrayZipperProcessor(property, value) ?? []
                 const processedArray = []
                 const processedErrors = []
                 for (const item of arrayOfObjects) {
@@ -114,38 +112,32 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
             schema = z.string({
-                required_error: `Expected string, received: ${originalValue}`,
-                invalid_type_error: `Expected string, received: ${originalValue}`,
+                error: `Expected string, received: ${originalValue}`,
             })
             break
         case PropertyType.NUMBER:
             schema = z.number({
-                required_error: `Expected number, received: ${originalValue}`,
-                invalid_type_error: `Expected number, received: ${originalValue}`,
+                error: `Expected number, received: ${originalValue}`,
             })
             break
         case PropertyType.CHECKBOX:
             schema = z.boolean({
-                required_error: `Expected boolean, received: ${originalValue}`,
-                invalid_type_error: `Expected boolean, received: ${originalValue}`,
+                error: `Expected boolean, received: ${originalValue}`,
             })
             break
         case PropertyType.DATE_TIME:
             schema = z.string({
-                required_error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
-                invalid_type_error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
+                error: `Invalid datetime format. Expected ISO format (e.g. 2024-03-14T12:00:00.000Z), received: ${originalValue}`,
             })
             break
         case PropertyType.ARRAY:
             schema = z.array(z.any(), {
-                required_error: `Expected array, received: ${originalValue}`,
-                invalid_type_error: `Expected array, received: ${originalValue}`,
+                error: `Expected array, received: ${originalValue}`,
             })
             break
         case PropertyType.OBJECT:
-            schema = z.record(z.any(), {
-                required_error: `Expected object, received: ${originalValue}`,
-                invalid_type_error: `Expected object, received: ${originalValue}`,
+            schema = z.record(z.any(), z.any(), {
+                error: `Expected object, received: ${originalValue}`,
             })
             break
         case PropertyType.JSON:
@@ -156,12 +148,15 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
                 },
             )
             break
-        case PropertyType.FILE:
-            schema = z.record(z.any(), {
-                required_error: `Expected file url or base64 with mimeType, received: ${originalValue}`,
-                invalid_type_error: `Expected file url or base64 with mimeType, received: ${originalValue}`,
-            })
+        case PropertyType.FILE: {
+            schema = z.any().refine(
+                (val) => isObject(val),
+                {
+                    message: `Expected file url or base64 with mimeType, received: ${originalValue}`,
+                },
+            )
             break
+        }
         default:
             schema = z.any()
     }
@@ -179,7 +174,7 @@ const validateProperty = (property: PieceProperty, value: unknown, originalValue
     }
     catch (err) {
         if (err instanceof z.ZodError) {
-            return err.errors.map(e => e.message)
+            return err.issues.map(e => e.message)
         }
         return []
     }

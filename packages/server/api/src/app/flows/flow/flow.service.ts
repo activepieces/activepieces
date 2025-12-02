@@ -29,7 +29,7 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { AddAPArrayOverlapsToQueryBuilder } from '../../database/database-connection'
 import { distributedLock } from '../../database/redis-connections'
@@ -41,6 +41,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
@@ -113,15 +114,15 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        const queryBuilder = flowRepo().createQueryBuilder('ff')
+        const queryBuilder = flowRepo().createQueryBuilder('ff').where({ operationStatus: Not(FlowOperationStatus.DELETING) })
 
         if (projectIds) {
-            queryBuilder.where({ projectId: In(projectIds) })
+            queryBuilder.andWhere({ projectId: In(projectIds) })
         }
         else {
             queryBuilder
                 .innerJoin('project', 'project', 'project.id = ff."projectId"')
-                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project."platformId" = :platformId', { platformId })
         }
 
         if (folderId !== undefined) {
@@ -188,7 +189,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         const paginationResult = await paginator.paginate<Flow & { version: FlowVersion | null, triggerSource?: TriggerSource }>(queryBuilder)
 
-        const populatedFlows = paginationResult.data.map((flow) => {
+        const populatedFlows = await Promise.all(paginationResult.data.map(async (flow) => {
             if (isNil(flow.version)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
@@ -198,16 +199,17 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
+            const migratedVersion = await flowVersionMigrationService.migrate(flow.version)
             return {
                 ...flow,
-                version: flow.version,
+                version: migratedVersion,
                 triggerSource: includeTriggerSource && flow.triggerSource
                     ? {
                         schedule: flow.triggerSource.schedule,
                     }
                     : undefined,
             }
-        })
+        }))
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
     async exists(id: FlowId): Promise<boolean> {

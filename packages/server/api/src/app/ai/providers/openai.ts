@@ -1,5 +1,6 @@
 import { AIProvider, DALLE2PricingPerImage, DALLE3PricingPerImage, FlatLanguageModelPricing, GPTImage1PricingPerImage  } from '@activepieces/common-ai'
 import { ActivepiecesError, ErrorCode,  isNil } from '@activepieces/shared'
+import { ImageModelV2 } from '@ai-sdk/provider'
 import { createParser } from 'eventsource-parser'
 import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
 import { AIProviderStrategy, StreamingParser, Usage } from './types'
@@ -39,7 +40,10 @@ export const openaiProvider: AIProviderStrategy = {
         const quality = (body.quality ?? 'standard') as 'standard' | 'hd'
 
         const languageModelConfig = providerConfig.languageModels.find((m) => m.instance.modelId === model)
-        const imageModelConfig = providerConfig.imageModels.find((m) => m.instance.modelId === model)
+        const imageModelConfig = providerConfig.imageModels.find((m) => {
+            const instanceModelId = typeof m.instance === 'string' ? m.instance : m.instance.modelId
+            return instanceModelId === model
+        })
         if (!languageModelConfig && !imageModelConfig) {
             throw new ActivepiecesError({
                 code: ErrorCode.AI_MODEL_NOT_SUPPORTED,
@@ -73,7 +77,7 @@ export const openaiProvider: AIProviderStrategy = {
             }
         }
 
-        if (imageModelConfig?.instance.modelId === 'dall-e-3') {
+        if (imageModelConfig && (imageModelConfig.instance as ImageModelV2).modelId === 'dall-e-3') {
             const pricing = imageModelConfig.pricing as DALLE3PricingPerImage
             const imageCost = pricing[quality][size as keyof typeof pricing[typeof quality]]
             return {
@@ -82,7 +86,7 @@ export const openaiProvider: AIProviderStrategy = {
             }
         }
 
-        if (imageModelConfig?.instance.modelId === 'gpt-image-1') {
+        if (imageModelConfig && (imageModelConfig.instance as ImageModelV2).modelId === 'gpt-image-1') {
             const pricing = imageModelConfig.pricing as GPTImage1PricingPerImage
             const { input_tokens_details } = apiResponse.usage as { input_tokens_details: { text_tokens: number, image_tokens: number } }
             const { output_tokens } = apiResponse.usage as { output_tokens: number }
