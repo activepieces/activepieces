@@ -6,6 +6,7 @@ import { t } from 'i18next';
 import { useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { ShowPoweredBy } from '@/components/show-powered-by';
@@ -21,7 +22,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { ReadMoreDescription } from '@/components/ui/read-more-description';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { api } from '@/lib/api';
 import {

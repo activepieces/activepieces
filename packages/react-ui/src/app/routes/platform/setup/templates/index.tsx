@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { FileText, Pencil, Plus, Trash } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -21,7 +22,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -32,7 +32,6 @@ import { UpsertTemplateDialog } from './upsert-template-dialog';
 
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-
 
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({

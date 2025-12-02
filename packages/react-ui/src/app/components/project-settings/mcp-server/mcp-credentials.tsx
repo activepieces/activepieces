@@ -1,16 +1,11 @@
 import { ReloadIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import {
-  ChevronDown,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  RefreshCw,
-} from 'lucide-react';
+import { Eye, EyeOff, RefreshCw } from 'lucide-react';
 import { useState } from 'react';
 
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -20,9 +15,7 @@ import { mcpHooks } from './utils/mcp-hooks';
 
 export function McpCredentials({ mcpServer }: McpCredentialsProps) {
   const [showToken, setShowToken] = useState(false);
-  const [showJson, setShowJson] = useState(false);
   const toggleTokenVisibility = () => setShowToken(!showToken);
-  const toggleJsonVisibility = () => setShowJson(!showJson);
   const currentProjectId = authenticationSession.getProjectId();
 
   const { checkAccess } = useAuthorization();
@@ -114,39 +107,14 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
       </div>
 
       {/* JSON Configuration */}
-      <div className="flex flex-col gap-2">
-        <button
-          onClick={toggleJsonVisibility}
-          className="flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {showJson ? (
-            <ChevronDown className="h-4 w-4" />
-          ) : (
-            <ChevronRight className="h-4 w-4" />
-          )}
-          {t('MCP Client Configuration (JSON)')}
-        </button>
-
-        {showJson && (
-          <div className="flex flex-col gap-2">
-            <div className="relative">
-              <pre className="bg-muted/50 whitespace-pre-wrap rounded-md px-4 py-4 text-xs overflow-x-auto">
-                <code>{JSON.stringify(jsonConfiguration, null, 2)}</code>
-              </pre>
-              <div className="absolute top-2 right-2">
-                <CopyButton
-                  textToCopy={JSON.stringify(jsonConfiguration, null, 2)}
-                />
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t(
-                'Copy this configuration to your MCP client settings file (e.g., Cursor).',
-              )}
-            </p>
-          </div>
+      <CollapsibleJson
+        json={jsonConfiguration}
+        label={t('MCP Client Configuration (JSON)')}
+        description={t(
+          'Copy this configuration to your MCP client settings file (e.g., Cursor).',
         )}
-      </div>
+        defaultOpen={false}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Pencil } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,12 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { projectMembersApi } from '../lib/project-members-api';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 interface EditRoleDialogProps {
   member: ProjectMemberWithUser;
@@ -60,7 +60,7 @@ export function EditRoleDialog({
       setIsOpen(false);
     },
     onError: () => {
-       internalErrorToast()
+      internalErrorToast();
     },
   });
 

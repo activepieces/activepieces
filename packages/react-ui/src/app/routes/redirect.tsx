@@ -1,9 +1,10 @@
 import { t } from 'i18next';
 import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -14,7 +15,6 @@ import {
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
 import { ErrorCode } from '@activepieces/shared';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 const RedirectPage: React.FC = React.memo(() => {
   const location = useLocation();

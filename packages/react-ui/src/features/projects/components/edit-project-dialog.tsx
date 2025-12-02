@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -33,8 +35,6 @@ import {
   ErrorCode,
   TeamProjectsLimit,
 } from '@activepieces/shared';
-import { toast } from 'sonner';
-import { internalErrorToast } from '@/components/ui/sonner';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -66,7 +66,7 @@ export function EditProjectDialog({
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
   const { updateCurrentProject } = projectHooks.useCurrentProject();
-  
+
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,

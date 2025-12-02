@@ -1,4 +1,4 @@
-"use client"
+'use client';
 
 import {
   CircleCheckIcon,
@@ -6,13 +6,13 @@ import {
   Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
-} from "lucide-react"
-import { useTheme } from "next-themes"
-import { Toaster as Sonner, toast, type ToasterProps } from "sonner"
+} from 'lucide-react';
+import { Toaster as Sonner, toast, type ToasterProps } from 'sonner';
+
+import { useTheme } from '@/components/theme-provider';
 
 export const INTERNAL_ERROR_MESSAGE =
   'An unexpected error occurred. Please try again in a moment.';
-
 
 export function internalErrorToast() {
   toast.error('Something went wrong', {
@@ -30,14 +30,27 @@ export const UNSAVED_CHANGES_TOAST = {
   duration: Infinity,
 };
 
-
 const Toaster = ({ ...props }: ToasterProps) => {
-  const { theme = "system" } = useTheme()
-
+  const { theme } = useTheme();
   return (
     <Sonner
-      theme={theme as ToasterProps["theme"]}
+      theme={theme as ToasterProps['theme']}
       className="toaster group"
+      toastOptions={{
+        classNames: {
+          toast: `
+            data-[type=error]:!text-destructive-300
+            data-[type=warning]:!text-warning-300
+            data-[type=success]:!text-success-300
+          `,
+          description: `
+            data-[type=error]:!text-destructive-300
+            data-[type=warning]:!text-warning-300
+            data-[type=success]:!text-success-300
+          `,
+        },
+        descriptionClassName: '!text-inherit',
+      }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
@@ -47,15 +60,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          '--normal-text': 'hsl(var(--foreground))',
+          '--normal-bg': 'hsl(var(--background))',
+          '--normal-border': 'hsl(var(--border))',
+          '--border-radius': 'var(--radius)',
         } as React.CSSProperties
       }
       {...props}
     />
-  )
-}
+  );
+};
 
-export { Toaster }
+export { Toaster };
