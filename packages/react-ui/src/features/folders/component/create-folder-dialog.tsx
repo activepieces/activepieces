@@ -27,7 +27,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -81,9 +82,7 @@ export const CreateFolderDialog = ({
       setIsDialogOpen(false);
       updateSearchParams(folder.id);
       refetchFolders();
-      toast({
-        title: t('Added folder successfully'),
-      });
+      toast.success(t('Added folder successfully'));
     },
     onError: (error) => {
       if (api.isError(error)) {
@@ -95,7 +94,7 @@ export const CreateFolderDialog = ({
             break;
           }
           default: {
-            toast(INTERNAL_ERROR_TOAST);
+            internalErrorToast();
             break;
           }
         }

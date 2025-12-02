@@ -17,7 +17,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { PasswordValidator } from '@/features/authentication/components/password-validator';
 import { passwordValidation } from '@/features/authentication/lib/password-validation-utils';
 import { HttpError } from '@/lib/api';
@@ -49,9 +49,7 @@ const ChangePasswordForm = () => {
   >({
     mutationFn: authenticationApi.resetPassword,
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your password was changed successfully'),
+      toast.success(t('Your password was changed successfully'), {
         duration: 3000,
       });
       navigate('/sign-in');

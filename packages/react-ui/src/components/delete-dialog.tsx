@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-import { toast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 interface ConfirmationDeleteDialogProps {
   title: string;
@@ -53,9 +53,7 @@ export const ConfirmationDeleteDialog = ({
     onSuccess: () => {
       handleClose();
       if (showToast) {
-        toast({
-          title: t('Removed {entityName}', { entityName }),
-        });
+        toast.success(t('Removed {entityName}', { entityName }));
       }
     },
     onError,

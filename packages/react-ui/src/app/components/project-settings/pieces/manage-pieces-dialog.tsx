@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { Form, FormField, FormItem } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { PiecesFilterType } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../../components/custom/multi-select-piece-property';
@@ -53,7 +53,6 @@ export const ManagePiecesDialog = React.memo(
       },
     });
 
-    const { toast } = useToast();
     const { pieces: allPieces, isLoading: isLoadingAllPieces } =
       piecesHooks.usePieces({ searchQuery: '', includeHidden: true });
 
@@ -68,9 +67,7 @@ export const ManagePiecesDialog = React.memo(
       },
       onSuccess: () => {
         onSuccess();
-        toast({
-          title: t('Success'),
-          description: t('Pieces list updated'),
+        toast.success(t('Pieces list updated'), {
         });
         setOpen(false);
       },

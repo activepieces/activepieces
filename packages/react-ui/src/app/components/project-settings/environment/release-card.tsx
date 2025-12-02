@@ -4,7 +4,7 @@ import { Package } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { cn } from '@/lib/utils';
@@ -20,15 +20,17 @@ const ReleaseCard = () => {
     },
     onSuccess: () => {
       refetch();
-      toast({
-        title: !project.releasesEnabled
+      toast.success(
+        !project.releasesEnabled
           ? t('Releases Enabled')
           : t('Releases Disabled'),
-        description: !project.releasesEnabled
-          ? t('You have successfully enabled releases')
-          : t('You have successfully disabled releases'),
-        duration: 3000,
-      });
+        {
+          description: !project.releasesEnabled
+            ? t('You have successfully enabled releases')
+            : t('You have successfully disabled releases'),
+          duration: 3000,
+        }
+      );
     },
   });
 

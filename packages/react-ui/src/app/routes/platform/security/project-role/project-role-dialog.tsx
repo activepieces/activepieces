@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { Permission, ProjectRole, RoleType } from '@activepieces/shared';
 
@@ -151,9 +151,8 @@ export const ProjectRoleDialog = ({
       onSave();
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: 'Role name already exists',
+      toast.error(t('Role name already exists'), {
+        duration: 3000,
       });
     },
   });
