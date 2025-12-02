@@ -1,5 +1,5 @@
 import { googleSheetsAuth } from '../../index';
-import { DropdownOption, OAuth2Property, OAuth2Props, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { DropdownOption, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { google, drive_v3 } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { columnToLabel, getHeaderRow, googleSheetsCommon } from './common';
@@ -14,7 +14,7 @@ export const includeTeamDrivesProp = () =>
 		required: false,
 	});
 
-export const spreadsheetIdProp = (displayName: string, description: string, required = true, googleSheetsAuth: OAuth2Property<OAuth2Props>) =>
+export const spreadsheetIdProp = (displayName: string, description: string, required = true) =>
 	Property.Dropdown({
 		displayName,
 		description,
@@ -124,7 +124,7 @@ export const sheetIdProp = (displayName: string, description: string, required =
 
 export const commonProps = {
 	includeTeamDrives: includeTeamDrivesProp(),
-	spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The ID of the spreadsheet to use.',true,googleSheetsAuth),
+	spreadsheetId: spreadsheetIdProp('Spreadsheet', 'The ID of the spreadsheet to use.'),
 	sheetId: sheetIdProp('Sheet', 'The ID of the sheet to use.'),
 };
 

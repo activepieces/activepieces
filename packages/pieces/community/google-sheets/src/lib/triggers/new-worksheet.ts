@@ -14,7 +14,7 @@ export const newWorksheetTrigger = createTrigger({
 	type: TriggerStrategy.POLLING,
 	props: {
 		includeTeamDrives: includeTeamDrivesProp(),
-		spreadsheetId: spreadsheetIdProp('Spreadsheet', '',true,googleSheetsAuth),
+		spreadsheetId: spreadsheetIdProp('Spreadsheet', '',true),
 	},
 	async onEnable(context) {
 		const ids: number[] = [];
