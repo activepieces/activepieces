@@ -199,6 +199,9 @@
       "@activepieces/piece-image-router": [
         "packages/pieces/community/image-router/src/index.ts"
       ],
+      "@activepieces/piece-cursor": [
+        "packages/pieces/community/cursor/src/index.ts"
+      ],
       "@activepieces/piece-gptzero-detect-ai": [
         "packages/pieces/community/gptzero-detect-ai/src/index.ts"
       ],
