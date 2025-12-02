@@ -1,7 +1,9 @@
-import { databaseConnection } from './database-connection'
+import { databaseConnection, migrateSqliteToPGliteIfNeeded } from './database-connection'
 import { databaseSeeds } from './seeds'
 
 export async function initializeDatabase({ runMigrations }: { runMigrations: boolean }   ) {
+    await migrateSqliteToPGliteIfNeeded()
+    
     await databaseConnection().initialize()
     if (runMigrations) {
         await databaseConnection().runMigrations()

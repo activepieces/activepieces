@@ -58,6 +58,8 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
+import { migrateSqliteToPGlite, shouldMigrateSqliteToPGlite } from './migration/sqlite-to-pglite'
+import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
 
@@ -140,12 +142,30 @@ export const commonProperties = {
 }
 
 let _databaseConnection: DataSource | null = null
+let _migrationCompleted = false
 
-export const databaseConnection = () => {
+const createDataSource = (): DataSource => {
+    switch (databaseType) {
+        case DatabaseType.SQLITE3:
+            return createSqlLiteDataSource()
+        case DatabaseType.PGLITE:
+            return createPGliteDataSource()
+        case DatabaseType.POSTGRES:
+        default:
+            return createPostgresDataSource()
+    }
+}
+
+export const migrateSqliteToPGliteIfNeeded = async (): Promise<void> => {
+    if (databaseType === DatabaseType.PGLITE && !_migrationCompleted && await shouldMigrateSqliteToPGlite()) {
+        await migrateSqliteToPGlite()
+        _migrationCompleted = true
+    }
+}
+
+export const databaseConnection = (): DataSource => {
     if (isNil(_databaseConnection)) {
-        _databaseConnection = databaseType === DatabaseType.SQLITE3
-            ? createSqlLiteDataSource()
-            : createPostgresDataSource()
+        _databaseConnection = createDataSource()
     }
     return _databaseConnection
 }
@@ -162,6 +182,7 @@ export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
 ): void {
     switch (getDatabaseType()) {
         case DatabaseType.POSTGRES:
+        case DatabaseType.PGLITE:
             queryBuilder.andWhere(`${columnName} @> :values`, { values })
             break
         case DatabaseType.SQLITE3:{
@@ -181,6 +202,7 @@ export function AddAPArrayOverlapsToQueryBuilder<T extends ObjectLiteral>(
 ): void {
     switch (getDatabaseType()) {
         case DatabaseType.POSTGRES:
+        case DatabaseType.PGLITE:
             queryBuilder.andWhere(`${columnName} && :${paramName}`, { [paramName]: values })
             break
         case DatabaseType.SQLITE3: {
@@ -202,6 +224,7 @@ export function APArrayContains<T>(
     const databaseType = getDatabaseType()
     switch (databaseType) {
         case DatabaseType.POSTGRES:
+        case DatabaseType.PGLITE:
             return {
                 [columnName]: ArrayContains(values),
             }

@@ -1,6 +1,7 @@
 import { AppSystemProp, ContainerType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { SQLiteToPostgresMigrationMode } from '../database/migration/sqlite-to-pglite'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
@@ -78,6 +79,7 @@ const systemPropValidators: {
     [AppSystemProp.CLOUD_AUTH_ENABLED]: booleanValidator,
     [AppSystemProp.CONFIG_PATH]: stringValidator,
     [AppSystemProp.DB_TYPE]: enumValidator(Object.values(DatabaseType)),
+    [AppSystemProp.SQLITE3_TO_PGLITE_MIGRATION]: enumValidator(Object.values(SQLiteToPostgresMigrationMode)),
     [AppSystemProp.DEV_PIECES]: stringValidator,
     [AppSystemProp.ENCRYPTION_KEY]: stringValidator,
     [AppSystemProp.EXECUTION_DATA_RETENTION_DAYS]: numberValidator,

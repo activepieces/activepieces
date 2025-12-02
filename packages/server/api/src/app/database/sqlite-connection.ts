@@ -178,7 +178,7 @@ const getSqliteDatabaseInMemory = (): string => {
     return ':memory:'
 }
 
-const getSqliteDatabase = (): string => {
+export const getSqliteDatabase = (): string => {
     const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
@@ -382,9 +382,19 @@ const getSynchronize = (): boolean => {
     return value[env] ?? false
 }
 
-
-export const createSqlLiteDataSource = (): DataSource => {
+export const createSqlLiteDataSource = ({ migrationsOnly = false }: { migrationsOnly?: boolean } = {}): DataSource => {
     const migrationConfig = getMigrationConfig()
+
+    if (migrationsOnly) {
+        return new DataSource({
+            type: 'sqlite',
+            database: getSqliteDatabase(),
+            ...migrationConfig,
+            entities: [],
+            subscribers: [],
+            synchronize: false,
+        })
+    }
 
     return new DataSource({
         type: 'sqlite',
