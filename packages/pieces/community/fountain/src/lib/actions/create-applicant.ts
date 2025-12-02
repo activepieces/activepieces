@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
 
 export const fountainCreateApplicant = createAction({
   name: 'create_applicant',
@@ -41,7 +41,7 @@ export const fountainCreateApplicant = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.fountain.com/v2/applicants',
+      url: getApiUrl(context.auth, '/applicants'),
       headers: getAuthHeaders(context.auth),
       body: requestBody,
     });
