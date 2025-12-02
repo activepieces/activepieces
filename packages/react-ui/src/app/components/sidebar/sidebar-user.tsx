@@ -37,6 +37,7 @@ import { ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
@@ -143,6 +144,7 @@ export function SidebarUser() {
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
+              <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

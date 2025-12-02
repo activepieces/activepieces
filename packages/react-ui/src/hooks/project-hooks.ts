@@ -1,4 +1,10 @@
-import { useQuery, QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import {
+  useQuery,
+  QueryClient,
+  useSuspenseQuery,
+  useInfiniteQuery,
+  InfiniteData,
+} from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
@@ -15,6 +21,8 @@ import {
   isNil,
   ProjectWithLimits,
   ProjectWithLimitsWithPlatform,
+  SeekPage,
+  ListProjectRequestForUserQueryParams,
 } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
@@ -35,16 +43,36 @@ export const projectHooks = {
       setCurrentProject,
     };
   },
-  useProjects: () => {
+  useProjects: (params?: ListProjectRequestForUserQueryParams) => {
+    const { limit = 1000, displayName, cursor, ...restParams } = params || {};
     return useQuery<ProjectWithLimits[], Error>({
-      queryKey: ['projects'],
+      queryKey: ['projects', params],
       queryFn: async () => {
         const results = await projectApi.list({
-          cursor: undefined,
-          limit: 1000,
+          cursor,
+          limit,
+          displayName,
+          ...restParams,
         });
         return results.data;
       },
+      enabled: !displayName || displayName.length > 0,
+    });
+  },
+  useProjectsInfinite: (limit = 20) => {
+    return useInfiniteQuery<
+      SeekPage<ProjectWithLimits>,
+      Error,
+      InfiniteData<SeekPage<ProjectWithLimits>>
+    >({
+      queryKey: ['projects-infinite', limit],
+      getNextPageParam: (lastPage) => lastPage.next,
+      initialPageParam: undefined,
+      queryFn: ({ pageParam }) =>
+        projectApi.list({
+          cursor: pageParam as string | undefined,
+          limit,
+        }),
     });
   },
   useProjectsForPlatforms: () => {

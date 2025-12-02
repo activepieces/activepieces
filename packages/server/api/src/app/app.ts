@@ -56,7 +56,8 @@ import { distributedLock, redisConnections } from './database/redis-connections'
 import { builderModule } from './builder/builder.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
-// import { flagHooks } from './flags/flags.hooks'
+import { flagHooks } from './flags/flags.hooks'
+import { flowService } from './flows/flow/flow.service'
 import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
@@ -67,8 +68,8 @@ import { communityFlowTemplateModule } from './flows/templates/community-flow-te
 import { flowTemplateModule } from './flows/templates/flow-template.module'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { system } from './helper/system/system'
-// import { SystemJobName } from './helper/system-jobs/common'
-// import { systemJobHandlers } from './helper/system-jobs/job-handlers'
+import { SystemJobName } from './helper/system-jobs/common'
+import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
 import { globalOAuthAppModule } from './oauth-apps/global-oauth-app.module'
@@ -229,6 +230,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(builderModule)
     await app.register(todoActivityModule)
     // await app.register(solutionsModule)
+    systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowService(app.log).backgroundDeleteHandler(data))
 
     app.get(
         '/redirect',

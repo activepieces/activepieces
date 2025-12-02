@@ -39,7 +39,7 @@ export const drupalAuth = PieceAuth.CustomAuth({
     website_url: Property.ShortText({
       displayName: 'Website URL',
       required: true,
-      description: 'URL of your Drupal site',
+      description: 'URL of your Drupal site without a trailing "/" character',
     }),
     username: Property.ShortText({
       displayName: 'Username',
@@ -56,6 +56,12 @@ export const drupalAuth = PieceAuth.CustomAuth({
       return {
         valid: false,
         error: 'Please fill all the fields [website_url, username, password]',
+      };
+    }
+    if (website_url.endsWith('/')) {
+      return {
+        valid: false,
+        error: 'The website URL must not end with a trailing slash.',
       };
     }
     try {

@@ -4,8 +4,10 @@ import {
     isNil,
     isObject,
     PrincipalType,
+    ProjectType,
 } from '@activepieces/shared'
-import { preSerializationHookHandler } from 'fastify'
+import { onRequestAsyncHookHandler, preSerializationHookHandler } from 'fastify'
+import { projectService } from '../project/project-service'
 
 export function extractResourceName(url: string): string | undefined {
     const urlPath = url.split('?')[0]
@@ -61,6 +63,31 @@ Payload | null
 
     done()
 }
+
+export const projectMustBeTeamType: onRequestAsyncHookHandler =
+    async (request, _res) => {
+        if (request.principal.type !== PrincipalType.USER && request.principal.type !== PrincipalType.SERVICE) {
+            return
+        }
+        const projectId = request.principal.type === PrincipalType.USER ? request.principal.projectId : null
+        if (isNil(projectId)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'Project ID is required / or is null',
+                },
+            })
+        }
+        const project = await projectService.getOneOrThrow(projectId)
+        if (project.type !== ProjectType.TEAM) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Project must be a team project',
+                },
+            })
+        }
+    }
 
 type SingleEntity = {
     projectId?: string

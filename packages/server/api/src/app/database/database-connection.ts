@@ -188,6 +188,28 @@ export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
     }
 }
 
+export function AddAPArrayOverlapsToQueryBuilder<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    columnName: string,
+    values: string[],
+    paramName: string,
+): void {
+    switch (getDatabaseType()) {
+        case DatabaseType.POSTGRES:
+            queryBuilder.andWhere(`${columnName} && :${paramName}`, { [paramName]: values })
+            break
+        case DatabaseType.SQLITE3: {
+            const orConditions = values.map((_, index) => `${columnName} LIKE :${paramName}${index}`).join(' OR ')
+            const params = values.reduce((acc, value, index) => {
+                acc[`${paramName}${index}`] = `%${value}%`
+                return acc
+            }, {} as Record<string, string>)
+            queryBuilder.andWhere(`(${orConditions})`, params)
+            break
+        }
+    }
+}
+
 export function APArrayContains<T>(
     columnName: string,
     values: string[],
