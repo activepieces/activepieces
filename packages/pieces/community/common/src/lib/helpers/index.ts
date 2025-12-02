@@ -48,7 +48,7 @@ const joinBaseUrlWithRelativePath = ({
 
 const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| undefined>(
   baseUrl: BaseUrlGetter<PieceAuth>,
-  auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>
+  auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>
 ) => {
   const exampleBaseUrl = `https://api.example.com`;
   try {
@@ -64,7 +64,7 @@ const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| undefine
     }
   }
 };
-type BaseUrlGetter<PieceAuth extends PieceAuthProperty| undefined> = (auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>) => string
+type BaseUrlGetter<PieceAuth extends PieceAuthProperty| undefined> = (auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>) => string
 export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| undefined>({
   auth,
   baseUrl,
@@ -267,7 +267,7 @@ const handleBinaryResponse = async (
       mime.extension(contentTypeValue ?? '') || 'txt';
     body = await files.write({
       fileName: `output.${fileExtension}`,
-      data: Buffer.from(bodyContent),
+      data: Buffer.from(bodyContent as any ),
     });
   } else {
     body = bodyContent;
