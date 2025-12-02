@@ -11,11 +11,11 @@ import { common, getScopeAndKey, PieceStoreScope } from './common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
-async function executeStorageRemoveValue(context: ActionContext<undefined, {
+async function executeStorageRemoveValue(context: ActionContext<PieceAuthProperty, {
   key: ShortTextProperty<true>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;
 }>, isTestMode = false) {
-  await propsValidation.validateZod(context.propsValue, { 
+  await propsValidation.validateZod(context.propsValue, {
     key: z.string().max(128),
   });
 
