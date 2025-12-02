@@ -7,12 +7,14 @@ export const pollybotAuth = PieceAuth.CustomAuth({
   props: {
     apiKey: Property.LongText({
       displayName: 'PollyBot API Key',
-      description: 'Your API Key starting with sk-workspace_...',
+      description:
+        'Your API Key starting with `sk-workspace_...`. Find your API Key in your [PollyBot Dashboard Settings](https://pollybot.app/docs/authentication).',
       required: true,
     }),
     chatbotId: Property.ShortText({
       displayName: 'Chatbot ID',
-      description: 'The unique ID for the specific chatbot (e.g., cmhm6o40a05h8mn12dv3tc456).',
+      description:
+        'The unique ID for the specific chatbot (e.g., `cmhm6o40a05h8mn12dv3tc456`). Learn more in the [PollyBot Authentication docs](https://pollybot.app/docs/authentication).',
       required: true,
     }),
   },
