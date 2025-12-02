@@ -204,6 +204,9 @@
       ],
       "@activepieces/piece-gptzero-detect-ai": [
         "packages/pieces/community/gptzero-detect-ai/src/index.ts"
+      ],
+      "@activepieces/piece-bursty-ai": [
+        "packages/pieces/community/bursty-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true

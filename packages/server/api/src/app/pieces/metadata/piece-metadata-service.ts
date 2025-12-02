@@ -288,8 +288,8 @@ const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMeta
     if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
         return []
     }
-    const packages = devPiecesConfig.split(',')
-    const pieces = await filePiecesUtils(packages, log).findAllPieces()
+    const piecesNames = devPiecesConfig.split(',')
+    const pieces = await filePiecesUtils(log).loadDistPiecesMetadata(piecesNames)
 
     return pieces.map((p): PieceMetadataSchema => ({
         id: apId(),
