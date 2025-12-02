@@ -1,9 +1,9 @@
 import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ImageModel } from 'ai';
 import { isNil, SeekPage } from '@activepieces/shared';
 import { SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from './supported-ai-providers';
 import { AIProviderWithoutSensitiveData } from './types';
+import { ImageModelV2 } from "@ai-sdk/provider";
 
 export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
@@ -103,7 +103,7 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         refreshers: ['provider', 'model'],
         props: async (propsValue): Promise<InputPropertyMap> => {
             const provider = propsValue['provider'] as unknown as string;
-            const model = propsValue['model'] as unknown as ImageModel;
+            const model = propsValue['model'] as unknown as ImageModelV2;
 
             const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
             if (isNil(providerMetadata)) {

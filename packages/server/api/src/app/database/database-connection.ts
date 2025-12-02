@@ -38,9 +38,7 @@ import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { DatabaseType, system } from '../helper/system/system'
-import { McpRunEntity } from '../mcp/mcp-run/mcp-run.entity'
-import { McpEntity } from '../mcp/mcp-server/mcp-entity'
-import { McpToolEntity } from '../mcp/tool/mcp-tool.entity'
+import { McpServerEntity } from '../mcp/mcp-entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -97,10 +95,8 @@ function getEntities(): EntitySchema<unknown>[] {
         TableWebhookEntity,
         UserIdentityEntity,
         TodoEntity,
-        McpEntity,
+        McpServerEntity,
         TodoActivityEntity,
-        McpToolEntity,
-        McpRunEntity,
         AIUsageEntity,
         TriggerSourceEntity,
     ]
@@ -172,6 +168,28 @@ export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
             for (const value of values) {
                 queryBuilder.andWhere(`${columnName} LIKE :value${values.indexOf(value)}`, { [`value${values.indexOf(value)}`]: `%${value}%` })
             }
+            break
+        }
+    }
+}
+
+export function AddAPArrayOverlapsToQueryBuilder<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    columnName: string,
+    values: string[],
+    paramName: string,
+): void {
+    switch (getDatabaseType()) {
+        case DatabaseType.POSTGRES:
+            queryBuilder.andWhere(`${columnName} && :${paramName}`, { [paramName]: values })
+            break
+        case DatabaseType.SQLITE3: {
+            const orConditions = values.map((_, index) => `${columnName} LIKE :${paramName}${index}`).join(' OR ')
+            const params = values.reduce((acc, value, index) => {
+                acc[`${paramName}${index}`] = `%${value}%`
+                return acc
+            }, {} as Record<string, string>)
+            queryBuilder.andWhere(`(${orConditions})`, params)
             break
         }
     }

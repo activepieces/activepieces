@@ -25,6 +25,7 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
+import { AddMcpServer1764606838149 } from './migration/1764606838149-AddMcpServer'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -296,6 +297,8 @@ import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migrat
 
 import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
+import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
+import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -503,6 +506,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveDurationAndAddArchivedAtIdxPostgres1763378445659,
         AddIconToProject1763377380235,
         AddProjectType1763644863137,
+        AddFlowOperationStatusField1764079041445,
+        AddMcpServer1764606838149,
     ]
 
     const edition = system.getEdition()
@@ -610,6 +615,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveMcpAndTablesLimitsAndBillingCycles1762103191643,
                 RemoveUnusedPaymentMethodColoumn1762709208569,
                 AddLastUsedAtToApiKey1763378445660,
+                RenameManageProjectsToTeamProjectLimits1764100884963,
             )
             break
         case ApEdition.COMMUNITY:

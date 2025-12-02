@@ -165,6 +165,8 @@ import { RemoveProjectIdFromPieceMetdataSqlite1763243032686 } from './migration/
 import { AddIconToProjectSqlite1763378269381 } from './migration/sqlite/1763378269381-AddIconToProjectSqlite'
 import { RemoveFlowRunDurationSqlite1763417279729 } from './migration/sqlite/1763417279729-RemoveFlowRunDurationSqlite'
 import { AddProjectTypeSqlite1763896147042 } from './migration/sqlite/1763896147042-AddProjectTypeSqlite'
+import { AddFlowOperationStatusFieldSqlite1764239872251 } from './migration/sqlite/1764239872251-AddFlowOperationStatusFieldSqlite'
+import { AddMcpServerSqlite1764524983756 } from './migration/sqlite/1764524983756-AddMcpServerSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -346,6 +348,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddIconToProjectSqlite1763378269381,
         RemoveFlowRunDurationSqlite1763417279729,
         AddProjectTypeSqlite1763896147042,
+        AddFlowOperationStatusFieldSqlite1764239872251,
+        AddMcpServerSqlite1764524983756,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

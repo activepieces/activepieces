@@ -76,7 +76,7 @@ export const binLookup = createAction({
 
     return await greipApiCall({
       method: HttpMethod.GET,
-      path: '/bin',
+      path: '/lookup/bin',
       queryParams,
       auth: context.auth,
     });

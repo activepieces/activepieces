@@ -82,7 +82,7 @@ export const phoneValidation = createAction({
 
     return await greipApiCall({
       method: HttpMethod.GET,
-      path: '/phone',
+      path: '/scoring/phone',
       queryParams,
       auth: context.auth,
     });

@@ -1,4 +1,5 @@
 import {
+  AgentTool,
   AppConnectionValue,
   ExecutionType,
   FlowRunId,
@@ -10,6 +11,7 @@ import {
   TriggerPayload,
   TriggerStrategy,
 } from '@activepieces/shared';
+
 import {
   InputPropertyMap,
   PiecePropValueSchema,
@@ -75,8 +77,8 @@ export type TriggerHookContext<
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
   ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
-      server: ServerContext;
-    }
+    server: ServerContext;
+  }
   : never;
 
 export type TestOrRunHookContext<
@@ -154,8 +156,8 @@ export type OnStartContext<
   PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap
 > = Omit<BaseContext<PieceAuth, TriggerProps>, 'flows'> & {
-   run: Pick<RunContext, 'id'>;
-   payload: unknown;
+  run: Pick<RunContext, 'id'>;
+  payload: unknown;
 }
 
 
@@ -178,6 +180,7 @@ export type BaseActionContext<
   files: FilesService;
   output: OutputContext;
   serverUrl: string;
+  agent: AgentContext;
   run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>,
@@ -203,6 +206,18 @@ export type ActionContext<
 > =
   | BeginExecutionActionContext<PieceAuth, ActionProps>
   | ResumeExecutionActionContext<PieceAuth, ActionProps>;
+
+
+
+
+export type ConstructToolParams = {
+  tools: AgentTool[]
+  model: unknown,
+}
+
+export interface AgentContext {
+  tools: (params: ConstructToolParams) => Promise<Record<string, unknown>>;
+}
 
 export interface FilesService {
   write({

@@ -160,6 +160,9 @@
       "@activepieces/piece-phantombuster": [
         "packages/pieces/community/phantombuster/src/index.ts"
       ],
+      "@activepieces/piece-openmic-ai": [
+        "packages/pieces/community/openmic-ai/src/index.ts"
+      ],
       "@activepieces/piece-datafuel": [
         "packages/pieces/community/datafuel/src/index.ts"
       ],
@@ -177,6 +180,27 @@
       ],
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
+      ],
+      "@activepieces/piece-orimon": [
+        "packages/pieces/community/orimon/src/index.ts"
+      ],
+      "@activepieces/piece-linkup": [
+        "packages/pieces/community/linkup/src/index.ts"
+      ],
+      "@activepieces/piece-youform": [
+        "packages/pieces/community/youform/src/index.ts"
+      ],
+      "@activepieces/piece-flow-parser": [
+        "packages/pieces/community/flow-parser/src/index.ts"
+      ],
+      "@activepieces/piece-writesonic-bulk": [
+        "packages/pieces/community/writesonic-bulk/src/index.ts",
+      ],
+      "@activepieces/piece-documentpro": [
+        "packages/pieces/community/documentpro/src/index.ts"
+      ],
+      "@activepieces/piece-image-router": [
+        "packages/pieces/community/image-router/src/index.ts"
       ]
     },
     "resolveJsonModule": true
