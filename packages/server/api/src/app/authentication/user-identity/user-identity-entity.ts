@@ -43,6 +43,7 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             type: String,
             nullable: false,
         },
+       
     },
     indices: [
         {
