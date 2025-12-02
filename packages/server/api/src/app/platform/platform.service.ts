@@ -13,6 +13,7 @@ import {
     PlatformUsage,
     PlatformWithoutSensitiveData,
     spreadIfDefined,
+    TeamProjectsLimit,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
@@ -59,6 +60,7 @@ const DEFAULT_PLAN = {
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
+    teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
 }
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)

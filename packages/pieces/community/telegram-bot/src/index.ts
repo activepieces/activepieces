@@ -3,6 +3,7 @@ import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { telegramCreateInviteLinkAction } from './lib/action/create-invite-link';
 import { telegramGetChatMemberAction } from './lib/action/get-chat-member';
+import { telegramGetFileAction } from './lib/action/get-file.action';
 import { telegramSendMediaAction } from './lib/action/send-media.action';
 import { telegramSendMessageAction } from './lib/action/send-text-message.action';
 import { telegramCommons } from './lib/common';
@@ -36,6 +37,7 @@ export const telegramBot = createPiece({
     telegramSendMessageAction,
     telegramSendMediaAction,
     telegramGetChatMemberAction,
+    telegramGetFileAction,
     telegramCreateInviteLinkAction,
     createCustomApiCallAction({
       baseUrl: (auth) => telegramCommons.getApiUrl(auth as string, ''),

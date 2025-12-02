@@ -6,11 +6,13 @@ The logic has been isolated to this file to avoid potential conflicts with the o
 import {
     ActivepiecesError, assertNotNullOrUndefined,
     Cursor,
+    EndpointScope,
     ErrorCode,
-    FlowStatus, Metadata, PlatformId,
+    FlowStatus, Metadata, PiecesFilterType, PlatformId,
     Project,
-    ProjectId, SeekPage,
+    ProjectId, ProjectType, ProjectWithLimits, SeekPage,
     spreadIfDefined,
+    UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Equal, ILike, In, IsNull } from 'typeorm'
@@ -21,12 +23,13 @@ import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
+import { projectMemberRepo } from '../../project-member/project-member.service'
 import { userService } from '../../user/user-service'
 
 const projectRepo = repoFactory(ProjectEntity)
 
 export const platformProjectService = (log: FastifyBaseLogger) => ({
-    async getAllForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<Project>> {
+    async getAllForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
         const user = await userService.getOneOrFail({ id: params.userId })
 
         assertNotNullOrUndefined(user.platformId, 'User does not have a platform set')
@@ -35,9 +38,10 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             platformId: params.platformId,
             userId: params.userId,
             displayName: params.displayName,
+            scope: params.scope,
         })
 
-        return getProjects({ ...params, projectIds: projects.map((project) => project.id) })
+        return getProjects({ ...params, projectIds: projects.map((project) => project.id) }, log)
     },
 
     async getWithPlanAndUsageOrThrow(projectId: string): Promise<Project> {
@@ -47,8 +51,13 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async update({ projectId, request }: UpdateParams): Promise<Project> {
-        return projectService.update(projectId, request)
+    async update({ projectId, request }: UpdateParams): Promise<ProjectWithLimits> {
+        const project = await projectService.getOneOrThrow(projectId)
+        await projectService.update(projectId, {
+            type: project.type,
+            ...request,
+        })
+        return enrichProject(project, log)
     },
 
     async hardDelete({ id }: HardDeleteParams): Promise<void> {
@@ -58,8 +67,8 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getProjects(params: GetAllParams & { projectIds?: string[] }): Promise<SeekPage<Project>> {
-    const { cursorRequest, limit, platformId, displayName, externalId, projectIds } = params
+async function getProjects(params: GetAllParams & { projectIds?: string[] }, log: FastifyBaseLogger): Promise<SeekPage<ProjectWithLimits>> {
+    const { cursorRequest, limit, platformId, displayName, externalId, projectIds, types } = params
     const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
     const paginator = buildPaginator({
         entity: ProjectEntity,
@@ -77,6 +86,7 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }): Pr
         ...spreadIfDefined('externalId', externalId),
         ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
+        ...(types ? { type: In(types) } : {}),
     }
 
     const queryBuilder = projectRepo()
@@ -85,11 +95,16 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }): Pr
 
     const { data, cursor } = await paginator.paginate(queryBuilder)
 
-    return paginationHelper.createPage<Project>(data, cursor)
+    const projects: ProjectWithLimits[] = await Promise.all(
+        data.map((project) => enrichProject(project, log)),
+    )
+
+    return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
 }
 
 type GetAllForParamsAndUser = {
     userId: string
+    scope?: EndpointScope
 } & GetAllParams
 
 type GetAllParams = {
@@ -98,6 +113,57 @@ type GetAllParams = {
     externalId?: string
     cursorRequest: Cursor | null
     limit: number
+    types?: ProjectType[]
+}
+
+export async function enrichProject(project: Project, log: FastifyBaseLogger): Promise<ProjectWithLimits> {
+    const totalUsers = await projectMemberRepo().countBy({
+        projectId: project.id,
+    })
+    const activeUsers = await projectMemberRepo()
+        .createQueryBuilder('project_member')
+        .leftJoin('user', 'user', 'user.id = project_member."userId"')
+        .groupBy('user.id')
+        .where('user.status = :activeStatus and project_member."projectId" = :projectId', {
+            activeStatus: UserStatus.ACTIVE,
+            projectId: project.id,
+        })
+        .getCount()
+
+    const totalFlows = await flowService(log).count({
+        projectId: project.id,
+    })
+
+    const activeFlows = await flowService(log).count({
+        projectId: project.id,
+        status: FlowStatus.ENABLED,
+    })
+
+    // todo(Rupal): Dummy plan
+    return {
+        ...project,
+        plan: {
+            id: project.id,
+            projectId: project.id,
+            created: project.created,
+            updated: project.updated,
+            locked: false,
+            name: 'Default Plan',
+            piecesFilterType: PiecesFilterType.ALLOWED,
+            pieces: [],
+            aiCredits: undefined,
+        },
+        usage: {
+            aiCredits: 0,
+            nextLimitResetDate: 0,
+        },
+        analytics: {
+            activeFlows,
+            totalFlows,
+            totalUsers,
+            activeUsers,
+        },
+    }
 }
 
 const assertAllProjectFlowsAreDisabled = async (params: AssertAllProjectFlowsAreDisabledParams, log: FastifyBaseLogger): Promise<void> => {

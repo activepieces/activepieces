@@ -3,12 +3,13 @@ This is a custom implementation to support platform projects with access control
 The logic has been isolated to this file to avoid potential conflicts with the open-source modules from upstream
 */
 
-import { ActivepiecesError, CreatePlatformProjectRequest, EndpointScope, ErrorCode, PrincipalType, Project, SeekPage, UpdateProjectRequestInCommunity } from '@activepieces/shared'
+import { ActivepiecesError, CreatePlatformProjectRequest, EndpointScope, ErrorCode, ListProjectRequestForPlatformQueryParams, PlatformRole, Principal, PrincipalType, ProjectType, ProjectWithLimits, SeekPage, ServicePrincipal, UpdateProjectPlatformRequest, UserPrincipal } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
+import { userService } from '../../user/user-service'
 import { projectService } from '../project-service'
-import { platformProjectService } from './platform-project.service'
+import { enrichProject, platformProjectService } from './platform-project.service'
 
 const CreateProjectRequest = {
     config: {
@@ -18,7 +19,7 @@ const CreateProjectRequest = {
     schema: {
         tags: ['projects'],
         response: {
-            [StatusCodes.OK]: Project,
+            [StatusCodes.OK]: ProjectWithLimits,
         },
         body: CreatePlatformProjectRequest,
     },
@@ -35,9 +36,9 @@ const UpdateProjectRequest = {
             id: Type.String(),
         }),
         response: {
-            [StatusCodes.OK]: Project,
+            [StatusCodes.OK]: ProjectWithLimits,
         },
-        body: UpdateProjectRequestInCommunity,
+        body: UpdateProjectPlatformRequest,
     },
 }
 
@@ -49,13 +50,9 @@ const ListProjectRequest = {
     schema: {
         tags: ['projects'],
         response: {
-            [StatusCodes.OK]: SeekPage(Project),
+            [StatusCodes.OK]: SeekPage(ProjectWithLimits),
         },
-        querystring: Type.Object({
-            externalId: Type.Optional(Type.String()),
-            limit: Type.Optional(Type.Number({})),
-            cursor: Type.Optional(Type.String({})),
-        }),
+        querystring: ListProjectRequestForPlatformQueryParams,
     },
 }
 
@@ -81,22 +78,47 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             platformId,
             ownerId: platform.ownerId,
             displayName: request.body.displayName,
-            externalId: request.body.externalId,
-            metadata: request.body.metadata,
+            externalId: request.body.externalId ?? undefined,
+            metadata: request.body.metadata ?? undefined,
+            type: ProjectType.TEAM,
         })
-        await reply.status(StatusCodes.CREATED).send(project)
+        const projectWithUsage = await enrichProject(project, app.log)
+        await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
     // Overrides the same endpoint handler in the open source counter-part
     app.post('/:id', UpdateProjectRequest, async (request) => {
-        return projectService.update(request.params.id, request.body)
+        const project = await projectService.getOneOrThrow(request.params.id)
+        const haveTokenForTheProject = request.principal.projectId === project.id
+        const ownThePlatform = await isPlatformAdmin(request.principal, project.platformId)
+        if (!haveTokenForTheProject && !ownThePlatform) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {},
+            })
+        }
+        return platformProjectService(request.log).update({
+            platformId: request.principal.platform.id,
+            projectId: request.params.id,
+            request: {
+                ...request.body,
+                externalId: ownThePlatform ? request.body.externalId : undefined,
+            },
+        })
     })
 
-    app.get('/', ListProjectRequest, async (request, reply) => {
-        const platformId = request.principal.platform.id
-        const platform = await platformService.getOneOrThrow(platformId)
-        const projects = await projectService.getAllForUser({ platformId, userId: platform.ownerId })
-        await reply.status(StatusCodes.CREATED).send(projects)
+    app.get('/', ListProjectRequest, async (request, _reply) => {
+        const userId = await getUserId(request.principal)
+        return platformProjectService(request.log).getAllForPlatform({
+            platformId: request.principal.platform.id,
+            externalId: request.query.externalId,
+            cursorRequest: request.query.cursor ?? null,
+            displayName: request.query.displayName,
+            types: request.query.types,
+            limit: request.query.limit ?? 50,
+            userId,
+            scope: EndpointScope.PLATFORM,
+        })
     })
 
     app.delete('/:id', DeleteProjectRequest, async (request, reply) => {
@@ -118,4 +140,25 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+async function getUserId(principal: Principal): Promise<string> {
+    if (principal.type === PrincipalType.SERVICE) {
+        const platform = await platformService.getOneOrThrow(principal.platform.id)
+        return platform.ownerId
+    }
+    return principal.id
+}
+
+async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, platformId: string): Promise<boolean> {
+    if (principal.platform.id !== platformId) {
+        return false
+    }
+    if (principal.type === PrincipalType.SERVICE) {
+        return true
+    }
+    const user = await userService.getOneOrFail({
+        id: principal.id,
+    })
+    return user.platformRole === PlatformRole.ADMIN
 }

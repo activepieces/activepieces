@@ -163,7 +163,7 @@ export class EngineConstants {
         })
     }
 
-    public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
+    public static fromExecutePropertyInput(input: Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
             flowVersionId: input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
