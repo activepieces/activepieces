@@ -12,7 +12,7 @@ export const collectionList = createAction({
     const client = new QdrantClient({
       apiKey: auth.props.key,
       url: auth.props.serverAddress,
-    });;
+    });
     const collections = await client.getCollections();
     return collections;
   },

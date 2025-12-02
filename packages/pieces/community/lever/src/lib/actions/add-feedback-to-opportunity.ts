@@ -18,7 +18,7 @@ export const addFeedbackToOpportunity = createAction({
   auth: leverAuth,
   props: {
     performAs: Property.Dropdown({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Feedback author',
       required: true,
       refreshers: ['auth'],
@@ -73,7 +73,7 @@ export const addFeedbackToOpportunity = createAction({
       required: true,
     }),
     panelId: Property.Dropdown({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Interview panel',
       description: 'If you select one, you must select an interview too',
       required: false,
@@ -118,7 +118,7 @@ export const addFeedbackToOpportunity = createAction({
       },
     }),
     interviewId: Property.Dropdown({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Interview',
       description: 'Mandatory is you select an interview panel',
       required: false,
@@ -164,7 +164,7 @@ export const addFeedbackToOpportunity = createAction({
       },
     }),
     feedbackTemplateId: Property.Dropdown({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Feedback template',
       description: 'Ignored if you select an interview panel and an interview',
       required: false,
@@ -200,7 +200,7 @@ export const addFeedbackToOpportunity = createAction({
       },
     }),
     feedbackFields: Property.DynamicProperties({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Fields',
       required: true,
       refreshers: [

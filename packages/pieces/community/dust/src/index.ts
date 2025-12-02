@@ -40,7 +40,9 @@ export const dustAuth = PieceAuth.CustomAuth({
   },
 });
 
-export type DustAuthType = AppConnectionValueForAuthProperty<typeof dustAuth>['props'];
+export type DustAuthType = AppConnectionValueForAuthProperty<
+  typeof dustAuth
+>['props'];
 export const dust = createPiece({
   displayName: 'Dust',
   description: 'Secure messaging and collaboration',
@@ -57,13 +59,11 @@ export const dust = createPiece({
     uploadFile,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        `${DUST_BASE_URL[(auth.props).region ?? 'us']}/${
-          (auth.props).workspaceId
-        }`,
+        `${DUST_BASE_URL[auth.props.region ?? 'us']}/${auth.props.workspaceId}`,
       auth: dustAuth,
       authMapping: async (auth) => ({
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${(auth.props).apiKey}`,
+        Authorization: `Bearer ${auth.props.apiKey}`,
       }),
     }),
   ],

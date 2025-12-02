@@ -9,8 +9,8 @@ import { notionAuth } from '../..';
 
 export const notionCommon = {
   baseUrl: 'https://api.notion.com/v1',
-  database_id: Property.Dropdown<string,true,typeof notionAuth>({
-auth: notionAuth,
+  database_id: Property.Dropdown<string, true, typeof notionAuth>({
+    auth: notionAuth,
     displayName: 'Database',
     required: true,
     description:
@@ -46,7 +46,7 @@ auth: notionAuth,
     },
   }),
   database_item_id: Property.Dropdown({
-auth: notionAuth,
+    auth: notionAuth,
     displayName: 'Database Item',
     description: 'Select the item you want to update',
     required: true,
@@ -81,7 +81,7 @@ auth: notionAuth,
     },
   }),
   archived_database_item_id: Property.Dropdown({
-auth: notionAuth,
+    auth: notionAuth,
     displayName: 'Archived Item',
     description:
       'Choose which archived item to restore from the selected database',

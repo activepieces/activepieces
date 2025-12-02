@@ -107,7 +107,7 @@ export const snowflakeCommonProps = {
         };
       }
 
-      const authValue = auth
+      const authValue = auth;
 
       const connection = configureConnection(authValue.props);
 
@@ -151,7 +151,7 @@ export const snowflakeCommonProps = {
         };
       }
 
-      const authValue = auth
+      const authValue = auth;
 
       const connection = configureConnection(authValue.props);
 
@@ -206,7 +206,7 @@ export const snowflakeCommonProps = {
         };
       }
 
-      const authValue = auth
+      const authValue = auth;
 
       const connection = configureConnection(authValue.props);
 
@@ -242,7 +242,7 @@ export const snowflakeCommonProps = {
       if (!auth) return {};
       if (!table) return {};
 
-      const authValue = auth
+      const authValue = auth;
 
       const connection = configureConnection(authValue.props);
       await connect(connection);

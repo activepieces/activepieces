@@ -13,7 +13,11 @@ import { githubAuth } from '../..';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',
-  repositoryDropdown: Property.Dropdown<{ repo: string; owner: string },true,typeof githubAuth>({
+  repositoryDropdown: Property.Dropdown<
+    { repo: string; owner: string },
+    true,
+    typeof githubAuth
+  >({
     displayName: 'Repository',
     refreshers: [],
     auth: githubAuth,
@@ -62,7 +66,7 @@ export const githubCommon = {
           number: number;
           title: string;
         }>({
-          accessToken: (auth).access_token,
+          accessToken: auth.access_token,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/milestones`,
         });
@@ -94,7 +98,7 @@ export const githubCommon = {
         }
         const { owner, repo } = repository as RepositoryProp;
         const branches = await githubPaginatedApiCall<{ name: string }>({
-          accessToken: (auth).access_token,
+          accessToken: auth.access_token,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/branches`,
         });
@@ -132,7 +136,7 @@ export const githubCommon = {
           title: string;
           pull_request?: Record<string, any>;
         }>({
-          accessToken: (auth).access_token,
+          accessToken: auth.access_token,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/issues`,
           query: {
@@ -169,11 +173,7 @@ export const githubCommon = {
           };
         }
         const { owner, repo } = repository as RepositoryProp;
-        const assignees = await getAssignee(
-          auth,
-          owner,
-          repo
-        );
+        const assignees = await getAssignee(auth, owner, repo);
         return {
           disabled: false,
           options: assignees.map((assignee) => {

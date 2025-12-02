@@ -63,7 +63,7 @@ export const searchRecords = createAction({
       auth.props.instance_url,
       auth.props.username,
       auth.props.password
-    );;
+    );
     if (vtigerInstance === null) return;
 
     const count = await countRecords(auth, propsValue.elementType as string);

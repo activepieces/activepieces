@@ -94,7 +94,10 @@ export const newComment = createTrigger({
   },
 });
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof notionAuth>, { page_id: string | undefined }> = {
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof notionAuth>,
+  { page_id: string | undefined }
+> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const lastItem = lastItemId as string;

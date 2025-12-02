@@ -18,7 +18,7 @@ export const listOpportunityFeedback = createAction({
       required: true,
     }),
     template: Property.Dropdown({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Feedback template',
       required: false,
       refreshers: ['auth'],

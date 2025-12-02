@@ -7,7 +7,7 @@ import {
 	FacebookPageDropdown,
 	FacebookPaginatedResponse,
 } from './types';
-import { facebookLeadsAuth } from '@activepieces/piece-facebook-leads';
+import { facebookLeadsAuth } from '../../index';
 
 export const facebookLeadsCommon = {
 	baseUrl: 'https://graph.facebook.com',

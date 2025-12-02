@@ -60,7 +60,7 @@ export const actionRecurringInvoice = createAction({
       'Content-Type': 'application/json',
     };
 
-    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');;
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const i: string[] = [context.propsValue.recurring_id];
 
     const createRequestBody = {

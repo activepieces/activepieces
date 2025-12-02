@@ -42,7 +42,7 @@ export const GmailProps = {
       ],
     },
   }),
-  label: Property.Dropdown<GmailLabel,false,typeof gmailAuth>({
+  label: Property.Dropdown<GmailLabel, false, typeof gmailAuth>({
     auth: gmailAuth,
     displayName: 'Label',
     description:
@@ -59,9 +59,7 @@ export const GmailProps = {
         };
       }
 
-      const response = await GmailRequests.getLabels(
-        auth
-      );
+      const response = await GmailRequests.getLabels(auth);
 
       return {
         disabled: false,

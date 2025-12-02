@@ -41,7 +41,7 @@ export const replyToConversation = createAction({
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${auth.props.apiKey}`,
-      },  
+      },
       body: JSON.stringify(
         {
           content: propsValue.query,

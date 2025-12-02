@@ -36,7 +36,7 @@ export function createPineconeClientFromAuth(auth: AppConnectionValueForAuthProp
     return createPineconeClient({ apiKey: auth });
   }
   
-  let actualAuth = auth.props;
+  const actualAuth = auth.props;
   
   if (!actualAuth || !actualAuth.apiKey) {
     throw new Error('Invalid authentication: API key is required');

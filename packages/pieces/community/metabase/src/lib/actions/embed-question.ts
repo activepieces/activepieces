@@ -27,7 +27,7 @@ export const embedQuestion = createAction({
       required: true,
       defaultValue: true,
     }),
-    parameterSettings: Property.DynamicProperties<false,typeof metabaseAuth>({
+    parameterSettings: Property.DynamicProperties<false, typeof metabaseAuth>({
       displayName: 'Parameter settings',
       auth: metabaseAuth,
       description:

@@ -16,7 +16,7 @@ export const deletePoints = createAction({
     const client = new QdrantClient({
       apiKey: auth.props.key,
       url: auth.props.serverAddress,
-    });;
+    });
 
     const collectionName = propsValue.collectionName as string;
     if (propsValue.getPointsBy === 'Ids') {

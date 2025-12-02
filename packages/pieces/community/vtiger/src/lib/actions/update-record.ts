@@ -278,7 +278,7 @@ export const updateRecord = createAction({
       auth.props.instance_url,
       auth.props.username,
       auth.props.password
-    );;
+    );
 
     if (instance !== null) {
       const response = await httpClient.sendRequest<Record<string, unknown>[]>({

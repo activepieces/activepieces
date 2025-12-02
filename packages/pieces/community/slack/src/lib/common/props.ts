@@ -1,7 +1,6 @@
-import { slackAuth } from '@activepieces/piece-slack';
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
-
+import {slackAuth} from '../../index';
 const slackChannelBotInstruction = `
 	Please make sure add the bot to the channel by following these steps:
 	  1. Type /invite in the channel's chat.

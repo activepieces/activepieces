@@ -55,7 +55,7 @@ export const docusignAuth = PieceAuth.CustomAuth({
   validate: async ({ auth, server }) => {
     try {
       await createApiClient({
-         props: auth,
+        props: auth,
         type: AppConnectionType.CUSTOM_AUTH,
       });
       return {
@@ -125,9 +125,7 @@ export const docusign = createPiece({
     getDocument,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return `https://${
-          (auth).props.environment
-        }.docusign.net/restapi`;
+        return `https://${auth.props.environment}.docusign.net/restapi`;
       },
       auth: docusignAuth,
       authMapping: async (auth) => {

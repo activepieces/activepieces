@@ -18,7 +18,7 @@ export const listOpportunityForms = createAction({
       required: true,
     }),
     template: Property.Dropdown({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Form template',
       required: false,
       refreshers: ['auth'],

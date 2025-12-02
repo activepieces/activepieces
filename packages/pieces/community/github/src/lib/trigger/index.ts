@@ -1465,7 +1465,7 @@ export const registered = [
   },
 ];
 
-export const githubTriggers= [
+export const githubTriggers = [
   ...registered.map((def) => githubRegisterTrigger(def)),
   newBranchTrigger,
   newCollaboratorTrigger,

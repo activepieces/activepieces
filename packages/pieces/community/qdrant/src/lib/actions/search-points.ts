@@ -37,7 +37,7 @@ export const searchPoints = createAction({
     const client = new QdrantClient({
       apiKey: auth.props.key,
       url: auth.props.serverAddress,
-    });;
+    });
     const { must, must_not } = propsValue;
 
     const filter = convertToFilter({

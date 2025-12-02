@@ -15,7 +15,7 @@ export const deleteCollection = createAction({
     const client = new QdrantClient({
       apiKey: auth.props.key,
       url: auth.props.serverAddress,
-    });;
+    });
     const collectionName = propsValue.collectionName as string;
     const response = await client.deleteCollection(collectionName);
     return response;

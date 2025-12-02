@@ -2,7 +2,9 @@ import { ApiClient } from 'docusign-esign';
 import { docusignAuth, DocusignAuthType } from '../index';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
-export async function createApiClient(auth: AppConnectionValueForAuthProperty<typeof docusignAuth>) {
+export async function createApiClient(
+  auth: AppConnectionValueForAuthProperty<typeof docusignAuth>
+) {
   const oAuthBasePath =
     auth.props.environment === 'demo'
       ? 'account-d.docusign.com'

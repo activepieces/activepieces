@@ -29,7 +29,7 @@ export const queryRecords = createAction({
       auth.props.instance_url,
       auth.props.username,
       auth.props.password
-    );;
+    );
     if (vtigerInstance === null) return;
 
     const response = await httpClient.sendRequest<{

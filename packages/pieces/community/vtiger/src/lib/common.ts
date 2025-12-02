@@ -415,14 +415,11 @@ export const recordProperty = () =>
         return {};
       }
 
-      let defaultValue: Record<string, unknown>;
-      defaultValue = {};
-    
 
       return generateElementFields(
         auth,
         elementType as unknown as string,
-        defaultValue
+        {}
       );
     },
   });

@@ -17,7 +17,7 @@ export const updateOpportunityStage = createAction({
       required: true,
     }),
     stage: Property.Dropdown({
-  auth: leverAuth,
+      auth: leverAuth,
       displayName: 'Stage',
       required: true,
       refreshers: ['auth'],
