@@ -1,9 +1,8 @@
-import { assertNotNullOrUndefined, FlowOperationStatus, tryCatch, WebsocketClientEvent } from '@activepieces/shared'
+import { assertNotNullOrUndefined, FlowOperationStatus, FlowStatusUpdatedResponse, isNil, tryCatch, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
-import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
 import { flowVersionService } from '../flow-version/flow-version.service'
 import { flowExecutionCache } from './flow-execution-cache'
 import { flowSideEffects } from './flow-service-side-effects'
@@ -46,7 +45,7 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                 id,
                 projectId,
             })
-        
+
             const publishedFlowVersionId = flowToUpdate.publishedVersionId
             if (flowToUpdate.status !== newStatus) {
                 assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
@@ -66,27 +65,31 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
                         preUpdateDone: true,
                     })
                 }
-        
-                flowToUpdate.status = newStatus
-                flowToUpdate.operationStatus = FlowOperationStatus.NONE
-                await flowRepo().save(flowToUpdate)
+
+                await flowRepo().save({
+                    ...flowToUpdate,
+                    operationStatus: FlowOperationStatus.NONE,
+                    publishedVersionId: publishedFlowVersion.id,
+                })
                 await flowExecutionCache(log).delete(id)
-                websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { flow: flowToUpdate, status: 'success' })
+
             }
         })
 
+        const flow = await flowService(log).getOnePopulatedOrThrow({
+            id,
+            projectId,
+        })
+        const response: FlowStatusUpdatedResponse = {
+            flow: flow,
+            error: isNil(error) ? undefined : error?.message,
+        }
+        websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, response)
+
         if (error) {
-            if (job.attemptsStarted >= (job.opts.attempts ?? 0)) {
-                await flowRepo().update(id, {
-                    operationStatus: FlowOperationStatus.NONE,
-                })
-                const flowTrigger = await triggerSourceService(log).getByFlowId({
-                    flowId: id,
-                    projectId,
-                    simulate: false,
-                })
-                websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, { status: 'failed', error, flowTrigger })
-            }
+            await flowRepo().update(id, {
+                operationStatus: FlowOperationStatus.NONE,
+            })
             throw error
         }
     },

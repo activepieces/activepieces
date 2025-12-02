@@ -1,5 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { StepRunResponse } from '../flows/sample-data'
+import { PopulatedFlow } from '../flows/flow';
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -11,6 +12,11 @@ export enum WebsocketClientEvent {
     TODO_ACTIVITY_CHANGED = 'TODO_ACTIVITY_CHANGED',
     TODO_ACTIVITY_CREATED = 'TODO_ACTIVITY_CREATED',
     FLOW_STATUS_UPDATED = 'FLOW_STATUS_UPDATED',
+}
+
+export type FlowStatusUpdatedResponse = {
+    flow: PopulatedFlow;
+    error: string | undefined;
 }
 
 export const TodoChanged = Type.Object({

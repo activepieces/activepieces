@@ -39,52 +39,11 @@ const zipFlows = async (flows: PopulatedFlow[]) => {
   return zip;
 };
 
-const updateStatusListener = (
-  socket: Socket,
-  callback: (
-    operationStatus: FlowOperationStatus,
-    newStatus?: FlowStatus,
-  ) => void,
-) => {
-  const onUpdateFinish = ({
-    flow: updatedFlow,
-    status,
-    error,
-    flowTrigger,
-  }: {
-    flow?: PopulatedFlow;
-    flowTrigger?: TriggerSource;
-    status: 'success' | 'failed';
-    error?: unknown;
-  }) => {
-    if (status === 'failed') {
-      useApErrorDialogStore.getState().openDialog({
-        title: t('Flow activation failed!'),
-        description: (
-          <>
-            {t('There’s an issue with your')}{' '}
-            <b>{getPieceNameFromAlias(flowTrigger?.pieceName ?? '')}</b>{' '}
-            {t('trigger preventing activation.')}
-            <br />
-            {t('Please fix it in')}{' '}
-            <b>{getPieceNameFromAlias(flowTrigger?.pieceName ?? '')}</b>
-            {', '}
-            {t('then try again.')}
-          </>
-        ),
-        error,
-      });
-    }
-    callback(FlowOperationStatus.NONE, updatedFlow?.status);
-    socket.off(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
-  };
-  socket.on(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
-};
+
 
 export const flowsUtils = {
   downloadFlow,
   zipFlows,
-  updateStatusListener,
   flowStatusToolTipRenderer: (flow: PopulatedFlow) => {
     const trigger = flow.version.trigger;
     switch (trigger?.type) {

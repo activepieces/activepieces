@@ -22,13 +22,17 @@ import {
   PopulatedFlow,
   FlowTrigger,
   FlowTriggerType,
+  WebsocketClientEvent,
+  FlowStatusUpdatedResponse,
+  isNil,
 } from '@activepieces/shared';
 
-import { flowsApi } from './flows-api';
 import { flowsUtils } from './flows-utils';
+import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
+import { flowsApi } from './flows-api';
 
 const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
-export const flowsHooks = {
+export const flowHooks = {
   invalidateFlowsQuery: (queryClient: QueryClient) => {
     queryClient.invalidateQueries({
       queryKey: createFlowsQueryKey(authenticationSession.getProjectId()!),
@@ -46,61 +50,61 @@ export const flowsHooks = {
       staleTime: 5 * 1000,
     });
   },
-  usePublishFlow: ({
+  useChangeFlowStatus: ({
     flowId,
-    setFlow,
-    setVersion,
-    setIsPublishing,
-  }: {
-    flowId: string;
-    setFlow: (flow: PopulatedFlow) => void;
-    setVersion: (version: FlowVersion) => void;
-    setIsPublishing: (isPublishing: boolean) => void;
-  }) => {
+    change,
+    onSuccess,
+  }: UseChangeFlowStatusParams) => {
     const { data: enableFlowOnPublish } = flagsHooks.useFlag<boolean>(
       ApFlagId.ENABLE_FLOW_ON_PUBLISH,
     );
     const socket = useSocket();
-
+    const { openDialog } = useApErrorDialogStore();
     return useMutation({
       mutationFn: async () => {
-        setIsPublishing(true);
-        return flowsApi.update(flowId, {
-          type: FlowOperationType.LOCK_AND_PUBLISH,
-          request: {
-            status: enableFlowOnPublish
-              ? FlowStatus.ENABLED
-              : FlowStatus.DISABLED,
-          },
-        });
-      },
-      onSuccess: (flow) => {
-        toast({
-          title: t('Success'),
-          description: t('Flow has been published.'),
-        });
-        setFlow(flow);
-        setVersion(flow.version);
-        setIsPublishing(false);
+        return await new Promise<FlowStatusUpdatedResponse>(async (resolve, reject) => {
+          await flowsApi.update(flowId, {
+            type: change === 'publish' ? FlowOperationType.LOCK_AND_PUBLISH : FlowOperationType.CHANGE_STATUS,
+            request: {
+              status: change === 'publish' ? (enableFlowOnPublish ? FlowStatus.ENABLED : FlowStatus.DISABLED) : change,
+            },
+          });
 
-        flowsUtils.updateStatusListener(
-          socket,
-          (operationStatus, newStatus) => {
-            setFlow({
-              ...flow,
-              operationStatus,
-              status: newStatus ?? flow.status,
-            });
-          },
-        );
+          const onUpdateFinish = (response: FlowStatusUpdatedResponse) => {
+            if (response.flow.id !== flowId) {
+              return;
+            }
+            socket.off(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
+            resolve(response);
+          };
+          socket.on(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
+        });
       },
-      onError: (err: Error) => {
+      onSuccess: (response: FlowStatusUpdatedResponse) => {
+        if (!isNil(response.error)) {
+          openDialog({
+            title: t('Issue details'),
+            description: (
+              <>
+                <p>
+                  {t(
+                    'An error occurred while changing the flow status. This may be due to an issue in the piece or its settings.'
+                  )}
+                </p>
+              </>
+            ),
+            error: response.error,
+          });
+          return;
+        }
+        onSuccess?.(response);
+      },
+      onError: (_uncaughtError: unknown) => {
         toast({
           title: t('Error'),
           description: t('Failed to publish flow, please contact support.'),
           variant: 'destructive',
         });
-        setIsPublishing(false);
       },
     });
   },
@@ -240,3 +244,10 @@ export const flowsHooks = {
     });
   },
 };
+
+
+type UseChangeFlowStatusParams = {
+  flowId: string;
+  change: 'publish' | FlowStatus
+  onSuccess: (flow: FlowStatusUpdatedResponse) => void;
+}

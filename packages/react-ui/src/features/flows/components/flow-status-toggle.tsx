@@ -1,16 +1,12 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
 
 import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
-import { useSocket } from '@/components/socket-provider';
+
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
-  FlowOperationStatus,
-  FlowOperationType,
   FlowStatus,
+  FlowStatusUpdatedResponse,
   Permission,
   PopulatedFlow,
   isNil,
@@ -22,56 +18,28 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { flowsApi } from '../lib/flows-api';
 import { flowsUtils } from '../lib/flows-utils';
+import { useState } from 'react';
+import { flowHooks } from '../lib/flows-hooks';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;
 };
 
 const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
-  const [isFlowPublished, setIsChecked] = useState(
-    flow.status === FlowStatus.ENABLED,
-  );
-  const [operationStatus, setOperationStatus] = useState(flow.operationStatus);
-  const socket = useSocket();
 
+  const [isFlowPublished, setIsFlowPublished] = useState(flow.status === FlowStatus.ENABLED);
   const { checkAccess } = useAuthorization();
   const userHasPermissionToToggleFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,
   );
 
-  useEffect(() => {
-    setIsChecked(flow.status === FlowStatus.ENABLED);
-    setOperationStatus(flow.operationStatus);
-  }, [flow.status, flow.operationStatus]);
 
-  const { mutate: changeStatus, isPending: isLoading } = useMutation<
-    PopulatedFlow,
-    Error,
-    void
-  >({
-    mutationFn: async (): Promise<PopulatedFlow> => {
-      return flowsApi.update(flow.id, {
-        type: FlowOperationType.CHANGE_STATUS,
-        request: {
-          status: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
-        },
-      });
-    },
-    onSuccess: (flow) => {
-      setOperationStatus(flow.operationStatus);
-      flowsUtils.updateStatusListener(socket, (operationStatus, newStatus) => {
-        setIsChecked(newStatus === FlowStatus.ENABLED);
-        setOperationStatus(operationStatus);
-      });
-    },
-    onError: () => {
-      toast({
-        title: t('Error'),
-        description: t('Failed to change flow status, please contact support.'),
-        variant: 'destructive',
-      });
+  const { mutate: changeStatus, isPending: isLoading } = flowHooks.useChangeFlowStatus({
+    flowId: flow.id,
+    change: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
+    onSuccess: (response: FlowStatusUpdatedResponse) => {
+      setIsFlowPublished(response.flow.status === FlowStatus.ENABLED);
     },
   });
 
@@ -87,7 +55,6 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
               disabled={
                 isLoading ||
                 !userHasPermissionToToggleFlowStatus ||
-                operationStatus !== FlowOperationStatus.NONE ||
                 isNil(flow.publishedVersionId)
               }
             />
@@ -97,15 +64,13 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
           {userHasPermissionToToggleFlowStatus
             ? isNil(flow.publishedVersionId)
               ? t('Please publish flow first')
-              : operationStatus !== FlowOperationStatus.NONE
-              ? t(`${operationStatus.toLowerCase()} flow ...`)
               : isFlowPublished
-              ? t('Flow is on')
-              : t('Flow is off')
+                ? t('Flow is on')
+                : t('Flow is off')
             : t('Permission Needed')}
         </TooltipContent>
       </Tooltip>
-      {isLoading || operationStatus !== FlowOperationStatus.NONE ? (
+      {isLoading ? (
         <LoadingSpinner />
       ) : (
         isFlowPublished && (

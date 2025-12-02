@@ -6,10 +6,10 @@ import { useSearchParam } from 'react-use';
 import { ChatDrawerSource } from '@/app/builder/builder-hooks';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Messages } from '@/features/chat/chat-message-list';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 
 import { ChatNotFound, FlowChat } from './flow-chat';
+import { flowHooks } from '@/features/flows/lib/flows-hooks';
 
 export function ChatPage() {
   const { flowId } = useParams();
@@ -18,7 +18,7 @@ export function ChatPage() {
 
   const [messages, setMessages] = useState<Messages>([]);
   const [chatSessionId, setChatSessionId] = useState<string | null>(null);
-  const { data: flow, isLoading } = flowsHooks.useGetFlow(flowId ?? '');
+  const { data: flow, isLoading } = flowHooks.useGetFlow(flowId ?? '');
   useEffect(() => {
     if (!chatSessionId) {
       setChatSessionId(nanoid());

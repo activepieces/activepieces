@@ -7,11 +7,11 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { FlowVersionState, Permission } from '@activepieces/shared';
+import { FlowStatusUpdatedResponse, FlowVersionState, Permission } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { flowHooks } from '@/features/flows/lib/flows-hooks';
 
 const PublishButton = () => {
   const { checkAccess } = useAuthorization();
@@ -39,11 +39,14 @@ const PublishButton = () => {
     flowVersion.id === flow.publishedVersionId;
   const permissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const isPublishedVersion = flowVersion.id === flow.publishedVersionId;
-  const { mutate: publish } = flowsHooks.usePublishFlow({
+  const { mutate: publish } = flowHooks.useChangeFlowStatus({
     flowId: flow.id,
-    setFlow,
-    setVersion,
-    setIsPublishing,
+    change: 'publish',
+    onSuccess: (response: FlowStatusUpdatedResponse) => {
+      setFlow(response.flow);
+      setVersion(response.flow.version);
+      setIsPublishing(false);
+    },
   });
   if (!permissionToEditFlow || !isViewingDraft || (readonly && !isPublishing)) {
     return null;
