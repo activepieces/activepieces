@@ -8,9 +8,12 @@ import {
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
-import { ContextVersion, LATEST_CONTEXT_VERSION } from './context/versioning';
+import { ContextVersion, LATEST_CONTEXT_VERSION, MINIMUM_SUPPORTED_RELEASE_AFTER_CONTEXT_VERSIONING } from './context/versioning';
+import * as semver from 'semver';
 
-export class Piece<PieceAuth extends PieceAuthProperty | undefined>
+
+
+export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
 {
   private readonly _actions: Record<string, Action<PieceAuth>> = {};
@@ -26,10 +29,13 @@ export class Piece<PieceAuth extends PieceAuthProperty | undefined>
     triggers: Trigger<PieceAuth>[],
     public readonly categories: PieceCategory[],
     public readonly auth?: PieceAuth,
-    public readonly minimumSupportedRelease?: string,
+    public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_CONTEXT_VERSIONING,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
   ) {
+    if(semver.lt(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_CONTEXT_VERSIONING)) {
+      this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_CONTEXT_VERSIONING;
+    }
     actions.forEach((action) => (this._actions[action.name] = action));
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
   }

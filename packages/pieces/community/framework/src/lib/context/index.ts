@@ -1,4 +1,5 @@
 import {
+  AgentTool,
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
@@ -11,6 +12,7 @@ import {
   TriggerPayload,
   TriggerStrategy,
 } from '@activepieces/shared';
+
 import {
   BasicAuthProperty,
   CustomAuthProperty,
@@ -91,7 +93,9 @@ export type TriggerHookContext<
   : S extends TriggerStrategy.POLLING
   ? PollingTriggerHookContext<PieceAuth, TriggerProps>
   : S extends TriggerStrategy.WEBHOOK
-  ? WebhookTriggerHookContext<PieceAuth, TriggerProps>
+  ? WebhookTriggerHookContext<PieceAuth, TriggerProps> & {
+    server: ServerContext;
+  }
   : never;
 
 export type TestOrRunHookContext<
@@ -192,6 +196,7 @@ type BaseActionContext<
   server: ServerContext;
   files: FilesService;
   output: OutputContext;
+  agent: AgentContext;
   run: RunContext;
   generateResumeUrl: (params: {
     queryParams: Record<string, string>,
@@ -217,6 +222,18 @@ export type ActionContext<
 > =
   | BeginExecutionActionContext<PieceAuth, ActionProps>
   | ResumeExecutionActionContext<PieceAuth, ActionProps>;
+
+
+
+
+export type ConstructToolParams = {
+  tools: AgentTool[]
+  model: unknown,
+}
+
+export interface AgentContext {
+  tools: (params: ConstructToolParams) => Promise<Record<string, unknown>>;
+}
 
 export interface FilesService {
   write({

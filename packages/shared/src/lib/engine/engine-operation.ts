@@ -10,7 +10,6 @@ import { ScheduleOptions } from '../trigger'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
-    EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -42,6 +41,7 @@ export const enum EngineSocketEvent {
     ENGINE_OPERATION = 'engine-operation',
     UPDATE_RUN_PROGRESS = 'update-run-progress',
     SEND_FLOW_RESPONSE = 'send-flow-response',
+    UPDATE_STEP_PROGRESS = 'update-step-progress',
 }
 
 
