@@ -38,7 +38,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       className="toaster group"
       toastOptions={{
         classNames: {
-          description: '!text-secondary-foreground',
+          description: '!text-secondary',
           error: '!text-destructive-300',
           warning: '!text-warning-300',
         },
