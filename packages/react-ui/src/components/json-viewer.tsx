@@ -15,7 +15,7 @@ import { cn, isStepFileUrl } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { Button } from './ui/button';
-import { toast } from './ui/use-toast';
+import { toast } from 'sonner';
 
 type JsonViewerProps = {
   json: any;
@@ -81,8 +81,7 @@ const JsonViewer = React.memo(
     const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
     const handleCopy = () => {
       navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-      toast({
-        title: t('Copied to clipboard'),
+      toast.success(t('Copied to clipboard'), {
         duration: 1000,
       });
     };

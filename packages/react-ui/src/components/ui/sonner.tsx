@@ -8,7 +8,28 @@ import {
   TriangleAlertIcon,
 } from "lucide-react"
 import { useTheme } from "next-themes"
-import { Toaster as Sonner, type ToasterProps } from "sonner"
+import { Toaster as Sonner, toast, type ToasterProps } from "sonner"
+
+export const INTERNAL_ERROR_MESSAGE =
+  'An unexpected error occurred. Please try again in a moment.';
+
+
+export function internalErrorToast() {
+  toast.error('Something went wrong', {
+    description: INTERNAL_ERROR_MESSAGE,
+    duration: 3000,
+  });
+}
+
+export const UNSAVED_CHANGES_TOAST = {
+  id: 'unsaved-changes',
+  title: 'Unsaved Changes',
+  description:
+    'Something went wrong and there are unsaved changes, please refresh and contact support if the problem persists.',
+  variant: 'destructive',
+  duration: Infinity,
+};
+
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme()

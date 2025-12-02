@@ -19,7 +19,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -34,6 +33,8 @@ import {
   ErrorCode,
   TeamProjectsLimit,
 } from '@activepieces/shared';
+import { toast } from 'sonner';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -65,8 +66,7 @@ export function EditProjectDialog({
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
   const { updateCurrentProject } = projectHooks.useCurrentProject();
-  const { toast } = useToast();
-
+  
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
@@ -100,9 +100,7 @@ export function EditProjectDialog({
       });
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
+      toast.success(t('Your changes have been saved.'), {
         duration: 3000,
       });
       queryClient.invalidateQueries({
@@ -121,7 +119,7 @@ export function EditProjectDialog({
             break;
           }
           default: {
-            toast(INTERNAL_ERROR_TOAST);
+            internalErrorToast();
             break;
           }
         }

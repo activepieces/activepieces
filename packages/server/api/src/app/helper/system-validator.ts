@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import { AppSystemProp, ContainerType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -5,7 +6,6 @@ import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { DatabaseType, system } from './system/system'
-import { inspect } from 'util'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {

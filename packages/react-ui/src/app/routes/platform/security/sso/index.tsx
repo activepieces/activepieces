@@ -11,7 +11,7 @@ import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dia
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 import { isNil } from '@activepieces/shared';
@@ -83,9 +83,7 @@ const SSOPage = () => {
       await refetch();
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Email authentication updated'),
+      toast.success(t('Email authentication updated'), {
         duration: 3000,
       });
     },

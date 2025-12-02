@@ -19,11 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 
 import { projectMembersApi } from '../lib/project-members-api';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 interface EditRoleDialogProps {
   member: ProjectMemberWithUser;
@@ -52,17 +53,14 @@ export function EditRoleDialog({
       });
     },
     onSuccess: () => {
-      toast({
-        title: t('Role updated successfully'),
+      toast.success(t('Role updated successfully'), {
+        duration: 3000,
       });
       onSave();
       setIsOpen(false);
     },
     onError: () => {
-      toast({
-        title: t('Error updating role'),
-        description: t('Please try again later'),
-      });
+       internalErrorToast()
     },
   });
 

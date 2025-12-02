@@ -21,7 +21,6 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -39,6 +38,7 @@ import {
 
 import { gitSyncApi } from '../lib/git-sync-api';
 import { gitSyncHooks } from '../lib/git-sync-hooks';
+import { toast } from 'sonner';
 
 type PushToGitDialogProps =
   | {
@@ -102,9 +102,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       }
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Pushed successfully'),
+      toast.success(t('Pushed successfully'), {
         duration: 3000,
       });
       setOpen(false);

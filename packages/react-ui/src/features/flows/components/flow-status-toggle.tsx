@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
 
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { toast } from 'sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   FlowStatus,
@@ -21,6 +22,7 @@ import {
 import { flowsUtils } from '../lib/flows-utils';
 import { useState } from 'react';
 import { flowHooks } from '../lib/flows-hooks';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 type FlowStatusToggleProps = {
   flow: PopulatedFlow;

@@ -37,7 +37,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_MESSAGE, useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { platformApi } from '@/lib/platforms-api';
@@ -79,7 +80,6 @@ export const SmtpSection = () => {
     resolver: typeboxResolver(FromSchema),
   });
 
-  const { toast } = useToast();
 
   const smtpConfigured = !isNil(platform?.smtp);
   const queryClient = useQueryClient();
@@ -106,9 +106,7 @@ export const SmtpSection = () => {
     },
     onSuccess: (platform) => {
       setIsOpen(false);
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
+      toast.success(t('Your changes have been saved.'), {
         duration: 3000,
       });
       setCurrentPlatform(queryClient, platform);

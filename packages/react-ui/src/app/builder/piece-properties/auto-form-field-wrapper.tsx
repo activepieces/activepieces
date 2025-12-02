@@ -13,7 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { getDefaultPropertyValue } from '@/features/pieces/lib/form-utils';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
@@ -255,9 +255,8 @@ const AutoFormFielWrapperErrorBoundary = ({
                   disabled: field.disabled,
                 }),
               );
-              toast({
-                title: t('Info copied to clipboard, please send it to support'),
-                duration: 5000,
+              toast(t('Info copied to clipboard, please send it to support'), {
+                duration: 3000,
               });
             }}
           >

@@ -20,8 +20,6 @@ export const AgentTools = ({ disabled, agentToolsField }: AgentToolsProps) => {
     ? (agentToolsField.value as AgentTool[])
     : [];
 
-  console.log(tools);
-
   const onToolsUpdate = (tools: AgentTool[]) => agentToolsField.onChange(tools);
 
   const { pieces } = piecesHooks.usePieces({});

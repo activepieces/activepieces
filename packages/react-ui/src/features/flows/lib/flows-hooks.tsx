@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { useSocket } from '@/components/socket-provider';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
@@ -30,6 +30,7 @@ import {
 import { flowsUtils } from './flows-utils';
 import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-error-dialog-store';
 import { flowsApi } from './flows-api';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 const createFlowsQueryKey = (projectId: string) => ['flows', projectId];
 export const flowHooks = {
@@ -100,11 +101,7 @@ export const flowHooks = {
         onSuccess?.(response);
       },
       onError: (_uncaughtError: unknown) => {
-        toast({
-          title: t('Error'),
-          description: t('Failed to publish flow, please contact support.'),
-          variant: 'destructive',
-        });
+         internalErrorToast();
       },
     });
   },
@@ -127,12 +124,7 @@ export const flowHooks = {
       },
       onSuccess: (res) => {
         if (res.length > 0) {
-          toast({
-            title: t('Success'),
-            description:
-              res.length === 1
-                ? t(`${res[0].version.displayName} has been exported.`)
-                : t('Flows have been exported.'),
+          toast.success(res.length === 1 ? t(`${res[0].version.displayName} has been exported.`) : t('Flows have been exported.'), {
             duration: 3000,
           });
         }
