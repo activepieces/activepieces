@@ -165,6 +165,7 @@ const TestWaitForNextWebhookDialog = ({
                 standardOutput: '',
                 input: {},
               },
+              onProgress: undefined,
             });
           }}
           isLoading={isLoading}

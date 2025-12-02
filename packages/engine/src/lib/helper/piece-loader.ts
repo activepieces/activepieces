@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, ExecutePropsOptions, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias, EngineGenericError } from '@activepieces/shared'
+import { ActivepiecesError, EngineGenericError, ErrorCode, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
 
 export const pieceLoader = {
@@ -72,10 +72,8 @@ export const pieceLoader = {
         }
     },
 
-    getPropOrThrow: async ({ params, devPieces }: GetPropParams) => {
-        const { piece: piecePackage, actionOrTriggerName, propertyName } = params
-
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
+    getPropOrThrow: async ({ pieceName, pieceVersion, actionOrTriggerName, propertyName, devPieces }: GetPropParams) => {
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, devPieces })
 
         const actionOrTrigger = piece.getAction(actionOrTriggerName) ?? piece.getTrigger(actionOrTriggerName)
 
@@ -83,8 +81,8 @@ export const pieceLoader = {
             throw new ActivepiecesError({
                 code: ErrorCode.STEP_NOT_FOUND,
                 params: {
-                    pieceName: piecePackage.pieceName,
-                    pieceVersion: piecePackage.pieceVersion,
+                    pieceName,
+                    pieceVersion,
                     stepName: actionOrTriggerName,
                 },
             })
@@ -96,8 +94,8 @@ export const pieceLoader = {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
-                    pieceName: piecePackage.pieceName,
-                    pieceVersion: piecePackage.pieceVersion,
+                    pieceName,
+                    pieceVersion,
                     stepName: actionOrTriggerName,
                     configName: propertyName,
                 },
@@ -195,7 +193,10 @@ type GetPieceAndActionParams = {
 }
 
 type GetPropParams = {
-    params: ExecutePropsOptions
+    pieceName: string
+    pieceVersion: string
+    actionOrTriggerName: string
+    propertyName: string
     devPieces: string[]
 }
 

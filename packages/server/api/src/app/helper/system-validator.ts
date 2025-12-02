@@ -5,6 +5,7 @@ import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
 import { DatabaseType, system } from './system/system'
+import { inspect } from 'util'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -202,6 +203,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
         catch (error: unknown) {
             throw new Error(JSON.stringify({
+                error: inspect(error),
                 message: 'S3 validation failed. Check your configuration and credentials.',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview#configure-s3-optional',
             }))

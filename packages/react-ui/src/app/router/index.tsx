@@ -39,8 +39,6 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import McpServersPage from '../routes/mcp-servers';
-import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
@@ -306,31 +304,6 @@ const routes = [
       </PageTitle>
     ),
   },
-
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.mcps,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_MCP}>
-          <PageTitle title="MCP">
-            <McpServersPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleMcp,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_MCP}>
-          <PageTitle title="MCP">
-            <McpPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
 
   {
     path: '/invitation',

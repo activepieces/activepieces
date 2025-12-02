@@ -1,13 +1,13 @@
 import { PiecePropValueSchema, DropdownOption } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from './auth';
+import { getAuthHeaders, getApiUrl } from './auth';
 
 export async function getFunnelsDropdown(auth: PiecePropValueSchema<typeof fountainAuth>): Promise<DropdownOption<string>[]> {
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/funnels',
+      url: getApiUrl(auth, '/funnels'),
       headers: getAuthHeaders(auth),
       queryParams: { per_page: '100' },
     });
@@ -26,7 +26,7 @@ export async function getLocationsDropdown(auth: PiecePropValueSchema<typeof fou
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/funnels',
+      url: getApiUrl(auth, '/funnels'),
       headers: getAuthHeaders(auth),
       queryParams: { per_page: '100' },
     });
@@ -53,7 +53,7 @@ export async function getUsersDropdown(auth: PiecePropValueSchema<typeof fountai
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/funnels',
+      url: getApiUrl(auth, '/funnels'),
       headers: getAuthHeaders(auth),
       queryParams: { per_page: '100' },
     });
@@ -87,7 +87,7 @@ export async function getStagesForFunnelDropdown(
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.fountain.com/v2/funnels/${funnelId}/stages`,
+      url: getApiUrl(auth, `/funnels/${funnelId}/stages`),
       headers: getAuthHeaders(auth),
     });
 

@@ -1,4 +1,4 @@
-import { DEFAULT_MCP_DATA, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType, EngineGenericError } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolOperation, ExecuteTriggerOperation, ExecutionType, FlowVersionState, PlatformId, ProgressUpdateType, Project, ProjectId, ResumePayload, RunEnvironment, TriggerHookType } from '@activepieces/shared'
 import { createPropsResolver, PropsResolver } from '../../variables/props-resolver'
 
 type RetryConstants = {
@@ -27,6 +27,8 @@ type EngineConstantsParams = {
     stepNameToTest?: string
     logsUploadUrl?: string
     logsFileId?: string
+    timeoutInSeconds: number
+    platformId: PlatformId
 }
 
 const DEFAULT_RETRY_CONSTANTS: RetryConstants = {
@@ -45,6 +47,8 @@ export class EngineConstants {
     public static readonly DEV_PIECES = process.env.AP_DEV_PIECES?.split(',') ?? []
     public static readonly TEST_MODE = process.env.AP_TEST_MODE === 'true'
 
+    public readonly platformId: string
+    public readonly timeoutInSeconds: number
     public readonly flowId: string
     public readonly flowVersionId: string
     public readonly flowVersionState: FlowVersionState
@@ -106,6 +110,8 @@ export class EngineConstants {
         this.stepNameToTest = params.stepNameToTest
         this.logsUploadUrl = params.logsUploadUrl
         this.logsFileId = params.logsFileId
+        this.platformId = params.platformId
+        this.timeoutInSeconds = params.timeoutInSeconds
     }
 
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
@@ -131,8 +137,10 @@ export class EngineConstants {
             resumePayload: input.executionType === ExecutionType.RESUME ? input.resumePayload : undefined,
             runEnvironment: input.runEnvironment,
             stepNameToTest: input.stepNameToTest ?? undefined,
-            logsUploadUrl: input.logsUploadUrl,
+            logsUploadUrl: input.logsUploadUrl, 
             logsFileId: input.logsFileId,
+            timeoutInSeconds: input.timeoutInSeconds,
+            platformId: input.platformId,
         })
     }
 
@@ -159,10 +167,12 @@ export class EngineConstants {
             resumePayload: undefined,
             runEnvironment: undefined,
             stepNameToTest: undefined,
+            timeoutInSeconds: input.timeoutInSeconds,
+            platformId: input.platformId,
         })
     }
 
-    public static fromExecutePropertyInput(input: ExecutePropsOptions): EngineConstants {
+    public static fromExecutePropertyInput(input: Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }): EngineConstants {
         return new EngineConstants({
             flowId: input.flowVersion?.flowId ?? DEFAULT_MCP_DATA.flowId,
             flowVersionId: input.flowVersion?.id ?? DEFAULT_MCP_DATA.flowVersionId,
@@ -185,6 +195,8 @@ export class EngineConstants {
             resumePayload: undefined,
             runEnvironment: undefined,
             stepNameToTest: undefined,
+            timeoutInSeconds: input.timeoutInSeconds,
+            platformId: input.platformId,
         })
     }
 
@@ -211,6 +223,8 @@ export class EngineConstants {
             resumePayload: undefined,
             runEnvironment: undefined,
             stepNameToTest: undefined,
+            timeoutInSeconds: input.timeoutInSeconds,
+            platformId: input.platformId,
         })
     }
 

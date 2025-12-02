@@ -48,10 +48,17 @@ export const progressService = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-                await sendUpdateRunRequest({
-                    engineConstants,
-                    flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
-                    updateImmediate: true,
+                const trimmedSteps = await flowExecutorContext
+                    .upsertStep(stepName, stepOutput.setOutput(params.data))
+                    .trimmedSteps()
+                const stepResponse = extractStepResponse({
+                    steps: trimmedSteps,
+                    runId: engineConstants.flowRunId,
+                    stepName,
+                })
+                await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_STEP_PROGRESS, {
+                    projectId: engineConstants.projectId,
+                    stepResponse,
                 })
             },
         }
@@ -100,7 +107,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         const stepResponse = extractStepResponse({
             steps: trimmedSteps,
             runId: engineConstants.flowRunId,
-            stepNameToTest: engineConstants.stepNameToTest,
+            stepName: engineConstants.stepNameToTest,
         })
 
         const request: UpdateRunProgressRequest = {
@@ -158,11 +165,11 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, f
 
 
 const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | undefined => {
-    if (isNil(params.stepNameToTest)) {
+    if (isNil(params.stepName)) {
         return undefined
     }
 
-    const stepOutput = params.steps?.[params.stepNameToTest]
+    const stepOutput = params.steps?.[params.stepName]
     const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
     return {
         runId: params.runId,
@@ -184,5 +191,5 @@ type UpdateStepProgressParams = {
 type ExtractStepResponse = {
     steps: Record<string, StepOutput>
     runId: string
-    stepNameToTest?: string
+    stepName?: string
 }
