@@ -23,6 +23,7 @@ export const singleSelectChannelInfo = Property.MarkDown({
 
 export const slackChannel = <R extends boolean>(required: R) =>
   Property.Dropdown<string, R>({
+    auth: undefined,
     displayName: 'Channel',
     description:
       "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'",
@@ -84,6 +85,7 @@ export const blocks = Property.Json({
 });
 
 export const userId = Property.Dropdown<string>({
+  auth: undefined,
   displayName: 'User',
   required: true,
   refreshers: [],

@@ -17,6 +17,7 @@ export const intercomClient = (auth: OAuth2PropertyValue<OAuth2Props>) => {
 export const commonProps = {
   admins: <R extends boolean>(options: { displayName: string; required: R }) =>
     Property.Dropdown<string, R>({
+      auth: undefined,
       displayName: options.displayName,
       required: options.required,
       options: async ({ auth }) => {
@@ -51,6 +52,7 @@ export const commonProps = {
     required: R;
   }) =>
     Property.Dropdown<string, R>({
+      auth: undefined,
       displayName: options.displayName,
       required: options.required,
       options: async ({ auth }) => {

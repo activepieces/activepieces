@@ -59,7 +59,8 @@ export const devPiecesInstaller = (packages: string[], log: FastifyBaseLogger) =
         const apDependencies = Object.keys(dependencies ?? {}).filter(dep => dep.startsWith('@activepieces/') && packageName !== dep)
 
         apDependencies.forEach(async (dependency) => {
-            await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency} --silent`, printOutput: true }).catch(e => {
+            console.log(`--------- dependency: ${dependency}, path: ${packagePath}`)
+            await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency}`, printOutput: true }).catch(e => {
                 log.error({
                     name: 'linkSharedActivepiecesPackagesToPiece',
                     message: JSON.stringify(e),
