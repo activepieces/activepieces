@@ -10,7 +10,7 @@ import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
 import { ContextVersion, LATEST_CONTEXT_VERSION } from './context/versioning';
 
-export class Piece<PieceAuth extends PieceAuthProperty | undefined>
+export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
 {
   private readonly _actions: Record<string, Action<PieceAuth>> = {};

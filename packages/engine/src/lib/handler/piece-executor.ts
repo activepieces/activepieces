@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { ToolSet } from 'ai'
@@ -88,7 +88,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             })
         }
-        const context: ActionContext = {
+        const context: ActionContext<PieceAuthProperty,InputPropertyMap> = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
             store: createContextStore({

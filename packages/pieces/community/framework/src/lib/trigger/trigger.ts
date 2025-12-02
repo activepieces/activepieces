@@ -102,7 +102,7 @@ export class ITrigger<
 }
 
 export type Trigger<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty,
   TriggerProps extends InputPropertyMap = any,
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>
