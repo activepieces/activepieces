@@ -49,6 +49,12 @@ export enum PlanName {
     APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
 }
 
+export enum TeamProjectsLimit {
+    NONE = 'NONE',
+    ONE = 'ONE',
+    UNLIMITED = 'UNLIMITED',
+}
+
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
     // TODO: We have to use the enum when we finalize the plan names
@@ -70,7 +76,7 @@ export const PlatformPlan = Type.Object({
     managePiecesEnabled: Type.Boolean(),
     manageTemplatesEnabled: Type.Boolean(),
     customAppearanceEnabled: Type.Boolean(),
-    manageProjectsEnabled: Type.Boolean(),
+    teamProjectsLimit: Type.Enum(TeamProjectsLimit),
     projectRolesEnabled: Type.Boolean(),
     customDomainsEnabled: Type.Boolean(),
     globalConnectionsEnabled: Type.Boolean(),

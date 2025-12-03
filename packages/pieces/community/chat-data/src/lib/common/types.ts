@@ -50,7 +50,7 @@ export const RetrainOptions = z.object({
   }).optional(),
   products: z.array(z.object({
     id: z.string(),
-    information: z.record(z.any()),
+    information: z.record(z.string(), z.unknown()),
   })).optional(),
   qAndAs: z.array(z.object({
     question: z.string(),

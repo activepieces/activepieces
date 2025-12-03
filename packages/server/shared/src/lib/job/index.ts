@@ -70,7 +70,6 @@ export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {
         case EngineOperationType.EXECUTE_FLOW:
-        case EngineOperationType.EXECUTE_TOOL:
             return flowTimeoutSandbox
         case EngineOperationType.EXECUTE_PROPERTY:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:

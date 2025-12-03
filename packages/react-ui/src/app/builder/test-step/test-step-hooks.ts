@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
@@ -64,7 +64,7 @@ export const testStepHooks = {
       }) => {
         if (isNil(step)) {
           console.error(`Step ${stepName} not found`);
-          toast(INTERNAL_ERROR_TOAST);
+          internalErrorToast();
           return;
         }
         if (response.success) {
@@ -298,23 +298,15 @@ export const testStepHooks = {
         ) {
           return params.preExistingSampleData;
         }
-        const todoParams =
-          params?.type === 'todoAction'
-            ? {
-                isForTodo: true as const,
-                onProgress: params.onProgress,
-              }
-            : {
-                isForTodo: false as const,
-                onProgress: undefined,
-              };
         const response = await flowRunsApi.testStep({
           socket,
           request: {
             flowVersionId,
             stepName: currentStep.name,
           },
-          ...todoParams,
+          onProgress: params?.onProgress,
+          onFinsih:
+            params?.type === 'agentAction' ? params.onFinish : undefined,
         });
         return response;
       },
@@ -343,7 +335,7 @@ export const testStepHooks = {
         if (error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {
           return;
         }
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       },
     });
   },
@@ -363,10 +355,12 @@ type TestActionMutationParams =
   | {
       preExistingSampleData: StepRunResponse;
       type: 'webhookAction';
+      onProgress: undefined;
     }
   | {
-      type: 'todoAction';
+      type: 'todoAction' | 'agentAction';
       onProgress: (progress: StepRunResponse) => void;
+      onFinish?: () => void;
     }
   | undefined;
 

@@ -48,17 +48,6 @@ export const userInteractionJobExecutor = (log: FastifyBaseLogger) => ({
                 })
                 break
             }
-            case WorkerJobType.EXECUTE_TOOL:
-                response = await engineRunner(log).excuteTool(engineToken, {
-                    platformId: jobData.platformId,
-                    actionName: jobData.actionName,
-                    pieceName: jobData.pieceName,
-                    pieceVersion: jobData.pieceVersion,
-                    input: jobData.input,
-                    projectId: jobData.projectId,
-                    timeoutInSeconds,
-                })
-                break
             case WorkerJobType.EXECUTE_PROPERTY:
                 response = await engineRunner(log).executeProp(engineToken, {
                     platformId: jobData.platformId,

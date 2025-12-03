@@ -1,3 +1,4 @@
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { FlowRunStatus, isNil, LoopOnItemsAction, LoopStepOutput, StepOutputStatus } from '@activepieces/shared'
 import { BaseExecutor } from './base-executor'
 import { flowExecutor } from './flow-executor'
@@ -13,7 +14,7 @@ export const loopExecutor: BaseExecutor<LoopOnItemsAction> = {
         constants,
     }) {
         const stepStartTime = performance.now()
-        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<LoopOnActionResolvedSettings>({
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver(LATEST_CONTEXT_VERSION).resolve<LoopOnActionResolvedSettings>({
             unresolvedInput: {
                 items: action.settings.items,
             },

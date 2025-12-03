@@ -20,8 +20,8 @@ export default defineConfig(({ command, mode }) => {
   return {
     root: __dirname,
     cacheDir: '../../node_modules/.vite/packages/react-ui',
-
     server: {
+      // allowedHosts: ['your_exposed_localhost'],
       proxy: {
         '/api': {
           target: 'http://127.0.0.1:3000',
