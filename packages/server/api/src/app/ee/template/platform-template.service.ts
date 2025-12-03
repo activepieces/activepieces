@@ -1,42 +1,34 @@
-import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, isNil, ListTemplatesRequestQuery, PopulatedTemplate, SeekPage, spreadIfDefined, Template, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { apId, Collection, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateTags, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { TemplateEntity } from '../../template/template.entity'
-import { flowTemplateService } from './flow/flow-template.service'
 
 
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
 export const platformTemplateService = () => ({
-    async create({ platformId, projectId, params }: CreateParams): Promise<PopulatedTemplate> {
-        const flowTemplate = await flowTemplateService().create({ projectId, platformId, template: params.template, scope: params.scope })
-
-        const { name, description, tags, blogUrl, metadata, author, categories } = params
-
+    async create({ platformId, name, description, pieces, tags, blogUrl, metadata, author, categories, collection }: CreateParams): Promise<Template> {
         const newTags = tags ?? []
         const newTemplate: NewTemplate = {
             id: apId(),
             name,
+            type: TemplateType.CUSTOM,
             description,
+            platformId,
             tags: newTags,
             blogUrl,
             metadata,
             author,
             usageCount: 0,
             categories,
+            pieces,
+            collection,
         }
-        const savedTemplate = await templateRepo().save({
-            ...newTemplate,
-            flowTemplateId: flowTemplate.id,
-        })
-        return enrichTemplate(savedTemplate)
+        return templateRepo().save(newTemplate)
     },
-    async update({ id, params }: UpdateParams): Promise<PopulatedTemplate> {
-        const template = await templateRepo().findOneByOrFail({
-            id,
-        })
-        await flowTemplateService().update({ id: template.flowTemplateId!, template: params.template })
-        const { name, description, tags, blogUrl, metadata, categories } = params
+    async update({ id, params }: UpdateParams): Promise<Template> {
+        const { name, description, tags, blogUrl, metadata, categories, collection } = params
+        const flowTemplate: FlowVersionTemplate | undefined = collection?.flowTemplates?.[0] ? sanitizeObjectForPostgresql(collection.flowTemplates[0]) : undefined
+        const pieces = flowTemplate ? flowPieceUtil.getUsedPieces(flowTemplate.trigger) : undefined
         await templateRepo().update(id, {
             ...spreadIfDefined('name', name),
             ...spreadIfDefined('description', description),
@@ -44,88 +36,29 @@ export const platformTemplateService = () => ({
             ...spreadIfDefined('blogUrl', blogUrl),
             ...spreadIfDefined('metadata', metadata),
             ...spreadIfDefined('categories', categories),
+            ...spreadIfDefined('collection', collection),
+            ...spreadIfDefined('pieces', pieces),
         })
-        return enrichTemplate(await templateRepo().findOneByOrFail({ id }))
-    },
-    async getOneOrThrow({ id }: { id: string }): Promise<Template> {
-        const template = await templateRepo().findOneBy({
-            id,
-        })
-        if (isNil(template)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    message: `Template ${id} is not found`,
-                },
-            })
-        }
-        return template
-    },
-    
-    async getOnePopulatedOrThrow({ id }: { id: string }): Promise<PopulatedTemplate> {
-        const template = await templateRepo().findOneBy({
-            id,
-        })
-        if (isNil(template)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    message: `Template ${id} is not found`,
-                },
-            })
-        }
-        return enrichTemplate(template)
-    },
-
-    async list({ platformId, requestQuery }: ListParams): Promise<SeekPage<PopulatedTemplate>> {
-        const flowTemplates = await flowTemplateService().list({ platformId, requestQuery })
-        const populatedFlowTemplates = await Promise.all(flowTemplates.data.map(async (flowTemplate) => {
-            const template = await templateRepo().findOneBy({ flowTemplateId: flowTemplate.id })
-            if (isNil(template)) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        message: `Template ${flowTemplate.id} is not found`,
-                    },
-                })
-            }
-            return {
-                ...template,
-                flowTemplate,
-            }
-        }))
-        return paginationHelper.createPage(populatedFlowTemplates, null)
-    },
-
-    async delete({ id }: { id: string }): Promise<void> {
-        await templateRepo().delete({
-            id,
-        })
+        return templateRepo().findOneByOrFail({ id })
     },
 })
 
-async function enrichTemplate(template: Template): Promise<PopulatedTemplate> {
-    const flowTemplate = isNil(template.flowTemplateId) ? undefined : await flowTemplateService().getOrThrow({ id: template.flowTemplateId })
-    return {
-        ...template,
-        flowTemplate,
-    }
-}
-
 type CreateParams = {
     platformId: string | undefined
-    projectId: string | undefined
-    params: CreateTemplateRequestBody
+    name: string
+    description: string
+    tags: TemplateTags[]
+    blogUrl: string | undefined
+    metadata: Metadata | null | undefined
+    author: string
+    categories: TemplateCategory[]
+    collection: Collection
+    pieces: string[]
 }
 
-type NewTemplate = Omit<Template, 'created' | 'updated' | 'flowTemplateId'>
+type NewTemplate = Omit<Template, 'created' | 'updated'>
 
 type UpdateParams = {
     id: string
     params: UpdateTemplateRequestBody
-}
-
-type ListParams = {
-    platformId: string
-    requestQuery: ListTemplatesRequestQuery
 }

@@ -21,8 +21,7 @@ import { templatesApi } from '@/features/templates/lib/templates-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { FlowTemplateScope } from '@activepieces/ee-shared';
-import { PopulatedTemplate } from '@activepieces/shared';
+import { Template } from '@activepieces/shared';
 
 const ShareTemplateSchema = Type.Object({
   description: Type.String(),
@@ -44,7 +43,7 @@ const ShareTemplateDialog: React.FC<{
   const openNewIndow = useNewWindow();
   const { data: currentUser } = userHooks.useCurrentUser();
   const { mutate, isPending } = useMutation<
-    PopulatedTemplate,
+    Template,
     Error,
     { flowId: string; description: string }
   >({
@@ -59,9 +58,6 @@ const ShareTemplateDialog: React.FC<{
         : 'Someone in platform';
 
       const flowTemplate = await templatesApi.create({
-        template: template.flowTemplate.template,
-        scope: FlowTemplateScope.PROJECT,
-        projectId: projectId!,
         name: template.name,
         description: shareTemplateForm.getValues().description,
         tags: template.tags,
@@ -69,6 +65,8 @@ const ShareTemplateDialog: React.FC<{
         metadata: null,
         author,
         categories: template.categories,
+        type: template.type,
+        collection: template.collection,
       });
 
       return flowTemplate;

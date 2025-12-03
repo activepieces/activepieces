@@ -2,31 +2,25 @@ import { api } from '@/lib/api';
 import {
   CreateTemplateRequestBody,
   ListTemplatesRequestQuery,
-  PopulatedTemplate,
+  Template,
   SeekPage,
   UpdateTemplateRequestBody,
 } from '@activepieces/shared';
 
 export const templatesApi = {
   getTemplate(templateId: string) {
-    return api.get<PopulatedTemplate>(`/v1/templates/custom/${templateId}`);
+    return api.get<Template>(`/v1/templates/${templateId}`);
   },
   create(request: CreateTemplateRequestBody) {
-    return api.post<PopulatedTemplate>(`/v1/templates/custom`, request);
+    return api.post<Template>(`/v1/templates`, request);
   },
   update(templateId: string, request: UpdateTemplateRequestBody) {
-    return api.post<PopulatedTemplate>(
-      `/v1/templates/custom/${templateId}`,
-      request,
-    );
+    return api.post<Template>(`/v1/templates/${templateId}`, request);
   },
-  list(request?: ListTemplatesRequestQuery) {
-    return api.get<SeekPage<PopulatedTemplate>>(
-      `/v1/templates/custom`,
-      request ?? {},
-    );
+  list(request: ListTemplatesRequestQuery) {
+    return api.get<SeekPage<Template>>(`/v1/templates`, request);
   },
   delete(templateId: string) {
-    return api.delete<void>(`/v1/templates/custom/${templateId}`);
+    return api.delete<void>(`/v1/templates/${templateId}`);
   },
 };

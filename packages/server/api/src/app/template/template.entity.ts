@@ -1,21 +1,27 @@
-import { FlowTemplate } from '@activepieces/ee-shared'
-import { Template } from '@activepieces/shared'
+import { Platform, Template } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
-    ApIdSchema,
     ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
     isPostgres,
     JSONB_COLUMN_TYPE } from '../database/database-common'
 
 type TemplateSchema = Template & {
-    flowTemplate: FlowTemplate
+    platform: Platform
 }
 
 export const TemplateEntity = new EntitySchema<TemplateSchema>({
     name: 'template',
     columns: {
         ...BaseColumnSchemaPart,
+        platformId: {
+            type: String,
+            nullable: true,
+        },
+        type: {
+            type: String,
+            nullable: false,
+        },
         name: {
             type: String,
             nullable: false,
@@ -24,9 +30,9 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
             type: String,
             nullable: false,
         },
-        flowTemplateId: {
-            ...ApIdSchema,
-            nullable: true,
+        collection: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
         },
         tags: {
             type: JSONB_COLUMN_TYPE,
@@ -53,11 +59,15 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
             array: isPostgres(),
             nullable: false,
         },
+        pieces: {
+            type: String,
+            array: true,
+        },
     },
     indices: [
         {
-            name: 'idx_template_flow_template_id',
-            columns: ['flowTemplateId'],
+            name: 'idx_template_pieces',
+            columns: ['pieces'],
             unique: false,
         },
         {
@@ -67,14 +77,15 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
         },
     ],
     relations: {
-        flowTemplate: {
+        platform: {
             type: 'many-to-one',
-            target: 'flow_template',
+            target: 'platform',
             cascade: true,
             onDelete: 'CASCADE',
+            nullable: true,
             joinColumn: {
-                name: 'flowTemplateId',
-                foreignKeyConstraintName: 'fk_template_flow_template_id',
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_template_platform_id',
             },
         },
     },

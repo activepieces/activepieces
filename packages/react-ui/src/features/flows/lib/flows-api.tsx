@@ -14,7 +14,7 @@ import {
   ListFlowVersionRequest,
   ListFlowsRequest,
   PopulatedFlow,
-  PopulatedFlowTemplateMetadata,
+  SharedTemplate,
   SeekPage,
 } from '@activepieces/shared';
 
@@ -60,12 +60,9 @@ export const flowsApi = {
       });
   },
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
-    return api.get<PopulatedFlowTemplateMetadata>(
-      `/v1/flows/${flowId}/template`,
-      {
-        params: request,
-      },
-    );
+    return api.get<SharedTemplate>(`/v1/flows/${flowId}/template`, {
+      params: request,
+    });
   },
   get(
     flowId: string,

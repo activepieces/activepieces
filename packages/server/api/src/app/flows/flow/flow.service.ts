@@ -19,10 +19,11 @@ import {
     Metadata,
     PlatformId,
     PopulatedFlow,
-    PopulatedFlowTemplateMetadata,
     ProjectId,
     SeekPage,
+    SharedTemplate,
     TelemetryEventName,
+    TemplateType,
     TriggerSource,
     UncategorizedFolderId,
     UserId,
@@ -507,7 +508,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         flowId,
         versionId,
         projectId,
-    }: GetTemplateParams): Promise<PopulatedFlowTemplateMetadata> {
+    }: GetTemplateParams): Promise<SharedTemplate> {
         const flow = await this.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
@@ -515,26 +516,20 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeConnectionsName: true,
             removeSampleData: true,
         })
-        const created = Date.now().toString()
-        const updated = Date.now().toString()
 
-        const template: PopulatedFlowTemplateMetadata = {
+        const template: SharedTemplate = {
             name: flow.version.displayName,
             description: '',
-            flowTemplate: {
-                pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
-                template: flow.version,
-                created,
-                updated,
+            collection: {
+                flowTemplates: [flow.version],
             },
             tags: [],
-            created,
-            updated,
             blogUrl: '',
             metadata: null,
-            usageCount: 0,
             author: '',
             categories: [],
+            pieces: flowPieceUtil.getUsedPieces(flow.version.trigger),
+            type: TemplateType.SHARED,
         }
         return template
     },

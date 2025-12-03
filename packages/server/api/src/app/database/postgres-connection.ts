@@ -300,7 +300,7 @@ import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
 import { UnifyCommunityWithEnterprise1764567780604 } from './migration/postgres/1764567780604-UnifyCommunityWithEnterprise'
 import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
-import { CreateTemplateTable1764710160167 } from './migration/postgres/1764710160167-CreateTemplateTable'
+import { CreateTemplateTable1764777773932 } from './migration/postgres/1764777773932-CreateTemplateTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -616,7 +616,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameManageProjectsToTeamProjectLimits1764100884963,
         UnifyCommunityWithEnterprise1764567780604,
         AddMcpServer1764606838149,
-        CreateTemplateTable1764710160167,
+        CreateTemplateTable1764777773932,
     ]
     return migrations
 }

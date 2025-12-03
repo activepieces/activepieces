@@ -26,7 +26,7 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
-import { PopulatedTemplate } from '@activepieces/shared';
+import { Template, TemplateType } from '@activepieces/shared';
 
 import { CreateTemplateDialog } from './create-template-dialog';
 import { UpdateTemplateDialog } from './update-template-dialog';
@@ -39,11 +39,13 @@ export default function TemplatesPage() {
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
-      return templatesApi.list({});
+      return templatesApi.list({
+        type: TemplateType.CUSTOM,
+      });
     },
   });
 
-  const [selectedRows, setSelectedRows] = useState<PopulatedTemplate[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Template[]>([]);
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -57,9 +59,7 @@ export default function TemplatesPage() {
     },
   });
 
-  const columnsWithCheckbox: ColumnDef<
-    RowDataWithActions<PopulatedTemplate>
-  >[] = [
+  const columnsWithCheckbox: ColumnDef<RowDataWithActions<Template>>[] = [
     {
       id: 'select',
       header: ({ table }) => (
@@ -133,19 +133,14 @@ export default function TemplatesPage() {
         <DataTableColumnHeader column={column} title={t('Pieces')} />
       ),
       cell: ({ row }) => {
-        const trigger = row.original.flowTemplate?.template.trigger;
+        const trigger = row.original.collection?.flowTemplates?.[0]?.trigger;
         if (!trigger) return null;
-        return (
-          <PieceIconList
-            trigger={trigger}
-            maxNumberOfIconsToShow={2}
-          />
-        );
+        return <PieceIconList trigger={trigger} maxNumberOfIconsToShow={2} />;
       },
     },
   ];
 
-  const bulkActions: BulkAction<PopulatedTemplate>[] = useMemo(
+  const bulkActions: BulkAction<Template>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => (

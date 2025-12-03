@@ -26,12 +26,15 @@ import { TemplateCard } from '@/features/templates/components/template-card';
 import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
 import { useTemplates } from '@/features/templates/hooks/templates-hook';
 import { userHooks } from '@/hooks/user-hooks';
-import { PlatformRole, PopulatedTemplate } from '@activepieces/shared';
+import { PlatformRole, Template, TemplateType } from '@activepieces/shared';
 
 export const ExplorePage = () => {
-  const { filteredTemplates, isLoading, search, setSearch } = useTemplates();
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<PopulatedTemplate | null>(null);
+  const { filteredTemplates, isLoading, search, setSearch } = useTemplates({
+    type: TemplateType.OFFICIAL,
+  });
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null,
+  );
   const { data: user } = userHooks.useCurrentUser();
   const navigate = useNavigate();
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;

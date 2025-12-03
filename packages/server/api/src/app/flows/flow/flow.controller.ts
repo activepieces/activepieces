@@ -16,10 +16,10 @@ import {
     Permission,
     PlatformUsageMetric,
     PopulatedFlow,
-    PopulatedFlowTemplateMetadata,
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SharedTemplate,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -298,7 +298,7 @@ const GetFlowTemplateRequestOptions = {
         }),
         querystring: GetFlowTemplateRequestQuery,
         response: {
-            [StatusCodes.OK]: PopulatedFlowTemplateMetadata,
+            [StatusCodes.OK]: SharedTemplate,
         },
     },
 }

@@ -1,28 +1,15 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     isNil,
     ListTemplatesRequestQuery,
-    PopulatedTemplate,
     SeekPage,
+    Template,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 
-export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(flowTemplateController, { prefix: '/v1/templates/official' })
-}
-
-const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.get('/', ListTemplatesRequest, async (request) => {
-        return communityTemplates.get(request.query)
-    })
-}
-
 export const communityTemplates = {
-    get: async (request: ListTemplatesRequestQuery): Promise<SeekPage<PopulatedTemplate>> => {
-
+    get: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {
             return paginationHelper.createPage([], null)
@@ -58,13 +45,4 @@ function convertToQueryString(params: ListTemplatesRequestQuery): string {
     })
 
     return searchParams.toString()
-}
-
-const ListTemplatesRequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        querystring: ListTemplatesRequestQuery,
-    },
 }

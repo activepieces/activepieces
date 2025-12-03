@@ -23,7 +23,7 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { TemplateCard } from '@/features/templates/components/template-card';
 import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
 import { useTemplates } from '@/features/templates/hooks/templates-hook';
-import { PopulatedTemplate } from '@activepieces/shared';
+import { Template, TemplateType } from '@activepieces/shared';
 
 const SelectFlowTemplateDialog = ({
   children,
@@ -32,10 +32,13 @@ const SelectFlowTemplateDialog = ({
   children: React.ReactNode;
   folderId: string;
 }) => {
-  const { filteredTemplates, isLoading, search, setSearch } = useTemplates();
+  const { filteredTemplates, isLoading, search, setSearch } = useTemplates({
+    type: TemplateType.CUSTOM,
+  });
   const carousel = useRef<CarouselApi>();
-  const [selectedTemplate, setSelectedTemplate] =
-    useState<PopulatedTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null,
+  );
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);

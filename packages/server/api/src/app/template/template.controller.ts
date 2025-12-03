@@ -1,0 +1,167 @@
+import { AppSystemProp } from '@activepieces/server-shared'
+import {
+    ALL_PRINCIPAL_TYPES,
+    ApEdition,
+    CreateTemplateRequestBody,    
+    FlowVersionTemplate,
+    isNil,
+    ListTemplatesRequestQuery,
+    Principal,
+    PrincipalType,
+    SERVICE_KEY_SECURITY_OPENAPI,
+    TemplateType,
+    UpdateTemplateRequestBody,
+} from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { Static, Type } from '@sinclair/typebox'
+import { StatusCodes } from 'http-status-codes'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
+import { system } from '../helper/system/system'
+import { platformService } from '../platform/platform.service'
+import { communityTemplates } from './community-flow-template.service'
+import { templateService } from './template.service'
+
+const edition = system.getEdition()
+
+export const templateController: FastifyPluginAsyncTypebox = async (app) => {
+    app.get('/:id', GetParams, async (request) => {
+        return templateService().getOneOrThrow({ id: request.params.id })
+    })
+
+    app.get('/', ListTemplatesParams, async (request) => {
+        const platformId = await resolveTemplatesPlatformId(request.principal)
+        if (isNil(platformId)) {
+            return communityTemplates.get(request.query)
+        }
+        return templateService().list({ platformId, requestQuery: request.query })
+    })
+
+    app.post('/', {
+        ...CreateParams,
+        preValidation: async (request) => {
+            const migratedFlowTemplates = await Promise.all((request.body.collection?.flowTemplates ?? []).map(async (flowTemplate: FlowVersionTemplate) => {
+                const migratedFlowTemplate = await migrateFlowVersionTemplate(flowTemplate.trigger, flowTemplate.schemaVersion)
+                return {
+                    ...flowTemplate,
+                    trigger: migratedFlowTemplate.trigger,
+                    schemaVersion: migratedFlowTemplate.schemaVersion,
+                }
+            }))
+            request.body.collection = {
+                flowTemplates: migratedFlowTemplates,
+            }
+        },
+    }, async (request, reply) => {
+        const { type } = request.body
+        let platformId: string | undefined
+
+        if (type === TemplateType.CUSTOM) {
+            await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+            platformId = request.principal.platform.id
+        }
+        
+        const result = await templateService().create({ platformId, params: request.body })
+        return reply.status(StatusCodes.CREATED).send(result)
+    })
+
+    app.post('/:id', UpdateParams, async (request, reply) => {
+        const result = await templateService().update({ id: request.params.id, params: request.body })
+        return reply.status(StatusCodes.OK).send(result)
+    })
+
+    app.delete('/:id', DeleteParams, async (request, reply) => {
+        const template = await templateService().getOneOrThrow({ id: request.params.id })
+
+        if (template.type === TemplateType.CUSTOM) {
+            await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+        }
+
+        await templateService().delete({
+            id: request.params.id,
+        })
+        return reply.status(StatusCodes.NO_CONTENT).send()
+    })
+}
+
+async function resolveTemplatesPlatformId(principal: Principal): Promise<string | null> {
+    if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
+        return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+    }
+    const platform = await platformService.getOneWithPlanOrThrow(principal.platform.id)
+    if (!platform.plan.manageTemplatesEnabled) {
+        if (edition === ApEdition.CLOUD) {
+            return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
+        }
+        return null
+    }
+    return platform.id
+}
+
+
+const GetIdParams = Type.Object({
+    id: Type.String(),
+})
+type GetIdParams = Static<typeof GetIdParams>
+
+
+const GetParams = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        tags: ['templates'],
+        description: 'Get a template.',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: GetIdParams,
+    },
+}
+
+const ListTemplatesParams = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        tags: ['templates'],
+        description: 'List templates.',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        querystring: ListTemplatesRequestQuery,
+    },
+}
+
+const DeleteParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
+    schema: {
+        description: 'Delete a template.',
+        tags: ['templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: GetIdParams,
+    },
+}
+
+const CreateParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
+    schema: {
+        description: 'Create a template.',
+        tags: ['templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        body: CreateTemplateRequestBody,
+    },
+}
+
+const UpdateParams = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+    },
+    schema: {
+        description: 'Update a template.',
+        tags: ['templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: GetIdParams,
+        body: UpdateTemplateRequestBody,
+    },
+}

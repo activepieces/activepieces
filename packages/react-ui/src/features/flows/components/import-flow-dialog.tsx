@@ -39,7 +39,7 @@ import {
   PopulatedFlow,
   TelemetryEventName,
   UncategorizedFolderId,
-  PopulatedTemplate,
+  Template,
 } from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
@@ -58,20 +58,18 @@ export type ImportFlowDialogProps =
 
 const readTemplateJson = async (
   templateFile: File,
-): Promise<PopulatedTemplate | null> => {
+): Promise<Template | null> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
 
     reader.onload = () => {
       try {
-        const template = JSON.parse(
-          reader.result as string,
-        ) as PopulatedTemplate;
-        const { flowTemplate, name } = template;
+        const template = JSON.parse(reader.result as string) as Template;
+        const { collection, name } = template;
         if (
-          !flowTemplate?.template ||
+          !collection?.flowTemplates?.[0] ||
           !name ||
-          !flowTemplate.template.trigger
+          !collection.flowTemplates[0].trigger
         ) {
           resolve(null);
         } else {
@@ -89,7 +87,7 @@ const ImportFlowDialog = (
   props: ImportFlowDialogProps & { children: React.ReactNode },
 ) => {
   const { capture } = useTelemetry();
-  const [templates, setTemplates] = useState<PopulatedTemplate[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -106,9 +104,9 @@ const ImportFlowDialog = (
   const { mutate: importFlows, isPending } = useMutation<
     PopulatedFlow[],
     Error,
-    PopulatedTemplate[]
+    Template[]
   >({
-    mutationFn: async (templates: PopulatedTemplate[]) => {
+    mutationFn: async (templates: Template[]) => {
       const importPromises = templates.map(async (template) => {
         let flow: PopulatedFlow | null = null;
         if (props.insideBuilder) {
@@ -129,8 +127,8 @@ const ImportFlowDialog = (
           type: FlowOperationType.IMPORT_FLOW,
           request: {
             displayName: template.name,
-            trigger: template.flowTemplate!.template.trigger,
-            schemaVersion: template.flowTemplate!.template.schemaVersion,
+            trigger: template.collection.flowTemplates![0].trigger,
+            schemaVersion: template.collection.flowTemplates![0].schemaVersion,
           },
         });
       });
@@ -205,7 +203,7 @@ const ImportFlowDialog = (
     setFailedFiles([]);
     setErrorMessage('');
     const file = files[0];
-    const newTemplates: PopulatedTemplate[] = [];
+    const newTemplates: Template[] = [];
     const isZipFile =
       file.type === 'application/zip' ||
       file.type === 'application/x-zip-compressed';

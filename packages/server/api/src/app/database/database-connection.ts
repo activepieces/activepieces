@@ -30,7 +30,6 @@ import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
-import { FlowTemplateEntity } from '../ee/template/flow/flow-template.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -115,7 +114,6 @@ function getEntities(): EntitySchema<unknown>[] {
                 OAuthAppEntity,
                 OtpEntity,
                 ApiKeyEntity,
-                FlowTemplateEntity,
                 GitRepoEntity,
                 AuditEventEntity,
                 ProjectReleaseEntity,
@@ -223,4 +221,4 @@ export function APArrayContains<T>(
 }
 
 // Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
+export const exportedConnection = databaseConnection()

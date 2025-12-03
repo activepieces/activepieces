@@ -32,12 +32,12 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
-  FlowVersionTemplate,
-  FlowTemplateScope,
-  FlowTemplate,
+  TemplateTags,
   TemplateCategory,
-} from '@activepieces/ee-shared';
-import { TemplateTags } from '@activepieces/shared';
+  Template,
+  FlowVersionTemplate,
+  TemplateType,
+} from '@activepieces/shared';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 
@@ -50,7 +50,7 @@ const CreateFlowTemplateSchema = Type.Object({
   }),
   description: Type.String(),
   blogUrl: Type.String(),
-  template: Type.Unknown(),
+  template: FlowVersionTemplate,
   tags: Type.Optional(Type.Array(TemplateTags)),
   categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
 });
@@ -81,19 +81,23 @@ export const CreateTemplateDialog = ({
     mutationKey: ['create-template'],
     mutationFn: () => {
       const formValue = form.getValues();
-      const projectId = authenticationSession.getProjectId();
       const author = currentUser
         ? `${currentUser.firstName} ${currentUser.lastName}`
         : 'Someone in platform';
 
+      const flowTemplate: FlowVersionTemplate = {
+        ...formValue.template,
+        displayName: formValue.displayName,
+        valid: formValue.template.valid ?? true,
+      };
+
+      console.log('flowTemplate', flowTemplate);
+
       return templatesApi.create({
-        template: {
-          ...(formValue.template as FlowVersionTemplate),
-          displayName: formValue.displayName,
-          valid: (formValue.template as FlowVersionTemplate).valid ?? true,
+        collection: {
+          flowTemplates: [flowTemplate],
         },
-        scope: FlowTemplateScope.PLATFORM,
-        projectId: projectId!,
+        type: TemplateType.CUSTOM,
         name: formValue.displayName,
         description: formValue.description,
         tags: formValue.tags || [],
@@ -210,10 +214,9 @@ export const CreateTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const flowTemplate = JSON.parse(
-                              text,
-                            ) as FlowTemplate;
-                            field.onChange(flowTemplate.template);
+                            const flowTemplate = JSON.parse(text)
+                              .template as FlowVersionTemplate;
+                            field.onChange(flowTemplate);
                           } catch (e) {
                             form.setError('template', {
                               message: t('Invalid JSON'),

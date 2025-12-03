@@ -31,10 +31,10 @@ import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import {
   FlowVersionTemplate,
-  FlowTemplate,
+  TemplateTags,
   TemplateCategory,
-} from '@activepieces/ee-shared';
-import { PopulatedTemplate, TemplateTags } from '@activepieces/shared';
+  Template,
+} from '@activepieces/shared';
 
 import { Textarea } from '../../../../../components/ui/textarea';
 
@@ -60,7 +60,7 @@ export const UpdateTemplateDialog = ({
 }: {
   children: React.ReactNode;
   onDone: () => void;
-  template: PopulatedTemplate;
+  template: Template;
 }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<UpdateFlowTemplateSchema>({
@@ -87,11 +87,16 @@ export const UpdateTemplateDialog = ({
         blogUrl: formValue.blogUrl,
         metadata: template.metadata,
         categories: formValue.categories || [],
-        template: formValue.template
+        collection: formValue.template
           ? {
-              ...(formValue.template as FlowVersionTemplate),
-              displayName: formValue.displayName,
-              valid: (formValue.template as FlowVersionTemplate).valid ?? true,
+              flowTemplates: [
+                {
+                  ...(formValue.template as FlowVersionTemplate),
+                  displayName: formValue.displayName,
+                  valid:
+                    (formValue.template as FlowVersionTemplate).valid ?? true,
+                },
+              ],
             }
           : undefined,
       });
@@ -195,10 +200,9 @@ export const UpdateTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const flowTemplate = JSON.parse(
-                              text,
-                            ) as FlowTemplate;
-                            field.onChange(flowTemplate.template);
+                            const flowTemplate = JSON.parse(text)
+                              .template as FlowVersionTemplate;
+                            field.onChange(flowTemplate);
                           } catch (e) {
                             form.setError('template', {
                               message: t('Invalid JSON'),
