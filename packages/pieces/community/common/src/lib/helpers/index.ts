@@ -77,7 +77,7 @@ export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| P
   extraProps,
   authLocation = 'headers',
 }: {
-  auth: PieceAuth;
+  auth?: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
   authMapping?: (
     auth: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>,

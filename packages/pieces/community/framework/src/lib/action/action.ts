@@ -37,7 +37,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
-export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty, ActionProps extends InputPropertyMap = InputPropertyMap> implements ActionBase {
+export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = any, ActionProps extends InputPropertyMap = InputPropertyMap> implements ActionBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
@@ -51,7 +51,7 @@ export class IAction<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |
 }
 
 export type Action<
-  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = any,
   ActionProps extends InputPropertyMap = any,
 > = IAction<PieceAuth, ActionProps>
 
