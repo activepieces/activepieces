@@ -29,12 +29,10 @@ import { Label } from '@/components/ui/label';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
   TemplateTag as TemplateTagType,
   TemplateCategory,
-  Template,
   FlowVersionTemplate,
   TemplateType,
 } from '@activepieces/shared';

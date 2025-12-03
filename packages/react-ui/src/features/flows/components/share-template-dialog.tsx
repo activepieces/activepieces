@@ -19,7 +19,6 @@ import { Label } from '@/components/ui/label';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { userHooks } from '@/hooks/user-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { Template } from '@activepieces/shared';
 
@@ -52,7 +51,6 @@ const ShareTemplateDialog: React.FC<{
         versionId: flowVersionId,
       });
 
-      const projectId = authenticationSession.getProjectId();
       const author = currentUser
         ? `${currentUser.firstName} ${currentUser.lastName}`
         : 'Someone in platform';

@@ -4,7 +4,6 @@ import { t } from 'i18next';
 import { MailCheck, MailX } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { toast } from 'sonner';
 
 import { Card } from '@/components/ui/card';
 import { FullLogo } from '@/components/ui/full-logo';
