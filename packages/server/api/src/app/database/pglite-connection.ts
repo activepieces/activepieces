@@ -25,16 +25,6 @@ const getPGliteDataPath = (): string | undefined => {
     return getPGliteDataPathFromDisk()
 }
 
-const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-
-    const value: Partial<Record<ApEnvironment, boolean>> = {
-        [ApEnvironment.TESTING]: true,
-    }
-
-    return value[env] ?? false
-}
-
 export const createPGliteDataSource = (): DataSource => {
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -59,7 +49,7 @@ export const createPGliteDataSource = (): DataSource => {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
-        synchronize: getSynchronize(),
+        synchronize: false,
         ...commonProperties,
     })
 }
