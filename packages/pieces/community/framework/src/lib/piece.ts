@@ -101,7 +101,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthPrope
 };
 
 type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined
 > = {
   displayName: string;
   logoUrl: string;

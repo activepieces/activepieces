@@ -1,7 +1,6 @@
 import { propsValidation } from '@activepieces/pieces-common';
 import { createAction } from '@activepieces/pieces-framework';
 import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
-
 export const createCampaign = createAction({
   auth: zohoCampaignsAuth,
   name: 'createCampaign',
