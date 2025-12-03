@@ -2,11 +2,11 @@ import { Type } from "@sinclair/typebox";
 import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from "./dropdown/static-dropdown";
 import { ShortTextProperty } from "./text-property";
 import { BasePropertySchema, TPropertyValue } from "./common";
-import { PropertyContext } from "../../context";
+import { AppConnectionValueForAuthProperty, PropertyContext } from "../../context";
 import { PropertyType } from "./property-type";
 import { JsonProperty } from "./json-property";
 import { ArrayProperty } from "./array-property";
-import { DropdownState, InputPropertyMap } from "..";
+import { InputPropertyMap, PieceAuthProperty } from "..";
 
 export const DynamicProp = Type.Union([
   ShortTextProperty,
@@ -35,12 +35,11 @@ export const DynamicProperties = Type.Composite([
   TPropertyValue(Type.Unknown(), PropertyType.DYNAMIC),
 ])
 
-export type DynamicProperties<R extends boolean> = BasePropertySchema &
+export type DynamicProperties<R extends boolean, PieceAuth extends PieceAuthProperty | undefined = undefined> = BasePropertySchema &
 {
-  props: (
-    propsValue: Record<string, DynamicPropsValue>,
-    ctx: PropertyContext
-  ) => Promise<InputPropertyMap>;
+   //dummy property to define auth property value inside props value
+  auth: PieceAuth
+  props: DynamicPropertiesOptions<PieceAuth>
   refreshers: string[];
 } &
   TPropertyValue<
@@ -49,3 +48,9 @@ export type DynamicProperties<R extends boolean> = BasePropertySchema &
     R
   >;
 
+  type DynamicPropertiesOptions<PieceAuth extends PieceAuthProperty | undefined = undefined> = (
+    propsValue: Record<string, unknown> & {
+      auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
+    },
+    ctx: PropertyContext,
+  ) => Promise<InputPropertyMap>;

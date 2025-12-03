@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { ActionContext, ConstructToolParams, PauseHook, PauseHookParams, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
+import { ActionContext, backwardCompatabilityContextUtils, ConstructToolParams, InputPropertyMap, PauseHook, PauseHookParams, PieceAuthProperty, PiecePropertyMap, RespondHook, RespondHookParams, StaticPropsValue, StopHook, StopHookParams, TagsManager } from '@activepieces/pieces-framework'
 import { AUTHENTICATION_PROPERTY_NAME, EngineGenericError, EngineSocketEvent, ExecutionType, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, PausedFlowTimeoutError, PauseType, PieceAction, RespondResponse, StepOutputStatus } from '@activepieces/shared'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { ToolSet } from 'ai'
@@ -52,7 +52,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             devPieces: constants.devPieces,
         })
 
-        const { resolvedInput, censoredInput } = await constants.propsResolver.resolve<StaticPropsValue<PiecePropertyMap>>({
+        const { resolvedInput, censoredInput } = await constants.getPropsResolver(piece.getContextInfo?.().version).resolve<StaticPropsValue<PiecePropertyMap>>({
             unresolvedInput: action.settings.input,
             executionState,
         })
@@ -87,7 +87,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             })
         }
-        const context: ActionContext = {
+        const context: ActionContext<PieceAuthProperty,InputPropertyMap> = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
             store: createContextStore({
@@ -133,11 +133,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 engineToken: constants.engineToken,
                 target: 'actions',
                 hookResponse: params.hookResponse,
+                contextVersion: piece.getContextInfo?.().version,
             }),
-            /*
-                @deprecated Use server.publicApiUrl instead.
-            */
-            serverUrl: constants.publicApiUrl,
             run: {
                 id: constants.flowRunId,
                 stop: createStopHook(params),
@@ -154,9 +151,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 return url.toString()
             },
         }
+        const backwardCompatibleContext = backwardCompatabilityContextUtils.makeActionContextBackwardCompatible({
+            contextVersion: piece.getContextInfo?.().version,
+            context,
+        })
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
-        const output = await runMethodToExecute(context)
+        const output = await runMethodToExecute(backwardCompatibleContext)
         const newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)
