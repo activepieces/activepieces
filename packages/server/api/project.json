@@ -11,7 +11,7 @@
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
-        "external": ["@electric-sql/pglite", "@electric-sql/pglite-socket"],
+        "external": ["@electric-sql/pglite"],
         "main": "packages/server/api/src/main.ts",
         "outputPath": "dist/packages/server/api",
         "outputFileName": "main.js",
