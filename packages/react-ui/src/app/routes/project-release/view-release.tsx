@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { isNil, ProjectReleaseType } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';

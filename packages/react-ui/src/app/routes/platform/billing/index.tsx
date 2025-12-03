@@ -61,7 +61,6 @@ export default function Billing() {
       <DashboardPageHeader
         title={t('Billing')}
         description={t('Manage billing, usage and limits')}
-        beta={true}
       >
         <div className="flex items-center gap-2">
           {!isEnterprise && isSubscriptionActive && (
