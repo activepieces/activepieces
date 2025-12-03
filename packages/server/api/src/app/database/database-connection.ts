@@ -104,6 +104,7 @@ function getEntities(): EntitySchema<unknown>[] {
     switch (edition) {
         case ApEdition.CLOUD:
         case ApEdition.ENTERPRISE:
+        case ApEdition.COMMUNITY:
             entities.push(
                 ProjectMemberEntity,
                 ProjectPlanEntity,
@@ -122,10 +123,7 @@ function getEntities(): EntitySchema<unknown>[] {
                 ConnectionKeyEntity,
                 AppCredentialEntity,
                 PlatformPlanEntity,
-           
             )
-            break
-        case ApEdition.COMMUNITY:
             break
         default:
             throw new Error(`Unsupported edition: ${edition}`)

@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +22,6 @@ import {
   FormLabel,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -102,9 +102,7 @@ const PushToGitDialog = (props: PushToGitDialogProps) => {
       }
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Pushed successfully'),
+      toast.success(t('Pushed successfully'), {
         duration: 3000,
       });
       setOpen(false);

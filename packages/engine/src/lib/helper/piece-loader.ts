@@ -1,9 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias } from '@activepieces/shared'
+import { ActivepiecesError, EngineGenericError, ErrorCode, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
-import { EngineGenericError } from './execution-errors'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (

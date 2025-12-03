@@ -1,11 +1,11 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { toast } from 'sonner';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { toast } from '@/components/ui/use-toast';
 import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
 import { gitSyncApi } from '@/features/git-sync/lib/git-sync-api';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
@@ -30,11 +30,7 @@ const EnvironmentSettings = () => {
     },
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Git Connection Removed'),
-        description: t(
-          'Your Git repository has been successfully disconnected',
-        ),
+      toast.success(t('Git Connection Removed'), {
         duration: 3000,
       });
     },

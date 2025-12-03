@@ -1,7 +1,6 @@
 import { ContextVersion } from '@activepieces/pieces-framework'
-import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue } from '@activepieces/shared'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 import { utils } from '../utils'
     
 export const createConnectionService = ({ projectId, engineToken, apiUrl, contextVersion }: CreateConnectionServiceParams): ConnectionService => {
