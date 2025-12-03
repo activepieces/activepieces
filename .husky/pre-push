@@ -1,15 +1,13 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-SKIP_CHECK_FLAG="--skip-check"
+# Environment variable to skip the check
+SKIP_MAIN_PUSH_ENV_VAR="SKIP_CHECK"
 
-# Allow skipping this hook with a flag
-for arg in "$@"
-do
-  if [ "$arg" = "$SKIP_CHECK_FLAG" ]; then
-    exit 0
-  fi
-done
+# Allow skipping this hook by setting env variable
+if [ ! -z "${!SKIP_MAIN_PUSH_ENV_VAR}" ]; then
+  exit 0
+fi
 
 while read local_ref local_sha remote_ref remote_sha
 do
