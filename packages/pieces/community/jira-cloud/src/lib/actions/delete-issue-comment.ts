@@ -12,7 +12,8 @@ export const deleteIssueCommentAction = createAction({
 	props: {
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
-		commentId: Property.Dropdown({
+		commentId: Property.Dropdown<string, true, typeof jiraCloudAuth>({
+			auth: jiraCloudAuth,
 			displayName: 'Comment ID',
 			refreshers: ['issueId'],
 			required: true,
@@ -27,7 +28,7 @@ export const deleteIssueCommentAction = createAction({
 				const response = await sendJiraRequest({
 					method: HttpMethod.GET,
 					url: `issue/${issueId}/comment`,
-					auth: auth as PiecePropValueSchema<typeof jiraCloudAuth>,
+					auth: auth,
 					queryParams: {
 						orderBy: '-created',
 						expand: 'renderedBody',

@@ -1,6 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
+import { AppConnectionType } from '@activepieces/shared';
 
 const authHelpDescription = `
 1. Login to your Pushbullet Dashboard.
@@ -16,7 +17,7 @@ export const phantombusterAuth = PieceAuth.SecretText({
   validate: async (auth) => {
     try {
       await makeRequest(
-        auth.auth as string,
+        { secret_text: auth.auth, type: AppConnectionType.SECRET_TEXT },
         HttpMethod.GET,
         '/agents/fetch-all'
       );

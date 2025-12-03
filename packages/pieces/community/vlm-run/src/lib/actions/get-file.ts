@@ -12,6 +12,6 @@ export const getFile = createAction({
   props: getFileProperties,
   async run({ auth: apiKey, propsValue }) {
     await propsValidation.validateZod(propsValue, getFileSchema);
-    return await vlmRunCommon.getFile({ apiKey, file_id: propsValue.fileId });
+    return await vlmRunCommon.getFile({ apiKey: apiKey.secret_text, file_id: propsValue.fileId });
   },
 });

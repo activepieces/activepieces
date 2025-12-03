@@ -53,7 +53,8 @@ export const extract = createAction({
       },
     }),
     schema: Property.DynamicProperties({
-      displayName: 'Data Definition',
+      displayName: 'Data Definition',   
+      auth: firecrawlAuth,
       required: true,
       refreshers: ['mode'],
       props: async (propsValue) => {
@@ -160,7 +161,7 @@ export const extract = createAction({
 
     // polling
     const timeoutSeconds = propsValue.timeout || 300;
-    const result = await polling(jobId, auth, timeoutSeconds, 'extract')
+    const result = await polling(jobId, auth.secret_text, timeoutSeconds, 'extract')
     return result;
   },
 });

@@ -1,4 +1,4 @@
-import { OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, Property, createTrigger } from '@activepieces/pieces-framework';
 import { TriggerStrategy } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -8,7 +8,7 @@ import {
 import { leadConnectorAuth } from '../..';
 import { getOpportunities, getPipelines } from '../common';
 
-const polling: Polling<OAuth2PropertyValue, { pipeline: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof leadConnectorAuth>, { pipeline: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const currentValues =
@@ -32,6 +32,7 @@ export const newOpportunity = createTrigger({
   description: 'Trigger when a new opportunity is added.',
   props: {
     pipeline: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Pipeline',
       description: 'The ID of the pipeline to use.',
       required: true,

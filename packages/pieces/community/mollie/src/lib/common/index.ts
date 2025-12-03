@@ -4,12 +4,14 @@ import {
   HttpRequest,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { mollieAuth } from '../..';
 
 export const mollieCommon = {
   baseUrl: 'https://api.mollie.com/v2',
 
   makeRequest: async <T = unknown>(
-    apiKey: string,
+    auth: AppConnectionValueForAuthProperty<typeof mollieAuth>,
     method: HttpMethod,
     url: string,
     body?: unknown,
@@ -25,7 +27,7 @@ export const mollieCommon = {
       url: `${mollieCommon.baseUrl}${url}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: apiKey,
+        token: auth.secret_text,
       },
       body,
       queryParams,

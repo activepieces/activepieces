@@ -16,7 +16,7 @@ export const newPipelineRecordCreated = createTrigger({
   async onEnable(context) {
     try {
       const channel_id = Date.now().toString();
-      const { api_domain } = context.auth as any;
+      const { api_domain } = context.auth.data;
 
       const webhookData = {
         watch: [
@@ -44,7 +44,7 @@ export const newPipelineRecordCreated = createTrigger({
     const channel_id = (await context.store.get(CACHE_KEY)) as string;
     if (!channel_id) return;
 
-    const { api_domain } = context.auth as any;
+    const { api_domain } = context.auth.data;
 
     await biginApiService.deleteWebhook(
       context.auth.access_token,

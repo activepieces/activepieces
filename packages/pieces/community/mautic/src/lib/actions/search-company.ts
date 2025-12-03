@@ -11,7 +11,7 @@ export const searchCompany = createAction({
     fields: mauticCommon.companyFields,
   },
   run: async function (context) {
-    const { base_url, username, password } = context.auth;
+    const { base_url, username, password } = context.auth.props;
     const url =
       (base_url.endsWith('/') ? base_url : base_url + '/') + 'api/companies';
     const fields = context.propsValue.fields;

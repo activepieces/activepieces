@@ -35,7 +35,7 @@ export const kclCompletionsAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.zoo.dev/ml/kcl/completions',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         prompt: propsValue.prompt,

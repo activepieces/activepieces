@@ -35,7 +35,7 @@ export const createProject = createAction({
       url: `${BASE_URL}/projects`,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
       body: {
         name: propsValue.name,

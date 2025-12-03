@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { cursorAuth } from '../common/auth';
 import { makeCursorRequest } from '../common/client';
@@ -31,8 +31,7 @@ const STATUS_OPTIONS = [
   { label: 'FAILED', value: 'FAILED' },
 ];
 
-const polling: Polling<
-  PiecePropValueSchema<typeof cursorAuth>,
+const polling: Polling< AppConnectionValueForAuthProperty<typeof cursorAuth>, 
   { agentId: string; status: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -42,7 +41,7 @@ const polling: Polling<
 
     try {
       const agent = await makeCursorRequest<Agent>(
-        auth as string,
+        auth,
         `/v0/agents/${agentId}`,
         HttpMethod.GET
       );
@@ -114,7 +113,7 @@ export const agentStatusEqualsTrigger = createTrigger({
 
     try {
       const agent = await makeCursorRequest<Agent>(
-        auth as string,
+        auth,
         `/v0/agents/${agentId}`,
         HttpMethod.GET
       );

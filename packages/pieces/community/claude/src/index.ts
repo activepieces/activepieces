@@ -27,7 +27,7 @@ export const claude = createPiece({
       baseUrl: () => baseUrl,
       authMapping: async (auth) => {
         return {
-          'x-api-key': `${auth}`,
+          'x-api-key': `${auth.secret_text}`,
         };
       },
     }),

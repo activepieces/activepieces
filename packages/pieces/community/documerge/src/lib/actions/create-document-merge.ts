@@ -26,7 +26,7 @@ export const createDocumentMerge = createAction({
       throw new Error('Document key is required');
     }
 
-    const client = new DocuMergeClient(context.auth);
+    const client = new DocuMergeClient(context.auth.secret_text);
 
     const response = await client.post<{ message: string }>(
       `/api/documents/merge/${encodeURIComponent(documentKey)}`,

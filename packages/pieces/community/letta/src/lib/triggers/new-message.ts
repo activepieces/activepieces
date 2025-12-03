@@ -7,6 +7,7 @@ import {
   TriggerStrategy,
   createTrigger,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
 import { getLettaClient } from '../common/client';
@@ -18,13 +19,13 @@ import type {
 } from '../common/types';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof lettaAuth>,
-  { agentId: string }
+  AppConnectionValueForAuthProperty<typeof lettaAuth>,
+  { agentId: string } 
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     const { agentId } = propsValue;
-    const client = getLettaClient(auth);
+    const client = getLettaClient(auth.props);
 
     const query: MessageListParams = {
       limit: 100,

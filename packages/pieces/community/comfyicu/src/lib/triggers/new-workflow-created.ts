@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-common';
 import { comfyIcuAuth } from '../../index';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
@@ -60,7 +61,7 @@ export const newWorkflowCreatedTrigger = createTrigger({
 });
 
 const polling: Polling<
-  PiecePropValueSchema<typeof comfyIcuAuth>,
+  AppConnectionValueForAuthProperty<typeof comfyIcuAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

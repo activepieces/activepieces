@@ -57,7 +57,7 @@ export const googleSearchConsolePiece = createPiece({
       baseUrl: () => 'https://www.googleapis.com/webmasters/v3',
       auth: googleSearchConsoleAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${(auth).access_token}`,
       }),
     }),
   ],

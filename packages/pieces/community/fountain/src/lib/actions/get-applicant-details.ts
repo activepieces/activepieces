@@ -1,10 +1,10 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
 import { getAuthHeaders, getApiUrl } from '../common/auth';
 import { PiecePropValueSchema } from '@activepieces/pieces-framework';
 
-async function getApplicantsDropdown(auth: PiecePropValueSchema<typeof fountainAuth>): Promise<{ label: string; value: string }[]> {
+async function getApplicantsDropdown(auth: AppConnectionValueForAuthProperty<typeof fountainAuth>): Promise<{ label: string; value: string }[]> {
   try {
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
@@ -31,9 +31,10 @@ export const fountainGetApplicantDetails = createAction({
   props: {
     id: Property.Dropdown({
       displayName: 'Applicant',
-      description: 'The applicant to retrieve details for (shows 50 most recent applicants)',
+      description: 'The applicant to delete (shows 50 most recent applicants)',
       required: true,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
         return { disabled: false, options: await getApplicantsDropdown(auth as any) };

@@ -9,7 +9,7 @@ import { createPdfFromHtml } from './lib/actions/create-pdf-from-html';
 import { createPdfFromUrl } from './lib/actions/create-pdf-from-url';
 import { PieceCategory } from '@activepieces/shared';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { ApitemplateAuthConfig, getRegionalBaseUrl } from './lib/common/client';
+import { ApitemplateAuthConfig, ApitemplateRegion, getRegionalBaseUrl } from './lib/common/client';
 
 export const apitemplateIo = createPiece({
   displayName: 'APITemplate.io',
@@ -29,11 +29,14 @@ export const apitemplateIo = createPiece({
     createCustomApiCallAction({
       auth: ApitemplateAuth,
       baseUrl: (auth) => {
-        const authConfig = auth as ApitemplateAuthConfig;
-        return getRegionalBaseUrl(authConfig.region);
+        const authConfig = auth?.props;
+        if (!authConfig) {
+          return '';
+        }
+        return getRegionalBaseUrl(authConfig.region as ApitemplateRegion);
       },
       authMapping: async (auth) => {
-        const authConfig = auth as ApitemplateAuthConfig;
+        const authConfig = auth.props;
         return {
           'X-API-KEY': authConfig.apiKey,
         };

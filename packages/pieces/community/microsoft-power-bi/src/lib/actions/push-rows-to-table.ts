@@ -13,6 +13,7 @@ export const pushRowsToDatasetTableAction = createAction({
     description: 'Add rows to a table in a Power BI dataset (supports Push, Streaming, and PushStreaming modes)',
     props: {
         dataset_id: Property.Dropdown({
+            auth: microsoftPowerBiAuth,
             displayName: 'Dataset',
             description: 'Select a dataset.',
             required: true,
@@ -53,6 +54,7 @@ export const pushRowsToDatasetTableAction = createAction({
             }
         }),
         table_name: Property.Dropdown({
+            auth: microsoftPowerBiAuth,
             displayName: 'Table',
             description: 'Select a table',
             required: true,
