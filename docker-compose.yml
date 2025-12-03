@@ -5,6 +5,9 @@ services:
     restart: unless-stopped
     ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOX_PROCESS or old activepieces, checking the breaking change documentation for more info.
     ## privileged: true
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - '8080:80'
     depends_on:
