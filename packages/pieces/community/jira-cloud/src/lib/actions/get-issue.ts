@@ -68,7 +68,7 @@ export const getIssueAction = createAction({
     mapNames: Property.Checkbox({
       displayName: 'Map Field Names',
       description: `
-Map human readable names to Fields, Rendered Fields and Schema.
+Map human readable names to Fields, Rendered Fields, Schema and Edit Meta.
 Notes:
 - This would implicitly add "names" to the expand field
 - If there are fields with the same name, they may be overridden
@@ -83,7 +83,7 @@ Notes:
     const queryParams = {} as QueryParams;
     let expandParams = expand as string[];
 
-    // expand names which is needed for mapping
+    // implicitly expand names which is needed for mapping
     if (mapNames) {
       expandParams = [...new Set(expandParams).add('names')];
     }
@@ -119,6 +119,14 @@ Notes:
       if (data.schema) {
         const mappedSchemaFields = mapFieldNames(data.schema, fieldNames);
         data['schema'] = mappedSchemaFields;
+      }
+
+      if (data.editmeta?.fields) {
+        const mappedEditmetaFields = mapFieldNames(
+          data.editmeta.fields,
+          fieldNames
+        );
+        data['editmeta']['fields'] = mappedEditmetaFields;
       }
     }
 
