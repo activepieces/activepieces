@@ -8,6 +8,7 @@ import {
   InputPropertyMap,
   FilesService,
   AppConnectionValueForAuthProperty,
+  ExtractPieceAuthPropertyTypeForMethods,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -46,9 +47,9 @@ const joinBaseUrlWithRelativePath = ({
   return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
 };
 
-const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| undefined>(
+const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>(
   baseUrl: BaseUrlGetter<PieceAuth>,
-  auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>
+  auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>
 ) => {
   const exampleBaseUrl = `https://api.example.com`;
   try {
@@ -64,8 +65,8 @@ const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| undefine
     }
   }
 };
-type BaseUrlGetter<PieceAuth extends PieceAuthProperty| undefined> = (auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>) => string
-export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| undefined>({
+type BaseUrlGetter<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined> = (auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>) => string
+export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>({
   auth,
   baseUrl,
   authMapping,
@@ -79,7 +80,7 @@ export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| u
   auth: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
   authMapping?: (
-    auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>,
+    auth: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>,
     propsValue: StaticPropsValue<any>
   ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
@@ -119,7 +120,7 @@ export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| u
               description: `You can either use the full URL or the relative path to the base URL
 i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               required: true,
-              defaultValue: baseUrl(auth),
+              defaultValue: auth ? baseUrl(auth) : '',
               ...(props?.url ?? {}),
             }),
           };
