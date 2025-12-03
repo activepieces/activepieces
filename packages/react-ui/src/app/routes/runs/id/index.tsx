@@ -9,6 +9,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { FlowRun, PopulatedFlow } from '@activepieces/shared';
+import { BuilderCanvas } from '@/app/builder/flow-canvas-v2';
 
 const FlowRunPage = () => {
   const { runId, projectId } = useParams();
@@ -61,7 +62,7 @@ const FlowRunPage = () => {
           outputSampleData={sampleData ?? {}}
           inputSampleData={sampleDataInput ?? {}}
         >
-          <BuilderPage />
+          <BuilderCanvas />
         </BuilderStateProvider>
       </ReactFlowProvider>
     )

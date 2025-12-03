@@ -43,6 +43,7 @@ import { FlowVersionsList } from './flow-versions';
 import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { BuilderCanvas } from './flow-canvas-v2';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -208,10 +209,7 @@ const BuilderPage = () => {
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-            <FlowCanvas
-              setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-            ></FlowCanvas>
-
+            <BuilderCanvas></BuilderCanvas>
             <RunDetailsBar
               run={run}
               isLoading={isSwitchingToDraftPending}
