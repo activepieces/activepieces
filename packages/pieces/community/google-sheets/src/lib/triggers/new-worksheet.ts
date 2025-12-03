@@ -22,7 +22,7 @@ export const newWorksheetTrigger = createTrigger({
 		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
-			spreadsheetId: context.propsValue.spreadsheetId,
+			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
 		if (response.data.sheets) {
 			for (const sheet of response.data.sheets) {
@@ -43,7 +43,7 @@ export const newWorksheetTrigger = createTrigger({
 		authClient.setCredentials(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 		const response = await sheets.spreadsheets.get({
-			spreadsheetId: context.propsValue.spreadsheetId,
+			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
 
 		if (response.data.sheets) {
@@ -63,7 +63,7 @@ export const newWorksheetTrigger = createTrigger({
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		const response = await sheets.spreadsheets.get({
-			spreadsheetId: context.propsValue.spreadsheetId,
+			spreadsheetId: context.propsValue.spreadsheetId as string,
 		});
 		if (isNil(response.data.sheets) || response.data.sheets.length === 0) {
 			return [];
