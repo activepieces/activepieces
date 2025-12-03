@@ -1,8 +1,8 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { apId, FlowVersion, isNil } from '@activepieces/shared'
+import { Static, Type } from '@sinclair/typebox'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
-import { Static, Type } from '@sinclair/typebox'
 
 const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
 const logger = system.globalLogger()
@@ -104,7 +104,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
         `)
         
         if (flowTemplates.length === 0) {
-            console.log('No flow templates to migrate')
+            logger.info('No flow templates to migrate')
             return
         }
 
@@ -160,7 +160,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             VALUES ${valuesPlaceholders}
         `, flattenedValues)
         
-        console.log(`Migrated ${flowTemplates.length} flow templates`)
+        logger.info(`Migrated ${flowTemplates.length} flow templates`)
 
         await queryRunner.query(`
             ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_project_id"
