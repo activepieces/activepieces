@@ -15,7 +15,7 @@ export const getHighlight = createAction({
   },
   async run(context) {
     const highlightId = context.propsValue.highlightId as string;
-    const client = new HedyApiClient(context.auth as string);
+    const client = new HedyApiClient(context.auth.secret_text);
     const response = await client.request<Highlight>({
       method: HttpMethod.GET,
       path: `/highlights/${highlightId}`,

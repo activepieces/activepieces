@@ -1,11 +1,11 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../../index';
 import { BexioClient } from '../common/client';
 import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof bexioAuth>,
+  AppConnectionValueForAuthProperty<typeof bexioAuth>,
   { status_id?: number }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -67,6 +67,7 @@ export const newProjectTrigger = createTrigger({
   type: TriggerStrategy.POLLING,
   props: {
     status_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Status',
       description: 'Filter projects by status (leave empty to trigger for all statuses)',
       required: false,
@@ -81,7 +82,7 @@ export const newProjectTrigger = createTrigger({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const statuses = await client.get<Array<{ id: number; name: string }>>('/2.0/pr_project_state').catch(() => []);
 
           if (statuses.length === 0) {

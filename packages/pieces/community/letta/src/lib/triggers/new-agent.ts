@@ -6,7 +6,7 @@ import {
 import {
   TriggerStrategy,
   createTrigger,
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { lettaAuth } from '../common/auth';
 import { getLettaClient } from '../common/client';
@@ -16,12 +16,12 @@ import type {
 } from '../common/types';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof lettaAuth>,
+  AppConnectionValueForAuthProperty<typeof lettaAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const client = getLettaClient(auth);
+    const client = getLettaClient(auth.props);
 
     const query: AgentListParams = {
       limit: 100,

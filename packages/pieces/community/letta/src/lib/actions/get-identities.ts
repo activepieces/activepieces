@@ -56,7 +56,7 @@ export const getIdentities = createAction({
       limit,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth);
+    const client = getLettaClient(context.auth.props);
 
     const query: IdentityListParams = {};
 

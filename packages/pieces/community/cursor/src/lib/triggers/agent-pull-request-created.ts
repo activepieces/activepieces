@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { cursorAuth } from '../common/auth';
 import { makeCursorRequest } from '../common/client';
@@ -28,7 +28,7 @@ interface ListAgentsResponse {
   nextCursor?: string;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof cursorAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof cursorAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS, store }) => {
     const isTest = lastFetchEpochMS === 0;
@@ -36,7 +36,7 @@ const polling: Polling<PiecePropValueSchema<typeof cursorAuth>, Record<string, n
 
     try {
       const response = await makeCursorRequest<ListAgentsResponse>(
-        auth as string,
+        auth,
         '/v0/agents',
         HttpMethod.GET,
         undefined,

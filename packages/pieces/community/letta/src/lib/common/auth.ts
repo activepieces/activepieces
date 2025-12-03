@@ -87,7 +87,7 @@ export const lettaAuth = PieceAuth.CustomAuth({
       if (error instanceof LettaError) {
         return {
           valid: false,
-          error: `Authentication failed: ${error.message}. Please verify your credentials.`,
+          error: `Authentication failed: ${error instanceof Error ? error.message : 'Unknown error'}. Please verify your credentials.`,
         };
       }
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

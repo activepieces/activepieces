@@ -68,7 +68,7 @@ export const firecrawl = createPiece({
       baseUrl: () => FIRECRAWL_API_BASE_URL,
       auth: firecrawlAuth,
       authMapping: async (auth) => ({
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

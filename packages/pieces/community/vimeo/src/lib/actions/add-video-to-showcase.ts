@@ -11,6 +11,7 @@ export const addVideoToShowcase = createAction({
   props: {
     videoId: userVideoDropdown,
     showcaseId: Property.Dropdown({
+      auth: vimeoAuth,
       displayName: 'Showcase ID',
       description: 'ID of the showcase to add the video to',
       required: true,

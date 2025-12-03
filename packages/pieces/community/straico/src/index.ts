@@ -44,7 +44,7 @@ export const straicoAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
+          token: auth.auth,
         },
       });
       return {
@@ -89,7 +89,7 @@ export const straico = createPiece({
       baseUrl: () => baseUrlv1,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

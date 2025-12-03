@@ -87,7 +87,7 @@ export const uploadRecording = createAction({
     }>({
       method: HttpMethod.POST,
       url: '/v1alpha1/meetings/import',
-      auth: { apiKey: context.auth },
+      auth: { apiKey: context.auth.secret_text },
       body,
     });
 

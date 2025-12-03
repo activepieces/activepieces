@@ -32,7 +32,7 @@ export const sendMessageToAgent = createAction({
       maxSteps,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth);
+    const client = getLettaClient(context.auth.props);
 
     const body: MessageCreateParamsNonStreaming = {
       streaming: false,

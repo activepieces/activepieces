@@ -4,6 +4,7 @@ import { ServiceNowRecordSchema } from '../common/types';
 import {
   tableDropdown,
   createServiceNowClient,
+  servicenowAuth,
 } from '../common/props';
 
 const FindRecordInputSchema = z.object({
@@ -18,6 +19,7 @@ const FindRecordInputSchema = z.object({
 });
 
 export const findRecordAction = createAction({
+  auth: servicenowAuth,
   name: 'find_record',
   displayName: 'Find Records',
   description: 'Search for records in a table using a query',

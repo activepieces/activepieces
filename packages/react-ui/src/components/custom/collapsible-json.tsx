@@ -31,9 +31,9 @@ export function CollapsibleJson({
       </button>
 
       {isOpen && (
-        <div className="flex flex-col gap-2">
-          <div className="relative">
-            <pre className="bg-muted/50 whitespace-pre-wrap rounded-md px-4 py-4 text-xs overflow-x-auto">
+        <div className="flex flex-col gap-2 min-w-0">
+          <div className="relative min-w-0">
+            <pre className="bg-muted/50 whitespace-pre-wrap break-all rounded-md px-4 py-4 text-xs overflow-x-auto max-w-full">
               <code>{jsonString}</code>
             </pre>
             <div className="absolute top-2 right-2">

@@ -67,8 +67,8 @@ export const sendNotification = createAction({
   },
   async run({ auth, propsValue }) {
     const baseUrl = 'https://api.pushover.net/1/messages.json';
-    const apiToken = auth.api_token;
-    const userKey = auth.user_key;
+    const apiToken = auth.props.api_token;
+    const userKey = auth.props.user_key;
 
     const title = propsValue.title;
     const message = propsValue.message;

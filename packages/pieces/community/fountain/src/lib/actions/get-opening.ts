@@ -15,9 +15,10 @@ export const fountainGetOpening = createAction({
       description: 'The opening to retrieve details for',
       required: true,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getFunnelsDropdown(auth as any) };
+        return { disabled: false, options: await getFunnelsDropdown(auth) };
       },
     }),
   },

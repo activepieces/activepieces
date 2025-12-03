@@ -18,7 +18,7 @@ export const findShippingLabel = createAction({
     const { label_id } = context.propsValue;
 
     const client = new ShippoClient({
-      apiToken: context.auth,
+      apiToken: context.auth.secret_text,
     });
 
     return await client.getShippingLabel(label_id);

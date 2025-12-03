@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth } from '@activepieces/pieces-framework';
 
 export const cursorAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -17,5 +17,5 @@ Note: The Cloud Agent API is in beta.
   required: true,
 });
 
-export type CursorAuth = string;
+export type CursorAuth = AppConnectionValueForAuthProperty<typeof cursorAuth>;
 

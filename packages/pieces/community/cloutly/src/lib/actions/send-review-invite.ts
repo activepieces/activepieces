@@ -65,7 +65,7 @@ export const sendReviewInvite = createAction({
       salesRepEmail: context.propsValue.salesRepEmail,
     };
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,

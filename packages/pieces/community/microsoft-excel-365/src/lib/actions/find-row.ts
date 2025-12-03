@@ -22,6 +22,7 @@ export const findRowAction = createAction({
     worksheet_id: excelCommon.worksheet_id,
     table_id: excelCommon.table_id,
     lookup_column: Property.Dropdown({
+      auth: excelAuth,
       displayName: 'Lookup Column',
       description: 'The column to search in.',
       required: true,

@@ -43,8 +43,8 @@ export const createFile = createAction({
     async run(context) {
         const fileName = context.propsValue['fileName'];
         const fileContent = context.propsValue['fileContent'];
-        const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);    
-        const client = await getClient(context.auth);
+        const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);    
+        const client = await getClient(context.auth.props);
 
         try {
             switch (protocolBackwardCompatibility) {
@@ -68,7 +68,7 @@ export const createFile = createAction({
                 error: err,
             };
         } finally {
-            await endClient(client, context.auth.protocol);
+            await endClient(client, context.auth.props.protocol);
         }
     },
 });
