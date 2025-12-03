@@ -8,18 +8,15 @@ import {
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
-import { ContextVersion, LATEST_CONTEXT_VERSION, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION } from './context/versioning';
-import * as semver from 'semver';
+import path from 'path';
+import fs from 'fs/promises';
 
-
-
-export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty>
+export class Piece<PieceAuth extends PieceAuthProperty = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
 {
-  private readonly _actions: Record<string, Action<PieceAuth>> = {};
-  private readonly _triggers: Record<string, Trigger<PieceAuth>> = {};
-  // this method didn't exist in older version
-  public getContextInfo: (() => { version: ContextVersion } )| undefined = () => ({ version: LATEST_CONTEXT_VERSION }); 
+  private readonly _actions: Record<string, Action> = {};
+  private readonly _triggers: Record<string, Trigger> = {};
+
   constructor(
     public readonly displayName: string,
     public readonly logoUrl: string,
@@ -29,13 +26,10 @@ export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthPr
     triggers: Trigger<PieceAuth>[],
     public readonly categories: PieceCategory[],
     public readonly auth?: PieceAuth,
-    public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
+    public readonly minimumSupportedRelease?: string,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
   ) {
-    if(!semver.valid(minimumSupportedRelease) || semver.lt(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
-      this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
-    }
     actions.forEach((action) => (this._actions[action.name] = action));
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
   }
@@ -52,16 +46,15 @@ export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthPr
       authors: this.authors,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
-      maximumSupportedRelease: this.maximumSupportedRelease,
-      contextInfo: this.getContextInfo?.()
+      maximumSupportedRelease: this.maximumSupportedRelease
     };
   }
 
-  getAction(actionName: string): Action<PieceAuth> | undefined {
+  getAction(actionName: string): Action | undefined {
     return this._actions[actionName];
   }
 
-  getTrigger(triggerName: string): Trigger<PieceAuth> | undefined {
+  getTrigger(triggerName: string): Trigger | undefined {
     return this._triggers[triggerName];
   }
 
@@ -74,7 +67,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthPr
   }
 }
 
-export const createPiece = <PieceAuth extends PieceAuthProperty | undefined>(
+export const createPiece = <PieceAuth extends PieceAuthProperty>(
   params: CreatePieceParams<PieceAuth>
 ) => {
   return new Piece(
@@ -93,7 +86,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | undefined>(
 };
 
 type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty | undefined
+  PieceAuth extends PieceAuthProperty = PieceAuthProperty
 > = {
   displayName: string;
   logoUrl: string;
@@ -117,7 +110,7 @@ type PieceEventProcessors = {
   }) => boolean;
 };
 
-type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n' | 'getContextInfo'> & {
+type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n'> & {
   authors?: PieceMetadata['authors']
   i18n?: PieceMetadata['i18n']
 }

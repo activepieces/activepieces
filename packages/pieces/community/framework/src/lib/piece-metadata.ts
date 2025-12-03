@@ -4,7 +4,6 @@ import { ErrorHandlingOptionsParam } from "./action/action";
 import { PieceAuthProperty } from "./property/authentication";
 import { Static, Type } from "@sinclair/typebox";
 import { LocalesEnum, PackageType, PieceCategory, PieceType, ProjectId, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from "@activepieces/shared";
-import { ContextVersion } from "./context/versioning";
 
 const I18nForPiece =  Type.Optional(Type.Partial(Type.Record(Type.Enum(LocalesEnum), Type.Record(Type.String(), Type.String()))));
 export type I18nForPiece = Static<typeof I18nForPiece>
@@ -42,8 +41,6 @@ export type PieceBase = {
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
   i18n?: Partial<Record<LocalesEnum, Record<string, string>>>
-  // this method didn't exist in older version
-  getContextInfo: (() => { version: ContextVersion }) | undefined;
 }
 
 
@@ -91,11 +88,9 @@ export const PieceMetadata = Type.Composite([
   })
 ])
 
-export type PieceMetadata = Omit<PieceBase, 'getContextInfo'> & {
+export type PieceMetadata = PieceBase & {
   actions: Record<string, ActionBase>;
   triggers: Record<string, TriggerBase>;
-  // this property didn't exist in older version
-  contextInfo: { version: ContextVersion } | undefined;
 };
 
 export const PieceMetadataSummary = Type.Composite([

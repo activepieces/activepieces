@@ -1,4 +1,3 @@
-import { ContextVersion } from '@activepieces/pieces-framework'
 import { applyFunctionToValues, isNil, isString } from '@activepieces/shared'
 import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
@@ -10,8 +9,13 @@ const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
 const FLATTEN_NESTED_KEYS_PATTERN = /\{\{\s*flattenNestedKeys(.*?)\}\}/g
 
+type PropsResolverParams = {
+    engineToken: string
+    projectId: string
+    apiUrl: string
+}
 
-export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVersion }: PropsResolverParams) => {
+export const createPropsResolver = ({ engineToken, projectId, apiUrl }: PropsResolverParams) => {
     return {
         resolve: async <T = unknown>(params: ResolveInputParams): Promise<ResolveResult<T>> => {
             const { unresolvedInput, executionState } = params
@@ -34,7 +38,6 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     ...resolveOptions,
                     input: token,
                     censoredInput: false,
-                    contextVersion,
                 }))
             const censoredInput = await applyFunctionToValues<T>(
                 unresolvedInput,
@@ -42,7 +45,6 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     ...resolveOptions,
                     input: token,
                     censoredInput: true,
-                    contextVersion,
                 }))
             return {
                 resolvedInput,
@@ -53,9 +55,7 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
 }
 
 const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeedResolving: string[],
-    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>,
-    contextVersion: ContextVersion | undefined,
-) => {
+    resolveOptions: Pick<ResolveInputInternalParams, 'engineToken' | 'projectId' | 'apiUrl' | 'currentState' | 'censoredInput'>) => {
     const resolvedValues: Record<string, unknown> = {}
     let longestResultLength = 0
     for (const tokenPart of partsThatNeedResolving) {
@@ -63,7 +63,6 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
         resolvedValues[tokenPart] = await resolveSingleToken({
             ...resolveOptions,
             variableName,
-            contextVersion,
         })
         if (Array.isArray(resolvedValues[tokenPart])) {
             longestResultLength = Math.max(longestResultLength, resolvedValues[tokenPart].length)
@@ -102,19 +101,17 @@ async function resolveInputAsync(params: ResolveInputInternalParams): Promise<un
         return resolveSingleToken({
             ...resolveOptions,
             variableName,
-            contextVersion: params.contextVersion,
         })
     }
     const inputIncludesFlattenNestedKeysTokens = input.match(FLATTEN_NESTED_KEYS_PATTERN)
     if (!isNil(inputIncludesFlattenNestedKeysTokens) && !isNil(tokensThatNeedResolving)) {
-        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions, params.contextVersion)
+        return mergeFlattenedKeysArraysIntoOneArray(input, tokensThatNeedResolving, resolveOptions)
     }
 
     return replaceAsync(input, VARIABLE_PATTERN, async (_fullMatch, variableName) => {
         const result = await resolveSingleToken({
             ...resolveOptions,
             variableName,
-            contextVersion: params.contextVersion,
         })
         return isString(result) ? result : JSON.stringify(result)
     })
@@ -138,7 +135,7 @@ async function handleConnection(params: ResolveSingleTokenParams): Promise<unkno
     if (censoredInput) {
         return '**REDACTED**'
     }
-    const connection = await createConnectionService({ engineToken, projectId, apiUrl, contextVersion: params.contextVersion }).obtain(connectionName)
+    const connection = await createConnectionService({ engineToken, projectId, apiUrl }).obtain(connectionName)
     const pathAfterConnectionName = parsePathAfterConnectionName(variableName, connectionName)
     if (isNil(pathAfterConnectionName) || pathAfterConnectionName.length === 0) {
         return connection
@@ -223,7 +220,6 @@ type ResolveSingleTokenParams = {
     projectId: string
     apiUrl: string
     censoredInput: boolean
-    contextVersion: ContextVersion | undefined
 }
 
 type ResolveInputInternalParams = {
@@ -233,7 +229,6 @@ type ResolveInputInternalParams = {
     apiUrl: string
     censoredInput: boolean
     currentState: Record<string, unknown>
-    contextVersion: ContextVersion | undefined
 }
 
 type ResolveInputParams = {
@@ -244,11 +239,4 @@ type ResolveInputParams = {
 type ResolveResult<T = unknown> = {
     resolvedInput: T
     censoredInput: unknown
-}
-
-type PropsResolverParams = {
-    engineToken: string
-    projectId: string
-    apiUrl: string
-    contextVersion: ContextVersion | undefined
 }

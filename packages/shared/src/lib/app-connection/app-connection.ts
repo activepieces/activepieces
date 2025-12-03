@@ -49,15 +49,14 @@ export type BaseOAuth2ConnectionValue = {
     scope: string
     token_url: string
     authorization_method?: OAuth2AuthorizationMethod
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: Record<string, any>
+    data: Record<string, unknown>
     props?: Record<string, string>
     grant_type?: OAuth2GrantType
 }
 
-export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {
+export type CustomAuthConnectionValue = {
     type: AppConnectionType.CUSTOM_AUTH
-    props: T
+    props: Record<string, unknown>
 }
 
 export type CloudOAuth2ConnectionValue = {
@@ -79,13 +78,13 @@ export type NoAuthConnectionValue = {
     type: AppConnectionType.NO_AUTH
 }
 
-export type AppConnectionValue<T extends AppConnectionType = AppConnectionType, PropsType extends Record<string, unknown> = Record<string, unknown>> =
+export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> =
     T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
         T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
             T extends AppConnectionType.CLOUD_OAUTH2 ? CloudOAuth2ConnectionValue :
                 T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
                     T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
-                        T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue<PropsType> :
+                        T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue :
                             T extends AppConnectionType.NO_AUTH ? NoAuthConnectionValue :
                                 never
 

@@ -80,7 +80,7 @@ export const OAuth2Property = Type.Composite([
 
 export type OAuth2Property<
   T extends OAuth2Props
-> = BasePieceAuthSchema<OAuth2PropertyValue<T>> &
+> = BasePieceAuthSchema<OAuth2PropertyValue> &
   OAuth2ExtraProps &
   TPropertyValue<
     OAuth2PropertyValue<T>,

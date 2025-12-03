@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
-import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
 import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
 import { createConnectionService } from './services/connections.service'
 
@@ -73,7 +73,7 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
+                const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl }).obtain(key)
                 if (params.target === 'actions') {
                     params.hookResponse.tags.push(`connection:${key}`)
                 }
@@ -103,4 +103,4 @@ export type HookResponse = {
     type: 'none'
     tags: string[]
 }
-type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined }
+type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
