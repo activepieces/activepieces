@@ -39,6 +39,7 @@ export const send_iMessage = createAction({
             defaultValue: false,
         }),
         fallback_when: Property.DynamicProperties({
+            auth: contiguityAuth,
             displayName: "When to fallback",
             description: 'Conditions that trigger SMS/RCS fallback',
             required: true,
@@ -117,7 +118,7 @@ export const send_iMessage = createAction({
             method: HttpMethod.POST,
             endpoint: '/send/imessage',
             body: body,
-            auth: context.auth,
+            auth: context.auth.secret_text,
         });
     },
 });

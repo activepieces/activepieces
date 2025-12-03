@@ -135,7 +135,7 @@ export const imageToImage = createAction({
       url: `${BASE_URL}/v1/openai/images/edits`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth as string,
+        token: context.auth.secret_text,
       },
       headers: {
         ...formData.getHeaders(),

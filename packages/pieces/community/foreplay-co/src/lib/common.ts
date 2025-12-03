@@ -1,7 +1,9 @@
 import { httpClient, HttpMethod, AuthenticationType } from "@activepieces/pieces-common";
+import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
+import { foreplayCoAuth } from "..";
 
 export interface ForeplayCoApiCallProps {
-  apiKey: string;
+  apiKey: AppConnectionValueForAuthProperty<typeof foreplayCoAuth>;
   method: HttpMethod;
   resourceUri: string;
   queryParams?: Record<string, string>;
@@ -22,7 +24,7 @@ export async function foreplayCoApiCall({
     url: `${baseUrl}${resourceUri}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: apiKey,
+      token: apiKey.secret_text,
     },
     queryParams,
     body,

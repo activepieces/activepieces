@@ -15,9 +15,10 @@ export const fountainGetStage = createAction({
       description: 'The opening that contains the stage',
       required: true,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getFunnelsDropdown(auth as any) };
+        return { disabled: false, options: await getFunnelsDropdown(auth) };
       },
     }),
     id: Property.Dropdown({
@@ -25,10 +26,11 @@ export const fountainGetStage = createAction({
       description: 'The stage to retrieve details for',
       required: true,
       refreshers: ['funnel_id'],
+      auth: fountainAuth,
       options: async ({ auth, funnel_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
         if (!funnel_id) return { disabled: true, options: [], placeholder: 'Select opening first' };
-        return { disabled: false, options: await getStagesForFunnelDropdown(auth as any, funnel_id as string) };
+        return { disabled: false, options: await getStagesForFunnelDropdown(auth, funnel_id as string) };
       },
     }),
   },

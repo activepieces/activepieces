@@ -36,7 +36,7 @@ export const listEnvelopes = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const apiClient = await createApiClient(auth as DocusignAuthType);
+    const apiClient = await createApiClient(auth);
     const envelopeApiClient = new EnvelopesApi(apiClient);
 
     const getPage = async (startPosition: number) => {

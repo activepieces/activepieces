@@ -22,13 +22,13 @@ export const convertFile = createAction({
         try {
             const supportedFormats = await client.getSupportedFormats({
                 inputFormat: input_format === 'auto' ? undefined : input_format,
-                outputFormat: output_format,
+                outputFormat: output_format as string,
                 include: ['options', 'engine_versions']
             });
             
             if (supportedFormats.length === 0) {
                 const allOutputFormats = await client.getSupportedFormats({
-                    outputFormat: output_format,
+                    outputFormat: output_format as string,
                     include: ['options', 'engine_versions']
                 });
                 

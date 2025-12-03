@@ -1,2 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
+
+    while read local_ref local_sha remote_ref remote_sha
+    do
+        if [ "$remote_ref" = "refs/heads/main" ]; then
+            echo "Direct pushes to 'main' are not allowed. Please use a feature branch and a pull request."
+            exit 1
+        fi
+    done

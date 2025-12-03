@@ -26,7 +26,7 @@ export const removeTagFromContact = createAction({
 
     async run(context) {
         const { list_id, email_address, tags } = context.propsValue;
-        const client = new EmailOctopusClient(context.auth);
+        const client = new EmailOctopusClient(context.auth.secret_text);
 
         
         const contactId = createHash('md5')

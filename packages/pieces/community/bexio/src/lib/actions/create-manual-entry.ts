@@ -44,6 +44,7 @@ export const createManualEntryAction = createAction({
       required: false,
     }),
     entryFields: Property.DynamicProperties({
+      auth: bexioAuth,
       displayName: 'Entry Details',
       description: 'Configure the entry details based on selected type',
       required: true,
@@ -57,7 +58,7 @@ export const createManualEntryAction = createAction({
 
         if (auth) {
           try {
-            const client = new BexioClient(auth as OAuth2PropertyValue);
+            const client = new BexioClient(auth);
             accounts = await client.get<Array<{ id: number; account_no: string; name: string }>>('/accounts');
             taxes = await client.get<Array<{ id: number; name: string; percentage: string }>>('/taxes');
             currencies = await client.get<Array<{ id: number; name: string }>>('/3.0/currencies');

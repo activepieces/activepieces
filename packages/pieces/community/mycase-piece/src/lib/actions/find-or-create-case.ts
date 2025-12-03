@@ -24,6 +24,7 @@ export const findOrCreateCase = createAction({
       required: false
     }),
     case_stage: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case Stage',
       description: 'The stage the case is currently in (used only when creating)',
       required: false,
@@ -60,6 +61,7 @@ export const findOrCreateCase = createAction({
       },
     }),
     practice_area: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Practice Area',
       description: 'The practice area for this case (used only when creating)',
       required: false,
@@ -123,6 +125,7 @@ export const findOrCreateCase = createAction({
       required: false
     }),
     billing_contact: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Billing Contact',
       description: 'The client or company to assign as the billing contact (used only when creating)',
       required: false,
@@ -163,7 +166,7 @@ export const findOrCreateCase = createAction({
       },
     }),
     clients: Property.MultiSelectDropdown({
-      displayName: 'Clients',
+  auth: mycaseAuth,      displayName: 'Clients',
       description: 'Clients to associate with the case (used only when creating)',
       required: false,
       refreshers: [],
@@ -199,7 +202,7 @@ export const findOrCreateCase = createAction({
       },
     }),
     companies: Property.MultiSelectDropdown({
-      displayName: 'Companies',
+  auth: mycaseAuth,      displayName: 'Companies',
       description: 'Companies to associate with the case (used only when creating)',
       required: false,
       refreshers: [],
@@ -235,7 +238,7 @@ export const findOrCreateCase = createAction({
       },
     }),
     staff: Property.MultiSelectDropdown({
-      displayName: 'Staff',
+  auth: mycaseAuth,      displayName: 'Staff',
       description: 'Staff members to associate with the case (used only when creating)',
       required: false,
       refreshers: [],
@@ -271,6 +274,7 @@ export const findOrCreateCase = createAction({
       },
     }),
     lead_lawyer: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Lead Lawyer',
       description: 'Select the lead lawyer for this case (used only when creating)',
       required: false,
@@ -311,6 +315,7 @@ export const findOrCreateCase = createAction({
       },
     }),
     originating_lawyer: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Originating Lawyer',
       description: 'Select the originating lawyer for this case (used only when creating)',
       required: false,

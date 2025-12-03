@@ -13,6 +13,7 @@ export const addNoteToContactAction = createAction({
   description: 'Add a new note to a contact.',
   props: {
     contact: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Contact',
       description: 'The contact to use.',
       required: true,
@@ -40,6 +41,7 @@ export const addNoteToContactAction = createAction({
       required: true,
     }),
     user: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'User',
       required: true,
       refreshers: [],

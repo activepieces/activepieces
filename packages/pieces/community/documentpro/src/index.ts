@@ -22,7 +22,7 @@ export const documentpro = createPiece({
       baseUrl: () => 'https://api.documentpro.ai/v1',
       authMapping: async (auth) => {
         return {
-          'x-api-key': `${auth}`,
+          'x-api-key': `${auth.secret_text}`,
         };
       },
     }),

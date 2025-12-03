@@ -94,7 +94,7 @@ export const listMeetings = createAction({
     }>({
       method: HttpMethod.GET,
       url,
-      auth: { apiKey: context.auth },
+      auth: { apiKey: context.auth.secret_text },
     });
 
     return response;

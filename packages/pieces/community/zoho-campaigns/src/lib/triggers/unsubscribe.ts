@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   StaticPropsValue,
@@ -14,7 +15,7 @@ import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 
 // replace auth with piece auth variable
 const polling: Polling<
-  PiecePropValueSchema<typeof zohoCampaignsAuth>,
+  AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
   StaticPropsValue<any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

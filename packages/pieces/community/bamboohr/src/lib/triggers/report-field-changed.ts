@@ -8,15 +8,15 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
-  PiecePropValueSchema,
   TriggerStrategy,
   createTrigger,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof bambooHrAuth>,
+  AppConnectionValueForAuthProperty<typeof bambooHrAuth>,
   {
     reportId: string;
     fieldToMonitor: string;
@@ -24,10 +24,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, store }) => {
-    const { companyDomain, apiKey } = auth as {
-      companyDomain: string;
-      apiKey: string;
-    };
+    const { companyDomain, apiKey } = auth.props;
 
     // Fetch the report from BambooHR
     const request: HttpRequest = {
