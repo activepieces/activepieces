@@ -6,11 +6,7 @@ import {
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    COLLATION,
-    isPostgres,
-    JSON_COLUMN_TYPE,
 } from '../../database/database-common'
 
 export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel
@@ -25,9 +21,9 @@ export const PieceMetadataEntity =
               nullable: false,
           },
           authors: {
-              type: ARRAY_COLUMN_TYPE,
+              type: String,
               nullable: false,
-              array: isPostgres(),
+              array: true,
           },
           displayName: {
               type: String,
@@ -53,28 +49,28 @@ export const PieceMetadataEntity =
           version: {
               type: String,
               nullable: false,
-              collation: COLLATION,
+              collation: 'en_natural',
           },
           minimumSupportedRelease: {
               type: String,
               nullable: false,
-              collation: COLLATION,
+              collation: 'en_natural',
           },
           maximumSupportedRelease: {
               type: String,
               nullable: false,
-              collation: COLLATION,
+              collation: 'en_natural',
           },
           auth: {
-              type: JSON_COLUMN_TYPE,
+              type: 'json',
               nullable: true,
           },
           actions: {
-              type: JSON_COLUMN_TYPE,
+              type: 'json',
               nullable: false,
           },
           triggers: {
-              type: JSON_COLUMN_TYPE,
+              type: 'json',
               nullable: false,
           },
           pieceType: {
@@ -82,9 +78,9 @@ export const PieceMetadataEntity =
               nullable: false,
           },
           categories: {
-              type: ARRAY_COLUMN_TYPE,
+              type: String,
               nullable: true,
-              array: isPostgres(),
+              array: true,
           },
           packageType: {
               type: String,
@@ -95,7 +91,7 @@ export const PieceMetadataEntity =
               nullable: true,
           },
           i18n: {
-              type: JSON_COLUMN_TYPE,
+              type: 'json',
               nullable: true,
           },
       },

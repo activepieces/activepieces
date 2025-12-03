@@ -16,7 +16,6 @@ import { Level } from 'pino'
 
 export enum DatabaseType {
     POSTGRES = 'POSTGRES',
-    SQLITE3 = 'SQLITE3',
     PGLITE = 'PGLITE',
 }
 

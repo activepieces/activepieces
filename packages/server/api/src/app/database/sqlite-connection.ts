@@ -382,26 +382,17 @@ const getSynchronize = (): boolean => {
     return value[env] ?? false
 }
 
-export const createSqlLiteDataSource = ({ migrationsOnly = false }: { migrationsOnly?: boolean } = {}): DataSource => {
-    const migrationConfig = getMigrationConfig()
-
-    if (migrationsOnly) {
-        return new DataSource({
-            type: 'sqlite',
-            database: getSqliteDatabase(),
-            ...migrationConfig,
-            entities: [],
-            subscribers: [],
-            synchronize: false,
-        })
-    }
-
+/**
+ * @deprecated SQLite3 is deprecated and only exists for migration purposes. Use PGLite instead.
+ */
+export const createSqlLiteDataSourceForMigrations = (): DataSource => {
     return new DataSource({
         type: 'sqlite',
         database: getSqliteDatabase(),
-        ...migrationConfig,
-        ...commonProperties,
-        synchronize: getSynchronize(),
+        ...getMigrationConfig(),
+        entities: [],
+        subscribers: [],
+        synchronize: false,
     })
 }
 

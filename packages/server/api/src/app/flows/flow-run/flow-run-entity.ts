@@ -8,11 +8,7 @@ import {
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    isPostgres,
-    JSONB_COLUMN_TYPE,
-    TIMESTAMP_COLUMN_TYPE,
 } from '../../database/database-common'
 
 type FlowRunSchema = FlowRun & {
@@ -50,24 +46,24 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
         },
         tags: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
             nullable: true,
         },
         startTime: {
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
             nullable: true,
         },
         finishTime: {
             nullable: true,
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
         },
         pauseMetadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
         failedStep: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
         archivedAt: {

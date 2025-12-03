@@ -2,19 +2,9 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import { DataSource, EntityMetadata } from 'typeorm'
 import { DatabaseType, system } from '../../helper/system/system'
 import { createPGliteDataSource } from '../pglite-connection'
-import { createSqlLiteDataSource } from '../sqlite-connection'
+import { createSqlLiteDataSourceForMigrations } from '../sqlite-connection'
 
 const log = system.globalLogger()
-
-export enum SQLiteToPostgresMigrationMode {
-    AUTO = 'AUTO',
-    FORCE = 'FORCE',
-    SKIP = 'SKIP',
-}
-
-function getMigrationMode(): SQLiteToPostgresMigrationMode {
-    return system.get(AppSystemProp.SQLITE3_TO_PGLITE_MIGRATION) ?? SQLiteToPostgresMigrationMode.AUTO
-}
 
 async function isPGliteEmpty(pgliteDataSource: DataSource): Promise<boolean> {
     const result = await pgliteDataSource.query('SELECT 1 FROM project LIMIT 1')
@@ -24,16 +14,6 @@ async function isPGliteEmpty(pgliteDataSource: DataSource): Promise<boolean> {
 export async function shouldMigrateSqliteToPGlite(): Promise<boolean> {
     if (system.get(AppSystemProp.DB_TYPE) !== DatabaseType.PGLITE) {
         return false
-    }
-
-    const mode = getMigrationMode()
-    
-    if (mode === SQLiteToPostgresMigrationMode.SKIP) {
-        return false
-    }
-
-    if (mode === SQLiteToPostgresMigrationMode.FORCE) {
-        return true
     }
 
     const pgliteDataSource = createPGliteDataSource()
@@ -51,7 +31,7 @@ export async function shouldMigrateSqliteToPGlite(): Promise<boolean> {
 export async function migrateSqliteToPGlite(): Promise<void> {
     log.info('Starting SQLite to PGLite migration...')
 
-    const sqliteDataSource = createSqlLiteDataSource({ migrationsOnly: true })
+    const sqliteDataSource = createSqlLiteDataSourceForMigrations()
     await sqliteDataSource.initialize()
     await sqliteDataSource.runMigrations()
 
