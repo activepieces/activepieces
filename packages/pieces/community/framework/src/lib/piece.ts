@@ -13,11 +13,11 @@ import * as semver from 'semver';
 
 
 
-export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty>
+export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
 {
-  private readonly _actions: Record<string, Action<PieceAuth>> = {};
-  private readonly _triggers: Record<string, Trigger<PieceAuth>> = {};
+  private readonly _actions: Record<string, Action> = {};
+  private readonly _triggers: Record<string, Trigger> = {};
   // this method didn't exist in older version
   public getContextInfo: (() => { version: ContextVersion } )| undefined = () => ({ version: LATEST_CONTEXT_VERSION }); 
   constructor(
@@ -25,8 +25,8 @@ export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthPr
     public readonly logoUrl: string,
     public readonly authors: string[],
     public readonly events: PieceEventProcessors | undefined,
-    actions: Action<PieceAuth>[],
-    triggers: Trigger<PieceAuth>[],
+    actions: Action[],
+    triggers: Trigger[],
     public readonly categories: PieceCategory[],
     public readonly auth?: PieceAuth,
     public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
@@ -57,11 +57,11 @@ export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthPr
     };
   }
 
-  getAction(actionName: string): Action<PieceAuth> | undefined {
+  getAction(actionName: string): Action | undefined {
     return this._actions[actionName];
   }
 
-  getTrigger(triggerName: string): Trigger<PieceAuth> | undefined {
+  getTrigger(triggerName: string): Trigger | undefined {
     return this._triggers[triggerName];
   }
 
@@ -74,10 +74,18 @@ export class Piece<PieceAuth extends PieceAuthProperty | undefined = PieceAuthPr
   }
 }
 
-export const createPiece = <PieceAuth extends PieceAuthProperty | undefined>(
+export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined>(
   params: CreatePieceParams<PieceAuth>
 ) => {
-  return new Piece(
+  if(params.auth && Array.isArray(params.auth)) { 
+    const isUnique = params.auth.every((auth, index, self) =>
+      index === self.findIndex((t) => t.type === auth.type)
+    );
+    if(!isUnique) {
+     throw new Error('Auth properties must be unique by type');
+    }
+  }
+  return new Piece<PieceAuth>(
     params.displayName,
     params.logoUrl,
     params.authors ?? [],
@@ -85,7 +93,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | undefined>(
     params.actions,
     params.triggers,
     params.categories ?? [],
-    params.auth ?? undefined,
+    params.auth,
     params.minimumSupportedRelease,
     params.maximumSupportedRelease,
     params.description,
@@ -93,7 +101,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | undefined>(
 };
 
 type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty | undefined
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
 > = {
   displayName: string;
   logoUrl: string;
@@ -103,8 +111,8 @@ type CreatePieceParams<
   events?: PieceEventProcessors;
   minimumSupportedRelease?: string;
   maximumSupportedRelease?: string;
-  actions: Action<PieceAuth>[];
-  triggers: Trigger<PieceAuth>[];
+  actions: Action[];
+  triggers: Trigger[];
   categories?: PieceCategory[];
 };
 

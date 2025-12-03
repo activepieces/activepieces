@@ -6,7 +6,7 @@ import { AppConnectionValueForAuthProperty, PropertyContext } from "../../contex
 import { PropertyType } from "./property-type";
 import { JsonProperty } from "./json-property";
 import { ArrayProperty } from "./array-property";
-import { InputPropertyMap, PieceAuthProperty } from "..";
+import { ExtractPieceAuthPropertyTypeForMethods, InputPropertyMap, PieceAuthProperty } from "..";
 
 export const DynamicProp = Type.Union([
   ShortTextProperty,
@@ -35,7 +35,7 @@ export const DynamicProperties = Type.Composite([
   TPropertyValue(Type.Unknown(), PropertyType.DYNAMIC),
 ])
 
-export type DynamicProperties<R extends boolean, PieceAuth extends PieceAuthProperty | undefined = undefined> = BasePropertySchema &
+export type DynamicProperties<R extends boolean, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined> = BasePropertySchema &
 {
    //dummy property to define auth property value inside props value
   auth: PieceAuth
@@ -48,9 +48,9 @@ export type DynamicProperties<R extends boolean, PieceAuth extends PieceAuthProp
     R
   >;
 
-  type DynamicPropertiesOptions<PieceAuth extends PieceAuthProperty | undefined = undefined> = (
+  type DynamicPropertiesOptions<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined> = (
     propsValue: Record<string, unknown> & {
-      auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
+      auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>;
     },
     ctx: PropertyContext,
   ) => Promise<InputPropertyMap>;

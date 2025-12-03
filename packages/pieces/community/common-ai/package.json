@@ -4,9 +4,9 @@
   "type": "commonjs",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@activepieces/shared": "0.27.0",
-    "@activepieces/pieces-framework": "0.21.0",
-    "@activepieces/pieces-common": "0.9.0",
+    "@activepieces/shared": "0.28.0",
+    "@activepieces/pieces-framework": "0.22.0",
+    "@activepieces/pieces-common": "0.10.0",
     "@ai-sdk/anthropic": "2.0.3",
     "@ai-sdk/google": "2.0.6",
     "@ai-sdk/openai": "2.0.12",
