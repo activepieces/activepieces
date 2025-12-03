@@ -5,8 +5,6 @@ import {
     ApplicationEventName,
     CustomDomain,
     CustomDomainStatus,
-    FlowTemplate,
-    FlowTemplateScope,
     GitBranchType,
     GitRepo,
     KeyAlgorithm,
@@ -64,6 +62,8 @@ import {
     RunEnvironment,
     Table,
     TeamProjectsLimit,
+    Template,
+    TemplateType,
     User,
     UserIdentity,
     UserIdentityProvider,
@@ -132,18 +132,26 @@ export const createMockOAuthApp = async (
 }
 
 export const createMockTemplate = (
-    template?: Partial<FlowTemplate>,
-): FlowTemplate => {
+    template?: Partial<Template>,
+): Template => {
     return {
         id: template?.id ?? apId(),
         created: template?.created ?? faker.date.recent().toISOString(),
         updated: template?.updated ?? faker.date.recent().toISOString(),
-        scope: template?.scope ?? FlowTemplateScope.PROJECT,
         pieces: template?.pieces ?? [],
-        schemaVersion: template?.schemaVersion ?? null,
-        template: template?.template ?? createMockFlowVersion(),
-        projectId: template?.projectId ?? apId(),
+        collection: template?.collection ?? {
+            flowTemplates: [createMockFlowVersion()],
+        },
         platformId: template?.platformId ?? apId(),
+        name: template?.name ?? faker.lorem.word(),
+        type: template?.type ?? TemplateType.CUSTOM,
+        description: template?.description ?? faker.lorem.sentence(),
+        tags: template?.tags ?? [],
+        blogUrl: template?.blogUrl ?? faker.internet.url(),
+        metadata: template?.metadata ?? null,
+        usageCount: template?.usageCount ?? 0,
+        author: template?.author ?? faker.person.fullName(),
+        categories: template?.categories ?? [],
     }
 }
 
