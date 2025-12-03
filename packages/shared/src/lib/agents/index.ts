@@ -24,6 +24,11 @@ export enum ToolCallStatus {
     COMPLETED = 'completed',
 }
 
+export enum ExecutionToolStatus {
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
 export enum ToolCallType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
