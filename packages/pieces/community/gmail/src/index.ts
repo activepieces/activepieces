@@ -1,3 +1,4 @@
+import { addLabelToEmail } from './lib/actions/add-label-to-email';
 kimport { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   OAuth2PropertyValue,
@@ -35,7 +36,8 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
-    createLabel, // 👈 aggiunta qui
+    addLabelToEmail,
+    createLabel, 
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
