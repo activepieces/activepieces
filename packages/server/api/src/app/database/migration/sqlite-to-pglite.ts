@@ -109,7 +109,17 @@ async function copyTableData(
     const tableName = entity.tableName
     log.info(`Migrating table: ${tableName}`)
 
-    const rows: Record<string, unknown>[] = await sqliteDataSource.query(`SELECT * FROM "${tableName}"`)
+    let rows: Record<string, unknown>[] = []
+    try {
+        rows = await sqliteDataSource.query(`SELECT * FROM "${tableName}"`)
+    }
+    catch (error) {
+        if (error instanceof Error && error.message.includes('no such table')) {
+            log.info(`Table ${tableName} does not exist, skipping`)
+            return
+        }
+        throw error
+    }
 
     if (rows.length === 0) {
         log.info(`Table ${tableName} is empty, skipping`)

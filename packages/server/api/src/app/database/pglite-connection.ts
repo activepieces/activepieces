@@ -1,7 +1,7 @@
 import { mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, spreadIfDefined } from '@activepieces/shared'
 import { types } from '@electric-sql/pglite'
 import { DataSource } from 'typeorm'
 import { PGliteDriver } from 'typeorm-pglite'
@@ -9,11 +9,30 @@ import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
 import { getMigrations } from './postgres-connection'
 
-const getPGliteDataPath = (): string => {
+const getPGliteDataPathFromDisk = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
     const pgliteDataPath = path.resolve(path.join(apConfigDirectoryPath, 'pglite'))
     mkdirSync(pgliteDataPath, { recursive: true })
     return pgliteDataPath
+}
+
+const getPGliteDataPath = (): string | undefined => {
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+
+    if (env === ApEnvironment.TESTING) {
+        return undefined // In-memory mode
+    }
+    return getPGliteDataPathFromDisk()
+}
+
+const getSynchronize = (): boolean => {
+    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
+
+    const value: Partial<Record<ApEnvironment, boolean>> = {
+        [ApEnvironment.TESTING]: true,
+    }
+
+    return value[env] ?? false
 }
 
 export const createPGliteDataSource = (): DataSource => {
@@ -27,7 +46,7 @@ export const createPGliteDataSource = (): DataSource => {
     return new DataSource({
         type: 'postgres',
         driver: new PGliteDriver({
-            dataDir: dataPath,
+            ...spreadIfDefined('dataDir', dataPath),
             serializers: {
                 [types.BOOL]: (val: unknown): string => {
                     if (val === true || val === 'true' || val === 1) return 'TRUE'
@@ -40,7 +59,7 @@ export const createPGliteDataSource = (): DataSource => {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
-        synchronize: false,
+        synchronize: getSynchronize(),
         ...commonProperties,
     })
 }
