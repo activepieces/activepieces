@@ -79,7 +79,7 @@ describe('Templates', () => {
                 url: '/v1/templates',
                 query: {
                     type: TemplateType.OFFICIAL,
-                }
+                },
             })
 
             // assert
