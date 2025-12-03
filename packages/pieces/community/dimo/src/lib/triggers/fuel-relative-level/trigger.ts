@@ -52,7 +52,7 @@ export const fuelRelativeTrigger = createTrigger({
 	},
 
 	async onEnable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { vehicleTokenIds, operator, fuelPercentage, coolDownPeriod, verificationToken } =
 			context.propsValue;
@@ -104,7 +104,7 @@ export const fuelRelativeTrigger = createTrigger({
 		}
 	},
 	async onDisable(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const dimo = new DimoClient({
 			clientId,
 			apiKey,

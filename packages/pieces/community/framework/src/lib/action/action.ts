@@ -4,7 +4,7 @@ import { ActionBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { PieceAuthProperty } from '../property/authentication';
 
-export type ActionRunner<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> =
+export type ActionRunner<PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty, ActionProps extends InputPropertyMap = InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
 export const ErrorHandlingOptionsParam = Type.Object({
@@ -19,7 +19,7 @@ export const ErrorHandlingOptionsParam = Type.Object({
 })
 export type ErrorHandlingOptionsParam = Static<typeof ErrorHandlingOptionsParam>
 
-type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> = {
+type CreateActionParams<PieceAuth extends PieceAuthProperty | undefined, ActionProps extends InputPropertyMap> = {
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */
@@ -34,7 +34,7 @@ type CreateActionParams<PieceAuth extends PieceAuthProperty, ActionProps extends
   errorHandlingOptions?: ErrorHandlingOptionsParam
 }
 
-export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends InputPropertyMap> implements ActionBase {
+export class IAction<PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty, ActionProps extends InputPropertyMap = InputPropertyMap> implements ActionBase {
   constructor(
     public readonly name: string,
     public readonly displayName: string,
@@ -48,12 +48,12 @@ export class IAction<PieceAuth extends PieceAuthProperty, ActionProps extends In
 }
 
 export type Action<
-  PieceAuth extends PieceAuthProperty = any,
+  PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty,
   ActionProps extends InputPropertyMap = any,
 > = IAction<PieceAuth, ActionProps>
 
 export const createAction = <
-  PieceAuth extends PieceAuthProperty = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty| undefined = undefined,
   ActionProps extends InputPropertyMap = any
 >(
   params: CreateActionParams<PieceAuth, ActionProps>,

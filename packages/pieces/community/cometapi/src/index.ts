@@ -20,7 +20,7 @@ export const cometapi = createPiece({
       auth: cometApiAuth,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

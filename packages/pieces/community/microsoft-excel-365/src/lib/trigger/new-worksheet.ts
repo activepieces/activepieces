@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   OAuth2PropertyValue,
   createTrigger
 } from '@activepieces/pieces-framework';
@@ -42,7 +43,7 @@ async function getWorksheets(
   }
 }
 
-const polling: Polling<OAuth2PropertyValue, { workbook_id: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof excelAuth>, { workbook_id: string }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, store }) => {
     const worksheets = await getWorksheets(auth, propsValue.workbook_id);

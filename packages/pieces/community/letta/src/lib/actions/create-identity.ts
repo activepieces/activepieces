@@ -82,7 +82,7 @@ export const createIdentity = createAction({
       properties,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth);
+    const client = getLettaClient(context.auth.props);
 
     const body: IdentityCreateParams = {
       identifier_key: identifierKey,

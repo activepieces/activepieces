@@ -16,7 +16,7 @@ export const createList = createAction({
   },
   async run(context) {
     const authentication = context.auth;
-    const accessToken = authentication;
+    const accessToken = authentication.secret_text; 
     const task_name = context.propsValue.task_name;
     const response = (
       await callsendfoxApi(HttpMethod.POST, 'lists', accessToken, {

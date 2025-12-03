@@ -17,6 +17,7 @@ export const createOrUpdateContact = createAction({
   description: 'Create or Update a contact in Constant Contact',
   props: {
     list: Property.MultiSelectDropdown({
+      auth: constantContactAuth,
       displayName: 'List',
       description: 'The list of the contact',
       required: true,
@@ -40,7 +41,7 @@ export const createOrUpdateContact = createAction({
               method: HttpMethod.GET,
               authentication: {
                 type: AuthenticationType.BEARER_TOKEN,
-                token: (auth as OAuth2PropertyValue)['access_token'],
+                token: (auth)['access_token'],
               },
             })
           ).body.lists.map((list) => {

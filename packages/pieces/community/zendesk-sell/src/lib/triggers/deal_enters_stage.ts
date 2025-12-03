@@ -1,10 +1,11 @@
 import {
     createTrigger,
     TriggerStrategy,
-    PiecePropValueSchema
+    PiecePropValueSchema,
+    AppConnectionValueForAuthProperty
 } from '@activepieces/pieces-framework';
 import { HttpMethod, DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
-import { zendeskSellAuth, ZendeskSellAuth as ZendeskSellAuthValue } from '../common/auth';
+import { zendeskSellAuth } from '../common/auth';
 import { zendeskSellCommon } from '../common/props';
 import { callZendeskApi } from '../common/client';
 
@@ -30,13 +31,13 @@ type TriggerPropsValue = {
 
 type PreviousDealStagesMap = Record<string, number>;
 
-const polling: Polling<PiecePropValueSchema<typeof zendeskSellAuth>, TriggerPropsValue> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof zendeskSellAuth>, TriggerPropsValue> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
 		const response = await callZendeskApi<{ items: ZendeskDealItem[] }>(
 			HttpMethod.GET,
 			'v2/deals',
-			auth as ZendeskSellAuthValue,
+			auth,
 			undefined,
 			{
 				sort_by: 'updated_at:desc',

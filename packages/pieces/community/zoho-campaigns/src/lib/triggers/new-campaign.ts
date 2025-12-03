@@ -4,15 +4,15 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof zohoCampaignsAuth>,
+  AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

@@ -15,7 +15,7 @@ export async function makeCursorRequest<T = any>(
     url: `${BASE_URL}${endpoint}`,
     authentication: {
       type: AuthenticationType.BASIC,
-      username: auth,
+      username: auth.secret_text,
       password: '',
     },
     headers: {

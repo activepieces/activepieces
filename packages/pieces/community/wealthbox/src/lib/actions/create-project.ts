@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fetchUserGroups, fetchUsers, fetchCustomFields, WEALTHBOX_API_BASE, handleApiError, DOCUMENT_TYPES } from '../common';
+import { wealthboxAuth } from '../..';
 
 export const createProject = createAction({
+  auth: wealthboxAuth,
   name: 'create_project',
   displayName: 'Create Project',
   description: 'Starts a new project with description and organizer. Launch project-based onboarding when new clients sign up.',
@@ -19,6 +21,7 @@ export const createProject = createAction({
     }),
 
     organizer: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Organizer',
       description: 'Select the user who will be responsible for organizing this project',
       required: false,
@@ -27,7 +30,7 @@ export const createProject = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const users = await fetchUsers(auth as string);
+          const users = await fetchUsers(auth.secret_text);
           const assignableUsers = users.filter((user: any) => !user.excluded_from_assignments);
           return {
             options: assignableUsers.map((user: any) => ({
@@ -45,6 +48,7 @@ export const createProject = createAction({
     }),
 
     visible_to: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Visible To',
       description: 'Select who can view this project',
       required: false,
@@ -53,7 +57,7 @@ export const createProject = createAction({
         if (!auth) return { options: [] };
 
         try {
-          const userGroups = await fetchUserGroups(auth as string);
+          const userGroups = await fetchUserGroups(auth.secret_text);
           return {
             options: userGroups.map((group: any) => ({
               label: group.name,
@@ -70,6 +74,7 @@ export const createProject = createAction({
     }),
 
     custom_fields: Property.DynamicProperties({
+      auth: wealthboxAuth,
       displayName: 'Custom Fields',
       description: 'Add custom fields to this project',
       required: false,
@@ -98,7 +103,7 @@ export const createProject = createAction({
         }
 
         try {
-          const customFields = await fetchCustomFields(auth as unknown as string, DOCUMENT_TYPES.PROJECT);
+          const customFields = await fetchCustomFields(auth.secret_text, DOCUMENT_TYPES.PROJECT);
           const customFieldOptions = customFields.map((field: any) => ({
             label: field.name,
             value: field.name
@@ -177,7 +182,7 @@ export const createProject = createAction({
     const customFieldsArray = (propsValue as any).custom_fields_array;
     if (customFieldsArray && Array.isArray(customFieldsArray) && customFieldsArray.length > 0) {
       try {
-        const customFields = await fetchCustomFields(auth as unknown as string, DOCUMENT_TYPES.PROJECT);
+        const customFields = await fetchCustomFields(auth.secret_text, DOCUMENT_TYPES.PROJECT);
         const customFieldMap = new Map(customFields.map((field: any) => [field.name, field.id]));
 
         requestBody.custom_fields = customFieldsArray.map((field: any) => {
@@ -207,7 +212,7 @@ export const createProject = createAction({
         method: HttpMethod.POST,
         url: `${WEALTHBOX_API_BASE}/projects`,
         headers: {
-          'ACCESS_TOKEN': auth as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Content-Type': 'application/json'
         },
         body: requestBody

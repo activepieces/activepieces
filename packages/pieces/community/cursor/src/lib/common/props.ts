@@ -1,6 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { CursorAuth } from './auth';
+import { cursorAuth, CursorAuth } from './auth';
 import { makeCursorRequest } from './client';
 
 interface Agent {
@@ -26,6 +26,7 @@ interface ListAgentsResponse {
 }
 
 export const agentDropdown = Property.Dropdown({
+  auth: cursorAuth,
   displayName: 'Agent',
   description: 'Select a cloud agent',
   required: true,

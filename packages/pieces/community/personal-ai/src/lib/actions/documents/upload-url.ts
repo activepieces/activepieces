@@ -54,7 +54,7 @@ export const uploadUrl = createAction({
       url: `${BASE_URL}/upload-url`,
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': auth as string,
+        'x-api-key': auth.secret_text,
       },
       body: {
         Url: url,

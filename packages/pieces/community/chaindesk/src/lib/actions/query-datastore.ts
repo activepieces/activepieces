@@ -28,8 +28,8 @@ export const queryDatastoretAction = createAction({
       url: BASE_URL + `/datastores/${datastoreId}/query`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
-      },
+        token: context.auth.secret_text,
+      },  
       body: {
         query,
       },

@@ -16,7 +16,7 @@ export const deleteADocument = createAction({
     const { documentId } = context.propsValue;
 
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.DELETE,
       `/documents/${documentId}`,
       {}
