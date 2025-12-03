@@ -28,6 +28,11 @@ test.describe('Webhooks', () => {
       action: 'Return Response'
     });
 
+    //clear
+    await page.locator('div.cm-activeLine.cm-line').fill(
+      ''
+    );
+
     await page.locator('div.cm-activeLine.cm-line').fill(
       '{"targetRunVersion": "{{trigger[\'queryParams\'][\'targetRunVersion\']}}"}'
     );

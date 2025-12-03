@@ -1,24 +1,20 @@
-import { PlatformId, ProjectId } from '@activepieces/shared'
+import { Flow, FlowId, FlowStatus, PlatformId, ProjectId } from '@activepieces/shared'
+import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
-    HARD_DELETE_PROJECT = 'hard-delete-project',
     PIECES_ANALYTICS = 'pieces-analytics',
     PIECES_SYNC = 'pieces-sync',
-    TRIAL_TRACKER = 'trial-tracker',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
-    ISSUES_REMINDER = 'issue-reminder',
+    TRIAL_TRACKER = 'trial-tracker',
+    ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
     AI_USAGE_REPORT = 'ai-usage-report',
-    SEVEN_DAYS_IN_TRIAL = 'seven-days-in-trial',
-    ONE_DAY_LEFT_ON_TRIAL = 'one-day-left-on-trial',
+    DELETE_FLOW = 'delete-flow',
+    UPDATE_FLOW_STATUS = 'update-flow-status',
 }
 
-type HardDeleteProjectSystemJobData = {
-    projectId: ProjectId
-}
-
-type IssuesReminderSystemJobData = {
+type IssuesSummarySystemJobData = {
     projectId: ProjectId
     projectName: string
     platformId: string
@@ -30,29 +26,29 @@ type AiUsageReportSystemJobData = {
     idempotencyKey: string
 }
 
-type SevenDaysInTrialEmailSystemJobData = {
-    platformId: PlatformId
-    email: string
-    firstName?: string
+type DeleteFlowDurableSystemJobData =  {
+    flow: Flow
+    preDeleteDone: boolean
+    dbDeleteDone: boolean
 }
 
-type OneDayLeftOnTrialEmailSystemJobData = {
-    platformId: PlatformId
-    email: string
-    firstName?: string
+type UpdateFlowStatusDurableSystemJobData =  {
+    id: FlowId
+    projectId: ProjectId
+    newStatus: FlowStatus
+    preUpdateDone: boolean
 }
 
 type SystemJobDataMap = {
-    [SystemJobName.HARD_DELETE_PROJECT]: HardDeleteProjectSystemJobData
-    [SystemJobName.ISSUES_REMINDER]: IssuesReminderSystemJobData
+    [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
     [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
-    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
-    [SystemJobName.SEVEN_DAYS_IN_TRIAL]: SevenDaysInTrialEmailSystemJobData
-    [SystemJobName.ONE_DAY_LEFT_ON_TRIAL]: OneDayLeftOnTrialEmailSystemJobData
+    [SystemJobName.TRIAL_TRACKER]: Record<string, never>
+    [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
+    [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -80,10 +76,12 @@ export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
 type UpsertJobParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
+    customConfig?: JobsOptions
 }
 
 export type SystemJobSchedule = {
     init(): Promise<void>
     upsertJob<T extends SystemJobName>(params: UpsertJobParams<T>): Promise<void>
+    getJob<T extends SystemJobName>(jobId: string): Promise<Job<SystemJobData<T>> | undefined>
     close(): Promise<void>
 }

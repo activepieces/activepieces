@@ -17,34 +17,30 @@ import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
-import { ProjectPiecesPage } from '@/app/routes/settings/pieces';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
 import { Error } from '@/features/billing/components/error';
 import { Success } from '@/features/billing/components/success';
-import { AcceptInvitation } from '@/features/team/component/accept-invitation';
+import { AcceptInvitation } from '@/features/members/component/accept-invitation';
+import { routesThatRequireProjectId } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { PlatformLayout } from '../components/platform-layout';
-import { ProjectDashboardLayout } from '../components/project-dashboard-layout';
-import ProjectSettingsLayout from '../components/project-settings-layout';
+import { ProjectDashboardLayout } from '../components/project-layout';
 import { BuilderNavigationSidebar } from '../components/sidebar/builder';
 import NotFoundPage from '../routes/404-page';
-import { AgentsPage } from '../routes/agents';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
+import { ExplorePage } from '../routes/explore';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import McpServersPage from '../routes/mcp-servers';
-import McpPage from '../routes/mcp-servers/id';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
-import SettingsJobsPage from '../routes/platform/infra/jobs';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
@@ -57,8 +53,8 @@ import TemplatesPage from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
+import { RunsPage } from '../routes/runs';
 import { FlowRunPage } from '../routes/runs/id';
-import { EnvironmentPage } from '../routes/settings/environment';
 import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
@@ -72,7 +68,6 @@ import { DefaultRoute } from './default-route';
 import { RoutePermissionGuard } from './permission-guard';
 import {
   ProjectRouterWrapper,
-  projectSettingsRoutes,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
 
@@ -99,8 +94,18 @@ const routes = [
     path: '/authenticate',
     element: <AuthenticatePage />,
   },
+  {
+    path: '/explore',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Explore">
+          <ExplorePage />
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  },
   ...ProjectRouterWrapper({
-    path: '/flows',
+    path: routesThatRequireProjectId.flows,
     element: (
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_FLOW}>
@@ -112,7 +117,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/flows/:flowId',
+    path: routesThatRequireProjectId.singleFlow,
     element: (
       <RoutePermissionGuard permission={Permission.READ_FLOW}>
         <PageTitle title="Builder">
@@ -135,16 +140,6 @@ const routes = [
       </PageTitle>
     ),
   },
-  ...ProjectRouterWrapper({
-    path: '/agents',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Agents">
-          <AgentsPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
   {
     path: '/chats/:flowId',
     element: (
@@ -154,7 +149,7 @@ const routes = [
     ),
   },
   ...ProjectRouterWrapper({
-    path: '/runs/:runId',
+    path: routesThatRequireProjectId.singleRun,
     element: (
       <RoutePermissionGuard permission={Permission.READ_RUN}>
         <PageTitle title="Flow Run">
@@ -166,24 +161,12 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/runs',
+    path: routesThatRequireProjectId.runs,
     element: (
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_RUN}>
           <PageTitle title="Runs">
-            <FlowsPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/issues',
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_RUN}>
-          <PageTitle title="Issues">
-            <FlowsPage />
+            <RunsPage />
           </PageTitle>
         </RoutePermissionGuard>
       </ProjectDashboardLayout>
@@ -198,7 +181,7 @@ const routes = [
     ),
   },
   ...ProjectRouterWrapper({
-    path: '/releases/:releaseId',
+    path: routesThatRequireProjectId.singleRelease,
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Releases">
@@ -208,7 +191,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/tables',
+    path: routesThatRequireProjectId.tables,
     element: (
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_TABLE}>
@@ -220,7 +203,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/tables/:tableId',
+    path: routesThatRequireProjectId.singleTable,
     element: (
       <RoutePermissionGuard permission={Permission.READ_TABLE}>
         <PageTitle title="Table">
@@ -234,7 +217,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/connections',
+    path: routesThatRequireProjectId.connections,
     element: (
       <ProjectDashboardLayout>
         <RoutePermissionGuard permission={Permission.READ_APP_CONNECTION}>
@@ -246,7 +229,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/releases',
+    path: routesThatRequireProjectId.releases,
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Releases">
@@ -256,7 +239,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/todos',
+    path: routesThatRequireProjectId.todos,
     element: (
       <ProjectDashboardLayout>
         <PageTitle title="Todos">
@@ -266,7 +249,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/todos/:todoId',
+    path: routesThatRequireProjectId.singleTodo,
     element: (
       <PageTitle title="Todo Testing">
         <TodoTestingPage />
@@ -274,7 +257,7 @@ const routes = [
     ),
   }),
   ...ProjectRouterWrapper({
-    path: '/settings',
+    path: routesThatRequireProjectId.settings,
     element: (
       <ProjectDashboardLayout>
         <SettingsRerouter></SettingsRerouter>
@@ -321,58 +304,6 @@ const routes = [
       </PageTitle>
     ),
   },
-
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.pieces,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Pieces">
-          <ProjectSettingsLayout>
-            <ProjectPiecesPage />
-          </ProjectSettingsLayout>
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: projectSettingsRoutes.environments,
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_PROJECT_RELEASE}>
-          <PageTitle title="Environments">
-            <ProjectSettingsLayout>
-              <EnvironmentPage />
-            </ProjectSettingsLayout>
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-
-  ...ProjectRouterWrapper({
-    path: '/mcps',
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_MCP}>
-          <PageTitle title="MCP">
-            <McpServersPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
-  ...ProjectRouterWrapper({
-    path: '/mcps/:mcpId',
-    element: (
-      <ProjectDashboardLayout>
-        <RoutePermissionGuard permission={Permission.READ_MCP}>
-          <PageTitle title="MCP">
-            <McpPage />
-          </PageTitle>
-        </RoutePermissionGuard>
-      </ProjectDashboardLayout>
-    ),
-  }),
 
   {
     path: '/invitation',
@@ -509,16 +440,6 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="Workers">
           <SettingsWorkersPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/jobs',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Jobs">
-          <SettingsJobsPage />
         </PageTitle>
       </PlatformLayout>
     ),

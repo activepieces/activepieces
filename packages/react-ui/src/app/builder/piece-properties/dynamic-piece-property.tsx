@@ -8,7 +8,11 @@ import { SkeletonList } from '@/components/ui/skeleton';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
-import { FlowAction, FlowTrigger } from '@activepieces/shared';
+import {
+  FlowAction,
+  FlowTrigger,
+  PropertyExecutionType,
+} from '@activepieces/shared';
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
@@ -45,17 +49,26 @@ const DynamicPropertiesImplementation = React.memo(
     ]);
     const form = useFormContext<FlowAction | FlowTrigger>();
     const { updateFormSchema } = useStepSettingsContext();
-    const isFirstRender = useRef(true);
-    const previousValues = useRef<undefined | unknown[]>(undefined);
+    const allInputValues = useWatch({
+      name: `settings.input`,
+      control: form.control,
+    });
+    const refreshersPropertiesNames = [...props.refreshers, 'auth'];
+    const refresherValues = refreshersPropertiesNames.reduce<
+      Record<string, unknown>
+    >((acc, refresher) => {
+      acc[refresher] = allInputValues[refresher];
+      return acc;
+    }, {});
+    const previousValues = useRef<Record<string, unknown>>(refresherValues);
     const { propertyLoadingFinished, propertyLoadingStarted } = useContext(
       DynamicPropertiesContext,
     );
     const [propertyMap, setPropertyMap] = useState<
       PiecePropertyMap | undefined
     >(undefined);
-    const newRefreshers = [...props.refreshers, 'auth'];
 
-    const { mutate, isPending, error } =
+    const { mutate, isPending } =
       piecesHooks.usePieceOptions<PropertyType.DYNAMIC>({
         onMutate: () => {
           propertyLoadingStarted(props.propertyName);
@@ -68,28 +81,9 @@ const DynamicPropertiesImplementation = React.memo(
           propertyLoadingFinished(props.propertyName);
         },
       });
-    if (error) {
-      throw error;
-    }
-    /* eslint-disable react-hooks/rules-of-hooks */
-    const refresherValues = newRefreshers.map((refresher) =>
-      useWatch({
-        name: `settings.input.${refresher}` as const,
-        control: form.control,
-      }),
-    );
-    /* eslint-enable react-hooks/rules-of-hooks */
 
     useDeepCompareEffectNoCheck(() => {
-      const input: Record<string, unknown> = {};
-      newRefreshers.forEach((refresher, index) => {
-        input[refresher] = refresherValues[index];
-      });
-
-      if (
-        !isFirstRender.current &&
-        !deepEqual(previousValues.current, refresherValues)
-      ) {
+      if (!deepEqual(previousValues.current, refresherValues)) {
         // the field state won't be cleared if you only unset the parent prop value
         if (propertyMap) {
           Object.keys(propertyMap).forEach((childPropName) => {
@@ -109,7 +103,6 @@ const DynamicPropertiesImplementation = React.memo(
       }
 
       previousValues.current = refresherValues;
-      isFirstRender.current = false;
       const { settings } = form.getValues();
       const actionOrTriggerName = settings.actionName ?? settings.triggerName;
       const { pieceName, pieceVersion } = settings;
@@ -120,7 +113,7 @@ const DynamicPropertiesImplementation = React.memo(
             pieceVersion,
             propertyName: props.propertyName,
             actionOrTriggerName: actionOrTriggerName,
-            input,
+            input: refresherValues,
             flowVersionId: flowVersion.id,
             flowId: flowVersion.flowId,
           },
@@ -131,7 +124,7 @@ const DynamicPropertiesImplementation = React.memo(
             const currentValue = form.getValues(
               `settings.input.${props.propertyName}`,
             );
-            const defaultValue = formUtils.getDefaultValueForStep({
+            const defaultValue = formUtils.getDefaultValueForProperties({
               props: response.options,
               existingInput: currentValue ?? {},
               propertySettings:
@@ -148,6 +141,19 @@ const DynamicPropertiesImplementation = React.memo(
             );
 
             if (!readonly) {
+              // previously the schema didn't have this property, so we need to set it
+              // we can't always set it to MANUAL, because some sub properties might be dynamic and have the same name as the dynamic property
+              // which will override the sub property exectuion type
+              if (
+                !form.getValues().settings?.propertySettings?.[
+                  props.propertyName
+                ]
+              ) {
+                form.setValue(
+                  `settings.propertySettings.${props.propertyName}.type`,
+                  PropertyExecutionType.MANUAL as unknown,
+                );
+              }
               form.setValue(
                 `settings.propertySettings.${props.propertyName}.schema`,
                 schemaWithoutDropdownOptions,
@@ -165,7 +171,7 @@ const DynamicPropertiesImplementation = React.memo(
           },
         },
       );
-    }, refresherValues);
+    }, [refresherValues]);
 
     return (
       <>

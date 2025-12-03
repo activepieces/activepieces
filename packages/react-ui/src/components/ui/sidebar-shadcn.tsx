@@ -23,12 +23,28 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 
-const SIDEBAR_COOKIE_NAME = 'sidebar_state';
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '18rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+
+function getSidebarStateFromLocalStorage(keyForStateInLocalStorage?: string) {
+  if (!keyForStateInLocalStorage) {
+    return true;
+  }
+  const stored = localStorage.getItem(keyForStateInLocalStorage);
+  return stored ? stored === 'true' : true;
+}
+
+function setSidebarStateToLocalStorage(
+  isOpen: boolean,
+  keyForStateInLocalStorage?: string,
+) {
+  if (!keyForStateInLocalStorage) {
+    return;
+  }
+  localStorage.setItem(keyForStateInLocalStorage, isOpen.toString());
+}
 
 type SidebarContextProps = {
   state: 'expanded' | 'collapsed';
@@ -57,13 +73,15 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
+    keyForStateInLocalStorage?: string;
   }
 >(
   (
     {
-      defaultOpen = true,
+      defaultOpen,
       open: openProp,
       onOpenChange: setOpenProp,
+      keyForStateInLocalStorage,
       className,
       style,
       children,
@@ -74,9 +92,9 @@ const SidebarProvider = React.forwardRef<
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
 
-    // This is the internal state of the sidebar.
-    // We use openProp and setOpenProp for control from outside the component.
-    const [_open, _setOpen] = React.useState(defaultOpen);
+    const [_open, _setOpen] = React.useState(
+      defaultOpen ?? getSidebarStateFromLocalStorage(keyForStateInLocalStorage),
+    );
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
       (value: boolean | ((value: boolean) => boolean)) => {
@@ -87,10 +105,9 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+        setSidebarStateToLocalStorage(openState, keyForStateInLocalStorage);
       },
-      [setOpenProp, open],
+      [setOpenProp, open, keyForStateInLocalStorage],
     );
 
     // Helper to toggle the sidebar.
@@ -277,8 +294,8 @@ Sidebar.displayName = 'Sidebar';
 
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
+  React.ComponentProps<typeof Button> & { iconClassName?: string }
+>(({ className, onClick, iconClassName, ...props }, ref) => {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -287,14 +304,14 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn('h-7 w-7', className)}
+      className={cn(className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeft />
+      <PanelLeft className={iconClassName} />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );
@@ -338,8 +355,8 @@ const SidebarInset = React.forwardRef<
     <main
       ref={ref}
       className={cn(
-        'relative flex w-full flex-1 flex-col bg-background max-h-[calc(100vh-1rem)]',
-        'md:peer-data-[variant=inset]:m-2 md:peer-data-[state=collapsed]:peer-data-[variant=inset]:ml-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow',
+        'relative flex w-full flex-1 flex-col bg-background max-h-[calc(100vh)]',
+        'md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:border-l',
         className,
       )}
       {...props}
@@ -535,7 +552,8 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+        default:
+          'hover:bg-sidebar-accent active:bg-sidebar-active hover:text-sidebar-accent-foreground',
         outline:
           'bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]',
       },
@@ -761,8 +779,8 @@ const SidebarSkeleton = ({ numOfItems }: { numOfItems: number }) => {
         <SidebarMenuItem key={index}>
           <SidebarMenuButton disabled className="px-2">
             <div className="flex items-center w-full">
-              <div className="w-4 h-4 mr-2 bg-gray-300 dark:bg-gray-600 rounded animate-pulse" />
-              <div className="bg-gray-300 w-full rounded dark:bg-gray-600 animate-pulse h-4" />
+              <div className="w-4 h-4 mr-2 bg-muted rounded animate-pulse" />
+              <div className="bg-muted w-full rounded animate-pulse h-4" />
             </div>
           </SidebarMenuButton>
         </SidebarMenuItem>

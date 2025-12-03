@@ -2,7 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, Plus, Upload, Workflow } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
@@ -18,12 +18,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { folderIdParamName } from '@/features/folders/component/folder-filter-list';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import { Permission, PopulatedFlow } from '@activepieces/shared';
+import {
+  Permission,
+  PopulatedFlow,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 
 import { ImportFlowDialog } from '../components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '../components/select-flow-template-dialog';
@@ -31,10 +34,10 @@ import { SelectFlowTemplateDialog } from '../components/select-flow-template-dia
 import { flowsApi } from './flows-api';
 
 type CreateFlowDropdownProps = {
-  refetch?: () => void;
+  refetch: () => void | null;
   variant?: 'default' | 'small';
   className?: string;
-  folderId?: string;
+  folderId: string;
 };
 
 export const CreateFlowDropdown = ({
@@ -46,7 +49,6 @@ export const CreateFlowDropdown = ({
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const [refresh, setRefresh] = useState(0);
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { embedState } = useEmbedding();
   const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
@@ -55,10 +57,9 @@ export const CreateFlowDropdown = ({
     void
   >({
     mutationFn: async () => {
-      const effectiveFolderId = folderId ?? searchParams.get(folderIdParamName);
       const folder =
-        effectiveFolderId && effectiveFolderId !== 'NULL'
-          ? await foldersApi.get(effectiveFolderId)
+        folderId !== UncategorizedFolderId
+          ? await foldersApi.get(folderId)
           : undefined;
       const flow = await flowsApi.create({
         projectId: authenticationSession.getProjectId()!,
@@ -117,7 +118,7 @@ export const CreateFlowDropdown = ({
             <Plus className="h-4 w-4 me-2" />
             <span>{t('From scratch')}</span>
           </DropdownMenuItem>
-          <SelectFlowTemplateDialog>
+          <SelectFlowTemplateDialog folderId={folderId}>
             <DropdownMenuItem
               onSelect={(e) => e.preventDefault()}
               disabled={isCreateFlowPending}
@@ -134,6 +135,7 @@ export const CreateFlowDropdown = ({
                 setRefresh(refresh + 1);
                 if (refetch) refetch();
               }}
+              folderId={folderId}
             >
               <DropdownMenuItem
                 onSelect={(e) => e.preventDefault()}

@@ -2,10 +2,9 @@ import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-f
 import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
 import { WebhookHandshakeStrategy } from '@activepieces/shared';
-import { DimoClient, getTirePressurePositionLabel } from '../../common/helpers';
+import { DimoClient, getTirePressurePositionLabel, getNumberExpression } from '../../common/helpers';
 import {
 	CreateWebhookParams,
-	NumericTriggerField,
 	WebhookInfo,
 	WebhookPayload,
 } from '../../common/types';
@@ -47,17 +46,11 @@ export const tirePressureTrigger = createTrigger({
 			description: 'The tire pressure in kilopascals to compare against',
 			required: true,
 		}),
-		triggerFrequency: Property.StaticDropdown({
-			displayName: 'Trigger Frequency',
-			description: 'How often the webhook should fire when condition is met.',
+		coolDownPeriod: Property.Number({
+			displayName: 'Cool Down Period (seconds)',
+			description: 'Minimum number of seconds between successive webhook firings',
 			required: true,
-			defaultValue: 'Realtime',
-			options: {
-				options: [
-					{ label: 'Real-time (continuous)', value: 'Realtime' },
-					{ label: 'Hourly', value: 'Hourly' },
-				],
-			},
+			defaultValue: 30,
 		}),
 		verificationToken: verificationTokenInput,
 	},
@@ -83,7 +76,7 @@ export const tirePressureTrigger = createTrigger({
 			tirePosition,
 			operator,
 			pressureKpa,
-			triggerFrequency,
+			coolDownPeriod,
 			verificationToken,
 		} = context.propsValue;
 
@@ -99,20 +92,16 @@ export const tirePressureTrigger = createTrigger({
 				: [];
 
 		const webhookPayload: CreateWebhookParams = {
-			service: 'Telemetry',
-			data: tirePosition,
-			trigger: {
-				field: tirePosition as NumericTriggerField,
-				operator,
-				value: pressureKpa,
-			},
-			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			service: 'telemetry.signals',
+			metricName: tirePosition,
+			condition: getNumberExpression(operator, pressureKpa),
+			coolDownPeriod,
 			description: `Tire pressure trigger: ${getTirePressurePositionLabel(
 				tirePosition,
 			)} ${operator} ${pressureKpa} kPa`,
-			target_uri: context.webhookUrl,
-			status: 'Active',
-			verification_token: verificationToken,
+			targetURL: context.webhookUrl,
+			status: 'enabled',
+			verificationToken: verificationToken,
 		};
 
 		try {
@@ -124,18 +113,12 @@ export const tirePressureTrigger = createTrigger({
 
 			const webhookId = createWebhookResponse.id;
 
-			if (ids.length === 0) {
-				await dimo.subscribeAllVehicles({
-					developerJwt,
-					webhookId,
-				});
-			} else {
-				await Promise.all(
-					ids.map(async (tokenId) => {
-						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
-					}),
-				);
-			}
+			await dimo.subscribeVehiclesToWebhook({
+				developerJwt,
+				webhookId,
+				vehicleTokenIds: ids,
+			});
+
 			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
 				webhookId,
 				verificationToken,

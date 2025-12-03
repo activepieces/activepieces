@@ -40,7 +40,7 @@ export const userService = {
         }
         return userRepo().save(user)
     },
-    async update({ id, status, platformId, platformRole, externalId, lastChangelogDismissed }: UpdateParams): Promise<UserWithMetaInformation> {
+    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
         const platform = await platformService.getOneOrThrow(user.platformId!)
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
@@ -59,7 +59,6 @@ export const userService = {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
             ...spreadIfDefined('externalId', externalId),
-            ...spreadIfDefined('lastChangelogDismissed', lastChangelogDismissed),
         })
 
         if (updateResult.affected !== 1) {
@@ -152,7 +151,6 @@ export const userService = {
             platformRole: user.platformRole,
             status: user.status,
             externalId: user.externalId,
-            lastChangelogDismissed: user.lastChangelogDismissed,
             created: user.created,
             updated: user.updated,
         }
@@ -219,7 +217,6 @@ type UpdateParams = {
     platformId: PlatformId
     platformRole?: PlatformRole
     externalId?: string
-    lastChangelogDismissed?: string
 }
 
 type CreateParams = {

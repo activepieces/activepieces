@@ -53,18 +53,19 @@ beforeEach(async () => {
         sendInvitation: jest.fn(),
         sendIssueCreatedNotification: jest.fn(),
         sendQuotaAlert: jest.fn(),
-        sendReminderJobHandler: jest.fn(),
+        sendIssuesSummary: jest.fn(),
         sendTrialReminder: jest.fn(),
+        sendReminderJobHandler: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
     }))
 
-    await databaseConnection().getRepository('flag').delete({})
-    await databaseConnection().getRepository('project').delete({})
-    await databaseConnection().getRepository('platform').delete({})
-    await databaseConnection().getRepository('user').delete({})
-    await databaseConnection().getRepository('user_identity').delete({})
-    await databaseConnection().getRepository('custom_domain').delete({})
-    await databaseConnection().getRepository('user_invitation').delete({})
+    await databaseConnection().getRepository('flag').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user_identity').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('custom_domain').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user_invitation').createQueryBuilder().delete().execute()
 })
 
 afterAll(async () => {
@@ -667,7 +668,7 @@ describe('Authentication API', () => {
             const mockEmail = faker.internet.email()
             const mockPassword = 'password'
 
-            const { mockUser, mockUserIdentity } = await mockBasicUser({
+            const { mockUser } = await mockBasicUser({
                 user: {
                     status: UserStatus.INACTIVE,
                     platformRole: PlatformRole.ADMIN,
@@ -716,10 +717,10 @@ describe('Authentication API', () => {
 
             const responseBody = response?.json()
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+            expect(response?.statusCode).toBe(StatusCodes.UNAUTHORIZED)
 
-            expect(responseBody?.code).toBe('USER_IS_INACTIVE')
-            expect(responseBody?.params?.email).toBe(mockUserIdentity.email)
+            expect(responseBody?.code).toBe('AUTHENTICATION')
+            expect(responseBody?.params.message).toBe('No platform found for identity')
         })
 
     })

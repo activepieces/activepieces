@@ -24,8 +24,8 @@ import {
 import { MoveFlowDialog } from '../components/move-flow-dialog';
 
 import { CreateFlowDropdown } from './create-flow-dropdown';
+import { flowHooks } from './flow-hooks';
 import { flowsApi } from './flows-api';
-import { flowsHooks } from './flows-hooks';
 
 export const useFlowsBulkActions = ({
   selectedRows,
@@ -33,12 +33,14 @@ export const useFlowsBulkActions = ({
   setSelectedRows,
   setRefresh,
   refetch,
+  folderId,
 }: {
   selectedRows: PopulatedFlow[];
   refresh: number;
   setSelectedRows: (selectedRows: PopulatedFlow[]) => void;
   setRefresh: (refresh: number) => void;
   refetch: () => void;
+  folderId: string;
 }) => {
   const userHasPermissionToUpdateFlow = useAuthorization().checkAccess(
     Permission.WRITE_FLOW,
@@ -63,7 +65,7 @@ export const useFlowsBulkActions = ({
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const { mutate: exportFlows, isPending: isExportPending } =
-    flowsHooks.useExportFlows();
+    flowHooks.useExportFlows();
   return useMemo(() => {
     const showMoveFlow =
       !embedState.hideFolders &&
@@ -175,7 +177,7 @@ export const useFlowsBulkActions = ({
                   </ConfirmationDeleteDialog>
                 </PermissionNeededTooltip>
               )}
-              <CreateFlowDropdown />
+              <CreateFlowDropdown refetch={refetch} folderId={folderId} />
             </div>
           );
         },

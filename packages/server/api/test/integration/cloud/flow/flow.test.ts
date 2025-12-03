@@ -2,9 +2,14 @@ import {
     DefaultProjectRole,
     FlowOperationType,
     FlowStatus,
+    FlowTriggerType,
+    PackageType,
+    PieceType,
     PlatformRole,
     PrincipalType,
     ProjectRole,
+    TriggerStrategy,
+    TriggerTestStrategy,
 } from '@activepieces/shared'
 import { FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -15,6 +20,7 @@ import { generateMockToken } from '../../../helpers/auth'
 import {
     createMockFlow,
     createMockFlowVersion,
+    createMockPieceMetadata,
     createMockProjectMember,
     mockAndSaveBasicSetup,
     mockBasicUser,
@@ -177,7 +183,6 @@ describe('Flow API', () => {
         ])('Succeeds if user role is %s', async ({ role, request }) => {
             // arrange
             const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -194,16 +199,49 @@ describe('Flow API', () => {
                 projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save([mockProjectMember])
-
+            
             const mockFlow = createMockFlow({
                 projectId: mockProject.id,
                 status: FlowStatus.DISABLED,
             })
             await databaseConnection().getRepository('flow').save([mockFlow])
-
+            const mockPieceMetadata = createMockPieceMetadata({ 
+                name: '@activepieces/piece-schedule',
+                version: '0.1.5',
+                triggers: {
+                    'every_hour': {
+                        'name': 'every_hour',
+                        'displayName': 'Every Hour',
+                        'description': 'Triggers the current flow every hour',
+                        'requireAuth': false,
+                        'props': {
+                        },
+                        'type': TriggerStrategy.POLLING,
+                        'sampleData': {
+                        },
+                        'testStrategy': TriggerTestStrategy.TEST_FUNCTION,
+                    },
+                },
+                pieceType: PieceType.OFFICIAL,
+                packageType: PackageType.REGISTRY,
+            })
+            await databaseConnection().getRepository('piece_metadata').save([mockPieceMetadata])
             const mockFlowVersion = createMockFlowVersion({
                 flowId: mockFlow.id,
                 updatedBy: mockUser.id,
+                trigger: {
+                    type: FlowTriggerType.PIECE,
+                    name: 'trigger',
+                    settings: {
+                        pieceName: '@activepieces/piece-schedule',
+                        pieceVersion: '0.1.5',
+                        input: {},
+                        propertySettings: {},
+                        triggerName: 'every_hour',
+                    },
+                    valid: true,
+                    displayName: 'Trigger',
+                },
             })
             await databaseConnection()
                 .getRepository('flow_version')
@@ -231,7 +269,6 @@ describe('Flow API', () => {
                 },
                 body: request,
             })
-
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
         })

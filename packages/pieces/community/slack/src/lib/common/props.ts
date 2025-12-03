@@ -62,16 +62,25 @@ export const profilePicture = Property.ShortText({
 });
 
 export const threadTs = Property.ShortText({
-  displayName: 'Thread ts',
+  displayName: 'Reply to Thread (Thread Message Link/Timestamp)',
   description:
-    'Provide the ts (timestamp) value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
+    'Provide the ts (timestamp) or link value of the **parent** message to make this message a reply. Do not use the ts value of the reply itself; use its parent instead. For example `1710304378.475129`.Alternatively, you can easily obtain the message link by clicking on the three dots next to the parent message and selecting the `Copy link` option.',
   required: false,
+});
+
+export const mentionOriginFlow = Property.Checkbox({
+  displayName: 'Mention flow of origin?',
+  description:
+    'If checked, adds a mention at the end of the Slack message to indicate which flow sent the notification, with a link to said flow.',
+  required: false,
+  defaultValue: false,
 });
 
 export const blocks = Property.Json({
   displayName: 'Block Kit blocks',
   description: 'See https://api.slack.com/block-kit for specs',
   required: false,
+  defaultValue: []
 });
 
 export const userId = Property.Dropdown<string>({

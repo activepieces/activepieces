@@ -4,14 +4,14 @@ import { RefreshCcwIcon } from 'lucide-react';
 import { useContext } from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Metrics } from '@/features/platform-admin/components/metrics';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/components/refresh-analytics-provider';
 import { Reports } from '@/features/platform-admin/components/reports';
-import { TaskUsage } from '@/features/platform-admin/components/task-usage';
+import { RunsAnalytics } from '@/features/platform-admin/components/runs-analytics';
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 
@@ -69,9 +69,10 @@ export default function AnalyticsPage() {
             </Button>
           )}
         </DashboardPageHeader>
+        <Separator />
         <Metrics report={isLoading ? undefined : data} />
         <Separator />
-        <TaskUsage report={isLoading ? undefined : data} />
+        <RunsAnalytics report={isLoading ? undefined : data} />
         <Separator />
         <Separator />
         <Reports report={isLoading ? undefined : data} />

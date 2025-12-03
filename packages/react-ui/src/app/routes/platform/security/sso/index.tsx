@@ -2,16 +2,16 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import React from 'react';
+import { toast } from 'sonner';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { NewOAuth2Dialog } from '@/app/routes/platform/security/sso/oauth2-dialog';
 import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dialog';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 import { isNil } from '@activepieces/shared';
@@ -83,9 +83,7 @@ const SSOPage = () => {
       await refetch();
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Email authentication updated'),
+      toast.success(t('Email authentication updated'), {
         duration: 3000,
       });
     },

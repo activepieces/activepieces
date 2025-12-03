@@ -45,6 +45,9 @@ export const updateCompanyAction = createAction({
 
 		// Add additional properties to the companyProperties object
 		Object.entries(objectProperties).forEach(([key, value]) => {
+			if ((Array.isArray(value) && value.length === 0)) {
+        return;  
+			}
 			// Format values if they are arrays
 			companyProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});

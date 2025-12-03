@@ -1,6 +1,14 @@
 import { createAction, Property, DynamicPropsValue, InputPropertyMap } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { firecrawlAuth } from '../../index';
+import { forScreenshotOutputFormat, forSimpleOutputFormat, downloadAndSaveScreenshot, forJsonOutputFormat, FIRECRAWL_API_BASE_URL } from '../common/common';
+
+function forDefaultScreenshot(): any {
+  return {
+    type: 'screenshot',
+    fullPage: true,
+  };
+}
 
 export const scrape = createAction({
   auth: firecrawlAuth,
@@ -64,95 +72,200 @@ export const scrape = createAction({
         };
       },
     }),
-    extractionType: Property.Dropdown({
-      displayName: 'Extraction Type',
-      description: 'Choose how to extract data from the webpage.',
+
+    formats: Property.Dropdown({
+      displayName: 'Output Format',
+      description: 'Choose what format you want your output in.',
       required: true,
       refreshers: [],
       options: async () => {
         return {
           options: [
-            { label: 'Default', value: 'default' },
-            { label: 'Prompt', value: 'prompt' },
-            { label: 'JSON Schema', value: 'schema' }
+            { label: 'Markdown', value: 'markdown' },
+            { label: 'Summary', value: 'summary' },
+            { label: 'HTML', value: 'html' },
+            { label: 'Raw HTML', value: 'rawHtml' },
+            { label: 'Links', value: 'links' },
+            { label: 'Images', value: 'images' },
+            { label: 'Screenshot', value: 'screenshot' },
+            { label: 'JSON', value: 'json' }
           ]
         };
       },
-      defaultValue: 'default',
+      defaultValue: 'markdown',
     }),
-    extractProperties: Property.DynamicProperties({
-      displayName: 'Extraction Properties',
-      description: 'Properties for data extraction from the webpage.',
+    extractPrompt: Property.DynamicProperties({
+      displayName: 'Extraction Prompt',
+      description: 'Prompt for extracting data.',
       required: false,
-      refreshers: ['extractionType'],
+      refreshers: ['formats'],
       props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
-        const extractionType = propsValue['extractionType'] as unknown as string;
-        
-        if (extractionType === 'default') {
+        const format = propsValue['formats'] as unknown as string;
+
+        if (format !== 'json') {
           return {};
         }
-        
-        if (extractionType === 'prompt') {
-          return {
-            prompt: Property.LongText({
-              displayName: 'Extraction Prompt',
-              description: 'Describe what information you want to extract in natural language.',
-              required: true,
-              defaultValue: 'Extract the main product information including name, price, and description.',
-            }),
-          };
+
+        return {
+          prompt: Property.LongText({
+            displayName: 'Extraction Prompt',
+            description: 'Describe what information you want to extract.',
+            required: false,
+            defaultValue: 'Extract the following data from the provided text.',
+          }),
+        };
+      },
+    }),
+
+    extractMode: Property.DynamicProperties({
+      displayName: 'Schema Mode',
+      description: 'Data schema type.',
+      required: false,
+      refreshers: ['formats'],
+      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+        const format = propsValue['formats'] as unknown as string;
+
+        if (format !== 'json') {
+          return {};
         }
-        
-        if (extractionType === 'schema') {
+
+        return {
+          mode: Property.StaticDropdown<'simple' | 'advanced'>({
+            displayName: 'Data Schema Type',
+            description: 'For complex schema, you can use advanced mode.',
+            required: true,
+            defaultValue: 'simple',
+            options: {
+              disabled: false,
+              options: [
+                { label: 'Simple', value: 'simple' },
+                { label: 'Advanced', value: 'advanced' },
+              ],
+            },
+          }),
+        };
+      },
+    }),
+    extractSchema: Property.DynamicProperties({
+      displayName: 'Data Definition',
+      required: false,
+      refreshers: ['formats', 'extractMode'],
+      props: async (propsValue: Record<string, DynamicPropsValue>): Promise<InputPropertyMap> => {
+        const mode = propsValue['extractMode']?.['mode'] as unknown as 'simple' | 'advanced';
+        const format = propsValue['formats'] as unknown as string;
+
+        if (format !== 'json') {
+          return {}; 
+        }
+
+        if (mode === 'advanced') {
           return {
-            schema: Property.Json({
-              displayName: 'Extraction Schema',
-              description: 'JSON schema defining the structure of data to extract.',
+            fields: Property.Json({
+              displayName: 'JSON Schema',
+              description:
+                'Learn more about JSON Schema here: https://json-schema.org/learn/getting-started-step-by-step',
               required: true,
               defaultValue: {
-                "type": "object",
-                "properties": {
-                  "company_name": {"type": "string"},
-                  "pricing_tiers": {"type": "array", "items": {"type": "string"}},
-                  "has_free_tier": {"type": "boolean"}
-                }
+                type: 'object',
+                properties: {
+                  name: {
+                    type: 'string',
+                  },
+                  age: {
+                    type: 'number',
+                  },
+                },
+                required: ['name'],
               },
             }),
           };
         }
-        
-        return {};
+        return {
+          fields: Property.Array({
+            displayName: 'Data Definition',
+            required: true,
+            properties: {
+              name: Property.ShortText({
+                displayName: 'Name',
+                description:
+                  'Provide the name of the value you want to extract from the unstructured text. The name should be unique and short. ',
+                required: true,
+              }),
+              description: Property.LongText({
+                displayName: 'Description',
+                description:
+                  'Brief description of the data, this hints for the AI on what to look for',
+                required: false,
+              }),
+              type: Property.StaticDropdown({
+                displayName: 'Data Type',
+                description: 'Type of parameter.',
+                required: true,
+                defaultValue: 'string',
+                options: {
+                  disabled: false,
+                  options: [
+                    { label: 'Text', value: 'string' },
+                    { label: 'Number', value: 'number' },
+                    { label: 'Boolean', value: 'boolean' },
+                  ],
+                },
+              }),
+              isRequired: Property.Checkbox({
+                displayName: 'Fail if Not present?',
+                required: true,
+                defaultValue: false,
+              }),
+            },
+          }),
+        };
       },
     }),
   },
-  async run({ auth, propsValue }) {
+  async run(context) {
+    const { auth, propsValue } = context;
     const body: Record<string, any> = {
       url: propsValue.url,
       timeout: propsValue.timeout,
     };
     
-    // Only include actions if the toggle is enabled and actions are provided
     if (propsValue.useActions && propsValue.actionProperties && propsValue.actionProperties['actions']) {
       body['actions'] = propsValue.actionProperties['actions'] || [];
     }
     
-    // Add extraction options based on the selected type
-    const extractionType = propsValue.extractionType as string;
-    
-    if (extractionType !== 'default' && propsValue.extractProperties) {
-      body['formats'] = ['json'];
-      body['jsonOptions'] = {};
-      
-      if (extractionType === 'prompt' && propsValue.extractProperties['prompt']) {
-        body['jsonOptions']['prompt'] = propsValue.extractProperties['prompt'];
-      } else if (extractionType === 'schema' && propsValue.extractProperties['schema']) {
-        body['jsonOptions']['schema'] = propsValue.extractProperties['schema'];
-      }
+    const format = propsValue.formats as string;
+    const formatsArray: any[] = []; 
+
+    // user selection
+    if (format === 'screenshot') {
+      const screenshotFormat = forScreenshotOutputFormat();
+      formatsArray.push(screenshotFormat);
+    } else if (format === 'json') {
+      const extractConfig = {
+        prompt: propsValue.extractPrompt?.['prompt'],
+        mode: propsValue.extractMode?.['mode'],
+        schema: propsValue.extractSchema
+      };
+      const jsonFormat = forJsonOutputFormat(extractConfig);
+      formatsArray.push({
+        type: 'json',
+        prompt: jsonFormat.prompt,
+        schema: jsonFormat.schema
+      });
+    } else {
+      const simpleFormat = forSimpleOutputFormat(format);
+      formatsArray.push(simpleFormat);
     }
-    
+
+    if (format !== 'screenshot') {
+      const defaultScreenshot = forDefaultScreenshot();
+      formatsArray.push(defaultScreenshot);
+    }
+    body['formats'] = formatsArray;
+
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: 'https://api.firecrawl.dev/v1/scrape',
+      url: `${FIRECRAWL_API_BASE_URL}/scrape`,
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${auth}`,
@@ -160,6 +273,16 @@ export const scrape = createAction({
       body: body,
     });
 
-    return response.body;
+    const result = response.body;
+    await downloadAndSaveScreenshot(result.data, context);
+
+    // reorder the data object to put screenshot first, then user's selected format only
+    result.data = {
+      screenshot: result.data.screenshot,
+      [format]: result.data[format],
+      metadata: result.data.metadata
+    };
+
+    return result;
   },
 }); 

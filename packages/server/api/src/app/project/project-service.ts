@@ -1,22 +1,25 @@
+import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
     apId,
     assertNotNullOrUndefined,
+    ColorName,
+    EndpointScope,
     ErrorCode,
     isNil,
     Metadata,
-    NotificationStatus,
     PlatformRole,
-    PlatformUsageMetric,
     Project,
+    ProjectIcon,
     ProjectId,
+    ProjectType,
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
 import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { PlatformPlanHelper } from '../ee/platform/platform-plan/platform-plan-helper'
+import { distributedStore } from '../database/redis-connections'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
@@ -27,20 +30,22 @@ export const projectRepo = repoFactory(ProjectEntity)
 
 export const projectService = {
     async create(params: CreateParams): Promise<Project> {
-
-        await PlatformPlanHelper.checkQuotaOrThrow({
-            platformId: params.platformId,
-            metric: PlatformUsageMetric.PROJECTS,
-        })
-
+        const colors = Object.values(ColorName)
+        const icon: ProjectIcon = {
+            color: colors[Math.floor(Math.random() * colors.length)],
+        }
         const newProject: NewProject = {
             id: apId(),
             ...params,
-            notifyStatus: params.notifyStatus ?? NotificationStatus.ALWAYS,
+            icon,
+            maxConcurrentJobs: params.maxConcurrentJobs,
             releasesEnabled: false,
         }
         const savedProject = await projectRepo().save(newProject)
         await projectHooks.get(system.globalLogger()).postCreate(savedProject)
+        if (!isNil(params.maxConcurrentJobs)) {
+            await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
+        }
         return savedProject
     },
     async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {
@@ -61,34 +66,42 @@ export const projectService = {
     },
 
     async getProjectIdsByPlatform(platformId: string): Promise<string[]> {
-        const projects = await projectRepo().find({
-            select: {
-                id: true,
-            },
-            where: {
-                platformId,
-            },
-        })
+        const projects = await projectRepo()
+            .createQueryBuilder('project')
+            .select('project.id')
+            .where({ platformId })
+            .orderBy('project.type', 'ASC')
+            .addOrderBy('project.displayName', 'ASC')
+            .addOrderBy('project.id', 'ASC')
+            .getMany()
 
         return projects.map((project) => project.id)
+    },
+
+    async countByPlatformIdAndType(platformId: string, type: ProjectType): Promise<number> {
+        return projectRepo().countBy({
+            platformId,
+            type,
+        })
     },
 
     async update(projectId: ProjectId, request: UpdateParams): Promise<Project> {
         const externalId = request.externalId?.trim() !== '' ? request.externalId : undefined
         await assertExternalIdIsUnique(externalId, projectId)
 
-        await projectRepo().update(
-            {
-                id: projectId,
-            },
-            {
-                ...spreadIfDefined('externalId', externalId),
-                ...spreadIfDefined('displayName', request.displayName),
-                ...spreadIfDefined('notifyStatus', request.notifyStatus),
-                ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
-                ...spreadIfDefined('metadata', request.metadata),
-            },
-        )
+        const baseUpdate = {
+            ...spreadIfDefined('externalId', externalId),
+            ...spreadIfDefined('releasesEnabled', request.releasesEnabled),
+            ...spreadIfDefined('metadata', request.metadata),
+            ...spreadIfDefined('maxConcurrentJobs', request.maxConcurrentJobs),
+        }
+
+        const teamUpdate = request.type === ProjectType.TEAM ? {
+            ...spreadIfDefined('displayName', request.displayName),
+            ...spreadIfDefined('icon', request.icon),
+        } : {}
+
+        await projectRepo().update({ id: projectId }, { ...baseUpdate, ...teamUpdate })
         return this.getOneOrThrow(projectId)
     },
 
@@ -149,7 +162,13 @@ export const projectService = {
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
         const filters = await getUsersFilters(params)
-        return projectRepo().findBy(filters)
+        return projectRepo()
+            .createQueryBuilder('project')
+            .where(filters)
+            .orderBy('project.type', 'ASC')
+            .addOrderBy('project.displayName', 'ASC')
+            .addOrderBy('project.id', 'ASC')
+            .getMany()
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
         const filters = await getUsersFilters(params)
@@ -183,25 +202,51 @@ async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptions
     const user = await userService.getOneOrFail({ id: params.userId })
     const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-    
-    if (isPrivilegedUser) {
-        // Platform admins and operators can see all projects in their platform
+
+    if (!isPrivilegedUser) {
+        // Regular members can only see projects they're members of and their own personal project
+        const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+            platformId: params.platformId,
+            userId: params.userId,
+        })
+
+        const personalProjects = await projectRepo().findBy({
+            platformId: params.platformId,
+            ownerId: params.userId,
+            type: ProjectType.PERSONAL,
+        })
+
+        return [{
+            platformId: params.platformId,
+            id: In([...projectIds, ...personalProjects.map((project) => project.id)]),
+            ...displayNameFilter,
+        }]
+    }
+
+
+    if (params.scope === EndpointScope.PLATFORM) {
+        // Platform admins and operators can see all projects inside platform
         return [{
             platformId: params.platformId,
             ...displayNameFilter,
         }]
     }
-    
-    // Only fetch project memberships for non-privileged users
-    const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
+
+    const teamProjects = await projectRepo().findBy({
         platformId: params.platformId,
-        userId: params.userId,
+        type: ProjectType.TEAM,
     })
-    
-    // Regular members can only see projects they're members of
+
+    const myPersonalProject = await projectRepo().findOneBy({
+        platformId: params.platformId,
+        ownerId: params.userId,
+        type: ProjectType.PERSONAL,
+    })
+
+    // Platform admin but in his dashboard he can see all projects inside platform & his own personal project only
     return [{
         platformId: params.platformId,
-        id: In(projectIds),
+        id: In([...teamProjects.map((project) => project.id), ...(myPersonalProject?.id ? [myPersonalProject.id] : [])]),
         ...displayNameFilter,
     }]
 }
@@ -227,6 +272,7 @@ type GetAllForUserParams = {
     platformId: string
     userId: string
     displayName?: string
+    scope?: EndpointScope
 }
 
 type GetOneByOwnerAndPlatformParams = {
@@ -239,22 +285,34 @@ type ExistsParams = {
     isSoftDeleted?: boolean
 }
 
-
-type UpdateParams = {
+type UpdateTeamProjectParams = {
+    type: ProjectType.TEAM
     displayName?: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     releasesEnabled?: boolean
     metadata?: Metadata
+    maxConcurrentJobs?: number
+    icon?: ProjectIcon
 }
+
+type UpdatePersonalProjectParams = {
+    type: ProjectType.PERSONAL
+    externalId?: string
+    releasesEnabled?: boolean
+    metadata?: Metadata
+    maxConcurrentJobs?: number
+}
+
+type UpdateParams = UpdateTeamProjectParams | UpdatePersonalProjectParams
 
 type CreateParams = {
     ownerId: UserId
     displayName: string
+    type: ProjectType
     platformId: string
     externalId?: string
-    notifyStatus?: NotificationStatus
     metadata?: Metadata
+    maxConcurrentJobs?: number
 }
 
 type GetByPlatformIdAndExternalIdParams = {
@@ -268,3 +326,4 @@ type AddProjectToPlatformParams = {
 }
 
 type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>
+

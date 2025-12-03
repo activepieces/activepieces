@@ -1,6 +1,6 @@
 import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, Platform } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
-import { PieceMetadataSchema } from '../../../pieces/piece-metadata-entity'
+import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
 import { platformService } from '../../../platform/platform.service'
 import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 

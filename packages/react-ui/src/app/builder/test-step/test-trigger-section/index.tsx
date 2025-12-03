@@ -49,8 +49,8 @@ const TestTriggerSection = React.memo(
     const { sampleData, sampleDataInput, setChatDrawerOpenSource } =
       useBuilderStateContext((state) => {
         return {
-          sampleData: state.sampleData[formValues.name],
-          sampleDataInput: state.sampleDataInput[formValues.name],
+          sampleData: state.outputSampleData[formValues.name],
+          sampleDataInput: state.inputSampleData[formValues.name],
           setChatDrawerOpenSource: state.setChatDrawerOpenSource,
         };
       });
@@ -142,7 +142,13 @@ const TestTriggerSection = React.memo(
               </p>
               <ManualWebhookTestButton
                 isWebhookTestingDialogOpen={isTestingDialogOpen}
-                setIsWebhookTestingDialogOpen={setIsTestingDialogOpen}
+                setIsWebhookTestingDialogOpen={(value) => {
+                  setIsTestingDialogOpen(value);
+                  if (!value) {
+                    abortControllerRef.current.abort();
+                    abortControllerRef.current = new AbortController();
+                  }
+                }}
               />
             </div>
           );

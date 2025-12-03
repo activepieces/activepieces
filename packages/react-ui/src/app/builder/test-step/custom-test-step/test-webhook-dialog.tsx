@@ -152,6 +152,7 @@ const TestWaitForNextWebhookDialog = ({
           showMethodDropdown={false}
           onSubmit={(data) => {
             onSubmit({
+              type: 'webhookAction',
               preExistingSampleData: {
                 runId: apId(),
                 success: true,
@@ -164,6 +165,7 @@ const TestWaitForNextWebhookDialog = ({
                 standardOutput: '',
                 input: {},
               },
+              onProgress: undefined,
             });
           }}
           isLoading={isLoading}

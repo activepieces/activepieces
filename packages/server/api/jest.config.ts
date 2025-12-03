@@ -14,9 +14,12 @@ export default {
     ],
   },
   "moduleNameMapper": {
-    "isolated-vm": "<rootDir>/__mocks__/isolated-vm.js"
+    "isolated-vm": "<rootDir>/__mocks__/isolated-vm.js",
+    "^@activepieces/shared$": "<rootDir>/../../../packages/shared/src/index.ts",
+    "^@activepieces/ee-shared$": "<rootDir>/../../../packages/ee/shared/src/index.ts"
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../../coverage/packages/server/api',
-  testTimeout: 120000
+  testTimeout: 200000,
+  maxWorkers: 1
 };

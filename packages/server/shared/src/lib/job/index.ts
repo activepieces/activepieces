@@ -6,6 +6,8 @@ import {
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
+export * from './runs-metadata-queue-factory'
+
 export enum JobStatus {
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
@@ -13,8 +15,12 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
+    RUNS_METADATA = 'runsMetadata',
 }
 
+export const getPlatformQueueName = (platformId: string): string => {
+    return `platform-${platformId}-jobs`
+}
 
 export const ApQueueJob = Type.Object({
     id: Type.String(),
@@ -24,13 +30,17 @@ export const ApQueueJob = Type.Object({
 })
 
 export type ApQueueJob = Static<typeof ApQueueJob>
-
 export const SendEngineUpdateRequest = Type.Object({
     workerServerId: Type.String(),
     requestId: Type.String(),
     response: Type.Unknown(),
 })
 export type SendEngineUpdateRequest = Static<typeof SendEngineUpdateRequest>
+
+export const MigrateJobsRequest = Type.Object({
+    jobData: Type.Record(Type.String(), Type.Unknown()),
+})
+export type MigrateJobsRequest = Static<typeof MigrateJobsRequest>
 
 export const SavePayloadRequest = Type.Object({
     flowId: Type.String(),
@@ -49,20 +59,17 @@ export const SubmitPayloadsRequest = Type.Object({
     environment: Type.Enum(RunEnvironment),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Optional(Type.Boolean()),
+    platformId: Type.String(),
 })
 
 export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
 
-export const GetRunForWorkerRequest = Type.Object({
-    runId: Type.String(),
-})
-export type GetRunForWorkerRequest = Static<typeof GetRunForWorkerRequest>
+
 
 
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {
         case EngineOperationType.EXECUTE_FLOW:
-        case EngineOperationType.EXECUTE_TOOL:
             return flowTimeoutSandbox
         case EngineOperationType.EXECUTE_PROPERTY:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:

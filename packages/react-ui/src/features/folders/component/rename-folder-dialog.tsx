@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -16,7 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { validationUtils } from '@/lib/utils';
 import { Folder } from '@activepieces/shared';
 
@@ -25,6 +26,7 @@ import { foldersApi } from '../lib/folders-api';
 const RenameFolderSchema = Type.Object({
   displayName: Type.String({
     errorMessage: t('Please enter a folder name'),
+    pattern: '.*\\S.*',
   }),
 });
 
@@ -49,15 +51,13 @@ const RenameFolderDialog = ({
   const { mutate, isPending } = useMutation<Folder, Error, RenameFolderSchema>({
     mutationFn: async (data) => {
       return await foldersApi.renameFolder(folderId, {
-        displayName: data.displayName,
+        displayName: data.displayName.trim(),
       });
     },
     onSuccess: () => {
       setIsOpen(false);
       onRename();
-      toast({
-        title: t('Renamed flow successfully'),
-      });
+      toast.success(t('Renamed flow successfully'));
     },
     onError: (err) => {
       if (validationUtils.isValidationError(err)) {
@@ -65,7 +65,7 @@ const RenameFolderDialog = ({
           message: t('Folder name already used'),
         });
       } else {
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       }
     },
   });

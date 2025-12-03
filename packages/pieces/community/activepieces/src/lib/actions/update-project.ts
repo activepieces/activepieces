@@ -39,11 +39,6 @@ export const updateProject = createAction({
         ],
       },
     }),
-    tasks: Property.Number({
-      displayName: 'Tasks',
-      description: undefined,
-      required: true,
-    }),
     team_members: Property.Number({
       displayName: 'Team Members',
       description: undefined,
@@ -60,9 +55,7 @@ export const updateProject = createAction({
       },
       body: {
         displayName: propsValue['display_name'],
-        notifyStatus: propsValue['notify_status'],
         plan: {
-          tasks: propsValue['tasks'],
           teamMembers: propsValue['team_members'],
         },
       },

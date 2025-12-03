@@ -5,24 +5,36 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { projectService } from './project-service'
 
 export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.get('/:id', async (request) => {
+    fastify.get('/:id', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER] as const,
+        },
+    }, async (request) => {
         return projectService.getOneOrThrow(request.principal.projectId)
     })
 
-    fastify.get('/', async (request) => {
+    fastify.get('/', {
+        config: {
+            allowedPrincipals: [PrincipalType.USER] as const,
+        },
+    }, async (request) => {
         return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
     })
 }
 
 export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post('/:id', UpdateProjectRequest, async (request) => {
-        return projectService.update(request.params.id, request.body)
+        const project = await projectService.getOneOrThrow(request.params.id)
+        return projectService.update(request.params.id, {
+            type: project.type,
+            ...request.body,
+        })
     })
 }
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
         scope: EndpointScope.PLATFORM,
     },
     schema: {

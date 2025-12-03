@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { googleCalendarAuth } from '../../';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
+import { randomUUID } from 'crypto';
 
 export const createEvent = createAction({
   auth: googleCalendarAuth,
@@ -75,6 +76,12 @@ export const createEvent = createAction({
       },
       required: true,
     }),
+    create_meet_link: Property.Checkbox({
+      displayName: 'Create Google Meet Link',
+      description: 'Automatically create a Google Meet video conference link for this event',
+      defaultValue: false,
+      required: false,
+    }),
   },
   async run(configValue) {
     // docs: https://developers.google.com/calendar/api/v3/reference/events/insert
@@ -89,6 +96,7 @@ export const createEvent = createAction({
       guests_can_modify: guestsCanModify,
       guests_can_invite_others: guestsCanInviteOthers,
       guests_can_see_other_guests: guestsCanSeeOtherGuests,
+      create_meet_link: createMeetLink,
     } = configValue.propsValue;
 
     const start = {
@@ -121,22 +129,36 @@ export const createEvent = createAction({
 
     const calendar = google.calendar({ version: 'v3', auth: authClient });
 
+    const requestBody: any = {
+      summary,
+      start,
+      end,
+      colorId,
+      //attachments: configValue.propsValue.attachment ? [attachment] : [],
+      location: location ?? '',
+      description: description ?? '',
+      attendees: attendeesObject,
+      guestsCanInviteOthers,
+      guestsCanModify,
+      guestsCanSeeOtherGuests,
+    };
+
+    if (createMeetLink) {
+      requestBody.conferenceData = {
+        createRequest: {
+          conferenceSolutionKey: {
+            type: 'hangoutsMeet',
+          },
+          requestId: randomUUID(),
+        },
+      };
+    }
+
     const response = await calendar.events.insert({
       calendarId,
       sendUpdates: sendNotifications,
-      requestBody: {
-        summary,
-        start,
-        end,
-        colorId,
-        //attachments: configValue.propsValue.attachment ? [attachment] : [],
-        location: location ?? '',
-        description: description ?? '',
-        attendees: attendeesObject,
-        guestsCanInviteOthers,
-        guestsCanModify,
-        guestsCanSeeOtherGuests,
-      },
+      conferenceDataVersion: createMeetLink ? 1 : 0,
+      requestBody,
     });
 
     return response.data;

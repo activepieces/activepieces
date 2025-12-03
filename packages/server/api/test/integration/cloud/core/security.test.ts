@@ -67,66 +67,6 @@ describe('API Security', () => {
         })
 
     })
-    describe('Global API Key Authentication', () => {
-        it('Authenticates Admin User using Global API Key', async () => {
-            // arrange
-            const mockApiKey = 'api-key'
-            const mockRequest = {
-                method: 'POST',
-                routeOptions: {
-                    url: '/v1/admin/platforms',
-                    config: {
-                        allowedPrincipals: [PrincipalType.SUPER_USER],
-                    },
-                },
-                headers: {
-                    'api-key': mockApiKey,
-                },
-            } as unknown as FastifyRequest
-
-            // act
-            const result = securityHandlerChain(mockRequest)
-
-            // assert
-            await expect(result).resolves.toBeUndefined()
-
-            expect(mockRequest.principal).toEqual(
-                expect.objectContaining({
-                    id: expect.stringMatching(/SUPER_USER_.{21}/),
-                    type: PrincipalType.SUPER_USER,
-                    projectId: expect.stringMatching(/SUPER_USER_.{21}/),
-                }),
-            )
-        })
-
-        it('Fails if provided API key is invalid', async () => {
-            // arrange
-            const mockInvalidApiKey = '321'
-            const mockRequest = {
-                method: 'POST',
-                routeOptions: {
-                    url: '/v1/admin/users',
-                    config: {},
-                },
-                headers: {
-                    'api-key': mockInvalidApiKey,
-                },
-            } as unknown as FastifyRequest
-
-            // act
-            const result = securityHandlerChain(mockRequest)
-
-            // assert
-            return result.catch((e) => {
-                expect(e).toEqual(
-                    new ActivepiecesError({
-                        code: ErrorCode.INVALID_API_KEY,
-                        params: {},
-                    }),
-                )
-            })
-        })
-    })
 
     describe('Platform API Key Authentication', () => {
         it('Authenticates service principals', async () => {
@@ -522,7 +462,9 @@ describe('API Security', () => {
                 method: 'GET',
                 routeOptions: {
                     url: '/v1/flows',
-                    config: {},
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
                 },
                 headers: {
                     authorization: `Bearer ${mockAccessToken}`,
@@ -608,7 +550,9 @@ describe('API Security', () => {
                 method: 'GET',
                 routeOptions: {
                     url: '/v1/flows',
-                    config: {},
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
                 },
                 query: {
                     projectId: mockOtherProjectId,
@@ -652,7 +596,9 @@ describe('API Security', () => {
                 method: 'GET',
                 routeOptions: {
                     url: '/v1/flows',
-                    config: {},
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
                 },
                 headers: {
                     authorization: `Bearer ${mockAccessToken}`,
@@ -686,7 +632,9 @@ describe('API Security', () => {
                 method: 'GET',
                 routeOptions: {
                     url: nonAuthenticatedRoute,
-                    config: {},
+                    config: {
+                        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                    },
                 },
                 headers: {},
             } as unknown as FastifyRequest
@@ -701,10 +649,6 @@ describe('API Security', () => {
                 expect.objectContaining({
                     id: expect.stringMatching(/ANONYMOUS_.{21}/),
                     type: PrincipalType.UNKNOWN,
-                    projectId: expect.stringMatching(/ANONYMOUS_.{21}/),
-                    platform: {
-                        id: expect.stringMatching(/ANONYMOUS_.{21}/),
-                    },
                 }),
             )
         })
@@ -717,7 +661,9 @@ describe('API Security', () => {
                 method: 'GET',
                 routeOptions: {
                     url: authenticatedRoute,
-                    config: {},
+                    config: {
+                        allowedPrincipals: [PrincipalType.USER],
+                    },
                 },
                 headers: {},
             } as unknown as FastifyRequest

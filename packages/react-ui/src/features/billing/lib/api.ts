@@ -4,11 +4,10 @@ import {
   ListAICreditsUsageResponse,
 } from '@activepieces/common-ai';
 import {
-  CreateSubscriptionParams,
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
-  UpdateSubscriptionParams,
-  StartTrialParams,
+  UpdateActiveFlowsAddonParams,
+  CreateSubscriptionParams,
 } from '@activepieces/ee-shared';
 import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
@@ -19,11 +18,17 @@ export const platformBillingApi = {
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
   },
-  updateSubscription(params: UpdateSubscriptionParams) {
-    return api.post<string>('/v1/platform-billing/update-subscription', params);
+  updateActiveFlowsLimits(params: UpdateActiveFlowsAddonParams) {
+    return api.post<string>(
+      '/v1/platform-billing/update-active-flows-addon',
+      params,
+    );
   },
   createSubscription(params: CreateSubscriptionParams) {
-    return api.post<string>('/v1/platform-billing/create-subscription', params);
+    return api.post<string>(
+      '/v1/platform-billing/create-checkout-session',
+      params,
+    );
   },
   setAiCreditsOverageLimit(params: SetAiCreditsOverageLimitParams) {
     return api.post<PlatformPlan>(
@@ -34,12 +39,6 @@ export const platformBillingApi = {
   toggleAiCreditsOverageEnabled(params: ToggleAiCreditsOverageEnabledParams) {
     return api.post<PlatformPlan>(
       '/v1/platform-billing/update-ai-overage-state',
-      params,
-    );
-  },
-  startTrial(params: StartTrialParams) {
-    return api.post<{ success: boolean }>(
-      '/v1/platform-billing/start-trial',
       params,
     );
   },

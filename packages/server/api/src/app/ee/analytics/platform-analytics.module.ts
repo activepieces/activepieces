@@ -1,3 +1,4 @@
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 import { piecesAnalyticsService } from './pieces-analytics.service'
@@ -12,12 +13,18 @@ export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) =>
 
 const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.get('/', async (request) => {
+    app.get('/', PlatformAnalyticsRequest, async (request) => {
         const { platform } = request.principal
         return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
     })
-    app.post('/', async (request) => {
+    app.post('/', PlatformAnalyticsRequest, async (request) => {
         const { platform } = request.principal
         return platformAnalyticsReportService(request.log).refreshReport(platform.id)
     })
+}
+
+const PlatformAnalyticsRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
 }

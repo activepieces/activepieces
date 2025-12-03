@@ -19,11 +19,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { TagInput } from '@/components/ui/tag-input';
 import { templatesApi } from '@/features/templates/lib/templates-api';
+import { api } from '@/lib/api';
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared';
 import {
-  flowMigrations,
   FlowTemplate,
-  FlowVersionState,
   FlowVersionTemplate,
   TemplateType,
 } from '@activepieces/shared';
@@ -37,7 +36,8 @@ const UpsertFlowTemplateSchema = Type.Object({
   }),
   description: Type.String(),
   blogUrl: Type.String(),
-  template: FlowVersionTemplate,
+  //avoid validating template because we need to migrate the template to the latest schema version in the backend
+  template: Type.Unknown(),
   tags: Type.Optional(Type.Array(Type.String())),
 });
 type UpsertFlowTemplateSchema = Static<typeof UpsertFlowTemplateSchema>;
@@ -68,9 +68,9 @@ export const UpsertTemplateDialog = ({
       const formValue = form.getValues();
       return templatesApi.create({
         template: {
-          ...formValue.template,
+          ...(formValue.template as FlowVersionTemplate),
           displayName: formValue.displayName,
-          valid: formValue.template.valid ?? true,
+          valid: (formValue.template as FlowVersionTemplate).valid ?? true,
         },
         type: TemplateType.PLATFORM,
         blogUrl: formValue.blogUrl,
@@ -83,6 +83,13 @@ export const UpsertTemplateDialog = ({
     onSuccess: () => {
       onDone();
       setOpen(false);
+    },
+    onError: (error) => {
+      if (api.isError(error)) {
+        form.setError('template', {
+          message: error.message,
+        });
+      }
     },
   });
 
@@ -184,29 +191,10 @@ export const UpsertTemplateDialog = ({
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
                           try {
-                            const json = JSON.parse(text) as FlowTemplate;
-                            const migratedFlowVersion = flowMigrations.apply({
-                              agentIds: [],
-                              connectionIds: [],
-                              created: new Date().toISOString(),
-                              displayName: '',
-                              flowId: '',
-                              id: '',
-                              updated: new Date().toISOString(),
-                              updatedBy: '',
-                              valid: false,
-                              trigger: json.template.trigger,
-                              state: FlowVersionState.DRAFT,
-                            });
-                            const migratedTemplate: FlowVersionTemplate = {
-                              trigger: migratedFlowVersion.trigger,
-                              agentIds: migratedFlowVersion.agentIds,
-                              connectionIds: migratedFlowVersion.connectionIds,
-                              displayName: migratedFlowVersion.displayName,
-                              valid: migratedFlowVersion.valid,
-                              schemaVersion: migratedFlowVersion.schemaVersion,
-                            };
-                            field.onChange(migratedTemplate);
+                            const flowTemplate = JSON.parse(
+                              text,
+                            ) as FlowTemplate;
+                            field.onChange(flowTemplate.template);
                           } catch (e) {
                             form.setError('template', {
                               message: t('Invalid JSON'),

@@ -235,9 +235,6 @@ export const determineDefaultRoute = (
   if (checkAccess(Permission.READ_RUN)) {
     return authenticationSession.appendProjectRoutePrefix('/runs');
   }
-  if (checkAccess(Permission.READ_ISSUES)) {
-    return authenticationSession.appendProjectRoutePrefix('/issues');
-  }
   return authenticationSession.appendProjectRoutePrefix('/settings');
 };
 export const NEW_FLOW_QUERY_PARAM = 'newFlow';
@@ -320,4 +317,20 @@ export const scrollToElementAndClickIt = (elementId: string) => {
     block: 'start',
   });
   element?.click();
+};
+
+export const routesThatRequireProjectId = {
+  runs: '/runs',
+  singleRun: '/runs/:runId',
+  flows: '/flows',
+  singleFlow: '/flows/:flowId',
+  connections: '/connections',
+  singleConnection: '/connections/:connectionId',
+  tables: '/tables',
+  singleTable: '/tables/:tableId',
+  todos: '/todos',
+  singleTodo: '/todos/:todoId',
+  settings: '/settings',
+  releases: '/releases',
+  singleRelease: '/releases/:releaseId',
 };

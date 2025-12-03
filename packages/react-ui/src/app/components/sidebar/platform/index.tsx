@@ -25,7 +25,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
 import { ApSidebareGroup, SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem } from '../ap-sidebar-item';
@@ -57,7 +57,7 @@ export function PlatformSidebar() {
       to: '/platform/projects',
       label: t('Projects'),
       icon: LayoutGrid,
-      locked: !platform.plan.manageProjectsEnabled,
+      locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
       isSubItem: false,
       show: true,
     },
@@ -183,13 +183,6 @@ export function PlatformSidebar() {
         },
         {
           type: 'link',
-          to: '/platform/infrastructure/jobs',
-          label: t('Jobs'),
-          isSubItem: true,
-          show: edition !== ApEdition.CLOUD,
-        },
-        {
-          type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
           isSubItem: true,
@@ -209,7 +202,7 @@ export function PlatformSidebar() {
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <div className="w-full py-2 flex items-center gap-2">
+        <div className="w-full pb-2 flex items-center gap-2">
           <Link
             to={defaultRoute}
             className={cn(buttonVariants({ variant: 'ghost', size: 'icon' }))}

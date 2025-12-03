@@ -55,7 +55,6 @@ export type ApErrorParams =
     | PieceNotFoundErrorParams
     | PieceTriggerNotFoundErrorParams
     | QuotaExceededParams
-    | ResourceLockedParams
     | FeatureDisabledErrorParams
     | SignUpDisabledParams
     | StepNotFoundErrorParams
@@ -81,7 +80,6 @@ export type ApErrorParams =
     | InvalidSmtpCredentialsErrorParams
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
-    | CopilotFailedErrorParams
     | ProjectExternalIdAlreadyExistsParams
     | MemoryIssueParams
     | InvalidCustomDomainErrorParams
@@ -92,6 +90,7 @@ export type ApErrorParams =
     | SubflowFailedParams
     | MachineNotAvailableParams
     | MachineNotConnectedParams
+    | DoesNotMeetBusinessRequirementsParams
 export type TriggerExecutionFailedParams = BaseErrorParams<ErrorCode.TRIGGER_EXECUTION_FAILED, {
     flowId: FlowId
     message?: string
@@ -105,7 +104,8 @@ export type BaseErrorParams<T, V> = {
 }
 
 export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
-    message?: string
+    standardOutput: string
+    standardError: string
 }>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
@@ -346,6 +346,7 @@ ErrorCode.VALIDATION,
 export type TriggerUpdateStatusErrorParams = BaseErrorParams<
 ErrorCode.TRIGGER_UPDATE_STATUS,
 {
+    flowId?: FlowId
     flowVersionId?: FlowVersionId
     message?: string
     standardOutput?: string
@@ -384,12 +385,6 @@ ErrorCode.QUOTA_EXCEEDED,
     metric: PlatformUsageMetric
 }
 >
-
-export type ResourceLockedParams = BaseErrorParams<
-ErrorCode.RESOURCE_LOCKED,
-{
-    message: string
-}>
 
 export type ErrorUpdatingSubscriptionParams = BaseErrorParams<
 ErrorCode.ERROR_UPDATING_SUBSCRIPTION,
@@ -463,10 +458,6 @@ export type InvalidReleaseTypeParams = BaseErrorParams<ErrorCode.INVALID_RELEASE
     message: string
 }>
 
-export type CopilotFailedErrorParams = BaseErrorParams<ErrorCode.COPILOT_FAILED, {
-    message: string
-}>
-
 export type ProjectExternalIdAlreadyExistsParams = BaseErrorParams<ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS, {
     externalId: string
 }>
@@ -490,6 +481,9 @@ export type MachineNotAvailableParams = BaseErrorParams<ErrorCode.MACHINE_NOT_AV
 }>
 
 export type MachineNotConnectedParams = BaseErrorParams<ErrorCode.MACHINE_NOT_CONNECTED, {
+    message: string
+}>
+export type DoesNotMeetBusinessRequirementsParams = BaseErrorParams<ErrorCode.DOES_NOT_MEET_BUSINESS_REQUIREMENTS, {
     message: string
 }>
 
@@ -541,7 +535,6 @@ export enum ErrorCode {
     PIECE_NOT_FOUND = 'PIECE_NOT_FOUND',
     PIECE_TRIGGER_NOT_FOUND = 'PIECE_TRIGGER_NOT_FOUND',
     QUOTA_EXCEEDED = 'QUOTA_EXCEEDED',
-    RESOURCE_LOCKED = 'RESOURCE_LOCKED',
     FEATURE_DISABLED = 'FEATURE_DISABLED',
     AI_CREDIT_LIMIT_EXCEEDED = 'AI_CREDIT_LIMIT_EXCEEDED',
     SIGN_UP_DISABLED = 'SIGN_UP_DISABLED',
@@ -558,8 +551,9 @@ export enum ErrorCode {
     INVALID_SMTP_CREDENTIALS = 'INVALID_SMTP_CREDENTIALS',
     INVALID_GIT_CREDENTIALS = 'INVALID_GIT_CREDENTIALS',
     INVALID_RELEASE_TYPE = 'INVALID_RELEASE_TYPE',
-    COPILOT_FAILED = 'COPILOT_FAILED',
     MCP_PIECE_REQUIRES_CONNECTION = 'MCP_PIECE_REQUIRES_CONNECTION',
     MCP_PIECE_CONNECTION_MISMATCH = 'MCP_PIECE_CONNECTION_MISMATCH',
     SUBFLOW_FAILED = 'SUBFLOW_FAILED',
+    DOES_NOT_MEET_BUSINESS_REQUIREMENTS = 'DOES_NOT_MEET_BUSINESS_REQUIREMENTS',
 }
+

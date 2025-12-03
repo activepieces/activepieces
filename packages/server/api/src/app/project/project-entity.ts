@@ -45,13 +45,14 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             type: TIMESTAMP_COLUMN_TYPE,
             deleteDate: true,
             nullable: true,
-        }, 
+        },
         ownerId: ApIdSchema,
         displayName: {
             type: String,
         },
-        notifyStatus: {
+        type: {
             type: String,
+            nullable: false,
         },
         platformId: {
             ...ApIdSchema,
@@ -59,6 +60,14 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         externalId: {
             type: String,
             nullable: true,
+        },
+        maxConcurrentJobs: {
+            type: Number,
+            nullable: true,
+        },
+        icon: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
         },
         releasesEnabled: {
             type: Boolean,

@@ -1,4 +1,4 @@
-import { BillingCycle, OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
+import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -98,13 +98,8 @@ export const platformService = {
             ...platform.federatedAuthProviders,
             ...(params.federatedAuthProviders ?? {}),
         }
-        const copilotSettings = params.copilotSettings ? {
-            ...platform.copilotSettings,
-            ...params.copilotSettings,
-        } : platform.copilotSettings
         const updatedPlatform: Platform = {
             ...platform,
-            copilotSettings,
             federatedAuthProviders,
             ...spreadIfDefined('name', params.name),
             ...spreadIfDefined('primaryColor', params.primaryColor),
@@ -156,7 +151,7 @@ export const platformService = {
         }
         return {
             ...platform,
-            usage: await platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id),
+            usage: await getUsage(platform),
             plan: await getPlan(platform),
         }
     },
@@ -197,7 +192,6 @@ async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
             ...OPEN_SOURCE_PLAN,
             stripeSubscriptionStartDate: 0,
             stripeSubscriptionEndDate: 0,
-            stripeBillingCycle: BillingCycle.MONTHLY,
         }
     }
     return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)

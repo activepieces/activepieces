@@ -32,7 +32,6 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
             id: originalFlow.id,
             projectId,
             platformId: project.platformId,
-            lock: true,
             userId: project.ownerId,
             operation: {
                 type: FlowOperationType.IMPORT_FLOW,
@@ -45,7 +44,7 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
         })
 
         if (!isNil(updatedFlow.publishedVersionId)) {
-            await flowService(log).updateStatus({
+            await flowService(log).addUpdateStatusJob({
                 id: updatedFlow.id,
                 projectId,
                 newStatus: newFlow.status,
@@ -68,7 +67,6 @@ export const projectStateHelper = (log: FastifyBaseLogger) => ({
                 id: flow.id,
                 projectId,
                 platformId: project.platformId,
-                lock: true,
                 userId: project.ownerId,
                 operation: {
                     type: FlowOperationType.LOCK_AND_PUBLISH,

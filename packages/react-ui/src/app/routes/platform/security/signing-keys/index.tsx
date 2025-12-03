@@ -5,13 +5,13 @@ import { Key, Plus, Trash } from 'lucide-react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog } from '@/features/platform-admin/components/new-signing-key-dialog';
 import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -116,7 +116,7 @@ const SigningKeysPage = () => {
                   }}
                   onError={(error) => {
                     console.error(error);
-                    toast(INTERNAL_ERROR_TOAST);
+                    internalErrorToast();
                   }}
                 >
                   <Button

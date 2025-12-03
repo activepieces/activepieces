@@ -12,23 +12,19 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
     return {
         async enable(params: EnableTriggerParams): Promise<TriggerSource> {
             const { flowVersion, projectId, simulate } = params
-            const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
-
-            const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
+            log.info({
                 flowVersion,
                 projectId,
-                pieceName: flowVersion.trigger.settings.pieceName,
-                pieceTrigger,
                 simulate,
-            })
-
+            }, '[triggerSourceService#enable] Enabling trigger source')
+            const pieceTrigger = await triggerUtils(log).getPieceTriggerOrThrow({ flowVersion, projectId })
             await triggerSourceRepo().softDelete({
                 flowId: flowVersion.flowId,
                 projectId,
                 simulate,
             })
-
-            const triggerSource: Omit<TriggerSource, 'created' | 'updated'> = {
+            log.info('[triggerSourceService#enable] Soft deleted trigger source')
+            const triggerSourceWithouSchedule: Omit<TriggerSource, 'created' | 'updated' | 'schedule'> = {
                 id: apId(),
                 type: pieceTrigger.type,
                 projectId,
@@ -37,10 +33,22 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
                 flowVersionId: flowVersion.id,
                 pieceName: flowVersion.trigger.settings.pieceName,
                 pieceVersion: flowVersion.trigger.settings.pieceVersion,
-                schedule: scheduleOptions,
                 simulate,
             }
-            return triggerSourceRepo().save(triggerSource)
+            const triggerSource = await triggerSourceRepo().save(triggerSourceWithouSchedule)
+            const { scheduleOptions } = await flowTriggerSideEffect(log).enable({
+                flowId: flowVersion.flowId,
+                flowVersionId: flowVersion.id,
+                projectId,
+                pieceName: flowVersion.trigger.settings.pieceName,
+                pieceTrigger,
+                simulate,
+            })
+            log.info('[triggerSourceService#enable] Enabled flow trigger side effect')
+            return triggerSourceRepo().save({
+                ...triggerSource,
+                schedule: scheduleOptions,
+            })
         },
         async get(params: GetTriggerParams): Promise<TriggerSource | null> {
             const { projectId, id } = params
@@ -100,6 +108,11 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
         },
         async disable(params: DisableTriggerParams): Promise<void> {
             const { projectId, flowId, simulate } = params
+            log.info({
+                flowId,
+                projectId,
+                simulate,
+            }, '[triggerSourceService#disable] Disabling trigger source')
             const triggerSource = await triggerSourceRepo().findOneBy({
                 flowId,
                 projectId,
@@ -112,18 +125,21 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             const pieceTrigger = await triggerUtils(log).getPieceTrigger({ flowVersion, projectId })
             if (!isNil(pieceTrigger)) {
                 await flowTriggerSideEffect(log).disable({
-                    flowVersion,
+                    flowId: triggerSource.flowId,
+                    flowVersionId: triggerSource.flowVersionId,
                     projectId,
                     pieceName: triggerSource.pieceName,
                     pieceTrigger,
                     simulate,
                     ignoreError: params.ignoreError,
                 })
+                log.info('[triggerSourceService#disable] Disabled flow trigger side effect')
             }
             await triggerSourceRepo().softDelete({
                 id: triggerSource.id,
                 projectId,
             })
+            log.info('[triggerSourceService#disable] Soft deleted trigger source')
         },
     }
 }
@@ -142,7 +158,7 @@ type GetByFlowIdParams = {
 type GetFlowIdParamsWithProjectId = {
     flowId: string
     projectId: string
-    simulate: boolean
+    simulate: boolean | undefined
 }
 
 type GetTriggerParams = {

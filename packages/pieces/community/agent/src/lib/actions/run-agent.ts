@@ -1,8 +1,10 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { agentCommon } from '../common';
-import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AgentRun, RunAgentRequestBody } from '@activepieces/shared';
-import { StatusCodes } from 'http-status-codes';
+import { agentCommon, AI_MODELS } from '../common';
+import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, AgentTool, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
+import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
+import { inspect } from 'util';
+import { z, ZodObject } from 'zod';
+import { agentOutputBuilder } from '../common/agent-output-builder';
 
 
 export const runAgent = createAction({
@@ -10,87 +12,206 @@ export const runAgent = createAction({
   displayName: 'Run Agent',
   description: 'Run the AI assistant to complete your task.',
   auth: PieceAuth.None(),
-  errorHandlingOptions: {
-    retryOnFailure: {
-      hide: true,
-    },
-    continueOnFailure: {
-      hide: true,
-    },
-  },
   props: {
-    agentId: Property.Dropdown({
-      displayName: 'Agent',
-      description: 'Select agent created',
-      required: true,
-      refreshers: [],
-      options: async (_auth, ctx) => {
-        const agentPage = await agentCommon.listAgents({
-          publicUrl: ctx.server.publicUrl,
-          token: ctx.server.token,
-        })
-        return {
-          disabled: false,
-          options: agentPage.body.data.map((agent) => {
-            return {
-              label: agent.displayName,
-              value: agent.externalId,
-            };
-          }),
-        }
-      },
-    }),
-    prompt: Property.LongText({
+    [AgentPieceProps.PROMPT]: Property.LongText({
       displayName: 'Prompt',
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
+    [AgentPieceProps.AI_MODEL]: Property.StaticDropdown({
+      displayName: 'AI Model',
+      required: true,
+      description: 'Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.',
+      options: {
+        options: AI_MODELS.map(model => ({
+          label: `(${model.provider}) ${model.displayName}`,
+          value: model.id,
+        })),
+      },
+    }),
+    [AgentPieceProps.AGENT_TOOLS]: Property.Array({
+      displayName: 'Agent Tools',
+      required: false,
+      properties: {
+        type: Property.ShortText({
+          displayName: 'Tool Type',
+          required: true
+        }),
+        toolName: Property.ShortText({
+          displayName: 'Tool Name',
+          required: true
+        }),
+        pieceMetadata: Property.Json({
+          displayName: 'Piece Metadata',
+          required: false,
+        }),
+        flowId: Property.ShortText({
+          displayName: 'Flow Id',
+          required: false
+        })
+      }
+    }),
+    [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
+      displayName: 'Structured Output',
+      defaultValue: undefined,
+      required: false,
+      properties: {
+        displayName: Property.ShortText({
+          displayName: 'Display Name',
+          required: true
+        }),
+        description: Property.ShortText({
+          displayName: 'Description',
+          required: false
+        }),
+        type: Property.ShortText({
+          displayName: 'Type',
+          required: true
+        })
+      }
+    }),
+    [AgentPieceProps.MAX_STEPS]: Property.Number({
+      displayName: 'Max steps',
+      description: 'The numbder of interations the agent can do',
+      required: true,
+      defaultValue: 20,
+    }),
   },
   async run(context) {
-    const { agentId, prompt } = context.propsValue
-    const serverToken = context.server.token;
-
-    const body: RunAgentRequestBody = {
-      externalId: agentId,
-      prompt,
-    }
-
-    const response = await httpClient.sendRequest<AgentRun>({
-      method: HttpMethod.POST,
-      url: `${context.server.publicUrl}v1/agent-runs`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: serverToken,
-      },
-      body
+    const { prompt, maxSteps, aiModel } = context.propsValue
+    const selectedModel = agentCommon.getModelById(aiModel as string)
+    const model = agentCommon.createModel({
+      model: selectedModel,
+      token: context.server.token,
+      baseURL: `${context.server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`,
+      flowId: context.flows.current.id,
     })
 
-    if (response.status !== StatusCodes.OK) {
-      throw new Error(response.body.message)
-    }
+    const outputBuilder = agentOutputBuilder(prompt)
+    const hasStructuredOutput = !isNil(context.propsValue.structuredOutput) && context.propsValue.structuredOutput.length > 0
+    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[]
+    const agentTools = await context.agent.tools({
+      tools: agentToolsMetadata,
+      model: model,
+    })
+    const stream = streamText({
+      model: model,
+      prompt: `
+${prompt}
 
-    const agentRun = await agentCommon.pollAgentRunStatus({
-      publicUrl: context.server.publicUrl,
-      token: serverToken,
-      agentRunId: response.body.id,
-      update: async (data: AgentRun) => {
-        await context.output.update({
-          data: mapAgentRunToOutput(data),
-        })
-      },
+<important_note>
+As your FINAL ACTION, you must call the \`${TASK_COMPLETION_TOOL_NAME}\` tool to indicate if the task is complete or not. 
+Call this tool only once you have done everything you can to achieve the user's goal, or if you are unable to continue. 
+If you do not make this final call, your work will be considered unsuccessful.
+</important_note>
+`,
+      system: `
+You are a helpful, proactive AI assistant.
+Today's date is ${new Date().toISOString().split('T')[0]}.
+
+Help the user finish their goal quickly and accurately.
+        `.trim(),
+      stopWhen: [
+        stepCountIs(maxSteps),
+        hasToolCall(TASK_COMPLETION_TOOL_NAME),
+      ],
+      tools: {
+        ...agentTools,
+        [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
+          description: 'This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user\'s task, or if you are unable to continue. Once you call this tool, you should not take any further actions.',
+          inputSchema: z.object({
+            success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
+            ...(hasStructuredOutput ? {
+              output: z.object(
+                structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}
+              )
+                .nullable()
+                .describe('The structured output of your task. This is optional and can be omitted if you have not achieved the goal.')
+            } : {
+              output: z.string().nullable().describe('The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.')
+            }),
+          }),
+          execute: async (params) => {
+            const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
+            outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
+            if (hasStructuredOutput && !isNil(output)) {
+              outputBuilder.setStructuredOutput(output)
+            }
+            if (!hasStructuredOutput && !isNil(output)) {
+              outputBuilder.addMarkdown(output as unknown as string)
+            }
+            return {}
+          },
+        }),
+
+      }
     });
 
-    return mapAgentRunToOutput(agentRun)
-  },
+    for await (const chuck of stream.fullStream) {
+      switch (chuck.type) {
+        case 'text-delta': {
+          outputBuilder.addMarkdown(chuck.text)
+          break
+        }
+        case 'tool-call': {
+          if (isTaskCompletionToolCall(chuck.toolName)) {
+            continue
+          }
+          outputBuilder.startToolCall({
+            toolName: chuck.toolName,
+            toolCallId: chuck.toolCallId,
+            input: chuck.input as Record<string, unknown>,
+            agentTools: agentToolsMetadata,
+          })
+          break
+        }
+        case 'tool-result': {
+          if (isTaskCompletionToolCall(chuck.toolName)) {
+            continue
+          }
+          outputBuilder.finishToolCall({
+            toolCallId: chuck.toolCallId,
+            output: chuck.output as Record<string, unknown>,
+          })
+          break;
+        }
+        case 'error': {
+          outputBuilder.fail({ message: "Error running agent: " + inspect(chuck.error) })
+          break;
+        }
+      }
+      await context.output.update({ data: outputBuilder.build() })
+    }
+    const { status } = outputBuilder.build()
+    if (status == AgentTaskStatus.IN_PROGRESS) {
+      outputBuilder.fail({})
+    }
+
+    return outputBuilder.build()
+  }
 });
 
 
-function mapAgentRunToOutput(agentRun: AgentRun): Record<string, unknown> {
-  return {
-    steps: agentRun.steps,
-    status: agentRun.status,
-    output: agentRun.output,
-    agentRunId: agentRun.id,
-    message: agentRun.message
+const isTaskCompletionToolCall = (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME
+
+function structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
+  const shape: Record<string, z.ZodType> = {}
+
+  for (const field of outputFields) {
+    switch (field.type) {
+      case AgentOutputFieldType.TEXT:
+        shape[field.displayName] = z.string()
+        break
+      case AgentOutputFieldType.NUMBER:
+        shape[field.displayName] = z.number()
+        break
+      case AgentOutputFieldType.BOOLEAN:
+        shape[field.displayName] = z.boolean()
+        break
+      default:
+        shape[field.displayName] = z.any()
+    }
   }
+
+  return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
 }

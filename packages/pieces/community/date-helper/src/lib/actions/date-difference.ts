@@ -1,7 +1,4 @@
-import { Property, createAction } from '@activepieces/pieces-framework';
-import dayjs from 'dayjs';
-import duration from 'dayjs/plugin/duration';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
+import { Property, createAction } from '@activepieces/pieces-framework'
 import {
   optionalTimeFormats,
   timeFormat,
@@ -9,10 +6,8 @@ import {
   timeFormatDescription,
   parseDate,
   getCorrectedFormat,
+  apDayjs,
 } from '../common';
-
-dayjs.extend(duration);
-dayjs.extend(advancedFormat);
 
 export const dateDifferenceAction = createAction({
   name: 'date_difference',
@@ -73,6 +68,7 @@ export const dateDifferenceAction = createAction({
     }),
   },
   async run(context) {
+    
     const inputStartDate = context.propsValue.startDate;
     const startDateFormat = getCorrectedFormat(context.propsValue.startDateFormat);
     const inputEndDate = context.propsValue.endDate;
@@ -81,7 +77,7 @@ export const dateDifferenceAction = createAction({
     const endDate = parseDate(inputEndDate, endDateFormat);
 
     const unitDifference = context.propsValue.unitDifference;
-    const difference = dayjs.duration(endDate.diff(startDate));
+    const difference = apDayjs.duration(endDate.diff(startDate));
 
     const outputresponse: Record<string, number> = {};
     for (let i = 0; i < unitDifference.length; i++) {

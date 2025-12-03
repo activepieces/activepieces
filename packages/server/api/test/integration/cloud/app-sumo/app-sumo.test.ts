@@ -42,9 +42,8 @@ describe('AppSumo API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
-
+            expect(response?.statusCode).toBe(StatusCodes.CREATED)
             expect(responseBody?.message).toBe('success')
             expect(responseBody?.redirect_url).toBe(
                 `https://cloud.activepieces.com/sign-up?email=${mockEmail}`,

@@ -5,7 +5,8 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
-import { createHtmlPlugin } from 'vite-plugin-html';
+
+import customHtmlPlugin from './vite-plugins/html-plugin';
 
 export default defineConfig(({ command, mode }) => {
   const isDev = command === 'serve' || mode === 'development';
@@ -66,13 +67,9 @@ export default defineConfig(({ command, mode }) => {
       react(),
       nxViteTsPaths(),
 
-      createHtmlPlugin({
-        inject: {
-          data: {
-            apTitle: AP_TITLE,
-            apFavicon: AP_FAVICON,
-          },
-        },
+      customHtmlPlugin({
+        title: AP_TITLE,
+        icon: AP_FAVICON,
       }),
       checker({
         typescript: {

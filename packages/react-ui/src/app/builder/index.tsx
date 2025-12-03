@@ -20,16 +20,12 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { UpgradeDialog } from '@/features/billing/components/upgrade-dialog';
 import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   FlowActionType,
-  ApEdition,
-  ApFlagId,
   FlowTriggerType,
   FlowVersionState,
   PieceTrigger,
@@ -41,7 +37,6 @@ import {
 import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
-import { CopilotSidebar } from './copilot';
 import { FlowCanvas } from './flow-canvas';
 import { LEFT_SIDEBAR_ID } from './flow-canvas/utils/consts';
 import { FlowVersionsList } from './flow-versions';
@@ -100,7 +95,6 @@ const BuilderPage = () => {
       state.selectedStep,
     ]);
 
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   useShowBuilderIsSavingWarningBeforeLeaving();
 
   const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
@@ -200,7 +194,6 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
             {leftSidebar === LeftSideBarType.VERSIONS && <FlowVersionsList />}
-            {leftSidebar === LeftSideBarType.AI_COPILOT && <CopilotSidebar />}
           </div>
         </ResizablePanel>
 
@@ -289,7 +282,6 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      {edition === ApEdition.CLOUD && <UpgradeDialog />}
       <ChatDrawer />
     </div>
   );

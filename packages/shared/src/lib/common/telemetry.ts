@@ -37,15 +37,6 @@ type SignedUp = {
     projectId: ProjectId
 }
 
-export type ClickedTutorialTelemetryParams = {
-    tab: 'flows'
-    | 'mcpServers'
-    | 'tables'
-    | 'agents'
-    | 'todos'
-    | 'gettingStarted'
-    location: 'tutorials-sidebar-item' | 'table-title' | 'small-button-inside-sidebar-item'
-}
 type QuotaAlert = {
     percentageUsed: number
 }
@@ -120,10 +111,6 @@ type FlowShared = {
 type OpenedFromDashboard = {
     location: 'sidenav' | 'tasks-progress'
 }
-type CopilotGeneratedCode = {
-    code: string
-    prompt: string
-}
 
 type FormsViewed = {
     flowId: string
@@ -177,7 +164,6 @@ export enum TelemetryEventName {
     REFERRAL_LINK_COPIED = 'referral.link.copied',
     FLOW_SHARED = 'flow.shared',
     TEMPLATE_SEARCH = 'template.search',
-    COPILOT_GENERATED_CODE = 'copilot.code.generated',
     FORMS_VIEWED = 'forms.viewed',
     FORMS_SUBMITTED = 'forms.submitted',
     REWARDS_OPENED = 'rewards.opened',
@@ -190,7 +176,6 @@ export enum TelemetryEventName {
     UPGRADE_POPUP_OPENED = 'upgrade.popup.opened',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',
-    CLICKED_TUTORIAL = 'clicked.tutorial',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -238,10 +223,6 @@ export type TelemetryEvent =
   TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD,
   OpenedFromDashboard
   >
-  | BaseTelemetryEvent<
-  TelemetryEventName.COPILOT_GENERATED_CODE,
-  CopilotGeneratedCode
-  >
   | BaseTelemetryEvent<TelemetryEventName.FORMS_VIEWED, FormsViewed>
   | BaseTelemetryEvent<TelemetryEventName.USER_INVITED, UserInvited>
   | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>
@@ -263,4 +244,3 @@ export type TelemetryEvent =
   AiProviderConfiguredOrUsed
   >
   | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
-  | BaseTelemetryEvent<TelemetryEventName.CLICKED_TUTORIAL, ClickedTutorialTelemetryParams>

@@ -12,6 +12,7 @@ import {
 import {
     BasicAuthConnectionValue,
     CustomAuthConnectionValue,
+    EngineGenericError,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
@@ -20,52 +21,62 @@ import {
     SecretTextConnectionValue,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
-import { FlowExecutorContext } from '../handler/context/flow-execution-context'
+import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
-    async executeProps({ params, pieceSource, executionState, constants, searchValue }: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
-        const property = await pieceLoader.getPropOrThrow({
-            params,
-            pieceSource,
+    async executeProps( operation: ExecutePropsParams): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> {
+        const constants = EngineConstants.fromExecutePropertyInput(operation)
+        const executionState = await testExecutionContext.stateFromFlowVersion({
+            apiUrl: operation.internalApiUrl,
+            flowVersion: operation.flowVersion,
+            projectId: operation.projectId,
+            engineToken: operation.engineToken,
+            sampleData: operation.sampleData,
         })
+        const property = await pieceLoader.getPropOrThrow({ pieceName: operation.pieceName, pieceVersion: operation.pieceVersion, actionOrTriggerName: operation.actionOrTriggerName, propertyName: operation.propertyName, devPieces: EngineConstants.DEV_PIECES })
+    
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
-            throw new Error(`Property type is not executable: ${property.type} for ${property.displayName}`)
+            throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property.type} for ${property.displayName}`)
         }
-        try {
+
+        const { data: executePropsResult, error: executePropsError } = await utils.tryCatchAndThrowOnEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
-                projectId: params.projectId,
-                engineToken: params.engineToken,
+                projectId: constants.projectId,
+                engineToken: constants.engineToken,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
-                unresolvedInput: params.input,
+                unresolvedInput: operation.input,
                 executionState,
             })
             const ctx = {
-                searchValue,
+                searchValue: operation.searchValue,
                 server: {
-                    token: params.engineToken,
+                    token: constants.engineToken,
                     apiUrl: constants.internalApiUrl,
-                    publicUrl: params.publicApiUrl,
+                    publicUrl: operation.publicApiUrl,
                 },
                 project: {
-                    id: params.projectId,
+                    id: constants.projectId,
                     externalId: constants.externalProjectId,
                 },
                 flows: createFlowsContext(constants),
+                step: {
+                    name: operation.actionOrTriggerName,
+                },
                 connections: utils.createConnectionManager({
-                    projectId: params.projectId,
-                    engineToken: params.engineToken,
+                    projectId: constants.projectId,
+                    engineToken: constants.engineToken,
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
                 }),
             }
-
+        
             switch (property.type) {
                 case PropertyType.DYNAMIC: {
                     const dynamicProperty = property as DynamicProperties<boolean>
@@ -94,10 +105,14 @@ export const pieceHelper = {
                         options,
                     }
                 }
+                default: {
+                    throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property}`)
+                }
             }
-        }
-        catch (e) {
-            console.error(e)
+        }))
+        
+        if (executePropsError) {
+            console.error(executePropsError)
             return {
                 type: property.type,
                 options: {
@@ -107,14 +122,16 @@ export const pieceHelper = {
                 },
             }
         }
+
+        return executePropsResult
     },
 
     async executeValidateAuth(
-        { params, pieceSource }: { params: ExecuteValidateAuthOperation, pieceSource: string },
+        { params, devPieces }: { params: ExecuteValidateAuthOperation, devPieces: string[] },
     ): Promise<ExecuteValidateAuthResponse> {
         const { piece: piecePackage } = params
 
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, pieceSource })
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName: piecePackage.pieceName, pieceVersion: piecePackage.pieceVersion, devPieces })
         const server = {
             apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
             publicUrl: params.publicApiUrl,
@@ -158,16 +175,16 @@ export const pieceHelper = {
                 })
             }
             default: {
-                throw new Error('Invalid auth type')
+                throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
             }
         }
     },
 
-    async extractPieceMetadata({ pieceSource, params }: { pieceSource: string, params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
+    async extractPieceMetadata({ devPieces, params }: { devPieces: string[], params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
         const { pieceName, pieceVersion } = params
-        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, pieceSource })
-        const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, pieceSource })
-        const pieceFolderPath = await pieceLoader.getPiecePath({ packageName: pieceAlias, pieceSource })
+        const piece = await pieceLoader.loadPieceOrThrow({ pieceName, pieceVersion, devPieces })
+        const pieceAlias = pieceLoader.getPackageAlias({ pieceName, pieceVersion, devPieces })
+        const pieceFolderPath = await pieceLoader.getPiecePath({ packageName: pieceAlias, devPieces })
         const i18n = await pieceTranslation.initializeI18n(pieceFolderPath)
         const fullMetadata = piece.metadata()
         return {
@@ -180,6 +197,5 @@ export const pieceHelper = {
     },
 }
 
-
-type ExecutePropsParams = { searchValue?: string, executionState: FlowExecutorContext, params: ExecutePropsOptions, pieceSource: string, constants: EngineConstants }
+type ExecutePropsParams = Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }
 

@@ -1,7 +1,11 @@
 import dayjs from 'dayjs';
 import { jwtDecode } from 'jwt-decode';
 
-import { AuthenticationResponse, isNil, Principal } from '@activepieces/shared';
+import {
+  AuthenticationResponse,
+  isNil,
+  UserPrincipal,
+} from '@activepieces/shared';
 
 import { ApStorage } from './ap-browser-storage';
 import { authenticationApi } from './authentication-api';
@@ -98,6 +102,6 @@ export const authenticationSession = {
   },
 };
 
-function getDecodedJwt(token: string): Principal {
-  return jwtDecode<Principal>(token);
+function getDecodedJwt(token: string): UserPrincipal {
+  return jwtDecode<UserPrincipal>(token);
 }

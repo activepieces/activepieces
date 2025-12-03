@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { CircleMinus, Pencil, RotateCcw, Trash, User } from 'lucide-react';
+import { toast } from 'sonner';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
@@ -13,7 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
 import { formatUtils } from '@/lib/utils';
@@ -22,8 +22,6 @@ import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
-  const { toast } = useToast();
-
   const { data, isLoading, refetch } = platformUserHooks.useUsers();
 
   const { mutate: deleteUser, isPending: isDeleting } = useMutation({
@@ -33,9 +31,7 @@ export default function UsersPage() {
     },
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('User deleted successfully'),
+      toast.success(t('User deleted successfully'), {
         duration: 3000,
       });
     },
@@ -54,14 +50,14 @@ export default function UsersPage() {
       },
       onSuccess: (data) => {
         refetch();
-        toast({
-          title: t('Success'),
-          description:
-            data.status === UserStatus.ACTIVE
-              ? t('User activated successfully')
-              : t('User deactivated successfully'),
-          duration: 3000,
-        });
+        toast.success(
+          data.status === UserStatus.ACTIVE
+            ? t('User activated successfully')
+            : t('User deactivated successfully'),
+          {
+            duration: 3000,
+          },
+        );
       },
     },
   );

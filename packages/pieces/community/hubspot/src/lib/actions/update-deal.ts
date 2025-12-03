@@ -80,6 +80,9 @@ export const updateDealAction = createAction({
 
 		// Add additional properties to the dealProperties object
 		Object.entries(objectProperties).forEach(([key, value]) => {
+			if ((Array.isArray(value) && value.length === 0)) {
+        return;  
+			}
 			// Format values if they are arrays
 			dealProperties[key] = Array.isArray(value) ? value.join(';') : value;
 		});

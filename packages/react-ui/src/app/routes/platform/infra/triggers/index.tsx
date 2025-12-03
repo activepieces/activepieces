@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {

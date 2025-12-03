@@ -5,10 +5,8 @@ import {
   flowStructureUtil,
   StepOutput,
   FlowAction,
-  FlowActionType,
 } from '@activepieces/shared';
 
-import { FlowStepAgent } from './flow-step-agent';
 import { FlowStepInputOutput } from './flow-step-input-output';
 
 type FlowStepIOProps = {
@@ -30,15 +28,6 @@ const FlowStepIO = React.memo(({ stepDetails }: FlowStepIOProps) => {
 
   if (!selectedStep) {
     return null;
-  }
-
-  const isAgentStep =
-    selectedStep.type === FlowActionType.PIECE &&
-    flowStructureUtil.isAgentPiece(selectedStep);
-  if (isAgentStep) {
-    return (
-      <FlowStepAgent stepDetails={stepDetails} selectedStep={selectedStep} />
-    );
   }
 
   return (

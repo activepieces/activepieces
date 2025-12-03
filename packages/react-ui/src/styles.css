@@ -65,6 +65,8 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-active: 0 0% 90%;
+    --sidebar-progress: 0 0% 50%;
   }
 
 .dark {
@@ -119,6 +121,8 @@
   --sidebar-accent-foreground: 210 30% 90%;
   --sidebar-border: 210 15% 22%;
   --sidebar-ring: 210 90% 70%;
+  --sidebar-active: 210 15% 25%;
+  --sidebar-progress: 210 15% 40%;
 }
 
 
@@ -161,4 +165,59 @@
 /* This is a hack to fix the issue with the pointer events being set to none when the vaul drawer is open */
 body {
   pointer-events: auto !important;
+}
+
+@layer utilities {
+  .scrollbar-hover {
+    scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .scrollbar-hover::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-hover::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    transition: opacity 0.2s;
+  }
+
+  .scrollbar-hover:hover::-webkit-scrollbar-thumb,
+  .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .scrollbar-hover:hover::-webkit-scrollbar-thumb,
+  .dark .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .scrollbar-hover:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark .scrollbar-hover:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .group:hover .scrollbar-hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark .group:hover .scrollbar-hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }

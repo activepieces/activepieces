@@ -1,7 +1,7 @@
 {
   "URL shortening and link management platform with analytics.": "Encurtamento de URL e plataforma de gerenciamento de links com análises.",
   "Access Token": "Token de acesso",
-  "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ": "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ",
+  "\n  To get your Access Token:\n  1. Log in to your Bitly account.\n  2. Click your profile icon in the top right corner.\n  3. Go to **Profile Settings**.\n  4. Navigate to the **Developer settings** section.\n  5. Click on **API**.\n  6. Click the **Generate token** button and enter your password to get your access token.\n  ": "\nPara obter seu Token siga estes passos:\n1. Faça login na sua conta Bitly.\n2. Clique no ícone do seu perfil (no lado superior direito).\n3. Vá para **Configurações do Perfil**.\n4. Navegue até a sessão \"Configurações do desenvolvedor\".\n5. Clique em **API**.\n6. Clique no botão  **Gerar Token** e informe sua senha para obter seu Token.\n  ",
   "Archive Bitlink": "Arquivar Bitlink",
   "Create Bitlink": "Criar Bitlink",
   "Create QR Code": "Create QR Code",

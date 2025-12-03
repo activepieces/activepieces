@@ -31,9 +31,11 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
 
 
 const ListAuditEventsRequestEndpoint = {
+    config: {
+        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER] as const,
+    },
     schema: {
         querystring: ListAuditEventsRequest,
-        allowedPrincipals: [PrincipalType.UNKNOWN],
         scope: EndpointScope.PLATFORM,
     },
 }

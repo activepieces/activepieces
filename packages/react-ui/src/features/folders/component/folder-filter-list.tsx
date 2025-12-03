@@ -20,7 +20,12 @@ import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import { FolderDto, isNil, Permission } from '@activepieces/shared';
+import {
+  FolderDto,
+  isNil,
+  Permission,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 
 import { foldersHooks } from '../lib/folders-hooks';
 import { foldersUtils } from '../lib/folders-utils';
@@ -131,7 +136,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     refetchAllFlowsCount();
   }, [refresh]);
 
-  const isInUncategorized = selectedFolderId === 'NULL';
+  const isInUncategorized = selectedFolderId === UncategorizedFolderId;
   const isInAllFlows = isNil(selectedFolderId);
 
   return (
@@ -193,7 +198,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
             'bg-accent dark:bg-accent/50': isInUncategorized,
           })}
-          onClick={() => updateSearchParams('NULL')}
+          onClick={() => updateSearchParams(UncategorizedFolderId)}
         >
           <TextWithIcon
             icon={<Shapes className="w-4 h-4"></Shapes>}

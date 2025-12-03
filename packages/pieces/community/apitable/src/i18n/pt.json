@@ -4,7 +4,7 @@
   "Instance Url": "URL da Instância",
   "The token of the AITable account": "O token da conta AITable",
   "The url of the AITable instance.": "A url da instância AITable.",
-  "\n    To obtain your AITable token, follow these steps:\n\n    1. Log in to your AITable account.\n    2. Visit https://apitable.com/workbench\n    3. Click on your profile picture (Bottom left).\n    4. Click on \"My Settings\".\n    5. Click on \"Developer\".\n    6. Click on \"Generate new token\".\n    7. Copy the token.\n    ": "\n    To obtain your AITable token, follow these steps:\n\n    1. Log in to your AITable account.\n    2. Visit https://apitable.com/workbench\n    3. Click on your profile picture (Bottom left).\n    4. Click on \"My Settings\".\n    5. Click on \"Developer\".\n    6. Click on \"Generate new token\".\n    7. Copy the token.\n    ",
+  "\n    To obtain your AITable token, follow these steps:\n\n    1. Log in to your AITable account.\n    2. Visit https://apitable.com/workbench\n    3. Click on your profile picture (Bottom left).\n    4. Click on \"My Settings\".\n    5. Click on \"Developer\".\n    6. Click on \"Generate new token\".\n    7. Copy the token.\n    ": "Para obter seu \"AiTable Token\", siga os seguintes passos:\n\n1. Entre na sua conta \"AiTable\".\n2. Acesse https://apitable.com/workbench\n3. Clique na sua foto de perfil (com o botão esquerdo)\n4. Vá para \"Minhas configurações\"\n5. Clique em \"Desenvolvedor\"\n6. Clique em \"Gerar novo Token\".\n7. Copie o Token gerado.",
   "Create Record": "Criar Registro",
   "Update Record": "Atualizar Registro",
   "Find Records": "Encontrar registros",

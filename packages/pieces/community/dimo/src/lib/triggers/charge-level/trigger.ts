@@ -1,7 +1,7 @@
 import { createTrigger, TriggerStrategy, Property } from '@activepieces/pieces-framework';
 import { HttpError } from '@activepieces/pieces-common';
 import { dimoAuth } from '../../../index';
-import { DimoClient } from '../../common/helpers';
+import { DimoClient, getNumberExpression } from '../../common/helpers';
 import { CreateWebhookParams, WebhookInfo, WebhookPayload } from '../../common/types';
 import { TriggerField } from '../../common/constants';
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
@@ -24,21 +24,15 @@ export const chargeLevelTrigger = createTrigger({
 		}),
 		operator: operatorStaticDropdown,
 		chargePercentage: Property.Number({
-			displayName: 'Charge Percentage (%)',
-			description: 'The battery charge level percentage (0-100%) to compare against.',
+			displayName: 'Charge Level (%)',
+			description: 'The battery charge level as a percentage (0-100) to compare against.',
 			required: true,
 		}),
-		triggerFrequency: Property.StaticDropdown({
-			displayName: 'Trigger Frequency',
-			description: 'How often the webhook should fire when condition is met.',
+		coolDownPeriod: Property.Number({
+			displayName: 'Cool Down Period (seconds)',
+			description: 'Minimum number of seconds between successive webhook firings',
 			required: true,
-			defaultValue: 'Realtime',
-			options: {
-				options: [
-					{ label: 'Real-time (continuous)', value: 'Realtime' },
-					{ label: 'Hourly', value: 'Hourly' },
-				],
-			},
+			defaultValue: 30,
 		}),
 		verificationToken: verificationTokenInput,
 	},
@@ -58,7 +52,7 @@ export const chargeLevelTrigger = createTrigger({
 	async onEnable(context) {
 		const { clientId, apiKey, redirectUri } = context.auth;
 
-		const { vehicleTokenIds, operator, chargePercentage, triggerFrequency, verificationToken } =
+		const { vehicleTokenIds, operator, chargePercentage, coolDownPeriod, verificationToken } =
 			context.propsValue;
 
 		// Validate charge percentage
@@ -78,18 +72,14 @@ export const chargeLevelTrigger = createTrigger({
 				: [];
 
 		const webhookPayload: CreateWebhookParams = {
-			service: 'Telemetry',
-			data: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
-			trigger: {
-				field: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
-				operator,
-				value: chargePercentage,
-			},
-			setup: triggerFrequency as 'Realtime' | 'Hourly',
+			service: 'telemetry.signals',
+			metricName: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent,
+			condition: getNumberExpression(operator, chargePercentage),
+			coolDownPeriod,
 			description: `Charge level trigger: ${operator} ${chargePercentage}%`,
-			target_uri: context.webhookUrl,
-			status: 'Active',
-			verification_token: verificationToken,
+			targetURL: context.webhookUrl,
+			status: 'enabled',
+			verificationToken: verificationToken,
 		};
 		try {
 			const developerJwt = await dimo.getDeveloperJwt();
@@ -100,18 +90,12 @@ export const chargeLevelTrigger = createTrigger({
 
 			const webhookId = createWebhookResponse.id;
 
-			if (ids.length === 0) {
-				await dimo.subscribeAllVehicles({
-					developerJwt,
-					webhookId,
-				});
-			} else {
-				await Promise.all(
-					ids.map(async (tokenId) => {
-						await dimo.subscribeVehicle({ developerJwt, tokenId, webhookId });
-					}),
-				);
-			}
+			await dimo.subscribeVehiclesToWebhook({
+				developerJwt,
+				webhookId,
+				vehicleTokenIds: ids,
+			});
+
 			await context.store.put<WebhookInfo>(TRIGGER_KEY, {
 				webhookId,
 				verificationToken,

@@ -1,8 +1,8 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { issuesService } from '../../../flows/issues/issues-service'
+import { redisConnections } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -13,7 +13,6 @@ import { emailSender, EmailTemplateData } from './email-sender/email-sender'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
-const EDITION_IS_NOT_CLOUD = EDITION !== ApEdition.CLOUD
 const MAX_ISSUES_EMAIL_LIMT = 50
 
 export const emailService = (log: FastifyBaseLogger) => ({
@@ -64,7 +63,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
+
         if (emails.length === 0) {
             return
         }
@@ -83,37 +82,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             },
         })
     },
-    async sendQuotaAlert({ projectId, resetDate, templateName }: SendQuotaAlertArgs): Promise<void> {
-        if (EDITION_IS_NOT_CLOUD) {
-            return
-        }
-
-        const project = await projectService.getOne(projectId)
-        assertNotNullOrUndefined(project, 'project')
-
-        const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        if (platform.plan.embeddingEnabled) {
-            return
-        }
-
-        const alerts = await alertsService(log).list({ projectId, cursor: undefined, limit: MAX_ISSUES_EMAIL_LIMT })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-
-        if (emails.length === 0) {
-            return
-        }
-
-        await emailSender(log).send({
-            emails,
-            platformId: project.platformId,
-            templateData: {
-                name: templateName,
-                vars: {
-                    resetDate,
-                },
-            },
-        })
-    },
 
     async sendOtp({ platformId, userIdentity, otp, type }: SendOtpArgs): Promise<void> {
         if (EDITION_IS_NOT_PAID) {
@@ -124,12 +92,12 @@ export const emailService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        log.info('Sending OTP email', {
+        log.info({
             email: userIdentity.email,
             otp,
             identityId: userIdentity.id,
             type,
-        })
+        }, 'Sending OTP email')
 
         const frontendPath = {
             [OtpType.EMAIL_VERIFICATION]: 'verify-email',
@@ -162,65 +130,76 @@ export const emailService = (log: FastifyBaseLogger) => ({
             templateData: otpToTemplate[type],
         })
     },
-    
-    async sendReminderJobHandler(job: {
+
+    async sendIssuesSummary(job: {
         projectId: string
         platformId: string
         projectName: string
     }): Promise<void> {
-        const issues = await issuesService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
-        if (issues.data.length === 0) {
+        const redisConnection = await redisConnections.useExisting()
+        const globalAlertsKey = `alerts:flowFailures:${job.platformId}:${job.projectId}`
+
+        const storedAlerts = await redisConnection.lrange(globalAlertsKey, 0, -1)
+        if (storedAlerts.length === 0) {
             return
         }
 
-        const alerts = await alertsService(log).list({ projectId: job.projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        
-        const issuesUrl = await domainHelper.getPublicUrl({
-            platformId: job.platformId,
-            path: 'runs?limit=10#Issues',
-        })
+        const parsedAlerts = storedAlerts.map((a) => {
+            try {
+                return JSON.parse(a)
+            }
+            catch {
+                return null
+            }
+        }).filter((a) => !isNil(a))
 
-        const issuesWithFormattedDate = issues.data.map((issue) => ({ 
-            ...issue, 
-            created: dayjs(issue.created).format('MMM D, h:mm a'),
-            lastOccurrence: dayjs(issue.lastOccurrence).format('MMM D, h:mm a'), 
-        }))
+        const issuesForProject = parsedAlerts.filter(
+            (a) => a.projectId === job.projectId,
+        )
+
+        if (issuesForProject.length === 0) {
+            return
+        }
+
+        const alerts = await alertsService(log).list({
+            projectId: job.projectId,
+            cursor: undefined,
+            limit: 50,
+        })
+        const emails = alerts.data
+            .filter((alert) => alert.channel === AlertChannel.EMAIL)
+            .map((alert) => alert.receiver)
 
         if (emails.length === 0) {
             return
         }
 
+        const issuesUrl = await domainHelper.getPublicUrl({
+            platformId: job.platformId,
+            path: 'runs?limit=10#Issues',
+        })
+
+        const issuesWithFormattedDate = issuesForProject.map((issue) => ({
+            ...issue,
+            createdAt: issue.createdAt
+                ? issue.createdAt
+                : dayjs().format('MMM D, h:mm a'),
+        }))
+
         await emailSender(log).send({
             emails,
             platformId: job.platformId,
             templateData: {
-                name: 'issues-reminder',
+                name: 'issues-summary',
                 vars: {
                     issuesUrl,
-                    issuesCount: issues.data.length.toString(),
+                    issuesCount: issuesWithFormattedDate.length.toString(),
                     projectName: job.projectName,
                     issues: JSON.stringify(issuesWithFormattedDate),
                 },
             },
         })
     },
-
-    async sendTrialReminder({ platformId, firstName, customerEmail, templateName }: SendTrialReminderArgs): Promise<void> {
-        await emailSender(log).send({
-            emails: [customerEmail],
-            platformId,
-            templateData: {
-                name: templateName,
-                vars: {
-                    year: new Date().getFullYear().toString(),
-                    firstName: firstName ?? 'Automator',
-                },
-            },
-        })
-
-    },
-
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
@@ -279,24 +258,11 @@ type SendInvitationArgs = {
     invitationLink: string
 }
 
-type SendQuotaAlertArgs = {
-    projectId: string
-    resetDate: string
-    templateName: 'quota-50' | 'quota-90' | 'quota-100'
-}
-
 type SendOtpArgs = {
     type: OtpType
     platformId: string | null
     otp: string
     userIdentity: UserIdentity
-}
-
-type SendTrialReminderArgs = {
-    platformId: string
-    firstName: string | undefined
-    customerEmail: string
-    templateName: '3-days-left-on-trial' | '7-days-in-trial' | '1-day-left-on-trial' | 'welcome-to-trial'
 }
 
 type IssueCreatedArgs = {

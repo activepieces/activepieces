@@ -25,7 +25,10 @@ import {
     SeekPage,
     spreadIfDefined,
     UpsertAppConnectionRequestBody,
+    User,
     UserId,
+    UserIdentity,
+    UserWithMetaInformation,
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -42,7 +45,7 @@ import { system } from '../../helper/system/system'
 import {
     getPiecePackageWithoutArchive,
     pieceMetadataService,
-} from '../../pieces/piece-metadata-service'
+} from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userService } from '../../user/user-service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -215,7 +218,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }
 
         const flows = await flowService(log).list({
-            projectId,
+            projectIds: [projectId],
             cursorRequest: null,
             limit: 1000,
             folderId: undefined,
@@ -288,30 +291,22 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         }
         const queryBuilder = appConnectionsRepo()
             .createQueryBuilder('app_connection')
+            .leftJoinAndSelect('app_connection.owner', 'owner')
+            .leftJoinAndSelect('owner.identity', 'owner_identity')
             .where(querySelector)
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
+        const flowIdsByExternalId = await fetchFlowIdsForConnections(log, data)
+
         const promises = data.map(async (encryptedConnection) => {
             const apConnection: AppConnection = await appConnectionHandler(log).decryptConnection(encryptedConnection)
-            const owner = isNil(apConnection.ownerId) ? null : await userService.getMetaInformation({
-                id: apConnection.ownerId,
-            })
-            const flowIds = await Promise.all(apConnection.projectIds.map(async (projectId) => {
-                const flows = await flowService(log).list({
-                    projectId,
-                    cursorRequest: null,
-                    limit: 1000,
-                    folderId: undefined,
-                    name: undefined,
-                    status: undefined,
-                    connectionExternalIds: [apConnection.externalId],
-                })
-                return flows.data.map((flow) => flow.id)
-            }))
+            const owner = mapToUserWithMetaInformation(encryptedConnection.owner)
+            const flowIds = flowIdsByExternalId.get(apConnection.externalId) ?? []
+
             return {
                 ...apConnection,
                 owner,
-                flowIds: flowIds.flat(),
+                flowIds,
             }
         })
         const refreshConnections = await Promise.all(promises)
@@ -542,6 +537,68 @@ const engineValidateAuth = async (
                 error: validateAuthResult.error,
             },
         })
+    }
+}
+
+async function fetchFlowIdsForConnections(
+    log: FastifyBaseLogger,
+    connections: AppConnectionSchema[],
+): Promise<Map<string, string[]>> {
+    const allExternalIds = new Set<string>()
+    const allProjectIds = new Set<string>()
+    
+    connections.forEach((connection) => {
+        allExternalIds.add(connection.externalId)
+        connection.projectIds.forEach((projectId) => {
+            allProjectIds.add(projectId)
+        })
+    })
+
+    if (allExternalIds.size === 0 || allProjectIds.size === 0) {
+        return new Map<string, string[]>()
+    }
+
+    const flowsPage = await flowService(log).list({
+        projectIds: Array.from(allProjectIds),
+        cursorRequest: null,
+        connectionExternalIds: Array.from(allExternalIds),
+    })
+
+    const flowIdsByExternalId = new Map<string, string[]>()
+    flowsPage.data.forEach((flow) => {
+        if (flow.version?.connectionIds) {
+            flow.version.connectionIds.forEach((connectionExternalId) => {
+                if (!flowIdsByExternalId.has(connectionExternalId)) {
+                    flowIdsByExternalId.set(connectionExternalId, [])
+                }
+                flowIdsByExternalId.get(connectionExternalId)!.push(flow.id)
+            })
+        }
+    })
+
+    return flowIdsByExternalId
+}
+
+function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }) | null): UserWithMetaInformation | null {
+    if (isNil(owner)) {
+        return null
+    }
+    const identity = owner.identity
+    if (isNil(identity)) {
+        return null
+    }
+
+    return {
+        id: owner.id,
+        email: identity.email,
+        firstName: identity.firstName,
+        lastName: identity.lastName,
+        platformId: owner.platformId,
+        platformRole: owner.platformRole,
+        status: owner.status,
+        externalId: owner.externalId,
+        created: owner.created,
+        updated: owner.updated,
     }
 }
 

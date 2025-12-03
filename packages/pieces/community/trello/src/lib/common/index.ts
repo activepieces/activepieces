@@ -100,6 +100,36 @@ export const trelloCommon = {
 			};
 		},
 	}),
+	board_id_opt: Property.Dropdown({
+		displayName: 'Boards',
+		description: 'List of boards',
+		required: false,
+		refreshers: [],
+		options: async ({ auth }) => {
+			if (!auth) {
+				return {
+					disabled: true,
+					placeholder: 'connect your account first',
+					options: [],
+				};
+			}
+
+			const basicAuthProperty = auth as BasicAuthPropertyValue;
+			const user = await getAuthorisedUser(basicAuthProperty.username, basicAuthProperty.password);
+			const boards = await listBoards(
+				basicAuthProperty.username,
+				basicAuthProperty.password,
+				user['id'],
+			);
+
+			return {
+				options: boards.map((board: { id: string; name: string }) => ({
+					value: board.id,
+					label: board.name,
+				})),
+			};
+		},
+	}),
 	board_labels: Property.MultiSelectDropdown({
 		displayName: 'Labels',
 		description: 'Assign labels to the card',

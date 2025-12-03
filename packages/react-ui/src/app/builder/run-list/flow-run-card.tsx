@@ -134,17 +134,31 @@ const FlowRunCard = React.memo(
       >
         <div>
           <span>
-            <Icon
-              className={cn('w-5 h-5', {
-                'text-success': variant === 'success',
-                'text-destructive': variant === 'error',
-              })}
-            />
+            {run.status === FlowRunStatus.CANCELED ? (
+              <Tooltip>
+                <TooltipTrigger>
+                  <Icon
+                    className={cn('w-5 h-5', {
+                      'text-success': variant === 'success',
+                      'text-destructive': variant === 'error',
+                    })}
+                  />
+                </TooltipTrigger>
+                <TooltipContent>{t('Canceled')}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Icon
+                className={cn('w-5 h-5', {
+                  'text-success': variant === 'success',
+                  'text-destructive': variant === 'error',
+                })}
+              />
+            )}
           </span>
         </div>
         <div className="grid gap-2">
           <div className="text-sm font-medium leading-none flex gap-2 items-center">
-            {formatUtils.formatDate(new Date(run.startTime))}{' '}
+            {formatUtils.formatDate(new Date(run.created ?? new Date()))}{' '}
             {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
           </div>
           {isFlowRunStateTerminal({
@@ -153,7 +167,14 @@ const FlowRunCard = React.memo(
           }) && (
             <p className="flex gap-1 text-xs text-muted-foreground">
               <StopwatchIcon className="h-3.5 w-3.5" />
-              {t('Took')} {formatUtils.formatDuration(run.duration, false)}
+              {t('Took')}{' '}
+              {formatUtils.formatDuration(
+                run.startTime && run.finishTime
+                  ? new Date(run.finishTime).getTime() -
+                      new Date(run.startTime).getTime()
+                  : undefined,
+                false,
+              )}
             </p>
           )}
           {run.status === FlowRunStatus.RUNNING && (

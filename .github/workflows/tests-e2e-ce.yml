@@ -63,14 +63,25 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
 
-      - name: Setup Node.js
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lock', 'package.json') }}
+          restore-keys: bun-
+
+      - name: Setup nodejs
         uses: actions/setup-node@v3
         with:
           node-version: 20
-          cache: 'npm'
-          
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
       - name: Install dependencies
-        run: npm ci
+        run: bun install
         
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium

@@ -22,12 +22,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import {
-  ImportFlowDialog,
-  ImportFlowDialogProps,
-} from '@/features/flows/components/import-flow-dialog';
+import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowsApi } from '@/features/flows/lib/flows-api';
 import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
 import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
@@ -46,7 +44,6 @@ import {
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowsApi } from '../../features/flows/lib/flows-api';
 
 interface FlowActionMenuProps {
   flow: PopulatedFlow;
@@ -83,10 +80,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const userHasPermissionToPushToGit = checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
-  const importFlowProps: ImportFlowDialogProps = {
-    insideBuilder: true,
-    flowId: flow.id,
-  };
+
   const { embedState } = useEmbedding();
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
@@ -123,7 +117,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   });
 
   const { mutate: exportFlow, isPending: isExportPending } =
-    flowsHooks.useExportFlows();
+    flowHooks.useExportFlows();
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
@@ -240,7 +234,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
-            <ImportFlowDialog {...importFlowProps}>
+            <ImportFlowDialog insideBuilder={true} flowId={flow.id}>
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
                 onSelect={(e) => e.preventDefault()}

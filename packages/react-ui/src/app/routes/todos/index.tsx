@@ -13,7 +13,6 @@ import {
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,7 +24,7 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
 import { userHooks } from '@/hooks/user-hooks';
@@ -318,13 +317,6 @@ function TodosPage() {
 
   return (
     <div className="flex-col w-full">
-      <DashboardPageHeader
-        description={t(
-          'Manage todos for your project that are created by automations',
-        )}
-        title={t('Todos')}
-        tutorialTab="todos"
-      />
       <Tabs
         value={activeTab}
         onValueChange={(value) => setActiveTab(value as 'all' | 'needs-action')}

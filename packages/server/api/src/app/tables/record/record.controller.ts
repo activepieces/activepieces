@@ -3,7 +3,6 @@ import {
     DeleteRecordsRequest,
     ListRecordsRequest,
     Permission,
-    PlatformUsageMetric,
     PopulatedRecord,
     PrincipalType,
     SeekPage,
@@ -16,7 +15,6 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { PlatformPlanHelper } from '../../ee/platform/platform-plan/platform-plan-helper'
 import { recordSideEffects } from './record-side-effects'
 import { recordService } from './record.service'
 
@@ -26,7 +24,6 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        await PlatformPlanHelper.checkResourceLocked({ resource: PlatformUsageMetric.TABLES, platformId: request.principal.platform.id })
         const records = await recordService.create({
             request: request.body,
             projectId: request.principal.projectId,
@@ -94,7 +91,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         body: CreateRecordsRequest,
@@ -106,7 +103,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({
@@ -121,7 +118,7 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER, PrincipalType.WORKER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {
@@ -141,7 +138,7 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.WRITE_TABLE,
     },
     schema: {
@@ -157,7 +154,7 @@ const DeleteRecordRequest = {
 
 const ListRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER],
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
         permission: Permission.READ_TABLE,
     },
     schema: {

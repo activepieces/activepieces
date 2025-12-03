@@ -11,7 +11,6 @@ import {
   ApFlagId,
   FlowRun,
   FlowRunStatus,
-  isNil,
   Permission,
 } from '@activepieces/shared';
 
@@ -55,6 +54,8 @@ function getStatusText(
       });
     case FlowRunStatus.INTERNAL_ERROR:
       return t('Run failed for an unknown reason, contact support.');
+    case FlowRunStatus.CANCELED:
+      return t('Run Cancelled');
   }
 }
 
@@ -111,11 +112,6 @@ const RunDetailsBar = React.memo(
                       memoryLimit ?? -1,
                     )}
                   </span>
-                  {!isNil(run.tasks) && run.tasks > 0 && (
-                    <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-md font-medium flex-shrink-0">
-                      {run.tasks} {t('tasks')}
-                    </span>
-                  )}
                 </div>
                 <span className="text-xs text-muted-foreground flex-shrink-0">
                   {formatUtils.formatDate(new Date(run.created))}

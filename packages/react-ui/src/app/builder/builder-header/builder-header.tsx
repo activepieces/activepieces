@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -38,6 +38,7 @@ import {
   FlowVersionState,
   Permission,
   supportUrl,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
@@ -75,7 +76,9 @@ export const BuilderHeader = () => {
 
   const { embedState } = useEmbedding();
 
-  const { data: folderData } = foldersHooks.useFolder(flow.folderId ?? 'NULL');
+  const { data: folderData } = foldersHooks.useFolder(
+    flow.folderId ?? UncategorizedFolderId,
+  );
 
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
@@ -85,6 +88,15 @@ export const BuilderHeader = () => {
   useEffect(() => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
   }, []);
+
+  const goToFolder = () => {
+    navigate({
+      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      search: createSearchParams({
+        folderId: folderData?.id ?? UncategorizedFolderId,
+      }).toString(),
+    });
+  };
 
   return (
     <div className="border-b select-none">
@@ -98,19 +110,7 @@ export const BuilderHeader = () => {
                 <>
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger
-                        onClick={() =>
-                          navigate({
-                            pathname:
-                              authenticationSession.appendProjectRoutePrefix(
-                                '/flows',
-                              ),
-                            search: createSearchParams({
-                              folderId: folderData?.id ?? 'NULL',
-                            }).toString(),
-                          })
-                        }
-                      >
+                      <TooltipTrigger onClick={goToFolder}>
                         {folderName}
                       </TooltipTrigger>
                       <TooltipContent>
@@ -135,7 +135,7 @@ export const BuilderHeader = () => {
                       },
                     },
                     () => {
-                      flowsHooks.invalidateFlowsQuery(queryClient);
+                      flowHooks.invalidateFlowsQuery(queryClient);
                     },
                   );
                 }}
@@ -151,9 +151,7 @@ export const BuilderHeader = () => {
               flow={flow}
               flowVersion={flowVersion}
               readonly={!isLatestVersion}
-              onDelete={() => {
-                flowsHooks.invalidateFlowsQuery(queryClient);
-              }}
+              onDelete={goToFolder}
               onRename={() => {
                 setIsEditingFlowName(true);
               }}

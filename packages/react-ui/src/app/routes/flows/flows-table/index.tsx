@@ -9,12 +9,19 @@ import { DataTable, DataTableFilters } from '@/components/ui/data-table';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
-import { FolderFilterList } from '@/features/folders/component/folder-filter-list';
+import {
+  FolderFilterList,
+  folderIdParamName,
+} from '@/features/folders/component/folder-filter-list';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowStatus, PopulatedFlow } from '@activepieces/shared';
+import {
+  FlowStatus,
+  PopulatedFlow,
+  UncategorizedFolderId,
+} from '@activepieces/shared';
 
 import { flowsTableColumns } from './columns';
 
@@ -43,7 +50,7 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
       const limit = searchParams.get('limit')
         ? parseInt(searchParams.get('limit')!)
         : 10;
-      const folderId = searchParams.get('folderId') ?? undefined;
+      const folderId = searchParams.get(folderIdParamName) ?? undefined;
       const connectionExternalId =
         searchParams.getAll('connectionExternalId') ?? undefined;
 
@@ -127,6 +134,7 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
     setSelectedRows,
     setRefresh,
     refetch: handleRefetch,
+    folderId: searchParams.get(folderIdParamName) ?? UncategorizedFolderId,
   });
 
   return (

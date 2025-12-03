@@ -10,7 +10,6 @@ import { ScheduleOptions } from '../trigger'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
-    EXECUTE_TOOL = 'EXECUTE_TOOL',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -40,6 +39,9 @@ export const enum EngineSocketEvent {
     ENGINE_STDERR = 'engine-stderr',
     ENGINE_READY = 'engine-ready',
     ENGINE_OPERATION = 'engine-operation',
+    UPDATE_RUN_PROGRESS = 'update-run-progress',
+    SEND_FLOW_RESPONSE = 'send-flow-response',
+    UPDATE_STEP_PROGRESS = 'update-step-progress',
 }
 
 
@@ -62,23 +64,24 @@ export type BaseEngineOperation = {
     internalApiUrl: string
     publicApiUrl: string
     timeoutInSeconds: number
+    platformId: PlatformId
 }
 
 export type ExecuteValidateAuthOperation = Omit<BaseEngineOperation, 'projectId'> & {
     piece: PiecePackage
-    platformId: PlatformId
     auth: AppConnectionValue
 }
 
 export type ExecuteExtractPieceMetadata = PiecePackage & { platformId: PlatformId }
 
-export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number }
+export type ExecuteExtractPieceMetadataOperation = ExecuteExtractPieceMetadata & { timeoutInSeconds: number, platformId: PlatformId }
 
 export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
     pieceVersion: string
-    input: Record<string, unknown>
+    predefinedInput: Record<string, unknown>
+    instruction: string
 }
 
 export type ExecutePropsOptions = BaseEngineOperation & {
@@ -95,7 +98,6 @@ type BaseExecuteFlowOperation<T extends ExecutionType> = BaseEngineOperation & {
     flowVersion: FlowVersion
     flowRunId: FlowRunId
     executionType: T
-    tasks: number
     runEnvironment: RunEnvironment
     executionState: ExecutionState
     serverHandlerId: string | null
@@ -209,6 +211,18 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
                 H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
                     ExecuteOnEnableTriggerResponse
 
+export enum ExecutionToolStatus {
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
+export type ExecuteToolResponse = {
+    status: ExecutionToolStatus
+    output?: unknown
+    resolvedInput: Record<string, unknown>
+    errorMessage?: unknown
+}
+
 export type ExecuteActionResponse = {
     success: boolean
     input: unknown
@@ -233,6 +247,7 @@ export type ExecuteValidateAuthResponse =
 export type EngineResponse<T = unknown> = {
     status: EngineResponseStatus
     response: T
+    delayInSeconds?: number
     error?: string
 }
 

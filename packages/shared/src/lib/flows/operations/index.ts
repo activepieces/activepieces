@@ -15,7 +15,6 @@ import { _deleteAction } from './delete-action'
 import { _deleteBranch } from './delete-branch'
 import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
-import { flowMigrations } from './migrations'
 import { _moveAction } from './move-action'
 import { _moveBranch } from './move-branch'
 import { _getOperationsForPaste } from './paste-operations'
@@ -420,13 +419,7 @@ export const flowOperations = {
                 break
             }
             case FlowOperationType.IMPORT_FLOW: {
-                const migratedFlow = flowMigrations.apply({
-                    ...clonedVersion,
-                    trigger: operation.request.trigger,
-                    displayName: operation.request.displayName,
-                    schemaVersion: operation.request.schemaVersion,
-                })
-                const operations = _importFlow(clonedVersion, migratedFlow)
+                const operations = _importFlow(clonedVersion, operation.request)
                 operations.forEach((operation) => {
                     clonedVersion = flowOperations.apply(clonedVersion, operation)
                 })

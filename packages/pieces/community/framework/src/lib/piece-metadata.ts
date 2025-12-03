@@ -115,6 +115,7 @@ const PiecePackageMetadata = Type.Object({
   tags: Type.Optional(Type.Array(Type.String())),
   pieceType: Type.Enum(PieceType),
   packageType: Type.Enum(PackageType),
+  platformId: Type.Optional(Type.String()),
   archiveId: Type.Optional(Type.String()),
 })
 type PiecePackageMetadata = Static<typeof PiecePackageMetadata>
@@ -130,3 +131,9 @@ export const PieceMetadataModelSummary = Type.Composite([
   PiecePackageMetadata
 ])
 export type PieceMetadataModelSummary = PieceMetadataSummary & PiecePackageMetadata;
+
+export const PiecePackageInformation = Type.Object({
+  name: Type.String(),
+  version: Type.String(),
+})
+export type PiecePackageInformation = Static<typeof PiecePackageInformation>

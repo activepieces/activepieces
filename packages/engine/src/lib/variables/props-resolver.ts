@@ -3,6 +3,7 @@ import replaceAsync from 'string-replace-async'
 import { initCodeSandbox } from '../core/code/code-sandbox'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { createConnectionService } from '../services/connections.service'
+import { utils } from '../utils'
 
 const VARIABLE_PATTERN = /\{\{(.*?)\}\}/g
 const CONNECTIONS = 'connections'
@@ -177,7 +178,7 @@ function parseSquareBracketConnectionPath(variableName: string): string | null {
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 async function evalInScope(js: string, contextAsScope: Record<string, unknown>, functions: Record<string, Function>): Promise<unknown> {
-    try {
+    const { data: result, error: resultError } = await utils.tryCatchAndThrowOnEngineError((async () => {
         const codeSandbox = await initCodeSandbox()
 
         const result = await codeSandbox.runScript({
@@ -186,11 +187,13 @@ async function evalInScope(js: string, contextAsScope: Record<string, unknown>, 
             functions,
         })
         return result ?? ''
-    }
-    catch (exception) {
-        console.warn('[evalInScope] Error evaluating variable', exception)
+    }))
+
+    if (resultError) {
+        console.warn('[evalInScope] Error evaluating variable', resultError)
         return ''
     }
+    return result ?? ''
 }
 
 function flattenNestedKeys(data: unknown, pathToMatch: string[]): unknown[] {

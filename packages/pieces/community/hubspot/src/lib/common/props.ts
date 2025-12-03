@@ -180,8 +180,8 @@ function createPropertyDefinition(property: HubspotProperty, propertyDisplayName
 		case HubspotFieldType.BooleanCheckBox:
 			return Property.StaticDropdown({
 				displayName: propertyDisplayName,
-				required: true,
-				defaultValue:'',
+				required: false,
+				defaultValue: null,
 				options:{
 					disabled:false,
 					options:[
