@@ -1,10 +1,20 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-    while read local_ref local_sha remote_ref remote_sha
-    do
-        if [ "$remote_ref" = "refs/heads/main" ]; then
-            echo "Direct pushes to 'main' are not allowed. Please use a feature branch and a pull request."
-            exit 1
-        fi
-    done
+SKIP_CHECK_FLAG="--skip-check"
+
+# Allow skipping this hook with a flag
+for arg in "$@"
+do
+  if [ "$arg" = "$SKIP_CHECK_FLAG" ]; then
+    exit 0
+  fi
+done
+
+while read local_ref local_sha remote_ref remote_sha
+do
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        echo "Direct pushes to 'main' are not allowed. Please use a feature branch and a pull request."
+        exit 1
+    fi
+done
