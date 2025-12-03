@@ -1,4 +1,3 @@
-import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import {
     FlowActionType,
     flowStructureUtil,
@@ -54,7 +53,6 @@ export const testExecutionContext = {
                         apiUrl,
                         projectId,
                         engineToken,
-                        contextVersion: LATEST_CONTEXT_VERSION,
                     }).resolve<{ items: unknown[] }>({
                         unresolvedInput: step.settings,
                         executionState: flowExecutionContext,

@@ -27,7 +27,9 @@ async function prepareInput(
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
 
     switch (jobData.executionType) {
+
         case ExecutionType.BEGIN: {
+
             return {
                 platformId: jobData.platformId,
                 flowVersion,

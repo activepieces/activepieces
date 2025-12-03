@@ -15,7 +15,7 @@ export enum WebhookRenewStrategy {
   NONE = 'NONE',
 }
 
-type OnStartRunner<PieceAuth extends PieceAuthProperty | undefined, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
+type OnStartRunner<PieceAuth extends PieceAuthProperty, TriggerProps extends InputPropertyMap> = (ctx: OnStartContext<PieceAuth, TriggerProps>) => Promise<unknown | void>
 
 
 
@@ -37,7 +37,7 @@ export interface WebhookResponse {
 }
 
 type BaseTriggerParams<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = {
@@ -57,7 +57,7 @@ type BaseTriggerParams<
 }
 
 type WebhookTriggerParams<
-PieceAuth extends PieceAuthProperty | undefined,
+PieceAuth extends PieceAuthProperty,
 TriggerProps extends InputPropertyMap,
 TS extends TriggerStrategy,
 > = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
@@ -68,7 +68,7 @@ TS extends TriggerStrategy,
 }
 
 type CreateTriggerParams<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
   TS extends TriggerStrategy,
 > = TS extends TriggerStrategy.WEBHOOK
@@ -77,7 +77,7 @@ type CreateTriggerParams<
 
 export class ITrigger<
   TS extends TriggerStrategy,
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
 > implements TriggerBase {
   constructor(
@@ -102,7 +102,7 @@ export class ITrigger<
 }
 
 export type Trigger<
-  PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty = any,
   TriggerProps extends InputPropertyMap = any,
   S extends TriggerStrategy = TriggerStrategy,
 > = ITrigger<S, PieceAuth, TriggerProps>
@@ -110,7 +110,7 @@ export type Trigger<
 // TODO refactor and extract common logic
 export const createTrigger = <
   TS extends TriggerStrategy,
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty,
   TriggerProps extends InputPropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
   switch (params.type) {
