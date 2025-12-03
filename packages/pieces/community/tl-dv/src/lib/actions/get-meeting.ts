@@ -34,7 +34,7 @@ export const getMeeting = createAction({
     }>({
       method: HttpMethod.GET,
       url: `/v1alpha1/meetings/${meetingId}`,
-      auth: { apiKey: context.auth },
+      auth: { apiKey: context.auth.secret_text },
     });
 
     return response;

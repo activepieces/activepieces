@@ -32,7 +32,7 @@ export const convertFileToPdf = createAction({
       throw new Error('File name is required');
     }
 
-    const client = new DocuMergeClient(context.auth);
+    const client = new DocuMergeClient(context.auth.secret_text);
 
     const body: Record<string, unknown> = {
       file: {

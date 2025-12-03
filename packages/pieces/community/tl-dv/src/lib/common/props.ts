@@ -1,10 +1,12 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { tldvCommon } from './client';
+import { tldvAuth } from './auth';
 
 export const meetingIdProperty = Property.Dropdown({
   displayName: 'Meeting',
   description: 'Select a meeting',
+  auth: tldvAuth,
   required: true,
   refreshers: [],
   options: async ({ auth }) => {
@@ -26,7 +28,7 @@ export const meetingIdProperty = Property.Dropdown({
       }>({
         method: HttpMethod.GET,
         url: '/v1alpha1/meetings?limit=100',
-        auth: { apiKey: auth as string },
+        auth: { apiKey: auth.secret_text },
       });
 
       if (response.results && response.results.length > 0) {

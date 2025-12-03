@@ -1,11 +1,12 @@
 import { Property } from '@activepieces/pieces-framework';
 import { getLettaClient } from './client';
-import type { LettaAuthType } from './auth';
+import { lettaAuth, type LettaAuthType } from './auth';
 
 
 export const identityIdsDropdown = Property.MultiSelectDropdown({
   displayName: 'Identities',
   description: 'Select identities to assign to the agent',
+  auth: lettaAuth,
   required: false,
   refreshers: [],
   options: async ({ auth }) => {
@@ -53,6 +54,7 @@ export const identityIdsDropdown = Property.MultiSelectDropdown({
 
 
 export const agentIdDropdown = Property.Dropdown({
+  auth: lettaAuth,
   displayName: 'Agent',
   description: 'Select the agent to send a message to',
   required: true,
