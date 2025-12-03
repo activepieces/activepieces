@@ -6,6 +6,7 @@ import { updateLead } from './lib/actions/update-lead';
 import { deleteLead } from './lib/actions/delete-lead';
 import { listLeads } from './lib/actions/list-leads';
 import { PieceCategory } from '@activepieces/shared';
+import { newLead } from './lib/triggers/new-lead';
 
 export const pollybotAi = createPiece({
   displayName: 'PollyBot AI',
@@ -16,5 +17,5 @@ export const pollybotAi = createPiece({
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   authors: ['Trayshmhirk', 'sanket-a11y'],
   actions: [createLead, getLead, updateLead, deleteLead, listLeads],
-  triggers: [],
+  triggers: [newLead],
 });

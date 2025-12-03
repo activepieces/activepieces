@@ -4,7 +4,6 @@ import { pollybotAuth } from '../auth';
 import { baseUrl, leadStatusOptions, formatError } from '../common/common';
 
 export const createLead = createAction({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
   name: 'create_lead',
   displayName: 'Create Lead',
   description: 'Creates a new lead in your PollyBot chatbot.',
