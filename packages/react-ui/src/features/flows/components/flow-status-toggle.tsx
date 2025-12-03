@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -29,6 +29,11 @@ const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
   const [isFlowPublished, setIsFlowPublished] = useState(
     flow.status === FlowStatus.ENABLED,
   );
+
+  useEffect(() => {
+    setIsFlowPublished(flow.status === FlowStatus.ENABLED);
+  }, [flow]);
+
   const { checkAccess } = useAuthorization();
   const userHasPermissionToToggleFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,

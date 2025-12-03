@@ -69,6 +69,17 @@ export const flowHooks = {
         }
         return await new Promise<FlowStatusUpdatedResponse>(
           (resolve, reject) => {
+            const onUpdateFinish = (response: FlowStatusUpdatedResponse) => {
+              if (response.flow.id !== flowId) {
+                return;
+              }
+              socket.off(
+                WebsocketClientEvent.FLOW_STATUS_UPDATED,
+                onUpdateFinish,
+              );
+              resolve(response);
+            };
+            socket.on(WebsocketClientEvent.FLOW_STATUS_UPDATED, onUpdateFinish);
             flowsApi
               .update(flowId, {
                 type:
@@ -84,24 +95,7 @@ export const flowHooks = {
                       : change,
                 },
               })
-              .then(() => {
-                const onUpdateFinish = (
-                  response: FlowStatusUpdatedResponse,
-                ) => {
-                  if (response.flow.id !== flowId) {
-                    return;
-                  }
-                  socket.off(
-                    WebsocketClientEvent.FLOW_STATUS_UPDATED,
-                    onUpdateFinish,
-                  );
-                  resolve(response);
-                };
-                socket.on(
-                  WebsocketClientEvent.FLOW_STATUS_UPDATED,
-                  onUpdateFinish,
-                );
-              })
+              .then(() => {})
               .catch((error) => {
                 reject(error);
               });
