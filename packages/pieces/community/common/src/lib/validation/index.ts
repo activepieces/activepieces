@@ -13,7 +13,7 @@ export const propsValidation = {
             await schemaObj.parseAsync(props)
         } catch (error) {
             if (error instanceof z.ZodError) {
-                const errors = error.errors.reduce((acc, err) => {
+                const errors = error.issues.reduce((acc, err) => {
                     const path = err.path.join('.')
                     return {
                         ...acc,

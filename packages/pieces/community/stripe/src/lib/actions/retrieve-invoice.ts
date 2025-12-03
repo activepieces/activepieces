@@ -23,7 +23,7 @@ export const stripeRetrieveInvoice = createAction({
       url: `${stripeCommon.baseUrl}/invoices/${invoice_id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
     });
 

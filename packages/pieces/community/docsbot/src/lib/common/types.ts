@@ -1,10 +1,13 @@
+import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
+import { docsbotAuth } from ".";
+
 export type createSourceUrlParams = {
   teamId: string;
   botId: string;
 };
 
 export interface AuthenticationParams {
-  apiKey: string;
+  apiKey: AppConnectionValueForAuthProperty<typeof docsbotAuth>;
 }
 
 export interface askQuestionRequestParams extends AuthenticationParams {

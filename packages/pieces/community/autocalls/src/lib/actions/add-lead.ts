@@ -9,6 +9,7 @@ export const addLead = createAction({
   description: "Add lead to an outbound campaign, to be called by an assistant from our platform.",
   props: {
     campaign: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'Campaign',
       description: 'Select a campaign',
       required: true,
@@ -89,6 +90,7 @@ export const addLead = createAction({
       defaultValue: 0,
     }),
     secondary_contacts: Property.DynamicProperties({
+      auth: autocallsAuth,
       displayName: 'Secondary Contacts',
       description: 'Add secondary contacts for this lead. Each contact can have its own phone number and variables.',
       required: false,
@@ -164,7 +166,7 @@ export const addLead = createAction({
         url: baseApiUrl + 'api/user/lead',
         body: body,
         headers: {
-          Authorization: "Bearer " + context.auth,
+          Authorization: "Bearer " + context.auth.secret_text,
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         },

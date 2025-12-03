@@ -12,6 +12,7 @@ export const findTaskByTitleAction = createAction({
 	description: 'Finds tasks by title.',
 	props: {
 		task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
 			displayName: 'Task List',
 			description: 'Select a specific task list to search within.',
 			required: true,

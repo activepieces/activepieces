@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -13,7 +14,7 @@ import dayjs from 'dayjs';
 
 const BASE_URL = 'https://api.flowparser.one/v1';
 
-const polling: Polling<string, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof flowParserAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     try {
@@ -35,7 +36,7 @@ const polling: Polling<string, Record<string, never>> = {
         method: HttpMethod.GET,
         url: `${BASE_URL}/documents/status-changes`,
         headers: {
-          flow_api_key: auth as string,
+          flow_api_key: auth.secret_text,
         },
         queryParams,
       });

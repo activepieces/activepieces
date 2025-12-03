@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { twilioAuth } from '../..';
 import { AuthenticationType, DedupeStrategy, httpClient, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -24,7 +24,7 @@ interface CallsResponse {
 
 
 const polling: Polling<
-  PiecePropValueSchema<typeof twilioAuth>,
+  AppConnectionValueForAuthProperty<typeof twilioAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

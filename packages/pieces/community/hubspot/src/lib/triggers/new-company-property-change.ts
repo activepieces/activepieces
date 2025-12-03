@@ -1,7 +1,7 @@
 import { hubspotAuth } from '../..';
 import {
 	createTrigger,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { standardObjectPropertiesDropdown } from '../common/props';
@@ -17,7 +17,7 @@ type Props = {
 	propertyName?: string | string[];
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });

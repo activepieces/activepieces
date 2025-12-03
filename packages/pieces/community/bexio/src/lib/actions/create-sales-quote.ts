@@ -18,7 +18,8 @@ export const createSalesQuoteAction = createAction({
       description: 'Quote title',
       required: false,
     }),
-    contact_id: Property.Dropdown({
+    contact_id: Property.Dropdown({ 
+      auth: bexioAuth,
       displayName: 'Contact',
       description: 'The contact for this quote',
       required: false,
@@ -33,7 +34,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -65,6 +66,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     contact_sub_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Contact Sub',
       description: 'Contact sub-address (optional)',
       required: false,
@@ -79,7 +81,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -111,6 +113,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     user_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'User',
       description: 'User responsible for this quote',
       required: true,
@@ -125,7 +128,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const users = await client.get<Array<{
             id: number;
             firstname?: string | null;
@@ -155,6 +158,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     pr_project_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Project',
       description: 'Project associated with this quote',
       required: false,
@@ -169,7 +173,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const projects = await client.get<Array<{
             id: number;
             name: string;
@@ -193,6 +197,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     language_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Language',
       description: 'Language for the quote',
       required: true,
@@ -207,7 +212,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const languages = await client.get<Array<{ id: number; name: string }>>('/2.0/language');
 
           return {
@@ -227,6 +232,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     bank_account_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Bank Account',
       description: 'Bank account for payment',
       required: true,
@@ -241,7 +247,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const bankAccounts = await client.get<Array<{
             id: number;
             name: string;
@@ -269,6 +275,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     currency_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Currency',
       description: 'Currency for this quote',
       required: true,
@@ -283,7 +290,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const currencies = await client.get<Array<{ id: number; name: string }>>('/currencies');
 
           return {
@@ -303,6 +310,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     payment_type_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Payment Type',
       description: 'Payment type for this quote',
       required: true,
@@ -317,7 +325,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const paymentTypes = await client.get<Array<{ id: number; name: string }>>('/2.0/payment_type');
 
           return {
@@ -421,6 +429,7 @@ export const createSalesQuoteAction = createAction({
       required: false,
     }),
     template_slug: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Document Template',
       description: 'Document template for the quote',
       required: false,
@@ -435,7 +444,7 @@ export const createSalesQuoteAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const templates = await client.get<Array<{
             template_slug: string;
             name: string;
@@ -460,6 +469,7 @@ export const createSalesQuoteAction = createAction({
       },
     }),
     positionFields: Property.DynamicProperties({
+      auth: bexioAuth,
       displayName: 'Quote Positions',
       description: 'Configure quote line items',
       required: true,
@@ -471,7 +481,7 @@ export const createSalesQuoteAction = createAction({
 
         if (auth) {
           try {
-            const client = new BexioClient(auth as OAuth2PropertyValue);
+            const client = new BexioClient(auth);
             units = await client.get<Array<{ id: number; name: string }>>('/2.0/unit').catch(() => []);
             accounts = await client.get<Array<{ id: number; account_no: string; name: string }>>('/accounts').catch(() => []);
             const taxesResponse = await client.get<Array<{

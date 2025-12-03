@@ -50,7 +50,7 @@ export const mollieSearchOrder = createAction({
   },
 
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth;
 
     const queryParams: Record<string, string> = {};
 

@@ -157,7 +157,10 @@ export const aiProviderService = {
         return (
             !isNil(model) &&
             !isNil(providerConfig.languageModels.find((m) => m.instance.modelId === model)) ||
-            !isNil(providerConfig.imageModels.find((m) => m.instance.modelId === model)) ||
+            !isNil(providerConfig.imageModels.find((m) => {
+                const instanceModelId = typeof m.instance === 'string' ? m.instance : m.instance.modelId
+                return instanceModelId === model
+            })) ||
             !isNil(providerConfig.videoModels.find((m) => m.instance.modelId === model))
         )
     },

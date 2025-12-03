@@ -12,7 +12,7 @@ export const newCampaignBounceTrigger = createTrigger({
 	type: TriggerStrategy.WEBHOOK,
 	props: {},
 	async onEnable(context) {
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		const res = await client.subscribeWebhook({
 			name: `Activepieces Campaign Bounce Hook`,
 			url: context.webhookUrl,
@@ -29,7 +29,7 @@ export const newCampaignBounceTrigger = createTrigger({
 			'activecampaign_new_campaign_bounce',
 		);
 		if (webhook != null) {
-			const client = makeClient(context.auth);
+			const client = makeClient(context.auth.props);
 			await client.unsubscribeWebhook(webhook.webhook.id);
 		}
 	},

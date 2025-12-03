@@ -1,9 +1,11 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { phantombusterAuth } from './auth';
 
 export const BASE_URL = `https://api.phantombuster.com/api/v2`;
 
 export async function makeRequest(
-  apiKey: string,
+  apiKey: AppConnectionValueForAuthProperty<typeof phantombusterAuth>,
   method: HttpMethod,
   path: string,
   body?: unknown

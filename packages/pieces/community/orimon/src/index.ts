@@ -16,7 +16,7 @@ export const orimon = createPiece({
       auth: orimonAuth,
       baseUrl: () => 'https://channel-connector.orimon.ai/orimon/v1',
       authMapping: async (auth) => ({
-        authorization: `apiKey ${auth as string}`,
+        authorization: `apiKey ${auth.secret_text}`,
       }),
     }),
   ],

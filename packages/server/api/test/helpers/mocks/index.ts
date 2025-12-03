@@ -15,6 +15,7 @@ import {
     ProjectMember,
     SigningKey,
 } from '@activepieces/ee-shared'
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
 import {
     AiOverageState,
@@ -416,6 +417,7 @@ export const createMockPieceMetadata = (
             pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
+        contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
     }
 }
 

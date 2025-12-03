@@ -34,7 +34,7 @@ export const queryAgentAction = createAction({
       url: BASE_URL + `/agents/${agentId}/query`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       body: {
         query,

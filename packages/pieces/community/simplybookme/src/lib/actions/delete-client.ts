@@ -16,7 +16,7 @@ export const deleteClient = createAction({
     clientId: clientDropdown
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const accessToken = await getAccessToken(auth);
 
     const { clientId } = context.propsValue;

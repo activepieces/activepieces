@@ -56,7 +56,7 @@ jobs:
 
 
       - name: publish pieces-common package
-        run: npx nx run-many --target=build --projects=common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
+        run: npx nx run-many --target=build --projects=pieces-common && npx ts-node -r tsconfig-paths/register -P packages/engine/tsconfig.lib.json tools/scripts/utils/publish-nx-project.ts packages/pieces/community/common
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 

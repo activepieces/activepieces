@@ -1,6 +1,6 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
-  PiecePropValueSchema,
   TriggerStrategy
 } from '@activepieces/pieces-framework';
 import {
@@ -8,15 +8,15 @@ import {
   Polling,
   pollingHelper
 } from '@activepieces/pieces-common';
-import { simplybookAuth, SimplybookAuth, makeJsonRpcCall } from '../common';
+import { simplybookAuth, makeJsonRpcCall } from '../common';
 
-const polling: Polling<PiecePropValueSchema<typeof simplybookAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof simplybookAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth }) => {
     const authData = auth;
     
     const clients = await makeJsonRpcCall<any[]>(
-      authData,
+      authData.props,
       'getClientList',
       ['', null]
     );

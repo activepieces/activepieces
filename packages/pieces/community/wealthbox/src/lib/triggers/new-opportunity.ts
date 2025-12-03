@@ -14,6 +14,7 @@ import {
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { fetchUsers, fetchContacts, fetchProjects, fetchOpportunities, fetchOpportunityStages, WEALTHBOX_API_BASE, handleApiError } from '../common';
+import { wealthboxAuth } from '../..';
 
 const polling: Polling<any, any> = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -61,7 +62,7 @@ const polling: Polling<any, any> = {
         method: HttpMethod.GET,
         url: url,
         headers: {
-          'ACCESS_TOKEN': auth as unknown as string,
+          'ACCESS_TOKEN': auth.secret_text,
           'Accept': 'application/json'
         }
       });
@@ -108,6 +109,7 @@ export const newOpportunity = createTrigger({
     }),
 
     resource_record: Property.DynamicProperties({
+      auth: wealthboxAuth,
       displayName: 'Linked Resource',
       description: 'Select the specific resource to filter opportunities by',
       required: false,
@@ -131,11 +133,11 @@ export const newOpportunity = createTrigger({
 
           switch (resourceTypeValue) {
             case 'Contact':
-              records = await fetchContacts(auth as unknown as string, { active: true, order: 'recent' });
+              records = await fetchContacts(auth.secret_text, { active: true, order: 'recent' });
               recordType = 'Contact';
               break;
             case 'Project':
-              records = await fetchProjects(auth as unknown as string);
+              records = await fetchProjects(auth.secret_text);
               recordType = 'Project';
               break;
             default:
@@ -177,6 +179,7 @@ export const newOpportunity = createTrigger({
     }),
 
     stage: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Opportunity Stage',
       description: 'Only trigger for opportunities in this stage (optional)',
       required: false,
@@ -185,7 +188,7 @@ export const newOpportunity = createTrigger({
         if (!auth) return { options: [] };
 
         try {
-          const stages = await fetchOpportunityStages(auth as unknown as string);
+          const stages = await fetchOpportunityStages(auth.secret_text);
           return {
             options: stages.map((stage: any) => ({
               label: stage.name || `Stage ${stage.id}`,
@@ -202,6 +205,7 @@ export const newOpportunity = createTrigger({
     }),
 
     manager: Property.Dropdown({
+      auth: wealthboxAuth,
       displayName: 'Opportunity Manager',
       description: 'Only trigger for opportunities managed by this user (optional)',
       required: false,
@@ -210,7 +214,7 @@ export const newOpportunity = createTrigger({
         if (!auth) return { options: [] };
 
         try {
-          const users = await fetchUsers(auth as unknown as string);
+          const users = await fetchUsers(auth.secret_text);
           const assignableUsers = users.filter((user: any) => !user.excluded_from_assignments);
           return {
             options: assignableUsers.map((user: any) => ({
