@@ -4,7 +4,7 @@ import {
   ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, FlowTriggerType } from '@activepieces/shared';
 
@@ -30,7 +30,7 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.triggerName,
   );
 
-  const { mutate: runFlow, isPending } = flowsHooks.useTestFlow({
+  const { mutate: runFlow, isPending } = flowHooks.useTestFlow({
     flowVersionId: flowVersion.id,
     onUpdateRun: (run) => {
       setRun(run, flowVersion);

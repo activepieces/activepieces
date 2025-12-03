@@ -4,7 +4,7 @@ import { t } from 'i18next';
 import { useFormContext } from 'react-hook-form';
 
 import { useSocket } from '@/components/socket-provider';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
@@ -64,7 +64,7 @@ export const testStepHooks = {
       }) => {
         if (isNil(step)) {
           console.error(`Step ${stepName} not found`);
-          toast(INTERNAL_ERROR_TOAST);
+          internalErrorToast();
           return;
         }
         if (response.success) {
@@ -335,7 +335,7 @@ export const testStepHooks = {
         if (error.message === CANCEL_TEST_STEP_ERROR_MESSAGE) {
           return;
         }
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       },
     });
   },

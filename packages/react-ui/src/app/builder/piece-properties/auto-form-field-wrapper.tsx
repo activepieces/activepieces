@@ -3,6 +3,7 @@ import { Calendar, SquareFunction, File } from 'lucide-react';
 import React from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { FormItem, FormLabel } from '@/components/ui/form';
@@ -13,7 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
 import { getDefaultPropertyValue } from '@/features/pieces/lib/form-utils';
 import { cn } from '@/lib/utils';
 import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
@@ -255,9 +255,8 @@ const AutoFormFielWrapperErrorBoundary = ({
                   disabled: field.disabled,
                 }),
               );
-              toast({
-                title: t('Info copied to clipboard, please send it to support'),
-                duration: 5000,
+              toast(t('Info copied to clipboard, please send it to support'), {
+                duration: 3000,
               });
             }}
           >

@@ -9,9 +9,9 @@ import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/embed-provider';
-import { useToast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
@@ -111,7 +111,6 @@ export const projectHooks = {
     }>();
     const projectIdFromToken = authenticationSession.getProjectId();
     const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-    const { toast } = useToast();
 
     const query = useSuspenseQuery<boolean, Error>({
       //added currentProjectId in case user switches project and goes back to the same project
@@ -132,12 +131,11 @@ export const projectHooks = {
             (error.response?.status === HttpStatusCode.BadRequest ||
               error.response?.status === HttpStatusCode.Forbidden)
           ) {
-            toast({
-              duration: 10000,
-              title: t('Invalid Access'),
+            toast.error(t('Invalid Access'), {
               description: t(
                 'Either the project does not exist or you do not have access to it.',
               ),
+              duration: 10000,
             });
           }
           return false;

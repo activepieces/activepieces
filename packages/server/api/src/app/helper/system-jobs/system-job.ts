@@ -56,7 +56,7 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
         }
     },
 
-    async upsertJob({ job, schedule }): Promise<void> {
+    async upsertJob({ job, schedule, customConfig }): Promise<void> {
         log.info({ name: 'SystemJob#upsertJob', jobName: job.name }, 'Upserting job')
         const existingJob = await getJobByNameAndJobId(job.name, job.jobId)
 
@@ -66,9 +66,13 @@ export const systemJobsSchedule = (log: FastifyBaseLogger): SystemJobSchedule =>
             log.info({ name: 'SystemJob#upsertJob', jobName: job.name }, 'Pattern changed, removing job from queue')
             await systemJobsQueue.removeRepeatable(existingJob.name as SystemJobName, existingJob.opts.repeat)
         }
+        if (!isNil(existingJob) && await existingJob.isFailed()) {
+            log.info({ name: 'SystemJob#upsertJob', jobName: job.name }, 'Retrying failed job')
+            await existingJob.retry()
+        }
         if (isNil(existingJob) || patternChanged) {
             log.info({ name: 'SystemJob#upsertJob', jobName: job.name }, 'Adding job to queue')
-            const jobOptions = configureJobOptions({ schedule, jobId: job.jobId })
+            const jobOptions = configureJobOptions({ schedule, jobId: job.jobId, customConfig })
             await systemJobsQueue.add(job.name, job.data, jobOptions)
             return
         }
@@ -114,8 +118,8 @@ async function removeDeprecatedJobs(): Promise<void> {
     }
 }
 
-const configureJobOptions = ({ schedule, jobId }: { schedule: JobSchedule, jobId?: string }): JobsOptions => {
-    const config: JobsOptions = {}
+const configureJobOptions = ({ schedule, jobId, customConfig }: { schedule: JobSchedule, jobId?: string, customConfig?: JobsOptions }): JobsOptions => {
+    const config: JobsOptions = customConfig ?? {}
 
     switch (schedule.type) {
         case 'one-time': {
