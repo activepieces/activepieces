@@ -31,49 +31,49 @@ export function formatError(e: unknown): string {
   return `Error (${status}): ${message}. ${details}`;
 }
 
-// Webhook Subscription Helpers
-export const pollybotCommon = {
-  // Updated to return both webhookId and secret
-  subscribeWebhook: async (
-    chatbotId: string,
-    apiKey: string,
-    webhookUrl: string
-  ): Promise<{ webhookId: string; secret: string }> => {
-    const response = await httpClient.sendRequest({
-      method: HttpMethod.POST,
-      url: `${baseUrl}/chatbots/${chatbotId}/webhooks`,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: {
-        name: `Activepieces - New Lead (${new Date().toISOString()})`,
-        url: webhookUrl,
-        eventTypes: ['LEAD_CREATED'],
-        maxRetries: 3,
-        retryDelay: 1000,
-      },
-    }); // PollyBot returns { webhook: { id: "...", secret: "..." }, ... } or just { id: "...", secret: "..." }
+// // Webhook Subscription Helpers
+// export const pollybotCommon = {
+//   // Updated to return both webhookId and secret
+//   subscribeWebhook: async (
+//     chatbotId: string,
+//     apiKey: string,
+//     webhookUrl: string
+//   ): Promise<{ webhookId: string; secret: string }> => {
+//     const response = await httpClient.sendRequest({
+//       method: HttpMethod.POST,
+//       url: `${baseUrl}/chatbots/${chatbotId}/webhooks`,
+//       headers: {
+//         Authorization: `Bearer ${apiKey}`,
+//       },
+//       body: {
+//         name: `Activepieces - New Lead (${new Date().toISOString()})`,
+//         url: webhookUrl,
+//         eventTypes: ['LEAD_CREATED'],
+//         maxRetries: 3,
+//         retryDelay: 1000,
+//       },
+//     }); // PollyBot returns { webhook: { id: "...", secret: "..." }, ... } or just { id: "...", secret: "..." }
 
-    const body = response.body;
-    const webhook = body.webhook || body;
+//     const body = response.body;
+//     const webhook = body.webhook || body;
 
-    return {
-      webhookId: webhook.id,
-      secret: webhook.secret, // Extract and return the secret
-    };
-  },
+//     return {
+//       webhookId: webhook.id,
+//       secret: webhook.secret, // Extract and return the secret
+//     };
+//   },
 
-  unsubscribeWebhook: async (
-    chatbotId: string,
-    apiKey: string,
-    webhookId: string
-  ): Promise<void> => {
-    await httpClient.sendRequest({
-      method: HttpMethod.DELETE,
-      url: `${baseUrl}/chatbots/${chatbotId}/webhooks/${webhookId}`,
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-      },
-    });
-  },
-};
+//   unsubscribeWebhook: async (
+//     chatbotId: string,
+//     apiKey: string,
+//     webhookId: string
+//   ): Promise<void> => {
+//     await httpClient.sendRequest({
+//       method: HttpMethod.DELETE,
+//       url: `${baseUrl}/chatbots/${chatbotId}/webhooks/${webhookId}`,
+//       headers: {
+//         Authorization: `Bearer ${apiKey}`,
+//       },
+//     });
+//   },
+// };
