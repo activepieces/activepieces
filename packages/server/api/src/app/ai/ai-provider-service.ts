@@ -44,6 +44,8 @@ export const aiProviderService = {
             updated: provider.updated,
             provider: provider.provider,
             platformId: provider.platformId,
+            displayName: '',
+            isConfigured: true,
         }))
 
         return {

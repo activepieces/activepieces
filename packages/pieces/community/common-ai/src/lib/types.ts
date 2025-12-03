@@ -11,7 +11,9 @@ export const AIProvider = Type.Object({
         })),
     }),
     provider: Type.String({ minLength: 1 }),
+    displayName: Type.String({ minLength: 1 }),
     platformId: Type.String(),
+    isConfigured: Type.Boolean(),
 })
 
 export type AIProvider = Static<typeof AIProvider>
