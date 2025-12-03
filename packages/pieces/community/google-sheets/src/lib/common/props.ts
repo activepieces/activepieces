@@ -19,7 +19,6 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 		displayName,
 		description,
 		required,
-		auth: googleSheetsAuth,
 		refreshers: ['includeTeamDrives'],
 		options: async ({ auth, includeTeamDrives }, { searchValue }) => {
 			if (!auth) {
@@ -75,7 +74,6 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 
 export const sheetIdProp = (displayName: string, description: string, required = true) =>
 	Property.Dropdown({
-		auth: googleSheetsAuth,
 		displayName,
 		description,
 		required,
@@ -89,9 +87,10 @@ export const sheetIdProp = (displayName: string, description: string, required =
 				};
 			}
 
+			const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
 
 			const authClient = new OAuth2Client();
-			authClient.setCredentials(auth);
+			authClient.setCredentials(authValue);
 
 			const sheets = google.sheets({ version: 'v4', auth: authClient });
 
@@ -130,7 +129,6 @@ export const commonProps = {
 
 export const rowValuesProp = () =>
 	Property.DynamicProperties({
-		auth: googleSheetsAuth,
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
@@ -179,8 +177,7 @@ export const rowValuesProp = () =>
 	});
 
 export const columnNameProp = () =>
-	Property.Dropdown({
-		auth: googleSheetsAuth,
+	Property.Dropdown<string>({
 		description: 'Column Name',
 		displayName: 'The name of the column to search in',
 		required: true,
