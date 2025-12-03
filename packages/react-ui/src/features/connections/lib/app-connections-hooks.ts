@@ -9,6 +9,10 @@ import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
+  getAuthPropertyForValue,
+  PieceAuthProperty,
+} from '@activepieces/pieces-framework';
+import {
   ApErrorParams,
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
@@ -238,6 +242,7 @@ type UseConnectionsProps = {
   extraKeys: any[];
   enabled?: boolean;
   staleTime?: number;
+  pieceAuth?: PieceAuthProperty | PieceAuthProperty[] | undefined;
 };
 
 export const appConnectionsQueries = {
@@ -246,10 +251,28 @@ export const appConnectionsQueries = {
     extraKeys,
     enabled,
     staleTime,
+    pieceAuth,
   }: UseConnectionsProps) => {
     return useQuery({
       queryKey: ['app-connections', ...extraKeys],
-      queryFn: () => appConnectionsApi.list(request),
+      queryFn: async () => {
+        const connections = await appConnectionsApi.list(request);
+        if (pieceAuth) {
+          return {
+            ...connections,
+            data: connections.data.filter(
+              (connection) =>
+                !isNil(
+                  getAuthPropertyForValue({
+                    authValueType: connection.type,
+                    pieceAuth,
+                  }),
+                ),
+            ),
+          };
+        }
+        return connections;
+      },
       enabled,
       staleTime,
     });
