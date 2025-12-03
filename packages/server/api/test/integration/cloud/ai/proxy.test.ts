@@ -1,5 +1,6 @@
 import { CategorizedLanguageModelPricing, DALLE3PricingPerImage, FlatLanguageModelPricing, GPTImage1PricingPerImage, TieredLanguageModelPricing } from '@activepieces/common-ai'
 import { ErrorCode, isNil, PrincipalType } from '@activepieces/shared'
+import { ImageModelV2 } from '@ai-sdk/provider'
 import { FastifyInstance } from 'fastify'
 import { aiProviderService } from '../../../../src/app/ai/ai-provider-service'
 import { AIUsageEntity, AIUsageSchema } from '../../../../src/app/ai/ai-usage-entity'
@@ -242,11 +243,12 @@ describe('AI Providers Proxy', () => {
                     },
                 })
 
-                const model = getProviderConfig('openai')?.imageModels.find(model => model.instance.modelId === 'dall-e-3')
+                const model = getProviderConfig('openai')?.imageModels.find(model => getModelId(model.instance) === 'dall-e-3')
                 const size = '1024x1024'
                 const quality = 'standard'
                 const imageCount = 1
 
+                const modelId = typeof model?.instance === 'string' ? model?.instance : model?.instance.modelId
                 // act
                 await app?.inject({
                     method: 'POST',
@@ -255,7 +257,7 @@ describe('AI Providers Proxy', () => {
                         authorization: `Bearer ${mockToken}`,
                     },
                     body: {
-                        model: model?.instance.modelId,
+                        model: modelId,
                         prompt: 'A beautiful sunset over mountains',
                         size,
                         quality,
@@ -298,7 +300,7 @@ describe('AI Providers Proxy', () => {
                     },
                 })
 
-                const model = getProviderConfig('openai')?.imageModels.find(model => model.instance.modelId === 'gpt-image-1')
+                const model = getProviderConfig('openai')?.imageModels.find(model => getModelId(model.instance) === 'gpt-image-1')
                 const size = '1024x1024'
                 const quality = 'low'
 
@@ -310,7 +312,7 @@ describe('AI Providers Proxy', () => {
                         authorization: `Bearer ${mockToken}`,
                     },
                     body: {
-                        model: model?.instance.modelId,
+                        model: getModelId(model?.instance),
                         prompt: 'A beautiful sunset over mountains',
                         size,
                         quality,
@@ -816,7 +818,7 @@ describe('AI Providers Proxy', () => {
                     },
                 })
 
-                const model = getProviderConfig('google')?.imageModels.find(model => model.instance.modelId === 'gemini-2.5-flash-image-preview')
+                const model = getProviderConfig('google')?.imageModels.find(model => getModelId(model.instance) === 'gemini-2.5-flash-image-preview')
                 if (isNil(model)) {
                     throw new Error('Google Gemini 2.5 Flash Image Preview model not found')
                 }
@@ -826,7 +828,7 @@ describe('AI Providers Proxy', () => {
                 // act
                 const response = await app?.inject({
                     method: 'POST',
-                    url: `/v1/ai-providers/proxy/google/v1beta/models/${model?.instance.modelId}:generateContent`,
+                    url: `/v1/ai-providers/proxy/google/v1beta/models/${getModelId(model?.instance)}:generateContent`,
                     headers: {
                         'x-goog-api-key': geminiKey,
                         authorization: `Bearer ${mockToken}`,
@@ -893,7 +895,7 @@ describe('AI Providers Proxy', () => {
                     },
                 })
 
-                const model = getProviderConfig('replicate')?.imageModels.find(model => model.instance.modelId === 'bytedance/sdxl-lightning-4step:5599ed30703defd1d160a25a63321b4dec97101d98b4674bcc56e41f62f35637')
+                const model = getProviderConfig('replicate')?.imageModels.find(model => getModelId(model.instance) === 'bytedance/sdxl-lightning-4step:5599ed30703defd1d160a25a63321b4dec97101d98b4674bcc56e41f62f35637')
                 const imageCount = 1
 
                 // act
@@ -908,7 +910,7 @@ describe('AI Providers Proxy', () => {
                             prompt: 'A beautiful sunset over mountains',
                             num_outputs: imageCount,
                         },
-                        version: model?.instance.modelId.split(':')[1],
+                        version: getModelId(model?.instance)?.split(':')[1],
                     },
                 })
 
@@ -946,13 +948,13 @@ describe('AI Providers Proxy', () => {
                     },
                 })
 
-                const model = getProviderConfig('replicate')?.imageModels.find(model => model.instance.modelId === 'black-forest-labs/flux-schnell')
+                const model = getProviderConfig('replicate')?.imageModels.find(model => getModelId(model.instance) === 'black-forest-labs/flux-schnell')
                 const imageCount = 1
 
                 // act
                 await app?.inject({
                     method: 'POST',
-                    url: `/v1/ai-providers/proxy/replicate/v1/models/${model?.instance.modelId}/predictions`,
+                    url: `/v1/ai-providers/proxy/replicate/v1/models/${getModelId(model?.instance)}/predictions`,
                     headers: {
                         authorization: `Bearer ${mockToken}`,
                     },
@@ -998,7 +1000,7 @@ describe('AI Providers Proxy', () => {
                     },
                 })
 
-                const model = getProviderConfig('replicate')?.imageModels.find(model => model.instance.modelId === 'black-forest-labs/flux-schnell')
+                const model = getProviderConfig('replicate')?.imageModels.find(model => getModelId(model.instance) === 'black-forest-labs/flux-schnell')
                 const imageCount = 3
 
                 // act
@@ -1028,6 +1030,11 @@ describe('AI Providers Proxy', () => {
 
 })
 
+
+function getModelId(model: ImageModelV2 | string | undefined): string | undefined {
+    if (!model) return undefined
+    return typeof model === 'string' ? model : (model as ImageModelV2).modelId
+}
 
 /**
  * Polls for AI usage data because response is returned before Ai usage is recorded

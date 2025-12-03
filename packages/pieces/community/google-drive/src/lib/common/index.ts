@@ -8,12 +8,14 @@ import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { OAuth2Client } from 'googleapis-common';
 import { google } from 'googleapis';
+import { googleDriveAuth } from '../..';
 
 export const common = {
   properties: {
     parentFolder: Property.Dropdown({
       displayName: 'Parent Folder',
       required: false,
+      auth: googleDriveAuth,
       refreshers: ['include_team_drives'],
       options: async ({ auth, include_team_drives }) => {
         if (!auth) {

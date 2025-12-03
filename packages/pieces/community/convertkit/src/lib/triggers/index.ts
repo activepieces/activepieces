@@ -44,7 +44,7 @@ export const addTag = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -59,7 +59,7 @@ export const addTag = createTrigger({
       '_webhook_subscriber_tag_add'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -90,7 +90,7 @@ export const removeTag = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -105,7 +105,7 @@ export const removeTag = createTrigger({
       '_webhook_subscriber_tag_remove'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -132,7 +132,7 @@ export const subscriberActivated = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -147,7 +147,7 @@ export const subscriberActivated = createTrigger({
       '_webhook_subscriber_activated'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -173,7 +173,7 @@ export const subscriberUnsubscribed = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -188,7 +188,7 @@ export const subscriberUnsubscribed = createTrigger({
       '_webhook_subscriber_unsubscribed'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -215,7 +215,7 @@ export const subscriberBounced = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -230,7 +230,7 @@ export const subscriberBounced = createTrigger({
       '_webhook_subscriber_bounced'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -260,7 +260,7 @@ export const subscriberComplained = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -275,7 +275,7 @@ export const subscriberComplained = createTrigger({
       '_webhook_subscriber_complained'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -306,7 +306,7 @@ export const formSubscribed = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_form_subscribed`, {
@@ -318,7 +318,7 @@ export const formSubscribed = createTrigger({
       '_webhook_form_subscribed'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -349,7 +349,7 @@ export const sequenceSubscribed = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -364,7 +364,7 @@ export const sequenceSubscribed = createTrigger({
       '_webhook_sequence_subscribed'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -395,7 +395,7 @@ export const sequenceCompleted = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(
@@ -410,7 +410,7 @@ export const sequenceCompleted = createTrigger({
       '_webhook_sequence_completed'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -441,7 +441,7 @@ export const linkClicked = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_link_clicked`, {
@@ -453,7 +453,7 @@ export const linkClicked = createTrigger({
       '_webhook_link_clicked'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -485,7 +485,7 @@ export const productPurchased = createTrigger({
       },
       target_url: context.webhookUrl,
     };
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_product_purchased`, {
@@ -497,7 +497,7 @@ export const productPurchased = createTrigger({
       '_webhook_product_purchased'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {
@@ -524,7 +524,7 @@ export const purchaseCreated = createTrigger({
       target_url: context.webhookUrl,
     };
 
-    const response = await createWebhook(context.auth, payload);
+    const response = await createWebhook(context.auth.secret_text, payload);
     const ruleId = response.id;
 
     await context.store?.put<WebhookInformation>(`_webhook_purchase_created`, {
@@ -536,7 +536,7 @@ export const purchaseCreated = createTrigger({
       '_webhook_purchase_created'
     );
     if (response !== null && response !== undefined) {
-      await removeWebhook(context.auth, response.ruleId);
+      await removeWebhook(context.auth.secret_text, response.ruleId);
     }
   },
   async run(context) {

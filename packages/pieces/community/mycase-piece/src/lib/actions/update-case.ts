@@ -9,6 +9,7 @@ export const updateCase = createAction({
   description: 'Updates an existing case in MyCase',
   props: {
     case_id: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case',
       description: 'Select the case to update',
       required: true,
@@ -60,6 +61,7 @@ export const updateCase = createAction({
       required: false,
     }),
     case_stage: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case Stage',
       description: 'The stage the case is currently in',
       required: false,
@@ -96,6 +98,7 @@ export const updateCase = createAction({
       },
     }),
     practice_area: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Practice Area',
       description: 'The practice area for this case',
       required: false,
@@ -158,6 +161,7 @@ export const updateCase = createAction({
       required: false,
     }),
     billing_contact: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Billing Contact',
       description: 'The client or company to assign as the billing contact',
       required: false,
@@ -198,7 +202,7 @@ export const updateCase = createAction({
       },
     }),
     clients: Property.MultiSelectDropdown({
-      displayName: 'Clients',
+  auth: mycaseAuth,      displayName: 'Clients',
       description: 'Clients to associate with the case',
       required: false,
       refreshers: [],
@@ -234,7 +238,7 @@ export const updateCase = createAction({
       },
     }),
     companies: Property.MultiSelectDropdown({
-      displayName: 'Companies',
+  auth: mycaseAuth,      displayName: 'Companies',
       description: 'Companies to associate with the case',
       required: false,
       refreshers: [],
@@ -270,7 +274,7 @@ export const updateCase = createAction({
       },
     }),
     staff: Property.MultiSelectDropdown({
-      displayName: 'Staff',
+  auth: mycaseAuth,      displayName: 'Staff',
       description: 'Staff members to associate with the case',
       required: false,
       refreshers: [],
@@ -306,6 +310,7 @@ export const updateCase = createAction({
       },
     }),
     lead_lawyer: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Lead Lawyer',
       description: 'Select the lead lawyer for this case',
       required: false,
@@ -346,6 +351,7 @@ export const updateCase = createAction({
       },
     }),
     originating_lawyer: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Originating Lawyer',
       description: 'Select the originating lawyer for this case',
       required: false,

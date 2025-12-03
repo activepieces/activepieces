@@ -1,8 +1,10 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const scheduleUpdated = createTrigger({
+  auth: assembledAuth,
   name: 'schedule_updated',
   displayName: 'Schedule Updated',
   description: 'Triggers when user schedule is modified.',
@@ -24,7 +26,7 @@ export const scheduleUpdated = createTrigger({
     const lastCheck = await context.store.get('lastScheduleCheck') || new Date(Date.now() - 60 * 60 * 1000).toISOString();
     
     const response = await assembledCommon.makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       `/events?type=schedule_updated&after=${lastCheck}&limit=100`
     );

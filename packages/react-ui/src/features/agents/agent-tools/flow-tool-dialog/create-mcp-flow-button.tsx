@@ -1,10 +1,10 @@
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 
 export const CreateMcpFlowButton = () => {
-  const { mutate: createMcpFlow, isPending } = flowsHooks.useCreateMcpFlow();
+  const { mutate: createMcpFlow, isPending } = flowHooks.useCreateMcpFlow();
 
   return (
     <div

@@ -64,7 +64,7 @@ export const sessionsUs = createPiece({
       baseUrl: () => 'https://api.app.sessions.us/api',
       auth: sessionAuth,
       authMapping: async (auth) => ({
-        'x-api-key': `${auth}`,
+        'x-api-key': `${auth.secret_text}`,
       }),
     }),
   ],

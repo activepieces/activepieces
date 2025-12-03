@@ -7,11 +7,11 @@ import {
     PiecePropertyMap,
     pieceTranslation,
     PropertyType,
-    StaticPropsValue,
-} from '@activepieces/pieces-framework'
+    StaticPropsValue } from '@activepieces/pieces-framework'
 import {
     BasicAuthConnectionValue,
     CustomAuthConnectionValue,
+    EngineGenericError,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
@@ -24,7 +24,6 @@ import { testExecutionContext } from '../handler/context/test-execution-context'
 import { createFlowsContext } from '../services/flows.service'
 import { utils } from '../utils'
 import { createPropsResolver } from '../variables/props-resolver'
-import { EngineGenericError } from './execution-errors'
 import { pieceLoader } from './piece-loader'
 
 export const pieceHelper = {
@@ -37,17 +36,17 @@ export const pieceHelper = {
             engineToken: operation.engineToken,
             sampleData: operation.sampleData,
         })
-        const property = await pieceLoader.getPropOrThrow({ pieceName: operation.pieceName, pieceVersion: operation.pieceVersion, actionOrTriggerName: operation.actionOrTriggerName, propertyName: operation.propertyName, devPieces: EngineConstants.DEV_PIECES })
+        const { property, piece } = await pieceLoader.getPropOrThrow({ pieceName: operation.pieceName, pieceVersion: operation.pieceVersion, actionOrTriggerName: operation.actionOrTriggerName, propertyName: operation.propertyName, devPieces: EngineConstants.DEV_PIECES })
     
         if (property.type !== PropertyType.DROPDOWN && property.type !== PropertyType.MULTI_SELECT_DROPDOWN && property.type !== PropertyType.DYNAMIC) {
             throw new EngineGenericError('PropertyTypeNotExecutableError', `Property type is not executable: ${property.type} for ${property.displayName}`)
         }
-
         const { data: executePropsResult, error: executePropsError } = await utils.tryCatchAndThrowOnEngineError((async (): Promise<ExecutePropsResult<PropertyType.DROPDOWN | PropertyType.MULTI_SELECT_DROPDOWN | PropertyType.DYNAMIC>> => {
             const { resolvedInput } = await createPropsResolver({
                 apiUrl: constants.internalApiUrl,
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
+                contextVersion: piece.getContextInfo?.().version,
             }).resolve<
             StaticPropsValue<PiecePropertyMap>
             >({
@@ -74,9 +73,10 @@ export const pieceHelper = {
                     engineToken: constants.engineToken,
                     apiUrl: constants.internalApiUrl,
                     target: 'properties',
+                    contextVersion: piece.getContextInfo?.().version,
                 }),
             }
-        
+          
             switch (property.type) {
                 case PropertyType.DYNAMIC: {
                     const dynamicProperty = property as DynamicProperties<boolean>

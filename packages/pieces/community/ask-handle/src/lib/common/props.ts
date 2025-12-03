@@ -1,8 +1,10 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { askHandleApiCall } from './client';
+import { askHandleAuth } from './auth';
 
 export const roomDropdown = Property.Dropdown({
+  auth: askHandleAuth,
   displayName: 'Room',
   description: 'Select a room',
   required: true,
@@ -18,12 +20,12 @@ export const roomDropdown = Property.Dropdown({
 
     try {
       const response = await askHandleApiCall(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/rooms/'
       );
 
-      const rooms = Array.isArray(response) ? response : (response as any)?.results || [];
+      const rooms = Array.isArray(response) ? response : (response)?.results || [];
 
       return {
         disabled: false,
@@ -43,6 +45,7 @@ export const roomDropdown = Property.Dropdown({
 });
 
 export const leadDropdown = Property.Dropdown({
+  auth: askHandleAuth,
   displayName: 'Lead',
   description: 'Select a lead',
   required: true,
@@ -58,7 +61,7 @@ export const leadDropdown = Property.Dropdown({
 
     try {
       const response = await askHandleApiCall(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/leads/'
       );

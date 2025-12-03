@@ -9,6 +9,7 @@ export const createTimeTrackingAction = createAction({
   description: 'Create a new timesheet entry',
   props: {
     user_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'User',
       description: 'User for this timesheet entry',
       required: true,
@@ -22,8 +23,8 @@ export const createTimeTrackingAction = createAction({
           };
         }
 
-        try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+        try { 
+          const client = new BexioClient(auth);
           const users = await client.get<Array<{
             id: number;
             firstname?: string | null;
@@ -53,6 +54,7 @@ export const createTimeTrackingAction = createAction({
       },
     }),
     status_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Status',
       description: 'Timesheet status',
       required: false,
@@ -67,7 +69,7 @@ export const createTimeTrackingAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           // TODO: Need to confirm endpoint - assuming /2.0/timesheet_status
           const statuses = await client.get<Array<{ id: number; name: string }>>('/2.0/timesheet_status').catch(() => []);
 
@@ -88,6 +90,7 @@ export const createTimeTrackingAction = createAction({
       },
     }),
     client_service_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Client Service',
       description: 'Business activity/client service',
       required: true,
@@ -102,7 +105,7 @@ export const createTimeTrackingAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           // TODO: Need to confirm endpoint - assuming /2.0/client_service
           const services = await client.get<Array<{ id: number; name: string }>>('/2.0/client_service').catch(() => []);
 
@@ -139,6 +142,7 @@ export const createTimeTrackingAction = createAction({
       required: false,
     }),
     contact_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Contact',
       description: 'Contact associated with this timesheet',
       required: false,
@@ -153,7 +157,7 @@ export const createTimeTrackingAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -185,6 +189,7 @@ export const createTimeTrackingAction = createAction({
       },
     }),
     sub_contact_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Sub Contact',
       description: 'Sub contact (optional)',
       required: false,
@@ -199,7 +204,7 @@ export const createTimeTrackingAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -231,6 +236,7 @@ export const createTimeTrackingAction = createAction({
       },
     }),
     pr_project_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Project',
       description: 'Project associated with this timesheet',
       required: false,
@@ -245,7 +251,7 @@ export const createTimeTrackingAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const projects = await client.get<Array<{
             id: number;
             name: string;
@@ -297,6 +303,7 @@ export const createTimeTrackingAction = createAction({
       },
     }),
     tracking_details: Property.DynamicProperties({
+      auth: bexioAuth,  
       displayName: 'Tracking Details',
       description: 'Time tracking details',
       required: true,

@@ -40,7 +40,7 @@ export const mailerLite = createPiece({
       baseUrl: () => 'https://connect.mailerlite.com/',
       auth: mailerLiteAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

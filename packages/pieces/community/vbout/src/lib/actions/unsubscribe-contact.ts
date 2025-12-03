@@ -17,7 +17,7 @@ export const unsubscribeContactAction = createAction({
     listid: vboutCommon.listid(true),
   },
   async run(context) {
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth.secret_text);
     const { email, listid } = context.propsValue;
     const res = await client.getContactByEmail(
       email as string,

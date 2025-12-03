@@ -13,7 +13,7 @@ export const getWorkerSchedule = createAction({
     worker: common.worker,
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.workers.getSchedule(
       context.propsValue.worker as string

@@ -33,7 +33,7 @@ export const videoask = createPiece({
       baseUrl: () => "https://api.videoask.com",
       authMapping: async (auth, propsValue) => {
         return {
-          Authorization: `Bearer ${(auth as any).access_token}`,
+          Authorization: `Bearer ${auth.access_token}`,
           "Content-Type": "application/json",
           "organization-id": propsValue['organizationId'],
         };

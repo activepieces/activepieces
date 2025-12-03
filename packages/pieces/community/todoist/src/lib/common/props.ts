@@ -1,5 +1,6 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { todoistRestClient } from './client/rest-client';
+import { todoistAuth } from '../..';
 
 const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
 	return {
@@ -10,7 +11,8 @@ const buildEmptyList = ({ placeholder }: { placeholder: string }) => {
 };
 
 export const todoistProjectIdDropdown = (description: string) =>
-	Property.Dropdown<string>({
+	Property.Dropdown<string,false,typeof todoistAuth>({
+		auth: todoistAuth,
 		displayName: 'Project',
 		refreshers: [],
 		description,
@@ -44,6 +46,7 @@ export const todoistProjectIdDropdown = (description: string) =>
 	});
 
 export const todoistSectionIdDropdown = Property.Dropdown({
+	auth: todoistAuth,
 	displayName: 'Section',
 	refreshers: ['project_id'],
 	required: false,

@@ -182,7 +182,7 @@ export const deepSearchQueryAction = createAction({
     const response = await JinaAICommon.makeRequest({
       url: JinaAICommon.deepsearchUrl,
       method: HttpMethod.POST,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       body: requestBody,
     });
 
