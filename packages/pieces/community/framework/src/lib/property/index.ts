@@ -1,8 +1,9 @@
 import { InputProperty } from './input';
 import { PieceAuthProperty } from './authentication';
-import { Type } from '@sinclair/typebox';
+import { TSchema, Type } from '@sinclair/typebox';
 import { PropertyType } from './input/property-type';
 import { DropdownState } from './input/dropdown/common';
+import { AUTHENTICATION_PROPERTY_NAME, isEmpty, isNil } from '@activepieces/shared';
 
 // EXPORTED
 export { ApFile } from './input/file-property';
@@ -11,6 +12,7 @@ export { DynamicProperties, DynamicProp } from './input/dynamic-prop';
 export { PropertyType } from './input/property-type';
 export { Property } from './input';
 export { PieceAuth,getAuthPropertyForValue } from './authentication';
+export type { ExtractPieceAuthPropertyTypeForMethods } from './authentication';
 export { DynamicPropsValue } from './input/dynamic-prop';
 export { DropdownOption,DropdownState } from './input/dropdown/common';
 export { OAuth2PropertyValue } from './authentication/oauth2-prop';
@@ -49,6 +51,7 @@ export const InputPropertyMap = Type.Record(Type.String(), InputProperty)
 export interface InputPropertyMap {
   [name: string]: InputProperty;
 }
+export { piecePropertiesUtils } from './util';
 
 export type PiecePropValueSchema<T extends PieceProperty> =
   T extends undefined

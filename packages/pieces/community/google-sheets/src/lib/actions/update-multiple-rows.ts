@@ -21,6 +21,7 @@ export const updateMultipleRowsAction = createAction({
 	props: {
 		...commonProps,
 		values: Property.DynamicProperties({
+			auth: googleSheetsAuth,
 			displayName: 'Values',
 			description: 'The values to update.',
 			required: true,
@@ -28,7 +29,7 @@ export const updateMultipleRowsAction = createAction({
 			props: async ({ auth, spreadsheetId, sheetId, headerRow }) => {
 				const sheet_Id = Number(sheetId);
 				const spreadsheet_Id = spreadsheetId as unknown as string;
-				const authentication = auth as OAuth2PropertyValue;
+				const authentication = auth;
 
 				if (
 					!auth ||

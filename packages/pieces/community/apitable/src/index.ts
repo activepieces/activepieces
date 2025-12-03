@@ -76,11 +76,11 @@ export const apitable = createPiece({
     findRecordAction,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        return (auth as { apiTableUrl: string }).apiTableUrl;
+        return (auth?.props.apiTableUrl ?? '');
       },
       auth: APITableAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { token: string }).token}`,
+        Authorization: `Bearer ${(auth?.props.token ?? '')}`,
       }),
     }),
   ],

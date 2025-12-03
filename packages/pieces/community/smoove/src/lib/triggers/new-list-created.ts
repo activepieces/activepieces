@@ -1,5 +1,5 @@
 
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { smooveAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
@@ -20,7 +20,7 @@ interface ListData {
     [key: string]: any;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, {
     fields?: string;
     sortBy?: string;
     maxItems?: number;
@@ -45,7 +45,7 @@ const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, {
             
             const endpoint = `/Lists${queryParams.length ? '?' + queryParams.join('&') : ''}`;
             
-            const response = await makeRequest(auth, HttpMethod.GET, endpoint);
+            const response = await makeRequest(auth.secret_text, HttpMethod.GET, endpoint);
             
             if (!response) {
                 return [];

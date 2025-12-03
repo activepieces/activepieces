@@ -20,6 +20,7 @@ export const createCompany = createAction({
             required: false,
         }),
         business_type_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Business Type',
             description: 'Legal structure of the company',
             required: false,
@@ -39,7 +40,7 @@ export const createCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/businessTypes.list',
                         body: {

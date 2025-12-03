@@ -82,7 +82,7 @@ export const appSocket = (log: FastifyBaseLogger) => ({
             })(), log)
         }, 15000)
     },
-    
+
     emitWithAck: async <T = unknown>(event: string, data: unknown): Promise<T> => {
         const result = await tryCatch(() => {
             return emitWithAckUtil<T>(socket, event, data, {
@@ -104,7 +104,7 @@ export const appSocket = (log: FastifyBaseLogger) => ({
 
         return result.data
     },
-    
+
     disconnect: (): void => {
         clearInterval(heartbeatInterval)
         if (socket) {

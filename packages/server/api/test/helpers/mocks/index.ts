@@ -15,6 +15,7 @@ import {
     ProjectMember,
     SigningKey,
 } from '@activepieces/ee-shared'
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
 import {
     AiOverageState,
@@ -25,6 +26,7 @@ import {
     AppConnectionType,
     assertNotNullOrUndefined,
     Cell,
+    ColorName,
     Field,
     FieldType,
     File,
@@ -33,6 +35,7 @@ import {
     FileType,
     FilteredPieceBehavior,
     Flow,
+    FlowOperationStatus,
     FlowRun,
     FlowRunStatus,
     FlowStatus,
@@ -49,14 +52,17 @@ import {
     PlatformPlan,
     PlatformRole,
     Project,
+    ProjectIcon,
     ProjectPlan,
     ProjectRelease,
     ProjectReleaseType,
     ProjectRole,
+    ProjectType,
     Record,
     RoleType,
     RunEnvironment,
     Table,
+    TeamProjectsLimit,
     TemplateType,
     User,
     UserIdentity,
@@ -175,6 +181,9 @@ export const createMockUserInvitation = (userInvitation: Partial<UserInvitation>
 }
 
 export const createMockProject = (project?: Partial<Project>): Project => {
+    const icon: ProjectIcon = {
+        color: faker.helpers.enumValue(ColorName),
+    }
     return {
         id: project?.id ?? apId(),
         created: project?.created ?? faker.date.recent().toISOString(),
@@ -186,6 +195,8 @@ export const createMockProject = (project?: Partial<Project>): Project => {
         externalId: project?.externalId ?? apId(),
         releasesEnabled: project?.releasesEnabled ?? false,
         metadata: project?.metadata ?? null,
+        type: project?.type ?? ProjectType.TEAM,
+        icon,
     }
 }
 
@@ -230,7 +241,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionStatus: undefined,
         showPoweredBy: platformPlan?.showPoweredBy ?? false,
         embeddingEnabled: platformPlan?.embeddingEnabled ?? false,
-        manageProjectsEnabled: platformPlan?.manageProjectsEnabled ?? false,
+        teamProjectsLimit: platformPlan?.teamProjectsLimit ?? TeamProjectsLimit.NONE,
         projectRolesEnabled: platformPlan?.projectRolesEnabled ?? false,
         customDomainsEnabled: platformPlan?.customDomainsEnabled ?? false,
         tablesEnabled: platformPlan?.tablesEnabled ?? false,
@@ -406,6 +417,7 @@ export const createMockPieceMetadata = (
             pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
+        contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
     }
 }
 
@@ -486,6 +498,7 @@ export const createMockFlow = (flow?: Partial<Flow>): Flow => {
         projectId: flow?.projectId ?? apId(),
         status: flow?.status ?? faker.helpers.enumValue(FlowStatus),
         folderId: flow?.folderId ?? null,
+        operationStatus: flow?.operationStatus ?? FlowOperationStatus.NONE,
         publishedVersionId: flow?.publishedVersionId ?? null,
         externalId: flow?.externalId ?? apId(),
     }
@@ -671,7 +684,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
             auditLogEnabled: true,
             apiKeysEnabled: true,
             customRolesEnabled: true,
-            manageProjectsEnabled: true,
+            teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
             customDomainsEnabled: true,
             includedAiCredits: 1000,
             ...params?.plan,

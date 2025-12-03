@@ -22,7 +22,7 @@ export const get_route = createAction({
             url,
             headers: {
                 ...commonHeaders,
-                'Authorization': `Token ${context.auth}`
+                'Authorization': `Token ${context.auth.secret_text}`
             }
         });
         return {

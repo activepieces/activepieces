@@ -1,6 +1,6 @@
 import fs from 'fs/promises'
 import { resolve } from 'path'
-import { ApLock, filePiecesUtils, memoryLock, runCommandWithLiveOutput } from '@activepieces/server-shared'
+import { ApLock, filePiecesUtils, memoryLock, spawnWithKill } from '@activepieces/server-shared'
 import { debounce, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import chalk from 'chalk'
 import chokidar, { FSWatcher } from 'chokidar'
@@ -46,18 +46,15 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
         }
 
         const startTime = Date.now()
-        await runCommandWithLiveOutput(`npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`)
+        await spawnWithKill({ cmd: `npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`, printOutput: true })
         const endTime = Date.now()
         const buildTime = (endTime - startTime) / 1000
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
 
-
-        await filePiecesUtils(packages, log).clearPieceCache(packageName)
-        await devPiecesInstaller(packages, log).linkSharedActivepiecesPackagesToPiece(packageName)
-        await devPiecesInstaller(packages, log).linkSharedActivepiecesPackagesToEachOther()
+        await devPiecesInstaller(log).linkSharedActivepiecesPackagesToPiece(packageName)
+        await devPiecesInstaller(log).linkSharedActivepiecesPackagesToEachOther()
      
-
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH, log)
         await cache.saveCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.saveCache('@activepieces/pieces-common', CacheState.PENDING)
@@ -86,20 +83,20 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
 
     const watchers: FSWatcher[] = []
   
-    await devPiecesInstaller(packages, app.log).installPiecesDependencies(packages)
+    await devPiecesInstaller(app.log).installPiecesDependencies(packages)
 
     for (const packageName of packages) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
 
-        const pieceDirectory = await filePiecesUtils(packages, app.log).findPieceDirectoryByFolderName(packageName)
+        const pieceDirectory = await filePiecesUtils(app.log).findSourcePiecePathByPieceName(packageName)
         if (isNil(pieceDirectory)) {
             app.log.info(chalk.yellow(`Piece directory not found for package: ${packageName}`))
             continue
         }
         app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
-        const packageJsonName = await filePiecesUtils(packages, app.log).getPackageNameFromFolderPath(pieceDirectory)
-        const nxProjectJson = await filePiecesUtils(packages, app.log).getProjectJsonFromFolderPath(pieceDirectory)
+        const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
+        const nxProjectJson = await filePiecesUtils(app.log).getProjectJsonFromFolderPath(pieceDirectory)
 
         const debouncedHandleFileChange = debounce(() => {
             handleFileChange(packages, packageName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)

@@ -30,12 +30,13 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { useShowPlatformAdminDashboard } from '@/hooks/authorization-hooks';
+import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PlatformRole } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
+import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
@@ -76,7 +77,7 @@ export function SidebarUser() {
                   </DropdownMenuTrigger>
                 </TooltipTrigger>
                 <TooltipContent side="right" align="center">
-                  {user.firstName}
+                  {user.firstName + ' ' + user.lastName}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -95,9 +96,8 @@ export function SidebarUser() {
                   />
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
-                      {user.firstName}
+                      {user.firstName + ' ' + user.lastName}
                     </span>
-                    <span className="truncate text-xs">{user.email}</span>
                   </div>
                   <ChevronsUpDown className="ml-auto size-4" />
                 </div>
@@ -121,7 +121,7 @@ export function SidebarUser() {
 
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    {user.firstName}
+                    {user.firstName + ' ' + user.lastName}
                   </span>
                   <span className="truncate text-xs">{user.email}</span>
                 </div>
@@ -135,6 +135,7 @@ export function SidebarUser() {
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
+              <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
@@ -154,7 +155,7 @@ export function SidebarUser() {
 }
 
 function SidebarPlatformAdminButton() {
-  const showPlatformAdminDashboard = useShowPlatformAdminDashboard();
+  const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
   const messages = notificationHooks.useNotifications();

@@ -1,5 +1,5 @@
 import {
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
   Property,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -14,7 +14,7 @@ import { isNil } from '@activepieces/shared';
 import { excelAuth } from '../..';
 
 const polling: Polling<
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty<typeof excelAuth>,
   {
     workbook_id: string;
     worksheet_id: string;

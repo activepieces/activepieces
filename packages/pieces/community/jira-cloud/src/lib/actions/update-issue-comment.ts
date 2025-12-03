@@ -13,6 +13,7 @@ export const updateIssueCommentAction = createAction({
 		projectId: getProjectIdDropdown(),
 		issueId: getIssueIdDropdown({ refreshers: ['projectId'] }),
 		commentId: Property.Dropdown({
+			auth: jiraCloudAuth,
 			displayName: 'Comment ID',
 			refreshers: ['issueId'],
 			required: true,
@@ -27,7 +28,7 @@ export const updateIssueCommentAction = createAction({
 				const response = await sendJiraRequest({
 					method: HttpMethod.GET,
 					url: `issue/${issueId}/comment`,
-					auth: auth as PiecePropValueSchema<typeof jiraCloudAuth>,
+					auth: auth,
 					queryParams: {
 						orderBy: '-created',
 						expand: 'renderedBody',

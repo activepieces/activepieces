@@ -20,7 +20,7 @@ import {
 
 import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
-import { areSheetIdsValid, GoogleSheetsAuthValue } from '../common/common';
+import { areSheetIdsValid,  } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,

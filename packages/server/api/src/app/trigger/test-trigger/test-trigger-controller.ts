@@ -7,7 +7,13 @@ export const testTriggerController: FastifyPluginAsyncTypebox = async (app) => {
         const { projectId } = req.principal
         const { flowId, flowVersionId, testStrategy } = req.body
 
-        return testTriggerService(req.log).test({
+        const logWithContext = req.log.child({
+            flowId,
+            flowVersionId,
+            projectId,
+            testStrategy,
+        })
+        return testTriggerService(logWithContext).test({
             flowId,
             flowVersionId,
             projectId,

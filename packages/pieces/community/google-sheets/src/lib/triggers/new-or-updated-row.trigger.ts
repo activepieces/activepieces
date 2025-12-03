@@ -39,6 +39,7 @@ export const newOrUpdatedRowTrigger = createTrigger({
 		}),
 		...commonProps,
 		trigger_column: Property.Dropdown({
+			auth: googleSheetsAuth,
 			displayName: 'Trigger Column',
 			description: `Trigger on changes to cells in this column only. \nSelect **Any Column** if you want the flow to trigger on changes to any cell within the row.`,
 			required: false,
@@ -53,14 +54,13 @@ export const newOrUpdatedRowTrigger = createTrigger({
 					};
 				}
 
-				const authValue = auth as GoogleSheetsAuthValue;
 				const spreadsheet_id = spreadsheetId as string;
 				const sheet_id = sheetId as number;
 
-				const sheetName = await getWorkSheetName(authValue, spreadsheet_id, sheet_id);
+				const sheetName = await getWorkSheetName(auth, spreadsheet_id, sheet_id);
 
 				const firstRowValues = await getWorkSheetValues(
-					authValue,
+					auth,
 					spreadsheet_id,
 					`${sheetName}!1:1`,
 				);

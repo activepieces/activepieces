@@ -162,6 +162,11 @@ import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/
 import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
 import { AddFailedStepDurationSqlite1762949199414 } from './migration/sqlite/1762949199414-AddFailedStepDurationSqlite'
 import { RemoveProjectIdFromPieceMetdataSqlite1763243032686 } from './migration/sqlite/1763243032686-RemoveProjectIdFromPieceMetdataSqlite'
+import { AddIconToProjectSqlite1763378269381 } from './migration/sqlite/1763378269381-AddIconToProjectSqlite'
+import { RemoveFlowRunDurationSqlite1763417279729 } from './migration/sqlite/1763417279729-RemoveFlowRunDurationSqlite'
+import { AddProjectTypeSqlite1763896147042 } from './migration/sqlite/1763896147042-AddProjectTypeSqlite'
+import { AddFlowOperationStatusFieldSqlite1764239872251 } from './migration/sqlite/1764239872251-AddFlowOperationStatusFieldSqlite'
+import { AddMcpServerSqlite1764524983756 } from './migration/sqlite/1764524983756-AddMcpServerSqlite'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -340,6 +345,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DeleteLastChangelogDismissedAtSqlite1762018344394,
         AddFailedStepDurationSqlite1762949199414,
         RemoveProjectIdFromPieceMetdataSqlite1763243032686,
+        AddIconToProjectSqlite1763378269381,
+        RemoveFlowRunDurationSqlite1763417279729,
+        AddProjectTypeSqlite1763896147042,
+        AddFlowOperationStatusFieldSqlite1764239872251,
+        AddMcpServerSqlite1764524983756,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

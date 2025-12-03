@@ -5,7 +5,7 @@ on:
 
 jobs:
   Release:
-    runs-on: ubuntu-latest
+    runs-on: depot-ubuntu-24.04
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -13,15 +13,15 @@ jobs:
       - name: Set RELEASE env var from package.json
         run: echo RELEASE=$(node --print "require('./package.json').version") >> $GITHUB_ENV
 
-      - name: Set up Depot CLI
-        uses: depot/setup-action@v1
-
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Depot CLI
+        uses: depot/setup-action@v1
 
       - name: Build and push
         uses: depot/build-push-action@v1
@@ -32,7 +32,6 @@ jobs:
           file: ./Dockerfile
           platforms: |
             linux/amd64
-            linux/arm64
           push: true
           tags: |
-            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}
+            ghcr.io/activepieces/activepieces-cloud:${{ env.RELEASE }}.${{ github.sha }}.beta

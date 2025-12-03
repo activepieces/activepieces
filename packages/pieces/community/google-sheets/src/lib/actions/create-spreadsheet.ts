@@ -13,7 +13,7 @@ import {
 } from '@activepieces/pieces-common';
 import { drive_v3, google, sheets_v4 } from 'googleapis';
 import { createGoogleClient, getAccessToken, googleSheetsAuth, GoogleSheetsAuthValue } from '../common/common';
-import { isNil } from '@activepieces/shared';
+import { AppConnectionType, isNil } from '@activepieces/shared';
 
 export const createSpreadsheetAction = createAction({
 	auth: googleSheetsAuth,
@@ -31,13 +31,14 @@ export const createSpreadsheetAction = createAction({
 			description: 'Determines if team drives should be included in the results.',
 			required: false,
 			refreshers: ['auth'],
+			auth: googleSheetsAuth,
 			props: async ({auth})=>{
 				const propsMap: InputPropertyMap = {};
 				if (!auth) {
 					return propsMap;
 				}
-				const authValue = auth as GoogleSheetsAuthValue;
-				if('serviceAccount' in authValue) { return propsMap; }
+				const authValue = auth;
+				if(authValue.type === AppConnectionType.CUSTOM_AUTH) { return propsMap; }
 				propsMap.includeTeamDrives = Property.Checkbox({
 					displayName: 'Include Team Drives',
 					description: 'Determines if shared drives should be included in the search for parent folder.',
@@ -53,12 +54,13 @@ export const createSpreadsheetAction = createAction({
 				'The folder to create the worksheet in.By default, the new worksheet is created in the root folder of drive.',
 			required: false,
 			refreshers: ['includeTeamDrivesProp','auth'],
-			props: async ({ auth, includeTeamDrivesProp }) => {
+			auth: googleSheetsAuth,
+				props: async ({ auth, includeTeamDrivesProp }) => {
 				const propsMap: InputPropertyMap = {};
 				if (!auth) {
 					return propsMap;
 				}
-				const authValue = auth as GoogleSheetsAuthValue;
+				const authValue = auth;
 				const isServiceAccount = 'serviceAccount' in authValue;
 				const includeTeamDrives = (includeTeamDrivesProp as DynamicPropsValue)['includeTeamDrives']  || isServiceAccount;
 				let folders: { id: string; name: string }[] = [];

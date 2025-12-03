@@ -22,6 +22,7 @@ export const createNote = createAction({
       defaultValue: 'case',
     }),
     entity: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Entity',
       description: 'Select the entity to create the note for',
       required: true,

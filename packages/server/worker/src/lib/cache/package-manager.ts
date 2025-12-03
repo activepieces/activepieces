@@ -3,7 +3,10 @@ import {
     CommandOutput,
     execPromise,
     fileSystemUtils,
+    spawnWithKill,
 } from '@activepieces/server-shared'
+import { tryCatch } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 
 export const packageManager = (log: FastifyBaseLogger) => ({
@@ -17,7 +20,19 @@ export const packageManager = (log: FastifyBaseLogger) => ({
             .map((path) => `--filter ./${path}`)
         await fileSystemUtils.threadSafeMkdir(path)
         log.debug({ path, args, filters }, '[PackageManager#install]')
-        return execPromise(`bun install ${args.join(' ')} ${filters.join(' ')}`, { cwd: path })
+        const { error, data } = await tryCatch(async () => spawnWithKill({
+            cmd: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            options: {
+                cwd: path,
+            },
+            printOutput: false,
+            timeoutMs: dayjs.duration(10, 'minutes').asMilliseconds(),
+        }))
+        if (error) {
+            log.error({ error }, '[PackageManager#install] Failed to install dependencies')
+            throw error
+        }
+        return data
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const config = [

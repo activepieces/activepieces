@@ -9,11 +9,15 @@ const mutexLock = new Mutex()
 export const pubsubFactory = (redisFactory: () => Promise<Redis>) => ({
     async subscribe(
         channel: string,
-        listener: (channel: string, message: string) => void,
+        listener: (message: string) => void,
     ): Promise<void> {
         const redisClientSubscriber = await getRedisClientSubscriber(redisFactory)
         await redisClientSubscriber.subscribe(channel)
-        redisClientSubscriber.on('message', listener)
+        redisClientSubscriber.on('message', (_channel, message) => {
+            if (_channel === channel) {
+                listener(message)
+            }
+        })
     },
     async publish(channel: string, message: string): Promise<void> {
         const redisClientPublisher = await getRedisClientPublisher(redisFactory)

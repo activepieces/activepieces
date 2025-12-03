@@ -1,6 +1,7 @@
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { knackApiCall } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const knackAuth = PieceAuth.CustomAuth({
   props: {
@@ -19,7 +20,10 @@ export const knackAuth = PieceAuth.CustomAuth({
     try {
       await knackApiCall({
         method: HttpMethod.GET,
-        auth,
+        auth: {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
         resourceUri: '/objects',
       });
       return { valid: true };

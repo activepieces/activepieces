@@ -336,7 +336,7 @@ export const createPaymentLinkAction = createAction({
       metadata
     } = context.propsValue;
     
-    const { baseUrl } = getEnvironmentFromApiKey(context.auth);
+    const { baseUrl } = getEnvironmentFromApiKey(context.auth.secret_text);
     
     const body: Record<string, any> = {
       amount,
@@ -482,7 +482,7 @@ export const createPaymentLinkAction = createAction({
         method: HttpMethod.POST,
         url: `${baseUrl}/payment-links`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

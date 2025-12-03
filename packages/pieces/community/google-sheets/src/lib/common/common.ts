@@ -1,18 +1,16 @@
-import { OAuth2PropertyValue, OAuth2Props, PieceAuth, PiecePropValueSchema, Property, ShortTextProperty, StaticPropsValue } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, OAuth2PropertyValue, OAuth2Props, PieceAuth, PiecePropValueSchema, Property, ShortTextProperty, StaticPropsValue } from '@activepieces/pieces-framework';
 import {
 	httpClient,
 	HttpMethod,
 	AuthenticationType,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { isNil, isString } from '@activepieces/shared';
+import { AppConnectionType, isNil, isString } from '@activepieces/shared';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { mapRowsToColumnLabels } from '../triggers/helpers';
 
-export type GoogleSheetsAuthValue = OAuth2PropertyValue<OAuth2Props> | StaticPropsValue<{
-    serviceAccount: ShortTextProperty<true>;
-}>;
+export type GoogleSheetsAuthValue = AppConnectionValueForAuthProperty<typeof googleSheetsAuth>
 export const googleSheetsCommon = {
 	baseUrl: 'https://sheets.googleapis.com/v4/spreadsheets',
 	getGoogleSheetRows,
@@ -301,23 +299,23 @@ export enum Dimension {
 }
 
 export async function createGoogleClient(auth: GoogleSheetsAuthValue): Promise<OAuth2Client> {
-	if('serviceAccount' in auth)
+	console.log(`------------------------auth ${ JSON.stringify(auth)}` );
+	if(auth.type === AppConnectionType.CUSTOM_AUTH)
 	{
-		const serviceAccount = JSON.parse(auth.serviceAccount);
+		const serviceAccount = JSON.parse(auth.props.serviceAccount);
 		return new google.auth.JWT({
 			email: serviceAccount.client_email,
 			key: serviceAccount.private_key,
 			scopes: googleSheetsScopes,
-		}
-		);
+		});
 	}
 	const authClient = new OAuth2Client();
     authClient.setCredentials(auth);
-	return authClient
+	return authClient;
 }
 
 export const getAccessToken = async (auth: GoogleSheetsAuthValue): Promise<string> => {
-	if('serviceAccount' in auth)
+	if(auth.type === AppConnectionType.CUSTOM_AUTH)
 	{
 		const googleClient = await createGoogleClient(auth);
 	    const response = await googleClient.getAccessToken();

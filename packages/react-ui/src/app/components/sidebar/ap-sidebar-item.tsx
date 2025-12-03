@@ -41,7 +41,10 @@ export const ApSidebarItem = (item: SidebarItemType) => {
   const isCollapsed = state === 'collapsed';
 
   return (
-    <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
+    <SidebarMenuItem
+      onClick={(e) => e.stopPropagation()}
+      className={cn(isCollapsed && 'flex justify-center')}
+    >
       {isCollapsed ? (
         <TooltipProvider delayDuration={0}>
           <Tooltip>

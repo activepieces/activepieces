@@ -1,10 +1,11 @@
 import { t } from 'i18next';
 import { Plus, Globe } from 'lucide-react';
-import { memo, useState } from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
+import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
 import { FormField, FormLabel } from '@/components/ui/form';
@@ -17,7 +18,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
+import {
+  useAuthorization,
+  useIsPlatformAdmin,
+} from '@/hooks/authorization-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import { cn } from '@/lib/utils';
 import {
   PieceMetadataModel,
   PieceMetadataModelSummary,
@@ -25,34 +31,22 @@ import {
 import {
   AppConnectionScope,
   AppConnectionWithoutSensitiveData,
+  Permission,
   PieceAction,
   PieceTrigger,
   PropertyExecutionType,
   isNil,
 } from '@activepieces/shared';
 
-type ConnectionSelectProps = {
-  disabled: boolean;
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  isTrigger: boolean;
-};
-const addBrackets = (str: string) => `{{connections['${str}']}}`;
-const removeBrackets = (str: string | undefined) => {
-  if (isNil(str)) {
-    return undefined;
-  }
-  return str.replace(
-    /\{\{connections\['(.*?)'\]\}\}/g,
-    (_, connectionName) => connectionName,
-  );
-};
-const ConnectionSelect = memo((params: ConnectionSelectProps) => {
+function ConnectionSelect(params: ConnectionSelectProps) {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
   const form = useFormContext<PieceAction | PieceTrigger>();
-
+  const hasPermissionToCreateConnection = useAuthorization().checkAccess(
+    Permission.WRITE_APP_CONNECTION,
+  );
   const {
     data: connections,
     isLoading: isLoadingConnections,
@@ -63,24 +57,21 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
       projectId: authenticationSession.getProjectId()!,
       limit: 1000,
     },
+    pieceAuth: params.piece.auth,
     extraKeys: [params.piece.name, authenticationSession.getProjectId()!],
     staleTime: 0,
   });
-
   const selectedConnection = connections?.data?.find(
     (connection) =>
       connection.externalId ===
       removeBrackets(form.getValues().settings.input.auth ?? ''),
   );
-
   const isGlobalConnection =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
-  const selectedAuth = Array.isArray(params.piece.auth)
-    ? params.piece.auth[0]
-    : params.piece.auth;
   const dynamicInputModeToggled =
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
+  const isPLatformAdmin = useIsPlatformAdmin();
   return (
     <FormField
       control={form.control}
@@ -91,7 +82,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
           {isLoadingConnections && (
             <div className="flex flex-col gap-2">
               <FormLabel>
-                {t('Connections')} <span className="text-destructive">*</span>
+                {t('Connection')} <span className="text-destructive">*</span>
               </FormLabel>
               <SearchableSelect
                 options={[]}
@@ -106,13 +97,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               />
             </div>
           )}
-          {!isLoadingConnections && selectedAuth && (
+          {!isLoadingConnections && params.piece.auth && (
             <AutoFormFieldWrapper
-              property={{ ...selectedAuth, displayName: t('Connection') }}
+              property={params.piece.auth}
               propertyName="auth"
-              field={field as unknown as ControllerRenderProps}
+              field={field}
               disabled={params.disabled}
-              hideDescription={true}
               inputName="settings.input.auth"
               allowDynamicValues={!params.isTrigger}
               dynamicInputModeToggled={dynamicInputModeToggled}
@@ -139,30 +129,30 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 disabled={params.disabled}
               >
                 <div className="relative">
-                  {field.value && !field.disabled && (
-                    <>
-                      {connections?.data?.find(
-                        (connection) =>
-                          connection.externalId ===
-                            removeBrackets(field.value) &&
-                          connection.scope !== AppConnectionScope.PLATFORM,
-                      ) && (
-                        <Button
-                          variant="ghost"
-                          size="xs"
-                          className="z-50 absolute right-8 top-2 "
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setReconnectConnection(selectedConnection ?? null);
-                            setSelectConnectionOpen(false);
-                            setConnectionDialogOpen(true);
-                          }}
+                  {field.value &&
+                    !field.disabled &&
+                    selectedConnection &&
+                    (!isGlobalConnection || isPLatformAdmin) && (
+                      <div className="z-50 absolute right-8 top-2 ">
+                        <PermissionNeededTooltip
+                          hasPermission={hasPermissionToCreateConnection}
                         >
-                          {t('Reconnect')}
-                        </Button>
-                      )}
-                    </>
-                  )}
+                          <Button
+                            variant="ghost"
+                            size="xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setReconnectConnection(selectedConnection);
+                              setSelectConnectionOpen(false);
+                              setConnectionDialogOpen(true);
+                            }}
+                            disabled={!hasPermissionToCreateConnection}
+                          >
+                            {t('Reconnect')}
+                          </Button>
+                        </PermissionNeededTooltip>
+                      </div>
+                    )}
 
                   <SelectTrigger className="flex gap-2 items-center">
                     <SelectValue
@@ -215,18 +205,31 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
                 </div>
 
                 <SelectContent>
-                  <SelectAction
-                    onClick={() => {
-                      setSelectConnectionOpen(false);
-                      setReconnectConnection(null);
-                      setConnectionDialogOpen(true);
-                    }}
+                  <PermissionNeededTooltip
+                    hasPermission={hasPermissionToCreateConnection}
                   >
-                    <span className="flex items-center gap-1 text-primary w-full">
-                      <Plus size={16} />
-                      {t('Create Connection')}
-                    </span>
-                  </SelectAction>
+                    <SelectAction
+                      onClick={() => {
+                        setSelectConnectionOpen(false);
+                        setReconnectConnection(null);
+                        setConnectionDialogOpen(true);
+                      }}
+                      disabled={!hasPermissionToCreateConnection}
+                    >
+                      <span
+                        className={cn(
+                          'flex items-center gap-1 text-primary w-full',
+                          {
+                            'text-muted-foreground cursor-not-allowed':
+                              !hasPermissionToCreateConnection,
+                          },
+                        )}
+                      >
+                        <Plus size={16} />
+                        {t('Create Connection')}
+                      </span>
+                    </SelectAction>
+                  </PermissionNeededTooltip>
 
                   {connections &&
                     connections.data &&
@@ -254,7 +257,25 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
       )}
     ></FormField>
   );
-});
+}
 
 ConnectionSelect.displayName = 'ConnectionSelect';
 export { ConnectionSelect };
+
+type ConnectionSelectProps = {
+  disabled: boolean;
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  isTrigger: boolean;
+};
+function addBrackets(str: string) {
+  return `{{connections['${str}']}}`;
+}
+function removeBrackets(str: string | undefined) {
+  if (isNil(str)) {
+    return undefined;
+  }
+  return str.replace(
+    /\{\{connections\['(.*?)'\]\}\}/g,
+    (_, connectionName) => connectionName,
+  );
+}

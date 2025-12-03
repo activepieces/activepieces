@@ -1,12 +1,14 @@
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { ContactItemSchema, ContactItem } from '../schemas';
+import { insightoAuth } from '../..';
 
 export const newContact = createTrigger({
   name: 'new_contact',
   displayName: 'New Contact',
   description: 'Triggers when a new contact is created',
   props: {},
+  auth: insightoAuth,
   sampleData: {
     id: '3c90c3cc-0d44-4b50-8888-8dd25736052a',
     first_name: 'John',
@@ -34,7 +36,7 @@ export const newContact = createTrigger({
   },
   async run(context) {
     try {
-      const apiKey = context.auth as string;
+      const apiKey = context.auth.secret_text;
       const url = `https://api.insighto.ai/api/v1/contact`;
 
       const queryParams: Record<string, string> = {

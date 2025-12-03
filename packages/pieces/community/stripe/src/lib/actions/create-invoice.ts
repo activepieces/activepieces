@@ -35,7 +35,7 @@ export const stripeCreateInvoice = createAction({
       method: HttpMethod.POST,
       url: 'https://api.stripe.com/v1/invoices',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {

@@ -24,8 +24,8 @@ import {
 import { MoveFlowDialog } from '../components/move-flow-dialog';
 
 import { CreateFlowDropdown } from './create-flow-dropdown';
+import { flowHooks } from './flow-hooks';
 import { flowsApi } from './flows-api';
-import { flowsHooks } from './flows-hooks';
 
 export const useFlowsBulkActions = ({
   selectedRows,
@@ -65,7 +65,7 @@ export const useFlowsBulkActions = ({
   const isDevelopmentBranch =
     gitSync && gitSync.branchType === GitBranchType.DEVELOPMENT;
   const { mutate: exportFlows, isPending: isExportPending } =
-    flowsHooks.useExportFlows();
+    flowHooks.useExportFlows();
   return useMemo(() => {
     const showMoveFlow =
       !embedState.hideFolders &&

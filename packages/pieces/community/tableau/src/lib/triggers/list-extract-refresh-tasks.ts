@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { tableauAuth } from '../../index';
 import { getAuthToken, buildTableauUrl, getTableauHeaders } from '../common';
@@ -10,10 +10,10 @@ function ensureString(body: any): string {
   return String(body);
 }
 
-const polling: Polling<PiecePropValueSchema<typeof tableauAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof tableauAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.LAST_ITEM,
-  items: async ({ auth }: { auth: PiecePropValueSchema<typeof tableauAuth> }) => {
-    const tableauAuth = auth as any;
+  items: async ({ auth }) => {
+    const tableauAuth = auth.props;
     const { token: authToken, siteId } = await getAuthToken(tableauAuth);
 
     const apiVersion = tableauAuth.apiVersion || '3.26';

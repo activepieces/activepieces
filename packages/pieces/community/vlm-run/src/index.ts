@@ -28,7 +28,7 @@ export const vlmRun = createPiece({
       baseUrl: () => 'https://api.vlm.run/v1',
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

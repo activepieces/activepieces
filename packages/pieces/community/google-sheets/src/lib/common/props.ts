@@ -1,6 +1,6 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { google, drive_v3 } from 'googleapis';
-import { columnToLabel, createGoogleClient, getHeaderRow, GoogleSheetsAuthValue, googleSheetsCommon } from './common';
+import { columnToLabel, createGoogleClient, getHeaderRow, googleSheetsAuth, GoogleSheetsAuthValue, googleSheetsCommon } from './common';
 import { isNil } from '@activepieces/shared';
 
 export const includeTeamDrivesProp = () =>
@@ -15,6 +15,7 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 	Property.Dropdown({
 		displayName,
 		description,
+		auth: googleSheetsAuth,
 		required,
 		refreshers: ['includeTeamDrives'],
 		options: async ({ auth, includeTeamDrives }, { searchValue }) => {
@@ -25,7 +26,7 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 					placeholder: 'Please authenticate first',
 				};
 			}
-			const authValue = auth as GoogleSheetsAuthValue;
+			const authValue = auth;
 
 			const authClient = await createGoogleClient(authValue);
 
@@ -72,6 +73,7 @@ export const sheetIdProp = (displayName: string, description: string, required =
 	Property.Dropdown({
 		displayName,
 		description,
+		auth: googleSheetsAuth,
 		required,
 		refreshers: ['spreadsheetId'],
 		options: async ({ auth, spreadsheetId }) => {
@@ -127,6 +129,7 @@ export const rowValuesProp = () =>
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
+		auth: googleSheetsAuth,
 		refreshers: ['sheetId', 'spreadsheetId', 'first_row_headers'],
 		props: async ({ auth, spreadsheetId, sheetId, first_row_headers }) => {
 			if (
@@ -172,13 +175,13 @@ export const rowValuesProp = () =>
 	});
 
 export const columnNameProp = () =>
-	Property.Dropdown<string>({
+	Property.Dropdown<string,true,typeof googleSheetsAuth>({
 		description: 'Column Name',
 		displayName: 'The name of the column to search in',
 		required: true,
+		auth: googleSheetsAuth,
 		refreshers: ['sheetId', 'spreadsheetId'],
 		options: async ({ auth, spreadsheetId, sheetId }) => {
-			const authValue = auth as GoogleSheetsAuthValue;
 			const spreadsheet_id = spreadsheetId as string;
 			const sheet_id = Number(sheetId) as number;
 			if (
@@ -194,7 +197,7 @@ export const columnNameProp = () =>
 			}
 
 			const sheetName = await googleSheetsCommon.findSheetName(
-				authValue,
+				auth,
 				spreadsheet_id,
 				sheet_id,
 			);
@@ -205,7 +208,7 @@ export const columnNameProp = () =>
 
 			const headers = await getHeaderRow({
 				spreadsheetId: spreadsheet_id,
-				auth: authValue,
+				auth,
 				sheetId: sheet_id,
 			});
 

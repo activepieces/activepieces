@@ -1,7 +1,9 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 
 export const getOrdersForPaymentLink = createAction({
+  auth: cashfreePaymentsAuth,
   name: 'get-orders-for-payment-link',
   displayName: 'Get Orders for Payment Link',
   description: 'View all order details for a payment link in Cashfree Payment Gateway',
@@ -70,11 +72,7 @@ export const getOrdersForPaymentLink = createAction({
 
   async run(context) {
     // Get authentication values from piece-level auth
-    const { clientId, clientSecret } = context.auth as {
-      authType: string;
-      clientId?: string;
-      clientSecret?: string;
-    };
+    const { clientId, clientSecret } = context.auth.props
 
 
     if (!clientId || !clientSecret) {
