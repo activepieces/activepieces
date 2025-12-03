@@ -7,6 +7,7 @@ import { PiecePackage } from '../pieces'
 import { PlatformId } from '../platform'
 import { ProjectId } from '../project/project'
 import { ScheduleOptions } from '../trigger'
+import { ExecutionToolStatus } from '../agents'
 
 export enum EngineOperationType {
     EXTRACT_PIECE_METADATA = 'EXTRACT_PIECE_METADATA',
@@ -210,11 +211,6 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
             H extends TriggerHookType.RENEW ? Record<string, never> :
                 H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
                     ExecuteOnEnableTriggerResponse
-
-export enum ExecutionToolStatus {
-    SUCCESS = 'SUCCESS',
-    FAILED = 'FAILED',
-}
 
 export type ExecuteToolResponse = {
     status: ExecutionToolStatus
