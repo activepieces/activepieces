@@ -102,15 +102,15 @@ export class ITrigger<
 }
 
 export type Trigger<
-  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = any,
   TriggerProps extends InputPropertyMap = any,
-  S extends TriggerStrategy = TriggerStrategy,
+  S extends TriggerStrategy = any,
 > = ITrigger<S, PieceAuth, TriggerProps>
 
 // TODO refactor and extract common logic
 export const createTrigger = <
   TS extends TriggerStrategy,
-  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined ,
   TriggerProps extends InputPropertyMap,
 >(params: CreateTriggerParams<PieceAuth, TriggerProps, TS>) => {
   switch (params.type) {

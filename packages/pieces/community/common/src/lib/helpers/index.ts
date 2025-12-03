@@ -49,7 +49,7 @@ const joinBaseUrlWithRelativePath = ({
 
 const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>(
   baseUrl: BaseUrlGetter<PieceAuth>,
-  auth: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>
+  auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>
 ) => {
   const exampleBaseUrl = `https://api.example.com`;
   try {

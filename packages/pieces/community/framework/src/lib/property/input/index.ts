@@ -47,13 +47,13 @@ export type InputProperty =
   | LongTextProperty<boolean>
   | MarkDownProperty
   | CheckboxProperty<boolean>
-  | DropdownProperty<any, boolean, PieceAuthProperty | undefined>
+  | DropdownProperty<any, boolean, PieceAuthProperty | undefined | PieceAuthProperty[]>
   | StaticDropdownProperty<any, boolean>
   | NumberProperty<boolean>
   | ArrayProperty<boolean>
   | ObjectProperty<boolean>
   | JsonProperty<boolean>
-  | MultiSelectDropdownProperty<unknown, boolean, PieceAuthProperty | undefined>
+  | MultiSelectDropdownProperty<unknown, boolean, PieceAuthProperty | undefined | PieceAuthProperty[]>
   | StaticMultiSelectDropdownProperty<unknown, boolean>
   | DynamicProperties<boolean, PieceAuthProperty | PieceAuthProperty[] | undefined>
   | DateTimeProperty<boolean>
@@ -155,7 +155,7 @@ export const Property = {
       ? ObjectProperty<true>
       : ObjectProperty<false>;
   },
-  Dropdown<T, R extends boolean = boolean, PieceAuth extends PieceAuthProperty | undefined = undefined>(
+  Dropdown<T, R extends boolean = boolean, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |  undefined = undefined>(
     request: Properties<DropdownProperty<T, R, PieceAuth>>
   ): R extends true ? DropdownProperty<T, true, PieceAuth> : DropdownProperty<T, false, PieceAuth> {
     return {
@@ -179,7 +179,7 @@ export const Property = {
       ? StaticDropdownProperty<T, true>
       : StaticDropdownProperty<T, false>;
   },
-  MultiSelectDropdown<T, R extends boolean = boolean, PieceAuth extends PieceAuthProperty | undefined = undefined>(
+  MultiSelectDropdown<T, R extends boolean = boolean, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined>(
     request: Properties<MultiSelectDropdownProperty<T, R, PieceAuth>>
   ): R extends true
     ? MultiSelectDropdownProperty<T, true, PieceAuth>
