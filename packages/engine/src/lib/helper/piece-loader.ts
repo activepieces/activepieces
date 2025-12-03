@@ -88,9 +88,9 @@ export const pieceLoader = {
             })
         }
 
-        const prop = (actionOrTrigger.props as PiecePropertyMap)[propertyName]
+        const property = (actionOrTrigger.props as PiecePropertyMap)[propertyName]
 
-        if (isNil(prop)) {
+        if (isNil(property)) {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
@@ -102,7 +102,7 @@ export const pieceLoader = {
             })
         }
 
-        return prop
+        return { property, piece }
     },
 
     getPackageAlias: ({ pieceName, pieceVersion, devPieces }: GetPackageAliasParams) => {

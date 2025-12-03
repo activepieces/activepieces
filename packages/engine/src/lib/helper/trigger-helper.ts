@@ -26,7 +26,7 @@ export const triggerHelper = {
             throw new EngineGenericError('TriggerNameNotSetError', 'Trigger name is not set')
         }
 
-        const { pieceTrigger, processedInput } = await prepareTriggerExecution({
+        const { pieceTrigger, processedInput, piece } = await prepareTriggerExecution({
             pieceName,
             pieceVersion,
             triggerName,
@@ -66,9 +66,9 @@ export const triggerHelper = {
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
                 target: 'triggers',
+                contextVersion: piece.getContextInfo?.().version,
             }),
         }
-
         await pieceTrigger.onStart(context)
     },
 
@@ -143,6 +143,7 @@ export const triggerHelper = {
                 projectId: constants.projectId,
                 engineToken: constants.engineToken,
                 target: 'triggers',
+                contextVersion: piece.getContextInfo?.().version,
             }),
         }
         switch (params.hookType) {
@@ -283,6 +284,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         apiUrl,
         projectId,
         engineToken,
+        contextVersion: piece.getContextInfo?.().version,
     }).resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
         executionState: FlowExecutorContext.empty(),

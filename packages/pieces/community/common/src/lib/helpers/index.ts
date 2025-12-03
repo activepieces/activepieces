@@ -7,6 +7,7 @@ import {
   StaticPropsValue,
   InputPropertyMap,
   FilesService,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -45,9 +46,9 @@ const joinBaseUrlWithRelativePath = ({
   return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
 };
 
-const getBaseUrlForDescription = (
-  baseUrl: (auth?: unknown) => string,
-  auth?: unknown
+const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| undefined>(
+  baseUrl: BaseUrlGetter<PieceAuth>,
+  auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>
 ) => {
   const exampleBaseUrl = `https://api.example.com`;
   try {
@@ -63,7 +64,8 @@ const getBaseUrlForDescription = (
     }
   }
 };
-export function createCustomApiCallAction({
+type BaseUrlGetter<PieceAuth extends PieceAuthProperty| undefined> = (auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>) => string
+export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| undefined>({
   auth,
   baseUrl,
   authMapping,
@@ -74,10 +76,10 @@ export function createCustomApiCallAction({
   extraProps,
   authLocation = 'headers',
 }: {
-  auth?: PieceAuthProperty;
-  baseUrl: (auth?: unknown) => string;
+  auth: PieceAuth;
+  baseUrl: BaseUrlGetter<PieceAuth>;
   authMapping?: (
-    auth: unknown,
+    auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>,
     propsValue: StaticPropsValue<any>
   ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
@@ -102,10 +104,11 @@ export function createCustomApiCallAction({
     description: description
       ? description
       : 'Make a custom API call to a specific endpoint',
-    auth: auth ? auth : undefined,
+    auth,
     requireAuth: auth ? true : false,
     props: {
       url: Property.DynamicProperties({
+        auth,
         displayName: '',
         required: true,
         refreshers: [],
@@ -183,11 +186,10 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         timeout,
         response_is_binary,
       } = context.propsValue;
-
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
 
-      const authValue = !isNil(authMapping)
+      const authValue = !isNil(authMapping) 
         ? await authMapping(context.auth, context.propsValue)
         : {};
 
@@ -265,7 +267,7 @@ const handleBinaryResponse = async (
       mime.extension(contentTypeValue ?? '') || 'txt';
     body = await files.write({
       fileName: `output.${fileExtension}`,
-      data: Buffer.from(bodyContent),
+      data: Buffer.from(bodyContent as any ),
     });
   } else {
     body = bodyContent;
