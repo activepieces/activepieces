@@ -3,12 +3,12 @@ import { BaseModelSchema, Metadata, Nullable } from '../common'
 import { ColorName } from '../project'
 import { Collection } from './collection'
 
-export const TemplateTags = Type.Object({
+export const TemplateTag = Type.Object({
     title: Type.String(),
     color: Type.Enum(ColorName),
     icon: Type.Optional(Type.String()),
 })
-export type TemplateTags = Static<typeof TemplateTags>
+export type TemplateTag = Static<typeof TemplateTag>
 
 export enum TemplateType {
     OFFICIAL = 'OFFICIAL',
@@ -36,7 +36,7 @@ export const Template = Type.Object({
     name: Type.String(),
     type: Type.Enum(TemplateType),
     description: Type.String(),
-    tags: Type.Array(TemplateTags),
+    tags: Type.Array(TemplateTag),
     blogUrl: Nullable(Type.String()),
     metadata: Nullable(Metadata),
     usageCount: Type.Number(),

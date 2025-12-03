@@ -1,10 +1,66 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { apId, Collection, isNil, TemplateCategory, TemplateType } from '@activepieces/shared'
+import { apId, FlowVersion, isNil } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { Static, Type } from '@sinclair/typebox'
 
 const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
 const logger = system.globalLogger()
+
+enum ColorName {
+    RED = 'RED',
+    BLUE = 'BLUE',
+    YELLOW = 'YELLOW',
+    PURPLE = 'PURPLE',
+    GREEN = 'GREEN',
+    PINK = 'PINK',
+    VIOLET = 'VIOLET',
+    ORANGE = 'ORANGE',
+    DARK_GREEN = 'DARK_GREEN',
+    CYAN = 'CYAN',
+    LAVENDER = 'LAVENDER',
+    DEEP_ORANGE = 'DEEP_ORANGE',
+}
+
+enum TemplateCategory {
+    ANALYTICS = 'ANALYTICS',
+    COMMUNICATION = 'COMMUNICATION',
+    CONTENT = 'CONTENT',
+    CUSTOMER_SUPPORT = 'CUSTOMER_SUPPORT',
+    DEVELOPMENT = 'DEVELOPMENT',
+    E_COMMERCE = 'E_COMMERCE',
+    FINANCE = 'FINANCE',
+    HR = 'HR',
+    IT_OPERATIONS = 'IT_OPERATIONS',
+    MARKETING = 'MARKETING',
+    PRODUCTIVITY = 'PRODUCTIVITY',
+    SALES = 'SALES',
+}
+
+const TemplateTag = Type.Object({
+    title: Type.String(),
+    color: Type.Enum(ColorName),
+    icon: Type.Optional(Type.String()),
+})
+type TemplateTag = Static<typeof TemplateTag>
+
+enum TemplateType {
+    OFFICIAL = 'OFFICIAL',
+    SHARED = 'SHARED',
+    CUSTOM = 'CUSTOM',
+}
+
+const FlowVersionTemplate = Type.Omit(
+    FlowVersion,
+    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
+)
+type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
+
+
+const Collection = Type.Object({
+    flowTemplates: Type.Optional(Type.Array(FlowVersionTemplate)),
+})
+type Collection = Static<typeof Collection>
 
 export class CreateTemplateTable1764777773932 implements MigrationInterface {
     name = 'CreateTemplateTable1764777773932'
@@ -46,15 +102,26 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
         const flowTemplates = await queryRunner.query(`
             SELECT * FROM "flow_template"
         `)
-        let count = 0
+        
+        if (flowTemplates.length === 0) {
+            console.log('No flow templates to migrate')
+            return
+        }
+
+        const templateValues: unknown[][] = []
+        
         for (const flowTemplate of flowTemplates) {
             const id = apId()
             const name = flowTemplate.name
-            const description = flowTemplate.description
+            const description = flowTemplate.description || ''
             const collection: Collection = {
                 flowTemplates: [flowTemplate.template],
             }
-            const tags = flowTemplate.tags
+            const tags: TemplateTag[] = flowTemplate.tags.map((tag: string) => ({
+                title: tag,
+                color: ColorName.BLUE,
+                icon: undefined,
+            }))
             const blogUrl = flowTemplate.blogUrl
             const metadata = flowTemplate.metadata
             const usageCount = 0
@@ -63,12 +130,37 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             const pieces = flowTemplate.pieces
             const type = flowTemplate.platformId === cloudPlatformId ? TemplateType.OFFICIAL : isNil(flowTemplate.projectId) ? TemplateType.CUSTOM : TemplateType.SHARED
             const platformId = flowTemplate.platformId
-            await queryRunner.query(`
-                INSERT INTO "template" ("id", "name", "description", "collection", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId") VALUES (${id}, ${name}, ${description}, ${collection}, ${tags}, ${blogUrl}, ${metadata}, ${usageCount}, ${author}, ${categories}, ${pieces}, ${type}, ${platformId})
-            `)
-            count++
+            
+            templateValues.push([
+                id,
+                name,
+                description,
+                JSON.stringify(collection),
+                JSON.stringify(tags),
+                blogUrl,
+                metadata ? JSON.stringify(metadata) : null,
+                usageCount,
+                author,
+                categories,
+                pieces,
+                type,
+                platformId,
+            ])
         }
-        console.log(`Migrated ${count} flow templates`)
+
+        const valuesPlaceholders = templateValues.map((_, index) => {
+            const offset = index * 13
+            return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13})`
+        }).join(', ')
+
+        const flattenedValues = templateValues.flat()
+
+        await queryRunner.query(`
+            INSERT INTO "template" ("id", "name", "description", "collection", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId") 
+            VALUES ${valuesPlaceholders}
+        `, flattenedValues)
+        
+        console.log(`Migrated ${flowTemplates.length} flow templates`)
 
         await queryRunner.query(`
             ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_project_id"

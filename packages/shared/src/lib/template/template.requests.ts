@@ -1,12 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Metadata, Nullable } from '../common'
 import { Collection } from './collection'
-import { TemplateCategory, TemplateTags, TemplateType } from './template'
+import { TemplateCategory, TemplateTag, TemplateType } from './template'
 
 export const CreateTemplateRequestBody = Type.Object({
     name: Type.String(),
     description: Type.String(),
-    tags: Type.Optional(Type.Array(TemplateTags)),
+    tags: Type.Optional(Type.Array(TemplateTag)),
     blogUrl: Type.Optional(Type.String()),
     metadata: Nullable(Metadata),
     author: Type.String(),
@@ -19,7 +19,7 @@ export type CreateTemplateRequestBody = Static<typeof CreateTemplateRequestBody>
 export const UpdateFlowTemplateRequestBody = Type.Object({
     name: Type.Optional(Type.String()),
     description: Type.Optional(Type.String()),
-    tags: Type.Optional(Type.Array(TemplateTags)),
+    tags: Type.Optional(Type.Array(TemplateTag)),
     blogUrl: Type.Optional(Type.String()),
     metadata: Nullable(Metadata),
     categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
@@ -33,7 +33,7 @@ export type UpdateTemplateRequestBody = Static<typeof UpdateTemplateRequestBody>
 export const ListFlowTemplatesRequestQuery = Type.Object({
     type: Type.Enum(TemplateType),
     pieces: Type.Optional(Type.Array(Type.String())),
-    tags: Type.Optional(Type.Array(Type.String())),
+    tags: Type.Optional(Type.Array(TemplateTag)),
     search: Type.Optional(Type.String()),
 })
 export type ListFlowTemplatesRequestQuery = Static<typeof ListFlowTemplatesRequestQuery>

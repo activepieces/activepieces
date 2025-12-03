@@ -13,14 +13,14 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import {
-  TemplateTags,
+  TemplateTag as TemplateTagType,
   ColorName,
   PROJECT_COLOR_PALETTE,
 } from '@activepieces/shared';
 
 type TemplateTagProps = Omit<InputProps, 'value' | 'onChange'> & {
-  value?: ReadonlyArray<TemplateTags>;
-  onChange: (value: ReadonlyArray<TemplateTags>) => void;
+  value?: ReadonlyArray<TemplateTagType>;
+  onChange: (value: ReadonlyArray<TemplateTagType>) => void;
 };
 
 const formatColorName = (colorName: string): string => {
@@ -43,7 +43,7 @@ const TemplateTag = forwardRef<HTMLInputElement, TemplateTagProps>((props) => {
     if (trimmedTitle) {
       const existingTag = value.find((tag) => tag.title === trimmedTitle);
       if (!existingTag) {
-        const newTag: TemplateTags = {
+        const newTag: TemplateTagType = {
           title: trimmedTitle,
           color: newTagColor,
           icon: newTagIcon.trim() || undefined,
@@ -57,7 +57,7 @@ const TemplateTag = forwardRef<HTMLInputElement, TemplateTagProps>((props) => {
     }
   };
 
-  const removeTag = (tagToRemove: TemplateTags) => {
+  const removeTag = (tagToRemove: TemplateTagType) => {
     onChange(value.filter((tag) => tag.title !== tagToRemove.title));
   };
 

@@ -35,7 +35,7 @@ function convertToQueryString(params: ListTemplatesRequestQuery): string {
         if (Array.isArray(value)) {
             value.forEach((val) => {
                 if (!isNil(val)) {
-                    searchParams.append(key, val)
+                    searchParams.append(key, typeof val === 'string' ? val : JSON.stringify(val))
                 }
             })
         }

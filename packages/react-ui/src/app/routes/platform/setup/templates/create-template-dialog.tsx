@@ -32,7 +32,7 @@ import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
 import {
-  TemplateTags,
+  TemplateTag as TemplateTagType,
   TemplateCategory,
   Template,
   FlowVersionTemplate,
@@ -51,7 +51,7 @@ const CreateFlowTemplateSchema = Type.Object({
   description: Type.String(),
   blogUrl: Type.String(),
   template: FlowVersionTemplate,
-  tags: Type.Optional(Type.Array(TemplateTags)),
+  tags: Type.Optional(Type.Array(TemplateTagType)),
   categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
 });
 type CreateFlowTemplateSchema = Static<typeof CreateFlowTemplateSchema>;

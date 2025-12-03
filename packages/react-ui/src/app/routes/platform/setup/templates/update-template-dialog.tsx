@@ -31,7 +31,7 @@ import { api } from '@/lib/api';
 import { formatUtils } from '@/lib/utils';
 import {
   FlowVersionTemplate,
-  TemplateTags,
+  TemplateTag as TemplateTagType,
   TemplateCategory,
   Template,
 } from '@activepieces/shared';
@@ -48,7 +48,7 @@ const UpdateFlowTemplateSchema = Type.Object({
   description: Type.String(),
   blogUrl: Type.String(),
   template: Type.Optional(Type.Unknown()),
-  tags: Type.Optional(Type.Array(TemplateTags)),
+  tags: Type.Optional(Type.Array(TemplateTagType)),
   categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
 });
 type UpdateFlowTemplateSchema = Static<typeof UpdateFlowTemplateSchema>;

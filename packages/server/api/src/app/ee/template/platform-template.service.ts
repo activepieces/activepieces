@@ -1,4 +1,4 @@
-import { apId, Collection, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateTags, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { apId, Collection, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TemplateEntity } from '../../template/template.entity'
 
@@ -47,7 +47,7 @@ type CreateParams = {
     platformId: string | undefined
     name: string
     description: string
-    tags: TemplateTags[]
+    tags: TemplateTag[]
     blogUrl: string | undefined
     metadata: Metadata | null | undefined
     author: string
