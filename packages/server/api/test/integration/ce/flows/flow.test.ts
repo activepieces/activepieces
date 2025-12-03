@@ -640,8 +640,10 @@ describe('Flow API', () => {
 
             expect(responseBody).toHaveProperty('name')
             expect(responseBody).toHaveProperty('description')
-            expect(responseBody).toHaveProperty('template')
-            expect(responseBody.template).toHaveProperty('trigger')
+            expect(responseBody).toHaveProperty('collection')
+            expect(responseBody.collection).toHaveProperty('flowTemplates')
+            expect(responseBody.collection.flowTemplates).toHaveLength(1)
+            expect(responseBody.collection.flowTemplates[0]).toHaveProperty('trigger')
         })
     })
 })
