@@ -13,10 +13,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  getPredefinedOAuth2App,
-  PieceToClientIdMap,
-} from '@/features/connections/lib/oauth-apps-hooks';
-import { OAuth2App } from '@/lib/oauth2-utils';
+  OAuth2App,
+  PiecesOAuth2AppsMap,
+  oauth2Utils,
+} from '@/lib/oauth2-utils';
 import { formatUtils } from '@/lib/utils';
 import {
   OAuth2Property,
@@ -25,23 +25,70 @@ import {
   DEFAULT_CONNECTION_DISPLAY_NAME,
 } from '@activepieces/pieces-framework';
 import {
-  isNil,
   AppConnectionType,
   BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
   OAuth2GrantType,
 } from '@activepieces/shared';
 
-export type SelectedAuth =
-  | {
-      authProperty: Exclude<PieceAuthProperty, OAuth2Property<any>>;
-      grantType: null;
-      oauth2App: null;
-    }
-  | {
-      authProperty: OAuth2Property<any>;
-      grantType: OAuth2GrantType;
-      oauth2App: OAuth2App;
-    };
+export function MutliAuthList({
+  pieceAuth,
+  setSelectedItem,
+  confirmSelectedItem,
+  piecesOAuth2AppsMap,
+  pieceName,
+  selectedItem,
+}: MutliAuthListProps) {
+  const authItems: RadioGroupListItem<AuthListItem>[] = pieceAuth.flatMap(
+    (auth) => {
+      const displayName = getDisplayName(auth);
+      if (auth.type === PropertyType.OAUTH2) {
+        const predefinedOAuth2App = oauth2Utils.getPredefinedOAuth2App(
+          piecesOAuth2AppsMap,
+          pieceName,
+        );
+        return createOAuth2Options(auth, displayName, predefinedOAuth2App);
+      }
+
+      return {
+        label: displayName,
+        value: { authProperty: auth, grantType: null, oauth2App: null },
+        description: auth.description,
+      };
+    },
+  );
+
+  const selectedOption = authItems.find((auth) =>
+    deepEqual(auth.value, selectedItem),
+  );
+
+  return (
+    <>
+      <DialogHeader className="mb-0">
+        <DialogTitle className="px-5">
+          <div className="flex items-center gap-2">
+            {t('Choose Authentication Method')}
+          </div>
+        </DialogTitle>
+      </DialogHeader>
+      <RadioGroupList
+        className="px-5 mt-5"
+        items={authItems}
+        onChange={setSelectedItem}
+        value={selectedOption?.value ?? null}
+      />
+      <DialogFooter className="mt-4">
+        <div className="mx-5 w-full flex justify-end gap-2">
+          <DialogClose asChild>
+            <Button variant="outline">{t('Cancel')}</Button>
+          </DialogClose>
+          <Button variant="default" onClick={() => confirmSelectedItem()}>
+            {t('Continue')}
+          </Button>
+        </div>
+      </DialogFooter>
+    </>
+  );
+}
 
 const getDisplayName = (auth: PieceAuthProperty): string => {
   if (
@@ -55,12 +102,12 @@ const getDisplayName = (auth: PieceAuthProperty): string => {
   return formatUtils.convertEnumToHumanReadable(auth.type);
 };
 
-const createOAuth2Options = (
+function createOAuth2Options(
   auth: OAuth2Property<any>,
   displayName: string,
   predefinedOAuth2App: OAuth2App | null,
-): RadioGroupListItem<SelectedAuth>[] => {
-  const options: RadioGroupListItem<SelectedAuth>[] = [];
+): RadioGroupListItem<AuthListItem>[] {
+  const options: RadioGroupListItem<AuthListItem>[] = [];
   const grantType = auth.grantType ?? OAuth2GrantType.AUTHORIZATION_CODE;
 
   const emptyOAuth2App: OAuth2App = {
@@ -121,72 +168,25 @@ const createOAuth2Options = (
   }
 
   return options;
-};
+}
 
-export const MutliAuthList = ({
-  pieceAuth,
-  setSelectedAuth,
-  confirmSelectedAuth,
-  pieceToClientIdMap,
-  pieceName,
-  selectedAuth,
-}: {
+export type AuthListItem =
+  | {
+      authProperty: Exclude<PieceAuthProperty, OAuth2Property<any>>;
+      grantType: null;
+      oauth2App: null;
+    }
+  | {
+      authProperty: OAuth2Property<any>;
+      grantType: OAuth2GrantType;
+      oauth2App: OAuth2App;
+    };
+
+type MutliAuthListProps = {
   pieceAuth: PieceAuthProperty[];
-  setSelectedAuth: (auth: SelectedAuth) => void;
-  confirmSelectedAuth: () => void;
-  pieceToClientIdMap: PieceToClientIdMap;
-  selectedAuth: SelectedAuth;
+  setSelectedItem: (auth: AuthListItem) => void;
+  confirmSelectedItem: () => void;
+  piecesOAuth2AppsMap: PiecesOAuth2AppsMap;
+  selectedItem: AuthListItem;
   pieceName: string;
-}) => {
-  const authItems: RadioGroupListItem<SelectedAuth>[] = pieceAuth
-    .filter((auth): auth is PieceAuthProperty => !isNil(auth))
-    .flatMap((auth) => {
-      const displayName = getDisplayName(auth);
-
-      if (auth.type === PropertyType.OAUTH2) {
-        const predefinedOAuth2App = getPredefinedOAuth2App(
-          pieceToClientIdMap,
-          pieceName,
-        );
-        return createOAuth2Options(auth, displayName, predefinedOAuth2App);
-      }
-
-      return {
-        label: displayName,
-        value: { authProperty: auth, grantType: null, oauth2App: null },
-        description: auth.description,
-      };
-    });
-
-  const selectedOption = authItems.find((auth) =>
-    deepEqual(auth.value, selectedAuth),
-  );
-
-  return (
-    <>
-      <DialogHeader className="mb-0">
-        <DialogTitle className="px-5">
-          <div className="flex items-center gap-2">
-            {t('Choose Authentication Method')}
-          </div>
-        </DialogTitle>
-      </DialogHeader>
-      <RadioGroupList
-        className="px-5 mt-5"
-        items={authItems}
-        onChange={setSelectedAuth}
-        value={selectedOption?.value ?? null}
-      />
-      <DialogFooter className="mt-4">
-        <div className="mx-5 w-full flex justify-end gap-2">
-          <DialogClose asChild>
-            <Button variant="outline">{t('Cancel')}</Button>
-          </DialogClose>
-          <Button variant="default" onClick={() => confirmSelectedAuth()}>
-            {t('Continue')}
-          </Button>
-        </div>
-      </DialogFooter>
-    </>
-  );
 };

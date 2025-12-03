@@ -1,7 +1,9 @@
 import { t } from 'i18next';
 import { CheckIcon, UnplugIcon, XIcon } from 'lucide-react';
 
+import { formUtils } from '@/features/pieces/lib/form-utils';
 import { authenticationSession } from '@/lib/authentication-session';
+import { OAuth2App } from '@/lib/oauth2-utils';
 import {
   CustomAuthProps,
   OAuth2Props,
@@ -18,6 +20,7 @@ import {
   isNil,
   apId,
   AppConnectionStatus,
+  OAuth2GrantType,
 } from '@activepieces/shared';
 
 import { appConnectionsApi } from './api/app-connections';
@@ -95,20 +98,26 @@ export const newConnectionUtils = {
     suggestedExternalId,
     suggestedDisplayName,
     pieceName,
+    grantType,
+    oauth2App,
+    redirectUrl,
   }: DefaultValuesParams): Partial<UpsertAppConnectionRequestBody> {
     const projectId = authenticationSession.getProjectId();
     assertNotNullOrUndefined(projectId, 'projectId');
     if (!auth) {
       throw new Error(`Unsupported property type: ${auth}`);
     }
+    const commmonProps = {
+      externalId: suggestedExternalId,
+      displayName: suggestedDisplayName,
+      pieceName: pieceName,
+      projectId,
+    };
 
     switch (auth.type) {
       case PropertyType.SECRET_TEXT:
         return {
-          externalId: suggestedExternalId,
-          displayName: suggestedDisplayName,
-          pieceName: pieceName,
-          projectId,
+          ...commmonProps,
           type: AppConnectionType.SECRET_TEXT,
           value: {
             type: AppConnectionType.SECRET_TEXT,
@@ -117,10 +126,7 @@ export const newConnectionUtils = {
         };
       case PropertyType.BASIC_AUTH:
         return {
-          externalId: suggestedExternalId,
-          displayName: suggestedDisplayName,
-          pieceName: pieceName,
-          projectId,
+          ...commmonProps,
           type: AppConnectionType.BASIC_AUTH,
           value: {
             type: AppConnectionType.BASIC_AUTH,
@@ -130,33 +136,73 @@ export const newConnectionUtils = {
         };
       case PropertyType.CUSTOM_AUTH: {
         return {
-          externalId: suggestedExternalId,
-          displayName: suggestedDisplayName,
-          pieceName: pieceName,
-          projectId,
+          ...commmonProps,
           type: AppConnectionType.CUSTOM_AUTH,
           value: {
             type: AppConnectionType.CUSTOM_AUTH,
-            props: newConnectionUtils.extractDefaultPropsValues(auth.props),
+            props: formUtils.getDefaultValueForProperties({
+              props: auth.props ?? {},
+              existingInput: {},
+            }),
           },
         };
       }
-      case PropertyType.OAUTH2:
-        return {
-          externalId: suggestedExternalId,
-          displayName: suggestedDisplayName,
-          pieceName: pieceName,
-          projectId,
-          type: AppConnectionType.CLOUD_OAUTH2,
-          value: {
-            type: AppConnectionType.CLOUD_OAUTH2,
-            scope: auth.scope.join(' '),
-            authorization_method: auth.authorizationMethod,
-            client_id: '',
-            props: newConnectionUtils.extractDefaultPropsValues(auth.props),
-            code: '',
-          },
-        };
+      case PropertyType.OAUTH2: {
+        switch (oauth2App?.oauth2Type) {
+          case AppConnectionType.CLOUD_OAUTH2:
+            return {
+              ...commmonProps,
+              type: AppConnectionType.CLOUD_OAUTH2,
+              value: {
+                type: AppConnectionType.CLOUD_OAUTH2,
+                client_id: oauth2App.clientId,
+                code: '',
+                scope: auth.scope.join(' '),
+                authorization_method: auth.authorizationMethod,
+                props: formUtils.getDefaultValueForProperties({
+                  props: auth.props ?? {},
+                  existingInput: {},
+                }),
+              },
+            };
+          case AppConnectionType.PLATFORM_OAUTH2:
+            return {
+              ...commmonProps,
+              type: AppConnectionType.PLATFORM_OAUTH2,
+              value: {
+                type: AppConnectionType.PLATFORM_OAUTH2,
+                client_id: oauth2App.clientId,
+                redirect_url: redirectUrl,
+                code: '',
+                scope: auth.scope.join(' '),
+                authorization_method: auth.authorizationMethod,
+                props: formUtils.getDefaultValueForProperties({
+                  props: auth.props ?? {},
+                  existingInput: {},
+                }),
+              },
+            };
+          default:
+            return {
+              ...commmonProps,
+              type: AppConnectionType.OAUTH2,
+              value: {
+                type: AppConnectionType.OAUTH2,
+                client_id: '',
+                redirect_url: redirectUrl,
+                code: '',
+                scope: auth.scope.join(' '),
+                authorization_method: auth.authorizationMethod,
+                props: formUtils.getDefaultValueForProperties({
+                  props: auth.props ?? {},
+                  existingInput: {},
+                }),
+                client_secret: '',
+                grant_type: grantType ?? OAuth2GrantType.AUTHORIZATION_CODE,
+              },
+            };
+        }
+      }
     }
   },
 
@@ -201,8 +247,11 @@ export const isConnectionNameUnique = async (
 };
 
 type DefaultValuesParams = {
-  auth: PieceAuthProperty;
   suggestedExternalId: string;
   suggestedDisplayName: string;
   pieceName: string;
+  redirectUrl: string;
+  auth: PieceAuthProperty;
+  oauth2App: OAuth2App | null;
+  grantType: OAuth2GrantType | null;
 };

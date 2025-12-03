@@ -114,8 +114,8 @@ const EmbeddedConnectionDialogContent = ({
     }
   }, [isSuccess, isLoadingPiece, pieceName]);
 
-  const { data: pieceToClientIdMap, isPending: loadingPieceToClientIdMap } =
-    oauthAppsQueries.usePieceToClientIdMap();
+  const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
+    oauthAppsQueries.usePiecesOAuth2AppsMap();
   return (
     <Dialog
       open={isDialogOpen}
@@ -139,16 +139,16 @@ const EmbeddedConnectionDialogContent = ({
         withCloseButton={!isLoadingPiece}
       >
         {isLoadingPiece ||
-          (loadingPieceToClientIdMap && (
+          (loadingPiecesOAuth2AppsMap && (
             <div className="flex justify-center items-center">
               <LoadingSpinner className="stroke-background size-[50px]"></LoadingSpinner>
             </div>
           ))}
 
-        {!isLoadingPiece && pieceModel && pieceToClientIdMap && (
+        {!isLoadingPiece && pieceModel && piecesOAuth2AppsMap && (
           <CreateOrEditConnectionDialogContent
             reconnectConnection={null}
-            pieceToClientIdMap={pieceToClientIdMap}
+            piecesOAuth2AppsMap={piecesOAuth2AppsMap}
             piece={pieceModel}
             externalIdComingFromSdk={connectionName}
             isGlobalConnection={false}

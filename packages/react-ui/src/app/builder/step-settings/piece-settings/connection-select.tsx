@@ -1,7 +1,7 @@
 import { t } from 'i18next';
 import { Plus, Globe } from 'lucide-react';
-import { memo, useState } from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { AutoFormFieldWrapper } from '@/app/builder/piece-properties/auto-form-field-wrapper';
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
@@ -38,22 +38,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-type ConnectionSelectProps = {
-  disabled: boolean;
-  piece: PieceMetadataModelSummary | PieceMetadataModel;
-  isTrigger: boolean;
-};
-const addBrackets = (str: string) => `{{connections['${str}']}}`;
-const removeBrackets = (str: string | undefined) => {
-  if (isNil(str)) {
-    return undefined;
-  }
-  return str.replace(
-    /\{\{connections\['(.*?)'\]\}\}/g,
-    (_, connectionName) => connectionName,
-  );
-};
-const ConnectionSelect = memo((params: ConnectionSelectProps) => {
+function ConnectionSelect(params: ConnectionSelectProps) {
   const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
@@ -76,18 +61,13 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
     extraKeys: [params.piece.name, authenticationSession.getProjectId()!],
     staleTime: 0,
   });
-
   const selectedConnection = connections?.data?.find(
     (connection) =>
       connection.externalId ===
       removeBrackets(form.getValues().settings.input.auth ?? ''),
   );
-
   const isGlobalConnection =
     selectedConnection?.scope === AppConnectionScope.PLATFORM;
-  const selectedAuth = Array.isArray(params.piece.auth)
-    ? params.piece.auth[0]
-    : params.piece.auth;
   const dynamicInputModeToggled =
     form.getValues().settings.propertySettings['auth']?.type ===
     PropertyExecutionType.DYNAMIC;
@@ -102,7 +82,7 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
           {isLoadingConnections && (
             <div className="flex flex-col gap-2">
               <FormLabel>
-                {t('Connections')} <span className="text-destructive">*</span>
+                {t('Connection')} <span className="text-destructive">*</span>
               </FormLabel>
               <SearchableSelect
                 options={[]}
@@ -117,13 +97,12 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
               />
             </div>
           )}
-          {!isLoadingConnections && selectedAuth && (
+          {!isLoadingConnections && params.piece.auth && (
             <AutoFormFieldWrapper
-              property={{ ...selectedAuth, displayName: t('Connection') }}
+              property={params.piece.auth}
               propertyName="auth"
-              field={field as unknown as ControllerRenderProps}
+              field={field}
               disabled={params.disabled}
-              hideDescription={true}
               inputName="settings.input.auth"
               allowDynamicValues={!params.isTrigger}
               dynamicInputModeToggled={dynamicInputModeToggled}
@@ -278,7 +257,25 @@ const ConnectionSelect = memo((params: ConnectionSelectProps) => {
       )}
     ></FormField>
   );
-});
+}
 
 ConnectionSelect.displayName = 'ConnectionSelect';
 export { ConnectionSelect };
+
+type ConnectionSelectProps = {
+  disabled: boolean;
+  piece: PieceMetadataModelSummary | PieceMetadataModel;
+  isTrigger: boolean;
+};
+function addBrackets(str: string) {
+  return `{{connections['${str}']}}`;
+}
+function removeBrackets(str: string | undefined) {
+  if (isNil(str)) {
+    return undefined;
+  }
+  return str.replace(
+    /\{\{connections\['(.*?)'\]\}\}/g,
+    (_, connectionName) => connectionName,
+  );
+}

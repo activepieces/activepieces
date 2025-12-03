@@ -24,12 +24,7 @@ import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import {
-  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
-  OAuth2GrantType,
-  PieceScope,
-} from '@activepieces/shared';
+import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -46,8 +41,8 @@ const PlatformPiecesPage = () => {
     includeHidden: true,
   });
 
-  const { refetch: refetchPiecesClientIdsMap } =
-    oauthAppsQueries.usePieceToClientIdMap();
+  const { refetch: refetchPiecesOAuth2AppsMap } =
+    oauthAppsQueries.usePiecesOAuth2AppsMap();
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -143,26 +138,14 @@ const PlatformPiecesPage = () => {
         {
           id: 'actions',
           cell: ({ row }) => {
-            const oauth2Auth = Array.isArray(row.original.auth)
-              ? row.original.auth.find(
-                  (auth) => auth.type === PropertyType.OAUTH2,
-                )
-              : row.original.auth;
-            const isOAuth2Enabled =
-              oauth2Auth &&
-              oauth2Auth.type === PropertyType.OAUTH2 &&
-              (oauth2Auth.grantType ===
-                BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
-                oauth2Auth.grantType === OAuth2GrantType.AUTHORIZATION_CODE ||
-                isNil(oauth2Auth.grantType));
             return (
               <div className="flex justify-end">
-                {isOAuth2Enabled && (
+                {shouldShowOauth2SettingForPiece(row.original) && (
                   <ConfigurePieceOAuth2Dialog
                     pieceName={row.original.name}
                     onConfigurationDone={() => {
                       refetchPieces();
-                      refetchPiecesClientIdsMap();
+                      refetchPiecesOAuth2AppsMap();
                     }}
                     isEnabled={isEnabled}
                   />
@@ -248,3 +231,19 @@ const PlatformPiecesPage = () => {
 
 PlatformPiecesPage.displayName = 'PlatformPiecesPage';
 export { PlatformPiecesPage };
+
+function shouldShowOauth2SettingForPiece(piece: PieceMetadataModelSummary) {
+  const pieceAuth = Array.isArray(piece.auth)
+    ? piece.auth.find((auth) => auth.type === PropertyType.OAUTH2)
+    : piece.auth;
+  if (isNil(pieceAuth)) {
+    return false;
+  }
+  if (pieceAuth.type !== PropertyType.OAUTH2) {
+    return false;
+  }
+  if (pieceAuth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
+    return false;
+  }
+  return true;
+}
