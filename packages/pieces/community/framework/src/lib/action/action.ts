@@ -4,7 +4,7 @@ import { ActionBase } from '../piece-metadata';
 import { InputPropertyMap } from '../property';
 import { ExtractPieceAuthPropertyTypeForMethods, PieceAuthProperty } from '../property/authentication';
 
-export type ActionRunner<PieceAuth extends PieceAuthProperty | undefined = PieceAuthProperty, ActionProps extends InputPropertyMap = InputPropertyMap> =
+export type ActionRunner<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty, ActionProps extends InputPropertyMap = InputPropertyMap> =
   (ctx: ActionContext<PieceAuth, ActionProps>) => Promise<unknown | void>
 
 export const ErrorHandlingOptionsParam = Type.Object({
@@ -19,7 +19,7 @@ export const ErrorHandlingOptionsParam = Type.Object({
 })
 export type ErrorHandlingOptionsParam = Static<typeof ErrorHandlingOptionsParam>
 
-type CreateActionParams<PieceAuth extends PieceAuthProperty | undefined | PieceAuthProperty[], ActionProps extends InputPropertyMap> = {
+type CreateActionParams<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined, ActionProps extends InputPropertyMap> = {
   /**
    * A dummy parameter used to infer {@code PieceAuth} type
    */

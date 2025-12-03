@@ -51,7 +51,7 @@ export type BaseOAuth2ConnectionValue = {
     authorization_method?: OAuth2AuthorizationMethod
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Record<string, any>
-    props?: Record<string, string>
+    props?: Record<string, unknown>
     grant_type?: OAuth2GrantType
 }
 
