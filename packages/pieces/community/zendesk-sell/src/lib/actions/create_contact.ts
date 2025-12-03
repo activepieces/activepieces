@@ -106,7 +106,7 @@ export const createContact = createAction({
         const response = await callZendeskApi(
             HttpMethod.POST,
             'v2/contacts',
-            auth as ZendeskSellAuth, 
+            auth, 
             { data: cleanedBody } 
         );
 

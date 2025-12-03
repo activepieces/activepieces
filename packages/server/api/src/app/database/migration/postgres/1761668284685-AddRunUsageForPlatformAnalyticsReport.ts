@@ -1,8 +1,9 @@
+import { ApEdition } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import dayjs from 'dayjs'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
-
+import { isNotOneOfTheseEditions } from '../../database-common'
 const log = system.globalLogger()
 
 const AnalyticsPieceReportItem = Type.Object({
@@ -89,6 +90,9 @@ export class AddRunUsageForPlatformAnalyticsReport1761668284685 implements Migra
     name = 'AddRunUsageForPlatformAnalyticsReport1761668284685'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         log.info('Starting migration: adding runsUsage column to platform analytics reports.')
         
         await queryRunner.query(`
@@ -125,6 +129,9 @@ export class AddRunUsageForPlatformAnalyticsReport1761668284685 implements Migra
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "runsUsage"
         `)

@@ -47,10 +47,10 @@ export const moxieCrm = createPiece({
     moxieCreateTaskAction,
     moxieCreateProjectAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { baseUrl: string }).baseUrl,
+      baseUrl: (auth) => (auth?.props.baseUrl ?? ''),
       auth: moxieCRMAuth,
       authMapping: async (auth) => ({
-        'X-API-KEY': (auth as { apiKey: string }).apiKey,
+        'X-API-KEY': (auth.props.apiKey),
       }),
     }),
   ],

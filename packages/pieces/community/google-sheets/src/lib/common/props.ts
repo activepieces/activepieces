@@ -18,6 +18,7 @@ export const spreadsheetIdProp = (displayName: string, description: string, requ
 	Property.Dropdown({
 		displayName,
 		description,
+		auth: googleSheetsAuth,
 		required,
 		refreshers: ['includeTeamDrives'],
 		options: async ({ auth, includeTeamDrives }, { searchValue }) => {
@@ -76,6 +77,7 @@ export const sheetIdProp = (displayName: string, description: string, required =
 	Property.Dropdown({
 		displayName,
 		description,
+		auth: googleSheetsAuth,
 		required,
 		refreshers: ['spreadsheetId'],
 		options: async ({ auth, spreadsheetId }) => {
@@ -132,6 +134,7 @@ export const rowValuesProp = () =>
 		displayName: 'Values',
 		description: 'The values to insert',
 		required: true,
+		auth: googleSheetsAuth,
 		refreshers: ['sheetId', 'spreadsheetId', 'first_row_headers'],
 		props: async ({ auth, spreadsheetId, sheetId, first_row_headers }) => {
 			if (
@@ -177,16 +180,15 @@ export const rowValuesProp = () =>
 	});
 
 export const columnNameProp = () =>
-	Property.Dropdown<string>({
+	Property.Dropdown<string,true,typeof googleSheetsAuth>({
 		description: 'Column Name',
 		displayName: 'The name of the column to search in',
 		required: true,
+		auth: googleSheetsAuth,
 		refreshers: ['sheetId', 'spreadsheetId'],
 		options: async ({ auth, spreadsheetId, sheetId }) => {
-			const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;
 			const spreadsheet_id = spreadsheetId as string;
 			const sheet_id = Number(sheetId) as number;
-			const accessToken = authValue.access_token;
 
 			if (
 				!auth ||
@@ -199,6 +201,7 @@ export const columnNameProp = () =>
 					placeholder: 'Please select a sheet first',
 				};
 			}
+			const accessToken = auth.access_token;
 
 			const sheetName = await googleSheetsCommon.findSheetName(
 				accessToken,

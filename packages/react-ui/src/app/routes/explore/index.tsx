@@ -3,7 +3,7 @@ import { ArrowLeft, Search, SearchX } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { ProjectDashboardPageHeader } from '@/app/components/project-layout/project-dashboard-page-header';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
 import {
@@ -46,11 +46,8 @@ export const ExplorePage = () => {
   };
 
   return (
-    <div className="pt-5">
-      <DashboardPageHeader
-        title={t('Explore Templates')}
-        description={t('Browse and use pre-built flow templates')}
-      />
+    <div>
+      <ProjectDashboardPageHeader title={t('Explore Templates')} />
       <div>
         <div className="mb-4">
           <InputWithIcon

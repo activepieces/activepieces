@@ -42,7 +42,7 @@ export const useAuthorization = () => {
   return { checkAccess };
 };
 
-export const useShowPlatformAdminDashboard = () => {
+export const useIsPlatformAdmin = () => {
   const platformRole = userHooks.getCurrentUserPlatformRole();
   return platformRole === PlatformRole.ADMIN;
 };

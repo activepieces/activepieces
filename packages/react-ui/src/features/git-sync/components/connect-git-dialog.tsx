@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,8 +24,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { INTERNAL_ERROR_MESSAGE } from '@/components/ui/sonner';
 import { Textarea } from '@/components/ui/textarea';
-import { INTERNAL_ERROR_MESSAGE, toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -71,9 +72,7 @@ const ConnectGitDialog = ({ open, setOpen, showButton }: ConnectGitProps) => {
     },
     onSuccess: (repo) => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Connected successfully'),
+      toast.success(t('Connected successfully'), {
         duration: 3000,
       });
     },

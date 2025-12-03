@@ -11,7 +11,7 @@ export const newContactAddedTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   props: {},
   async onEnable(context) {
-    const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+    const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const webhook = await makeRequest(
       { subdomain, apiToken },
@@ -27,7 +27,7 @@ export const newContactAddedTrigger = createTrigger({
   },
 
   async onDisable(context) {
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
     const webhookId = await context.store.get('webhookId');
 
     if (webhookId) {
@@ -41,7 +41,7 @@ export const newContactAddedTrigger = createTrigger({
   },
 
   async run(context) {
-      const { subdomain, apiToken } = context.auth as { subdomain: string; apiToken: string };
+      const { subdomain, apiToken } = context.auth.props as { subdomain: string; apiToken: string };
 
     const payload = context.payload.body as { contacts: { add: { id: string }[] } }
     const contactId = payload.contacts.add[0].id;
@@ -52,7 +52,7 @@ export const newContactAddedTrigger = createTrigger({
     return [response]
   },
   async test(context) {
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
 
     const response = await makeRequest({ subdomain, apiToken }, HttpMethod.GET, '/contacts?limit=5&order[updated_at]=desc');
 

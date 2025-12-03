@@ -17,6 +17,7 @@ export const getJobResults = createAction({
   props: {
     workflow: workflowProp,
     job: Property.Dropdown({
+      auth: captainDataAuth,
       displayName: 'Job',
       required: true,
       refreshers: ['workflow'],
@@ -31,8 +32,8 @@ export const getJobResults = createAction({
           url: `${CAPTAIN_DATA_BASE_URL}/workflows/${workflow}/jobs`,
           method: HttpMethod.GET,
           headers: {
-            Authorization: `x-api-key ${(auth as CaptainDataAuthType).apiKey}`,
-            'x-project-id': (auth as CaptainDataAuthType).projectId,
+            Authorization: `x-api-key ${auth.props.apiKey}`,
+            'x-project-id': auth.props.projectId,
           },
         });
         return {
@@ -61,8 +62,8 @@ export const getJobResults = createAction({
       url: `${CAPTAIN_DATA_BASE_URL}/jobs/${propsValue.job}/results`,
       method: HttpMethod.GET,
       headers: {
-        Authorization: `x-api-key ${(auth as CaptainDataAuthType).apiKey}`,
-        'x-project-id': (auth as CaptainDataAuthType).projectId,
+        Authorization: `x-api-key ${auth.props.apiKey}`,
+        'x-project-id': auth.props.projectId,
       },
     });
     return response.body;

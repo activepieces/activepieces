@@ -231,7 +231,7 @@ const MultiSelectTrigger = React.forwardRef<
           role="combobox"
           loading={loading}
           className={cn(
-            'flex min-h-10  w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-input bg-transparent px-4 py-1 text-sm  ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
+            'flex min-h-10 h-auto  w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-input bg-transparent px-4 py-1 text-sm  ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
             {
               'cursor-not-allowed opacity-80': disabled,
               'cursor-pointer': !disabled,

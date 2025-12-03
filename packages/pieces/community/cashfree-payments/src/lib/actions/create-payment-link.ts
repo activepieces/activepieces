@@ -1,11 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { cashfreePaymentsAuth } from '../auth/cashgram-auth';
 
 export const createPaymentLink = createAction({
   name: 'create-payment-link',
   displayName: 'Create Payment Link',
   description: 'Creates a payment link in Cashfree Payment Gateway',
-  requireAuth: true,
+  auth: cashfreePaymentsAuth,
   props: {
     environment: Property.StaticDropdown({
       displayName: 'Environment',
@@ -190,12 +191,7 @@ export const createPaymentLink = createAction({
 
   async run(context) {
     // Get authentication values from piece-level auth
-    const { clientId, clientSecret } = context.auth as {
-
-      clientId?: string;
-      clientSecret?: string;
-    };
-
+    const { clientId, clientSecret } = context.auth.props
 
 
     if (!clientId || !clientSecret) {

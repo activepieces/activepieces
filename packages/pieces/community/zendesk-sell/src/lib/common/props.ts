@@ -1,16 +1,18 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { ZendeskSellAuth } from './auth';
+import { zendeskSellAuth, ZendeskSellAuth } from './auth';
 import { callZendeskApi } from './client';
 
 
 export const zendeskSellCommon = {
     lead: (required = true) => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Lead',
         required,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) {
                 return {
                     disabled: true,
@@ -33,11 +35,13 @@ export const zendeskSellCommon = {
     }),
 
     contact: (required = true) => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Contact',
         required,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) {
                 return {
                     disabled: true,
@@ -60,12 +64,13 @@ export const zendeskSellCommon = {
     }),
 
     tags: (resourceType: 'contact' | 'lead' | 'deal') => Property.MultiSelectDropdown({
+        auth: zendeskSellAuth,
         displayName: 'Tags',
         description: 'A list of tags to associate with the record.',
         required: false,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) {
                 return {
                     disabled: true,
@@ -89,12 +94,14 @@ export const zendeskSellCommon = {
     }),
 
     leadSource: () => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Lead Source',
         description: 'The source of the lead.',
         required: false,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) {
                 return {
                     disabled: true,
@@ -118,11 +125,13 @@ export const zendeskSellCommon = {
     }),
 
     deal: (required = true) => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Deal',
         required,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) return { disabled: true, placeholder: 'Connect account first', options: [] };
             try {
                 const response = await callZendeskApi<{ items: { data: { id: number; name: string } }[] }>(
@@ -139,11 +148,13 @@ export const zendeskSellCommon = {
     }),
 
     company: (required = true) => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Company',
         required,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) return { disabled: true, placeholder: 'Connect account first', options: [] };
             try {
                 const response = await callZendeskApi<{ items: { data: { id: number; name: string } }[] }>(
@@ -160,11 +171,13 @@ export const zendeskSellCommon = {
     }),
 
     pipeline: (required = true) => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Pipeline',
         required,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) return { disabled: true, placeholder: 'Connect account first', options: [] };
             try {
                 const response = await callZendeskApi<{ items: { data: { id: number; name: string } }[] }>(
@@ -181,11 +194,13 @@ export const zendeskSellCommon = {
     }),
 
     stage: (required = true) => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Stage',
         required,
         refreshers: ['pipeline_id'],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             const pipelineId = propsValue['pipeline_id'] as number | undefined;
 
             if (!auth || !pipelineId) {
@@ -206,11 +221,13 @@ export const zendeskSellCommon = {
     }),
 
     owner: () => Property.Dropdown({
+        auth: zendeskSellAuth,
+
         displayName: 'Owner',
         required: false,
         refreshers: [],
         options: async (propsValue) => {
-            const auth = propsValue['auth'] as ZendeskSellAuth | undefined;
+            const auth = propsValue.auth
             if (!auth) return { disabled: true, placeholder: 'Connect account first', options: [] };
             try {
                 const response = await callZendeskApi<{ items: { data: { id: number; name: string } }[] }>(

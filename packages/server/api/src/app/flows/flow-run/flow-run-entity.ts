@@ -54,14 +54,6 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             array: isPostgres(),
             nullable: true,
         },
-        duration: {
-            nullable: true,
-            type: Number,
-        },
-        waitDuration: {
-            nullable: true,
-            type: Number,
-        },
         startTime: {
             type: TIMESTAMP_COLUMN_TYPE,
             nullable: true,
@@ -90,20 +82,20 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
     },
     indices: [
         {
-            name: 'idx_run_project_id_environment_created_desc',
-            columns: ['projectId', 'environment', 'created'],
+            name: 'idx_run_project_id_environment_archived_at_created_desc',
+            columns: ['projectId', 'environment', 'archivedAt', 'created'],
         },
         {
-            name: 'idx_run_project_id_environment_status_created_desc',
-            columns: ['projectId', 'environment', 'status', 'created'],
+            name: 'idx_run_project_id_environment_status_archived_at_created_desc',
+            columns: ['projectId', 'environment', 'status', 'archivedAt', 'created'],
         },
         {
-            name: 'idx_run_project_id_flow_id_environment_created_desc',
-            columns: ['projectId', 'flowId', 'environment', 'created'],
+            name: 'idx_run_project_id_flow_id_environment_archived_at_created_desc',
+            columns: ['projectId', 'flowId', 'environment', 'archivedAt', 'created'],
         },
         {
-            name: 'idx_run_project_id_flow_id_environment_status_created_desc',
-            columns: ['projectId', 'flowId', 'environment', 'status', 'created'],
+            name: 'idx_run_project_id_flow_id_environment_status_archived_at_created_desc',
+            columns: ['projectId', 'flowId', 'environment', 'status', 'archivedAt', 'created'],
         },
         {
             name: 'idx_run_flow_id',

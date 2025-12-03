@@ -1,0 +1,17 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "@activepieces/piece-letta",
+      "dependencies": {
+        "@letta-ai/letta-client": "^1.3.1",
+        "tslib": "^2.3.0",
+      },
+    },
+  },
+  "packages": {
+    "@letta-ai/letta-client": ["@letta-ai/letta-client@1.3.1", "", {}, "sha512-L+R7Zjsy2flB0CsGn/a6LAtRpC4HPBXpfU6/K6Xfxl8tHJXzgCEOjAxAuC7SxF0sfSRMF72a/Ves2A15NrCSag=="],
+
+    "tslib": ["tslib@2.8.1", "", {}, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
+  }
+}

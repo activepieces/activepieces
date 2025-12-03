@@ -50,6 +50,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         displayName: {
             type: String,
         },
+        type: {
+            type: String,
+            nullable: false,
+        },
         platformId: {
             ...ApIdSchema,
         },
@@ -60,6 +64,10 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         maxConcurrentJobs: {
             type: Number,
             nullable: true,
+        },
+        icon: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
         },
         releasesEnabled: {
             type: Boolean,

@@ -80,7 +80,7 @@ export const createProduct = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
 
     const product = new Product(hostUrl, appKey, appToken);
 

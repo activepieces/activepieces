@@ -250,7 +250,7 @@ export const eventOnData = createTrigger({
         third_party_id: workflowId,
       },
       headers: {
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
       queryParams: {},
     };
@@ -271,7 +271,7 @@ export const eventOnData = createTrigger({
           endpoint +
           `public/v4/forms/${formId}/third_party_webhooks/${response.webhookId}?used-with-actives-pieces=`,
         headers: {
-          Authorization: context.auth,
+          Authorization: context.auth.secret_text,
         },
       };
       await httpClient.sendRequest(request);

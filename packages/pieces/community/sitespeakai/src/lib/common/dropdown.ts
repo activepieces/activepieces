@@ -1,8 +1,10 @@
 import { Property } from "@activepieces/pieces-framework";
 import { makeRequest } from "./client";
 import { HttpMethod } from "@activepieces/pieces-common";
+import { SiteSpeakAuth } from "./auth";
 
 export const chatbotIdDropdown = Property.Dropdown({
+  auth: SiteSpeakAuth,
   displayName: 'chatbotId',
   description: 'Chat bot ID ',
   required: false,
@@ -18,7 +20,7 @@ export const chatbotIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/me/chatbots`
       );
@@ -39,7 +41,8 @@ export const chatbotIdDropdown = Property.Dropdown({
     }
   },
 });
-export const conversationIdDropdown = Property.Dropdown<string>({
+export const conversationIdDropdown = Property.Dropdown<string,false,typeof SiteSpeakAuth>({
+    auth: SiteSpeakAuth,
     displayName: 'Conversation',
     description: 'Pick a conversation for context, or leave empty to start a new one.',
     required: false,
@@ -56,7 +59,7 @@ export const conversationIdDropdown = Property.Dropdown<string>({
 
         try {
             const response = await makeRequest(
-                auth as string,
+                auth.secret_text,
                 HttpMethod.GET,
                 `/${chatbotId}/conversations`
             );
@@ -77,7 +80,8 @@ export const conversationIdDropdown = Property.Dropdown<string>({
         }
     },
 });
-export const finetuneIdDropdown = Property.Dropdown<string>({
+export const finetuneIdDropdown = Property.Dropdown<string,true,typeof SiteSpeakAuth>({
+  auth: SiteSpeakAuth,
   displayName: 'Finetune Entry',
   description: 'Select the finetune entry to delete.',
   required: true,
@@ -94,7 +98,7 @@ export const finetuneIdDropdown = Property.Dropdown<string>({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/${chatbotId}/finetunes`
       );
