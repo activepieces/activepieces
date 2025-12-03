@@ -72,7 +72,7 @@ export const PieceAuth = {
   },
 };
 
-export type ExtractPieceAuthPropertyTypeForMethods<T extends PieceAuthProperty | PieceAuthProperty[]> = T extends PieceAuthProperty[] ? T[number] : T;
+export type ExtractPieceAuthPropertyTypeForMethods<T extends PieceAuthProperty | PieceAuthProperty[] | undefined> = T extends PieceAuthProperty[] ? T[number] : T extends undefined ? undefined : T;
 
 export function getAuthPropertyForValue({ authValueType, pieceAuth }: GetAuthPropertyForValue) {
   if (!Array.isArray(pieceAuth) || isNil(pieceAuth)) {

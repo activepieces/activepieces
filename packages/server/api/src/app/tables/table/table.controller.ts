@@ -3,6 +3,8 @@ import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableRespons
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
+import { recordSideEffects } from '../record/record-side-effects'
+import { recordService } from '../record/record.service'
 import { tableService } from './table.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -85,6 +87,21 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
             id: request.params.id,
             webhookId: request.params.webhookId,
         })
+    })
+
+    fastify.post('/:id/clear', ClearTableRequest, async (request, reply) => {
+        const deletedRecords = await recordService.deleteAll({
+            tableId: request.params.id,
+            projectId: request.principal.projectId,
+        })
+        await reply.status(StatusCodes.NO_CONTENT).send()
+        await recordSideEffects(fastify.log).handleRecordsEvent({
+            tableId: request.params.id,
+            projectId: request.principal.projectId,
+            records: deletedRecords,
+            logger: request.log,
+            authorization: request.headers.authorization as string,
+        }, 'deleted')
     })
 }
 
@@ -217,6 +234,24 @@ const UpdateRequest = {
             id: Type.String(),
         }),
         body: UpdateTableRequest,
+    },
+}
+
+const ClearTableRequest = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
+        permission: Permission.WRITE_TABLE,
+    },
+    schema: {
+        tags: ['tables'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        description: 'Clear all records from a table',
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.NO_CONTENT]: Type.Never(),
+        },
     },
 }
 

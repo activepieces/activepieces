@@ -4,7 +4,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown
 
  } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { Client } from '@hubspot/api-client';
 import { FilterOperatorEnum } from '../common/types';
 
@@ -84,7 +84,7 @@ export const findProductAction = createAction({
 		const defaultProductProperties = getDefaultPropertiesForObject(OBJECT_TYPE.PRODUCT);
 
 		const response = await client.crm.products.searchApi.doSearch({
-			limit: 100,
+			limit: MAX_SEARCH_PAGE_SIZE,
 			properties: [...defaultProductProperties, ...additionalPropertiesToRetrieve],
 			filterGroups: [{ filters }],
 		});

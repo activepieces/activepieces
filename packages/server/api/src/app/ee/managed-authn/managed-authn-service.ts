@@ -7,6 +7,7 @@ import {
     PlatformRole,
     PrincipalType,
     Project,
+    ProjectType,
     User,
     UserIdentity,
     UserIdentityProvider,
@@ -37,6 +38,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
 
         if (!isNil(externalPrincipal.projectDisplayName)) {
             await projectService.update(project.id, {
+                type: project.type,
                 displayName: externalPrincipal.projectDisplayName,
             })
         }
@@ -183,6 +185,7 @@ const getOrCreateProject = async ({
         ownerId: platform.ownerId,
         platformId,
         externalId: externalProjectId,
+        type: ProjectType.TEAM,
     })
 
     return { project, isNewProject: true }

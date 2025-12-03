@@ -8,13 +8,18 @@ import {
 import { PieceBase, PieceMetadata} from './piece-metadata';
 import { PieceAuthProperty } from './property/authentication';
 import { ServerContext } from './context';
+import { ContextVersion, LATEST_CONTEXT_VERSION, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION } from './context/versioning';
+import * as semver from 'semver';
 
-export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = PieceAuthProperty | PieceAuthProperty[]>
+
+
+export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = PieceAuthProperty>
   implements Omit<PieceBase, 'version' | 'name'>
 {
   private readonly _actions: Record<string, Action> = {};
   private readonly _triggers: Record<string, Trigger> = {};
-
+  // this method didn't exist in older version
+  public getContextInfo: (() => { version: ContextVersion } )| undefined = () => ({ version: LATEST_CONTEXT_VERSION }); 
   constructor(
     public readonly displayName: string,
     public readonly logoUrl: string,
@@ -24,10 +29,13 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = P
     triggers: Trigger[],
     public readonly categories: PieceCategory[],
     public readonly auth?: PieceAuth,
-    public readonly minimumSupportedRelease?: string,
+    public readonly minimumSupportedRelease: string = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION,
     public readonly maximumSupportedRelease?: string,
     public readonly description = '',
   ) {
+    if(!semver.valid(minimumSupportedRelease) || semver.lt(minimumSupportedRelease, MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION)) {
+      this.minimumSupportedRelease = MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION;
+    }
     actions.forEach((action) => (this._actions[action.name] = action));
     triggers.forEach((trigger) => (this._triggers[trigger.name] = trigger));
   }
@@ -44,7 +52,8 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = P
       authors: this.authors,
       auth: this.auth,
       minimumSupportedRelease: this.minimumSupportedRelease,
-      maximumSupportedRelease: this.maximumSupportedRelease
+      maximumSupportedRelease: this.maximumSupportedRelease,
+      contextInfo: this.getContextInfo?.()
     };
   }
 
@@ -65,7 +74,7 @@ export class Piece<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] = P
   }
 }
 
-export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthProperty[]>(
+export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined>(
   params: CreatePieceParams<PieceAuth>
 ) => {
   if(params.auth && Array.isArray(params.auth)) { 
@@ -92,7 +101,7 @@ export const createPiece = <PieceAuth extends PieceAuthProperty | PieceAuthPrope
 };
 
 type CreatePieceParams<
-  PieceAuth extends PieceAuthProperty | PieceAuthProperty[]
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
 > = {
   displayName: string;
   logoUrl: string;
@@ -116,7 +125,7 @@ type PieceEventProcessors = {
   }) => boolean;
 };
 
-type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n'> & {
+type BackwardCompatiblePieceMetadata = Omit<PieceMetadata, 'name' | 'version' | 'authors' | 'i18n' | 'getContextInfo'> & {
   authors?: PieceMetadata['authors']
   i18n?: PieceMetadata['i18n']
 }

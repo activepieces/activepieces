@@ -17,7 +17,7 @@ export const airtableGetRecordByIdAction = createAction({
     const { base: baseId, tableId, recordId } = propsValue;
 
     return await airtableCommon.getRecordById({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId: baseId as string,
       tableId: tableId as string,
       recordId: recordId as string,

@@ -5,8 +5,6 @@ import {
     flowStructureUtil,
     FlowVersion,
     isNil,
-    McpTool,
-    McpToolType,
     PopulatedFlow,
 } from '@activepieces/shared'
 import { databaseConnection } from '../../../database/database-connection'
@@ -18,7 +16,7 @@ export const moveAgentsToFlowVerion: Migration = {
         const db = databaseConnection()
 
         const agentsAndMcpPromises = await Promise.all(
-            flowStructureUtil.getAllSteps(flowVersion.trigger).map(async (step): Promise<{ agent: Record<string, unknown>, tools: McpTool[] } | null> => {
+            flowStructureUtil.getAllSteps(flowVersion.trigger).map(async (step): Promise<{ agent: Record<string, unknown>, tools: { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[] } | null> => {
                 if (step.type === FlowActionType.PIECE && step.settings.pieceName === AGENT_PIECE_NAME) {
                     const agentResults = await db.query('SELECT * FROM agent WHERE "externalId" = $1', [step.settings.input['agentId']])
                     if (isNil(agentResults) || agentResults.length === 0) {
@@ -32,13 +30,13 @@ export const moveAgentsToFlowVerion: Migration = {
                     const dbTools = await db.query('SELECT * FROM mcp_tool WHERE "mcpId" = $1', [agent.mcpId])
 
                     const tools = dbTools.map((tool: {
-                        type: McpToolType
+                        type: string
                         pieceMetadata: string | Record<string, unknown>
                         mcpId: string
                         flow: string
                         flowId: string
                     }) => {
-                        if (tool.type === McpToolType.PIECE) {
+                        if (tool.type === 'PIECE') {
                             const pieceMetadata = typeof tool.pieceMetadata === 'string' ? JSON.parse(tool.pieceMetadata) : tool.pieceMetadata
                             return {
                                 type: tool.type,
@@ -48,6 +46,9 @@ export const moveAgentsToFlowVerion: Migration = {
                             }
                         }
                         else {
+                            if (isNil(tool.flow)) {
+                                return null
+                            }
                             const populatedFlow = JSON.parse(tool.flow) as PopulatedFlow
                             return {
                                 type: tool.type,
@@ -61,7 +62,7 @@ export const moveAgentsToFlowVerion: Migration = {
 
                     return {
                         agent,
-                        tools,
+                        tools: tools.filter((tool: unknown) => !isNil(tool)),
                     }
                 }
                 return null

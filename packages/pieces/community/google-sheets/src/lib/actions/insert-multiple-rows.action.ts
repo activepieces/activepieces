@@ -49,6 +49,7 @@ export const insertMultipleRowsAction = createAction({
 			},
 		}),
 		values: Property.DynamicProperties({
+			auth: googleSheetsAuth,
 			displayName: 'Values',
 			description: 'The values to insert.',
 			required: true,
@@ -57,7 +58,7 @@ export const insertMultipleRowsAction = createAction({
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;
 				const valuesInputType = input_type as unknown as string;
-				const authentication = auth as OAuth2PropertyValue;
+				const authentication = auth;
 
 				if (
 					!auth ||
@@ -157,6 +158,7 @@ export const insertMultipleRowsAction = createAction({
 			defaultValue: false,
 		}),
 		check_for_duplicate_column: Property.DynamicProperties({
+			auth: googleSheetsAuth,
 			displayName: 'Duplicate Value Column',
 			description: 'The column to check for duplicate values.',
 			refreshers: ['spreadsheetId', 'sheetId', 'check_for_duplicate', 'headerRow'],
@@ -164,7 +166,7 @@ export const insertMultipleRowsAction = createAction({
 			props: async ({ auth, spreadsheetId, sheetId, check_for_duplicate, headerRow }) => {
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;
-				const authentication = auth as OAuth2PropertyValue;
+				const authentication = auth;
 				const checkForExisting = check_for_duplicate as unknown as boolean;
 				if (
 					!auth ||

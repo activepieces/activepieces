@@ -18,7 +18,7 @@ export const getRunAction = createAction({
 		const { runId } = context.propsValue;
 
 		const response = await skyvernApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/runs/${runId}`,
 		});

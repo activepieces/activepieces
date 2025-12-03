@@ -76,7 +76,7 @@ export const sendText = createAction({
             method: HttpMethod.POST,
             endpoint: '/send/text',
             body: body,
-            auth: context.auth,
+            auth: context.auth.secret_text,
         });
     },
 });

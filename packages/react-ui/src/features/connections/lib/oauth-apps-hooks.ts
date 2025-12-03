@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { PiecesOAuth2AppsMap } from '@/lib/oauth2-utils';
@@ -18,9 +18,7 @@ export const oauthAppsMutations = {
         refetch();
       },
       onSuccess: () => {
-        toast({
-          title: t('Success'),
-          description: t('OAuth2 Credentials Deleted'),
+        toast.success(t('OAuth2 Credentials Deleted'), {
           duration: 3000,
         });
         setOpen(false);
@@ -38,9 +36,7 @@ export const oauthAppsMutations = {
         refetch();
       },
       onSuccess: () => {
-        toast({
-          title: t('Success'),
-          description: t('OAuth2 Credentials Updated'),
+        toast.success(t('OAuth2 Credentials Updated'), {
           duration: 3000,
         });
         onConfigurationDone();

@@ -123,7 +123,8 @@ export const workerMachine = {
         return environmentVariables.getEnvironment(WorkerSystemProp.PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
     preWarmCacheEnabled: () => {
-        return environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE) === 'true'
+        const enabledVar = environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE)
+        return isNil(enabledVar) || environmentVariables.getEnvironment(WorkerSystemProp.PRE_WARM_CACHE) === 'true'
     },
 }
 

@@ -17,15 +17,16 @@ export const updateContact = createAction({
 
   props: {
     contactId: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Select Contact',
       description: 'Choose a contact to update',
       required: true,
       refreshers: ['auth'],
-      options: async ({ auth }: any) => {
+      options: async ({ auth }) => {
         if (!auth) return handleDropdownError('Please connect first');
         const resp = await biginApiService.fetchContacts(
           auth.access_token,
-          auth.api_domain
+          auth.data['api_domain']
         );
         return {
           options: resp.data.map((c: any) => ({
@@ -37,6 +38,7 @@ export const updateContact = createAction({
     }),
 
     contactDetails: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Contact Fields',
       description: 'Edit any of these fields',
       refreshers: ['contactId', 'auth'],
@@ -46,7 +48,8 @@ export const updateContact = createAction({
       ): Promise<InputPropertyMap> => {
         if (!contactId) return {};
         const contact = JSON.parse(contactId);
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const [fieldsResp, usersResp, companiesResp] = await Promise.all([
           biginApiService.fetchModuleFields(access_token, api_domain, 'Contacts'),
@@ -200,7 +203,7 @@ export const updateContact = createAction({
 
   async run(context) {
    try {
-     const { contactDetails, contactId, accountName, tag } = context.propsValue as any;
+     const { contactDetails, contactId, accountName, tag } = context.propsValue;
 
      const record: Record<string, any> = { id: JSON.parse(contactId).id };
 
@@ -236,7 +239,7 @@ export const updateContact = createAction({
 
      const resp = await biginApiService.updateContact(
        context.auth.access_token,
-       (context.auth as any).api_domain,
+       context.auth.data['api_domain'],
        payload
      );
 

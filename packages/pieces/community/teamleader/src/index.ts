@@ -45,7 +45,7 @@ export const teamleader = createPiece({
             baseUrl: () => 'https://api.focus.teamleader.eu',
             auth: teamleaderAuth,
             authMapping: async (auth) => ({
-                Authorization: `Bearer ${(auth as any).access_token}`,
+                Authorization: `Bearer ${auth.access_token}`,
             }),
         }),
     ],

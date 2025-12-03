@@ -1,7 +1,9 @@
 import { Alert, AlertChannel, ListAlertsParams } from '@activepieces/ee-shared'
 import { apDayjsDuration } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, SeekPage } from '@activepieces/shared'
+
 import dayjs from 'dayjs'
+import timezone from 'dayjs/plugin/timezone'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
@@ -15,6 +17,8 @@ import { projectService } from '../../project/project-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
 import { AlertEntity } from './alerts-entity'
+
+dayjs.extend(timezone)
 
 const repo = repoFactory(AlertEntity)
 const DAY_IN_SECONDS = apDayjsDuration(1, 'day').asSeconds()
@@ -110,7 +114,6 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         })
 
         const { data, cursor: newCursor } = await paginator.paginate(query)
-
         return paginationHelper.createPage<Alert>(data, newCursor)
     },
     async delete({ alertId }: { alertId: ApId }): Promise<void> {
@@ -128,11 +131,11 @@ export const alertsService = (log: FastifyBaseLogger) => ({
 })
 
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const { platformId } = params
+    const { platformId, flowRunId, projectId } = params
 
     const issueUrl = await domainHelper.getPublicUrl({
         platformId,
-        path: 'runs?limit=10#Issues',
+        path: `projects/${projectId}/runs/${flowRunId}`,
     })
 
     await emailService(log).sendIssueCreatedNotification({
@@ -177,7 +180,6 @@ type IssueParams = {
     flowName: string
     createdAt: string
 }
-
 
 type IssueToAlert = {
     flowVersionId: string

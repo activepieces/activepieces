@@ -19,8 +19,8 @@ export const getCustomSourceById = createAction({
     const sourceId = context.propsValue.sourceId as string;
 
     const response = await makeRequest(
-      context.auth as string,
-      HttpMethod.GET,
+      context.auth.secret_text,
+      HttpMethod.GET, 
       `/external/sources/custom/${encodeURIComponent(sourceId)}`,
       undefined
     );

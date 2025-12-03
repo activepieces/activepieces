@@ -53,7 +53,7 @@ export const createAppUser = createAction({
         method: HttpMethod.POST,
         url: `https://studio-api.softr.io/v1/api/users`,
         headers: {
-          'Softr-Api-Key': auth,
+          'Softr-Api-Key': auth.secret_text,
           'Softr-Domain': domain,
           'Content-Type': 'application/json',
         },

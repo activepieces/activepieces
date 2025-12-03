@@ -38,7 +38,11 @@ import { pieceListUtils } from './utils'
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
+
     return {
+        async setup(): Promise<void> {
+            await localPieceCache(log).setup()
+        },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 ...params,
@@ -102,6 +106,21 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 return undefined
             }
             return piece
+        },
+        async getAllUnfiltered(platformId: PlatformId): Promise<Map<string, PieceMetadataModel>> {
+            const allPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
+                platformId,
+                release: undefined,
+                log,
+            })
+            
+            const pieceMap = new Map<string, PieceMetadataModel>()
+            for (const piece of allPieces) {
+                if (!pieceMap.has(piece.name)) {
+                    pieceMap.set(piece.name, piece)
+                }
+            }
+            return pieceMap
         },
         async getOrThrow({ projectId, version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
             const piece = await this.get({ projectId, version, name, platformId })
@@ -212,22 +231,32 @@ export const getPiecePackageWithoutArchive = async (
         platformId,
     })
     switch (pieceMetadata.packageType) {
-        case PackageType.ARCHIVE: {
-            assertNotNullOrUndefined(pieceMetadata.archiveId, 'archiveId')
+        case PackageType.ARCHIVE:
+            assertNotNullOrUndefined(pieceMetadata.platformId, 'platformId is required')
             return {
-                packageType: PackageType.ARCHIVE,
-                pieceName: pkg.pieceName,
+                pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
-                platformId: platformId!,
                 pieceType: pieceMetadata.pieceType,
-                archiveId: pieceMetadata.archiveId,
+                packageType: pieceMetadata.packageType,
+                archiveId: pieceMetadata.archiveId!,
+                platformId: pieceMetadata.platformId,
             }
-        }
         case PackageType.REGISTRY: {
-            return {
-                packageType: PackageType.REGISTRY,
-                pieceName: pkg.pieceName,
+            const piecePlatformId = pieceMetadata.platformId
+            if (pieceMetadata.pieceType === PieceType.CUSTOM) {
+                assertNotNullOrUndefined(piecePlatformId, 'platformId is required')
+                return {  
+                    pieceName: pieceMetadata.name,
+                    pieceVersion: pieceMetadata.version,
+                    packageType: pieceMetadata.packageType,
+                    pieceType: pieceMetadata.pieceType,
+                    platformId: piecePlatformId,
+                }
+            }
+            return {  
+                pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
+                packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
             }
         }
@@ -259,8 +288,8 @@ const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMeta
     if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
         return []
     }
-    const packages = devPiecesConfig.split(',')
-    const pieces = await filePiecesUtils(packages, log).findAllPieces()
+    const piecesNames = devPiecesConfig.split(',')
+    const pieces = await filePiecesUtils(log).loadDistPiecesMetadata(piecesNames)
 
     return pieces.map((p): PieceMetadataSchema => ({
         id: apId(),

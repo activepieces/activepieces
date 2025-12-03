@@ -1,20 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Compass, Search, Loader2, Plus } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 
+import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { useEmbedding } from '@/components/embed-provider';
-import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
@@ -31,9 +25,21 @@ import {
   useSidebar,
   SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import { isNil } from '@activepieces/shared';
+import {
+  isNil,
+  PlatformRole,
+  ProjectType,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
@@ -43,15 +49,106 @@ import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar() {
-  const { data: projects } = projectHooks.useProjects();
+  const {
+    data: projectPages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: refetchProjects,
+  } = projectHooks.useProjectsInfinite(20);
   const { embedState } = useEmbedding();
   const { state, setOpen } = useSidebar();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
+  const projectsScrollRef = useRef<HTMLDivElement>(null);
+  const { data: currentUser } = userHooks.useCurrentUser();
+  const { platform } = platformHooks.useCurrentPlatform();
+
+  const {
+    data: searchResults,
+    isLoading: isSearching,
+    refetch: refetchSearchResults,
+  } = projectHooks.useProjects({
+    displayName: debouncedSearchQuery,
+    limit: 100,
+  });
+
+  useEffect(() => {
+    if (!searchOpen) {
+      setSearchQuery('');
+    }
+  }, [searchOpen]);
+
+  const allProjects = useMemo(() => {
+    const projects = projectPages?.pages.flatMap((page) => page.data) ?? [];
+    const uniqueProjects = Array.from(
+      new Map(projects.map((project) => [project.id, project])).values(),
+    );
+    return uniqueProjects;
+  }, [projectPages]);
+
+  const shouldShowNewProjectButton = useMemo(() => {
+    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+      return false;
+    }
+    return currentUser?.platformRole === PlatformRole.ADMIN;
+  }, [platform.plan.teamProjectsLimit]);
+
+  const shouldShowSearchButton = useMemo(() => {
+    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
+      return false;
+    }
+    return true;
+  }, [platform.plan.teamProjectsLimit]);
+
+  const shouldDisableNewProjectButton = useMemo(() => {
+    if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
+      const teamProjects = allProjects.filter(
+        (project) => project.type === ProjectType.TEAM,
+      );
+      return teamProjects.length >= 1;
+    }
+    return false;
+  }, [platform.plan.teamProjectsLimit, allProjects]);
+
+  const isSearchMode = debouncedSearchQuery.length > 0;
+
+  const displayProjects = useMemo(() => {
+    if (isSearchMode) {
+      return searchResults ?? [];
+    }
+    return allProjects;
+  }, [isSearchMode, searchResults, allProjects]);
+
+  useEffect(() => {
+    const scrollContainer = projectsScrollRef.current;
+    if (!scrollContainer || isSearchMode) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const scrollThreshold = 100;
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+      if (
+        distanceFromBottom < scrollThreshold &&
+        hasNextPage &&
+        !isFetchingNextPage
+      ) {
+        fetchNextPage();
+      }
+    };
+
+    scrollContainer.addEventListener('scroll', handleScroll);
+
+    handleScroll();
+
+    return () => scrollContainer.removeEventListener('scroll', handleScroll);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isSearchMode]);
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -72,23 +169,12 @@ export function ProjectDashboardSidebar() {
 
   const items = [exploreLink].filter(permissionFilter);
 
-  const filteredProjects = useMemo(() => {
-    if (!projects) return [];
-    if (!searchQuery.trim()) return projects;
-
-    const query = searchQuery.toLowerCase().trim();
-    return projects.filter((project) =>
-      project.displayName.toLowerCase().includes(query),
-    );
-  }, [projects, searchQuery]);
-
   const handleProjectSelect = async (projectId: string) => {
-    const project = projects?.find((p) => p.id === projectId);
+    const project = displayProjects?.find((p) => p.id === projectId);
     if (project) {
       await setCurrentProject(queryClient, project);
       navigate('/');
       setSearchOpen(false);
-      setSearchQuery('');
     }
   };
 
@@ -101,20 +187,25 @@ export function ProjectDashboardSidebar() {
         className={cn(
           state === 'collapsed' ? 'cursor-nesw-resize' : '',
           'group',
+          'p-1',
         )}
       >
         <AppSidebarHeader />
 
-        {state === 'collapsed' && <SidebarSeparator className="my-3" />}
-        {state === 'expanded' && <div className="mt-1" />}
+        {state === 'collapsed' && <div className="mt-1" />}
+        {state === 'expanded' && <div className="mt-2" />}
 
         <SidebarContent
           className={cn(
-            state === 'collapsed' ? 'gap-4' : 'gap-3',
+            state === 'collapsed' ? 'gap-2' : 'gap-0',
             'scrollbar-hover',
+            'cursor-default',
+            'flex',
+            'flex-col',
+            'overflow-hidden',
           )}
         >
-          <SidebarGroup>
+          <SidebarGroup className="cursor-default flex-shrink-0">
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
@@ -124,79 +215,154 @@ export function ProjectDashboardSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator />
+          <SidebarSeparator
+            className={cn(
+              state === 'collapsed' ? 'mb-3' : 'mb-5',
+              'flex-shrink-0',
+            )}
+          />
 
-          <SidebarGroup>
+          <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
             {state === 'expanded' && (
               <div className="flex items-center justify-between">
                 <SidebarGroupLabel>{t('Projects')}</SidebarGroupLabel>
-                {projects && projects.length > 3 && (
-                  <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:bg-accent"
+                <div className="flex items-center gap-1">
+                  {shouldShowNewProjectButton && (
+                    <>
+                      {!shouldDisableNewProjectButton ? (
+                        <NewProjectDialog
+                          onCreate={() => {
+                            refetchProjects();
+                            refetchSearchResults();
+                          }}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 hover:bg-accent"
+                          >
+                            <Plus />
+                          </Button>
+                        </NewProjectDialog>
+                      ) : (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                disabled
+                                className="h-6 w-6"
+                              >
+                                <Plus />
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="max-w-[250px]">
+                            <p className="text-xs mb-1">
+                              {t(
+                                'Upgrade your plan to create additional team projects.',
+                              )}{' '}
+                              <button
+                                className="text-xs text-primary underline hover:no-underline"
+                                onClick={() =>
+                                  window.open(
+                                    'https://www.activepieces.com/pricing',
+                                    '_blank',
+                                  )
+                                }
+                              >
+                                {t('View Plans')}
+                              </button>
+                            </p>
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </>
+                  )}
+                  {shouldShowSearchButton && (
+                    <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 hover:bg-accent"
+                        >
+                          <Search />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        className="w-[280px] p-3"
+                        align="start"
+                        side="right"
+                        sideOffset={8}
                       >
-                        <Search className="text-muted-foreground" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent
-                      className="w-[280px] p-0"
-                      align="start"
-                      side="right"
-                      sideOffset={8}
-                    >
-                      <Command>
-                        <CommandInput
+                        <Input
                           placeholder={t('Search projects...')}
                           value={searchQuery}
-                          onValueChange={setSearchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="h-9"
+                          autoFocus
                         />
-                        <CommandList>
-                          <CommandEmpty>{t('No projects found.')}</CommandEmpty>
-                          <CommandGroup>
-                            {filteredProjects.map((project) => (
-                              <CommandItem
-                                key={project.id}
-                                value={project.id}
-                                onSelect={handleProjectSelect}
-                                className="flex items-center gap-2 cursor-pointer"
-                              >
-                                <Avatar className="size-6 bg-primary flex items-center justify-center rounded-sm text-primary-foreground text-xs">
-                                  {project.displayName.charAt(0)}
-                                </Avatar>
-                                <span className="flex-1 truncate">
-                                  {project.displayName}
-                                </span>
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                )}
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                </div>
               </div>
             )}
-            <SidebarGroupContent>
-              <SidebarMenu className={cn(state === 'collapsed' ? 'gap-2' : '')}>
-                {projects?.map((p) => (
+            <div
+              ref={projectsScrollRef}
+              className={cn(
+                'flex-1 overflow-y-auto',
+                state === 'collapsed'
+                  ? 'flex flex-col items-center scrollbar-none'
+                  : 'scrollbar-hover',
+              )}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SidebarMenu
+                className={cn(
+                  state === 'collapsed'
+                    ? 'gap-2 flex flex-col items-center'
+                    : '',
+                )}
+              >
+                {displayProjects.map((project) => (
                   <ProjectSideBarItem
-                    key={p.id}
-                    project={p}
+                    key={project.id}
+                    project={project}
                     isCurrentProject={location.pathname.includes(
-                      `/projects/${p.id}`,
+                      `/projects/${project.id}`,
                     )}
                     handleProjectSelect={handleProjectSelect}
                   />
                 ))}
+                {(isFetchingNextPage || (isSearchMode && isSearching)) && (
+                  <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {state === 'expanded' && <span>{t('Loading...')}</span>}
+                  </div>
+                )}
+                {isSearchMode &&
+                  !isSearching &&
+                  displayProjects.length === 0 && (
+                    <div className="px-2 py-2 text-sm text-muted-foreground">
+                      {state === 'expanded' && t('No projects found.')}
+                    </div>
+                  )}
               </SidebarMenu>
-            </SidebarGroupContent>
+            </div>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter onClick={(e) => e.stopPropagation()}>
-          {state === 'expanded' && <SidebarUsageLimits />}
+        <SidebarFooter
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-default"
+        >
+          {state === 'expanded' && (
+            <div className="mb-2">
+              <SidebarUsageLimits />
+            </div>
+          )}
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

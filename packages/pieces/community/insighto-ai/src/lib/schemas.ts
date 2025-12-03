@@ -30,8 +30,8 @@ export const ContactItemSchema = z.object({
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   email: z.string().optional(),
-  channels: z.record(z.any()).optional(),
-  user_attributes: z.record(z.any()).optional(),
+  channels: z.record(z.string(), z.unknown()).optional(),
+  user_attributes: z.record(z.string(), z.unknown()).optional(),
   last_seen: z.string().optional(),
   last_sent: z.string().optional(),
   org_id: z.string().optional(),
@@ -39,7 +39,7 @@ export const ContactItemSchema = z.object({
   last_assistant_id: z.string().optional(),
   first_widget_id: z.string().optional(),
   last_widget_id: z.string().optional(),
-  custom_fields: z.record(z.any()).optional(),
+  custom_fields: z.record(z.string(), z.unknown()).optional(),
   created_at: z.string(),
 });
 
@@ -70,8 +70,8 @@ export const CapturedFormWebhookSchema = z.object({
     widget_id: z.string().uuid(),
     assistant_id: z.string().uuid(),
     form_name: z.string(),
-    field_values: z.record(z.any()),
-    attributes: z.record(z.any()),
+    field_values: z.record(z.string(), z.unknown()),
+    attributes: z.record(z.string(), z.unknown()),
   }),
 });
 
@@ -102,7 +102,7 @@ export const ConversationWebhookSchema = z.object({
       created_at: z.string().nullable(),
       char_count: z.number().nullable(),
     })),
-    attributes: z.record(z.any()),
+    attributes: z.record(z.string(), z.unknown()),
   }),
 });
 

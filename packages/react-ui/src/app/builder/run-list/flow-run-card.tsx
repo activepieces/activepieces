@@ -167,7 +167,14 @@ const FlowRunCard = React.memo(
           }) && (
             <p className="flex gap-1 text-xs text-muted-foreground">
               <StopwatchIcon className="h-3.5 w-3.5" />
-              {t('Took')} {formatUtils.formatDuration(run.duration, false)}
+              {t('Took')}{' '}
+              {formatUtils.formatDuration(
+                run.startTime && run.finishTime
+                  ? new Date(run.finishTime).getTime() -
+                      new Date(run.startTime).getTime()
+                  : undefined,
+                false,
+              )}
             </p>
           )}
           {run.status === FlowRunStatus.RUNNING && (

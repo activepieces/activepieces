@@ -10,7 +10,6 @@ import { newPostsByAuthor } from './lib/triggers/new-posts-by-author';
 import { newFollowerOnAccount } from './lib/triggers/new-follower-on-account';
 import { newTimelinePosts } from './lib/triggers/new-timeline-posts';
 import { newPost } from './lib/triggers/new-post';
-
 export { blueskyAuth } from './lib/common/auth';
 export { createBlueskyAgent } from './lib/common/client';
 

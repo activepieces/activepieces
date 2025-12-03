@@ -16,7 +16,7 @@ export const runExtractRefreshTask = createAction({
   auth: tableauAuth,
   props: {
     taskId: Property.Dropdown({
-      displayName: 'Extract Refresh Task',
+ auth: tableauAuth,     displayName: 'Extract Refresh Task',
       description: 'Select the extract refresh task to run',
       required: true,
       refreshers: ['auth'],

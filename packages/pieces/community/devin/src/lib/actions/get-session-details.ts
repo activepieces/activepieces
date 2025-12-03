@@ -19,7 +19,7 @@ export const getSessionDetails = createAction({
       method: HttpMethod.GET,
       url: `https://api.devin.ai/v1/session/${propsValue.sessionId}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

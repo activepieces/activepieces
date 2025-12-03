@@ -27,6 +27,7 @@ export const createSpreadsheetAction = createAction({
 		}),
 		includeTeamDrives: includeTeamDrivesProp(),
 		folder: Property.Dropdown({
+			auth: googleSheetsAuth,
 			displayName: 'Parent Folder',
 			description:
 				'The folder to create the worksheet in.By default, the new worksheet is created in the root folder of drive.',
@@ -40,7 +41,7 @@ export const createSpreadsheetAction = createAction({
 						placeholder: 'Please authenticate first',
 					};
 				}
-				const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+				const authProp = auth;
 				let folders: { id: string; name: string }[] = [];
 				let pageToken = null;
 				do {

@@ -6,6 +6,7 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { sendfoxAuth } from '..';
 
 export async function getLists(accessToken: string) {
   const list_of_lists = [];
@@ -59,11 +60,19 @@ export async function getcontacts(accessToken: string) {
 
 export const sendfoxCommon = {
   lists: Property.Dropdown({
+    auth: sendfoxAuth,
     displayName: 'Lists',
     required: false,
     refreshers: ['auth'],
     options: async ({ auth }) => {
-      const authentication = auth as string;
+      if (!auth) {
+        return {
+          disabled: true,
+          placeholder: 'connect your account first',
+          options: [],
+        };
+      }
+      const authentication = auth.secret_text;
       if (!authentication) {
         return {
           disabled: true,
