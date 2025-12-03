@@ -28,8 +28,8 @@ export const retellAi = createPiece({
     createCustomApiCallAction({
       auth: retellAiAuth,
       baseUrl: () => 'https://api.retellai.com',
-      authMapping: async (auth: unknown) => {
-        const { apiKey } = auth as { apiKey: string };
+      authMapping: async (auth) => {
+        const { apiKey } = auth.props;
         return {
           Authorization: `Bearer ${apiKey}`,
         };

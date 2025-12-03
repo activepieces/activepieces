@@ -24,10 +24,11 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -43,7 +44,6 @@ import {
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowsApi } from '../../features/flows/lib/flows-api';
 
 interface FlowActionMenuProps {
   flow: PopulatedFlow;
@@ -117,7 +117,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   });
 
   const { mutate: exportFlow, isPending: isExportPending } =
-    flowsHooks.useExportFlows();
+    flowHooks.useExportFlows();
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>

@@ -1,8 +1,11 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { AIErrorResponse } from '@activepieces/common-ai'
 import { agentCommon, AI_MODELS } from '../common';
-import {  AgentOutputField, AgentPieceProps, AgentResult, AgentTaskStatus, assertNotNullOrUndefined, ContentBlockType, isNil, McpTool, ToolCallContentBlock, ToolCallStatus } from '@activepieces/shared';
-import { APICallError, stepCountIs, streamText } from 'ai';
+import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, AgentTool, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
+import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
+import { inspect } from 'util';
+import { z, ZodObject } from 'zod';
+import { agentOutputBuilder } from '../common/agent-output-builder';
+
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -27,27 +30,19 @@ export const runAgent = createAction({
       },
     }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
-      displayName: 'MCP Tools',
+      displayName: 'Agent Tools',
       required: false,
       properties: {
         type: Property.ShortText({
-          displayName: 'Type',
+          displayName: 'Tool Type',
           required: true
         }),
         toolName: Property.ShortText({
           displayName: 'Tool Name',
           required: true
         }),
-        mcpId: Property.ShortText({
-          displayName: 'Mcp Id',
-          required: false
-        }),
         pieceMetadata: Property.Json({
           displayName: 'Piece Metadata',
-          required: false,
-        }),
-        flow: Property.Json({
-          displayName: 'Populated Flow',
           required: false,
         }),
         flowId: Property.ShortText({
@@ -83,124 +78,140 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, agentTools, structuredOutput, aiModel } = context.propsValue
-    const { server } = context
-
-    const result: AgentResult = {
-      prompt,
-      steps: [],
-      status: AgentTaskStatus.IN_PROGRESS,
-      message: null,
-    }
-
-    const commonParams = {
-        apiUrl: context.server.apiUrl,
-        token: server.token,
-        flowId: context.flows.current.id,
-        flowVersionId: context.flows.current.version.id,
-        stepName: context.step.name
-    }
-
-    const agentToolInstance: Awaited<ReturnType<typeof agentCommon.agentTools>> = await agentCommon.agentTools({
-        outputFields: structuredOutput as AgentOutputField[],
-        tools: agentTools as McpTool[],
-        ...commonParams
-    })
-
+    const { prompt, maxSteps, aiModel } = context.propsValue
     const selectedModel = agentCommon.getModelById(aiModel as string)
-    const baseURL = `${server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`
-    const modelInstance = agentCommon.createModel({
+    const model = agentCommon.createModel({
       model: selectedModel,
-      token: server.token,
-      baseURL,
+      token: context.server.token,
+      baseURL: `${context.server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`,
       flowId: context.flows.current.id,
     })
-    
-    const systemPrompt = agentCommon.constructSystemPrompt(prompt)
-    const { fullStream } = streamText({
-      model: modelInstance,
-      system: systemPrompt,
-      prompt: prompt,
-      stopWhen: stepCountIs(maxSteps),
-      tools: await agentToolInstance.tools()
+
+    const outputBuilder = agentOutputBuilder(prompt)
+    const hasStructuredOutput = !isNil(context.propsValue.structuredOutput) && context.propsValue.structuredOutput.length > 0
+    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[]
+    const agentTools = await context.agent.tools({
+      tools: agentToolsMetadata,
+      model: model,
     })
+    const stream = streamText({
+      model: model,
+      prompt: `
+${prompt}
 
-    let currentText = ''
-    for await (const chunk of fullStream) {
-      
-      if (chunk.type === 'text-delta') {
-          currentText += chunk.text
+<important_note>
+As your FINAL ACTION, you must call the \`${TASK_COMPLETION_TOOL_NAME}\` tool to indicate if the task is complete or not. 
+Call this tool only once you have done everything you can to achieve the user's goal, or if you are unable to continue. 
+If you do not make this final call, your work will be considered unsuccessful.
+</important_note>
+`,
+      system: `
+You are a helpful, proactive AI assistant.
+Today's date is ${new Date().toISOString().split('T')[0]}.
+
+Help the user finish their goal quickly and accurately.
+        `.trim(),
+      stopWhen: [
+        stepCountIs(maxSteps),
+        hasToolCall(TASK_COMPLETION_TOOL_NAME),
+      ],
+      tools: {
+        ...agentTools,
+        [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
+          description: 'This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user\'s task, or if you are unable to continue. Once you call this tool, you should not take any further actions.',
+          inputSchema: z.object({
+            success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
+            ...(hasStructuredOutput ? {
+              output: z.object(
+                structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}
+              )
+                .nullable()
+                .describe('The structured output of your task. This is optional and can be omitted if you have not achieved the goal.')
+            } : {
+              output: z.string().nullable().describe('The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.')
+            }),
+          }),
+          execute: async (params) => {
+            const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
+            outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
+            if (hasStructuredOutput && !isNil(output)) {
+              outputBuilder.setStructuredOutput(output)
+            }
+            if (!hasStructuredOutput && !isNil(output)) {
+              outputBuilder.addMarkdown(output as unknown as string)
+            }
+            return {}
+          },
+        }),
+
       }
-      else if (chunk.type === 'tool-call') { 
-          if (currentText.length > 0) {
-              result.steps.push({
-                  type: ContentBlockType.MARKDOWN,
-                  markdown: currentText,
-              })
-              currentText = ''
-              context.output.update({ data: { 
-                ...result
-              }})
+    });
+
+    for await (const chuck of stream.fullStream) {
+      switch (chuck.type) {
+        case 'text-delta': {
+          outputBuilder.addMarkdown(chuck.text)
+          break
+        }
+        case 'tool-call': {
+          if (isTaskCompletionToolCall(chuck.toolName)) {
+            continue
           }
-          const metadata = agentCommon.getMetadata(chunk.toolName, agentTools as McpTool[], {
-              toolName: chunk.toolName,
-              toolCallId: chunk.toolCallId,
-              type: ContentBlockType.TOOL_CALL,
-              status: ToolCallStatus.IN_PROGRESS,
-              input: chunk.input as Record<string, unknown>,
-              output: undefined,
-              startTime: new Date().toISOString(),
+          outputBuilder.startToolCall({
+            toolName: chuck.toolName,
+            toolCallId: chuck.toolCallId,
+            input: chuck.input as Record<string, unknown>,
+            agentTools: agentToolsMetadata,
           })
-          result.steps.push(metadata)
-          context.output.update({ data: { 
-            ...result
-          }})
-      }
-      else if (chunk.type === 'tool-result') {
-          const lastBlockIndex = result.steps.findIndex((block) => block.type === ContentBlockType.TOOL_CALL && block.toolCallId === chunk.toolCallId)
-          const lastBlock = result.steps[lastBlockIndex] as ToolCallContentBlock
-          assertNotNullOrUndefined(lastBlock, 'Last block must be a tool call')
-          result.steps[lastBlockIndex] = {
-              ...lastBlock,
-              status: ToolCallStatus.COMPLETED,
-              endTime: new Date().toISOString(),
-              output: chunk.output,
+          break
+        }
+        case 'tool-result': {
+          if (isTaskCompletionToolCall(chuck.toolName)) {
+            continue
           }
-          context.output.update({ data: { 
-            ...result
-          }})
+          outputBuilder.finishToolCall({
+            toolCallId: chuck.toolCallId,
+            output: chuck.output as Record<string, unknown>,
+          })
+          break;
+        }
+        case 'error': {
+          outputBuilder.fail({ message: "Error running agent: " + inspect(chuck.error) })
+          break;
+        }
       }
-      else if (chunk.type === 'error') {
-          result.status = AgentTaskStatus.FAILED
-          if (APICallError.isInstance(chunk.error)) {
-              const errorResponse = (chunk.error as unknown as { data: AIErrorResponse })?.data
-              result.message = errorResponse?.error?.message ?? JSON.stringify(chunk.error)
-          }
-          else {
-              result.message = agentCommon.concatMarkdown(result.steps ?? []) + '\n' + JSON.stringify(chunk.error, null, 2)
-          }
-          context.output.update({ data: { 
-            ...result
-          }})
-          return result
-      }
+      await context.output.update({ data: outputBuilder.build() })
+    }
+    const { status } = outputBuilder.build()
+    if (status == AgentTaskStatus.IN_PROGRESS) {
+      outputBuilder.fail({})
     }
 
-    if (currentText.length > 0) {
-      result.steps.push({
-          type: ContentBlockType.MARKDOWN,
-          markdown: currentText,
-      })
-    }
-
-    const markAsComplete = result.steps.find(agentCommon.isMarkAsComplete) as ToolCallContentBlock | undefined
-
-    result.status = !isNil(markAsComplete) ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
-    result.message = agentCommon.concatMarkdown(result.steps)
-    context.output.update({ data: { 
-      ...result
-    }})
-
-    return result
+    return outputBuilder.build()
   }
 });
+
+
+const isTaskCompletionToolCall = (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME
+
+function structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
+  const shape: Record<string, z.ZodType> = {}
+
+  for (const field of outputFields) {
+    switch (field.type) {
+      case AgentOutputFieldType.TEXT:
+        shape[field.displayName] = z.string()
+        break
+      case AgentOutputFieldType.NUMBER:
+        shape[field.displayName] = z.number()
+        break
+      case AgentOutputFieldType.BOOLEAN:
+        shape[field.displayName] = z.boolean()
+        break
+      default:
+        shape[field.displayName] = z.any()
+    }
+  }
+
+  return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
+}

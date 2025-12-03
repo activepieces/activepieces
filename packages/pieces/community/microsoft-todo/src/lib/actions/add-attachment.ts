@@ -11,6 +11,7 @@ export const addAttachmentAction = createAction({
     description: 'Adds an attachment to a task.',
     props: {
         task_list_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task List',
             description: 'The task list that contains the task.',
             required: true,
@@ -27,6 +28,7 @@ export const addAttachmentAction = createAction({
             },
         }),
         task_id: Property.Dropdown({
+   auth: microsoftToDoAuth,
             displayName: 'Task',
             description: 'The task to which you are adding the attachment.',
             required: true,

@@ -18,9 +18,9 @@ export const retrieveBot = createAction({
   async run(context) {
     const { bot_id } = context.propsValue;
 
-    const response = await makeRequest(
-      context.auth.server as string,
-      context.auth.api_key as string,
+    const response =  await makeRequest(
+      context.auth.props.server,
+      context.auth.props.api_key,
       HttpMethod.GET,
       `/bot/${bot_id}`,
       {}

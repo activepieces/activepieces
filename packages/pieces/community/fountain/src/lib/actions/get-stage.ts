@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
 import { getFunnelsDropdown, getStagesForFunnelDropdown } from '../common/dropdowns';
 
 export const fountainGetStage = createAction({
@@ -15,9 +15,10 @@ export const fountainGetStage = createAction({
       description: 'The opening that contains the stage',
       required: true,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getFunnelsDropdown(auth as any) };
+        return { disabled: false, options: await getFunnelsDropdown(auth) };
       },
     }),
     id: Property.Dropdown({
@@ -25,10 +26,11 @@ export const fountainGetStage = createAction({
       description: 'The stage to retrieve details for',
       required: true,
       refreshers: ['funnel_id'],
+      auth: fountainAuth,
       options: async ({ auth, funnel_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
         if (!funnel_id) return { disabled: true, options: [], placeholder: 'Select opening first' };
-        return { disabled: false, options: await getStagesForFunnelDropdown(auth as any, funnel_id as string) };
+        return { disabled: false, options: await getStagesForFunnelDropdown(auth, funnel_id as string) };
       },
     }),
   },
@@ -37,7 +39,7 @@ export const fountainGetStage = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.fountain.com/v2/stages/${stageId}`,
+      url: getApiUrl(context.auth, `/stages/${stageId}`),
       headers: getAuthHeaders(context.auth),
     });
 

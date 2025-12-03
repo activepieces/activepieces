@@ -12,6 +12,7 @@ export const askDeepseek = createAction({
   description: 'Ask Deepseek anything you want!',
   props: {
     model: Property.Dropdown({
+      auth: deepseekAuth,
       displayName: 'Model',
       required: true,
       description: 'The model which will generate the completion.',
@@ -28,7 +29,7 @@ export const askDeepseek = createAction({
         try {
           const openai = new OpenAI({
             baseURL: baseUrl,
-            apiKey: auth as string,
+            apiKey: auth.secret_text,
           });
           const response = await openai.models.list();
           // We need to get only LLM models
@@ -131,7 +132,7 @@ export const askDeepseek = createAction({
     });
     const openai = new OpenAI({
       baseURL: baseUrl,
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const {
       model,

@@ -17,7 +17,7 @@ export const getVendor = createAction({
   },
   async run(context) {
     const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
-      context.auth;
+      context.auth.props;
     const { vendorId } = context.propsValue;
 
     const requestUrl = `https://${accountId}.suitetalk.api.netsuite.com/services/rest/record/v1/vendor/${vendorId}`;

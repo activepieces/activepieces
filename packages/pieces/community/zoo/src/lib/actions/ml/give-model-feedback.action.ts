@@ -32,7 +32,7 @@ export const giveModelFeedbackAction = createAction({
       method: HttpMethod.POST,
       url: `https://api.zoo.dev/user/text-to-cad/${propsValue.modelId}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         feedback: propsValue.feedback,

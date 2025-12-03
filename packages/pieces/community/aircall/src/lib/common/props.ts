@@ -1,8 +1,10 @@
 import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { aircallAuth } from './auth';
 
-export const callIdDropdown = Property.Dropdown({
+export const callIdDropdown = Property.Dropdown<number,true,typeof aircallAuth>({
+  auth: aircallAuth,
   displayName: 'Call',
   required: true,
   refreshers: [],
@@ -40,7 +42,8 @@ export const callIdDropdown = Property.Dropdown({
   },
 });
 
-export const numberIdDropdown = Property.Dropdown({
+export const numberIdDropdown = Property.Dropdown<string,true,typeof aircallAuth>({
+  auth: aircallAuth,
   displayName: 'Number ID',
   required: true,
   refreshers: ['auth'],
@@ -55,7 +58,7 @@ export const numberIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as { username: string; password: string },
+        auth,
         HttpMethod.GET,
         '/numbers'
       );
@@ -76,7 +79,8 @@ export const numberIdDropdown = Property.Dropdown({
   },
 });
 
-export const contactIdDropdown = Property.Dropdown({
+export const contactIdDropdown = Property.Dropdown<string,true,typeof aircallAuth>({
+  auth: aircallAuth,
   displayName: 'Contact ID',
   description: 'Select the contact to update',
   required: true,
@@ -93,7 +97,7 @@ export const contactIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as { username: string; password: string },
+        auth,
         HttpMethod.GET,
         '/contacts'
       );
@@ -116,7 +120,8 @@ export const contactIdDropdown = Property.Dropdown({
   },
 });
 
-export const tagIdDropdown = Property.MultiSelectDropdown({
+export const tagIdDropdown = Property.MultiSelectDropdown<number,false,typeof aircallAuth>({
+  auth: aircallAuth,
   displayName: 'Tags',
   required: false,
   refreshers: ['auth'],

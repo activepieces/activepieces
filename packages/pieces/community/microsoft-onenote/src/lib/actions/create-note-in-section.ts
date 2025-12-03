@@ -10,6 +10,7 @@ export const createNoteInSection = createAction({
 	description: 'Create a new note in a specific section with title and content.',
 	props: {
 		notebook_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Notebook',
 			description: 'The notebook to create the note in.',
 			required: true,
@@ -26,6 +27,7 @@ export const createNoteInSection = createAction({
 			},
 		}),
 		section_id: Property.Dropdown({
+			auth: oneNoteAuth,
 			displayName: 'Section',
 			description: 'The section to create the note in.',
 			required: true,

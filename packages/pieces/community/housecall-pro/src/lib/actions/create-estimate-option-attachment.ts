@@ -16,7 +16,7 @@ export const createEstimateOptionAttachment = createAction({
     const { estimate_id, option_id, file } = propsValue;
 
     const formData = new FormData();
-    const blob = new Blob([file.data], { type: "application/octet-stream" });
+    const blob = new Blob([file.data] as unknown as BlobPart[], { type: "application/octet-stream" });
     formData.append("file", blob, file.filename);
 
     const response = await httpClient.sendRequest({

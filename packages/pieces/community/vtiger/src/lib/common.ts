@@ -7,6 +7,7 @@ import {
   httpClient,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   DropdownState,
   DynamicPropsValue,
   PiecePropValueSchema,
@@ -174,11 +175,11 @@ export const Modules: Record<string, (record: Record<string, string>) => Promise
 export async function refreshModules(auth: VTigerAuthValue){
   const response = await httpClient.sendRequest({
     method: HttpMethod.GET,
-    url: `${(auth as VTigerAuthValue)['instance_url']}/restapi/v1/vtiger/default/listtypes?fieldTypeList=null`,
+    url: `${auth.props.instance_url}/restapi/v1/vtiger/default/listtypes?fieldTypeList=null`,
     authentication: {
       type: AuthenticationType.BASIC,
-      username: auth.username,
-      password: auth.password,
+      username: auth.props.username,
+      password: auth.props.password,
     },
   });
 
@@ -198,11 +199,11 @@ export async function refreshModules(auth: VTigerAuthValue){
 
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${(auth as VTigerAuthValue)['instance_url']}/restapi/v1/vtiger/default/describe?elementType=${element}`,
+        url: `${auth.props.instance_url}/restapi/v1/vtiger/default/describe?elementType=${element}`,
         authentication: {
 			    type: AuthenticationType.BASIC,
-          username: auth.username,
-          password: auth.password,
+          username: auth.props.username,
+          password: auth.props.password,
         },
       });
 
@@ -233,11 +234,12 @@ export async function refreshModules(auth: VTigerAuthValue){
 }
 
 export const elementTypeProperty = Property.Dropdown({
+  auth: vtigerAuth,
   displayName: 'Module Type',
   description: 'The module / element type',
   required: true,
   refreshers: [],
-  options: async (props: any) => {
+  options: async (props) => {
     const { auth } = props;
     if (!auth) {
       return {
@@ -277,10 +279,11 @@ export interface Field {
   };
 }
 
-export type VTigerAuthValue = PiecePropValueSchema<typeof vtigerAuth>;
+export type VTigerAuthValue = AppConnectionValueForAuthProperty<typeof vtigerAuth>;
 
 export const recordIdProperty = () =>
   Property.DynamicProperties({
+    auth: vtigerAuth,
     displayName: 'Record Fields',
     description: 'Add new fields to be created in the new record',
     required: true,
@@ -291,9 +294,9 @@ export const recordIdProperty = () =>
       }
 
       const instance = await instanceLogin(
-        auth['instance_url'],
-        auth['username'],
-        auth['password']
+        auth.props.instance_url,
+        auth.props.username,
+        auth.props.password
       );
       if (!instance) return {};
 
@@ -302,7 +305,7 @@ export const recordIdProperty = () =>
         result: Record<string, string>[];
       }>({
         method: HttpMethod.GET,
-        url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
+        url: `${auth.props.instance_url}/webservice.php`,
         queryParams: {
           sessionName: instance.sessionId ?? instance.sessionName,
           operation: 'query',
@@ -355,14 +358,14 @@ export const FieldMapping = {
 };
 
 export async function getRecordReference(
-  auth: PiecePropValueSchema<typeof vtigerAuth>,
+  auth: AppConnectionValueForAuthProperty<typeof vtigerAuth>,
   modules: string[]
 ): Promise<DropdownState<string>> {
   const module = modules[0]; //Limit to the first reference for now
   const vtigerInstance = await instanceLogin(
-    auth['instance_url'],
-    auth['username'],
-    auth['password']
+    auth.props.instance_url,
+    auth.props.username,
+    auth.props.password
   );
   if (vtigerInstance === null)
     return {
@@ -371,7 +374,7 @@ export async function getRecordReference(
     };
 
   const httpRequest = prepareHttpRequest(
-    auth['instance_url'],
+    auth.props.instance_url,
     vtigerInstance.sessionId ?? vtigerInstance.sessionName,
     'query' as Operation,
     { query: `SELECT * FROM ${module};` }
@@ -400,62 +403,37 @@ export async function getRecordReference(
   };
 }
 
-export const recordProperty = (create = true) =>
+export const recordProperty = () =>
   Property.DynamicProperties({
+    auth: vtigerAuth,
     displayName: 'Record Fields',
     description: 'Add new fields to be created in the new record',
     required: true,
-    refreshers: create ? ['elementType'] : ['id', 'elementType'],
+    refreshers: ['elementType'],
     props: async ({ auth, id, elementType }) => {
       if (!auth || !elementType) {
         return {};
       }
 
-      let defaultValue: Record<string, unknown>;
-
-      if (create) {
-        defaultValue = {};
-      } else {
-        if (id && 'id' in id) {
-          const retrieve_response = await httpClient.sendRequest<
-            Record<string, unknown>
-          >({
-            method: HttpMethod.GET,
-            url: `${(auth as VTigerAuthValue)['instance_url']}/restapi/v1/vtiger/default/retrieve`,
-            authentication: {
-              type: AuthenticationType.BASIC,
-              username: auth['username'],
-              password: auth['password'],
-            },
-            queryParams: {
-              elementType: elementType as unknown as string,
-              id: id['id'] as unknown as string,
-            },
-          });
-          defaultValue = retrieve_response.body;
-        } else {
-          defaultValue = {};
-        }
-      }
 
       return generateElementFields(
-        auth as VTigerAuthValue,
+        auth,
         elementType as unknown as string,
-        defaultValue
+        {}
       );
     },
   });
 
 export const queryRecords = async (
-  auth: VTigerAuthValue,
+  auth: AppConnectionValueForAuthProperty<typeof vtigerAuth>,
   elementType: string,
   page = 0,
   limit = 100
 ) => {
   const instance = await instanceLogin(
-    auth['instance_url'],
-    auth['username'],
-    auth['password']
+    auth.props.instance_url,
+    auth.props.username,
+    auth.props.password
   );
   if (!instance) return [];
 
@@ -464,7 +442,7 @@ export const queryRecords = async (
     result: Record<string, unknown>[];
   }>({
     method: HttpMethod.GET,
-    url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
+    url: `${auth.props.instance_url}/webservice.php`,
     queryParams: {
       sessionName: instance.sessionId ?? instance.sessionName,
       operation: 'query',
@@ -485,9 +463,9 @@ export const countRecords = async (
   elementType: string
 ) => {
   const instance = await instanceLogin(
-    auth['instance_url'],
-    auth['username'],
-    auth['password']
+    auth.props.instance_url,
+    auth.props.username,
+    auth.props.password
   );
   if (!instance) return 0;
 
@@ -496,7 +474,7 @@ export const countRecords = async (
     result: { count: string }[];
   }>({
     method: HttpMethod.GET,
-    url: `${(auth as VTigerAuthValue)['instance_url']}/webservice.php`,
+    url: `${auth.props.instance_url}/webservice.php`,
     queryParams: {
       sessionName: instance.sessionId ?? instance.sessionName,
       operation: 'query',
@@ -523,11 +501,11 @@ export const generateElementFields = async (
     result: { fields: Field[] };
   }>({
     method: HttpMethod.GET,
-    url: `${auth['instance_url']}/restapi/v1/vtiger/default/describe`,
+    url: `${auth.props.instance_url}/restapi/v1/vtiger/default/describe`,
     authentication: {
       type: AuthenticationType.BASIC,
-      username: auth.username,
-      password: auth.password,
+      username: auth.props.username,
+      password: auth.props.password,
     },
     queryParams: {
       elementType: elementType,
@@ -571,12 +549,12 @@ export const generateElementFields = async (
           };
         } else if (field.type.name === 'owner') {
           options = await getRecordReference(
-            auth as PiecePropValueSchema<typeof vtigerAuth>,
+            auth,
             ['Users']
           );
         } else if (field.type.refersTo) {
           options = await getRecordReference(
-            auth as PiecePropValueSchema<typeof vtigerAuth>,
+            auth,
             field.type.refersTo ?? []
           );
         } else {

@@ -21,7 +21,7 @@ export const createVoice = createAction({
   },
   async run(context) {
     const client = new HumeClient({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
     });
 
     const { generationId, voiceName } = context.propsValue;

@@ -38,7 +38,7 @@ export const replyToReview = createAction({
     const { app_ext_id, review_id, answer_text } = context.propsValue;
 
     const response = await makeRequest(
-      context.auth,
+      context.auth.secret_text,
       HttpMethod.POST,
       `/reviews/reply`,
       {

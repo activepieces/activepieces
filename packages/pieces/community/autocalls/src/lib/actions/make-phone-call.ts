@@ -9,6 +9,7 @@ export const makePhoneCall = createAction({
   description: "Call a customer by it's phone number using an assistant from our platform.",
   props: {
     assistant: Property.Dropdown({
+      auth: autocallsAuth,
       displayName: 'Assistant',
       description: 'Select an assistant',
       required: true,
@@ -19,7 +20,7 @@ export const makePhoneCall = createAction({
           method: HttpMethod.GET,
           url: baseApiUrl + 'api/user/assistants/outbound',
           headers: {
-            Authorization: "Bearer " + auth,
+            Authorization: "Bearer " + auth?.secret_text,
           },
         });
 
@@ -70,7 +71,7 @@ export const makePhoneCall = createAction({
         variables: context.propsValue['variables'],
       },
       headers: {
-        Authorization: "Bearer " + context.auth,
+        Authorization: "Bearer " + context.auth.secret_text,
       },
     });
     return res.body;

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/ui/use-toast';
 import {
   FlowAction,
   flowOperations,
@@ -83,8 +83,7 @@ export async function pasteNodes(
     applyOperation(request);
   });
   if (addOperations.length === 0) {
-    toast({
-      title: t('No Steps Pasted'),
+    toast(t('No Steps Pasted'), {
       description: t(
         'Please make sure you have copied a step(s) and allowed permission to your clipboard',
       ),

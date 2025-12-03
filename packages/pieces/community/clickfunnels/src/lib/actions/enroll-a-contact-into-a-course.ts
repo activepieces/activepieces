@@ -21,7 +21,7 @@ export const enrollAContactIntoACourse = createAction({
       },
     };
 
-    const response = await clickfunnelsApiService.createCourseEnrollment(auth, propsValue.courseId as string, payload);
+    const response = await clickfunnelsApiService.createCourseEnrollment(auth.props, propsValue.courseId as string, payload);
 
     return response;
   },

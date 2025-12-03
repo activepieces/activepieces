@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { ChevronDown, Info, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -14,13 +15,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { internalErrorToast } from '@/components/ui/sonner';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
@@ -79,16 +80,11 @@ const RoleCell = ({
       return Promise.resolve();
     },
     onSuccess: () => {
-      toast({
-        title: t('Role updated successfully'),
-      });
+      toast.success(t('Role updated successfully'));
       refetch();
     },
     onError: () => {
-      toast({
-        title: t('Error updating role'),
-        description: t('Please try again later'),
-      });
+      internalErrorToast();
     },
   });
 

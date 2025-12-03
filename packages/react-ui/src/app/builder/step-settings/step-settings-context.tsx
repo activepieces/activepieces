@@ -11,6 +11,7 @@ import {
 import {
   PieceMetadataModel,
   PiecePropertyMap,
+  piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
 import { FlowAction, setAtPath, FlowTrigger } from '@activepieces/shared';
 
@@ -73,7 +74,10 @@ export const StepSettingsProvider = ({
   const updateFormSchema = useCallback(
     (key: string, newFieldPropertyMap: PiecePropertyMap) => {
       setFormSchema((prevSchema) => {
-        const newFieldSchema = formUtils.buildSchema(newFieldPropertyMap);
+        const newFieldSchema = piecePropertiesUtils.buildSchema(
+          newFieldPropertyMap,
+          undefined,
+        );
         const currentSchema = { ...prevSchema };
         const keyUpdated = createUpdatedSchemaKey(key);
         setAtPath(currentSchema, keyUpdated, newFieldSchema);

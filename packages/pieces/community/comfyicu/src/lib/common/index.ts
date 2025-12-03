@@ -5,16 +5,17 @@ import {
   HttpRequest,
   AuthenticationType,
 } from '@activepieces/pieces-common';
-import { Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, Property } from '@activepieces/pieces-framework';
+import { comfyIcuAuth } from '../..';
 
 export async function comfyIcuApiCall({
-  apiKey,
+  apiKey: {secret_text},
   endpoint,
   method,
   qparams,
   body,
 }: {
-  apiKey: string;
+  apiKey: AppConnectionValueForAuthProperty<typeof comfyIcuAuth>;
   endpoint: string;
   method: HttpMethod;
   qparams?: QueryParams;
@@ -27,7 +28,7 @@ export async function comfyIcuApiCall({
     body,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: apiKey,
+      token: secret_text,
     },
   };
 
@@ -37,6 +38,7 @@ export async function comfyIcuApiCall({
 
 export const commonProps = {
     workflow_id:Property.Dropdown({
+       auth: comfyIcuAuth,
         displayName:'Workflow ID',
         refreshers:[],
         required:true,
@@ -51,7 +53,7 @@ export const commonProps = {
             }
 
             const response = await comfyIcuApiCall({
-                apiKey:auth as string,
+                apiKey:auth,
                 endpoint:'/workflows',
                 method:HttpMethod.GET
             })

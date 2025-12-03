@@ -1,11 +1,11 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { fragmentAuth } from '../common/auth';
 import { fragmentClient, FragmentTask } from '../common/client';
 import { HttpMethod, QueryParams } from '@activepieces/pieces-common';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 
-const polling: Polling<string, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof fragmentAuth>, Record<string, never>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS }) => {
 		const isTest = lastFetchEpochMS > 0;

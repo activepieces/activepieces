@@ -1,6 +1,6 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { UsersListResponse, WebClient } from '@slack/web-api';
-
+import {slackAuth} from '../../index';
 const slackChannelBotInstruction = `
 	Please make sure add the bot to the channel by following these steps:
 	  1. Type /invite in the channel's chat.
@@ -22,7 +22,8 @@ export const singleSelectChannelInfo = Property.MarkDown({
 });
 
 export const slackChannel = <R extends boolean>(required: R) =>
-  Property.Dropdown<string, R>({
+  Property.Dropdown<string, R,typeof slackAuth>({
+    auth: slackAuth,
     displayName: 'Channel',
     description:
       "You can get the Channel ID by right-clicking on the channel and selecting 'View Channel Details.'",
@@ -83,7 +84,8 @@ export const blocks = Property.Json({
   defaultValue: []
 });
 
-export const userId = Property.Dropdown<string>({
+export const userId = Property.Dropdown<string,true,typeof slackAuth>({
+  auth: slackAuth,
   displayName: 'User',
   required: true,
   refreshers: [],

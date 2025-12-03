@@ -5,10 +5,12 @@ import {
 } from '@activepieces/pieces-framework';
 import { helpScoutApiRequest } from './api';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { helpScoutAuth } from './auth';
 
 export const customerIdDropdown = Property.Dropdown({
   displayName: 'Customer',
   refreshers: [],
+  auth: helpScoutAuth,
   required: true,
   options: async ({ auth }) => {
     if (!auth) {
@@ -22,7 +24,7 @@ export const customerIdDropdown = Property.Dropdown({
     const response = await helpScoutApiRequest({
       method: HttpMethod.GET,
       url: '/customers',
-      auth: auth as OAuth2PropertyValue,
+      auth: auth,
     });
 
     const { _embedded } = response.body as {
@@ -46,6 +48,7 @@ export const customerIdDropdown = Property.Dropdown({
 export const userIdDropdown =(displayName:string)=> Property.Dropdown({
   displayName,
   refreshers: [],
+  auth: helpScoutAuth,
   required: false,
   options: async ({ auth }) => {
     if (!auth) {
@@ -59,7 +62,7 @@ export const userIdDropdown =(displayName:string)=> Property.Dropdown({
     const response = await helpScoutApiRequest({
       method: HttpMethod.GET,
       url: '/users',
-      auth: auth as OAuth2PropertyValue,
+      auth: auth,
     });
 
     const { _embedded } = response.body as {
@@ -85,6 +88,7 @@ export const conversationIdDropdown = Property.Dropdown({
   displayName:'Conversation',
   refreshers: [],
   required: false,
+  auth: helpScoutAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -97,7 +101,7 @@ export const conversationIdDropdown = Property.Dropdown({
     const response = await helpScoutApiRequest({
       method: HttpMethod.GET,
       url: '/conversations',
-      auth: auth as OAuth2PropertyValue,
+      auth: auth,
     });
 
     const { _embedded } = response.body as {
@@ -124,6 +128,7 @@ export const mailboxIdDropdown =(required=true)=> Property.Dropdown({
   displayName: 'Mailbox',
   refreshers: [],
   required,
+  auth: helpScoutAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -136,7 +141,7 @@ export const mailboxIdDropdown =(required=true)=> Property.Dropdown({
     const response = await helpScoutApiRequest({
       method: HttpMethod.GET,
       url: '/mailboxes ',
-      auth: auth as OAuth2PropertyValue,
+      auth: auth,
     });
 
     const { _embedded } = response.body as {
@@ -161,13 +166,14 @@ export const customerProperties = Property.DynamicProperties({
   displayName: 'Customer Properties',
   refreshers: [],
   required: true,
+  auth: helpScoutAuth,
   props: async ({ auth }) => {
     if (!auth) return {};
 
     const response = await helpScoutApiRequest({
       method: HttpMethod.GET,
       url: '/customer-properties',
-      auth: auth as OAuth2PropertyValue,
+        auth: auth,
     });
 
     const { _embedded } = response.body as {
