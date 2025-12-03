@@ -179,7 +179,7 @@ export const authenticationUtils = {
                     body: JSON.stringify({ email: identity.email }),
                 },
             )
-            return await response.json()
+            await response.json()
         }
         catch (error) {
             log.warn(error)
