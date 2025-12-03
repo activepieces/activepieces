@@ -77,6 +77,13 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
             }
         })
 
+
+        if (error) {
+            await flowRepo().update(id, {
+                operationStatus: FlowOperationStatus.NONE,
+            })
+        }
+
         const flow = await flowService(log).getOnePopulatedOrThrow({
             id,
             projectId,
@@ -87,11 +94,9 @@ export const flowBackgroundJobs = (log: FastifyBaseLogger) => ({
         }
         websocketService.to(projectId).emit(WebsocketClientEvent.FLOW_STATUS_UPDATED, response)
 
-        if (error) {
-            await flowRepo().update(id, {
-                operationStatus: FlowOperationStatus.NONE,
-            })
+        if (!isNil(error)) {
             throw error
         }
+
     },
 })
