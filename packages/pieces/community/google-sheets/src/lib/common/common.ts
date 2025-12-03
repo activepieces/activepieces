@@ -299,7 +299,6 @@ export enum Dimension {
 }
 
 export async function createGoogleClient(auth: GoogleSheetsAuthValue): Promise<OAuth2Client> {
-	console.log(`------------------------auth ${ JSON.stringify(auth)}` );
 	if(auth.type === AppConnectionType.CUSTOM_AUTH)
 	{
 		const serviceAccount = JSON.parse(auth.props.serviceAccount);
