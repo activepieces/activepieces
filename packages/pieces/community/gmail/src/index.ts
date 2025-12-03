@@ -1,3 +1,4 @@
+import { removeLabelFromEmail } from './lib/actions/remove-label-from-email';
 import { addLabelToEmail } from './lib/actions/add-label-to-email';
 kimport { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
@@ -11,7 +12,7 @@ import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
 
-// 👉 NUOVA ACTION CHE HAI CREATO
+
 import { createLabel } from './lib/actions/create-label';
 
 export const gmailAuth = PieceAuth.OAuth2({
@@ -37,6 +38,7 @@ export const gmail = createPiece({
   actions: [
     gmailSendEmailAction,
     addLabelToEmail,
+    removeLabelFromEmail,
     createLabel, 
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
