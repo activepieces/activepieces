@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
 
@@ -115,7 +115,9 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                   <Download className="mr-2 h-4 w-4" />
                   {t('Export')}
                 </DropdownMenuItem>
-                <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToPushToGit}
+                >
                   <PushToGitDialog type="table" tables={[table]}>
                     <DropdownMenuItem
                       disabled={!userHasPermissionToPushToGit}

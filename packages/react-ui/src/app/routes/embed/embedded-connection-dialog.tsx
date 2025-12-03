@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { memoryRouter } from '@/app/router';
+import { memoryRouter } from '@/app/guards';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { cn, parentWindow } from '@/lib/utils';

@@ -22,7 +22,7 @@ import { ErrorCode, isNil } from '@activepieces/shared';
 
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
-import { ApRouter } from './router';
+import { ApRouter } from './guards';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
