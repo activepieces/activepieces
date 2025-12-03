@@ -6,7 +6,7 @@ export enum ContextVersion {
 }
 //bump these two constants after creating a new context version
 export const LATEST_CONTEXT_VERSION = ContextVersion.V1;
-export const MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION = '0.74.0';
+export const MINIMUM_SUPPORTED_RELEASE_AFTER_LATEST_CONTEXT_VERSION = '0.73.0';
 
 export const backwardCompatabilityContextUtils = {
     makeActionContextBackwardCompatible({ context, contextVersion }: MakeActionContextBackwardCompatibleParams): ActionContext<PieceAuthProperty,InputPropertyMap> {
