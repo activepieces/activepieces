@@ -87,7 +87,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
             })
         }
-        const context: ActionContext<PieceAuthProperty,InputPropertyMap> = {
+        const context: ActionContext<PieceAuthProperty, InputPropertyMap> = {
             executionType: isPaused ? ExecutionType.RESUME : ExecutionType.BEGIN,
             resumePayload: constants.resumePayload!,
             store: createContextStore({
