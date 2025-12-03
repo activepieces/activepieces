@@ -11,6 +11,7 @@ import {
     Table,
     TableWebhook,
     TriggerEvent,
+    File,
     User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
