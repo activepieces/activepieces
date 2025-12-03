@@ -76,9 +76,20 @@ Notes:
       required: true,
       defaultValue: false,
     }),
+    mapTransitions: Property.Checkbox({
+      displayName: 'Map Transition Names',
+      description: `
+Map human readable names to Transitions.
+Notes:
+- If there are transitions with the same name, they may be overridden
+- This changes the original data structure from list to map
+				`.trim(),
+      required: true,
+      defaultValue: false,
+    }),
   },
   async run(context) {
-    const { issueId, expand, mapNames } = context.propsValue;
+    const { issueId, expand, mapNames, mapTransitions } = context.propsValue;
 
     const queryParams = {} as QueryParams;
     let expandParams = expand as string[];
@@ -128,6 +139,18 @@ Notes:
         );
         data['editmeta']['fields'] = mappedEditmetaFields;
       }
+    }
+
+    if (mapTransitions && data.transitions) {
+      const mappedTransitions = data.transitions.reduce(
+        (acc: Record<string, any>, transition: any) => {
+          acc[transition.name] = transition;
+          return acc;
+        },
+        {}
+      );
+
+      data['transitions'] = mappedTransitions;
     }
 
     return data;
