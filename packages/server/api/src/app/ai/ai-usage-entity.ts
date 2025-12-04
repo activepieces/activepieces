@@ -1,7 +1,7 @@
 import { AIUsage } from '@activepieces/common-ai'
 import { Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
 export type AIUsageSchema = AIUsage & {
     project: Project
@@ -32,7 +32,7 @@ export const AIUsageEntity = new EntitySchema<AIUsageSchema>({
             nullable: false,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
     },

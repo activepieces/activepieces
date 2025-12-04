@@ -30,10 +30,8 @@ import { context, propagation, trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import pLimit from 'p-limit'
-import { In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
+import { ArrayContains, In, IsNull, Not, Repository, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { isPostgres } from '../../database/database-common'
-import { APArrayContains } from '../../database/database-connection'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -104,7 +102,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             })
         }
         if (params.tags) {
-            query = query.andWhere(APArrayContains('tags', params.tags))
+            query = query.andWhere({ tags: ArrayContains(params.tags) })
         }
 
         if (!isNil(params.failedStepName)) {
@@ -446,36 +444,29 @@ async function getAllChildRuns(parentRunIds: string[]): Promise<FlowRun[]> {
         return []
     }
 
-    const parentRunIdPlaceholders = createSqlPlaceholders(parentRunIds.length, 0)
-    
-    const statusStartIndex = parentRunIds.length
-    const statusPlaceholders = createSqlPlaceholders(CANCELLABLE_STATUSES.length, statusStartIndex)
-
     const query = `
         WITH RECURSIVE descendants AS (
             SELECT *
             FROM flow_run
-            WHERE "parentRunId" IN (${parentRunIdPlaceholders})
-              AND status IN (${statusPlaceholders})
+            WHERE "parentRunId" = ANY($1)
+              AND status = ANY($2)
 
             UNION ALL
 
             SELECT f.*
             FROM flow_run f
             INNER JOIN descendants d ON f."parentRunId" = d.id
-            WHERE f.status IN (${statusPlaceholders})
+            WHERE f.status = ANY($2)
         )
-        SELECT * FROM descendants
+        SELECT * FROM descendants;
     `
 
-    const queryParams = 
-        [
-            ...parentRunIds,
-            ...CANCELLABLE_STATUSES,
-            ...(!isPostgres() ? CANCELLABLE_STATUSES : []),
-        ]
+    const params = [
+        parentRunIds,
+        CANCELLABLE_STATUSES,
+    ]
 
-    const results = await flowRunRepo().query(query, queryParams)
+    const results = await flowRunRepo().query(query, params)
     return results as FlowRun[]
 }
 
@@ -623,11 +614,6 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
     }
 }
 
-function createSqlPlaceholders(count: number, startIndex = 0): string {
-    return Array.from({ length: count }, (_, index) => {
-        return isPostgres() ? `$${startIndex + index + 1}` : '?'
-    }).join(',')
-}
 
 
 type CreateParams = {

@@ -3,7 +3,6 @@ import { WorkerMachine } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 
@@ -12,7 +11,7 @@ export const WorkerMachineEntity = new EntitySchema<WorkerMachine>({
     columns: {
         ...BaseColumnSchemaPart,
         information: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
         },
     },
     relations: {},

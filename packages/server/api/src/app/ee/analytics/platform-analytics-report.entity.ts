@@ -2,7 +2,6 @@ import { Platform, PlatformAnalyticsReport } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 type PlatformAnalyticsReportEntity = PlatformAnalyticsReport & {
@@ -40,15 +39,15 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             type: Number,
         },
         topPieces: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
         topProjects: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
         runsUsage: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
     },    

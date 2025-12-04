@@ -31,7 +31,6 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
-import { AddAPArrayOverlapsToQueryBuilder } from '../../database/database-connection'
 import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
@@ -179,11 +178,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         if (connectionExternalIds !== undefined) {
-            AddAPArrayOverlapsToQueryBuilder(queryBuilder, 'latest_version."connectionIds"', connectionExternalIds, 'connectionExternalIds')
+            queryBuilder.andWhere('latest_version."connectionIds" && :connectionExternalIds', { connectionExternalIds })
         }
 
         if (agentExternalIds !== undefined) {
-            AddAPArrayOverlapsToQueryBuilder(queryBuilder, 'latest_version."agentIds"', agentExternalIds, 'agentExternalIds')
+            queryBuilder.andWhere('latest_version."agentIds" && :agentExternalIds', { agentExternalIds })
         }
 
         const paginationResult = await paginator.paginate<Flow & { version: FlowVersion | null, triggerSource?: TriggerSource }>(queryBuilder)

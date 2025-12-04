@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     Brackets,
     EntitySchema,
@@ -6,7 +5,6 @@ import {
     SelectQueryBuilder,
     WhereExpressionBuilder,
 } from 'typeorm'
-import { DatabaseType, system } from '../system/system'
 import { atob, btoa, decodeByType, encodeByType } from './pagination-utils'
 
 export enum Order {
@@ -186,19 +184,8 @@ export default class Paginator<Entity extends ObjectLiteral> {
             return
         }
 
-        const dbType = system.get(AppSystemProp.DB_TYPE)
         const operator = this.getOperator()
-        let queryString: string
-
-        if (dbType === DatabaseType.SQLITE3) {
-            queryString = `strftime('%s', ${this.alias}.${PAGINATION_KEY}) ${operator} strftime('%s', :${PAGINATION_KEY})`
-        }
-        else if (dbType === DatabaseType.POSTGRES) {
-            queryString = `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`
-        }
-        else {
-            throw new Error('Unsupported database type')
-        }
+        const queryString = `DATE_TRUNC('second', ${this.alias}.${PAGINATION_KEY}) ${operator} DATE_TRUNC('second', :${PAGINATION_KEY}::timestamp)`
 
         where.orWhere(queryString, cursors)
     }

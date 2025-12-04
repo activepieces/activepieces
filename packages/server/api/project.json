@@ -11,6 +11,7 @@
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
+        "external": ["@electric-sql/pglite"],
         "main": "packages/server/api/src/main.ts",
         "outputPath": "dist/packages/server/api",
         "outputFileName": "main.js",
@@ -101,7 +102,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=ee nx test-ee-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -111,7 +112,7 @@
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=ce nx test-ce-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -121,7 +122,7 @@
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=cloud nx test-cloud-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -149,7 +150,7 @@
     "db-migration": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx db server-api -- migration:generate -p -d packages/server/api/src/app/database/database-connection.ts packages/server/api/src/app/database/migration/{args.name}"
+        "command": "nx db server-api -- migration:generate -p -d packages/server/api/src/app/database/migration-data-source.ts packages/server/api/src/app/database/migration/postgres/{args.name}"
       }
     }
   }
