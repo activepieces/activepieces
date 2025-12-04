@@ -1,17 +1,30 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "aspen",
+  "theme": "linden",
   "name": "Activepieces",
   "colors": {
-    "primary": "#6e41e2",
-    "light": "#c5b3f3",
-    "dark": "#6838e0"
+    "primary": "#9675FF",
+    "light": "#9675FF",
+    "dark": "#9675FF"
+  },
+  "navbar": {
+    "primary": {
+      "type": "button",
+      "label": "Dashboard",
+      "href": "https://dashboard.mintlify.com"
+    }
+  },
+  "background": {
+    "color": {
+      "light": "#FEFCF8",
+      "dark": "#151413"
+    }
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "tabs": [
       {
-        "tab": "Homepage",
+        "tab": "Overview",
         "groups": [
           {
             "group": "Overview",
@@ -55,7 +68,8 @@
         ]
       },
       {
-        "tab": "Development",
+        "tab": "Build Pieces",
+        "description": "Learn how to build, test, and publish your own custom pieces in Activepieces.",
         "groups": [
           {
             "group": "Overview",
@@ -248,8 +262,7 @@
       "openapi.json"
     ]
   },
-  "navbar": {
-  },
+
   
   "footer": {
     "socials": {
