@@ -53,6 +53,9 @@ export const BuilderHeader = () => {
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  const { data: supportUrlString } = flagsHooks.useFlag<string>(
+    ApFlagId.SUPPORT_URL,
+  );
   const isInRunsPage = useMemo(
     () => location.pathname.includes('/runs'),
     [location.pathname],
@@ -171,7 +174,7 @@ export const BuilderHeader = () => {
             <Button
               variant="ghost"
               className="gap-2 px-2"
-              onClick={() => openNewWindow(supportUrl)}
+              onClick={() => openNewWindow(supportUrlString ?? supportUrl)}
             >
               <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
               {t('Support')}
