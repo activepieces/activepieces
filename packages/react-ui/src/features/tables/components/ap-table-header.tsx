@@ -115,7 +115,9 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                   <Download className="mr-2 h-4 w-4" />
                   {t('Export')}
                 </DropdownMenuItem>
-                <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+                <PermissionNeededTooltip
+                  hasPermission={userHasPermissionToPushToGit}
+                >
                   <PushToGitDialog type="table" tables={[table]}>
                     <DropdownMenuItem
                       disabled={!userHasPermissionToPushToGit}

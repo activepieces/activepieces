@@ -23,13 +23,14 @@ import {
   AgentTool,
   FlowTriggerType,
   AgentToolType,
+  AgentFlowTool,
 } from '@activepieces/shared';
 
 import { FlowDialogContent } from './flow-dialog-content';
 
 type AgentFlowToolDialogProps = {
   children: React.ReactNode;
-  selectedFlows: string[];
+  selectedFlows: AgentFlowTool[];
   open: boolean;
   onToolsUpdate: (tools: AgentTool[]) => void;
   onClose: () => void;
@@ -46,7 +47,7 @@ export function AgentFlowToolDialog({
 }: AgentFlowToolDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFlows, setSelectedFlows] =
-    useState<string[]>(initialSelectedFlows);
+    useState<AgentFlowTool[]>(initialSelectedFlows);
 
   const projectId = authenticationSession.getProjectId();
 
@@ -72,17 +73,11 @@ export function AgentFlowToolDialog({
   });
 
   const handleSave = () => {
-    const newTools = selectedFlows.map((flowId) => ({
-      type: AgentToolType.FLOW,
-      flowId: flowId,
-      toolName: flowId,
-    })) as AgentTool[];
-
     const nonFlowTools: AgentTool[] = tools.filter(
       (tool) => tool.type !== AgentToolType.FLOW,
     );
 
-    const updatedTools = [...nonFlowTools, ...newTools];
+    const updatedTools = [...nonFlowTools, ...selectedFlows];
     onToolsUpdate(updatedTools);
     handleClose();
   };

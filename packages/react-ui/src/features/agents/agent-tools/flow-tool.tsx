@@ -42,7 +42,7 @@ export const AgentFlowTool = ({
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">
               <span className="group-hover:underline">
-                {tool.flowId || t('Flow')}
+                {tool.toolName || t('Flow')}
               </span>
             </h3>
           </div>
@@ -62,9 +62,9 @@ export const AgentFlowTool = ({
               onCloseAutoFocus={(e) => e.preventDefault()}
             >
               <ConfirmationDeleteDialog
-                title={`${t('Delete')} ${tool.flowId}`}
+                title={`${t('Delete')} ${tool.toolName}`}
                 message={t('Are you sure you want to delete this tool?')}
-                mutationFn={async () => await removeTool([tool.toolName])}
+                mutationFn={async () => await removeTool([tool.flowId])}
                 entityName={t('Tool')}
               >
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
