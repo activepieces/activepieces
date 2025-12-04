@@ -7,6 +7,7 @@ import {
   AuthenticationType,
 } from '@activepieces/pieces-common';
 import {
+  ApFile,
   createAction,
   DynamicPropsValue,
   PieceAuth,
@@ -17,6 +18,7 @@ import FormData from 'form-data';
 import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
+import mime from 'mime-types';
 
 enum AuthType {
   NONE = 'NONE',
@@ -295,7 +297,15 @@ export const httpSendRequestAction = createAction({
       if (body_type === 'form_data') {
         const formData = new FormData();
         for (const key in bodyInput) {
-          formData.append(key, bodyInput[key]);
+          if (isApFile(bodyInput[key])) {
+            const file = bodyInput[key] as ApFile;
+            formData.append(key, file.data, {
+              filename: file.filename,
+              contentType: mime.lookup(file.extension || '') || 'application/octet-stream',
+            });
+          } else {
+            formData.append(key, bodyInput[key]);
+          }
         }
         request.body = formData;
         request.headers = { ...request.headers, ...formData.getHeaders() };
@@ -404,4 +414,8 @@ const handleBinaryResponse = (
 
 const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
+};
+
+const isApFile = (obj: any): obj is ApFile => {
+  return obj && typeof obj === 'object' && 'data' in obj && 'filename' in obj && 'extension' in obj;
 };
