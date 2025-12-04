@@ -1,8 +1,10 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApEdition,
     CreateTemplateRequestBody,    
+    ErrorCode,    
     FlowVersionTemplate,
     isNil,
     ListTemplatesRequestQuery,
@@ -30,7 +32,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
-        const platformId = await resolveTemplatesPlatformId(request.principal)
+        const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type)
         if (isNil(platformId)) {
             return communityTemplates.get(request.query)
         }
@@ -84,18 +86,37 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-async function resolveTemplatesPlatformId(principal: Principal): Promise<string | null> {
+async function resolveTemplatesPlatformIdOrThrow(principal: Principal, type: TemplateType): Promise<string | null> {
     if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
         return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
-    const platform = await platformService.getOneWithPlanOrThrow(principal.platform.id)
-    if (!platform.plan.manageTemplatesEnabled) {
+
+    if (type === TemplateType.OFFICIAL) {
         if (edition === ApEdition.CLOUD) {
             return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         }
         return null
     }
-    return platform.id
+
+    if (type === TemplateType.CUSTOM) {
+        const platform = await platformService.getOneWithPlanOrThrow(principal.platform.id)
+        if (!platform.plan.manageTemplatesEnabled) {
+            throw new ActivepiecesError({
+                code: ErrorCode.FEATURE_DISABLED,
+                params: {
+                    message: 'Templates are not enabled for this platform',
+                },
+            })
+        }
+        return platform.id
+    }
+
+    throw new ActivepiecesError({
+        code: ErrorCode.VALIDATION,
+        params: {
+            message: 'Invalid request, shared templates are not supported to being listed',
+        },
+    })
 }
 
 
