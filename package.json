@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.72.4",
-  "rcVersion": "0.72.4-redis-scan",
+  "rcVersion": "0.72.4-redis-scan-1",
   "scripts": {
     "prepare": "husky install",
     "prebuild": "node tools/scripts/install-bun.js",
