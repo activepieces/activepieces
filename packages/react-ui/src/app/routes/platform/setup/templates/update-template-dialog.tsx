@@ -92,7 +92,8 @@ export const UpdateTemplateDialog = ({
               {
                 ...(formValue.template as FlowVersionTemplate),
                 displayName: formValue.displayName,
-                valid: (formValue.template as FlowVersionTemplate).valid ?? true,
+                valid:
+                  (formValue.template as FlowVersionTemplate).valid ?? true,
               },
             ]
           : undefined,

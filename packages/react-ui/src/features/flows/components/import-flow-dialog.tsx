@@ -66,11 +66,7 @@ const readTemplateJson = async (
       try {
         const template = JSON.parse(reader.result as string) as Template;
         const { flows, name } = template;
-        if (
-          !flows?.[0] ||
-          !name ||
-          !flows[0].trigger
-        ) {
+        if (!flows?.[0] || !name || !flows[0].trigger) {
           resolve(null);
         } else {
           resolve(template);
