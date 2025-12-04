@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPieceVersionToAppConnection1764856239445 implements MigrationInterface {
     name = 'AddPieceVersionToAppConnection1764856239445'
@@ -25,7 +25,7 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
                 CONSTRAINT "fk_app_connection_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_app_connection"(
                     "id",
@@ -72,14 +72,14 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
                     '0.0.0'
                 ) as "pieceVersion"
             FROM "app_connection"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "app_connection"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_app_connection"
                 RENAME TO "app_connection"
-        `);
+        `)
 
     }
 
@@ -87,7 +87,7 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
         await queryRunner.query(`
             ALTER TABLE "app_connection"
                 RENAME TO "temporary_app_connection"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "app_connection" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -107,7 +107,7 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
                 CONSTRAINT "fk_app_connection_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE
                 SET NULL ON UPDATE NO ACTION
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "app_connection"(
                     "id",
@@ -140,10 +140,10 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
                 "scope",
                 "metadata"
             FROM "temporary_app_connection"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_app_connection"
-        `);
+        `)
     }
 
 }
