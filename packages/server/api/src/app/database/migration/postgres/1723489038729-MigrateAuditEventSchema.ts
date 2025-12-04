@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class MigrateAuditEventSchema1723489038729 implements MigrationInterface {
     name = 'MigrateAuditEventSchema1723489038729'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             DROP INDEX "audit_event_platform_id_project_id_user_id_idx"
         `)
@@ -21,6 +26,9 @@ export class MigrateAuditEventSchema1723489038729 implements MigrationInterface 
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             DROP INDEX "audit_event_platform_id_project_id_user_id_idx"
         `)

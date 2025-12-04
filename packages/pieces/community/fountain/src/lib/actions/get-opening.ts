@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
 import { getFunnelsDropdown } from '../common/dropdowns';
 
 export const fountainGetOpening = createAction({
@@ -15,9 +15,10 @@ export const fountainGetOpening = createAction({
       description: 'The opening to retrieve details for',
       required: true,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getFunnelsDropdown(auth as any) };
+        return { disabled: false, options: await getFunnelsDropdown(auth) };
       },
     }),
   },
@@ -26,7 +27,7 @@ export const fountainGetOpening = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `https://api.fountain.com/v2/funnels/${openingId}`,
+      url: getApiUrl(context.auth, `/funnels/${openingId}`),
       headers: getAuthHeaders(context.auth),
     });
 

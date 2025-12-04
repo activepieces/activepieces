@@ -2,6 +2,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,8 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-
-import { toast } from './ui/use-toast';
 
 interface ConfirmationDeleteDialogProps {
   title: string;
@@ -53,9 +52,7 @@ export const ConfirmationDeleteDialog = ({
     onSuccess: () => {
       handleClose();
       if (showToast) {
-        toast({
-          title: t('Removed {entityName}', { entityName }),
-        });
+        toast.success(t('Removed {entityName}', { entityName }));
       }
     },
     onError,

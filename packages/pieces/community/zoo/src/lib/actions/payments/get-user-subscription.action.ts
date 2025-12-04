@@ -14,7 +14,7 @@ export const getUserSubscriptionAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/user/payment/subscriptions',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

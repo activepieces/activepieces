@@ -94,6 +94,7 @@ export const createLead = createAction({
       required: false,
     }),
     referral_source: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Referral Source',
       description: 'The referral source to associate with this lead',
       required: false,
@@ -130,6 +131,7 @@ export const createLead = createAction({
       },
     }),
     referred_by: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Referred By',
       description: 'Existing client or company who referred this lead',
       required: false,

@@ -1,5 +1,6 @@
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { Property } from '@activepieces/pieces-framework';
+import { manychatAuth } from '../..';
 
 export const BASE_URL = 'https://api.manychat.com/fb';
 
@@ -10,9 +11,10 @@ export const subscriberId = Property.Number({
 });
 
 export const tagIdDropdown = Property.Dropdown({
+	auth: manychatAuth,
 	displayName: 'Tag',
 	refreshers: [],
-	required: true,
+	required: true,	
 	options: async ({ auth }) => {
 		if (!auth) {
 			return {
@@ -27,7 +29,7 @@ export const tagIdDropdown = Property.Dropdown({
 			method: HttpMethod.GET,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth as string,
+				token: auth.secret_text
 			},
 		});
 

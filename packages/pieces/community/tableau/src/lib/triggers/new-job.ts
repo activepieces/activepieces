@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, Property, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, Property, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { tableauAuth } from '../../index';
 import { getAuthToken, buildTableauUrl, getTableauHeaders } from '../common';
@@ -10,10 +10,10 @@ function ensureString(body: any): string {
   return String(body);
 }
 
-const polling: Polling<PiecePropValueSchema<typeof tableauAuth>, { jobType?: string; status?: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof tableauAuth>, { jobType?: string; status?: string }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const tableauAuth = auth as any;
+    const tableauAuth = auth.props;
     const { token: authToken, siteId } = await getAuthToken(tableauAuth);
 
     const apiVersion = tableauAuth.apiVersion || '3.26';

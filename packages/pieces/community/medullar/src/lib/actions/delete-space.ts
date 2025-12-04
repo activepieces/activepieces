@@ -18,7 +18,7 @@ export const deleteSpace = createAction({
       method: HttpMethod.DELETE,
       url: `${medullarCommon.aiUrl}/spaces/${context.propsValue.spaceId}/`,
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
     });
 

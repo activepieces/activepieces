@@ -20,6 +20,7 @@ export const createSalesInvoiceAction = createAction({
       required: false,
     }),
     contact_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Contact',
       description: 'The contact for this invoice',
       required: false,
@@ -32,9 +33,8 @@ export const createSalesInvoiceAction = createAction({
             options: [],
           };
         }
-
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -66,6 +66,7 @@ export const createSalesInvoiceAction = createAction({
       },
     }),
     contact_sub_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Contact Sub',
       description: 'Contact sub-address (optional)',
       required: false,
@@ -80,7 +81,7 @@ export const createSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -112,6 +113,7 @@ export const createSalesInvoiceAction = createAction({
       },
     }),
     user_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'User',
       description: 'User assigned to this invoice',
       required: true,
@@ -126,7 +128,7 @@ export const createSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const users = await client.get<Array<{ id: number; firstname: string | null; lastname: string | null; email: string }>>('/3.0/users');
 
           return {
@@ -146,6 +148,7 @@ export const createSalesInvoiceAction = createAction({
       },
     }),
     pr_project_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Project',
       description: 'Project associated with this invoice',
       required: false,
@@ -160,7 +163,7 @@ export const createSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const projects = await client.get<Array<{
             id: number;
             name: string;
@@ -184,6 +187,7 @@ export const createSalesInvoiceAction = createAction({
       },
     }),
     language_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Language',
       description: 'Language for the invoice',
       required: true,
@@ -198,7 +202,7 @@ export const createSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const languages = await client.get<Array<{ id: number; name: string }>>('/2.0/language');
 
           return {
@@ -218,6 +222,7 @@ export const createSalesInvoiceAction = createAction({
       },
     }),
     bank_account_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Bank Account',
       description: 'Bank account for payment',
       required: true,
@@ -232,7 +237,7 @@ export const createSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const bankAccounts = await client.get<Array<{
             id: number;
             name: string;
@@ -264,6 +269,7 @@ export const createSalesInvoiceAction = createAction({
       required: true,
     }),
     payment_type_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Payment Type',
       description: 'Payment type for this invoice',
       required: true,
@@ -278,7 +284,7 @@ export const createSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const paymentTypes = await client.get<Array<{ id: number; name: string }>>('/2.0/payment_type');
 
           return {
@@ -359,6 +365,7 @@ export const createSalesInvoiceAction = createAction({
       required: false,
     }),
     template_slug: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Document Template',
       description: 'Document template for the invoice',
       required: false,
@@ -373,7 +380,7 @@ export const createSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const templates = await client.get<Array<{
             template_slug: string;
             name: string;
@@ -397,7 +404,8 @@ export const createSalesInvoiceAction = createAction({
         }
       },
     }),
-    positionFields: Property.DynamicProperties({
+    positionFields: Property.DynamicProperties({  
+      auth: bexioAuth,
       displayName: 'Invoice Positions',
       description: 'Configure invoice line items',
       required: true,
@@ -409,7 +417,7 @@ export const createSalesInvoiceAction = createAction({
 
         if (auth) {
             try {
-              const client = new BexioClient(auth as OAuth2PropertyValue);
+                const client = new BexioClient(auth);
               units = await client.get<Array<{ id: number; name: string }>>('/2.0/unit').catch(() => []);
               accounts = await client.get<Array<{ id: number; account_no: string; name: string }>>('/accounts').catch(() => []);
               const taxesResponse = await client.get<Array<{

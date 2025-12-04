@@ -210,9 +210,9 @@ export const translateText = createAction({
     } = context.propsValue;
     const request = await httpClient.sendRequest<string[]>({
       method: HttpMethod.POST,
-      url: context.auth.type === 'free' ? DEEPL_FREE_URL : DEEPL_PAID_URL,
+      url: context.auth.props.type === 'free' ? DEEPL_FREE_URL : DEEPL_PAID_URL,
       headers: {
-        Authorization: `DeepL-Auth-Key ${context.auth.key}`,
+        Authorization: `DeepL-Auth-Key ${context.auth.props.key}`,
         'Content-Type': 'application/json',
       },
       body: {

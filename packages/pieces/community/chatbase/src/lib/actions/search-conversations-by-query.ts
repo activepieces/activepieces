@@ -52,7 +52,7 @@ export const searchConversationsAction = createAction({
 	async run(context) {
 		const { chatbotId, filteredSources, startDate, endDate, page, size } = context.propsValue;
 
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const queryParams = new URLSearchParams({ chatbotId });
 

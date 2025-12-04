@@ -20,12 +20,20 @@ export const updateEmailTemplate = createAction({
   description: 'Modify an existing email template with new content',
   props: {
     templateName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Template to Update',
       description: 'Select template to modify',
       required: true,
       refreshers: ['loadCurrentContent'],
       options: async ({ auth }) => {
-        const templates = await getEmailTemplates(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const templates = await getEmailTemplates(auth.props);
 
         if (templates.length === 0) {
           return {
@@ -101,7 +109,7 @@ export const updateEmailTemplate = createAction({
       sampleData,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     const sesClient = createSESClient({ accessKeyId, secretAccessKey, region });
 

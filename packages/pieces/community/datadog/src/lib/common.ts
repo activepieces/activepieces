@@ -1,32 +1,29 @@
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { client } from '@datadog/datadog-api-client';
+import { datadogAuth } from '../..';
 
-export type DatadogAuthType = {
-  apiKey: string;
-  appKey: string | undefined;
-  site: string;
-};
 
-export const getDatadogConfiguration = (auth: DatadogAuthType) => {
+export const getDatadogConfiguration = (auth: AppConnectionValueForAuthProperty<typeof datadogAuth>) => {
   const configuration = client.createConfiguration(
     {authMethods: {
-      apiKeyAuth: auth.apiKey,
-      ...(auth.appKey ? {appKeyAuth: auth.appKey} : {}),
+      apiKeyAuth: auth.props.apiKey,
+      ...(auth.props.appKey ? {appKeyAuth: auth.props.appKey} : {}),
     }}
   );
   configuration.setServerVariables({
-    site: auth.site
+    site: auth.props.site
   });
   return configuration;
 }
 
-export const constructDatadogBaseUrl = (auth: DatadogAuthType, subdomain = 'api', version = 'v2') => {
-  return `https://${subdomain}.${auth.site}/api/${version}`;
+export const constructDatadogBaseUrl = (auth: AppConnectionValueForAuthProperty<typeof datadogAuth>, subdomain = 'api', version = 'v2') => {
+  return `https://${subdomain}.${auth.props.site}/api/${version}`;
 };
 
-export const constructDatadogBaseHeaders = (auth: DatadogAuthType) => {
+export const constructDatadogBaseHeaders = (auth: AppConnectionValueForAuthProperty<typeof datadogAuth>) => {
   return {
-    'Accept': 'application/json',
-    'DD-API-KEY': auth.apiKey,
-    ...(auth.appKey ? {'DD-APPLICATION-KEY': auth.appKey} : {}),
+    'Accept': 'application/json', 
+    'DD-API-KEY': auth.props.apiKey,
+    ...(auth.props.appKey ? {'DD-APPLICATION-KEY': auth.props.appKey} : {}),
   };
 };

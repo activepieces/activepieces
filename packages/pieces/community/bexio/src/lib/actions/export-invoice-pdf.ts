@@ -9,6 +9,7 @@ export const exportInvoicePdfAction = createAction({
   description: 'Export an existing sales invoice as a PDF document',
   props: {
     invoice_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Invoice',
       description: 'Select the invoice to export',
       required: true,
@@ -23,7 +24,7 @@ export const exportInvoicePdfAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const invoices = await client.get<Array<{
             id: number;
             document_nr: string;

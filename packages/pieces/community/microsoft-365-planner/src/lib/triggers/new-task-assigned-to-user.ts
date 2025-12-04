@@ -4,6 +4,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
     createTrigger,
     PiecePropValueSchema,
     StaticPropsValue,
@@ -18,7 +19,7 @@ const props = {
 };
 
 const polling: Polling<
-  PiecePropValueSchema<typeof microsoft365PlannerAuth>,
+  AppConnectionValueForAuthProperty<typeof microsoft365PlannerAuth>,
   StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

@@ -40,6 +40,7 @@ export const findFileAction = createAction({
         required: false,
     }),
     searchFolderId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'Folder to Search In (Optional)',
       description: 'The folder to search within. If not specified, the entire drive will be searched. **Only applies when searching by name.**',
       required: false,
