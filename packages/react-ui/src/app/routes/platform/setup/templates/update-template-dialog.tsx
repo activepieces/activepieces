@@ -5,15 +5,6 @@ import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import {
-  MultiSelect,
-  MultiSelectTrigger,
-  MultiSelectValue,
-  MultiSelectContent,
-  MultiSelectList,
-  MultiSelectItem,
-  MultiSelectSearch,
-} from '@/components/custom/multi-select';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,19 +17,15 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
-import { formatUtils } from '@/lib/utils';
 import {
   FlowVersionTemplate,
   TemplateTag as TemplateTagType,
   TemplateCategory,
   Template,
 } from '@activepieces/shared';
-
-import { Textarea } from '../../../../../components/ui/textarea';
-
-import { TemplateTag } from './template-tag';
 
 const UpdateFlowTemplateSchema = Type.Object({
   displayName: Type.String({
@@ -212,51 +199,6 @@ export const UpdateTemplateDialog = ({
                     placeholder={t('Template')}
                     className="rounded-sm"
                   />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="tags"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="tags">{t('Tags')}</Label>
-                  <TemplateTag
-                    onChange={(tags) => field.onChange(tags)}
-                    value={field.value}
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              name="categories"
-              render={({ field }) => (
-                <FormItem className="grid space-y-2">
-                  <Label htmlFor="categories">{t('Categories')}</Label>
-                  <MultiSelect
-                    modal={true}
-                    value={(field.value as string[]) || []}
-                    onValueChange={(value) =>
-                      field.onChange(value as TemplateCategory[])
-                    }
-                  >
-                    <MultiSelectTrigger>
-                      <MultiSelectValue placeholder={t('Select categories')} />
-                    </MultiSelectTrigger>
-                    <MultiSelectContent>
-                      <MultiSelectSearch
-                        placeholder={t('Search categories...')}
-                      />
-                      <MultiSelectList>
-                        {Object.values(TemplateCategory).map((category) => (
-                          <MultiSelectItem key={category} value={category}>
-                            {formatUtils.convertEnumToHumanReadable(category)}
-                          </MultiSelectItem>
-                        ))}
-                      </MultiSelectList>
-                    </MultiSelectContent>
-                  </MultiSelect>
                   <FormMessage />
                 </FormItem>
               )}
