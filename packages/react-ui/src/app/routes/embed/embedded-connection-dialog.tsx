@@ -59,11 +59,12 @@ const EmbeddedConnectionDialogContent = ({
   const hasErrorRef = useRef(false);
 
   const {
-    pieceModel,
+    data: pieceModel,
     isLoading: isLoadingPiece,
     isSuccess,
-  } = piecesHooks.usePiece({
-    name: pieceName ?? '',
+  } = piecesHooks.usePieceForEmbeddingConnection({
+    pieceName: pieceName ?? '',
+    connectionExternalId: connectionName ?? '',
   });
   const hideConnectionIframe = (
     connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,

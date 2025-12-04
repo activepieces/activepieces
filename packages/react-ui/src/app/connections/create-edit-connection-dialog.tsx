@@ -94,6 +94,7 @@ function CreateOrEditConnectionSection({
           redirectUrl: redirectUrl ?? '',
         }),
         projectIds: reconnectConnection?.projectIds ?? [],
+        pieceVersion: piece.version,
       },
     },
     mode: 'onChange',

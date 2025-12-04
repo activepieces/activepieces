@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
+import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import {
   useAuthorization,
   useIsPlatformAdmin,
@@ -43,6 +44,13 @@ function ConnectionSelect(params: ConnectionSelectProps) {
   const [selectConnectionOpen, setSelectConnectionOpen] = useState(false);
   const [reconnectConnection, setReconnectConnection] =
     useState<AppConnectionWithoutSensitiveData | null>(null);
+  const {
+    pieceModel: pieceForReconnection,
+    isLoading: isLoadingReconnectionPiece,
+  } = piecesHooks.usePiece({
+    name: params.piece.name,
+    version: reconnectConnection?.pieceVersion,
+  });
   const form = useFormContext<PieceAction | PieceTrigger>();
   const hasPermissionToCreateConnection = useAuthorization().checkAccess(
     Permission.WRITE_APP_CONNECTION,
@@ -110,7 +118,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
               <CreateOrEditConnectionDialog
                 reconnectConnection={reconnectConnection}
                 isGlobalConnection={isGlobalConnection}
-                piece={params.piece}
+                piece={pieceForReconnection ?? params.piece}
                 key={`CreateOrEditConnectionDialog-open-${connectionDialogOpen}`}
                 open={connectionDialogOpen}
                 setOpen={(open, connection) => {
@@ -140,6 +148,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                           <Button
                             variant="ghost"
                             size="xs"
+                            loading={isLoadingReconnectionPiece}
                             onClick={(e) => {
                               e.stopPropagation();
                               setReconnectConnection(selectedConnection);
