@@ -64,5 +64,5 @@ export const redisHelper = {
             keys.push(...foundKeys)
         } while (cursor !== '0')
         return keys
-    }
+    },
 }
