@@ -21,7 +21,7 @@ export const sendModelingCommandAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/ws/modeling/commands',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
 

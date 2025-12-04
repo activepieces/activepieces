@@ -1,2 +1,18 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
+
+# Environment variable to skip the check
+SKIP_MAIN_PUSH_ENV_VAR="SKIP_CHECK"
+
+# Allow skipping this hook by setting env variable
+if [ ! -z "${!SKIP_MAIN_PUSH_ENV_VAR}" ]; then
+  exit 0
+fi
+
+while read local_ref local_sha remote_ref remote_sha
+do
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        echo "Direct pushes to 'main' are not allowed. Please use a feature branch and a pull request."
+        exit 1
+    fi
+done

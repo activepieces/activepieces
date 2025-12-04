@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import { cursorAuth } from '../common/auth';
 import { makeCursorRequest } from '../common/client';
@@ -15,7 +15,7 @@ interface AgentConversationResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof cursorAuth>,
+  AppConnectionValueForAuthProperty<typeof cursorAuth>,
   { agentId: string }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -24,7 +24,7 @@ const polling: Polling<
 
     try {
       const response = await makeCursorRequest<AgentConversationResponse>(
-        auth as string,
+        auth,
         `/v0/agents/${agentId}/conversation`,
         HttpMethod.GET
       );

@@ -33,7 +33,7 @@ export const updateDataSourceAction = createAction({
     const { datasourceId, defaultName, disabled, hidden } = propsValue;
 
     try {
-      const client = new CognosClient(auth);
+      const client = new CognosClient(auth.props);
 
       const updateDefinition: any = {};
       

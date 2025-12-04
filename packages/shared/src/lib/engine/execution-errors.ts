@@ -1,4 +1,4 @@
-import { STORE_KEY_MAX_LENGTH } from "../store-entry/store-entry"
+import { STORE_KEY_MAX_LENGTH } from '../store-entry/store-entry'
 
 export enum ExecutionErrorType {
     ENGINE = 'ENGINE',

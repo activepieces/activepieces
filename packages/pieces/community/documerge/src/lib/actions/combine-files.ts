@@ -48,7 +48,7 @@ export const combineFiles = createAction({
       throw new Error('At least one file is required');
     }
 
-    const client = new DocuMergeClient(context.auth);
+    const client = new DocuMergeClient(context.auth.secret_text);
 
     const body: Record<string, unknown> = {
       output,

@@ -88,7 +88,7 @@ export const createAgentFromTemplate = createAction({
       initialMessageSequence,
     } = context.propsValue;
 
-    const client = getLettaClient(context.auth);
+    const client = getLettaClient(context.auth.props);
 
     const body: AgentCreateParams = {};
 

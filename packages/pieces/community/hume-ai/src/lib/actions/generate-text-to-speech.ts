@@ -67,7 +67,7 @@ export const generateTextToSpeech = createAction({
   },
   async run(context) {
     const client = new HumeClient({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
     });
 
     const {

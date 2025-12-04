@@ -62,7 +62,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "npx nx run-many --target=build --projects=pieces-http,pieces-data-mapper,pieces-approval,pieces-webhook,shared",
+          "npx nx run-many --target=build --projects=pieces-http,pieces-data-mapper,pieces-approval,pieces-webhook,shared"
         ],
         "parallel": false
       }

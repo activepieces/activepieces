@@ -22,7 +22,7 @@ export const sendANote = createAction({
   },
   async run(context) {
     return await makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/pushes',
       {

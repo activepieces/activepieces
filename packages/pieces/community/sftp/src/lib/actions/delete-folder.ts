@@ -35,10 +35,10 @@ export const deleteFolderAction = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
+    const client = await getClient(context.auth.props);
     const directoryPath = context.propsValue.folderPath;
     const recursive = context.propsValue.recursive ?? false;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
@@ -61,7 +61,7 @@ export const deleteFolderAction = createAction({
         error: err,
       };
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.props.protocol);
     }
   },
 });

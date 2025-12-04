@@ -1,6 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const guideliteAuth = PieceAuth.SecretText({
   displayName: 'Guidelite API Key',
@@ -18,7 +19,7 @@ For more information, visit: https://docs.guidelite.ai/reference/quickstart
   validate: async ({ auth }) => {
     if (auth) {
       try {
-        await makeRequest(auth, HttpMethod.GET, '/assistant/list');
+        await makeRequest({secret_text: auth, type: AppConnectionType.SECRET_TEXT}, HttpMethod.GET, '/assistant/list');
         return {
           valid: true,
         };

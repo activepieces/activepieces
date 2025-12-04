@@ -29,7 +29,7 @@ export const newSubmissionTrigger = createTrigger({
       url: BASE_URL + '/webhooks',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       body:{},
       queryParams: {
@@ -51,7 +51,7 @@ export const newSubmissionTrigger = createTrigger({
         url: BASE_URL + `/webhooks/${webhookId}`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth,
+          token: context.auth.secret_text,
         },
       });
     }

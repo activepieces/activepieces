@@ -1,4 +1,4 @@
-import { FilesService, Store } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, FilesService, Store } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
 
@@ -17,7 +17,7 @@ interface TimebasedPolling<AuthValue, PropsValue> {
   >;
 }
 
-interface LastItemPolling<AuthValue, PropsValue> {
+interface LastItemPolling<AuthValue extends AppConnectionValueForAuthProperty<any>, PropsValue> {
   strategy: DedupeStrategy.LAST_ITEM;
   items: (params: {
     auth: AuthValue;
@@ -38,12 +38,12 @@ export enum DedupeStrategy {
   LAST_ITEM,
 }
 
-export type Polling<AuthValue, PropsValue> =
+export type Polling<AuthValue extends AppConnectionValueForAuthProperty<any>, PropsValue> =
   | TimebasedPolling<AuthValue, PropsValue>
   | LastItemPolling<AuthValue, PropsValue>;
 
 export const pollingHelper = {
-  async poll<AuthValue, PropsValue>(
+  async poll<AuthValue extends AppConnectionValueForAuthProperty<any>, PropsValue>(
     polling: Polling<AuthValue, PropsValue>,
     {
       store,
@@ -110,7 +110,7 @@ export const pollingHelper = {
       }
     }
   },
-  async onEnable<AuthValue, PropsValue>(
+  async onEnable<AuthValue extends AppConnectionValueForAuthProperty<any>, PropsValue>(
     polling: Polling<AuthValue, PropsValue>,
     {
       store,
@@ -140,7 +140,7 @@ export const pollingHelper = {
       }
     }
   },
-  async onDisable<AuthValue, PropsValue>(
+  async onDisable<AuthValue extends AppConnectionValueForAuthProperty<any>, PropsValue>(
     polling: Polling<AuthValue, PropsValue>,
     params: { store: Store; auth: AuthValue; propsValue: PropsValue }
   ): Promise<void> {
@@ -150,7 +150,7 @@ export const pollingHelper = {
         return;
     }
   },
-  async test<AuthValue, PropsValue>(
+  async test<AuthValue extends AppConnectionValueForAuthProperty<any>, PropsValue>(
     polling: Polling<AuthValue, PropsValue>,
     {
       auth,

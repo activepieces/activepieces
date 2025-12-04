@@ -15,9 +15,10 @@ export const fountainListStages = createAction({
       description: 'The opening to get stages for',
       required: true,
       refreshers: [],
-      options: async ({ auth }) => {
+      auth: fountainAuth,
+        options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getFunnelsDropdown(auth as any) };
+        return { disabled: false, options: await getFunnelsDropdown(auth) };
       },
     }),
   },

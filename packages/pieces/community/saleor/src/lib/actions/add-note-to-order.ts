@@ -22,7 +22,7 @@ export const addOrderNote = createAction({
   },
   async run({auth, propsValue}) {
     const { orderId, message } = propsValue;
-    const { token, apiUrl } = auth;
+    const { token, apiUrl } = auth.props;
 
     const query = `
         mutation AddOrderNote($orderId: ID!, $message: String!) {

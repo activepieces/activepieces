@@ -43,7 +43,7 @@ export const writesonicBulk = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          'X-API-KEY': `${auth as string}`,
+          'X-API-KEY': `${auth.secret_text}`,
         };
       },
     }),

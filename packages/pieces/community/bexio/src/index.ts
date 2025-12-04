@@ -1,7 +1,6 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
   createPiece,
-  OAuth2PropertyValue,
   PieceAuth,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -115,7 +114,7 @@ export const bexio = createPiece({
       baseUrl: () => 'https://api.bexio.com',
       auth: bexioAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${(auth).access_token}`,
       }),
     }),
   ],

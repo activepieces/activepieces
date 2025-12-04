@@ -31,6 +31,7 @@ To make your webhook accessible from the internet, you need to configure the bac
 1. Install ngrok.
 2. Run the command `ngrok http 4200`.
 3. Replace the `AP_FRONTEND_URL` environment variable in `packages/server/api/.env` with the ngrok URL.
+4. Go to /packages/react-ui/vite.config.ts, uncomment allowedHosts and set the value to what ngrok gives you.
 
 Once you have completed these configurations, you are good to go!
 

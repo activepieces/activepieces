@@ -1,8 +1,11 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
 import { Property } from "@activepieces/pieces-framework";
 import { baseUrlv0 } from "./common";
+import { straicoAuth } from "../..";
 
 export const agentIdDropdown =(displayName:string, desc:string)=> Property.Dropdown({
+  auth: straicoAuth,
+
       displayName,
       required: true,
       description: desc,
@@ -27,7 +30,7 @@ export const agentIdDropdown =(displayName:string, desc:string)=> Property.Dropd
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
         });
 
