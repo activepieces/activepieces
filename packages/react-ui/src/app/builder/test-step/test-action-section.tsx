@@ -23,8 +23,8 @@ import { defaultAgentOutput, isRunAgent } from './agent-test-step';
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { testStepHooks } from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { testStepHooks } from './utils/test-step-hooks';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
