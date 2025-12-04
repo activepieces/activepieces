@@ -160,25 +160,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             VALUES ${valuesPlaceholders}
         `, flattenedValues)
         
-        logger.info(`Migrated ${flowTemplates.length} flow templates`)
-
-        await queryRunner.query(`
-            ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_project_id"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "flow_template" DROP CONSTRAINT "fk_flow_template_platform_id"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "idx_flow_template_pieces"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "idx_flow_template_tags"
-        `)
-        await queryRunner.query(`
-            DROP TABLE "flow_template"
-        `)
-        logger.info('Dropped flow_template table')
-        logger.info('Finished migration CreateTemplateTable1764777773932')
+        logger.info(`Finished migration CreateTemplateTable1764777773932, migrated ${flowTemplates.length} flow templates`)
     }
 
     public async down(_queryRunner: QueryRunner): Promise<void> {
