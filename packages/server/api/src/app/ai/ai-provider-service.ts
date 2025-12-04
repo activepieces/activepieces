@@ -1,5 +1,4 @@
 import { CreateAIProviderRequest } from '@activepieces/common-ai'
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -13,7 +12,6 @@ import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { AiProviderConfig, aiProviders } from './providers'
-import { ConfigSchema } from './providers/ai-provider'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
