@@ -2,16 +2,19 @@ import { AIProvider, AIProviderWithoutSensitiveData, CreateAIProviderRequest } f
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { aiProviderService } from './ai-provider-service-v2'
+import { aiProviderService } from './ai-provider-service'
 
 export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAIProviders, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService.listProviders(platformId)
     })
+    app.get('/:id/config-schema', GetAIProviderConfig, async (request) => {
+        return aiProviderService.getConfigSchema(request.params.id)
+    })
     app.get('/:id/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
-        return { config: await aiProviderService.getConfig(request.params.id, platformId) }
+        return aiProviderService.getConfig(platformId, request.params.id)
     })
     app.get('/:id/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
@@ -22,9 +25,10 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
         await aiProviderService.upsert(platformId, request.body)
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
-    app.delete('/:id', DeleteAIProvider, async (request) => {
+    app.delete('/:id', DeleteAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
-        return aiProviderService.delete(platformId, request.params.id)
+        await aiProviderService.delete(platformId, request.params.id)
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
@@ -47,9 +51,6 @@ const GetAIProviderConfig = {
         params: Type.Object({
             id: Type.String(),
         }),
-        response: {
-            [StatusCodes.OK]: Type.Pick(AIProvider, ['config']),
-        },
     },
 }
 

@@ -9,8 +9,8 @@ export const summarizeText: Action = createAction({
   displayName: 'Summarize Text',
   description: '',
   props: {
-    provider: aiProps({ modelType: 'language' }).provider,
-    model: aiProps({ modelType: 'language' }).model,
+    provider: aiProps({ modelType: 'text' }).provider,
+    model: aiProps({ modelType: 'text' }).model,
     text: Property.LongText({
       displayName: 'Text',
       required: true,

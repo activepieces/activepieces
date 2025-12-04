@@ -4,7 +4,7 @@ import { AiOverageState, ApEdition, ApEnvironment, apId, Cursor, FlowStatus, Pla
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { AIUsageEntity, AIUsageSchema } from '../../ai/ai-usage-entity'
+import { AIUsageEntity, AIUsageSchema } from './ai-usage-entity'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'
 import { flowRepo } from '../../flows/flow/flow.repo'

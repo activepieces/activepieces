@@ -4,12 +4,7 @@ import { Static, Type } from '@sinclair/typebox'
 
 export const AIProvider = Type.Object({
     ...BaseModelSchema,
-    config: Type.Object({
-        apiKey: Type.String(),
-        azureOpenAI: Type.Optional(Type.Object({
-            resourceName: Type.String(),
-        })),
-    }),
+    config: Type.Object({}),
     provider: Type.String({ minLength: 1 }),
     displayName: Type.String({ minLength: 1 }),
     platformId: Type.String(),
@@ -24,7 +19,6 @@ export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSens
 export const CreateAIProviderRequest = Type.Object({
     provider: Type.String({ minLength: 1 }),
     apiKey: Type.String(),
-    useAzureOpenAI: Type.Optional(Type.Boolean()),
     resourceName: Type.Optional(Type.String()),
 })
 

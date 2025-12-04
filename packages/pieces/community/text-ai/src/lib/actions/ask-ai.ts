@@ -9,8 +9,8 @@ export const askAI = createAction({
   displayName: 'Ask AI',
   description: '',
   props: {
-    provider: aiProps({ modelType: 'language' }).provider,
-    model: aiProps({ modelType: 'language' }).model,
+    provider: aiProps({ modelType: 'text' }).provider,
+    model: aiProps({ modelType: 'text' }).model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -31,8 +31,8 @@ export const askAI = createAction({
       required: false,
       defaultValue: 2000,
     }),
-    webSearch: aiProps({ modelType: 'language' }).webSearch,
-    webSearchOptions: aiProps({ modelType: 'language' }).webSearchOptions,
+    webSearch: aiProps({ modelType: 'text' }).webSearch,
+    webSearchOptions: aiProps({ modelType: 'text' }).webSearchOptions,
   },
   async run(context) {
     const providerName = context.propsValue.provider as string;

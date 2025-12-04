@@ -5,14 +5,14 @@ import { SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from './supported-ai-prov
 import { AIProviderWithoutSensitiveData } from './types';
 import { ImageModelV2 } from "@ai-sdk/provider";
 
-export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
+export const aiProps = <T extends 'text' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
         displayName: 'Provider',
         required: true,
         refreshers: [],
         options: async (_, ctx) => {
             const { body: { data: supportedProviders } } = await httpClient.sendRequest<
-                SeekPage<AIProviderWithoutSensitiveData>
+                SeekPage<{ id: string; name: string; isConfigured: boolean }>
             >({
                 method: HttpMethod.GET,
                 url: `${ctx.server.apiUrl}v1/ai-providers`,
@@ -20,7 +20,9 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                     Authorization: `Bearer ${ctx.server.token}`,
                 },
             });
-            if (supportedProviders.length === 0) {
+
+            const configured = supportedProviders.filter(supportedProvider => supportedProvider.isConfigured);
+            if (configured.length === 0) {
                 return {
                     disabled: true,
                     options: [],
@@ -28,34 +30,13 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                 };
             }
 
-            const providers = supportedProviders.map(supportedProvider => {
-                const provider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === supportedProvider.provider);
-                if (!provider) return null;
-
-                if (modelType === 'language') {
-                    if (provider.languageModels.length === 0) return null;
-
-                    if (functionCalling && !provider.languageModels.some(model => model.functionCalling)) {
-                        return null;
-                    }
-                } else if (modelType === 'image') {
-                    if (provider.imageModels.length === 0) return null;
-                } else if (modelType === 'video') {
-                    if (provider.videoModels.length === 0) return null;
-                }
-
-                return {
-                    value: provider.provider,
-                    label: provider.displayName
-                };
-            });
-
-            const filteredProviders = providers.filter(p => p !== null);
-
             return {
-                placeholder: filteredProviders.length > 0 ? 'Select AI Provider' : `No providers available for ${modelType} models${functionCalling ? ' with function calling' : ''}`,
-                disabled: filteredProviders.length === 0,
-                options: filteredProviders,
+                placeholder: 'Select AI Provider',
+                disabled: false,
+                options: configured.map(supportedProvider => ({
+                    label: supportedProvider.name,
+                    value: supportedProvider.id,
+                })),
             };
         },
     }),
@@ -64,7 +45,7 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         required: true,
         defaultValue: 'gpt-4o',
         refreshers: ['provider'],
-        options: async (propsValue) => {
+        options: async (propsValue, ctx) => {
             const provider = propsValue['provider'] as string;
             if (isNil(provider)) {
                 return {
@@ -74,25 +55,22 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
                 };
             }
 
-            const supportedProvider = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
-            if (isNil(supportedProvider)) {
-                return {
-                    disabled: true,
-                    options: [],
-                };
-            }
+            const { body: { data: allModels } } = await httpClient.sendRequest<SeekPage<{ id: string; name: string; type: 'text' | 'image' }>>({
+                method: HttpMethod.GET,
+                url: `${ctx.server.apiUrl}v1/ai-providers/${provider}/models`,
+                headers: {
+                    Authorization: `Bearer ${ctx.server.token}`,
+                },
+            });
 
-            const allModels = modelType === 'language' ? supportedProvider.languageModels : modelType === 'image' ? supportedProvider.imageModels : supportedProvider.videoModels;
-            const models = (modelType === 'language' && functionCalling)
-                ? allModels.filter(model => (model as SupportedAIProvider['languageModels'][number]).functionCalling)
-                : allModels;
+            const models = allModels.filter(model => model.type === modelType);
 
             return {
                 placeholder: 'Select AI Model',
                 disabled: false,
                 options: models.map(model => ({
-                    label: model.displayName,
-                    value: model.instance,
+                    label: model.name,
+                    value: model.id,
                 })),
             };
         },
@@ -349,9 +327,9 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
 })
 
 
-type AIPropsParams<T extends 'language' | 'image' | 'video'> = {
+type AIPropsParams<T extends 'text' | 'image' | 'video'> = {
     modelType: T,
-    functionCalling?: T extends 'language' ? boolean : never
+    functionCalling?: T extends 'text' ? boolean : never
 }
 
 type AIPropsReturn = {

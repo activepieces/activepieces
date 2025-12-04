@@ -10,7 +10,7 @@ import {
     SelectQueryBuilder,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
-import { AIUsageEntity } from '../ai/ai-usage-entity'
+import { AIUsageEntity } from '../ee/platform/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
