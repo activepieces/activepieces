@@ -1,4 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
+import { ApEnvironment } from '@activepieces/shared'
 import { DataSource, EntityMetadata } from 'typeorm'
 import { DatabaseType, system } from '../../helper/system/system'
 import { createPGliteDataSource } from '../pglite-connection'
@@ -12,7 +13,7 @@ async function isPGliteEmpty(pgliteDataSource: DataSource): Promise<boolean> {
 }
 
 export async function shouldMigrateSqliteToPGlite(): Promise<boolean> {
-    if (system.get(AppSystemProp.DB_TYPE) !== DatabaseType.PGLITE) {
+    if (system.get(AppSystemProp.DB_TYPE) !== DatabaseType.PGLITE || system.get(AppSystemProp.ENVIRONMENT) === ApEnvironment.TESTING) {
         return false
     }
 
