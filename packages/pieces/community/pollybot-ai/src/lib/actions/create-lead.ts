@@ -32,14 +32,18 @@ export const createLead = createAction({
       displayName: 'Status',
       required: false,
       options: {
-        options: Object.entries(leadStatusOptions).map(([value, label]) => ({ label, value })),
+        options: Object.entries(leadStatusOptions).map(([value, label]) => ({
+          label,
+          value,
+        })),
       },
       defaultValue: 'new',
     }),
     metadata: Property.Json({
       displayName: 'Metadata',
       required: false,
-      description: 'Custom data as JSON object (e.g., {"company": "Tech Corp"})',
+      description:
+        'Custom data as JSON object (e.g., {"company": "Tech Corp"})',
     }),
   },
   async run({ auth, propsValue }) {
@@ -53,13 +57,12 @@ export const createLead = createAction({
     if (status) requestBody['status'] = status;
     if (metadata) requestBody['metadata'] = metadata;
 
-
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.POST,
-        url: `${baseUrl}/chatbots/${auth.chatbotId}/leads`,
+        url: `${baseUrl}/chatbots/${auth.props.chatbotId}/leads`,
         headers: {
-          Authorization: `Bearer ${auth.apiKey}`,
+          Authorization: `Bearer ${auth.props.apiKey}`,
         },
         body: requestBody,
       });

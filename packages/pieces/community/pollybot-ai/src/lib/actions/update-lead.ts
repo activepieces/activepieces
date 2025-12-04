@@ -52,9 +52,9 @@ export const updateLead = createAction({
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.PUT,
-        url: `${baseUrl}/chatbots/${auth.chatbotId}/leads/${id}`,
+        url: `${baseUrl}/chatbots/${auth.props.chatbotId}/leads/${id}`,
         headers: {
-          Authorization: `Bearer ${auth.apiKey}`,
+          Authorization: `Bearer ${auth.props.apiKey}`,
         },
         body: requestBody,
       });

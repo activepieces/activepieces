@@ -53,9 +53,9 @@ export const listLeads = createAction({
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/chatbots/${auth.chatbotId}/leads`,
+        url: `${baseUrl}/chatbots/${auth.props.chatbotId}/leads`,
         headers: {
-          Authorization: `Bearer ${auth.apiKey}`,
+          Authorization: `Bearer ${auth.props.apiKey}`,
         },
         queryParams: queryParams,
       });

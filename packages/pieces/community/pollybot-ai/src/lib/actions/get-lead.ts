@@ -20,9 +20,9 @@ export const getLead = createAction({
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: `${baseUrl}/chatbots/${auth.chatbotId}/leads/${propsValue.id}`,
+        url: `${baseUrl}/chatbots/${auth.props.chatbotId}/leads/${propsValue.id}`,
         headers: {
-          Authorization: `Bearer ${auth.apiKey}`,
+          Authorization: `Bearer ${auth.props.apiKey}`,
         },
       });
       return response.body.data || response.body;
