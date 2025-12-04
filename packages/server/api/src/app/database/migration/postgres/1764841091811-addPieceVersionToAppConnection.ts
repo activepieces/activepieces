@@ -34,7 +34,7 @@ export class AddPieceVersionToAppConnection1764841091811 implements MigrationInt
                 SELECT pm."version"
                 FROM "piece_metadata" pm
                 WHERE pm."name" = ac."pieceName"
-                ORDER BY pm."created" DESC
+                ORDER BY pm."version" DESC
                 LIMIT 1
             )
             WHERE ac."pieceName" IS NOT NULL
