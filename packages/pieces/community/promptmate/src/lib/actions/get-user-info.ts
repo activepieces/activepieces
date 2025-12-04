@@ -13,7 +13,7 @@ export const getUserInfo = createAction({
       method: HttpMethod.GET,
       url: 'https://api.promptmate.io/v1/userInfo',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
     });
 

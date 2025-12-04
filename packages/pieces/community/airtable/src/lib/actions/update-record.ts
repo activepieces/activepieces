@@ -31,14 +31,14 @@ export const airtableUpdateRecordAction = createAction({
     });
     const updatedFields: Record<string, unknown> =
       await airtableCommon.createNewFields(
-        personalToken,
+        personalToken.secret_text,
         baseId,
         tableId as string,
         fieldsWithoutEmptyStrings
       );
 
     return await airtableCommon.updateRecord({
-      personalToken,
+      personalToken: personalToken.secret_text,
       baseId: baseId as string,
       tableId: tableId as string,
       recordId: recordId as string,

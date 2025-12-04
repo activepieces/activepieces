@@ -81,7 +81,7 @@ export const stripe = createPiece({
       baseUrl: () => 'https://api.stripe.com/v1',
       auth: stripeAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

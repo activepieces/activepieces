@@ -13,6 +13,7 @@ export const getContactsFromListAction = createAction({
             displayName: 'Contact List',
             description: 'Select the contact list to retrieve contacts from.',
             required: true,
+            auth: kallabotAuth,
             refreshers: [],
             options: async ({ auth }) => {
                 if (!auth) {
@@ -28,7 +29,7 @@ export const getContactsFromListAction = createAction({
                         method: HttpMethod.GET,
                         url: 'https://api.kallabot.com/contacts/lists',
                         headers: {
-                            'Authorization': `Bearer ${auth}`,
+                            'Authorization': `Bearer ${auth.secret_text}`,
                             'Content-Type': 'application/json'
                         }
                     });

@@ -24,9 +24,9 @@ export const deleteFileAction = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
+    const client = await getClient(context.auth.props);
     const filePath = context.propsValue.filePath;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
@@ -49,7 +49,7 @@ export const deleteFileAction = createAction({
         error: err,
       };
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.props.protocol);
     }
   },
 });

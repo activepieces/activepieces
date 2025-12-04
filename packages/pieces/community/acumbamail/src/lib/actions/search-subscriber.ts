@@ -24,7 +24,7 @@ export const searchSubscriberAction = createAction({
     const request: HttpRequest = {
       method: HttpMethod.DELETE,
       url: acumbamailCommon.baseUrl + '/searchSubscriber/',
-      queryParams: { auth_token: context.auth, subscriber: subscriber },
+      queryParams: { auth_token: context.auth.secret_text, subscriber: subscriber },
     };
 
     const res = await httpClient.sendRequest(request);

@@ -84,7 +84,7 @@ export const createDetailedReport = createAction({
     })
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const accessToken = await getAccessToken(auth);
 
     const filter: any = {};

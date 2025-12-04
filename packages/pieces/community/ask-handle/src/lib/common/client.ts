@@ -28,7 +28,6 @@ export async function askHandleApiCall(
     );
   } catch (error: any) {
     const statusCode = error.response?.status;
-    const errorData = error.response?.body || error.response?.data;
 
     if (statusCode) {
       switch (statusCode) {

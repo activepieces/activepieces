@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -17,7 +18,7 @@ const getToken = (auth: any): string => {
 };
 
 const newChecklistItemPolling: Polling<
-  PiecePropValueSchema<typeof meistertaskAuth>,
+  AppConnectionValueForAuthProperty<typeof meistertaskAuth>,
   { task_id: unknown }
 > = {
   strategy: DedupeStrategy.LAST_ITEM,

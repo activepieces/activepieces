@@ -19,7 +19,7 @@ export const doctly = createPiece({
 			baseUrl: () => BASE_URL,
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 				};
 			},
 		}),

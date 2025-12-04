@@ -15,7 +15,7 @@ export const instantVerifyAction = createAction({
     }),
   },
   async run(context) {
-    return await instantVerify(context.auth, {
+    return await instantVerify(context.auth.props, {
       email: context.propsValue.email,
     });
   },

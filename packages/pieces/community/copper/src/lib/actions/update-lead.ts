@@ -19,12 +19,11 @@ export const updateLead = createAction({
       description: '',
       refreshers: ['auth', 'leadId'],
       required: false,
-      props: async ({ auth, leadId }: any): Promise<InputPropertyMap> => {
+      auth: CopperAuth,
+      props: async ({ auth, leadId }) => {
         if (!auth || !leadId) return {};
-
-        const lead = JSON.parse(leadId);
-
-        return {
+        const lead = JSON.parse(leadId as string);
+        const map:InputPropertyMap= {
           name: Property.ShortText({
             displayName: 'Full Name',
             required: true,
@@ -81,6 +80,7 @@ export const updateLead = createAction({
             defaultValue: lead.address?.country,
           }),
         };
+        return map;
       },
     }),
   },

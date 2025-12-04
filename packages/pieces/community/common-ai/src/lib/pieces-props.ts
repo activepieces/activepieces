@@ -1,12 +1,13 @@
-import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
+import { Property, InputPropertyMap, PieceAuth } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { ImageModel } from 'ai';
 import { isNil, SeekPage } from '@activepieces/shared';
 import { SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from './supported-ai-providers';
 import { AIProviderWithoutSensitiveData } from './types';
+import { ImageModelV2 } from "@ai-sdk/provider";
 
 export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
+        auth: PieceAuth.None(),
         displayName: 'Provider',
         required: true,
         refreshers: [],
@@ -60,6 +61,7 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         },
     }),
     model: Property.Dropdown({
+        auth: PieceAuth.None(),
         displayName: 'Model',
         required: true,
         defaultValue: 'gpt-4o',
@@ -98,12 +100,13 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         },
     }),
     advancedOptions: Property.DynamicProperties({
+        auth: PieceAuth.None(),
         displayName: 'Advanced Options',
         required: false,
         refreshers: ['provider', 'model'],
         props: async (propsValue): Promise<InputPropertyMap> => {
             const provider = propsValue['provider'] as unknown as string;
-            const model = propsValue['model'] as unknown as ImageModel;
+            const model = propsValue['model'] as unknown as ImageModelV2;
 
             const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
             if (isNil(providerMetadata)) {
@@ -240,6 +243,7 @@ export const aiProps = <T extends 'language' | 'image' | 'video'>({ modelType, f
         description: 'Whether to use web search to find information for the AI to use in its response.',
     }),
     webSearchOptions: Property.DynamicProperties({
+        auth: PieceAuth.None(),
         displayName: 'Web Search Options',
         required: false,
         refreshers: ['webSearch', 'provider', 'model'],
