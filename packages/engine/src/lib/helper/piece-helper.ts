@@ -2,22 +2,23 @@ import {
     DropdownProperty,
     DynamicProperties,
     ExecutePropsResult,
+    getAuthPropertyForValue,
     MultiSelectDropdownProperty,
+    PieceAuthProperty,
     PieceMetadata,
     PiecePropertyMap,
     pieceTranslation,
     PropertyType,
     StaticPropsValue } from '@activepieces/pieces-framework'
 import {
-    BasicAuthConnectionValue,
-    CustomAuthConnectionValue,
+    AppConnectionType,
+    AppConnectionValue,
     EngineGenericError,
     ExecuteExtractPieceMetadata,
     ExecutePropsOptions,
     ExecuteValidateAuthOperation,
     ExecuteValidateAuthResponse,
-    OAuth2ConnectionValueWithApp,
-    SecretTextConnectionValue,
+    isNil,
 } from '@activepieces/shared'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { testExecutionContext } from '../handler/context/test-execution-context'
@@ -136,48 +137,12 @@ export const pieceHelper = {
             apiUrl: params.internalApiUrl.endsWith('/') ? params.internalApiUrl : params.internalApiUrl + '/',
             publicUrl: params.publicApiUrl,
         }
-        if (piece.auth?.validate === undefined) {
-            return {
-                valid: true,
-            }
-        }
+        return  validateAuth({
+            authValue: params.auth,
+            pieceAuth: piece.auth,
+            server,
+        })
 
-        switch (piece.auth.type) {
-            case PropertyType.BASIC_AUTH: {
-                const con = params.auth as BasicAuthConnectionValue
-                return piece.auth.validate({
-                    auth: {
-                        username: con.username,
-                        password: con.password,
-                    },
-                    server,
-                })
-            }
-            case PropertyType.SECRET_TEXT: {
-                const con = params.auth as SecretTextConnectionValue
-                return piece.auth.validate({
-                    auth: con.secret_text,
-                    server,
-                })
-            }
-            case PropertyType.CUSTOM_AUTH: {
-                const con = params.auth as CustomAuthConnectionValue
-                return piece.auth.validate({
-                    auth: con.props,
-                    server,
-                })
-            }
-            case PropertyType.OAUTH2: {
-                const con = params.auth as OAuth2ConnectionValueWithApp
-                return piece.auth.validate({
-                    auth: con,
-                    server,
-                })
-            }
-            default: {
-                throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
-            }
-        }
     },
 
     async extractPieceMetadata({ devPieces, params }: { devPieces: string[], params: ExecuteExtractPieceMetadata }): Promise<PieceMetadata> {
@@ -199,3 +164,90 @@ export const pieceHelper = {
 
 type ExecutePropsParams = Omit<ExecutePropsOptions, 'piece'> & { pieceName: string, pieceVersion: string }
 
+
+function mismatchAuthTypeErrorMessage(pieceAuthType: PropertyType, connectionType: AppConnectionType): ExecuteValidateAuthResponse {
+    return {
+        valid: false,
+        error: `Connection value type does not match piece auth type: ${pieceAuthType} !== ${connectionType}`,
+    }
+}
+
+const validateAuth = async ({
+    server,
+    authValue,
+    pieceAuth,
+}: ValidateAuthParams): Promise<ExecuteValidateAuthResponse> => {
+    if (isNil(pieceAuth)) {
+        return {
+            valid: true,
+        }
+    }
+    const usedPieceAuth = getAuthPropertyForValue({
+        authValueType: authValue.type,
+        pieceAuth,
+    })
+
+    if (isNil(usedPieceAuth)) {
+        return {
+            valid: false,
+            error: 'No piece auth found for auth value',
+        }
+    }
+    if (isNil(usedPieceAuth.validate)) {
+        return {
+            valid: true,
+        }
+    }
+  
+
+    switch (usedPieceAuth.type) {
+        case PropertyType.OAUTH2:{
+            if (authValue.type !== AppConnectionType.OAUTH2 && authValue.type !== AppConnectionType.CLOUD_OAUTH2 && authValue.type !== AppConnectionType.PLATFORM_OAUTH2) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue,
+                server,
+            })
+        }
+        case PropertyType.BASIC_AUTH:{
+            if (authValue.type !== AppConnectionType.BASIC_AUTH) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue,
+                server,
+            })
+        }
+        case PropertyType.SECRET_TEXT:{
+            if (authValue.type !== AppConnectionType.SECRET_TEXT) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue.secret_text,
+                server,
+            })
+        }
+        case PropertyType.CUSTOM_AUTH:{
+            if (authValue.type !== AppConnectionType.CUSTOM_AUTH) {
+                return mismatchAuthTypeErrorMessage(usedPieceAuth.type, authValue.type)
+            }
+            return usedPieceAuth.validate({
+                auth: authValue.props,
+                server,
+            })
+        }
+        default: {
+            throw new EngineGenericError('InvalidAuthTypeError', 'Invalid auth type')
+        }
+    }
+}
+
+type ValidateAuthParams = {
+    server: {
+        apiUrl: string
+        publicUrl: string
+    }
+    authValue: AppConnectionValue
+    pieceAuth: PieceAuthProperty | PieceAuthProperty[] | undefined
+}

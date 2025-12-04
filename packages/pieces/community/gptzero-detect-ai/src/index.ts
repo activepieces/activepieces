@@ -5,7 +5,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { gptzeroDetectAiAuth } from './lib/common/auth';
 
 export const gptzeroDetectAi = createPiece({
-  displayName: 'Gptzero-detect-ai',
+  displayName: 'GPTZero',
   auth: gptzeroDetectAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gptzero-detect-ai.png',
