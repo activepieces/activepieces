@@ -32,7 +32,6 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
 
         const { data } = res.body;
 
-        // Map deployments to ProviderModel format
         return data.map((deployment: any) => ({
             id: deployment.name,
             name: deployment.name,
