@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Metadata, Nullable } from '../common'
-import { Collection } from './collection'
+import { FlowVersionTemplate } from './template'
 import { TemplateCategory, TemplateTag, TemplateType } from './template'
 
 export const CreateTemplateRequestBody = Type.Object({
@@ -12,7 +12,7 @@ export const CreateTemplateRequestBody = Type.Object({
     author: Type.String(),
     categories: Type.Array(Type.Enum(TemplateCategory)),
     type: Type.Enum(TemplateType),
-    collection: Collection,
+    flows: Type.Optional(Type.Array(FlowVersionTemplate)),
 })
 export type CreateTemplateRequestBody = Static<typeof CreateTemplateRequestBody>
 
@@ -23,7 +23,7 @@ export const UpdateFlowTemplateRequestBody = Type.Object({
     blogUrl: Type.Optional(Type.String()),
     metadata: Nullable(Metadata),
     categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
-    collection: Type.Optional(Collection),
+    flows: Type.Optional(Type.Array(FlowVersionTemplate)),
 })
 export type UpdateFlowTemplateRequestBody = Static<typeof UpdateFlowTemplateRequestBody>
 

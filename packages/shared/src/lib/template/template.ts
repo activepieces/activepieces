@@ -1,7 +1,7 @@
 import { Omit, Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Metadata, Nullable } from '../common'
 import { ColorName } from '../project'
-import { Collection } from './collection'
+import { FlowVersion } from '../flows/flow-version'
 
 export const TemplateTag = Type.Object({
     title: Type.String(),
@@ -9,6 +9,7 @@ export const TemplateTag = Type.Object({
     icon: Type.Optional(Type.String()),
 })
 export type TemplateTag = Static<typeof TemplateTag>
+
 
 export enum TemplateType {
     OFFICIAL = 'OFFICIAL',
@@ -31,6 +32,13 @@ export enum TemplateCategory {
     SALES = 'SALES',
 }
 
+export const FlowVersionTemplate = Type.Omit(
+    FlowVersion,
+    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
+)
+export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
+
+
 export const Template = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
@@ -44,7 +52,7 @@ export const Template = Type.Object({
     categories: Type.Array(Type.Enum(TemplateCategory)),
     pieces: Type.Array(Type.String()),
     platformId: Nullable(Type.String()),
-    collection: Collection,
+    flows: Type.Optional(Type.Array(FlowVersionTemplate)),
 })
 export type Template = Static<typeof Template>
 

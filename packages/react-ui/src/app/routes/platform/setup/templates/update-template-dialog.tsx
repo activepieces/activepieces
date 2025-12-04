@@ -87,17 +87,14 @@ export const UpdateTemplateDialog = ({
         blogUrl: formValue.blogUrl,
         metadata: template.metadata,
         categories: formValue.categories || [],
-        collection: formValue.template
-          ? {
-              flowTemplates: [
-                {
-                  ...(formValue.template as FlowVersionTemplate),
-                  displayName: formValue.displayName,
-                  valid:
-                    (formValue.template as FlowVersionTemplate).valid ?? true,
-                },
-              ],
-            }
+        flows: formValue.template
+          ? [
+              {
+                ...(formValue.template as FlowVersionTemplate),
+                displayName: formValue.displayName,
+                valid: (formValue.template as FlowVersionTemplate).valid ?? true,
+              },
+            ]
           : undefined,
       });
     },

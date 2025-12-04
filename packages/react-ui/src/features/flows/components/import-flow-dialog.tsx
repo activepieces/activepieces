@@ -65,11 +65,11 @@ const readTemplateJson = async (
     reader.onload = () => {
       try {
         const template = JSON.parse(reader.result as string) as Template;
-        const { collection, name } = template;
+        const { flows, name } = template;
         if (
-          !collection?.flowTemplates?.[0] ||
+          !flows?.[0] ||
           !name ||
-          !collection.flowTemplates[0].trigger
+          !flows[0].trigger
         ) {
           resolve(null);
         } else {
@@ -127,8 +127,8 @@ const ImportFlowDialog = (
           type: FlowOperationType.IMPORT_FLOW,
           request: {
             displayName: template.name,
-            trigger: template.collection.flowTemplates![0].trigger,
-            schemaVersion: template.collection.flowTemplates![0].schemaVersion,
+            trigger: template.flows![0].trigger,
+            schemaVersion: template.flows![0].schemaVersion,
           },
         });
       });

@@ -139,9 +139,7 @@ export const createMockTemplate = (
         created: template?.created ?? faker.date.recent().toISOString(),
         updated: template?.updated ?? faker.date.recent().toISOString(),
         pieces: template?.pieces ?? [],
-        collection: template?.collection ?? {
-            flowTemplates: [createMockFlowVersion()],
-        },
+        flows: template?.flows ?? [createMockFlowVersion()],
         platformId: template?.platformId ?? apId(),
         name: template?.name ?? faker.lorem.word(),
         type: template?.type ?? TemplateType.CUSTOM,

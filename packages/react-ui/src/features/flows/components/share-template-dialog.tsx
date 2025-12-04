@@ -64,7 +64,7 @@ const ShareTemplateDialog: React.FC<{
         author,
         categories: template.categories,
         type: template.type,
-        collection: template.collection,
+        flows: template.flows,
       });
 
       return flowTemplate;

@@ -30,7 +30,7 @@ const TemplateViewer = ({ template }: { template: Template }) => {
         projectId: authenticationSession.getProjectId()!,
         displayName: template.name,
       });
-      const flowTemplate = template.collection.flowTemplates?.[0];
+      const flowTemplate = template.flows?.[0];
       if (!flowTemplate) {
         throw new Error('Template does not have a flow template');
       }
@@ -74,9 +74,9 @@ const TemplateViewer = ({ template }: { template: Template }) => {
             <div className="flex flex-col gap-2 items-center justify-between mb-4">
               <div className="flex flex-row w-full justify-between items-center">
                 <span>{t('Steps in this flow')}</span>
-                {template.collection.flowTemplates?.[0]?.trigger && (
+                {template.flows?.[0]?.trigger && (
                   <PieceIconList
-                    trigger={template.collection.flowTemplates[0].trigger}
+                    trigger={template.flows[0].trigger}
                     maxNumberOfIconsToShow={5}
                   ></PieceIconList>
                 )}

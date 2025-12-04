@@ -1,4 +1,4 @@
-import { apId, Collection, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { apId, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TemplateEntity } from '../../template/template.entity'
 
@@ -6,7 +6,7 @@ import { TemplateEntity } from '../../template/template.entity'
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
 export const platformTemplateService = () => ({
-    async create({ platformId, name, description, pieces, tags, blogUrl, metadata, author, categories, collection }: CreateParams): Promise<Template> {
+    async create({ platformId, name, description, pieces, tags, blogUrl, metadata, author, categories, flows }: CreateParams): Promise<Template> {
         const newTags = tags ?? []
         const newTemplate: NewTemplate = {
             id: apId(),
@@ -21,14 +21,14 @@ export const platformTemplateService = () => ({
             usageCount: 0,
             categories,
             pieces,
-            collection,
+            flows,
         }
         return templateRepo().save(newTemplate)
     },
     async update({ id, params }: UpdateParams): Promise<Template> {
-        const { name, description, tags, blogUrl, metadata, categories, collection } = params
-        const flowTemplate: FlowVersionTemplate | undefined = collection?.flowTemplates?.[0] ? sanitizeObjectForPostgresql(collection.flowTemplates[0]) : undefined
-        const pieces = flowTemplate ? flowPieceUtil.getUsedPieces(flowTemplate.trigger) : undefined
+        const { name, description, tags, blogUrl, metadata, categories, flows } = params
+        const flow: FlowVersionTemplate | undefined = flows?.[0] ? sanitizeObjectForPostgresql(flows[0]) : undefined
+        const pieces = flow ? flowPieceUtil.getUsedPieces(flow.trigger) : undefined
         await templateRepo().update(id, {
             ...spreadIfDefined('name', name),
             ...spreadIfDefined('description', description),
@@ -36,7 +36,7 @@ export const platformTemplateService = () => ({
             ...spreadIfDefined('blogUrl', blogUrl),
             ...spreadIfDefined('metadata', metadata),
             ...spreadIfDefined('categories', categories),
-            ...spreadIfDefined('collection', collection),
+            ...spreadIfDefined('flows', flows),
             ...spreadIfDefined('pieces', pieces),
         })
         return templateRepo().findOneByOrFail({ id })
@@ -52,7 +52,7 @@ type CreateParams = {
     metadata: Metadata | null | undefined
     author: string
     categories: TemplateCategory[]
-    collection: Collection
+    flows: FlowVersionTemplate[]
     pieces: string[]
 }
 

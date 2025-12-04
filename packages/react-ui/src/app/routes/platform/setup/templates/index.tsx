@@ -133,7 +133,7 @@ export default function TemplatesPage() {
         <DataTableColumnHeader column={column} title={t('Pieces')} />
       ),
       cell: ({ row }) => {
-        const trigger = row.original.collection?.flowTemplates?.[0]?.trigger;
+        const trigger = row.original.flows?.[0]?.trigger;
         if (!trigger) return null;
         return <PieceIconList trigger={trigger} maxNumberOfIconsToShow={2} />;
       },

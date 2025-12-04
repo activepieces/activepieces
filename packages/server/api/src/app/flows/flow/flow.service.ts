@@ -520,9 +520,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         const template: SharedTemplate = {
             name: flow.version.displayName,
             description: '',
-            collection: {
-                flowTemplates: [flow.version],
-            },
+            flows: [flow.version],
             tags: [],
             blogUrl: '',
             metadata: null,

@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, Collection, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
@@ -25,12 +25,8 @@ export const templateService = () => ({
     async create({ platformId, params }: CreateParams): Promise<Template> {
         const { name, description, tags, blogUrl, metadata, author, categories, type } = params
         const newTags = tags ?? []
-        const sanatizedFlowTemplates: FlowVersionTemplate[] = params.collection?.flowTemplates?.map((flowTemplate) => sanitizeObjectForPostgresql(flowTemplate)) ?? []
-        const pieces = sanatizedFlowTemplates.map((flowTemplate) => flowPieceUtil.getUsedPieces(flowTemplate.trigger)).flat()
-
-        const collection: Collection = {
-            flowTemplates: sanatizedFlowTemplates,
-        }
+        const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
+        const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
 
         switch (type) {
             case TemplateType.OFFICIAL:
@@ -48,12 +44,12 @@ export const templateService = () => ({
                     usageCount: 0,
                     categories,
                     pieces,
-                    collection,
+                    flows: sanatizedFlows,
                 }
                 return templateRepo().save(newTemplate)
             }
             case TemplateType.CUSTOM: {
-                return platformTemplateService().create({ platformId, name, description, pieces, tags: newTags, blogUrl, metadata, author, categories, collection })
+                return platformTemplateService().create({ platformId, name, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows: sanatizedFlows })
             }
         }
     },
@@ -63,11 +59,8 @@ export const templateService = () => ({
         const template = await templateService().getOneOrThrow({ id })
 
         const newTags = tags ?? []
-        const sanatizedFlowTemplates: FlowVersionTemplate[] = params.collection?.flowTemplates?.map((flowTemplate) => sanitizeObjectForPostgresql(flowTemplate)) ?? []
-        const pieces = sanatizedFlowTemplates.map((flowTemplate) => flowPieceUtil.getUsedPieces(flowTemplate.trigger)).flat()
-        const collection: Collection = {
-            flowTemplates: sanatizedFlowTemplates,
-        }
+        const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
+        const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
         switch (template.type) {
             case TemplateType.OFFICIAL:
             case TemplateType.SHARED: {
@@ -78,7 +71,7 @@ export const templateService = () => ({
                     ...spreadIfDefined('blogUrl', blogUrl),
                     ...spreadIfDefined('metadata', metadata),
                     ...spreadIfDefined('categories', categories),
-                    ...spreadIfDefined('collection', collection),
+                    ...spreadIfDefined('flows', sanatizedFlows),
                     ...spreadIfDefined('pieces', pieces),
                     ...spreadIfDefined('tags', newTags),
                 })

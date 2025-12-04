@@ -15,7 +15,7 @@ export const TemplateDetailsView = ({ template }: TemplateDetailsViewProps) => {
       <div className="mb-4 p-8 flex items-center justify-center gap-2 width-full bg-green-300 rounded-lg">
         <PieceIconList
           size="xxl"
-          trigger={template.collection.flowTemplates![0].trigger}
+          trigger={template.flows![0].trigger}
           maxNumberOfIconsToShow={3}
         />
       </div>

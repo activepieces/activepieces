@@ -57,11 +57,6 @@ const FlowVersionTemplate = Type.Omit(
 type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 
 
-const Collection = Type.Object({
-    flowTemplates: Type.Optional(Type.Array(FlowVersionTemplate)),
-})
-type Collection = Static<typeof Collection>
-
 export class CreateTemplateTable1764777773932 implements MigrationInterface {
     name = 'CreateTemplateTable1764777773932'
 
@@ -77,7 +72,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
                 "type" character varying NOT NULL,
                 "name" character varying NOT NULL,
                 "description" character varying NOT NULL,
-                "collection" jsonb NOT NULL,
+                "flows" jsonb NOT NULL,
                 "tags" jsonb NOT NULL,
                 "blogUrl" character varying,
                 "metadata" jsonb,
@@ -114,9 +109,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             const id = apId()
             const name = flowTemplate.name
             const description = flowTemplate.description || ''
-            const collection: Collection = {
-                flowTemplates: [flowTemplate.template],
-            }
+            const flows: FlowVersionTemplate[] = [flowTemplate.template]
             const tags: TemplateTag[] = flowTemplate.tags.map((tag: string) => ({
                 title: tag,
                 color: ColorName.BLUE,
@@ -135,7 +128,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
                 id,
                 name,
                 description,
-                JSON.stringify(collection),
+                JSON.stringify(flows),
                 JSON.stringify(tags),
                 blogUrl,
                 metadata ? JSON.stringify(metadata) : null,
@@ -156,7 +149,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
         const flattenedValues = templateValues.flat()
 
         await queryRunner.query(`
-            INSERT INTO "template" ("id", "name", "description", "collection", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId") 
+            INSERT INTO "template" ("id", "name", "description", "flows", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId") 
             VALUES ${valuesPlaceholders}
         `, flattenedValues)
         

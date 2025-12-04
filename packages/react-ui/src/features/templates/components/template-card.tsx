@@ -53,8 +53,8 @@ export const TemplateCard = ({
         type: FlowOperationType.IMPORT_FLOW,
         request: {
           displayName: template.name,
-          trigger: template.collection.flowTemplates![0].trigger,
-          schemaVersion: template.collection.flowTemplates![0].schemaVersion,
+          trigger: template.flows![0].trigger,
+          schemaVersion: template.flows![0].schemaVersion,
         },
       });
     },
@@ -70,7 +70,7 @@ export const TemplateCard = ({
     >
       <div className="flex items-center gap-2 p-4">
         <PieceIconList
-          trigger={template.collection.flowTemplates![0].trigger}
+          trigger={template.flows![0].trigger}
           maxNumberOfIconsToShow={2}
         />
       </div>

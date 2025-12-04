@@ -92,9 +92,7 @@ export const CreateTemplateDialog = ({
       console.log('flowTemplate', flowTemplate);
 
       return templatesApi.create({
-        collection: {
-          flowTemplates: [flowTemplate],
-        },
+        flows: [flowTemplate],
         type: TemplateType.CUSTOM,
         name: formValue.displayName,
         description: formValue.description,

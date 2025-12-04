@@ -30,7 +30,7 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
             type: String,
             nullable: false,
         },
-        collection: {
+        flows: {
             type: JSONB_COLUMN_TYPE,
             nullable: false,
         },
