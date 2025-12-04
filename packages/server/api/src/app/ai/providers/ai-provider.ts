@@ -10,8 +10,6 @@ export type AIProviderStrategy<T extends object> = {
     authHeaders(config: T): Record<string, string>;
 }
 
-export type ConfigSchema<T> = { attribute: keyof T; label: string; type: 'string' | 'number' }[];
-
 export type ProviderModel = {
     id: string;
     name: string;
