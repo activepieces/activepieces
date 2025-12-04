@@ -1,8 +1,7 @@
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import { ToastAction } from '@/components/ui/toast';
-import { toast } from '@/components/ui/use-toast';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
 import { ApFlagId } from '@activepieces/shared';
@@ -46,21 +45,16 @@ const CreateAgentActionItem = ({
       stepMetadataWithSuggestions={createAgentPieceSelectorItem.pieceMetadata}
       onClick={() => {
         if (!isAgentsConfigured) {
-          toast({
-            title: t('Connect to OpenAI'),
+          toast('Connect to OpenAI', {
             description: t(
               "To create an agent, you'll first need to connect to OpenAI in platform settings.",
             ),
-            action: (
-              <ToastAction
-                altText="Try again"
-                onClick={() => {
-                  navigate('/platform/setup/ai');
-                }}
-              >
-                {t('Set Up')}
-              </ToastAction>
-            ),
+            action: {
+              label: 'Set Up',
+              onClick: () => {
+                navigate('/platform/setup/ai');
+              },
+            },
           });
           return;
         }

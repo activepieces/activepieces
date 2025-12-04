@@ -67,8 +67,8 @@ export const quickbase = createPiece({
       },
       authMapping: async (auth) => {
         return {
-          'QB-Realm-Hostname': (auth as any).realmHostname,
-          'Authorization': `QB-USER-TOKEN ${(auth as any).userToken}`,
+          'QB-Realm-Hostname': (auth).props.realmHostname,
+          'Authorization': `QB-USER-TOKEN ${(auth).props.userToken}`,
           'Content-Type': 'application/json',
         };
       },

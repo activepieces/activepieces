@@ -1,12 +1,14 @@
 import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { griptapeAuth } from './auth';
 
 export const assistantIdDropdown = Property.Dropdown({
   displayName: 'Assistant',
   description: 'Select the assistant',
   required: true,
   refreshers: [],
+  auth: griptapeAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -17,7 +19,7 @@ export const assistantIdDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/assistants'
       );
@@ -43,6 +45,7 @@ export const knowledgeBaseIdsDropdown = Property.MultiSelectDropdown({
   description: 'Select knowledge bases to use',
   required: false,
   refreshers: [],
+  auth: griptapeAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -53,7 +56,7 @@ export const knowledgeBaseIdsDropdown = Property.MultiSelectDropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/knowledge-bases'
       );
@@ -79,6 +82,7 @@ export const rulesetIdsDropdown = Property.MultiSelectDropdown({
   description: 'Select rulesets to apply',
   required: false,
   refreshers: [],
+  auth: griptapeAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -89,7 +93,7 @@ export const rulesetIdsDropdown = Property.MultiSelectDropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/rulesets'
       );
@@ -115,6 +119,7 @@ export const structuresIdsDropdown = Property.MultiSelectDropdown({
   description: 'Select structures to use',
   required: false,
   refreshers: [],
+  auth: griptapeAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -125,7 +130,7 @@ export const structuresIdsDropdown = Property.MultiSelectDropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/structures'
       );
@@ -151,6 +156,7 @@ export const toolsIdsDropdown = Property.MultiSelectDropdown({
   description: 'Select tools to use',
   required: false,
   refreshers: [],
+  auth: griptapeAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -161,7 +167,7 @@ export const toolsIdsDropdown = Property.MultiSelectDropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         '/tools'
       );
@@ -187,6 +193,7 @@ export const threadIdsDropdown = Property.MultiSelectDropdown({
   description: 'Select the thread',
   required: false,
   refreshers: [],
+  auth: griptapeAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -198,7 +205,7 @@ export const threadIdsDropdown = Property.MultiSelectDropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/threads`
       );
@@ -224,6 +231,7 @@ export const structureIdDropdown = Property.Dropdown({
   description: 'Select the structure',
   required: true,
   refreshers: [],
+  auth: griptapeAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -235,7 +243,7 @@ export const structureIdDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/structures`
       );
@@ -261,6 +269,7 @@ export const assistantRunsDropdown = Property.Dropdown({
   description: 'Select the assistant run',
   required: true,
   refreshers: ['assistant_id'],
+  auth: griptapeAuth,
   options: async ({ auth, assistant_id }) => {
     if (!auth) {
       return {
@@ -280,7 +289,7 @@ export const assistantRunsDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/assistants/${assistant_id}/runs`
       );
@@ -306,7 +315,8 @@ export const structureRunsDropdown = Property.Dropdown({
   description: 'Select the structure run',
   required: true,
   refreshers: ['structure_id'],
-  options: async ({ auth, structure_id }) => {
+  auth: griptapeAuth,
+      options: async ({ auth, structure_id }) => {
     if (!auth) {
       return {
         disabled: true,
@@ -325,7 +335,7 @@ export const structureRunsDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/structures/${structure_id}/runs`
       );

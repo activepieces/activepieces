@@ -9,6 +9,7 @@ import {
 import {
   createAction,
   DynamicPropsValue,
+  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { assertNotNullOrUndefined } from '@activepieces/shared';
@@ -57,6 +58,7 @@ export const httpSendRequestAction = createAction({
     authFields: Property.DynamicProperties({
       displayName: 'Authentication Fields',
       required: false,
+      auth: PieceAuth.None(),
       refreshers: ['authType'],
       props: async ({ authType }) => {
         if (!authType) {
@@ -123,10 +125,11 @@ export const httpSendRequestAction = createAction({
         ],
       },
     }),
-    body: Property.DynamicProperties({
+    body: Property.DynamicProperties({  
       displayName: 'Body',
       refreshers: ['body_type'],
       required: false,
+      auth: PieceAuth.None(),
       props: async ({ body_type }) => {
         if (!body_type) return {};
 
@@ -173,6 +176,7 @@ export const httpSendRequestAction = createAction({
       required: false,
     }),
     proxy_settings: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Proxy Settings',
       refreshers: ['use_proxy'],
       required: false,
@@ -390,7 +394,7 @@ const handleBinaryResponse = (
   let body;
 
   if (isBinary && isBinaryBody(bodyContent)) {
-    body = Buffer.from(bodyContent).toString('base64');
+    body = Buffer.from(bodyContent as unknown as string).toString('base64');
   } else {
     body = bodyContent;
   }

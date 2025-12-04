@@ -54,12 +54,15 @@ export const netsuite = createPiece({
     runSuiteQL,
     createCustomApiCallAction({
       baseUrl: (auth) => {
-        const authValue = auth as PiecePropValueSchema<typeof netsuiteAuth>;
+        if (!auth) {
+          return '';
+        }
+        const authValue = auth.props;
         return `https://${authValue.accountId}.suitetalk.api.netsuite.com`;
       },
       auth: netsuiteAuth,
       authMapping: async (auth, propsValue) => {
-        const authValue = auth as PiecePropValueSchema<typeof netsuiteAuth>;
+        const authValue = auth.props;
 
         const authHeader = createOAuthHeader(
           authValue.accountId,

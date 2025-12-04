@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -16,8 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { projectHooks } from '@/hooks/project-hooks';
 import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
 
@@ -58,10 +58,8 @@ export function ProjectSelectionDialog({
         (!plan.flows || plan.flows.length === 0) &&
         (!plan.tables || plan.tables.length === 0)
       ) {
-        toast({
-          title: t('No Changes Found'),
+        toast(t('No Changes Found'), {
           description: t('There are no differences to apply'),
-          variant: 'default',
         });
         return;
       }

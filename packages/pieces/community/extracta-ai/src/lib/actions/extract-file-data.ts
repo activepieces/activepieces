@@ -287,7 +287,7 @@ export const extractFileData = createAction({
         url: 'https://api.extracta.ai/api/v1/createExtraction',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${apiKey}`
+          Authorization: `Bearer ${apiKey.secret_text}`
         },
         body: { extractionDetails }
       });
@@ -309,7 +309,7 @@ export const extractFileData = createAction({
         method: HttpMethod.POST,
         url: 'https://api.extracta.ai/api/v1/uploadFiles',
         headers: {
-          Authorization: `Bearer ${apiKey}`
+          Authorization: `Bearer ${apiKey.secret_text}`
         },
         body: formData
       });

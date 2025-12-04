@@ -40,7 +40,7 @@ export const telegramBot = createPiece({
     telegramGetFileAction,
     telegramCreateInviteLinkAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => telegramCommons.getApiUrl(auth as string, ''),
+      baseUrl: (auth) => auth ? telegramCommons.getApiUrl(auth, '') : '',
       auth: telegramBotAuth,
     }),
   ],

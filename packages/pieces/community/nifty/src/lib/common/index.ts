@@ -6,9 +6,11 @@ import {
   httpClient,
   AuthenticationType,
 } from '@activepieces/pieces-common';
+import { niftyAuth } from '../..';
 
 export const nitfyCommon = {
   portfolio: Property.Dropdown({
+auth:niftyAuth,
     displayName: 'Portfolio',
     required: true,
     refreshers: [],
@@ -46,6 +48,7 @@ export const nitfyCommon = {
     },
   }),
   project: Property.Dropdown({
+auth:niftyAuth,
     displayName: 'Project',
     required: true,
     refreshers: ['portfolio'],
@@ -94,6 +97,7 @@ export const nitfyCommon = {
     },
   }),
   status: Property.Dropdown({
+auth:niftyAuth,
     displayName: 'Status',
     required: true,
     refreshers: ['project'],
@@ -143,6 +147,7 @@ export const nitfyCommon = {
     },
   }),
   milestone: Property.Dropdown({
+auth:niftyAuth,
     displayName: 'Milestone',
     required: true,
     refreshers: ['project'],

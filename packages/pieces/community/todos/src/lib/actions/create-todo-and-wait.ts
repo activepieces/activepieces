@@ -1,4 +1,4 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth } from '@activepieces/pieces-framework';
 import {
   ExecutionType,
   PauseType,
@@ -7,6 +7,7 @@ import {
 import { sendTodoApproval, createTodoProps } from '../utils/utils';
 
 export const createTodoAndWait = createAction({
+  auth: PieceAuth.None(),
   name: 'createTodoAndWait',
   displayName: 'Create Todo and Wait',
   description:

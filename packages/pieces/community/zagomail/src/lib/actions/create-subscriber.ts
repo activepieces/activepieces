@@ -36,6 +36,6 @@ export const createSubscriber = createAction({
 			payload[field] = formattedValue;
 		}
 
-		return await zagoMailApiService.createSubscriber(auth, listUId, payload);
+		return await zagoMailApiService.createSubscriber(auth.secret_text, listUId, payload);
 	},
 });

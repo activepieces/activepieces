@@ -1,11 +1,10 @@
 import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { textToSpeech } from './lib/actions/text-to-speech-action';
 import {
   createClient,
   ELEVEN_RESIDENCY,
-  ElevenAuthType,
   ElevenResidency,
   getApiKey,
   getRegionApiUrl
@@ -48,7 +47,10 @@ export const elevenlabsAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const elevenlabs = createClient(auth);
+      const elevenlabs = createClient({
+        type: AppConnectionType.CUSTOM_AUTH,
+        props: auth,
+      });
       await elevenlabs.user.get();
 
       return {
@@ -79,13 +81,13 @@ export const elevenlabs = createPiece({
       // missing propsValue to not override url when credentials are changed
       // @see packages/pieces/community/common/src/lib/helpers/index.ts:65
       baseUrl: (auth) => {
-        return getRegionApiUrl((auth as ElevenAuthType)?.region)
+        return getRegionApiUrl(auth?.props.region)
       },
       auth: elevenlabsAuth,
       authMapping: async (auth) => {
         return ({
           // keep old plain value for bc
-          'xi-api-key': `${getApiKey(auth as ElevenAuthType)}`,
+          'xi-api-key': `${getApiKey(auth.props.apiKey)}`,
         })
       },
     }),

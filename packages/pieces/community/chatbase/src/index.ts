@@ -31,7 +31,7 @@ export const chatbase = createPiece({
 			baseUrl: () => 'https://www.chatbase.co/api/v1',
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${auth}`,
+					Authorization: `Bearer ${auth.secret_text}`,
 				};
 			},
 		}),

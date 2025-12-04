@@ -10,6 +10,7 @@ export const createExpense = createAction({
 	auth: teamworkAuth,
 	props: {
 		'project-id': Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'The project to log the expense against.',
 			required: true,
@@ -22,7 +23,7 @@ export const createExpense = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/projects.json',
 				});

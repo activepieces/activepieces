@@ -2,7 +2,6 @@ import { LockKeyhole } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-import { BetaBadge } from '@/components/custom/beta-badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
 import {
@@ -27,7 +26,6 @@ export type SidebarItemType = {
   locked?: boolean;
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
-  isBeta?: boolean;
   isSubItem?: boolean;
   show?: boolean;
   hasPermission?: boolean;
@@ -92,7 +90,6 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                   {item.icon && <item.icon className="size-5" />}
                   <span className="text-sm">{item.label}</span>
                 </div>
-                {item.isBeta && <BetaBadge showTooltip={false} />}
               </div>
               {item.locked && <LockKeyhole className="size-3.5" />}
             </div>

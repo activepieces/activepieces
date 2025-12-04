@@ -10,13 +10,21 @@ export const ingestDocumentAction = createAction({
   description: 'Upload and ingest a document into a Contextual AI datastore',
   props: {
     datastoreId: Property.Dropdown({
+      auth: contextualAiAuth,
       displayName: 'Datastore',
       description: 'Select the datastore to upload the document to',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
         try {
-          const { apiKey, baseUrl } = auth as { apiKey: string; baseUrl?: string };
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your account first',
+            };
+          }
+          const { apiKey, baseUrl } = auth.props;
           const client = new ContextualAI({
             apiKey: apiKey,
             baseURL: baseUrl || 'https://api.contextual.ai/v1',
@@ -58,7 +66,7 @@ export const ingestDocumentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const { datastoreId, file, customMetadata, configuration } = propsValue;
 
     const client = new ContextualAI({

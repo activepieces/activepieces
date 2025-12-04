@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -18,14 +19,14 @@ const props = {
   assistant_id: assistantIdDropdown,
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof griptapeAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue, auth, lastFetchEpochMS }) => {
     const { assistant_id } = propsValue;
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/assistants/${assistant_id}/runs?status=SUCCEEDED,FAILED,ERROR,CANCELLED&page_size=100`
       );

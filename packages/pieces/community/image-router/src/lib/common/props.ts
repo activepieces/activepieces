@@ -1,8 +1,10 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { imageRouterApiCall } from './client';
+import { imageRouterAuth } from './auth';
 
 export const modelDropdown = Property.Dropdown({
+  auth: imageRouterAuth,
   displayName: 'Model',
   description: 'Select an image generation model',
   required: true,
@@ -18,7 +20,7 @@ export const modelDropdown = Property.Dropdown({
 
     try {
       const response = await imageRouterApiCall<any>({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.GET,
         resourceUri: '/v1/models?type=image',
       });
