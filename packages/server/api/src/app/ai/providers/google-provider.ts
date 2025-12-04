@@ -1,10 +1,7 @@
 import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { AIProviderStrategy, ProviderModel } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-export type GoogleProviderConfig = {
-    apiKey: string;
-}
+import { GoogleProviderConfig } from '@activepieces/common-ai';
 
 
 export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {

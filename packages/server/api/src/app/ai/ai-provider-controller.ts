@@ -1,4 +1,4 @@
-import { AIProvider, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
+import { AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -46,7 +46,7 @@ const GetAIProviderConfig = {
     },
     schema: {
         params: Type.Object({
-            id: Type.String(),
+            id: Type.Enum(AIProviderName),
         }),
     },
 }
@@ -57,7 +57,7 @@ const ListModels = {
     },
     schema: {
         params: Type.Object({
-            id: Type.String(),
+            id: Type.Enum(AIProviderName),
         }),
     },
 }
@@ -77,7 +77,7 @@ const DeleteAIProvider = {
     },
     schema: {
         params: Type.Object({
-            id: Type.String(),
+            id: Type.Enum(AIProviderName),
         }),
     },
 }

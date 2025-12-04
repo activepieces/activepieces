@@ -1,9 +1,6 @@
+import { OpenAIProviderConfig } from '@activepieces/common-ai';
 import { AIProviderStrategy, ProviderModel } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-export type OpenAIProviderConfig = {
-    apiKey: string;
-}
 
 export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
     name() {

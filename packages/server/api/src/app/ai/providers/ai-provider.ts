@@ -1,10 +1,6 @@
-import { AIProvider, AIUsageMetadata } from '@activepieces/common-ai'
-import { SeekPage } from '@activepieces/shared'
-import { Type } from '@sinclair/typebox';
-import { FastifyRequest, RawServerBase, RequestGenericInterface } from 'fastify'
+import { AIProviderConfig } from '@activepieces/common-ai'
 
-
-export type AIProviderStrategy<T extends object> = {
+export type AIProviderStrategy<T extends AIProviderConfig> = {
     name(): string;
     listModels(config: T): Promise<ProviderModel[]>;
 }

@@ -1,10 +1,6 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { AIProviderStrategy, ProviderModel } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
-export type OpenRouterProviderConfig = {
-    apiKey: string;
-}
+import { OpenRouterProviderConfig } from '@activepieces/common-ai';
 
 export const openRouterProvider: AIProviderStrategy<OpenRouterProviderConfig> = {
     name() {

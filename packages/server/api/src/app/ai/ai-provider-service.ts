@@ -1,4 +1,4 @@
-import { CreateAIProviderRequest } from '@activepieces/common-ai'
+import { AIProviderConfig, AIProviderName, CreateAIProviderRequest } from '@activepieces/common-ai'
 import {
     ActivepiecesError,
     ApEdition,
@@ -11,7 +11,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
-import { AiProviderConfig, aiProviders } from './providers'
+import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
@@ -21,7 +21,7 @@ export const aiProviderService = {
 
         const data: ListAIProviderResponseItem[] = [];
 
-        for (const id of Object.keys(aiProviders)) {
+        for (const id of Object.values(AIProviderName)) {
             const isConfigured = configuredProviders.find(c => c.provider === id)
             const provider = aiProviders[id]
 
@@ -35,17 +35,17 @@ export const aiProviderService = {
         return { data, next: null, previous: null }
     },
 
-    async listModels(platformId: PlatformId, providerId: string): Promise<SeekPage<ListModelsResponseItem>> {
-        const configured = await aiProviderRepo().findOneByOrFail({ platformId, provider: providerId })
+    async listModels(platformId: PlatformId, providerId: AIProviderName): Promise<SeekPage<ListModelsResponseItem>> {
+        const { config } = await this.getConfig(platformId, providerId)
 
         const provider = aiProviders[providerId]
-        const data = await provider.listModels(configured.config)
+        const data = await provider.listModels(config)
 
         return { data, next: null, previous: null }
     },
 
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
-        if (request.provider === 'azure' && system.getEdition() !== ApEdition.ENTERPRISE) {
+        if (request.provider === AIProviderName.Azure && system.getEdition() !== ApEdition.ENTERPRISE) {
             throw new ActivepiecesError({
                 code: ErrorCode.FEATURE_DISABLED,
                 params: {
@@ -56,23 +56,20 @@ export const aiProviderService = {
 
         await aiProviderRepo().upsert({
             id: apId(),
-            config: await encryptUtils.encryptObject({
-                apiKey: request.apiKey,
-                resourceName: request.resourceName,
-            }),
+            config: await encryptUtils.encryptObject(request.config),
             provider: request.provider,
             platformId,
         }, ['provider', 'platformId'])
     },
 
-    async delete(platformId: PlatformId, provider: string): Promise<void> {
+    async delete(platformId: PlatformId, provider: AIProviderName): Promise<void> {
         await aiProviderRepo().delete({
             platformId,
             provider,
         })
     },
 
-    async getConfig(platformId: PlatformId, providerId: string): Promise<GetProviderConfigResponse> {
+    async getConfig(platformId: PlatformId, providerId: AIProviderName): Promise<GetProviderConfigResponse> {
         const aiProvider = await aiProviderRepo().findOneOrFail({
             where: {
                 provider: providerId,
@@ -86,7 +83,7 @@ export const aiProviderService = {
             },
         })
 
-        const config = await encryptUtils.decryptObject<AiProviderConfig[keyof AiProviderConfig]>(aiProvider.config)
+        const config = await encryptUtils.decryptObject<AIProviderConfig>(aiProvider.config)
 
         return { config }
     },
@@ -105,6 +102,6 @@ export type ListModelsResponseItem = {
 }
 
 export type GetProviderConfigResponse = {
-    config: AiProviderConfig[keyof AiProviderConfig];
+    config: AIProviderConfig;
 }
 
