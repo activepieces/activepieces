@@ -389,7 +389,7 @@ async function findAllPiecesVersionsSortedByNameAscVersionDesc({
     const piecesFromDatabaseFiltered = piecesFromDatabase.filter((piece) => (isOfficialPiece(piece) || isCustomPiece(platformId, piece)) && isSupportedRelease(release, piece))
 
     const piecesFromDevelopment = await loadDevPiecesIfEnabled(log)
-    const allPieces = [...piecesFromDevelopment, ...piecesFromDatabaseFiltered]
+    const allPieces = [...piecesFromDatabaseFiltered, ...piecesFromDevelopment]
 
     return allPieces
 }
