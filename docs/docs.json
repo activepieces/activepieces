@@ -1,4 +1,5 @@
 {
+  "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
   "name": "Activepieces",
   "colors": {
@@ -110,15 +111,7 @@
               "build-pieces/building-pieces/overview",
               "build-pieces/building-pieces/start-building",
               "build-pieces/building-pieces/setup-fork",
-              {
-                "group": "Development Setup",
-                "icon": "circle-2",
-                "pages": [
-                  "build-pieces/development-setup/getting-started",
-                  "build-pieces/development-setup/local",
-                  "build-pieces/development-setup/codespaces"
-                ]
-              },
+              "build-pieces/building-pieces/development-setup",
               "build-pieces/building-pieces/piece-definition",
               "build-pieces/building-pieces/piece-authentication",
               "build-pieces/building-pieces/create-action",
@@ -157,8 +150,7 @@
               "build-pieces/piece-reference/piece-versioning",
               "build-pieces/piece-reference/examples",
               "build-pieces/piece-reference/custom-api-calls",
-              "build-pieces/piece-reference/i18n",
-              "build-pieces/piece-reference/ai-providers"
+              "build-pieces/piece-reference/i18n"
             ]
           },
           {
@@ -167,9 +159,9 @@
               "build-pieces/misc/build-piece",
               "build-pieces/misc/publish-piece",
               "build-pieces/misc/pieces-ci-cd",
-              "build-pieces/misc/create-new-ai-provider",
               "build-pieces/misc/private-fork",
-              "build-pieces/misc/dev-container"
+              "build-pieces/misc/dev-container",
+              "build-pieces/misc/codespaces"
             ]
           }
         ]

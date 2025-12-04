@@ -1,14 +1,42 @@
 ---
-title: 'Getting Started'
-description: ''
+title: 'Development setup'
+icon: 'circle-2'
 ---
 
-## Development Setup 
+## Prerequisites
 
-To set up the development environment, you can choose one of the following methods:
+- Node.js v18+
+- npm v9+
 
-- **Codespaces**: This is the quickest way to set up the development environment. Follow the [Codespaces](./codespaces) guide.
-- **Local Environment**: It is recommended for local development. Follow the [Local Environment](./local) guide.
+## Instructions
+
+1. Setup the environment
+
+```bash
+node tools/setup-dev.js
+```
+
+2. Start the environment
+
+This command will start activepieces with sqlite3 and in memory queue.
+
+```bash
+npm start
+```
+
+<Note>
+  By default, the development setup only builds specific pieces.Open the file
+  `packages/server/api/.env` and add comma-separated list of pieces to make
+  available.
+
+For more details, check out the [Piece Development](/build-pieces/building-pieces/development-setup#pieces-development) section.
+
+</Note>
+
+3. Go to **_localhost:4200_** on your web browser and sign in with these details:
+
+Email: `dev@ap.com`
+Password: `12345678`
 
 
 ## Pieces Development
