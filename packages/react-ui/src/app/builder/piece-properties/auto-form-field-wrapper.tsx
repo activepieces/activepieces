@@ -44,6 +44,9 @@ function AutoFormFieldWrapper({
   const isArrayProperty =
     !isPieceAuthProperty(property) && property.type === PropertyType.ARRAY;
   const isAuthProperty = isPieceAuthProperty(property);
+  const displayName = doesPropertyHaveDisplayName(property)
+    ? property.displayName
+    : t('Connection');
   return (
     <AutoFormFielWrapperErrorBoundary
       field={field}
@@ -54,9 +57,7 @@ function AutoFormFieldWrapper({
         <FormLabel className="flex items-center gap-1 ">
           {placeBeforeLabelText && !dynamicInputModeToggled && children}
           <div className="pt-1">
-            <span>
-              {isAuthProperty ? t('Connection') : property.displayName}
-            </span>{' '}
+            <span>{displayName}</span>{' '}
             {(isAuthProperty || property.required) && (
               <span className="text-destructive">*</span>
             )}
@@ -335,4 +336,10 @@ function isPieceAuthProperty(
     Array.isArray(property) ||
     authPropertyTypes.some((authType) => property.type === authType)
   );
+}
+
+function doesPropertyHaveDisplayName(
+  property: PieceProperty | PieceAuthProperty[],
+): property is PieceProperty {
+  return !Array.isArray(property);
 }
