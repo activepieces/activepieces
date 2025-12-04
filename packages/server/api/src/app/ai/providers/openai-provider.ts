@@ -15,7 +15,7 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
             url: `https://api.openai.com/v1/models`,
             method: HttpMethod.GET,
             headers: {
-                ...this.authHeaders(config),
+                'Authorization': `Bearer ${config.apiKey}`,
                 'Content-Type': 'application/json',
             },
         });
@@ -34,10 +34,4 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
             type: openaiImageModels.includes(model.id) ? 'image' : 'text',
         }));
     },
-
-    authHeaders(config: OpenAIProviderConfig) {
-        return {
-            'Authorization': `Bearer ${config.apiKey}`,
-        }
-    }
 };

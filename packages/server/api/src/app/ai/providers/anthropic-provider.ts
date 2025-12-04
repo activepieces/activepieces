@@ -16,7 +16,7 @@ export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
             url: `https://api.anthropic.com/v1/models`,
             method: HttpMethod.GET,
             headers: {
-                ...this.authHeaders(config),
+                'x-api-key': config.apiKey,
                 'Content-Type': 'application/json',
             },
         });
@@ -29,10 +29,4 @@ export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
             type: 'text',
         }));
     },
-
-    authHeaders(config: AnthropicProviderConfig) {
-        return {
-            'x-api-key': config.apiKey,
-        }
-    }
 };

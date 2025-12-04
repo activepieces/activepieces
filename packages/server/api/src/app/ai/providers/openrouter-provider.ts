@@ -28,8 +28,4 @@ export const openRouterProvider: AIProviderStrategy<OpenRouterProviderConfig> = 
             type: model.architecture.output_modalities.includes('image') ? 'image' : 'text',
         }));
     },
-
-    authHeaders(config: OpenRouterProviderConfig) {
-        return {}
-    }
 };

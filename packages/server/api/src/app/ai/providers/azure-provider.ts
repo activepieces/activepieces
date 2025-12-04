@@ -25,7 +25,7 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
             url: `${endpoint}/openai/deployments?api-version=${apiVersion}`,
             method: HttpMethod.GET,
             headers: {
-                ...this.authHeaders(config),
+                'api-key': config.apiKey,
                 'Content-Type': 'application/json',
             },
         });
@@ -38,10 +38,4 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
             type: 'text',
         }));
     },
-
-    authHeaders(config: AzureProviderConfig) {
-        return {
-            'api-key': config.apiKey,
-        }
-    }
 };

@@ -17,7 +17,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
             url: `https://generativelanguage.googleapis.com/v1beta/models?api_key=${config.apiKey}`,
             method: HttpMethod.GET,
             headers: {
-                ...this.authHeaders(config),
+                'x-goog-api-key': config.apiKey,
                 'Content-Type': 'application/json',
             },
         });
@@ -30,10 +30,4 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
             type: 'text',
         }));
     },
-
-    authHeaders(config: GoogleProviderConfig) {
-        return {
-            'x-goog-api-key': config.apiKey,
-        }
-    }
 };
