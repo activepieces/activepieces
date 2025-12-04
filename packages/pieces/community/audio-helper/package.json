@@ -1,0 +1,18 @@
+{
+  "name": "@activepieces/piece-audio-helper",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@activepieces/pieces-framework": "^0.22.1",
+    "@activepieces/shared": "^0.72.4",
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "tslib": "^2.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.19.0",
+    "@types/fluent-ffmpeg": "^2.1.0"
+  }
+}
