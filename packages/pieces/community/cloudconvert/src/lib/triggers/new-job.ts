@@ -69,7 +69,7 @@ export const newJob = createTrigger({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${cloudconvertCommon.baseUrl((context.auth).props?.['region'] || 'auto')}/webhooks`,
+      url: `${cloudconvertCommon.baseUrl((context.auth).props?.['region'] as string || 'auto')}/webhooks`,
       body: {
         url: webhookUrl,
         events: ['job.created']

@@ -26,9 +26,9 @@ import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';

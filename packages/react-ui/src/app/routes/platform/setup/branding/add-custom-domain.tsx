@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { customDomainApi } from '@/features/platform-admin/lib/custom-domain-api';
 import { api } from '@/lib/api';
 import { CustomDomain } from '@activepieces/ee-shared';
@@ -70,9 +71,12 @@ const AddCustomDomainDialog = React.memo(
               });
               break;
             }
+            default: {
+              internalErrorToast();
+              break;
+            }
           }
         }
-        setOpen(true);
       },
     });
 

@@ -5,7 +5,7 @@ import { Type } from "@sinclair/typebox";
 import { PropertyType } from "../property-type";
 import { PieceAuthProperty } from "../../authentication";
 
-type DynamicDropdownOptions<T, PieceAuth extends PieceAuthProperty | undefined = undefined> = (
+type DynamicDropdownOptions<T, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |  undefined = undefined> = (
   propsValue: Record<string, unknown> & {
     auth?: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
   },
@@ -20,7 +20,7 @@ export const DropdownProperty = Type.Composite([
   }),
 ]);
 
-export type DropdownProperty<T, R extends boolean, PieceAuth extends PieceAuthProperty | undefined = undefined> = BasePropertySchema & {
+export type DropdownProperty<T, R extends boolean, PieceAuth extends PieceAuthProperty | PieceAuthProperty[] |  undefined = undefined> = BasePropertySchema & {
   /**
    * A dummy property used to infer {@code PieceAuth} type
    */
@@ -42,7 +42,7 @@ export const MultiSelectDropdownProperty = Type.Composite([
 export type MultiSelectDropdownProperty<
   T,
   R extends boolean,
-  PieceAuth extends PieceAuthProperty | undefined = undefined
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined
 > = BasePropertySchema & {
   /**
    * A dummy property used to infer {@code PieceAuth} type
