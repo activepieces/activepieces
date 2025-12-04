@@ -9,6 +9,7 @@ import { openpgpEncrypt } from './lib/actions/openpgp-encrypt';
 
 export const Crypto = createPiece({
   displayName: 'Crypto',
+  version: '0.0.1',
   description: 'Generate random passwords and hash existing text',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.30.0',
