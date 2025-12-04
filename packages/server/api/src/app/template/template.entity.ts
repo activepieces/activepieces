@@ -1,0 +1,92 @@
+import { Platform, Template } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+import {
+    ARRAY_COLUMN_TYPE,
+    BaseColumnSchemaPart,
+    isPostgres,
+    JSONB_COLUMN_TYPE } from '../database/database-common'
+
+type TemplateSchema = Template & {
+    platform: Platform
+}
+
+export const TemplateEntity = new EntitySchema<TemplateSchema>({
+    name: 'template',
+    columns: {
+        ...BaseColumnSchemaPart,
+        platformId: {
+            type: String,
+            nullable: true,
+        },
+        type: {
+            type: String,
+            nullable: false,
+        },
+        name: {
+            type: String,
+            nullable: false,
+        },
+        description: {
+            type: String,
+            nullable: false,
+        },
+        flows: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
+        },
+        tags: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: false,
+        },
+        blogUrl: {
+            type: String,
+            nullable: true,
+        },
+        metadata: {
+            type: JSONB_COLUMN_TYPE,
+            nullable: true,
+        },
+        usageCount: {
+            type: Number,
+            nullable: false,
+        },
+        author: {
+            type: String,
+            nullable: false,
+        },
+        categories: {
+            type: ARRAY_COLUMN_TYPE,
+            array: isPostgres(),
+            nullable: false,
+        },
+        pieces: {
+            type: String,
+            array: true,
+        },
+    },
+    indices: [
+        {
+            name: 'idx_template_pieces',
+            columns: ['pieces'],
+            unique: false,
+        },
+        {
+            name: 'idx_template_categories',
+            columns: ['categories'],
+            unique: false,
+        },
+    ],
+    relations: {
+        platform: {
+            type: 'many-to-one',
+            target: 'platform',
+            cascade: true,
+            onDelete: 'CASCADE',
+            nullable: true,
+            joinColumn: {
+                name: 'platformId',
+                foreignKeyConstraintName: 'fk_template_platform_id',
+            },
+        },
+    },
+})

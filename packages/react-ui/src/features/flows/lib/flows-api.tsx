@@ -3,18 +3,18 @@ import { toast } from 'sonner';
 
 import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
+import { GetFlowTemplateRequestQuery } from '@activepieces/ee-shared';
 import {
   CreateFlowRequest,
   ErrorCode,
   FlowOperationRequest,
-  FlowTemplate,
   FlowVersion,
   FlowVersionMetadata,
   GetFlowQueryParamsRequest,
-  GetFlowTemplateRequestQuery,
   ListFlowVersionRequest,
   ListFlowsRequest,
   PopulatedFlow,
+  SharedTemplate,
   SeekPage,
 } from '@activepieces/shared';
 
@@ -60,7 +60,7 @@ export const flowsApi = {
       });
   },
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
-    return api.get<FlowTemplate>(`/v1/flows/${flowId}/template`, {
+    return api.get<SharedTemplate>(`/v1/flows/${flowId}/template`, {
       params: request,
     });
   },
