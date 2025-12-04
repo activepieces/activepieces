@@ -1,0 +1,46 @@
+---
+title: "API Requests"
+description: "Send requests to your Activepieces instance from the embedded app"
+icon: "server"
+---
+
+<Info>
+**Requirements:**
+* Activepieces version 0.34.5 or higher
+* SDK version 0.3.6 or higher
+</Info>
+
+
+
+You can use the embedded SDK to send requests to your instance and retrieve data.
+
+<Steps>
+
+   <Step title="Initialize the SDK">
+        Follow the instructions in the [Embed Builder](./embed-builder) to initialize the SDK.
+    </Step>
+
+    <Step title="Call (request) Method">
+        
+
+        ```html
+        <script> 
+        activepieces.request({path:'/flows',method:'GET'}).then(console.log);
+        </script>
+        ```
+
+        **Request Parameters:**
+
+        | Parameter Name | Required | Type   | Description                                 |
+        | -------------- | -------- | ------ | ------------------------------------------- |
+        | path      | ✅      | string | The path within your instance you want to hit (we prepend the path with your_instance_url/api/v1)
+        | method | ✅      | string | The http method to use 'GET', 'POST','PUT', 'DELETE', 'OPTIONS', 'PATCH' and 'HEAD 
+        | body      | ❌      | JSON object | The json body of your request
+        | queryParams | ❌ | Record\<string,string\> | The query params to include in your request
+
+
+
+  </Step>
+
+
+</Steps>

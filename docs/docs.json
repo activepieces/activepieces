@@ -1,6 +1,5 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "linden",
+  "theme": "mint",
   "name": "Activepieces",
   "colors": {
     "primary": "#9675FF",
@@ -8,16 +7,26 @@
     "dark": "#9675FF"
   },
   "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/activepieces/activepieces"
+      },
+      {
+        "label": "Pieces",
+        "href": "https://www.activepieces.com/pieces"
+      }
+    ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "label": "Get Started",
+      "href": "https://www.activepieces.com/plans"
     }
   },
   "background": {
     "color": {
-      "light": "#FEFCF8",
-      "dark": "#151413"
+      "light": "#ffffff",
+      "dark": "#090d0d"
     }
   },
   "favicon": "/favicon.svg",
@@ -29,7 +38,7 @@
           {
             "group": "Overview",
             "pages": [
-              "homepage/welcome"
+              "overview/welcome"
             ]
           }
         ]
@@ -63,6 +72,30 @@
             "group": "Overview",
             "pages": [
               "deplyment/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Embedding",
+        "groups": [
+          {
+            "group": "Essentials",
+            "pages": [
+              "embedding/overview",
+              "embedding/provision-users",
+              "embedding/embed-builder"
+            ]
+          },
+          {
+            "group": "Misc",
+            "pages": [
+              "embedding/customize-pieces",
+              "embedding/embed-connections",
+              "embedding/navigation",
+              "embedding/predefined-connection",
+              "embedding/sdk-changelog",
+              "embedding/sdk-server-requests"
             ]
           }
         ]
@@ -137,17 +170,6 @@
               "build-pieces/misc/create-new-ai-provider",
               "build-pieces/misc/private-fork",
               "build-pieces/misc/dev-container"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Embedding",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "embedding/overview"
             ]
           }
         ]
@@ -310,6 +332,7 @@
           }
         ]
       }
+
     ],
     "global": {
     }
