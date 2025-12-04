@@ -98,8 +98,6 @@ export const agentCommon = {
             const toolDescription = triggerSettings.input?.toolDescription
             const returnsResponse = triggerSettings.input?.returnsResponse
 
-            console.log("inputSchema: ", triggerSettings.input?.inputSchema)
-
             const inputSchema = Object.fromEntries(
                 triggerSettings.input?.inputSchema.map(prop => [
                     fixProperty(prop.name),
