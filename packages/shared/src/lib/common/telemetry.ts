@@ -142,9 +142,9 @@ type McpToolCalled = {
 }
 
 type PieceSelectorSearch = {
-    search: string,
-    isTrigger: boolean,
-    selectedActionOrTriggerName: string| null,
+    search: string
+    isTrigger: boolean
+    selectedActionOrTriggerName: string | null
 }
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
