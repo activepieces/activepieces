@@ -1,5 +1,4 @@
-import { createPiece } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { createPiece, PieceAuth, PieceCategory } from "@activepieces/pieces-framework";
 
 import { mergePdf } from "./lib/actions/merge-pdf";
 import { splitPdf } from "./lib/actions/split-pdf";
@@ -10,11 +9,12 @@ import { addWatermark } from "./lib/actions/add-watermark";
 
 export const pdfToolkit = createPiece({
   displayName: "PDF Toolkit",
-  description: "Utilities for manipulating PDF files: merge, split, extract, compress, watermark.",
+  description: "Manipulate PDF files: merge, split, extract text/pages, compress, and apply watermarks.",
   logoUrl: "https://cdn.activepieces.com/pieces/pdf.png",
   authors: ["lau90eth"],
+  auth: PieceAuth.None(),
   categories: [PieceCategory.CONTENT_AND_FILES],
-  auth: undefined,
+
   actions: [
     mergePdf,
     splitPdf,
