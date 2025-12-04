@@ -300,6 +300,7 @@ import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
 import { UnifyCommunityWithEnterprise1764567780604 } from './migration/postgres/1764567780604-UnifyCommunityWithEnterprise'
+import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -615,6 +616,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameManageProjectsToTeamProjectLimits1764100884963,
         UnifyCommunityWithEnterprise1764567780604,
         AddMcpServer1764606838149,
+        AddPieceVersionToAppConnection1764841091811
     ]
     return migrations
 }

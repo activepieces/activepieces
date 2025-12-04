@@ -102,6 +102,7 @@ export type AppConnection<Type extends AppConnectionType = AppConnectionType> = 
     owner: UserWithMetaInformation | null
     value: AppConnectionValue<Type>
     metadata: Metadata | null
+    pieceVersion: string
 }
 
 export type OAuth2AppConnection = AppConnection<AppConnectionType.OAUTH2>
@@ -126,6 +127,7 @@ export const AppConnectionWithoutSensitiveData = Type.Object({
     owner: Nullable(UserWithMetaInformation),
     metadata: Nullable(Metadata),
     flowIds: Nullable(Type.Array(ApId)),
+    pieceVersion: Type.String(),
 }, {
     description: 'App connection is a connection to an external app.',
 })
