@@ -1,30 +1,14 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddPieceVersionToAppConnection1764841091811 implements MigrationInterface {
     name = 'AddPieceVersionToAppConnection1764841091811'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_flow_id_status_created_archived_"
-        `);
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_status_created_archived_at"
-        `);
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_created_archived_at"
-        `);
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_flow_id_created_archived_at"
-        `);
-        await queryRunner.query(`
-            ALTER TABLE "piece_metadata" DROP COLUMN "projectId"
-        `);
-        
-        // Add pieceVersion column as nullable first
+             // Add pieceVersion column as nullable first
         await queryRunner.query(`
             ALTER TABLE "app_connection"
             ADD "pieceVersion" character varying
-        `);
+        `)
         
         // Populate pieceVersion with the latest version from piece_metadata
         // matching on pieceName and platformId
@@ -38,7 +22,7 @@ export class AddPieceVersionToAppConnection1764841091811 implements MigrationInt
                 LIMIT 1
             )
             WHERE ac."pieceName" IS NOT NULL
-        `);
+        `)
         
         // For connections without a matching piece_metadata, use a default value
         // (you may want to adjust this based on your business logic)
@@ -46,108 +30,21 @@ export class AddPieceVersionToAppConnection1764841091811 implements MigrationInt
             UPDATE "app_connection"
             SET "pieceVersion" = '0.0.0'
             WHERE "pieceVersion" IS NULL
-        `);
+        `)
         
         // Now make the column NOT NULL
         await queryRunner.query(`
             ALTER TABLE "app_connection"
             ALTER COLUMN "pieceVersion" SET NOT NULL
-        `);
-        
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "environment",
-                "archivedAt",
-                "created"
-            )
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_status_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "environment",
-                "status",
-                "archivedAt",
-                "created"
-            )
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_flow_id_environment_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "flowId",
-                "environment",
-                "archivedAt",
-                "created"
-            )
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_flow_id_environment_status_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "flowId",
-                "environment",
-                "status",
-                "archivedAt",
-                "created"
-            )
-        `);
+        `)
+
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_flow_id_environment_status_archived_at_created_desc"
-        `);
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_flow_id_environment_archived_at_created_desc"
-        `);
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_status_archived_at_created_desc"
-        `);
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_archived_at_created_desc"
-        `);
+
         await queryRunner.query(`
             ALTER TABLE "app_connection" DROP COLUMN "pieceVersion"
-        `);
-        await queryRunner.query(`
-            ALTER TABLE "piece_metadata"
-            ADD "projectId" character varying(21)
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_flow_id_created_archived_at" ON "flow_run" (
-                "created",
-                "projectId",
-                "flowId",
-                "environment",
-                "archivedAt"
-            )
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_created_archived_at" ON "flow_run" (
-                "created",
-                "projectId",
-                "environment",
-                "archivedAt"
-            )
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_status_created_archived_at" ON "flow_run" (
-                "created",
-                "projectId",
-                "environment",
-                "status",
-                "archivedAt"
-            )
-        `);
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_flow_id_status_created_archived_" ON "flow_run" (
-                "created",
-                "projectId",
-                "flowId",
-                "environment",
-                "status",
-                "archivedAt"
-            )
-        `);
+        `)
     }
 
 }
