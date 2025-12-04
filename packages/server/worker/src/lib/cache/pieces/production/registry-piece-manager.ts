@@ -1,6 +1,6 @@
 import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { exceptionHandler, fileSystemUtils, memoryLock, pubsubFactory, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { exceptionHandler, fileSystemUtils, memoryLock, pubsubFactory, redisHelper, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ExecutionMode,
     groupBy,
@@ -20,7 +20,6 @@ import { workerMachine } from '../../../utils/machine'
 import { workerRedisConnections } from '../../../utils/worker-redis'
 import { packageManager } from '../../package-manager'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../../worker-cache'
-import Redis from 'ioredis'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -63,7 +62,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         log.info('[registryPieceManager] Warming up pieces cache')
         const startTime = performance.now()
         const redis = await workerRedisConnections.useExisting()
-        const usedPiecesKey = await getUsedPiecesKeys(redis)
+        const usedPiecesKey = await redisHelper.scanAll(redis, `${REDIS_USED_PIECES_CACHE_KEY}:*`)
         const usedPiecesValues = usedPiecesKey.length > 0 ? await redis.mget(...usedPiecesKey) : []
         const usedPieces = usedPiecesKey.filter((_key, index) => usedPiecesValues[index] !== null).map((_key, index) => JSON.parse(usedPiecesValues[index] as string))
         await registryPieceManager(log).install({
@@ -300,15 +299,6 @@ async function persistPiecesOnRedis(pieces: PiecePackage[]): Promise<void> {
 
 function getPackageArchivePathForPiece(rootWorkspace: string, piecePackage: PrivatePiecePackage): string {
     return join(piecePath(rootWorkspace, piecePackage), `${piecePackage.archiveId}.tgz`)
-}
-
-async function getUsedPiecesKeys(redis: Redis): Promise<string[]> {
-    const stream = redis.scanStream({ match: `${REDIS_USED_PIECES_CACHE_KEY}:*`, count: 100 });
-    const usedPiecesKey: string[] = []
-    for await (const key of stream) {
-        usedPiecesKey.push(key)
-    }
-    return usedPiecesKey
 }
 
 type InstallParams = {
