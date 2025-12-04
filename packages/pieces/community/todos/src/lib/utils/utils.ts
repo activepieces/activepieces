@@ -76,7 +76,7 @@ export function constructTodoUrl(publicUrl: string, todoId: string, status: stri
 }
 
 type ApprovalParms = {
-  auth: AppConnectionValueForAuthProperty<undefined>;
+  auth?: AppConnectionValueForAuthProperty<undefined>;
   propsValue: {
     title: string;
     description?: string;

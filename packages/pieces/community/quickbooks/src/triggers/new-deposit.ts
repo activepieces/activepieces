@@ -17,7 +17,7 @@ const polling: Polling<
   strategy: DedupeStrategy.TIMEBASED,
   async items({ auth, lastFetchEpochMS }) {
     const { access_token } = auth;
-    const companyId = auth.props?.['companyId'];
+    const companyId = auth.props?.['companyId'] as string;
 
     const apiUrl = quickbooksCommon.getApiUrl(companyId!);
 

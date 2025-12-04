@@ -1,3 +1,4 @@
+import { redisHelper } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -13,7 +14,7 @@ export const deleteStaleRunMetadata = (log: FastifyBaseLogger) => ({
             log.info('[deleteStaleRunMetadata] Already migrated, skipping')
             return
         }
-        const keys = await redisConnection.keys('runs_metadata:*')
+        const keys = await redisHelper.scanAll(redisConnection, 'runs_metadata:*')
         log.info({ count: keys.length }, '[deleteStaleRunMetadata] Found stale run metadata keys')
         for (const key of keys) {
             await redisConnection.expire(key, dayjs.duration(10, 'minute').asSeconds())

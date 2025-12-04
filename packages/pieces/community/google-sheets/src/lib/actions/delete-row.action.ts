@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
-import { googleSheetsAuth } from '../../';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 
 export const deleteRowAction = createAction({
@@ -29,7 +29,7 @@ export const deleteRowAction = createAction({
       spreadsheetId as string,
       sheetId as number,
       adjustedRowIndex,
-      context.auth.access_token
+      context.auth,
     );
 
     return {

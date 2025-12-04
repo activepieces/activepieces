@@ -26,7 +26,7 @@ import {
   SampleDataDataType,
 } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 import { testStepUtils } from './test-step-utils';
 

@@ -113,7 +113,7 @@ export function makeClient(
   auth: AppConnectionValueForAuthProperty<typeof businessCentralAuth>
 ) {
   const client = new BusinessCentralAPIClient(
-    auth.props?.['environment']?? '',
+    auth.props?.['environment'] as string ?? '',
     auth.access_token
   );
   return client;

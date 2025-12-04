@@ -1,7 +1,5 @@
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
-  OAuth2PropertyValue,
-  PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
@@ -12,7 +10,7 @@ import { findRowsAction } from './lib/actions/find-rows';
 import { getRowsAction } from './lib/actions/get-rows';
 import { insertRowAction } from './lib/actions/insert-row.action';
 import { updateRowAction } from './lib/actions/update-row';
-import { googleSheetsCommon } from './lib/common/common';
+import { getAccessToken, googleSheetsAuth, GoogleSheetsAuthValue, googleSheetsCommon } from './lib/common/common';
 import { newRowAddedTrigger } from './lib/triggers/new-row-added-webhook';
 import { newOrUpdatedRowTrigger } from './lib/triggers/new-or-updated-row.trigger';
 import { insertMultipleRowsAction } from './lib/actions/insert-multiple-rows.action';
@@ -27,21 +25,8 @@ import { updateMultipleRowsAction } from './lib/actions/update-multiple-rows';
 import { createColumnAction } from './lib/actions/create-column';
 import { exportSheetAction } from './lib/actions/export-sheet';
 
-export const googleSheetsAuth = PieceAuth.OAuth2({
-  description: '',
-
-  authUrl: 'https://accounts.google.com/o/oauth2/auth',
-  tokenUrl: 'https://oauth2.googleapis.com/token',
-  required: true,
-  scope: [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive.readonly',
-    'https://www.googleapis.com/auth/drive',
-  ],
-});
-
 export const googleSheets = createPiece({
-  minimumSupportedRelease: '0.36.1',
+  minimumSupportedRelease: '0.71.4',
   logoUrl: 'https://cdn.activepieces.com/pieces/google-sheets.png',
   categories: [PieceCategory.PRODUCTIVITY],
   authors: [
@@ -80,13 +65,13 @@ export const googleSheets = createPiece({
       },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${(auth).access_token}`,
+          Authorization: `Bearer ${(await getAccessToken(auth as GoogleSheetsAuthValue))}`,
         };
       },
     }),
   ],
   displayName: 'Google Sheets',
   description: 'Create, edit, and collaborate on spreadsheets online',
-  triggers: [newRowAddedTrigger, newOrUpdatedRowTrigger,newSpreadsheetTrigger,newWorksheetTrigger],
+  triggers: [newOrUpdatedRowTrigger,newRowAddedTrigger,newSpreadsheetTrigger,newWorksheetTrigger],
   auth: googleSheetsAuth,
 });

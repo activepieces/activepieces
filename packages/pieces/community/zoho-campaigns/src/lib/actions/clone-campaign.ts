@@ -9,7 +9,7 @@ export const cloneCampaign = createAction({
   description: 'Clone an existing campaign, optionally renaming.',
   props: zohoCampaignsCommon.cloneCampaignProperties(),
   async run({ auth, propsValue }) {
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
     const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,

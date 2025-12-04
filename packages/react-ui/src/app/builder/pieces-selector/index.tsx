@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -19,6 +19,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
 
+import {
+  PieceSearchProvider,
+  usePieceSearchContext,
+} from '../../../features/pieces/lib/piece-search-context';
+
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
@@ -30,7 +35,15 @@ type PieceSelectorProps = {
   stepToReplacePieceDisplayName?: string;
 };
 
-const PieceSelector = ({
+const PieceSelectorWrapper = (props: PieceSelectorProps) => {
+  return (
+    <PieceSearchProvider>
+      <PieceSelectorContent {...props} />
+    </PieceSearchProvider>
+  );
+};
+
+const PieceSelectorContent = ({
   children,
   operation,
   id,
@@ -51,7 +64,7 @@ const PieceSelector = ({
       id === 'trigger',
     state.deselectStep,
   ]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const { searchQuery, setSearchQuery } = usePieceSearchContext();
   const isForReplace =
     operation.type === FlowOperationType.UPDATE_ACTION ||
     (operation.type === FlowOperationType.UPDATE_TRIGGER && !isForEmptyTrigger);
@@ -122,10 +135,8 @@ const PieceSelector = ({
           <>
             <div>
               <PiecesSearchInput
-                searchQuery={searchQuery}
                 searchInputRef={searchInputRef}
                 onSearchChange={(e) => {
-                  setSearchQuery(e);
                   setSelectedPieceMetadataInPieceSelector(null);
                   if (e === '') {
                     clearSearch();
@@ -158,4 +169,4 @@ const PieceSelector = ({
   );
 };
 
-export { PieceSelector };
+export { PieceSelectorWrapper as PieceSelector };

@@ -2,12 +2,14 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import {
   areSheetIdsValid,
   Dimension,
+  getAccessToken,
+  GoogleSheetsAuthValue,
   googleSheetsCommon,
   objectToArray,
   stringifyArray,
   ValueInputOption,
 } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { isNil } from '@activepieces/shared';
 import { AuthenticationType, httpClient, HttpMethod, HttpRequest } from '@activepieces/pieces-common';
 import { commonProps, rowValuesProp } from '../common/props';
@@ -34,7 +36,7 @@ export const insertRowAction = createAction({
   },
   async run({ propsValue, auth }) {
     const { values, spreadsheetId:inputSpreadsheetId, sheetId:inputSheetId, as_string, first_row_headers } = propsValue;
-    const accessToken = auth.access_token;
+   
 
     if (!areSheetIdsValid(inputSpreadsheetId, inputSheetId)) {
 			throw new Error('Please select a spreadsheet and sheet first.');
@@ -44,7 +46,7 @@ export const insertRowAction = createAction({
 		const spreadsheetId = inputSpreadsheetId as string;
 
     const sheetName = await googleSheetsCommon.findSheetName(
-      accessToken,
+      auth,
       spreadsheetId,
       sheetId
     );
@@ -54,7 +56,7 @@ export const insertRowAction = createAction({
       : values.values;
 
     const res = await appendGoogleSheetValues({
-      accessToken,
+      auth,
       majorDimension: Dimension.COLUMNS,
       range: sheetName,
       spreadSheetId: spreadsheetId,
@@ -73,8 +75,8 @@ function extractRowNumber(updatedRange: string): number {
 }
 
 async function appendGoogleSheetValues(params: AppendGoogleSheetValuesParams) {
-  const { accessToken, majorDimension, range, spreadSheetId, valueInputOption, values } = params;
-
+  const { auth, majorDimension, range, spreadSheetId, valueInputOption, values } = params;
+  const accessToken = await getAccessToken(auth);
   const request: HttpRequest = {
     method: HttpMethod.POST,
     url: `https://sheets.googleapis.com/v4/spreadsheets/${spreadSheetId}/values/${encodeURIComponent(`${range}!A:A`)}:append`,
@@ -101,5 +103,5 @@ type AppendGoogleSheetValuesParams = {
   range: string;
   valueInputOption: ValueInputOption;
   majorDimension: Dimension;
-  accessToken: string;
+  auth: GoogleSheetsAuthValue;
 };

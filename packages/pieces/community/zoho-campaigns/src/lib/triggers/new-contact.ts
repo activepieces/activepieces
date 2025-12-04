@@ -19,7 +19,7 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
     const accessToken = auth.access_token;
     const { listkey } = propsValue;
 

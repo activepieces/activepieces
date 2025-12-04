@@ -92,8 +92,8 @@ export const microsoftDynamicsCrm = createPiece({
           return '';
         }
         return `${getBaseUrl(
-          props['hostUrl'],
-          props['proxyUrl']
+          props['hostUrl'] as string,
+          props['proxyUrl'] as string
         )}/api/data/v9.2`;
       },
       authMapping: async (auth) => ({

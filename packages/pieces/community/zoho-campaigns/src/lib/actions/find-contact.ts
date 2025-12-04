@@ -9,7 +9,7 @@ export const findContact = createAction({
   description: 'Look up an existing contact by email address.',
   props: zohoCampaignsCommon.findContactProperties(),
   async run({ auth, propsValue }) {
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
     const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,

@@ -20,7 +20,7 @@ import {
 import { FlowTrigger, McpPropertyType } from '@activepieces/shared';
 
 import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
-import { testStepHooks } from '../test-step-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 type McpToolTestingDialogProps = {
   open: boolean;

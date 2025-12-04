@@ -4,7 +4,7 @@ import { burstyAiAuth } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';
 
 export const burstyAi = createPiece({
-  displayName: 'Bursty-ai',
+  displayName: 'BurstyAI',
   auth: burstyAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/bursty-ai.png',

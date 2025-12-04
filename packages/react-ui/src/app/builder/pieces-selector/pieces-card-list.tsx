@@ -48,6 +48,7 @@ export const PiecesCardList: React.FC<PiecesCardListProps> = ({
   );
   const { isLoading: isLoadingPieces, data: categories } =
     piecesHooks.usePiecesSearch({
+      shouldCaptureEvent: true,
       searchQuery,
       type:
         operation.type === FlowOperationType.UPDATE_TRIGGER

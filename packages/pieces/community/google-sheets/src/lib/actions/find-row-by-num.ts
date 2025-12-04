@@ -1,6 +1,6 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import { areSheetIdsValid, googleSheetsCommon } from '../common/common';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
 
 export const findRowByNumAction = createAction({
@@ -30,7 +30,7 @@ export const findRowByNumAction = createAction({
 		}
 
     const row = await googleSheetsCommon.getGoogleSheetRows({
-      accessToken: context.auth.access_token,
+      auth: context.auth,
       sheetId: sheetId as number,
       spreadsheetId: spreadsheetId as string,
       rowIndex_s: rowNumber,

@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { usePieceSearchContext } from '@/features/pieces/lib/piece-search-context';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
@@ -10,16 +11,15 @@ import {
 import { SearchInput } from '../../../components/ui/search-input';
 
 type PiecesSearchInputProps = {
-  searchQuery: string;
   searchInputRef: React.RefObject<HTMLInputElement>;
   onSearchChange: (query: string) => void;
 };
 
 const PiecesSearchInput = ({
-  searchQuery,
   searchInputRef,
   onSearchChange,
 }: PiecesSearchInputProps) => {
+  const { searchQuery, setSearchQuery } = usePieceSearchContext();
   const {
     resetToBeforeNoneWasSelected: resetToPreviousValue,
     setSelectedTab,
@@ -47,6 +47,7 @@ const PiecesSearchInput = ({
         value={searchQuery}
         ref={searchInputRef}
         onChange={(e) => {
+          setSearchQuery(e);
           onSearchChange(e);
           if (e === '') {
             resetToPreviousValue();

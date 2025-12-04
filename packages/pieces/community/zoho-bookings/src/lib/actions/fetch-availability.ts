@@ -173,7 +173,7 @@ export const fetchAvailability = createAction({
   },
   async run(context) {
     const { auth, propsValue } = context;
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
 
     // Validate props using Zod schema
     await propsValidation.validateZod(propsValue, zohoBookingsCommon.fetchAvailabilitySchema);
