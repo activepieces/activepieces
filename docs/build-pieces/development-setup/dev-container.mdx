@@ -1,0 +1,57 @@
+---
+title: 'Dev Containers'
+description: ''
+---
+
+## Using Dev Containers in Visual Studio Code
+
+The project includes a dev container configuration that allows you to use Visual Studio Code's [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension to develop the project in a consistent environment. This can be especially helpful if you are new to the project or if you have a different environment setup on your local machine.
+
+## Prerequisites
+
+Before you can use the dev container, you will need to install the following:
+
+- [Visual Studio Code](https://code.visualstudio.com/).
+- The [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack) extension for Visual Studio Code.
+- [Docker](https://www.docker.com/).
+
+## Using the Dev Container
+
+To use the dev container for the Activepieces project, follow these steps:
+
+1. Clone the Activepieces repository to your local machine.
+2. Open the project in Visual Studio Code.
+3. Press `Ctrl+Shift+P` and type `> Dev Containers: Reopen in Container`.
+4. Run `npm start`.
+5. The backend will run at `localhost:3000` and the frontend will run at `localhost:4200`.
+
+<Note>
+  By default, the development setup only builds specific pieces.Open the file
+  `packages/server/api/.env` and add comma-separated list of pieces to make
+  available.
+
+For more details, check out the [Piece Development](/developers/development-setup/getting-started) section.
+
+</Note>
+
+The login credentials are:  
+Email: `dev@ap.com`
+Password: `12345678`
+
+## Exiting the Dev Container
+
+To exit the dev container and return to your local environment, follow these steps:
+
+1. In the bottom left corner of Visual Studio Code, click the `Remote-Containers: Reopen folder locally` button.
+2. Visual Studio Code will close the connection to the dev container and reopen the project in your local environment.
+
+## Troubleshoot
+
+One of the best trouble shoot after an error occur is to reset the dev container.
+
+1. Exit the dev container
+2. Run the following
+   ```sh
+   sh tools/reset-dev.sh
+   ```
+3. Rebuild the dev container from above steps

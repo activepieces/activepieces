@@ -1,0 +1,22 @@
+---
+title: 'Getting Started'
+description: ''
+---
+
+## Development Setup 
+
+To set up the development environment, you can choose one of the following methods:
+
+- **Codespaces**: This is the quickest way to set up the development environment. Follow the [Codespaces](./codespaces) guide.
+- **Local Environment**: It is recommended for local development. Follow the [Local Environment](./local) guide.
+
+
+## Pieces Development
+
+When [`AP_SYNC_MODE`](https://github.com/activepieces/activepieces/blob/main/packages/server/api/.env#L17) is set to `OFFICIAL_AUTO`, all pieces are automatically loaded from the cloud API and synced to the database on first launch. This process may take a few seconds to several minutes depending on your internet connection.
+
+For local development, pieces are loaded from your local `dist` folder instead of the database. To enable this, set the [`AP_DEV_PIECES`](https://github.com/activepieces/activepieces/blob/main/packages/server/api/.env#L4) environment variable with a comma-separated list of pieces. For example, to develop with `google-sheets` and `cal-com`:
+
+```sh
+AP_DEV_PIECES=google-sheets,cal-com npm start
+```

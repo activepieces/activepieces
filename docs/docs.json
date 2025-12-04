@@ -72,9 +72,11 @@
         "description": "Learn how to build, test, and publish your own custom pieces in Activepieces.",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Development setup",
             "pages": [
-              "development/overview"
+              "build-pieces/development-setup/getting-started",
+              "build-pieces/development-setup/local",
+              "build-pieces/development-setup/codespaces"
             ]
           }
         ]
