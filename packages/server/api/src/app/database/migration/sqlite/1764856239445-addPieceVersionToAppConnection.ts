@@ -62,7 +62,12 @@ export class AddPieceVersionToAppConnection1764856239445 implements MigrationInt
                     (SELECT "version"
                      FROM "piece_metadata" pm
                      WHERE pm."name" = "app_connection"."pieceName"
-                     ORDER BY pm."version" DESC
+                       AND pm."version" GLOB '[0-9]*.[0-9]*.[0-9]*'
+                       AND length(pm."version") - length(replace(pm."version", '.', '')) = 2
+                     ORDER BY 
+                        CAST(substr(pm."version", 1, instr(pm."version" || '.', '.') - 1) AS INTEGER) DESC,
+                        CAST(substr(substr(pm."version", instr(pm."version", '.') + 1), 1, instr(substr(pm."version", instr(pm."version", '.') + 1) || '.', '.') - 1) AS INTEGER) DESC,
+                        CAST(substr(pm."version", length(pm."version") - instr(replace(reverse(pm."version"), '.', ''), '') + 1) AS INTEGER) DESC
                      LIMIT 1),
                     '0.0.0'
                 ) as "pieceVersion"

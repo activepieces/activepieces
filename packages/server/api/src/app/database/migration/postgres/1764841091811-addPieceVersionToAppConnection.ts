@@ -18,7 +18,11 @@ export class AddPieceVersionToAppConnection1764841091811 implements MigrationInt
                 SELECT pm."version"
                 FROM "piece_metadata" pm
                 WHERE pm."name" = ac."pieceName"
-                ORDER BY pm."version" DESC
+                  AND pm."version" ~ '^[0-9]+\\.[0-9]+\\.[0-9]+$'
+                ORDER BY 
+                    (string_to_array(pm."version", '.'))[1]::int DESC,
+                    (string_to_array(pm."version", '.'))[2]::int DESC,
+                    (string_to_array(pm."version", '.'))[3]::int DESC
                 LIMIT 1
             )
             WHERE ac."pieceName" IS NOT NULL
