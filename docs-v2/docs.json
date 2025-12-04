@@ -1,0 +1,261 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "aspen",
+  "name": "Activepieces",
+  "colors": {
+    "primary": "#6e41e2",
+    "light": "#c5b3f3",
+    "dark": "#6838e0"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Homepage",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "homepage/welcome"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Users Guide",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "users-guide/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Admin Guide",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "admin-guide/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "deplyment/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Development",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "development/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Embedding",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "embedding/overview"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "endpoints/overview"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              {
+                "group": "Projects",
+                "icon": "building",
+                "pages": [
+                  "endpoints/projects/schema",
+                  "endpoints/projects/create",
+                  "endpoints/projects/update",
+                  "endpoints/projects/list",
+                  "endpoints/projects/delete"
+                ]
+              },
+              {
+                "group": "Users",
+                "icon": "user",
+                "pages": [
+                  "endpoints/users/schema",
+                  "endpoints/users/update",
+                  "endpoints/users/list"
+                ]
+              },
+              {
+                "group": "User Invitations",
+                "icon": "paper-plane",
+                "pages": [
+                  "endpoints/user-invitations/schema",
+                  "endpoints/user-invitations/upsert",
+                  "endpoints/user-invitations/list",
+                  "endpoints/user-invitations/delete"
+                ]
+              },
+              {
+                "group": "Project Members",
+                "icon": "user",
+                "pages": [
+                  "endpoints/project-members/schema",
+                  "endpoints/project-members/list",
+                  "endpoints/project-members/delete"
+                ]
+              },
+              {
+                "group": "Connections",
+                "icon": "link",
+                "pages": [
+                  "endpoints/connections/schema",
+                  "endpoints/connections/upsert",
+                  "endpoints/connections/list",
+                  "endpoints/connections/delete"
+                ]
+              },
+              {
+                "group": "Flows",
+                "icon": "bolt",
+                "pages": [
+                  "endpoints/flows/schema",
+                  "endpoints/flows/create",
+                  "endpoints/flows/update",
+                  "endpoints/flows/get",
+                  "endpoints/flows/list",
+                  "endpoints/flows/delete"
+                ]
+              },
+              {
+                "group": "Flow Runs",
+                "icon": "play",
+                "pages": [
+                  "endpoints/flow-runs/schema",
+                  "endpoints/flow-runs/get",
+                  "endpoints/flow-runs/list"
+                ]
+              },
+              {
+                "group": "Sample Data",
+                "icon": "database",
+                "pages": [
+                  "endpoints/sample-data/get"
+                ]
+              },
+              {
+                "group": "Pieces",
+                "icon": "plug",
+                "pages": [
+                  "endpoints/pieces/schema",
+                  "endpoints/pieces/install"
+                ]
+              },
+              {
+                "group": "Project Releases",
+                "icon": "cube",
+                "pages": [
+                  "endpoints/project-releases/schema",
+                  "endpoints/project-releases/create"
+                ]
+              },
+              {
+                "group": "Global Connections",
+                "icon": "globe",
+                "pages": [
+                  "endpoints/global-connections/schema",
+                  "endpoints/global-connections/upsert",
+                  "endpoints/global-connections/update",
+                  "endpoints/global-connections/list",
+                  "endpoints/global-connections/delete"
+                ]
+              },
+              {
+                "group": "Git Sync",
+                "icon": "git",
+                "pages": [
+                  "endpoints/git-repos/schema",
+                  "endpoints/git-repos/configure"
+                ]
+              },
+              {
+                "group": "Folders",
+                "icon": "folder",
+                "pages": [
+                  "endpoints/folders/schema",
+                  "endpoints/folders/create",
+                  "endpoints/folders/update",
+                  "endpoints/folders/get",
+                  "endpoints/folders/list",
+                  "endpoints/folders/delete"
+                ]
+              },
+              {
+                "group": "Flow Templates",
+                "icon": "copy",
+                "pages": [
+                  "endpoints/flow-templates/schema",
+                  "endpoints/flow-templates/create",
+                  "endpoints/flow-templates/delete",
+                  "endpoints/flow-templates/get",
+                  "endpoints/flow-templates/list"
+                ]
+              },
+              {
+                "group": "Queue Metrics",
+                "icon": "gauge-high",
+                "pages": [
+                  "endpoints/queue-metrics/metrics"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+    }
+  },
+  "logo": {
+    "light": "./resources/logo/light.svg",
+    "dark": "./resources/logo/dark.svg",
+    "href": "https://www.activepieces.com"
+  },
+  "api": {
+    "openapi": [
+      "openapi.json"
+    ]
+  },
+  "navbar": {
+  },
+  
+  "footer": {
+    "socials": {
+      "x": "https://x.com/activepieces",
+      "github": "https://github.com/activepieces/activepieces",
+      "linkedin": "https://linkedin.com/company/activepieces"
+    }
+  }
+}
