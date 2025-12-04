@@ -1,6 +1,6 @@
-import { AIProviderStrategy, ProviderModel } from './ai-provider';
+import { AIProviderStrategy } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { GoogleProviderConfig } from '@activepieces/common-ai';
+import { GoogleProviderConfig, AIProviderModel, AIProviderModelType } from '@activepieces/common-ai';
 
 
 export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
@@ -8,7 +8,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
         return 'Google';
     },
 
-    async listModels(config: GoogleProviderConfig): Promise<ProviderModel[]> {
+    async listModels(config: GoogleProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: any[] }>({
             url: `https://generativelanguage.googleapis.com/v1beta/models?api_key=${config.apiKey}`,
             method: HttpMethod.GET,
@@ -23,7 +23,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
         return data.map((model: any) => ({
             id: model.name,
             name: model.displayName,
-            type: 'text',
+            type: AIProviderModelType.Text,
         }));
     },
 };

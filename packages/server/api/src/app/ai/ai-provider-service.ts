@@ -1,4 +1,4 @@
-import { AIProviderConfig, AIProviderName, CreateAIProviderRequest } from '@activepieces/common-ai'
+import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
 import {
     ActivepiecesError,
     ApEdition,
@@ -16,10 +16,10 @@ import { aiProviders } from './providers'
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
 export const aiProviderService = {
-    async listProviders(platformId: PlatformId): Promise<SeekPage<ListAIProviderResponseItem>> {
+    async listProviders(platformId: PlatformId): Promise<SeekPage<AIProviderWithoutSensitiveData>> {
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
-        const data: ListAIProviderResponseItem[] = [];
+        const data: AIProviderWithoutSensitiveData[] = [];
 
         for (const id of Object.values(AIProviderName)) {
             const isConfigured = configuredProviders.find(c => c.provider === id)
@@ -35,7 +35,7 @@ export const aiProviderService = {
         return { data, next: null, previous: null }
     },
 
-    async listModels(platformId: PlatformId, providerId: AIProviderName): Promise<SeekPage<ListModelsResponseItem>> {
+    async listModels(platformId: PlatformId, providerId: AIProviderName): Promise<SeekPage<AIProviderModel>> {
         const { config } = await this.getConfig(platformId, providerId)
 
         const provider = aiProviders[providerId]
@@ -87,18 +87,6 @@ export const aiProviderService = {
 
         return { config }
     },
-}
-
-export type ListAIProviderResponseItem = {
-    id: string;
-    name: string;
-    isConfigured: boolean;
-}
-
-export type ListModelsResponseItem = {
-    id: string;
-    name: string;
-    type: 'text' | 'image';
 }
 
 export type GetProviderConfigResponse = {

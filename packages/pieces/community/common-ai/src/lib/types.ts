@@ -78,8 +78,24 @@ export const AIProvider = Type.Intersect([
 
 export type AIProvider = Static<typeof AIProvider>
 
-export const AIProviderWithoutSensitiveData = Type.Omit(AIProvider, ['config'])
+export const AIProviderWithoutSensitiveData = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    isConfigured: Type.Boolean(),
+})
 export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSensitiveData>
+
+export enum AIProviderModelType {
+    Image = 'image',
+    Text = 'text',
+}
+
+export const AIProviderModel = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    type: Type.Enum(AIProviderModelType),
+})
+export type AIProviderModel = Static<typeof AIProviderModel>
 
 export const CreateAIProviderRequest = ProviderConfigUnion
 

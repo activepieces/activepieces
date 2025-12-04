@@ -1,14 +1,13 @@
-import { AIProviderStrategy, ProviderModel } from './ai-provider';
+import { AIProviderStrategy } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AzureProviderConfig } from '@activepieces/common-ai';
-
+import { AzureProviderConfig, AIProviderModel, AIProviderModelType } from '@activepieces/common-ai';
 
 export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
     name() {
         return 'Azure OpenAI';
     },
 
-    async listModels(config: AzureProviderConfig): Promise<ProviderModel[]> {
+    async listModels(config: AzureProviderConfig): Promise<AIProviderModel[]> {
         const endpoint = `${config.resourceName}.openai.azure.com`;
         const apiKey = config.apiKey;
         const apiVersion = '2024-10-21';
@@ -31,7 +30,7 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
         return data.map((deployment: any) => ({
             id: deployment.name,
             name: deployment.name,
-            type: 'text',
+            type: AIProviderModelType.Text,
         }));
     },
 };

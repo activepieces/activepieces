@@ -2,7 +2,7 @@ import { Property, InputPropertyMap } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil, SeekPage } from '@activepieces/shared';
 import { SUPPORTED_AI_PROVIDERS, SupportedAIProvider } from './supported-ai-providers';
-import { AIProviderWithoutSensitiveData } from './types';
+import { AIProviderModel, AIProviderWithoutSensitiveData } from './types';
 import { ImageModelV2 } from "@ai-sdk/provider";
 
 export const aiProps = <T extends 'text' | 'image' | 'video'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
@@ -12,7 +12,7 @@ export const aiProps = <T extends 'text' | 'image' | 'video'>({ modelType, funct
         refreshers: [],
         options: async (_, ctx) => {
             const { body: { data: supportedProviders } } = await httpClient.sendRequest<
-                SeekPage<{ id: string; name: string; isConfigured: boolean }>
+                SeekPage<AIProviderWithoutSensitiveData>
             >({
                 method: HttpMethod.GET,
                 url: `${ctx.server.apiUrl}v1/ai-providers`,
@@ -55,7 +55,7 @@ export const aiProps = <T extends 'text' | 'image' | 'video'>({ modelType, funct
                 };
             }
 
-            const { body: { data: allModels } } = await httpClient.sendRequest<SeekPage<{ id: string; name: string; type: 'text' | 'image' }>>({
+            const { body: { data: allModels } } = await httpClient.sendRequest<SeekPage<AIProviderModel>>({
                 method: HttpMethod.GET,
                 url: `${ctx.server.apiUrl}v1/ai-providers/${provider}/models`,
                 headers: {
