@@ -54,3 +54,15 @@ export function redisConnectionFactory(
     return factory
 }
 
+export const redisHelper = {
+    scanAll: async (redis: Redis, match: string): Promise<string[]> => {
+        const keys: string[] = []
+        let cursor = '0'
+        do {
+            const [newCursor, foundKeys] = await redis.scan(cursor, 'MATCH', match, 'COUNT', 1000)
+            cursor = newCursor
+            keys.push(...foundKeys)
+        } while (cursor !== '0')
+        return keys
+    }
+}
