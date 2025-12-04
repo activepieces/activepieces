@@ -1,4 +1,3 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { AIProviderStrategy, ProviderModel } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -23,10 +22,16 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
 
         const { data } = res.body;
 
+        const openaiImageModels = [
+            'gpt-image-1',
+            'dall-e-3',
+            'dall-e-2'
+        ]
+
         return data.map((model: any) => ({
             id: model.id,
             name: model.id,
-            type: 'text',
+            type: openaiImageModels.includes(model.id) ? 'image' : 'text',
         }));
     },
 
