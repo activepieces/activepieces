@@ -1,4 +1,3 @@
-import { ActivepiecesError, ErrorCode } from '@activepieces/shared';
 import { AIProviderStrategy, ProviderModel } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { AzureProviderConfig } from '@activepieces/common-ai';
