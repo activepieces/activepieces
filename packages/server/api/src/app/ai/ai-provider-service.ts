@@ -16,7 +16,6 @@ import { AiProviderConfig, aiProviders } from './providers'
 import { ConfigSchema } from './providers/ai-provider'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
-const isCloudEdition = system.getEdition() === ApEdition.CLOUD
 
 export const aiProviderService = {
     async listProviders(platformId: PlatformId): Promise<SeekPage<ListAIProviderResponseItem>> {
@@ -57,12 +56,12 @@ export const aiProviderService = {
             })
         }
 
-        const provider = aiProviders[request.provider]
-        const validatedConfig = provider.validateConfig(request)
-
         await aiProviderRepo().upsert({
             id: apId(),
-            config: await encryptUtils.encryptObject(validatedConfig),
+            config: await encryptUtils.encryptObject({
+                apiKey: request.apiKey,
+                resourceName: request.resourceName,
+            }),
             provider: request.provider,
             platformId,
         }, ['provider', 'platformId'])
@@ -90,18 +89,9 @@ export const aiProviderService = {
         })
 
         const config = await encryptUtils.decryptObject<AiProviderConfig[keyof AiProviderConfig]>(aiProvider.config)
-        
-        const provider = aiProviders[providerId]
-        const headers = provider.authHeaders(config)
 
-        return { config, headers }
+        return { config }
     },
-
-    async getConfigSchema(providerId: string): Promise<ConfigSchema<any>> {
-        const provider = aiProviders[providerId]
-
-        return provider.configSchema();
-    }
 }
 
 export type ListAIProviderResponseItem = {
@@ -118,6 +108,5 @@ export type ListModelsResponseItem = {
 
 export type GetProviderConfigResponse = {
     config: AiProviderConfig[keyof AiProviderConfig];
-    headers: Record<string, string>;
 }
 

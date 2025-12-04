@@ -40,40 +40,6 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
         }));
     },
 
-    validateConfig(config: object): AzureProviderConfig {
-        if (
-            'apiKey' in config && 
-            typeof config.apiKey === 'string' &&
-            'resourceName' in config &&
-            typeof config.resourceName === 'string'
-        ) {
-            return {
-                apiKey: config.apiKey,
-                resourceName: config.resourceName,
-            }
-        }
-
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_API_KEY,
-            params: {}
-        })
-    },
-
-    configSchema() {
-        return [
-            {
-                attribute: 'apiKey',
-                label: 'API Key',
-                type: 'string',
-            },
-            {
-                attribute: 'resourceName',
-                label: 'Resource Name',
-                type: 'string',
-            }
-        ]
-    },
-
     authHeaders(config: AzureProviderConfig) {
         return {
             'api-key': config.apiKey,
