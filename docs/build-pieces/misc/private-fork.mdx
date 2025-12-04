@@ -1,0 +1,84 @@
+---
+title: 'Setup Private Fork'
+icon: "code-branch"
+---
+
+<Tip>
+**Friendly Tip #1:** If you want to experiment, you can fork or clone the public repository.
+</Tip>
+
+<Tip>
+For private piece installation, you will need the paid edition. However, you can still develop pieces, contribute them back, **OR** publish them to the public npm registry and use them in your own instance or project.
+</Tip>
+
+## Create a Private Fork (Private Pieces)
+
+By following these steps, you can create a private fork on GitHub, GitLab or another platform and configure the "activepieces" repository as the upstream source, allowing you to incorporate changes from the "activepieces" repository.
+
+1. **Clone the Repository:**
+
+Begin by creating a bare clone of the repository. Remember that this is a temporary step and will be deleted later.
+
+```bash
+git clone --bare git@github.com:activepieces/activepieces.git
+ ```
+
+2. **Create a Private Git Repository**
+
+Generate a new private repository on GitHub or your chosen platform. When initializing the new repository, do not include a README, license, or gitignore files. This precaution is essential to avoid merge conflicts when synchronizing your fork with the original repository.
+   
+3. **Mirror-Push to the Private Repository:**
+
+Mirror-push the bare clone you created earlier to your newly created "activepieces" repository. Make sure to replace `<your_username>` in the URL below with your actual GitHub username.
+
+```bash
+cd activepieces.git
+git push --mirror git@github.com:<your_username>/activepieces.git
+```
+
+4. **Remove the Temporary Local Repository:**
+  
+```bash
+cd ..
+rm -rf activepieces.git
+```
+
+5. **Clone Your Private Repository:**
+
+Now, you can clone your "activepieces" repository onto your local machine into your desired directory.
+
+```bash
+cd ~/path/to/directory
+git clone git@github.com:<your_username>/activepieces.git
+```
+
+6. **Add the Original Repository as a Remote:**
+
+If desired, you can add the original repository as a remote to fetch potential future changes. However, remember to disable push operations for this remote, as you are not permitted to push changes to it.
+
+```bash
+git remote add upstream git@github.com:activepieces/activepieces.git
+git remote set-url --push upstream DISABLE
+```
+
+You can view a list of all your remotes using `git remote -v`. It should resemble the following:
+
+```
+origin	git@github.com:<your_username>/activepieces.git (fetch)
+origin	git@github.com:<your_username>/activepieces.git (push)
+upstream	git@github.com:activepieces/activepieces.git (fetch)
+upstream	DISABLE (push)
+```
+
+> When pushing changes, always use `git push origin`.
+
+### Sync Your Fork
+
+To retrieve changes from the "upstream" repository, fetch the remote and rebase your work on top of it.
+
+```bash
+git fetch upstream
+git merge upstream/main
+```
+
+Conflict resolution should not be necessary since you've only added pieces to your repository.

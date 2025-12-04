@@ -1,0 +1,51 @@
+---
+title: 'Create Piece Definition'
+icon: 'circle-3'
+description: ''
+---
+
+
+This tutorial will guide you through the process of creating a Gelato piece with an action that fetches random icecream flavor and trigger that fetches new icecream flavor created. It assumes that you are familiar with the following:
+
+- [Activepieces Local development](../development-setup/local) Or [GitHub Codespaces](../development-setup/codespaces).
+- TypeScript syntax.
+
+## Piece Definition
+
+To get started, let's generate a new piece for Gelato
+
+```bash
+npm run cli pieces create
+```
+
+You will be asked three questions to define your new piece:
+
+1. `Piece Name`: Specify a name for your piece. This name uniquely identifies your piece within the ActivePieces ecosystem.
+2. `Package Name`: Optionally, you can enter a name for the npm package associated with your piece. If left blank, the default name will be used.
+3. `Piece Type`: Choose the piece type based on your intention. It can be either "custom" if it's a tailored solution for your needs, or "community" if it's designed to be shared and used by the broader community.
+
+**Example:**
+
+```bash
+npm run cli pieces create
+
+? Enter the piece name: gelato
+? Enter the package name: @activepieces/piece-gelato
+? Select the piece type: community
+```
+
+The piece will be generated at `packages/pieces/community/gelato/`,
+the `src/index.ts` file should contain the following code
+
+```ts
+import { PieceAuth, createPiece } from '@activepieces/pieces-framework';
+
+export const gelato = createPiece({
+  displayName: 'Gelato',
+  logoUrl: 'https://cdn.activepieces.com/pieces/gelato.png',
+  auth: PieceAuth.None(),
+  authors: [],
+  actions: [],
+  triggers: [],
+});
+```

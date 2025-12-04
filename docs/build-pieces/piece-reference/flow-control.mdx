@@ -1,0 +1,65 @@
+---
+title: 'Flow Control'
+icon: 'Joystick'
+description: 'Learn How to Control Flow from Inside the Piece'
+---
+
+Flow Controls provide the ability to control the flow of execution from inside a piece. By using the `ctx` parameter in the `run` method of actions, you can perform various operations to control the flow.
+
+## Stop Flow
+
+You can stop the flow and provide a response to the webhook trigger. This can be useful when you want to terminate the execution of the piece and send a specific response back.
+
+**Example with Response:**
+
+```typescript
+context.run.stop({
+  response: {
+    status: context.propsValue.status ?? StatusCodes.OK,
+    body: context.propsValue.body,
+    headers: (context.propsValue.headers as Record<string, string>) ?? {},
+  },
+});
+```
+
+**Example without Response:**
+
+```typescript
+context.run.stop();
+```
+
+## Pause Flow and Wait for Webhook
+
+You can pause flow and return HTTP response, also provide a callback to URL that you can call with certain payload and continue the flow.
+
+**Example:**
+
+```typescript
+ctx.run.pause({
+  pauseMetadata: {
+    type: PauseType.WEBHOOK,
+    response: {
+      callbackUrl: context.generateResumeUrl({
+        queryParams: {},
+      }),
+    },
+  },
+});
+```
+
+## Pause Flow and Delay
+
+You can pause or delay the flow until a specific timestamp. Currently, the only supported type of pause is a delay based on a future timestamp.
+
+**Example:**
+
+```typescript
+ctx.run.pause({
+    pauseMetadata: {
+        type: PauseType.DELAY,
+        resumeDateTime: futureTime.toUTCString()
+    }
+});
+```
+
+These flow hooks give you control over the execution of the piece by allowing you to stop the flow or pause it until a certain condition is met. You can use these hooks to customize the behavior and flow of your actions.

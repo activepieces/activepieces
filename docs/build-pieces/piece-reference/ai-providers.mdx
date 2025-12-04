@@ -1,0 +1,299 @@
+---
+title: 'AI SDK & Providers'
+icon: 'brain'
+description: 'The AI Toolkit to build AI pieces tailored for specific use cases that work with many AI providers using the AI SDK'
+---
+
+**What it provides:**
+
+- 🔐 **Centralized Credentials Management**: Admin manages credentials, end users use without hassle.
+- 🌐 **Support for Multiple AI Providers**: OpenAI, Anthropic, and many open-source models.
+- 💬 **Support for Various AI Capabilities**: Chat, Image, Agents, and more.
+
+## Using the AI SDK
+
+Activepieces integrates with the [AI SDK](https://ai-sdk.dev/) to provide a unified interface for calling LLMs across multiple AI providers. Here's an example on how to use the AI SDK's `generateText` function to call an LLM in your actions.
+
+```typescript
+import { SUPPORTED_AI_PROVIDERS, createAIModel, aiProps } from '@activepieces/common-ai';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { LanguageModel, generateText } from 'ai';
+
+export const askAI = createAction({
+  name: 'askAi',
+  displayName: 'Ask AI',
+  description: 'Generate text using AI providers',
+  props: {
+    // AI provider selection (OpenAI, Anthropic, etc.)
+    provider: aiProps({ modelType: 'language' }).provider,
+    // Model selection within the chosen provider
+    model: aiProps({ modelType: 'language' }).model,
+    prompt: Property.LongText({
+      displayName: 'Prompt',
+      required: true,
+    }),
+    creativity: Property.Number({
+      displayName: 'Creativity',
+      required: false,
+      defaultValue: 100,
+      description: 'Controls the creativity of the AI response (0-100)',
+    }),
+    maxTokens: Property.Number({
+      displayName: 'Max Tokens',
+      required: false,
+      defaultValue: 2000,
+    }),
+  },
+  async run(context) {
+    const providerName = context.propsValue.provider as string;
+    const modelInstance = context.propsValue.model as LanguageModel;
+
+    // The `createAIModel` function creates a standardized AI model instance compatible with the AI SDK:
+    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
+    const engineToken = context.server.token;
+    const provider = createAIModel({
+      providerName,           // Provider name (e.g., 'openai', 'anthropic')
+      modelInstance,          // Model instance with configuration
+      engineToken,            // Authentication token
+      baseURL,               // Proxy URL for API requests
+    });
+
+    // Generate text using the AI SDK
+    const response = await generateText({
+      model: provider,                                        // AI provider instance
+      messages: [
+        {
+          role: 'user',
+          content: context.propsValue.prompt,
+        },
+      ],
+      maxTokens: context.propsValue.maxTokens,               // Limit response length
+      temperature: (context.propsValue.creativity ?? 100) / 100, // Control randomness (0-1)
+      headers: {
+        'Authorization': `Bearer ${engineToken}`,            // Required for proxy authentication
+      },
+    });
+
+    return response.text ?? '';
+  },
+});
+```
+
+## AI Properties Helper
+
+Use `aiProps` to create consistent AI-related properties:
+
+```typescript
+import { aiProps } from '@activepieces/ai-common';
+
+// For language models (text generation)
+props: {
+  provider: aiProps({ modelType: 'language' }).provider,
+  model: aiProps({ modelType: 'language' }).model,
+}
+
+// For image models (image generation)
+props: {
+  provider: aiProps({ modelType: 'image' }).provider,
+  model: aiProps({ modelType: 'image' }).model,
+  advancedOptions: aiProps({ modelType: 'image' }).advancedOptions,
+}
+
+// For function calling support
+props: {
+  provider: aiProps({ modelType: 'language', functionCalling: true }).provider,
+  model: aiProps({ modelType: 'language', functionCalling: true }).model,
+}
+```
+
+### Advanced Options
+
+The `aiProps` helper includes an `advancedOptions` property that provides provider-specific configuration options. These options are dynamically generated based on the selected provider and model.
+
+To add advanced options for your new provider, update the `advancedOptions` property in `packages/pieces/community/common/src/lib/ai/index.ts`:
+
+```typescript
+// In packages/pieces/community/common/src/lib/ai/index.ts
+advancedOptions: Property.DynamicProperties({
+    displayName: 'Advanced Options',
+    required: false,
+    refreshers: ['provider', 'model'],
+    props: async (propsValue): Promise<InputPropertyMap> => {
+        const provider = propsValue['provider'] as unknown as string;
+
+        const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
+        if (isNil(providerMetadata)) {
+            return {};
+        }
+
+        if (modelType === 'image') {
+            // Existing OpenAI options
+            if (provider === 'openai') {
+                return {
+                    quality: Property.StaticDropdown({
+                        options: {
+                            options: [
+                                { label: 'Standard', value: 'standard' },
+                                { label: 'HD', value: 'hd' },
+                            ],
+                            disabled: false,
+                            placeholder: 'Select Image Quality',
+                        },
+                        defaultValue: 'standard',
+                        description: 'Standard images are less detailed and faster to generate.',
+                        displayName: 'Image Quality',
+                        required: true,
+                    }),
+                };
+            }
+
+        return {};
+    },
+})
+```
+
+The advanced options automatically update when users change their provider or model selection, ensuring only relevant options are shown.
+
+## Adding a New AI Provider
+
+To add support for a new AI provider, you need to update several files in the Activepieces codebase. Here's a complete guide:
+
+Before starting, check the [Vercel AI SDK Providers](https://ai-sdk.dev/providers/ai-sdk-providers) documentation to see all available providers and their capabilities.
+
+### 1. Install Required Dependencies
+
+First, add the AI SDK for your provider to the project dependencies:
+
+```bash
+npm install @ai-sdk/openai
+```
+
+### 2. Update SUPPORTED_AI_PROVIDERS Array
+
+First, add your new provider to the `SUPPORTED_AI_PROVIDERS` array in `packages/ai-providers-shared/src/lib/supported-ai-providers.ts`:
+
+```typescript
+import { openai } from '@ai-sdk/openai' // Import the OpenAI SDK
+
+export const SUPPORTED_AI_PROVIDERS: SupportedAIProvider[] = [
+  // ... existing providers
+  {
+    provider: 'openai',                                    // Unique provider identifier
+    baseUrl: 'https://api.openai.com',                    // OpenAI's API base URL
+    displayName: 'OpenAI',                                // Display name in UI
+    markdown: `Follow these instructions to get your OpenAI API Key:
+
+1. Visit: https://platform.openai.com/account/api-keys
+2. Create a new API key for Activepieces integration.
+3. Add your credit card and upgrade to paid plan to avoid rate limits.
+`,                                                        // Instructions for users
+    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png', // OpenAI logo
+    auth: {
+      headerName: 'Authorization',                        // HTTP header name for auth
+      bearer: true,                                       // Whether to use "Bearer" prefix
+    },
+    languageModels: [                                     // Available language models
+      {
+        displayName: 'GPT-4o',
+        instance: openai('gpt-4o'),                       // Model instance from AI SDK
+        functionCalling: true,                            // Whether model supports function calling
+      },
+      {
+        displayName: 'GPT-4o Mini',
+        instance: openai('gpt-4o-mini'),
+        functionCalling: true,
+      },
+    ],
+    imageModels: [                                        // Available image models
+      {
+        displayName: 'DALL-E 3',
+        instance: openai.image('dall-e-3'),              // Image model instance
+      },
+      {
+        displayName: 'DALL-E 2',
+        instance: openai.image('dall-e-2'),
+      },
+    ],
+  },
+];
+```
+
+### 3. Update createAIModel Function
+
+Add a case for your provider in the `createAIModel` function in `packages/shared/src/lib/ai/ai-sdk.ts`:
+
+```typescript
+import { createOpenAI } from '@ai-sdk/openai' // Import the OpenAI SDK
+
+export function createAIModel<T extends LanguageModel | ImageModel>({
+    providerName,
+    modelInstance,
+    engineToken,
+    baseURL,
+}: CreateAIModelParams<T>): T {
+    const isImageModel = SUPPORTED_AI_PROVIDERS
+        .flatMap(provider => provider.imageModels)
+        .some(model => model.instance.modelId === modelInstance.modelId)
+
+    switch (providerName) {
+        // ... existing cases
+        case 'openai': {
+            const openaiVersion = 'v1'                     // OpenAI API version
+            const provider = createOpenAI({
+                apiKey,                                     // OpenAI API key
+                baseURL: `${baseURL}/${openaiVersion}`,    // Full API URL
+            })
+            
+            if (isImageModel) {
+                return provider.imageModel(modelInstance.modelId) as T
+            }
+            return provider(modelInstance.modelId) as T
+        }
+        default:
+            throw new Error(`Provider ${providerName} is not supported`)
+    }
+}
+```
+
+### 4. Handle Provider-Specific Requirements
+
+OpenAI supports both language and image models, but some providers may have specific requirements or limitations:
+
+```typescript
+// Example: Anthropic only supports language models
+case 'anthropic': {
+    const provider = createAnthropic({
+        apiKey,
+        baseURL: `${baseURL}/v1`,
+    })
+    
+    if (isImageModel) {
+        throw new Error(`Provider ${providerName} does not support image models`)
+    }
+    return provider(modelInstance.modelId) as T
+}
+
+// Example: Replicate primarily supports image models
+case 'replicate': {
+    const provider = createReplicate({
+        apiToken: apiKey,  // Note: Replicate uses 'apiToken' instead of 'apiKey'
+        baseURL: `${baseURL}/v1`,
+    })
+    
+    if (!isImageModel) {
+        throw new Error(`Provider ${providerName} does not support language models`)
+    }
+    return provider.imageModel(modelInstance.modelId) as unknown as T
+}
+```
+
+### 5. Test Your Integration
+
+After adding the provider, test it by:
+
+1. **Configure credentials** in the Admin panel for your new provider
+2. **Create a test action** using `aiProps` to select your provider and models
+3. **Verify functionality** by running a flow with your new provider
+
+Once these changes are made, your new AI provider will be available in the `aiProps` dropdowns and can be used with `generateText` and other [AI SDK functions](https://ai-sdk.dev/docs/introduction) throughout Activepieces.
+

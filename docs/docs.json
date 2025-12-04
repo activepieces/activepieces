@@ -72,11 +72,71 @@
         "description": "Learn how to build, test, and publish your own custom pieces in Activepieces.",
         "groups": [
           {
-            "group": "Development setup",
+            "group": "Build a Piece",
             "pages": [
-              "build-pieces/development-setup/getting-started",
-              "build-pieces/development-setup/local",
-              "build-pieces/development-setup/codespaces"
+              "build-pieces/building-pieces/overview",
+              "build-pieces/building-pieces/start-building",
+              "build-pieces/building-pieces/setup-fork",
+              {
+                "group": "Development Setup",
+                "icon": "circle-2",
+                "pages": [
+                  "build-pieces/development-setup/getting-started",
+                  "build-pieces/development-setup/local",
+                  "build-pieces/development-setup/codespaces"
+                ]
+              },
+              "build-pieces/building-pieces/piece-definition",
+              "build-pieces/building-pieces/piece-authentication",
+              "build-pieces/building-pieces/create-action",
+              "build-pieces/building-pieces/create-trigger",
+              {
+                "group": "Sharing Pieces",
+                "icon": "circle-7",
+                "pages": [
+                  "build-pieces/sharing-pieces/overview",
+                  "build-pieces/sharing-pieces/contribute",
+                  "build-pieces/sharing-pieces/community",
+                  "build-pieces/sharing-pieces/private"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Piece Reference",
+            "pages": [
+              "build-pieces/piece-reference/authentication",
+              {
+                "group": "Triggers",
+                "icon": "bolt",
+                "pages": [
+                  "build-pieces/piece-reference/triggers/overview",
+                  "build-pieces/piece-reference/triggers/polling-trigger",
+                  "build-pieces/piece-reference/triggers/webhook-trigger"
+                ]
+              },
+              "build-pieces/piece-reference/properties",
+              "build-pieces/piece-reference/properties-validation",
+              "build-pieces/piece-reference/flow-control",
+              "build-pieces/piece-reference/persistent-storage",
+              "build-pieces/piece-reference/files",
+              "build-pieces/piece-reference/external-libraries",
+              "build-pieces/piece-reference/piece-versioning",
+              "build-pieces/piece-reference/examples",
+              "build-pieces/piece-reference/custom-api-calls",
+              "build-pieces/piece-reference/i18n",
+              "build-pieces/piece-reference/ai-providers"
+            ]
+          },
+          {
+            "group": "Misc",
+            "pages": [
+              "build-pieces/misc/build-piece",
+              "build-pieces/misc/publish-piece",
+              "build-pieces/misc/pieces-ci-cd",
+              "build-pieces/misc/create-new-ai-provider",
+              "build-pieces/misc/private-fork",
+              "build-pieces/misc/dev-container"
             ]
           }
         ]
