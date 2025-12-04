@@ -3,9 +3,9 @@ import { useState, ReactNode } from 'react';
 
 import { Button, ButtonProps } from '@/components/ui/button';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { ConnectGitDialog } from '@/features/git-sync/components/connect-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { ConnectGitDialog } from '@/features/project-releases/components/connect-git-dialog';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   DiffReleaseRequest,

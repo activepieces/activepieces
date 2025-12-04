@@ -3,19 +3,20 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   Property,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { rabbitmqAuth } from '../../index';
 import { rabbitmqConnect } from '../common';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof rabbitmqAuth>, {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof rabbitmqAuth>, {
   queue: string,
   maxMessagesPerPoll: number,
 }> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue }) => {
-    const connection = await rabbitmqConnect(auth);
+    const connection = await rabbitmqConnect(auth.props);
     const channel = await connection.createChannel();
     const messages = [];
 

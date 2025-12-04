@@ -21,10 +21,11 @@ export const createOpportunityAction = createAction({
       displayName: 'Party',
       required: true,
       refreshers: [],
+      auth: capsuleCrmAuth,
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const contacts = await capsuleCrmClient.searchContacts(
-          auth as CapsuleCrmAuthType,
+          auth,
           ''
         );
         return {
@@ -49,13 +50,14 @@ export const createOpportunityAction = createAction({
       required: false,
     }),
     milestoneId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Milestone',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const milestones = await capsuleCrmClient.listMilestones(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: milestones.map((milestone) => ({
@@ -107,6 +109,7 @@ export const createOpportunityAction = createAction({
       description: 'The duration of the opportunity.',
     }),
     ownerId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Owner',
       required: false,
       description: 'The user the opportunity is assigned to.',
@@ -114,7 +117,7 @@ export const createOpportunityAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const users = await capsuleCrmClient.listUsers(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: users.map((user) => ({
@@ -125,6 +128,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     teamId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Team',
       required: false,
       description: 'The team the opportunity is assigned to.',
@@ -132,7 +136,7 @@ export const createOpportunityAction = createAction({
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const teams = await capsuleCrmClient.listTeams(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: teams.map((team) => ({
@@ -143,12 +147,13 @@ export const createOpportunityAction = createAction({
       },
     }),
     tags: Property.MultiSelectDropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Tags',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
-        const tags = await capsuleCrmClient.listTags(auth as CapsuleCrmAuthType);
+        const tags = await capsuleCrmClient.listTags(auth);
         return {
           options: tags.map((tag) => ({
             label: tag.name,
@@ -158,6 +163,7 @@ export const createOpportunityAction = createAction({
       },
     }),
     customFields: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Custom Fields',
       required: true,
       refreshers: [],
@@ -165,7 +171,7 @@ export const createOpportunityAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const customFields = await capsuleCrmClient.listCustomFields(
-          auth as CapsuleCrmAuthType
+          auth
         );
         for (const field of customFields) {
           switch (field.type) {

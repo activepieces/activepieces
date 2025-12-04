@@ -20,6 +20,7 @@ export const textToImage = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      auth: stableDiffusionAuth,
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
@@ -30,7 +31,7 @@ export const textToImage = createAction({
             placeholder: 'Please authenticate first',
           };
         }
-        const { baseUrl } = auth as StableDiffusionAuthType;
+        const { baseUrl } = auth.props;
         const request: HttpRequest = {
           method: HttpMethod.GET,
           url: `${baseUrl}/sdapi/v1/sd-models`,
@@ -63,7 +64,7 @@ export const textToImage = createAction({
   async run({ auth, propsValue, files }) {
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${auth.baseUrl}/sdapi/v1/txt2img`,
+      url: `${auth.props.baseUrl}/sdapi/v1/txt2img`,
       headers: {
         'Content-Type': 'application/json',
       },

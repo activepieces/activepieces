@@ -35,7 +35,7 @@ export const runSuiteQL = createAction({
   },
   async run(context) {
     const { accountId, consumerKey, consumerSecret, tokenId, tokenSecret } =
-      context.auth;
+      context.auth.props;
 
     const query = context.propsValue.query;
     const args: string[] = (context.propsValue.args as string[]) || [];

@@ -21,7 +21,7 @@ export const manychatAuth = PieceAuth.SecretText({
 				url: `${BASE_URL}/page/getInfo`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth as string,
+					token: auth
 				},
 			});
 			return {

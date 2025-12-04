@@ -1,5 +1,5 @@
 import { trelloAuth } from '../..';
-import { TriggerStrategy, createTrigger, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { trelloCommon, getCardsInBoard, getCardsInList } from '../common';
@@ -11,7 +11,7 @@ interface Props {
     time_unit: string;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof trelloAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof trelloAuth>, Props> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth, propsValue, lastFetchEpochMS }) {
         const { board_id, list_id_opt, time_before_due, time_unit } = propsValue;

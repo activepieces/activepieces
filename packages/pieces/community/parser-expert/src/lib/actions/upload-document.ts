@@ -50,7 +50,7 @@ export const uploadDocument = createAction({
     }>({
       method: HttpMethod.POST,
       url: '/v1/upload',
-      auth: auth as string,
+      auth: auth.secret_text,
       body: formData,
       headers: formData.getHeaders(),
     });

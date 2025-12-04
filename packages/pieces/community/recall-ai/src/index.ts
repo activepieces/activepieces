@@ -19,13 +19,12 @@ export const recallAi = createPiece({
     sendChatMessage,
     createCustomApiCallAction({
       auth: recallAiAuth,
-      baseUrl: (auth: unknown) => {
-        return `${(auth as any).server as string}/api/v1`;
+      baseUrl: (auth) => {
+        return `${(auth)?.props.server as string}/api/v1`;
       },
-      authMapping: async (auth: unknown) => {
-        const { apiKey } = auth as { apiKey: string };
+      authMapping: async (auth) => {
         return {
-          Authorization: `${apiKey}`,
+          Authorization: `${auth.props.api_key}`,
         };
       },
     }),

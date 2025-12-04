@@ -34,7 +34,7 @@ export const getExtractedData = createAction({
     }>({
       method: HttpMethod.GET,
       url: '/v1/extracts',
-      auth: auth as string,
+      auth: auth.secret_text,
       queryParams: {
         parser_id,
         bucket_id,

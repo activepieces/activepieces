@@ -1,4 +1,4 @@
-import { createTrigger,PiecePropValueSchema,TriggerStrategy } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createTrigger,PiecePropValueSchema,TriggerStrategy } from '@activepieces/pieces-framework';
 import { googleSheetsAuth } from '../../index';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 
@@ -9,7 +9,7 @@ import { includeTeamDrivesProp } from '../common/props';
 type Props = {
     includeTeamDrives?: boolean;
 };
-const polling: Polling<PiecePropValueSchema<typeof googleSheetsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof googleSheetsAuth>, Props> = {
     strategy: DedupeStrategy.TIMEBASED,
     async items({ auth, propsValue, lastFetchEpochMS }) {
         const authValue = auth as PiecePropValueSchema<typeof googleSheetsAuth>;

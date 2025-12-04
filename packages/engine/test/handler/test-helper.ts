@@ -4,6 +4,8 @@ import { EngineConstants } from '../../src/lib/handler/context/engine-constants'
 export const generateMockEngineConstants = (params?: Partial<EngineConstants>): EngineConstants => {
     return new EngineConstants(
         {
+            platformId: params?.platformId ?? 'platformId',
+            timeoutInSeconds: params?.timeoutInSeconds ?? 10,
             flowId: params?.flowId ?? 'flowId',
             flowVersionId: params?.flowVersionId ?? 'flowVersionId',
             flowVersionState: params?.flowVersionState ?? FlowVersionState.DRAFT,

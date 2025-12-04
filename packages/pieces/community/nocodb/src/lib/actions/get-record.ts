@@ -20,6 +20,6 @@ export const getRecordAction = createAction({
 		const { baseId, tableId, recordId } = context.propsValue;
 
 		const client = makeClient(context.auth);
-		return await client.getRecord(baseId, tableId, recordId, context.auth.version || 3);
+		return await client.getRecord(baseId, tableId, recordId, context.auth.props.version || 3);
 	},
 });

@@ -29,7 +29,7 @@ export const createFinetune = createAction({
     };
 
     const response = await makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.POST,
       `/${propsValue.chatbotId}/finetunes`,
       body

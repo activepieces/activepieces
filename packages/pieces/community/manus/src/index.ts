@@ -27,7 +27,7 @@ export const manus = createPiece({
       baseUrl: () => 'https://api.manus.ai/v1',
       auth: manusAuth,
       authMapping: async (auth) => ({
-        API_KEY: auth as string,
+        API_KEY: auth.secret_text,
       }),
     }),
   ],

@@ -1,6 +1,7 @@
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { BexioClient } from './client';
 import { BexioAccount, BexioTax, BexioCurrency } from './types';
+import { bexioAuth } from '../..';
 
 export const bexioCommonProps = {
   account: (options: {
@@ -9,6 +10,7 @@ export const bexioCommonProps = {
     required: boolean;
   }) => {
     return Property.Dropdown({
+      auth: bexioAuth,
       displayName: options.displayName,
       description: options.description,
       required: options.required,
@@ -23,7 +25,7 @@ export const bexioCommonProps = {
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const accounts = await client.get<BexioAccount[]>('/accounts');
 
           return {
@@ -45,6 +47,7 @@ export const bexioCommonProps = {
   },
 
   tax: Property.Dropdown({
+    auth: bexioAuth,
     displayName: 'Tax',
     description: 'Select a tax rate',
     required: false,
@@ -59,7 +62,7 @@ export const bexioCommonProps = {
       }
 
       try {
-        const client = new BexioClient(auth as OAuth2PropertyValue);
+        const client = new BexioClient(auth);
         const taxes = await client.get<BexioTax[]>('/taxes');
 
         return {
@@ -85,6 +88,7 @@ export const bexioCommonProps = {
     required: boolean;
   }) => {
     return Property.Dropdown({
+      auth: bexioAuth,
       displayName: options.displayName,
       description: options.description,
       required: options.required,
@@ -99,7 +103,7 @@ export const bexioCommonProps = {
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const currencies = await client.get<BexioCurrency[]>('/3.0/currencies');
 
           return {

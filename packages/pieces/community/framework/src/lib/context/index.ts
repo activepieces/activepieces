@@ -25,12 +25,12 @@ import { PieceAuthProperty } from '../property/authentication';
 import { DelayPauseMetadata, PauseMetadata, WebhookPauseMetadata } from '@activepieces/shared';
 
 export type BaseContext<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   Props extends InputPropertyMap
 > = {
   flows: FlowsContext;
   step: StepContext;
-  auth: PieceAuth extends undefined ? undefined : AppConnectionValueForAuthProperty<Exclude<PieceAuth, undefined>>;
+    auth: AppConnectionValueForAuthProperty<PieceAuth>;
   propsValue: StaticPropsValue<Props>;
   store: Store;
   project: {
@@ -46,14 +46,19 @@ type ExtractCustomAuthProps<T> = T extends CustomAuthProperty<infer Props> ? Pro
 type ExtractOAuth2Props<T> = T extends OAuth2Property<infer Props> ? Props : never;
 
 
-export  type AppConnectionValueForAuthProperty<T extends PieceAuthProperty | undefined> = 
+export type AppConnectionValueForAuthProperty<T extends PieceAuthProperty | PieceAuthProperty[] | undefined> = 
+  T extends PieceAuthProperty[] ? AppConnectionValueForSingleAuthProperty<T[number]> :
+  T extends PieceAuthProperty ? AppConnectionValueForSingleAuthProperty<T> :
+  T extends undefined ? undefined : never;
+
+type AppConnectionValueForSingleAuthProperty<T extends PieceAuthProperty | undefined> = 
   T extends SecretTextProperty<boolean> ? AppConnectionValue<AppConnectionType.SECRET_TEXT> :
   T extends BasicAuthProperty ? AppConnectionValue<AppConnectionType.BASIC_AUTH> :
   T extends CustomAuthProperty<any> ? AppConnectionValue<AppConnectionType.CUSTOM_AUTH, StaticPropsValue<ExtractCustomAuthProps<T>>> :
   T extends OAuth2Property<any> ? AppConnectionValue<AppConnectionType.OAUTH2, StaticPropsValue<ExtractOAuth2Props<T>>> :
   T extends undefined ? undefined : never;
 type AppWebhookTriggerHookContext<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
   webhookUrl: string;
@@ -70,14 +75,14 @@ type AppWebhookTriggerHookContext<
 };
 
 type PollingTriggerHookContext<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap
 > = BaseContext<PieceAuth, TriggerProps> & {
   setSchedule(schedule: { cronExpression: string; timezone?: string }): void;
 };
 
 type WebhookTriggerHookContext<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap,
 > = BaseContext<PieceAuth, TriggerProps> & {
   webhookUrl: string;
@@ -85,7 +90,7 @@ type WebhookTriggerHookContext<
   server: ServerContext;
 };
 export type TriggerHookContext<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap,
   S extends TriggerStrategy,
 > = S extends TriggerStrategy.APP_WEBHOOK
@@ -99,7 +104,7 @@ export type TriggerHookContext<
   : never;
 
 export type TestOrRunHookContext<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap,
   S extends TriggerStrategy
 > = TriggerHookContext<PieceAuth, TriggerProps, S> & {
@@ -170,7 +175,7 @@ export type RunContext = {
 }
 
 export type OnStartContext<
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   TriggerProps extends InputPropertyMap
 > = Omit<BaseContext<PieceAuth, TriggerProps>, 'flows'> & {
   run: Pick<RunContext, 'id'>;
@@ -188,7 +193,7 @@ export type OutputContext = {
 
 type BaseActionContext<
   ET extends ExecutionType,
-  PieceAuth extends PieceAuthProperty | undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined,
   ActionProps extends InputPropertyMap
 > = BaseContext<PieceAuth, ActionProps> & {
   executionType: ET;
@@ -205,19 +210,19 @@ type BaseActionContext<
 };
 
 type BeginExecutionActionContext<
-  PieceAuth extends PieceAuthProperty | undefined = undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.BEGIN, PieceAuth, ActionProps>;
 
 type ResumeExecutionActionContext<
-  PieceAuth extends PieceAuthProperty | undefined = undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > = BaseActionContext<ExecutionType.RESUME, PieceAuth, ActionProps> & {
   resumePayload: ResumePayload;
 };
 
 export type ActionContext<
-  PieceAuth extends PieceAuthProperty | undefined = undefined,
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined = undefined,
   ActionProps extends InputPropertyMap = InputPropertyMap
 > =
   | BeginExecutionActionContext<PieceAuth, ActionProps>

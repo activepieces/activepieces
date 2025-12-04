@@ -61,12 +61,12 @@ export const ghostcms = createPiece({
     findMember,
     findUser,
     createCustomApiCallAction({
-      baseUrl: (auth) =>
-        `${(auth as { baseUrl: string }).baseUrl}/ghost/api/admin`,
+      baseUrl: (auth) =>auth ?
+        `${auth.props.baseUrl}/ghost/api/admin` : '',
       auth: ghostAuth,
       authMapping: async (auth) => ({
         Authorization: `Ghost ${common.jwtFromApiKey(
-          (auth as { apiKey: string }).apiKey
+          auth.props.apiKey
         )}`,
       }),
     }),

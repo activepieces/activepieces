@@ -1,5 +1,6 @@
 import { zuoraAuth } from '../../';
 import {
+  AppConnectionValueForAuthProperty,
   DropdownOption,
   PiecePropValueSchema,
   Property,
@@ -13,7 +14,7 @@ import {
 } from '@activepieces/pieces-common';
 
 export async function queryAccounts(
-  auth: PiecePropValueSchema<typeof zuoraAuth>
+  auth: AppConnectionValueForAuthProperty<typeof zuoraAuth>
 ) {
   const token = await getAccessToken(auth);
   const result: Record<string, any>[] = [];
@@ -30,7 +31,7 @@ export async function queryAccounts(
 
     const request: HttpRequest = {
       method: HttpMethod.GET,
-      url: `${auth.environment}/v2/accounts`,
+      url: `${auth.props.environment}/v2/accounts`,
       queryParams: qs,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
@@ -47,14 +48,14 @@ export async function queryAccounts(
 }
 
 export async function getAccessToken(
-  auth: PiecePropValueSchema<typeof zuoraAuth>
+  auth: AppConnectionValueForAuthProperty<typeof zuoraAuth>
 ): Promise<string> {
   const request: HttpRequest = {
     method: HttpMethod.POST,
-    url: `${auth.environment}/oauth/token`,
+    url: `${auth.props.environment}/oauth/token`,
     body: new URLSearchParams({
-      client_id: auth.clientId,
-      client_secret: auth.clientSecret,
+      client_id: auth.props.clientId,
+      client_secret: auth.props.clientSecret,
       grant_type: 'client_credentials',
     }),
     headers: {
@@ -69,6 +70,7 @@ export async function getAccessToken(
 export const zuoraCommonProps = {
   account_id: (displayName: string, description: string, required: boolean) =>
     Property.Dropdown({
+      auth: zuoraAuth,
       displayName,
       description,
       required,
@@ -81,7 +83,7 @@ export const zuoraCommonProps = {
             placeholder: 'Please connect your account first',
           };
         }
-        const authValue = auth as PiecePropValueSchema<typeof zuoraAuth>;
+        const authValue = auth as AppConnectionValueForAuthProperty<typeof zuoraAuth>;
         const accounts = await queryAccounts(authValue);
 
         const options: DropdownOption<string>[] = [];

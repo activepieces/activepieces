@@ -18,7 +18,7 @@ export const newCampaignTrigger = createTrigger({
     };
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/account/webhooks',
       HttpMethod.POST,
       webhookData
@@ -31,7 +31,7 @@ export const newCampaignTrigger = createTrigger({
     
     if (webhookId) {
       await makeSenderRequest(
-        context.auth,
+        context.auth.secret_text,
         `/account/webhooks/${webhookId}`,
         HttpMethod.DELETE
       );
@@ -45,7 +45,7 @@ export const newCampaignTrigger = createTrigger({
   async test(context) {
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/campaigns?limit=1',
       HttpMethod.GET
     );

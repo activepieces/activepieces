@@ -29,7 +29,7 @@ export const scanFile = createAction({
       method: HttpMethod.POST,
       url: 'https://api.gptzero.me/v2/predict/files',
       headers: {
-        'x-api-key': context.auth,
+        'x-api-key': context.auth.secret_text,
       },
       body: formData,
     });
