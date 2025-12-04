@@ -347,7 +347,7 @@ export const googleSheetsAuth =[PieceAuth.OAuth2({
 	required: true,
 	scope:googleSheetsScopes ,
   }), PieceAuth.CustomAuth({
-	displayName: 'Service Account (Enterprise)',
+	displayName: 'Service Account (Advanced)',
 	description: 'Allows you to authenticate on behalf of the organization via a service account, you can get one by going to https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key',
 	required: true,
 	props: {
