@@ -56,11 +56,13 @@ export function redisConnectionFactory(
 
 export const redisHelper = {
     scanAll: async (redis: Redis, match: string): Promise<string[]> => {
-        const stream = redis.scanStream({ match, count: 100 });
         const keys: string[] = []
-        for await (const key of stream) {
-            keys.push(key)
-        }
+        let cursor = '0'
+        do {
+            const [newCursor, foundKeys] = await redis.scan(cursor, 'MATCH', match, 'COUNT', 1000)
+            cursor = newCursor
+            keys.push(...foundKeys)
+        } while (cursor !== '0')
         return keys
     }
 }
