@@ -1,0 +1,25 @@
+---
+title: "Files"
+icon: 'file'
+description: "Learn how to use files object to create file references."
+---
+
+The `ctx.files` object allow you to store files in local storage or in a remote storage depending on the run environment.
+
+## Write
+
+You can use the `write` method to write a file to the storage, It returns a string that can be used in other actions or triggers properties to reference the file.
+
+**Example:**
+```ts
+const fileReference = await files.write({
+    fileName: 'file.txt',
+    data: Buffer.from('text')
+});
+```
+
+<Tip>
+This code will store the file in the database If the run environment is testing mode since it will be required to test other steps, other wise it will store it in the local temporary directory.
+</Tip>
+
+For Reading the file If you are using the file property in a trigger or action, It will be automatically parsed and you can use it directly, please refer to `Property.File` in the [properties](./properties#file) section.

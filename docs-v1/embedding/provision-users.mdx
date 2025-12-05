@@ -1,0 +1,113 @@
+---
+title: "Provision Users"
+description: "Automatically authenticate your SaaS users to your Activepieces instance"
+icon: 'user'
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+## Overview
+
+In Activepieces, there are **Projects** and **Users**. Each project is provisioned with their corresponding workspace, project, or team in your SaaS. The users are then mapped to the respective users in Activepieces.
+
+To achieve this, the backend will generate a signed token that contains all the necessary information to automatically create a user and project. If the user or project already exists, it will skip the creation and log in the user directly.
+
+<Steps>
+  <Step title="Step 1: Obtain Signing Key">
+    You can generate a signing key by going to **Platform Settings -> Signing Keys -> Generate Signing Key**.
+
+    This will generate a public and private key pair. The public key will be used by Activepieces to verify the signature of the JWT tokens you send. The private key will be used by you to sign the JWT tokens.
+
+    ![Create Signing Key](../resources/screenshots/create-signing-key.png)
+    <Warning>
+      Please store your private key in a safe place, as it will not be stored in Activepieces.
+    </Warning>
+  </Step>
+
+  <Step title="Step 2: Generate a JWT">
+    The signing key will be used to generate JWT tokens for the currently logged-in user on your website, which will then be sent to the Activepieces Iframe as a query parameter to authenticate the user and exchange the token for a longer lived token.
+
+    To generate these tokens, you will need to add code in your backend to generate the token using the RS256 algorithm, so the JWT header would look like this:
+
+    <Tip>
+      To obtain the `SIGNING_KEY_ID`, refer to the signing key table and locate the value in the first column.
+       ![Signing Key ID](../resources/screenshots/signing-key-id.png)
+    </Tip>
+
+    ```json
+    {
+      "alg": "RS256",
+      "typ": "JWT",
+      "kid": "SIGNING_KEY_ID"
+    }
+    ```
+
+    The signed tokens must include these claims in the payload:
+    ```json
+    {
+      "version": "v3",
+      "externalUserId": "user_id",
+      "externalProjectId": "user_project_id",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "EDITOR",
+      "piecesFilterType": "NONE",
+      "exp": 1856563200,
+      "tasks": 50000,
+      "aiCredits": 250
+    }
+    ```
+
+    | Claim             | Description                                     |
+    |-------------------|-------------------------------------------------|
+    | externalUserId    | Unique identification of the user in **your** software |
+    | externalProjectId | Unique identification of the user's project in **your** software |
+    | projectDisplayName| Display name of the user's project |
+    | firstName         | First name of the user                           |
+    | lastName          | Last name of the user                            |
+    | role              | Role of the user in the Activepieces project (e.g., **EDITOR**, **VIEWER**, **ADMIN**)           |
+    | exp               | Expiry timestamp for the token (Unix timestamp)  |
+    | piecesFilterType  | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
+    | piecesTags        | Customize the project pieces, check [customize pieces](/embedding/customize-pieces)  |
+    | tasks             | Customize the tasks limit for your user's project |
+    | aiCredits         | Customize the ai credits limit for your user's project |
+
+    You can use any JWT library to generate the token. Here is an example using the jsonwebtoken library in Node.js:
+
+    <Tip>
+      **Friendly Tip #1**: You can also use this [tool](https://dinochiesa.github.io/jwt/) to generate a quick example.
+    </Tip>
+
+    <Tip>
+      **Friendly Tip #2**: Make sure the expiry time is very short, as it's a temporary token and will be exchanged for a longer-lived token.
+    </Tip>
+
+    ```javascript Node.js
+    const jwt = require('jsonwebtoken');
+
+    // JWT NumericDates specified in seconds:
+    const currentTime = Math.floor(Date.now() / 1000);
+    let token = jwt.sign(
+      {
+        version: "v3",
+        externalUserId: "user_id",
+        externalProjectId: "user_project_id",
+        firstName: "John",
+        lastName: "Doe",
+        role: "EDITOR",
+        piecesFilterType: "NONE",
+        exp: currentTime + (60 * 60), // 1 hour from now
+      },
+      process.env.ACTIVEPIECES_SIGNING_KEY,
+      {
+        algorithm: "RS256",
+        header: {
+          kid: signingKeyID, // Include the "kid" in the header
+        },
+      }
+    );
+    ```
+
+    Once you have generated the token, please check the embedding docs to know how to embed the token in the iframe.
+  </Step>
+</Steps>

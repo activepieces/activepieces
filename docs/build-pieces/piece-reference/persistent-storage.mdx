@@ -1,0 +1,45 @@
+---
+title: "Persistent Storage"
+icon: 'database'
+description: "Learn how to store and retrieve data from a key-value store"
+---
+
+The `ctx` parameter inside triggers and actions provides a simple key/value storage mechanism. The storage is persistent, meaning that the stored values are retained even after the execution of the piece.
+
+By default, the storage operates at the flow level, but it can also be configured to store values at the project level.
+
+<Tip>
+The storage scope is completely isolated. If a key is stored in a different scope, it will not be fetched when requested in different scope.
+</Tip>
+
+## Put
+
+You can store a value with a specified key in the storage.
+
+**Example:**
+
+```typescript
+ctx.store.put('KEY', 'VALUE', StoreScope.PROJECT);
+```
+
+## Get
+
+You can retrieve the value associated with a specific key from the storage.
+
+**Example:**
+
+```typescript
+const value = ctx.store.get<string>('KEY', StoreScope.PROJECT);
+```
+
+## Delete
+
+You can delete a key-value pair from the storage.
+
+**Example:**
+
+```typescript
+ctx.store.delete('KEY', StoreScope.PROJECT);
+```
+
+These storage operations allow you to store, retrieve, and delete key-value pairs in the persistent storage. You can use this storage mechanism to store and retrieve data as needed within your triggers and actions.
