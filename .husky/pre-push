@@ -1,11 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-# Environment variable to skip the check
-SKIP_MAIN_PUSH_ENV_VAR="SKIP_CHECK"
-
-# Allow skipping this hook by setting env variable
-if [ ! -z "${!SKIP_MAIN_PUSH_ENV_VAR}" ]; then
+# Allow skipping this hook by setting SKIP_CHECK env variable
+if [ ! -z "$SKIP_CHECK" ]; then
   exit 0
 fi
 
