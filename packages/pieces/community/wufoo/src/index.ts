@@ -2,7 +2,7 @@ import {
   createCustomApiCallAction,
   HttpMethod,
 } from '@activepieces/pieces-common';
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { wufooApiCall } from './lib/common/client';
 import { createFormEntryAction } from './lib/actions/create-form-entry';
 import { findFormAction } from './lib/actions/find-form';
@@ -10,6 +10,7 @@ import { findSubmissionByFieldAction } from './lib/actions/find-submission-by-fi
 import { getEntryDetailsAction } from './lib/actions/get-entry-details';
 import { newFormEntryTrigger } from './lib/triggers/new-form-entry';
 import { newFormTrigger } from './lib/triggers/new-form';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const wufooAuth = PieceAuth.CustomAuth({
   description: 'Enter your Wufoo API Key and Subdomain.',
@@ -29,7 +30,10 @@ export const wufooAuth = PieceAuth.CustomAuth({
     try {
       await wufooApiCall({
         method: HttpMethod.GET,
-        auth,
+        auth: {
+          props: auth,
+          type: AppConnectionType.CUSTOM_AUTH,
+        },
         resourceUri: '/forms.json',
       });
       return { valid: true };
@@ -58,7 +62,7 @@ export const wufoo = createPiece({
       auth: wufooAuth,
       baseUrl: (auth: any) => `https://${auth.subdomain}.wufoo.com/api/v3`,
       authMapping: async (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth.props;
         const encoded = Buffer.from(`${apiKey}:footastic`).toString('base64');
         return {
           Authorization: `Basic ${encoded}`,

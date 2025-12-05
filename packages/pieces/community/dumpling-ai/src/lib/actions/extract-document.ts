@@ -42,7 +42,7 @@ export const extractDocument = createAction({
 			url: 'https://app.dumplingai.com/api/v1/extract-document',
 			headers: {
 				'Content-Type': 'application/json',
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 			},
 			body: requestBody,
 		});

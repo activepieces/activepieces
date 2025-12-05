@@ -1,4 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
+import { TriggerUpdateStatusErrorParams } from '../common/activepieces-error'
+import { PopulatedFlow } from '../flows/flow'
 import { StepRunResponse } from '../flows/sample-data'
 
 export enum WebsocketClientEvent {
@@ -10,6 +12,12 @@ export enum WebsocketClientEvent {
     TODO_CHANGED = 'TODO_CHANGED',
     TODO_ACTIVITY_CHANGED = 'TODO_ACTIVITY_CHANGED',
     TODO_ACTIVITY_CREATED = 'TODO_ACTIVITY_CREATED',
+    FLOW_STATUS_UPDATED = 'FLOW_STATUS_UPDATED',
+}
+
+export type FlowStatusUpdatedResponse = {
+    flow: PopulatedFlow
+    error: TriggerUpdateStatusErrorParams | undefined
 }
 
 export const TodoChanged = Type.Object({

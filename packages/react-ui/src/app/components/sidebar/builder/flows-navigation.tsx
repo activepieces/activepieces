@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { EllipsisVertical, Folder, FolderOpen, Shapes } from 'lucide-react';
 import { useMemo, useEffect, useRef, useState } from 'react';
@@ -24,7 +23,7 @@ import {
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
 import { CreateFlowDropdown } from '@/features/flows/lib/create-flow-dropdown';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
@@ -60,7 +59,7 @@ export function FlowsNavigation() {
     data: flows,
     isLoading: flowsLoading,
     refetch: refetchFlows,
-  } = flowsHooks.useFlows({
+  } = flowHooks.useFlows({
     cursor: undefined,
     limit: 99999,
   });

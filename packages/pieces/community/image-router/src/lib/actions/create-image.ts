@@ -79,7 +79,7 @@ export const createImage = createAction({
         revised_prompt?: string;
       }>;
     }>({
-      apiKey: context.auth as string,
+      apiKey: context.auth.secret_text,
       method: HttpMethod.POST,
       resourceUri: '/v1/openai/images/generations',
       body,

@@ -20,13 +20,21 @@ export const createAgentAction = createAction({
       required: false,
     }),
     datastoreIds: Property.MultiSelectDropdown({
+      auth: contextualAiAuth,
       displayName: 'Datastores',
       description: 'Select datastores to associate with this agent (leave empty to create new datastore)',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         try {
-          const { apiKey, baseUrl } = auth as { apiKey: string; baseUrl?: string };
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your account first',
+            };
+          }
+          const { apiKey, baseUrl } = auth.props;
           const client = new ContextualAI({
             apiKey: apiKey,
             baseURL: baseUrl || 'https://api.contextual.ai/v1',
@@ -63,7 +71,7 @@ export const createAgentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const { name, description, datastoreIds, systemPrompt, filterPrompt } = propsValue;
 
     const client = new ContextualAI({

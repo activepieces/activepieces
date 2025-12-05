@@ -6,8 +6,10 @@ import {
 import { Property } from '@activepieces/pieces-framework';
 import { BASE_URL } from './constants';
 import { ListFormsResponse } from './types';
+import { youformAuth } from './auth';
 
 export const formIdDropdown = Property.Dropdown({
+  auth: youformAuth,
   displayName: 'Form',
   refreshers: [],
   required: true,
@@ -25,7 +27,7 @@ export const formIdDropdown = Property.Dropdown({
       url: BASE_URL + '/forms',
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
     });
 

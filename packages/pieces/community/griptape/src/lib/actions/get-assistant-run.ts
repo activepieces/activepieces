@@ -17,7 +17,7 @@ export const getAssistantRun = createAction({
     const { assistant_run_id } = context.propsValue;
 
     const response = await makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       `/assistant-runs/${assistant_run_id}`
     );

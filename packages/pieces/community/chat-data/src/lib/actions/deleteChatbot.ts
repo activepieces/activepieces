@@ -1,13 +1,16 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { ChatDataClient } from '../common/client';
+import { chatDataAuth } from '../common/types';
 
 export const deleteChatbot = createAction({
+  auth: chatDataAuth,
   name: 'delete_chatbot',
   displayName: 'Delete Chatbot',
   description:
     'Delete a chatbot and all its associated data (training data, conversations, leads, etc.). This action is irreversible.',
   props: {
     chatbotId: Property.Dropdown({
+      auth: chatDataAuth,
       displayName: 'Chatbot',
       description: 'Select the chatbot to delete',
       required: true,
@@ -21,7 +24,7 @@ export const deleteChatbot = createAction({
           };
         }
         try {
-          const client = new ChatDataClient(auth as string);
+          const client = new ChatDataClient(auth.secret_text);
           const chatbots = await client.listChatbots();
           return {
             options: chatbots.map((chatbot) => ({
@@ -40,7 +43,7 @@ export const deleteChatbot = createAction({
     }),
   },
   async run(context) {
-    const client = new ChatDataClient(context.auth as string);
+    const client = new ChatDataClient(context.auth.secret_text);
     const result = await client.deleteChatbot(context.propsValue.chatbotId);
     return result;
   },

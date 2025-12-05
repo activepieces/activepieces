@@ -17,12 +17,14 @@ export const uploadFile = createAction({
     }),
   },
   async run({ auth, propsValue: { file } }) {
-    const client = createClient(auth as DustAuthType);
+    const client = createClient(auth.props);
 
     const contentType = (mimeTypes.lookup(file.filename) ||
       'text/plain') as FileUploadUrlRequestType['contentType'];
 
-    const blob = new Blob([file.data], { type: contentType });
+    const blob = new Blob([file.data as unknown as ArrayBuffer], {
+      type: contentType,
+    });
     const formData = new FormData();
     formData.append('file', blob, file.filename);
     const fileObject = formData.get('file');

@@ -89,6 +89,7 @@ export const findOrCreatePerson = createAction({
       required: false,
     }),
     people_group: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'People Group',
       description: 'The people group to associate (used only when creating)',
       required: false,
@@ -125,7 +126,7 @@ export const findOrCreatePerson = createAction({
       },
     }),
     cases: Property.MultiSelectDropdown({
-      displayName: 'Cases',
+  auth: mycaseAuth,      displayName: 'Cases',
       description: 'Cases to associate with the client (used only when creating)',
       required: false,
       refreshers: [],

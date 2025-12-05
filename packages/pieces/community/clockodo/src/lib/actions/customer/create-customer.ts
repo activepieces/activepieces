@@ -31,7 +31,7 @@ export default createAction({
     color: clockodoCommon.color(false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.createCustomer({
       name: propsValue.name,
       number: emptyToNull(propsValue.number),

@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -13,7 +14,7 @@ import { WeblingChanges } from '../common/types';
 import { getChanges } from '../common/helpers';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof weblingAuth>,
+  AppConnectionValueForAuthProperty<typeof weblingAuth>,
   { calendarId?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

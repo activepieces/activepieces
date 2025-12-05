@@ -19,12 +19,12 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
-import { isRunAgent } from './agent-test-step';
+import { defaultAgentOutput, isRunAgent } from './agent-test-step';
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { testStepHooks } from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
+import { testStepHooks } from './utils/test-step-hooks';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
@@ -116,7 +116,10 @@ const TestStepSectionImplementation = React.memo(
       testAction({
         type: 'agentAction',
         onProgress: async (progress: StepRunResponse) => {
-          setLiveAgentResult(progress.output as AgentResult);
+          const outputProgress = progress.output;
+          if (!isNil(outputProgress)) {
+            setLiveAgentResult(outputProgress as AgentResult);
+          }
         },
         onFinish: () => {
           setLiveAgentResult(undefined);
@@ -128,6 +131,7 @@ const TestStepSectionImplementation = React.memo(
       if (isTodoCreateTask(currentStep)) {
         handleTodoTest();
       } else if (isRunAgent(currentStep)) {
+        setLiveAgentResult(defaultAgentOutput);
         handleAgentTest();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);

@@ -22,11 +22,13 @@ import {
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import {
+  ExecuteToolResponse,
   isNil,
   MarkdownContentBlock,
   MarkdownVariant,
   TASK_COMPLETION_TOOL_NAME,
   ToolCallStatus,
+  ExecutionToolStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
 
@@ -36,12 +38,6 @@ interface AgentToolBlockProps {
   block: ToolCallContentBlock;
   index: number;
 }
-
-type ToolCallOutput = {
-  success: boolean;
-  output: Record<string, unknown>;
-  resolvedInput: Record<string, unknown>;
-};
 
 const parseJsonOrReturnOriginal = (json: unknown) => {
   try {
@@ -78,10 +74,10 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
   const { data: metadata, isLoading } = agentToolHooks.useToolMetadata(block);
 
-  const output = block.output as ToolCallOutput | null;
-
+  const output = block.output as ExecuteToolResponse | null;
+  const errorMessage = output?.errorMessage as string | null;
   const isDone = block.status === ToolCallStatus.COMPLETED;
-  const isSuccess = output?.success ?? true;
+  const isSuccess = output?.status ?? ExecutionToolStatus.FAILED;
   const hasInstructions = !isNil(block.input?.instruction);
   const resolvedFields = output?.resolvedInput ?? null;
   const result = output?.output
@@ -92,7 +88,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
 
   const renderStatusIcon = () => {
     if (!isDone) return <Loader2 className="h-4 w-4 animate-spin shrink-0" />;
-    return isSuccess ? (
+    return isSuccess === ExecutionToolStatus.SUCCESS ? (
       <CheckCheck className="h-4 w-4 text-success shrink-0" />
     ) : (
       <CircleX className="h-4 w-4 text-destructive shrink-0" />
@@ -164,7 +160,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                       variant="outline"
                       className="text-xs"
                     >
-                      {t('Output')}
+                      {isNil(errorMessage) ? t('Output') : t('Error')}
                     </TabsTrigger>
                   </TabsList>
 
@@ -187,6 +183,11 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                         data={result}
                         hideCopyButton
                         maxHeight={300}
+                      />
+                    ) : !isNil(errorMessage) ? (
+                      <ApMarkdown
+                        variant={MarkdownVariant.BORDERLESS}
+                        markdown={errorMessage}
                       />
                     ) : (
                       <div className="text-muted-foreground text-sm">

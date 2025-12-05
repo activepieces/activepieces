@@ -1,6 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { QuickbaseClient } from './client';
 import { QuickbaseApp, QuickbaseTable, QuickbaseField } from './types';
+import { quickbaseAuth } from '../..';
 
 
 export const recordIdProp = Property.ShortText({
@@ -17,6 +18,7 @@ export const fieldsMapperProp = Property.Object({
 
 export const createDynamicFieldsMapperProp = () => Property.DynamicProperties({
   displayName: 'Field Values',
+  auth: quickbaseAuth,
   description: 'Select and set values for table fields',
   required: true,
   refreshers: ['appId', 'tableId'],
@@ -26,7 +28,7 @@ export const createDynamicFieldsMapperProp = () => Property.DynamicProperties({
     }
 
     try {
-      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
+      const client = new QuickbaseClient(auth.props.realmHostname, auth.props.userToken);
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
 
       const props: Record<string, any> = {};
@@ -93,6 +95,8 @@ export const maxRecordsProp = Property.Number({
 
 
 export const createAppIdProp = () => Property.Dropdown({
+  auth: quickbaseAuth,
+
   displayName: 'App',
   description: 'Select the Quickbase app',
   required: true,
@@ -107,7 +111,7 @@ export const createAppIdProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
+      const client = new QuickbaseClient(auth.props.realmHostname, auth.props.userToken);
       const apps = await client.get<QuickbaseApp[]>('/apps');
 
       return {
@@ -127,6 +131,8 @@ export const createAppIdProp = () => Property.Dropdown({
 });
 
 export const createTableIdProp = () => Property.Dropdown({
+  auth: quickbaseAuth,
+
   displayName: 'Table',
   description: 'Select the table',
   required: true,
@@ -141,7 +147,7 @@ export const createTableIdProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
+      const client = new QuickbaseClient(auth.props.realmHostname, auth.props.userToken);
       const tables = await client.get<QuickbaseTable[]>(`/tables?appId=${appId}`);
 
       return {
@@ -161,6 +167,8 @@ export const createTableIdProp = () => Property.Dropdown({
 });
 
 export const createMergeFieldProp = () => Property.Dropdown({
+  auth: quickbaseAuth,
+
   displayName: 'Merge Field',
   description: 'Field to use for matching existing records (for upsert operations)',
   required: true,
@@ -175,7 +183,7 @@ export const createMergeFieldProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
+      const client = new QuickbaseClient(auth.props.realmHostname, auth.props.userToken);
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
 
       return {
@@ -198,6 +206,8 @@ export const createMergeFieldProp = () => Property.Dropdown({
 
 
 export const createSortFieldProp = () => Property.Dropdown({
+  auth: quickbaseAuth,
+
   displayName: 'Sort Field',
   description: 'Field to sort records by (optional)',
   required: false,
@@ -212,7 +222,7 @@ export const createSortFieldProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
+      const client = new QuickbaseClient(auth.props.realmHostname, auth.props.userToken);
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
 
       return {
@@ -250,6 +260,8 @@ export const createSortOrderProp = () => Property.StaticDropdown({
 });
 
 export const createRecordIdProp = () => Property.Dropdown({
+  auth: quickbaseAuth,
+
   displayName: 'Record',
   description: 'Select a record from the table',
   required: true,
@@ -264,7 +276,7 @@ export const createRecordIdProp = () => Property.Dropdown({
     }
 
     try {
-      const client = new QuickbaseClient((auth as any).realmHostname as string, (auth as any).userToken as string);
+      const client = new QuickbaseClient(auth.props.realmHostname, auth.props.userToken);
 
       const fields = await client.get<QuickbaseField[]>(`/fields?tableId=${tableId}`);
       const displayField = fields.find(f => f.fieldType === 'text' && f.label.toLowerCase().includes('name'))

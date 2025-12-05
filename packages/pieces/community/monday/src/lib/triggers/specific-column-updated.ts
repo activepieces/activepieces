@@ -20,6 +20,7 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
     workspace_id: mondayCommon.workspace_id(true),
     board_id: mondayCommon.board_id(true),
     column_id: Property.Dropdown({
+      auth: mondayAuth,
       displayName: 'Column ID',
       required: true,
       refreshers: ['board_id'],
@@ -32,7 +33,7 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
             options: [],
           };
         }
-        const client = makeClient(auth as string);
+        const client = makeClient(auth);
         const res = await client.listBoardColumns({
           boardId: board_id as string,
         });
@@ -86,7 +87,7 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
   async onEnable(context) {
     const { board_id, column_id } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const res = await client.createWebhook({
       boardId: board_id,
       url: context.webhookUrl,
@@ -103,7 +104,7 @@ export const specificColumnValueUpdatedTrigger = createTrigger({
       'monday_specific_column_updated'
     );
     if (webhook != null) {
-      const client = makeClient(context.auth as string);
+      const client = makeClient(context.auth);
       await client.deleteWebhook({ webhookId: webhook.id });
     }
   },

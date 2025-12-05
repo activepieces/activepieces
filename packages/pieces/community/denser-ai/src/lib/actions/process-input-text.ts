@@ -46,7 +46,7 @@ export const processInputText = createAction({
   },
   async run(context) {
     const { question, prompt, model, citation } = context.propsValue;
-    const { apiKey, chatbotId } = context.auth;
+    const { apiKey, chatbotId } = context.auth.props;
     const response = await makeRequest(HttpMethod.POST, `/query`, {
       question,
       prompt,

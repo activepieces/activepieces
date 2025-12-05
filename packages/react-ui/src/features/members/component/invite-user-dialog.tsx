@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { CopyIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
@@ -34,7 +35,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { toast } from '@/components/ui/use-toast';
 import { PlatformRoleSelect } from '@/features/members/component/platform-role-select';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
@@ -121,8 +121,8 @@ export const InviteUserDialog = ({
         setInvitationLink(res.link);
       } else {
         setOpen(false);
-        toast({
-          title: t('Invitation sent successfully'),
+        toast.success(t('Invitation sent successfully'), {
+          duration: 3000,
         });
       }
       refetch();
@@ -165,8 +165,8 @@ export const InviteUserDialog = ({
 
   const copyInvitationLink = () => {
     navigator.clipboard.writeText(invitationLink);
-    toast({
-      title: t('Invitation link copied successfully'),
+    toast.success(t('Invitation link copied successfully'), {
+      duration: 3000,
     });
   };
 
