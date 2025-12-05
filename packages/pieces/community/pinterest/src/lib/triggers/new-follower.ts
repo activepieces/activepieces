@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   PiecePropValueSchema,
   OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -15,7 +16,7 @@ import { makeRequest } from '../common';
 import { pinterestAuth } from '../common/auth';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof pinterestAuth>,
+  AppConnectionValueForAuthProperty<typeof pinterestAuth>,
   Record<string, any>
 > = {
   strategy: DedupeStrategy.LAST_ITEM,
@@ -80,29 +81,17 @@ export const newFollower = createTrigger({
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
-    return await pollingHelper.test<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, context as any);
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
     const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
   },
   async onDisable(context) {
     const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
   },
   async run(context) {
-    return await pollingHelper.poll<
-      PiecePropValueSchema<typeof pinterestAuth>,
-      Record<string, any>
-    >(polling, context as any);
+    return await pollingHelper.poll(polling, context);
   },
 });

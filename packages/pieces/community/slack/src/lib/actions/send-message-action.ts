@@ -26,13 +26,13 @@ export const slackSendMessageAction = createAction({
       description: 'The text of your message',
       required: true,
     }),
+    threadTs,
     username,
     profilePicture,
     file: Property.File({
       displayName: 'Attachment',
       required: false,
     }),
-    threadTs,
     replyBroadcast: Property.Checkbox({
       displayName: 'Broadcast reply to channel',
       description: 'When replying to a thread, also make the message visible to everyone in the channel (only applicable when Thread Timestamp is provided)',

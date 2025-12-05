@@ -79,6 +79,7 @@ export const askClaude = createAction({
         'Uses claude 3.7 sonnet enhanced reasoning capabilities for complex tasks.',
     }),
     thinkingModeParams: Property.DynamicProperties({
+      auth: claudeAuth,
       displayName: '',
       refreshers: ['thinkingMode'],
       required: false,
@@ -105,7 +106,7 @@ export const askClaude = createAction({
     });
 
     const anthropic = new Anthropic({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     let billingIssue = false;
     let unauthorized = false;

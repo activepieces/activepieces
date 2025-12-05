@@ -1,7 +1,9 @@
 import { DynamicPropsValue, Property } from '@activepieces/pieces-framework';
 import { zagoMailApiService } from './request';
+import { zagomailAuth } from '../..';
 
 export const listUId = Property.Dropdown({
+	auth: zagomailAuth,
 	displayName: 'List',
 	refreshers: [],
 	required: true,
@@ -14,7 +16,7 @@ export const listUId = Property.Dropdown({
 			};
 		}
 
-		const response = await zagoMailApiService.getAllLists(auth as string);
+		const response = await zagoMailApiService.getAllLists(auth.secret_text);
 
 		const lists = response.data as {
 			records: Array<{ general: { list_uid: string; name: string } }>;
@@ -31,6 +33,7 @@ export const listUId = Property.Dropdown({
 });
 
 export const campaignUid = Property.Dropdown({
+	auth: zagomailAuth,
 	displayName: 'Campaign',
 	refreshers: [],
 	required: true,
@@ -43,7 +46,7 @@ export const campaignUid = Property.Dropdown({
 			};
 		}
 
-		const response = await zagoMailApiService.getCampaigns(auth as string);
+		const response = await zagoMailApiService.getCampaigns(auth.secret_text);
 
 		const campaigns = response as {
 			records: Array<{ campaign_uid: string; name: string }>;
@@ -60,6 +63,7 @@ export const campaignUid = Property.Dropdown({
 });
 
 export const listFields = (isCreate=false) => Property.DynamicProperties({
+	auth: zagomailAuth,
 	displayName: 'List Fields',
 	refreshers: ['listUId'],
 	required: true,
@@ -69,7 +73,7 @@ export const listFields = (isCreate=false) => Property.DynamicProperties({
 		const fields: DynamicPropsValue = {};
 
 		const response = await zagoMailApiService.getListFields(
-			auth as unknown as string,
+			auth.secret_text,
 			listUId as unknown as string,
 		);
 

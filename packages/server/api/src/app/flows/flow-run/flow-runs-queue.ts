@@ -59,7 +59,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('flowId', runMetadata.flowId),
                                     ...spreadIfDefined('flowVersionId', runMetadata.flowVersionId),
                                     ...spreadIfDefined('environment', runMetadata.environment),
-                                    ...(isNil(existingFlowRun.startTime) ? spreadIfDefined('startTime', runMetadata.startTime) : {}),
+                                    ...spreadIfDefined('startTime', runMetadata.startTime),
                                     ...spreadIfDefined('finishTime', runMetadata.finishTime),
                                     ...spreadIfDefined('status', runMetadata.status),
                                     ...spreadIfDefined('tags', runMetadata.tags),
@@ -96,6 +96,9 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 })
                             }
 
+                            if (!isNil(runMetadata.requestId)) {
+                                await distributedStore.deleteKeyIfFieldValueMatches(key, 'requestId', runMetadata.requestId)
+                            }
                             if (!isNil(runMetadata.finishTime)) {
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
                             }

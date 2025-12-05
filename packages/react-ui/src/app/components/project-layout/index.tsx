@@ -3,6 +3,7 @@ import React, { ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
@@ -42,7 +43,7 @@ export function ProjectDashboardLayout({
   const { t } = useTranslation();
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
-
+  const isEmbedded = useEmbedding().embedState.isEmbedded;
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
@@ -64,7 +65,7 @@ export function ProjectDashboardLayout({
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
       <SidebarProvider>
-        <ProjectDashboardSidebar />
+        {!isEmbedded && <ProjectDashboardSidebar />}
         <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
           <div className="flex flex-col">
             {!hideHeader && (

@@ -21,6 +21,7 @@ export const createDocument = createAction({
       defaultValue: 'firm',
     }),
     case: Property.Dropdown({
+  auth: mycaseAuth,
       displayName: 'Case',
       description: 'Select the case to associate this document with',
       required: false,
@@ -77,7 +78,7 @@ export const createDocument = createAction({
       required: false,
     }),
     staff: Property.MultiSelectDropdown({
-      displayName: 'Staff',
+  auth: mycaseAuth,      displayName: 'Staff',
       description: 'Staff members to share this document with (only for firm documents)',
       required: false,
       refreshers: ['document_type'],

@@ -1,6 +1,7 @@
 import { Property, DynamicPropsValue } from '@activepieces/pieces-framework';
 import { EventType, EventOption } from '../types';
 import { fetchTags, fetchForms, fetchSequences } from '../service';
+import { convertkitAuth } from '../../..';
 
 export const initiatorValue = Property.ShortText({
   displayName: 'Initiator Value URL',
@@ -25,8 +26,9 @@ export const eventParameter = Property.DynamicProperties({
   description: 'The required parameter for the event',
   required: false,
   refreshers: ['auth', 'event'],
+  auth: convertkitAuth,
   props: async ({ auth, event }) => {
-    if (!event) {
+    if (!event || !auth) {
       return {
         disabled: true,
         placeholder: 'Select event first',
@@ -51,7 +53,7 @@ export const eventParameter = Property.DynamicProperties({
     const fieldType = eventOption.type || '';
 
     if (required_parameter === 'tag_id') {
-      const tags = await fetchTags(auth.toString());
+      const tags = await fetchTags(auth.secret_text);
       const options = tags.map((tag) => {
         return {
           label: tag.name,
@@ -70,7 +72,7 @@ export const eventParameter = Property.DynamicProperties({
     }
 
     if (required_parameter === 'form_id') {
-      const forms = await fetchForms(auth.toString());
+      const forms = await fetchForms(auth.secret_text);
       const options = forms.map((form) => {
         return {
           label: form.name,
@@ -89,7 +91,7 @@ export const eventParameter = Property.DynamicProperties({
     }
 
     if (required_parameter === 'sequence_id') {
-      const courses = await fetchSequences(auth.toString());
+      const courses = await fetchSequences(auth.secret_text);
       const options = courses.map((sequence) => {
         return {
           label: sequence.name,

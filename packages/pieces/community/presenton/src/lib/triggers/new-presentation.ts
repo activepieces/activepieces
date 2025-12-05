@@ -2,6 +2,7 @@ import {
   createTrigger,
   TriggerStrategy,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -14,12 +15,12 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof presentonAuth>,
+  AppConnectionValueForAuthProperty<typeof presentonAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
-    const apiKey = auth as string;
+    const apiKey = auth.secret_text;
 
     const response: any = await makeRequest(
       apiKey,

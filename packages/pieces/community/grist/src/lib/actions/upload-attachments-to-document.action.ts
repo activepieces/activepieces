@@ -27,14 +27,14 @@ export const gristUploadAttachmentsToDocumnetAction = createAction({
       required: false,
     }),
   },
-  async run(context) {
+  async run(context) {  
     const documentId = context.propsValue.document_id;
     const attachment = context.propsValue.attachment;
     const attachmentName = context.propsValue.attachment_name;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
 
     const formData = new FormData();
@@ -46,10 +46,10 @@ export const gristUploadAttachmentsToDocumnetAction = createAction({
 
     const response = await httpClient.sendRequest<Array<number>>({
       method: HttpMethod.POST,
-      url: context.auth.domain + '/api' + `/docs/${documentId}/attachments`,
+      url: context.auth.props.domain + '/api' + `/docs/${documentId}/attachments`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.apiKey,
+        token: context.auth.props.apiKey,
       },
       headers: { ...formData.getHeaders() },
       body: formData,

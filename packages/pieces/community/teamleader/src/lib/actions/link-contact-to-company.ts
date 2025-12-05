@@ -10,6 +10,7 @@ export const linkContactToCompany = createAction({
     auth: teamleaderAuth,
     props: {
         contact_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Contact',
             description: 'Select the contact to link',
             required: true,
@@ -23,7 +24,7 @@ export const linkContactToCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/contacts.list',
                         body: {}
@@ -46,6 +47,7 @@ export const linkContactToCompany = createAction({
             }
         }),
         company_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Company',
             description: 'Select the company to link to',
             required: true,
@@ -59,7 +61,7 @@ export const linkContactToCompany = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.list',
                         body: {}

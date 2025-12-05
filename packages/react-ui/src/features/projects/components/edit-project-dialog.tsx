@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,7 +20,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -32,6 +33,7 @@ import {
   ProjectWithLimits,
   ApErrorParams,
   ErrorCode,
+  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 interface EditProjectDialogProps {
@@ -43,6 +45,7 @@ interface EditProjectDialogProps {
     aiCredits?: string;
     externalId?: string;
   };
+  renameOnly?: boolean;
 }
 
 type FormValues = {
@@ -56,13 +59,13 @@ export function EditProjectDialog({
   onClose,
   projectId,
   initialValues,
+  renameOnly = false,
 }: EditProjectDialogProps) {
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
   const { updateCurrentProject } = projectHooks.useCurrentProject();
-  const { toast } = useToast();
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -97,9 +100,7 @@ export function EditProjectDialog({
       });
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
+      toast.success(t('Your changes have been saved.'), {
         duration: 3000,
       });
       queryClient.invalidateQueries({
@@ -118,7 +119,7 @@ export function EditProjectDialog({
             break;
           }
           default: {
-            toast(INTERNAL_ERROR_TOAST);
+            internalErrorToast();
             break;
           }
         }
@@ -129,9 +130,13 @@ export function EditProjectDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full">
-        <DialogTitle>{t('Edit Project')}</DialogTitle>
+        <DialogTitle>
+          {renameOnly ? t('Rename Project') : t('Edit Project')}
+        </DialogTitle>
         <p className="text-sm text-muted-foreground mb-4 mt-1">
-          {t('Update your project settings and configuration.')}
+          {renameOnly
+            ? null
+            : t('Update your project settings and configuration.')}
         </p>
         <Form {...form}>
           <form
@@ -164,39 +169,41 @@ export function EditProjectDialog({
               )}
             />
 
-            {platform.plan.manageProjectsEnabled && (
-              <FormField
-                name="aiCredits"
-                render={({ field }) => (
-                  <FormItem>
-                    <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        type="number"
-                        id="aiCredits"
-                        placeholder={t('AI Credits')}
-                        className="rounded-sm pr-16"
-                      />
-                      {!field.disabled && (
-                        <Button
-                          variant="link"
-                          type="button"
-                          tabIndex={-1}
-                          className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                          onClick={() => form.setValue('aiCredits', '')}
-                        >
-                          {t('Clear')}
-                        </Button>
-                      )}
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
+            {!renameOnly &&
+              platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE && (
+                <FormField
+                  name="aiCredits"
+                  render={({ field }) => (
+                    <FormItem>
+                      <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
+                      <div className="relative">
+                        <Input
+                          {...field}
+                          type="number"
+                          id="aiCredits"
+                          placeholder={t('AI Credits')}
+                          className="rounded-sm pr-16"
+                        />
+                        {!field.disabled && (
+                          <Button
+                            variant="link"
+                            type="button"
+                            tabIndex={-1}
+                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
+                            onClick={() => form.setValue('aiCredits', '')}
+                          >
+                            {t('Clear')}
+                          </Button>
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
-            {platform.plan.embeddingEnabled &&
+            {!renameOnly &&
+              platform.plan.embeddingEnabled &&
               platformRole === PlatformRole.ADMIN && (
                 <FormField
                   name="externalId"

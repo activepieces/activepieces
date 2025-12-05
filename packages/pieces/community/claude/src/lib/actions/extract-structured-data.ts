@@ -63,7 +63,8 @@ export const extractStructuredDataAction = createAction({
         ],
       },
     }),
-    schema: Property.DynamicProperties({
+    schema: Property.DynamicProperties({  
+      auth: claudeAuth,
       displayName: 'Data Definition',
       required: true,
       refreshers: ['mode'],
@@ -193,7 +194,7 @@ export const extractStructuredDataAction = createAction({
     }
 
     const anthropic = new Anthropic({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
     });
 
     const messages: Anthropic.Messages.MessageParam[] = [

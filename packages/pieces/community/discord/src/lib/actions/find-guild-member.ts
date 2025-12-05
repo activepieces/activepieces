@@ -27,7 +27,7 @@ export const discordFindGuildMemberByUsername = createAction({
       method: HttpMethod.GET,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     };

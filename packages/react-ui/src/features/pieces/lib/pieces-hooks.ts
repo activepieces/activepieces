@@ -2,6 +2,7 @@ import { useMutation, useQueries, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
+import { useTelemetry } from '@/components/telemetry-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
@@ -23,6 +24,7 @@ import {
   FlowTriggerType,
   ApFlagId,
   ApEnvironment,
+  TelemetryEventName,
 } from '@activepieces/shared';
 
 import { pieceSearchUtils } from './piece-search-utils';
@@ -69,6 +71,7 @@ type UsePiecesSearchProps = {
   searchQuery: string;
   enabled?: boolean;
   type: 'action' | 'trigger';
+  shouldCaptureEvent: boolean;
 };
 
 export const piecesHooks = {
@@ -167,6 +170,7 @@ export const piecesHooks = {
     data: CategorizedStepMetadataWithSuggestions[];
   } => {
     const { selectedTab } = usePieceSelectorTabs();
+    const { capture } = useTelemetry();
     const { data: environment } = flagsHooks.useFlag<ApEnvironment>(
       ApFlagId.ENVIRONMENT,
     );
@@ -266,11 +270,22 @@ export const piecesHooks = {
         return result;
       }
 
-      case PieceSelectorTabType.NONE:
+      case PieceSelectorTabType.NONE: {
+        if (props.shouldCaptureEvent && props.searchQuery.length > 3) {
+          capture({
+            name: TelemetryEventName.PIECE_SELECTOR_SEARCH,
+            payload: {
+              search: props.searchQuery,
+              isTrigger: props.type === 'trigger',
+              selectedActionOrTriggerName: null,
+            },
+          });
+        }
         return {
           isLoading: false,
           data: allCategory.metadata.length > 0 ? [allCategory] : [],
         };
+      }
     }
   },
   usePieceOptions: <

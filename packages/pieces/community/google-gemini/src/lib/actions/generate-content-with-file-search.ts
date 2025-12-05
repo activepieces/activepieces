@@ -20,6 +20,7 @@ export const generateContentWithFileSearchAction = createAction({
     }),
     model: Property.Dropdown({
       displayName: 'Model',
+      auth: googleGeminiAuth,
       required: true,
       description: 'The model which will generate the completion',
       refreshers: [],
@@ -46,7 +47,7 @@ export const generateContentWithFileSearchAction = createAction({
       const fileBuffer = Buffer.from(file.base64, 'base64');
       await fs.writeFile(tempFilePath, fileBuffer);
 
-      const genAI = new GoogleGenAI({ apiKey: auth });
+      const genAI = new GoogleGenAI({ apiKey: auth.secret_text });
 
       const fileSearchStore = await genAI.fileSearchStores.create({
         config: { displayName: fileStoreName },

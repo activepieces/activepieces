@@ -49,14 +49,15 @@ export type BaseOAuth2ConnectionValue = {
     scope: string
     token_url: string
     authorization_method?: OAuth2AuthorizationMethod
-    data: Record<string, unknown>
-    props?: Record<string, string>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: Record<string, any>
+    props?: Record<string, unknown>
     grant_type?: OAuth2GrantType
 }
 
-export type CustomAuthConnectionValue = {
+export type CustomAuthConnectionValue<T extends Record<string, unknown> = Record<string, unknown>> = {
     type: AppConnectionType.CUSTOM_AUTH
-    props: Record<string, unknown>
+    props: T
 }
 
 export type CloudOAuth2ConnectionValue = {
@@ -78,13 +79,13 @@ export type NoAuthConnectionValue = {
     type: AppConnectionType.NO_AUTH
 }
 
-export type AppConnectionValue<T extends AppConnectionType = AppConnectionType> =
+export type AppConnectionValue<T extends AppConnectionType = AppConnectionType, PropsType extends Record<string, unknown> = Record<string, unknown>> =
     T extends AppConnectionType.SECRET_TEXT ? SecretTextConnectionValue :
         T extends AppConnectionType.BASIC_AUTH ? BasicAuthConnectionValue :
             T extends AppConnectionType.CLOUD_OAUTH2 ? CloudOAuth2ConnectionValue :
                 T extends AppConnectionType.PLATFORM_OAUTH2 ? PlatformOAuth2ConnectionValue :
                     T extends AppConnectionType.OAUTH2 ? OAuth2ConnectionValueWithApp :
-                        T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue :
+                        T extends AppConnectionType.CUSTOM_AUTH ? CustomAuthConnectionValue<PropsType> :
                             T extends AppConnectionType.NO_AUTH ? NoAuthConnectionValue :
                                 never
 
@@ -138,7 +139,7 @@ export const AppConnectionOwners = Type.Object({
 
 export type AppConnectionOwners = Static<typeof AppConnectionOwners>
 /**i.e props: {projectId: "123"} and value: "{{projectId}}" will return "123" */
-export const resolveValueFromProps = (props: Record<string, string> | undefined, value: string)=>{
+export const resolveValueFromProps = (props: Record<string, unknown> | undefined, value: string)=>{
     let resolvedScope = value
     if (!props) {
         return resolvedScope

@@ -23,8 +23,10 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
 import { fileService } from '../file/file.service'
+import { pubsub } from '../helper/pubsub'
 import { system } from '../helper/system/system'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
+import { REDIS_REFRESH_LOCAL_PIECES_CHANNEL } from './metadata/local-piece-cache'
 import { pieceMetadataService } from './metadata/piece-metadata-service'
 
 export const pieceInstallService = (log: FastifyBaseLogger) => ({
@@ -57,7 +59,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
-
+            await pubsub.publish(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, '')
             return savedPiece
         }
         catch (error) {
