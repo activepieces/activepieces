@@ -11,16 +11,46 @@ export const newLeadTrigger = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   sampleData: {
     node: {
-      id: 'cust_123',
+      id: 'cus_dummy_id',
+      __typename: 'Customer',
+      email: 'dummy@example.com',
       first_name: 'John',
       last_name: 'Doe',
-      email: 'john@example.com',
-      phone: '+1234567890',
-      accepts_marketing: true,
-      orders_count: 1,
-      total_spent: 100,
-      created_at: '2023-01-01T00:00:00Z',
-      updated_at: '2023-01-01T00:00:00Z',
+      full_name: 'John Doe',
+      phone: '+1 00000-00000',
+      location: 'US',
+      avatar: '//www.gravatar.com/avatar/00000000000000000000000000000000',
+      notes: 'Sample customer notes',
+      accepts_marketing: false,
+      custom: {},
+      tags: [],
+      shipping_address: {
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'dummy@example.com',
+        phone: '+1 00000-00000',
+        line1: '123 Dummy Street',
+        line2: '',
+        country: 'US',
+        city: 'Sample City',
+        area: '',
+        zip: '000000',
+        state: 'CA',
+      },
+      billing_address: {
+        first_name: 'John',
+        last_name: 'Doe',
+        email: 'dummy@example.com',
+        phone: '+1 00000-00000',
+        line1: '123 Dummy Street',
+        line2: '',
+        country: 'US',
+        city: 'Sample City',
+        area: '',
+        zip: '000000',
+        state: 'CA',
+      },
+      leads: [],
     },
   },
   async onEnable(context) {
@@ -43,11 +73,9 @@ export const newLeadTrigger = createTrigger({
       },
     };
 
-    const response = await lightfunnelsCommon.makeGraphQLRequest<{ createWebhook: { id: string } }>(
-      context.auth,
-      query,
-      variables
-    );
+    const response = await lightfunnelsCommon.makeGraphQLRequest<{
+      createWebhook: { id: string };
+    }>(context.auth, query, variables);
 
     await context.store.put('webhook_id', response.data.createWebhook.id);
   },
@@ -60,11 +88,9 @@ export const newLeadTrigger = createTrigger({
         }
       `;
 
-      await lightfunnelsCommon.makeGraphQLRequest(
-        context.auth,
-        query,
-        { id: webhookId }
-      );
+      await lightfunnelsCommon.makeGraphQLRequest(context.auth, query, {
+        id: webhookId,
+      });
 
       await context.store.delete('webhook_id');
     }

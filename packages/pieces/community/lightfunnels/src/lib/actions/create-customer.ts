@@ -25,12 +25,28 @@ export const createCustomer = createAction({
     }),
     phone: Property.ShortText({
       displayName: 'Phone',
-      description: 'Phone number of the customer',
-      required: false,
+      description: 'Phone number of the customer eg: +1234567890',
+      required: true,
+    }),
+    acceptsMarketing: Property.Checkbox({
+      displayName: 'Accepts Marketing',
+      description: 'Whether the customer accepts marketing communications',
+      required: true,
+    }),
+    tags: Property.Array({
+      displayName: 'Tags',
+      description: 'Tags to associate with the customer',
+      required: true,
+      properties: {
+        tag: Property.ShortText({
+          displayName: 'Tag',
+          required: true,
+        }),
+      },
     }),
   },
   async run(context) {
-    const { firstName, lastName, email, phone } = context.propsValue;
+    const { firstName, lastName, email, phone, acceptsMarketing, tags } = context.propsValue;
 
     const graphqlQuery = `
       mutation createCustomerMutation($node: InputCustomer!) {
@@ -42,11 +58,15 @@ export const createCustomer = createAction({
           full_name
           email
           phone
+          accepts_marketing
+          tags
           created_at
           updated_at
         }
       }
     `;
+
+    const tagArray = (tags || []).map((t: any) => t.tag);
 
     const variables = {
       node: {
@@ -54,6 +74,8 @@ export const createCustomer = createAction({
         last_name: lastName,
         email,
         phone,
+        accepts_marketing: acceptsMarketing,
+        tags: tagArray,
       },
     };
 
