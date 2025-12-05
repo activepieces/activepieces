@@ -69,7 +69,8 @@ export const flagService = {
             },
             {
                 id: ApFlagId.AGENTS_CONFIGURED,
-                value: await aiProviderService.isAgentConfigured(),
+                // TODO (@abuaboud): add new check
+                value: true,
                 created,
                 updated,
             },
