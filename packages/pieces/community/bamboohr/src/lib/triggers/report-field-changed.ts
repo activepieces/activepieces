@@ -24,9 +24,8 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, store }) => {
-    
     const { companyDomain, apiKey } = auth.props;
-  
+
     const request: HttpRequest = {
       method: HttpMethod.GET,
       url: `https://api.bamboohr.com/api/gateway.php/${companyDomain}/v1/reports/${propsValue.reportId}?format=json`,
@@ -35,32 +34,37 @@ const polling: Polling<
         Accept: 'application/json',
       },
     };
-  
+
     try {
       const response = await httpClient.sendRequest<{
-        fields: Array<{id: string; type: string; name: string}>;
+        fields: Array<{ id: string; type: string; name: string }>;
         employees: any[][];
       }>(request);
-  
+
       const fields = response.body.fields || [];
       const reportData = response.body.employees || [];
-  
+
       const fieldMap: Record<string, number> = {};
       fields.forEach((field, idx) => {
         fieldMap[field.id] = idx;
       });
-  
+
       const monitorFieldIdx = fieldMap[propsValue.fieldToMonitor];
       const idFieldIdx = fieldMap['id'] || 0;
-  
+
       if (monitorFieldIdx === undefined) {
         console.warn(
-          `Field "${propsValue.fieldToMonitor}" not found in report. Available fields: ${Object.keys(fieldMap).join(', ')}`
+          `Field "${
+            propsValue.fieldToMonitor
+          }" not found in report. Available fields: ${Object.keys(
+            fieldMap
+          ).join(', ')}`
         );
         return [];
       }
-  
-      const lastKnownState = (await store.get<Record<string, any>>('lastReportState')) || {};
+
+      const lastKnownState =
+        (await store.get<Record<string, any>>('lastReportState')) || {};
       const currentState: Record<string, any> = {};
       const changes: any[] = [];
       const displayNameIdx =
@@ -68,7 +72,7 @@ const polling: Polling<
         fieldMap['fullName2'] ??
         fieldMap['firstName'] ??
         idFieldIdx;
-  
+
       reportData.forEach((employee: any) => {
         const employeeId = String(employee[idFieldIdx]);
         const currentFieldValue = employee[monitorFieldIdx];
@@ -76,7 +80,10 @@ const polling: Polling<
 
         currentState[employeeId] = currentFieldValue;
 
-        if (lastFieldValue !== undefined && lastFieldValue !== currentFieldValue) {
+        if (
+          lastFieldValue !== undefined &&
+          lastFieldValue !== currentFieldValue
+        ) {
           changes.push({
             epochMilliSeconds: dayjs().valueOf(),
             data: {
@@ -91,7 +98,7 @@ const polling: Polling<
           });
         }
       });
-  
+
       await store.put('lastReportState', currentState);
       return changes;
     } catch (error) {
@@ -138,7 +145,8 @@ export const reportFieldChanged = createTrigger({
   type: TriggerStrategy.POLLING,
 
   async test(context) {
-    return await pollingHelper.test(polling, context);  },
+    return await pollingHelper.test(polling, context);
+  },
 
   async onEnable(context) {
     await pollingHelper.onEnable(polling, context);
