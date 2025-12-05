@@ -18,7 +18,6 @@ import { StatusCodes } from 'http-status-codes'
 import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { transaction } from '../core/db/transaction'
 import { platformMustBeOwnedByCurrentUser, platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
-import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
 import { flowService } from '../flows/flow/flow.service'
@@ -32,10 +31,6 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
         await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
-        const { smtp } = req.body
-        if (smtp) {
-            await smtpEmailSender(req.log).validateOrThrow(smtp)
-        }
 
         await platformService.update({
             id: req.params.id,
