@@ -48,7 +48,7 @@ export const extractStructuredData = createAction({
 				],
 			},
 		}),
-		schama: Property.DynamicProperties({
+		schema: Property.DynamicProperties({
 			auth: PieceAuth.None(),
 			displayName: 'Data Definition',
 			required: true,
@@ -130,7 +130,7 @@ export const extractStructuredData = createAction({
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
 		const prompt = context.propsValue.prompt;
-		const schema = context.propsValue.schama;
+		const schema = context.propsValue.schema;
 		const maxOutputTokens = context.propsValue.maxOutputTokens;
 
 		if (!text && !files.length) {
