@@ -60,7 +60,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                                 pieceVersion: pieceVersion,
                                 actionName: 'returnContext',
                                 input: {
-                                    response: fields,
+                                    body: fields,
                                 },
                             },
                         }
