@@ -73,7 +73,7 @@ export default function UsersPage() {
         <DashboardPageHeader
           title={t('Users')}
           description={t(
-            'Manage, delete, active and desactivate users on platfrom',
+            'Manage, delete, activate and deactivate users on platform',
           )}
         />
         <DataTable
