@@ -4,7 +4,7 @@ import { PropertyType } from "./input/property-type";
 import { Type, TSchema } from "@sinclair/typebox";
 import { AUTHENTICATION_PROPERTY_NAME, isEmpty, isNil } from "@activepieces/shared";
 
-function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAuthProperty[] | undefined) {
+function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAuthProperty[] | undefined, requireAuth: boolean | undefined = true) {
     const entries = Object.entries(props);
     const nullableType = [Type.Null(), Type.Undefined()];
     const nonNullableUnknownPropType = Type.Not(
@@ -117,11 +117,10 @@ function buildSchema(props: PiecePropertyMap, auth: PieceAuthProperty | PieceAut
         );
       }
     }
-    if(auth)
+    if(auth && requireAuth)
       {
-       const authProperty = Array.isArray(auth) ? auth.at(0) : auth;
        propsSchema[AUTHENTICATION_PROPERTY_NAME] = Type.String({
-         minLength: authProperty?.required? 1: 0
+         minLength: 1
        })
       }
     return Type.Object(propsSchema);
