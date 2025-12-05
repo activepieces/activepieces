@@ -55,7 +55,7 @@ type SlackSendMessageParams = {
   username?: string;
   profilePicture?: string;
   blocks?: unknown[] | Record<string, any>;
-  text: string;
+  text?: string;
   file?: ApFile;
   threadTs?: string;
   replyBroadcast?: boolean;
