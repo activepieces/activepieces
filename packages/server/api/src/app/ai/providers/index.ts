@@ -1,15 +1,17 @@
-import { anthropicProvider } from './anthropic'
-import { googleProvider } from './google'
-import { openaiProvider } from './openai'
-import { replicateProvider } from './replicate'
-import { AIProviderStrategy } from './types'
+import { anthropicProvider } from './anthropic-provider'
+import { googleProvider } from './google-provider'
+import { openaiProvider } from './openai-provider'
+import { AIProviderStrategy } from './ai-provider'
+import { openRouterProvider } from './openrouter-provider'
+import { azureProvider } from './azure-provider'
+import { AIProviderConfig, AIProviderName } from '@activepieces/common-ai'
 
-export const aiProvidersStrategies: Record<string, AIProviderStrategy> = {
-    openai: openaiProvider,
-    anthropic: anthropicProvider,
-    replicate: replicateProvider,
-    google: googleProvider,
+export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderConfig>> = {
+    [AIProviderName.OpenAI]: openaiProvider,
+    [AIProviderName.Anthropic]: anthropicProvider,
+    [AIProviderName.OpenRouter]: openRouterProvider,
+    [AIProviderName.Azure]: azureProvider,
+    [AIProviderName.Google]: googleProvider,
 }
 
-export { AIProviderStrategy, Usage } from './types'
-export { getProviderConfig, calculateTokensCost } from './utils' 
+export { AIProviderStrategy } from './ai-provider'

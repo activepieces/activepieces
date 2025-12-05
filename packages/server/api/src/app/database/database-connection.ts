@@ -10,7 +10,7 @@ import {
     SelectQueryBuilder,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
-import { AIUsageEntity } from '../ai/ai-usage-entity'
+import { AIUsageEntity } from '../ee/platform/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
@@ -60,6 +60,7 @@ import { UserInvitationEntity } from '../user-invitations/user-invitation.entity
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
+import { OpenRouterApiKeyEntity } from '../ai/proxy/openrouter/openrouter-api-key-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -99,6 +100,7 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoActivityEntity,
         AIUsageEntity,
         TriggerSourceEntity,
+        OpenRouterApiKeyEntity,
     ]
 
     switch (edition) {
