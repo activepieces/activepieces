@@ -222,6 +222,12 @@
       ],
       "@activepieces/piece-parser-expert": [
         "packages/pieces/community/parser-expert/src/index.ts"
+      ],
+      "@activepieces/piece-bookedin-ai": [
+        "packages/pieces/community/bookedin-ai/src/index.ts"
+      ],
+      "@activepieces/piece-bookedin": [
+        "packages/pieces/community/bookedin/src/index.ts"
       ]
     },
     "resolveJsonModule": true
