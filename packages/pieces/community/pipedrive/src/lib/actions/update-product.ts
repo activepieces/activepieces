@@ -15,10 +15,10 @@ export const updateProductAction = createAction({
     auth: pipedriveAuth,
     name: 'update-product',
     displayName: 'Update Product',
-    description: 'Update a product.',
+    description: 'Updates an existing product.',
     props: {
         id: Property.ShortText({
-            displayName: 'ID of product',
+            displayName: 'Product ID',
             required: true,
         }),
         name: Property.ShortText({
