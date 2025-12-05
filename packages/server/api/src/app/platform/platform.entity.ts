@@ -40,10 +40,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
-        smtp: {
-            type: JSONB_COLUMN_TYPE,    
-            nullable: true,
-        },
 
         cloudAuthEnabled: {
             type: Boolean,
