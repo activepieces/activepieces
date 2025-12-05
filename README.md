@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/activepieces-activepieces-badge.png)](https://mseep.ai/app/activepieces-activepieces)
+
 
 <h1 align="center">
   <a
