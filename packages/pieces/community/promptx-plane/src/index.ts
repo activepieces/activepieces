@@ -1,4 +1,5 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { listAllItemsInModule } from './lib/actions/list-all-items-in-module';
 import { listAllModules } from './lib/actions/list-all-modules';
 
@@ -19,6 +20,20 @@ export const plane = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://plane.so/brand-logos/logo-dark.svg',
   authors: ['tumrabert'],
-  actions: [listAllModules, listAllItemsInModule],
+  actions: [
+    listAllModules, 
+    listAllItemsInModule,
+    createCustomApiCallAction({
+      baseUrl: () => {
+        return `${baseUrl}`;
+      },
+      auth: planeAuth,
+      authMapping: async (auth) => {
+        return {
+          Authorization: `Bearer ${auth}`,
+        };
+      },
+    }),
+  ],
   triggers: [],
 });
