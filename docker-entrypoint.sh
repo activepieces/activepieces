@@ -2,10 +2,16 @@
 
 # Install bun if not already installed
 if ! command -v bun >/dev/null 2>&1; then
-    echo "Installing bun..."
+    echo "Installing Bun..."
     curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
+
+    # Set up Bun paths for Docker entrypoint
     export BUN_INSTALL="/root/.bun"
     export PATH="${BUN_INSTALL}/bin:${PATH}"
+
+    # Run isolated-vm install again after Bun is available
+    cd /usr/src
+    bun install isolated-vm@5.0.1
 fi
 
 # Set default values if not provided

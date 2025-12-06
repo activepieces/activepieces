@@ -36,10 +36,6 @@ RUN --mount=type=cache,target=/root/.npm \
     pm2@6.0.10 \
     typescript@4.9.4
 
-# Install isolated-vm globally (needed for sandboxes)
-RUN --mount=type=cache,target=/root/.bun/install/cache \
-    cd /usr/src && bun install isolated-vm@5.0.1
-
 ### STAGE 1: Build ###
 FROM base AS build
 
