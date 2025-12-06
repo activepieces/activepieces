@@ -44,6 +44,14 @@ WORKDIR /usr/src/app
 # Copy only dependency files first for better layer caching
 COPY .npmrc package.json bun.lock ./
 
+## Install Bun
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
+
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="${BUN_INSTALL}/bin:${PATH}"
+
+RUN bun --version
+
 # Install all dependencies with frozen lockfile
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
