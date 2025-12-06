@@ -106,5 +106,7 @@ COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
 
 LABEL service=activepieces
 
+RUN rm -rf ~/.bun 
+
 ENTRYPOINT ["./docker-entrypoint.sh"]
 EXPOSE 80
