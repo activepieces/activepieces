@@ -1,6 +1,7 @@
 #!/bin/sh
 
-# Install bun if not already installed
+# Ensure Bun is installed and up-to-date for maximum CPU compatibility
+# Attempt runtime installation of Bun to handle legacy/older CPU instruction sets
 if ! command -v bun >/dev/null 2>&1; then
     echo "Installing Bun..."
     curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
