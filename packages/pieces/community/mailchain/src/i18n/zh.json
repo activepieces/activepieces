@@ -1,16 +1,16 @@
 {
-  "Mailchain is a simple, secure, and decentralized communications protocol that enables blockchain-based email.": "Mailchain is a simple, secure, and decentralized communications protocol that enables blockchain-based email.",
-  "The secret recovery phrase (25-word mnemonic phrase) to authenticate with the Mailchain Protocol. You can obtain this phrase when setting up your Mailchain account.": "The secret recovery phrase (25-word mnemonic phrase) to authenticate with the Mailchain Protocol. You can obtain this phrase when setting up your Mailchain account.",
-  "Get Authenticated User": "Get Authenticated User",
-  "Send Email": "Send Email",
-  "Get the authenticated user to the Mailchain Protocol": "Get the authenticated user to the Mailchain Protocol",
-  "Send an email to blockchain or mailchain addresses": "Send an email to blockchain or mailchain addresses",
+  "Mailchain is a simple, secure, and decentralized communications protocol that enables blockchain-based email.": "Mailchain 是一个简单、安全和分散的通信协议，它可以启用基于区块链的电子邮件。",
+  "The secret recovery phrase (25-word mnemonic phrase) to authenticate with the Mailchain Protocol. You can obtain this phrase when setting up your Mailchain account.": "用于认证邮件链协议的密钥恢复短语(25个单词字词)。您可以在设置您的邮件链账户时获取此短语。",
+  "Get Authenticated User": "获取认证用户",
+  "Send Email": "发送电子邮件",
+  "Get the authenticated user to the Mailchain Protocol": "获取认证用户到邮件链协议",
+  "Send an email to blockchain or mailchain addresses": "发送电子邮件到区块链或邮件链地址",
   "Markdown": "Markdown",
-  "To": "To",
-  "Subject": "Subject",
-  "Content": "Content",
+  "To": "收件人",
+  "Subject": "议 题",
+  "Content": "内容",
   "**Getting Started with Mailchain:**\n\nTo send emails using the Mailchain Protocol, you need to first create an account on [Mailchain](https://app.mailchain.com/). Once your account is set up, you will receive a Mailchain address. You can also connect your wallet to associate a blockchain address with your Mailchain account.\n\n**Recipients:**\n\nWhen sending an email, you can use either a Mailchain address or a blockchain address as the recipient. For blockchain addresses, you can leverage supported web3 domain ": "**Getting Started with Mailchain:**\n\nTo send emails using the Mailchain Protocol, you need to first create an account on [Mailchain](https://app.mailchain.com/). Once your account is set up, you will receive a Mailchain address. You can also connect your wallet to associate a blockchain address with your Mailchain account.\n\n**Recipients:**\n\nWhen sending an email, you can use either a Mailchain address or a blockchain address as the recipient. For blockchain addresses, you can leverage supported web3 domain services, including ENS, Unstoppable Domains, Lens, Coinbase, and many more.\n\n**Example Usage:**\n- **Mailchain Address:** 'yourname@mailchain.com'\n- **Blockchain Address:** 'yourname.eth' (ENS), 'yourname.crypto' (Unstoppable Domains), etc.\n\nTo manage your inbox and send emails, visit [Mailchain's Web App](https://app.mailchain.com/).\n",
-  "The blockchain or mailchain addresses to send the email to": "The blockchain or mailchain addresses to send the email to",
-  "The subject of the email": "The subject of the email",
-  "The content of the email": "The content of the email"
+  "The blockchain or mailchain addresses to send the email to": "要发送邮件的 blockchain 或邮件链地址",
+  "The subject of the email": "邮件主题",
+  "The content of the email": "电子邮件的内容"
 }
