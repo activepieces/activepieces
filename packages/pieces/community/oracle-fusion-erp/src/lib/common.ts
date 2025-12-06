@@ -33,7 +33,3 @@ export async function makeOracleApiCall<T>(
   const response = await httpClient.sendRequest<T>(request);
   return response.body;
 }
-
-export const oracleFusionCommon = {
-  baseRestApiUrl: (baseUrl: string) => `${baseUrl}/fscmRestApi/resources/latest`,
-};

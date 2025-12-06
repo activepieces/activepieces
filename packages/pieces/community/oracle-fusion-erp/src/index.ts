@@ -6,6 +6,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { getEmployeeAction } from './lib/actions/get-employee';
 import { createInvoiceAction } from './lib/actions/create-invoice';
 import { getPurchaseOrderAction } from './lib/actions/get-purchase-order';
+import { getOAuthToken, OracleFusionAuth } from './lib/auth';
 
 export const oracleFusionErpAuth = PieceAuth.CustomAuth({
   description: 'Oracle Fusion Cloud ERP Authentication',
@@ -29,21 +30,11 @@ export const oracleFusionErpAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const tokenResponse = await fetch(`${auth.baseUrl}/oauth2/v1/token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': `Basic ${Buffer.from(`${auth.clientId}:${auth.clientSecret}`).toString('base64')}`,
-        },
-        body: 'grant_type=client_credentials',
-      });
-
-      if (tokenResponse.ok) {
-        return { valid: true };
-      }
-      return { valid: false, error: 'Invalid credentials or base URL' };
+      await getOAuthToken(auth as OracleFusionAuth);
+      return { valid: true };
     } catch (e) {
-      return { valid: false, error: 'Failed to connect to Oracle Fusion Cloud ERP' };
+      const errorMessage = e instanceof Error ? e.message : 'Failed to connect to Oracle Fusion Cloud ERP';
+      return { valid: false, error: errorMessage };
     }
   },
 });
@@ -61,20 +52,11 @@ export const oracleFusionErp = createPiece({
     createInvoiceAction,
     getPurchaseOrderAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => `${(auth as { baseUrl: string }).baseUrl}/fscmRestApi/resources/latest`,
+      baseUrl: (auth) => `${(auth as OracleFusionAuth).baseUrl}/fscmRestApi/resources/latest`,
       auth: oracleFusionErpAuth,
       authMapping: async (auth) => {
-        const a = auth as { baseUrl: string; clientId: string; clientSecret: string };
-        const tokenResponse = await fetch(`${a.baseUrl}/oauth2/v1/token`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${Buffer.from(`${a.clientId}:${a.clientSecret}`).toString('base64')}`,
-          },
-          body: 'grant_type=client_credentials',
-        });
-        const tokenData = await tokenResponse.json();
-        return { Authorization: `Bearer ${tokenData.access_token}` };
+        const accessToken = await getOAuthToken(auth as OracleFusionAuth);
+        return { Authorization: `Bearer ${accessToken}` };
       },
     }),
   ],
