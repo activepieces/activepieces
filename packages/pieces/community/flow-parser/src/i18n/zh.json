@@ -1,14 +1,14 @@
 {
-  "Upload, process, and manage documents programmatically with FlowParser's REST API.": "Upload, process, and manage documents programmatically with FlowParser's REST API.",
+  "Upload, process, and manage documents programmatically with FlowParser's REST API.": "使用 FlowParser 的 REST API来上传、处理和管理文档。",
   "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n": "\nTo get your API Key:\n\n1. Go to your FlowParser account\n2. Navigate to API settings\n3. Copy your API key\n4. Paste it here\n",
-  "Upload Document": "Upload Document",
-  "Upload a new document to FlowParser for processing": "Upload a new document to FlowParser for processing",
+  "Upload Document": "上传文档",
+  "Upload a new document to FlowParser for processing": "上传新文档到 FlowParser 以供处理",
   "File": "文件",
-  "The document file to upload": "The document file to upload",
-  "New Parsed Document by Template": "New Parsed Document by Template",
-  "New Parsed Document Found": "New Parsed Document Found",
-  "Triggers when a new document is parsed using a specific template": "Triggers when a new document is parsed using a specific template",
-  "Triggers when a document has been successfully parsed": "Triggers when a document has been successfully parsed",
+  "The document file to upload": "要上传的文档文件",
+  "New Parsed Document by Template": "新建模板解析的文档",
+  "New Parsed Document Found": "找到新的解析文档",
+  "Triggers when a new document is parsed using a specific template": "使用特定模板解析新文档时触发",
+  "Triggers when a document has been successfully parsed": "文档解析成功时触发",
   "Template": "模板",
-  "Select a template to monitor for new parsed documents": "Select a template to monitor for new parsed documents"
+  "Select a template to monitor for new parsed documents": "选择用于监视新解析文档的模板"
 }
