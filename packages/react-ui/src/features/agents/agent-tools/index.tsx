@@ -25,8 +25,11 @@ export const AgentTools = ({ disabled, agentToolsField }: AgentToolsProps) => {
   const { pieces } = piecesHooks.usePieces({});
 
   const removeTool = async (toolIds: string[]): Promise<void> => {
-    const newTools = tools.filter((tool) => !toolIds.includes(tool.toolName));
-
+    const newTools = tools.filter((tool) =>
+      tool.type === AgentToolType.PIECE
+        ? !toolIds.includes(tool.toolName)
+        : !toolIds.includes(tool.flowId),
+    );
     onToolsUpdate(newTools);
   };
 

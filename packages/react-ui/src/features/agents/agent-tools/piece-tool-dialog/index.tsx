@@ -56,10 +56,6 @@ export function AgentPieceDialog({
   const [selectedConnectionExternalId, setSelectedConnectionExternalId] =
     useState<string | null>(null);
 
-  console.log('@@@@@@@@@@@@@@@@@@@@@222222222');
-  console.log(selectedConnectionExternalId);
-  console.log('@@@@@@@@@@@@@@@@@@@@@222222222');
-
   const [debouncedQuery] = useDebounce(searchQuery, 300);
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const { metadata, isLoading: isPiecesLoading } =

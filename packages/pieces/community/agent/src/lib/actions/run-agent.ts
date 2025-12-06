@@ -1,11 +1,10 @@
 import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
 import { agentCommon, AI_MODELS } from '../common';
-import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, AgentTool, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
+import { AgentOutputField, AgentPieceProps, AgentTaskStatus, isNil, AgentTool, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { inspect } from 'util';
-import { z, ZodObject } from 'zod';
+import { z } from 'zod';
 import { agentOutputBuilder } from '../common/agent-output-builder';
-
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -47,6 +46,10 @@ export const runAgent = createAction({
         }),
         flowId: Property.ShortText({
           displayName: 'Flow Id',
+          required: false
+        }),
+        externalId: Property.ShortText({
+          displayName: 'External Id',
           required: false
         })
       }
@@ -90,6 +93,14 @@ export const runAgent = createAction({
     const outputBuilder = agentOutputBuilder(prompt)
     const hasStructuredOutput = !isNil(context.propsValue.structuredOutput) && context.propsValue.structuredOutput.length > 0
     const agentToolsMetadata = context.propsValue.agentTools as AgentTool[]
+
+    const flowsTools = await agentCommon.constructFlowsTools({
+      agentToolsMetadata,
+      fetchFlows: context.flows.list,
+      publicUrl: context.server.publicUrl,
+      token: context.server.token
+    })
+
     const agentTools = await context.agent.tools({
       tools: agentToolsMetadata,
       model: model,
@@ -116,14 +127,14 @@ Help the user finish their goal quickly and accurately.
         hasToolCall(TASK_COMPLETION_TOOL_NAME),
       ],
       tools: {
-        ...agentTools,
+        ...{...agentTools, ...flowsTools},
         [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
           description: 'This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user\'s task, or if you are unable to continue. Once you call this tool, you should not take any further actions.',
           inputSchema: z.object({
             success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
             ...(hasStructuredOutput ? {
               output: z.object(
-                structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}
+                agentCommon.structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}
               )
                 .nullable()
                 .describe('The structured output of your task. This is optional and can be omitted if you have not achieved the goal.')
@@ -154,7 +165,7 @@ Help the user finish their goal quickly and accurately.
           break
         }
         case 'tool-call': {
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentCommon.isTaskCompletionToolCall(chuck.toolName)) {
             continue
           }
           outputBuilder.startToolCall({
@@ -166,7 +177,7 @@ Help the user finish their goal quickly and accurately.
           break
         }
         case 'tool-result': {
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentCommon.isTaskCompletionToolCall(chuck.toolName)) {
             continue
           }
           outputBuilder.finishToolCall({
@@ -182,6 +193,7 @@ Help the user finish their goal quickly and accurately.
       }
       await context.output.update({ data: outputBuilder.build() })
     }
+
     const { status } = outputBuilder.build()
     if (status == AgentTaskStatus.IN_PROGRESS) {
       outputBuilder.fail({})
@@ -190,28 +202,3 @@ Help the user finish their goal quickly and accurately.
     return outputBuilder.build()
   }
 });
-
-
-const isTaskCompletionToolCall = (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME
-
-function structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
-  const shape: Record<string, z.ZodType> = {}
-
-  for (const field of outputFields) {
-    switch (field.type) {
-      case AgentOutputFieldType.TEXT:
-        shape[field.displayName] = z.string()
-        break
-      case AgentOutputFieldType.NUMBER:
-        shape[field.displayName] = z.number()
-        break
-      case AgentOutputFieldType.BOOLEAN:
-        shape[field.displayName] = z.boolean()
-        break
-      default:
-        shape[field.displayName] = z.any()
-    }
-  }
-
-  return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
-}

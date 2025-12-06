@@ -32,6 +32,7 @@ export const AgentFlowTool = Type.Object({
     type: Type.Literal(AgentToolType.FLOW),
     ...AgentToolBase,
     flowId: ApId,
+    externalId: Type.String(),
 })
 export type AgentFlowTool = Static<typeof AgentFlowTool>
 
