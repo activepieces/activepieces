@@ -28,8 +28,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libcap-dev && \
     yarn config set python /usr/bin/python3
 
-## Install Bun
-RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
+# Install bun using official curl installer
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.1"
 
 ENV BUN_INSTALL="/root/.bun"
 ENV PATH="${BUN_INSTALL}/bin:${PATH}"
@@ -43,6 +43,10 @@ RUN --mount=type=cache,target=/root/.npm \
     npm@9.9.3 \
     pm2@6.0.10 \
     typescript@4.9.4
+
+# Install isolated-vm globally (needed for sandboxes)
+RUN --mount=type=cache,target=/root/.bun/install/cache \
+    cd /usr/src && bun install isolated-vm@5.0.1
 
 ### STAGE 1: Build ###
 FROM base AS build
@@ -66,7 +70,6 @@ RUN npx nx run-many --target=build --projects=react-ui,server-api --configuratio
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     cd dist/packages/server/api && \
     bun install --production --frozen-lockfile
-
 
 ### STAGE 2: Run ###
 FROM base AS run
