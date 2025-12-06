@@ -53,6 +53,7 @@ function buildInputSchemaForStep(
         return piecePropertiesUtils.buildSchema(
           piece.actions[actionNameOrTriggerName].props,
           piece.auth,
+          piece.actions[actionNameOrTriggerName].requireAuth,
         );
       }
       return Type.Object({});
@@ -66,6 +67,7 @@ function buildInputSchemaForStep(
         return piecePropertiesUtils.buildSchema(
           piece.triggers[actionNameOrTriggerName].props,
           piece.auth,
+          piece.triggers[actionNameOrTriggerName].requireAuth,
         );
       }
       return Type.Object({});
