@@ -228,6 +228,12 @@
       ],
       "@activepieces/piece-vidlab7": [
         "packages/pieces/community/vidlab7/src/index.ts"
+      ],
+      "@activepieces/piece-image-toolkit": [
+        "packages/pieces/community/image-toolkit/src/index.ts"
+      ],
+      "@activepieces/piece-video-helper": [
+        "packages/pieces/community/video-helper/src/index.ts"
       ]
     },
     "resolveJsonModule": true

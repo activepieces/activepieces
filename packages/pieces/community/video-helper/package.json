@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-video-helper",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "tslib": "^2.3.0"
+  }
+}
