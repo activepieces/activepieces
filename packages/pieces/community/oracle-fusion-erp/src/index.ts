@@ -6,6 +6,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { getEmployeeAction } from './lib/actions/get-employee';
 import { createInvoiceAction } from './lib/actions/create-invoice';
 import { getPurchaseOrderAction } from './lib/actions/get-purchase-order';
+import { getOAuthToken, OracleFusionAuth } from './lib/auth';
 
 export const oracleFusionErpAuth = PieceAuth.CustomAuth({
   description: 'Oracle Fusion Cloud ERP Authentication',
