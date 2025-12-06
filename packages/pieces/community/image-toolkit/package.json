@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-image-toolkit",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "sharp": "^0.34.5",
+    "tslib": "^2.3.0"
+  }
+}
