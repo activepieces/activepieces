@@ -162,4 +162,32 @@ describe('createInvoiceAction', () => {
       })
     );
   });
+
+  test('should include bearer token in request', async () => {
+    (httpClient.sendRequest as jest.Mock).mockResolvedValue({
+      body: { InvoiceId: 'INV-004' },
+    });
+
+    const context = {
+      auth: mockAuth,
+      propsValue: {
+        invoiceNumber: 'INV-2024-005',
+        supplierId: 'SUP-999',
+        invoiceAmount: 750.00,
+        invoiceDate: '2024-12-06',
+        invoiceCurrency: 'USD',
+      },
+    };
+
+    await createInvoiceAction.run(context as any);
+
+    expect(httpClient.sendRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authentication: {
+          type: 'BEARER_TOKEN',
+          token: 'mock-access-token',
+        },
+      })
+    );
+  });
 });

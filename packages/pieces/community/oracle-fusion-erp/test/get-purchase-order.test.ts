@@ -131,7 +131,7 @@ describe('getPurchaseOrderAction', () => {
     );
   });
 
-  test('should construct correct API URL with special characters in PO ID', async () => {
+  test('should URL-encode special characters in PO ID', async () => {
     (httpClient.sendRequest as jest.Mock).mockResolvedValue({
       body: { POHeaderId: 'PO-2024/001' },
     });
@@ -147,7 +147,7 @@ describe('getPurchaseOrderAction', () => {
 
     expect(httpClient.sendRequest).toHaveBeenCalledWith(
       expect.objectContaining({
-        url: 'https://test-oracle.example.com/fscmRestApi/resources/latest/purchaseOrders/PO-2024/001',
+        url: 'https://test-oracle.example.com/fscmRestApi/resources/latest/purchaseOrders/PO-2024%2F001',
       })
     );
   });
