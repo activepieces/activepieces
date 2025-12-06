@@ -28,6 +28,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libcap-dev && \
     yarn config set python /usr/bin/python3
 
+## Install Bun
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
+
+ENV BUN_INSTALL="/root/.bun"
+ENV PATH="${BUN_INSTALL}/bin:${PATH}"
+
+RUN bun --version
+
 # Install global npm packages in a single layer
 RUN --mount=type=cache,target=/root/.npm \
     npm install -g --no-fund --no-audit \
@@ -44,14 +52,6 @@ WORKDIR /usr/src/app
 # Copy only dependency files first for better layer caching
 COPY .npmrc package.json bun.lock ./
 
-## Install Bun
-RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
-
-ENV BUN_INSTALL="/root/.bun"
-ENV PATH="${BUN_INSTALL}/bin:${PATH}"
-
-RUN bun --version
-
 # Install all dependencies with frozen lockfile
 RUN --mount=type=cache,target=/root/.bun/install/cache \
     bun install --frozen-lockfile
@@ -67,13 +67,6 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
     cd dist/packages/server/api && \
     bun install --production --frozen-lockfile
 
-    # Install bun using official curl installer
-RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.3"
-
-ENV BUN_INSTALL="/root/.bun"
-ENV PATH="${BUN_INSTALL}/bin:${PATH}"
-
-RUN bun --version
 
 ### STAGE 2: Run ###
 FROM base AS run
@@ -109,6 +102,8 @@ COPY --from=build /usr/src/app/packages ./packages
 COPY --from=build /usr/src/app/dist/packages/react-ui /usr/share/nginx/html/
 
 LABEL service=activepieces
+
+RUN rm -rf ~/.bun 
 
 ENTRYPOINT ["./docker-entrypoint.sh"]
 EXPOSE 80
