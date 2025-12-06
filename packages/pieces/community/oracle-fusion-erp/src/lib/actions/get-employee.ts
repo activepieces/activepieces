@@ -22,7 +22,7 @@ export const getEmployeeAction = createAction({
 
     return await makeOracleApiCall(
       auth,
-      `/workers/${encodeURIComponent(workerId)}`,
+      `/workers/${workerId}`,
       HttpMethod.GET
     );
   },

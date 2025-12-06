@@ -22,7 +22,7 @@ export const getPurchaseOrderAction = createAction({
 
     return await makeOracleApiCall(
       auth,
-      `/purchaseOrders/${encodeURIComponent(poId)}`,
+      `/purchaseOrders/${poId}`,
       HttpMethod.GET
     );
   },

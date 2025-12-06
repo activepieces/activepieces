@@ -30,11 +30,21 @@ export const oracleFusionErpAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      await getOAuthToken(auth as OracleFusionAuth);
-      return { valid: true };
+      const tokenResponse = await fetch(`${auth.baseUrl}/oauth2/v1/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Authorization': `Basic ${Buffer.from(`${auth.clientId}:${auth.clientSecret}`).toString('base64')}`,
+        },
+        body: 'grant_type=client_credentials',
+      });
+
+      if (tokenResponse.ok) {
+        return { valid: true };
+      }
+      return { valid: false, error: 'Invalid credentials or base URL' };
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Failed to connect to Oracle Fusion Cloud ERP';
-      return { valid: false, error: errorMessage };
+      return { valid: false, error: 'Failed to connect to Oracle Fusion Cloud ERP' };
     }
   },
 });
@@ -52,11 +62,20 @@ export const oracleFusionErp = createPiece({
     createInvoiceAction,
     getPurchaseOrderAction,
     createCustomApiCallAction({
-      baseUrl: (auth) => `${(auth as OracleFusionAuth).baseUrl}/fscmRestApi/resources/latest`,
+      baseUrl: (auth) => `${(auth as { baseUrl: string }).baseUrl}/fscmRestApi/resources/latest`,
       auth: oracleFusionErpAuth,
       authMapping: async (auth) => {
-        const accessToken = await getOAuthToken(auth as OracleFusionAuth);
-        return { Authorization: `Bearer ${accessToken}` };
+        const a = auth as { baseUrl: string; clientId: string; clientSecret: string };
+        const tokenResponse = await fetch(`${a.baseUrl}/oauth2/v1/token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Basic ${Buffer.from(`${a.clientId}:${a.clientSecret}`).toString('base64')}`,
+          },
+          body: 'grant_type=client_credentials',
+        });
+        const tokenData = await tokenResponse.json();
+        return { Authorization: `Bearer ${tokenData.access_token}` };
       },
     }),
   ],

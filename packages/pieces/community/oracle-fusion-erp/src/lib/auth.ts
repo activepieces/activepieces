@@ -15,15 +15,9 @@ export async function getOAuthToken(auth: OracleFusionAuth): Promise<string> {
   });
 
   if (!tokenResponse.ok) {
-    const errorText = await tokenResponse.text().catch(() => 'Unknown error');
-    throw new Error(`Failed to get OAuth token: ${tokenResponse.status} ${tokenResponse.statusText} - ${errorText}`);
+    throw new Error(`Failed to get OAuth token: ${tokenResponse.statusText}`);
   }
 
   const tokenData = await tokenResponse.json();
-
-  if (!tokenData.access_token) {
-    throw new Error('OAuth response missing access_token');
-  }
-
   return tokenData.access_token;
 }
