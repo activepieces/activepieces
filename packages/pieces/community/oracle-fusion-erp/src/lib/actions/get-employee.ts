@@ -23,7 +23,9 @@ export const getEmployeeAction = createAction({
     return await makeOracleApiCall(
       auth,
       `/workers/${workerId}`,
-      HttpMethod.GET
+      HttpMethod.GET,
+      undefined,
+      '/hcmRestApi/resources/latest'
     );
   },
 });

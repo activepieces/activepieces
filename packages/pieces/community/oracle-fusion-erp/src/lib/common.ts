@@ -10,13 +10,14 @@ export async function makeOracleApiCall<T>(
   auth: OracleFusionAuth,
   endpoint: string,
   method: HttpMethod = HttpMethod.GET,
-  body?: unknown
+  body?: unknown,
+  apiBase: string = '/fscmRestApi/resources/latest'
 ): Promise<T> {
   const accessToken = await getOAuthToken(auth);
 
   const request: HttpRequest = {
     method,
-    url: `${auth.baseUrl}/fscmRestApi/resources/latest${endpoint}`,
+    url: `${auth.baseUrl}${apiBase}${endpoint}`,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
       token: accessToken,

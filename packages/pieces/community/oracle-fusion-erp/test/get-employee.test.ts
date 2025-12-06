@@ -58,7 +58,7 @@ describe('getEmployeeAction', () => {
     expect(httpClient.sendRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         method: HttpMethod.GET,
-        url: 'https://test-oracle.example.com/fscmRestApi/resources/latest/workers/12345',
+        url: 'https://test-oracle.example.com/hcmRestApi/resources/latest/workers/12345',
       })
     );
     expect(result).toEqual(mockEmployee);

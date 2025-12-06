@@ -55,7 +55,7 @@ export const oracleFusionErp = createPiece({
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/oracle.png',
   authors: ['activepieces'],
-  categories: [PieceCategory.BUSINESS_INTELLIGENCE],
+  categories: [PieceCategory.ACCOUNTING],
   auth: oracleFusionErpAuth,
   actions: [
     getEmployeeAction,
