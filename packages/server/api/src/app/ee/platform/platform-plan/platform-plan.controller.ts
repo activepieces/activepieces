@@ -1,4 +1,3 @@
-import { ListAICreditsUsageRequest, ListAICreditsUsageResponse } from '@activepieces/common-ai'
 import { CreateCheckoutSessionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -15,7 +14,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
         const [platformPlan, usage] = await Promise.all([
             platformPlanService(request.log).getOrCreateForPlatform(platform.id),
-            platformUsageService(request.log).getAllPlatformUsage(platform.id),
+            platformPlanService(request.log).getUsage(platform.id),
         ])
 
         const { stripeSubscriptionCancelDate: cancelDate } = platformPlan
@@ -46,7 +45,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { state } = request.body
         
         const [usage, platformPlan] = await Promise.all([
-            platformUsageService(request.log).getAllPlatformUsage(platformId),
+            platformPlanService(request.log).getUsage(platformId),
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
         ])
 
@@ -97,7 +96,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         const { limit } = request.body
         
         const [usage, platformPlan] = await Promise.all([
-            platformUsageService(request.log).getAllPlatformUsage(platformId),
+            platformPlanService(request.log).getUsage(platformId),
             platformPlanService(request.log).getOrCreateForPlatform(platformId),
         ])
         
@@ -178,16 +177,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
         })
     })
 
-    fastify.get('/ai-credits-usage', ListAIUsageRequest, async (request) => {
-        const { limit, cursor } = request.query
-        const platformId = request.principal.platform.id
-        
-        return platformUsageService(request.log).listAICreditsUsage({
-            platformId,
-            cursor: cursor ?? null,
-            limit: limit ?? 10,
-        })
-    })
 }
 
 const InfoRequest = {
@@ -216,18 +205,6 @@ const EnableAiCreditsOverageRequest = {
         allowedPrincipals: [PrincipalType.USER] as const,
     },
 }
-
-const ListAIUsageRequest = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-    },
-    schema: {
-        querystring: ListAICreditsUsageRequest,
-        response: {
-            [StatusCodes.OK]: ListAICreditsUsageResponse,
-        },
-    },
-} 
 
 const UpdateActiveFlowsAddonRequest = {
     schema: {

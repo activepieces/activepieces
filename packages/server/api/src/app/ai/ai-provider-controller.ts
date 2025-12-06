@@ -42,7 +42,7 @@ const ListAIProviders = {
 
 const GetAIProviderConfig = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         params: Type.Object({

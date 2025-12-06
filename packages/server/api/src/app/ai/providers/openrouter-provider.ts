@@ -3,11 +3,8 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { AIProviderModelType, OpenRouterProviderConfig, AIProviderModel } from '@activepieces/common-ai';
 
 export const openRouterProvider: AIProviderStrategy<OpenRouterProviderConfig> = {
-    name() {
-        return 'Open Router';
-    },
-
-    async listModels(config: OpenRouterProviderConfig): Promise<AIProviderModel[]> {
+    name: 'OpenRouter',
+    async listModels(_config: OpenRouterProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: any[] }>({
             url: `https://api.openrouter.ai/v1/models`,
             method: HttpMethod.GET,

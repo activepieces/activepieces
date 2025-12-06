@@ -3,10 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { AzureProviderConfig, AIProviderModel, AIProviderModelType } from '@activepieces/common-ai';
 
 export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
-    name() {
-        return 'Azure OpenAI';
-    },
-
+    name: 'Azure OpenAI',
     async listModels(config: AzureProviderConfig): Promise<AIProviderModel[]> {
         const endpoint = `${config.resourceName}.openai.azure.com`;
         const apiKey = config.apiKey;

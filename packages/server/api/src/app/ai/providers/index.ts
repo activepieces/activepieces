@@ -12,6 +12,10 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderCo
     [AIProviderName.OPENROUTER]: openRouterProvider,
     [AIProviderName.AZURE]: azureProvider,
     [AIProviderName.GOOGLE]: googleProvider,
+    [AIProviderName.ACTIVEPIECES]: {
+        ...openRouterProvider,
+        name: 'ActivePieces',
+    },
 }
 
 export { AIProviderStrategy } from './ai-provider'
