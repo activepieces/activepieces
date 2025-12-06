@@ -1,16 +1,17 @@
 import { isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric, UserWithMetaInformation } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsageMetric, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-
 import { repoFactory } from '../../../core/db/repo-factory'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { userService } from '../../../user/user-service'
-import { platformUsageService } from '../platform-usage-service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
+import { flowRepo } from '../../../flows/flow/flow.repo'
+import { projectService } from '../../../project/project-service'
+import { In } from 'typeorm'
 
 export const platformPlanRepo = repoFactory(PlatformPlanEntity)
 
@@ -25,7 +26,7 @@ export const AI_CREDIT_PRICE_ID = getPriceIdFor(PRICE_NAMES.AI_CREDITS)
 export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({
- 
+
     async getOrCreateForPlatform(platformId: string): Promise<PlatformPlan> {
         const platformPlan = await platformPlanRepo().findOneBy({ platformId })
         if (!isNil(platformPlan)) return platformPlan
@@ -96,13 +97,16 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        const plan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
-        const platformUsage = await platformUsageService(system.globalLogger()).getAllPlatformUsage(platformId)
+        const projectIds = await projectService.getProjectIdsByPlatform(platformId)
+        const activeFlowsCount = await flowRepo().count({
+            where: {
+                projectId: In(projectIds),
+                status: FlowStatus.ENABLED,
+            },
+        })
+        const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
 
-        const limit = plan.activeFlowsLimit
-        const currentUsage = platformUsage.activeFlows
-
-        if (!isNil(limit) && currentUsage >= limit) {
+        if (!isNil(platformPlan.activeFlowsLimit) && activeFlowsCount >= platformPlan.activeFlowsLimit) {
             throw new ActivepiecesError({
                 code: ErrorCode.QUOTA_EXCEEDED,
                 params: {

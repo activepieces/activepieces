@@ -22,7 +22,7 @@ export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
         return data.map((model: any) => ({
             id: model.id,
             name: model.display_name,
-            type: AIProviderModelType.Text,
+            type: AIProviderModelType.TEXT,
         }));
     },
 };

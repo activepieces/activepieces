@@ -45,7 +45,7 @@ export const aiProviderService = {
     },
 
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
-        if (request.provider === AIProviderName.Azure && system.getEdition() !== ApEdition.ENTERPRISE) {
+        if (request.provider === AIProviderName.AZURE && system.getEdition() !== ApEdition.ENTERPRISE) {
             throw new ActivepiecesError({
                 code: ErrorCode.FEATURE_DISABLED,
                 params: {

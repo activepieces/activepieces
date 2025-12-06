@@ -23,7 +23,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
         return data.map((model: any) => ({
             id: model.name,
             name: model.displayName,
-            type: AIProviderModelType.Text,
+            type: AIProviderModelType.TEXT,
         }));
     },
 };

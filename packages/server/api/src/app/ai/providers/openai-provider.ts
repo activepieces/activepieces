@@ -28,7 +28,7 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
         return data.map((model: any) => ({
             id: model.id,
             name: model.id,
-            type: openaiImageModels.includes(model.id) ? AIProviderModelType.Image : AIProviderModelType.Text,
+            type: openaiImageModels.includes(model.id) ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }));
     },
 };

@@ -21,7 +21,7 @@ export const openRouterProvider: AIProviderStrategy<OpenRouterProviderConfig> = 
         return data.map((model: any) => ({
             id: model.id,
             name: model.name,
-            type: model.architecture.output_modalities.includes('image') ? AIProviderModelType.Image : AIProviderModelType.Text,
+            type: model.architecture.output_modalities.includes('image') ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }));
     },
 };

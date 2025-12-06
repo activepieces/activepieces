@@ -37,33 +37,38 @@ export const AIProviderConfig = Type.Union([
 export type AIProviderConfig = Static<typeof AIProviderConfig>
 
 export enum AIProviderName {
-    OpenAI = 'openai',
-    OpenRouter = 'openrouter',
-    Anthropic = 'anthropic',
-    Azure = 'azure',
-    Google = 'google',
+    OPENAI = 'openai',
+    OPENROUTER = 'openrouter',
+    ANTHROPIC = 'anthropic',
+    AZURE = 'azure',
+    GOOGLE = 'google',
+    ACTIVEPIECES = 'activepieces',
 }
 
 const ProviderConfigUnion = Type.Union([
     Type.Object({
-        provider: Type.Literal(AIProviderName.OpenAI),
+        provider: Type.Literal(AIProviderName.OPENAI),
         config: OpenAIProviderConfig,
     }),
     Type.Object({
-        provider: Type.Literal(AIProviderName.OpenRouter),
+        provider: Type.Literal(AIProviderName.OPENROUTER),
         config: OpenRouterProviderConfig,
     }),
     Type.Object({
-        provider: Type.Literal(AIProviderName.Anthropic),
+        provider: Type.Literal(AIProviderName.ANTHROPIC),
         config: AnthropicProviderConfig,
     }),
     Type.Object({
-        provider: Type.Literal(AIProviderName.Azure),
+        provider: Type.Literal(AIProviderName.AZURE),
         config: AzureProviderConfig,
     }),
     Type.Object({
-        provider: Type.Literal(AIProviderName.Google),
+        provider: Type.Literal(AIProviderName.GOOGLE),
         config: GoogleProviderConfig,
+    }),
+    Type.Object({
+        provider: Type.Literal(AIProviderName.ACTIVEPIECES),
+        config: Type.Object({}),
     }),
 ]);
 
@@ -81,13 +86,13 @@ export type AIProvider = Static<typeof AIProvider>
 export const AIProviderWithoutSensitiveData = Type.Object({
     id: Type.String(),
     name: Type.String(),
-    isConfigured: Type.Boolean(),
+    configured: Type.Boolean(),
 })
 export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSensitiveData>
 
 export enum AIProviderModelType {
-    Image = 'image',
-    Text = 'text',
+    IMAGE = 'image',
+    TEXT = 'text',
 }
 
 export const AIProviderModel = Type.Object({

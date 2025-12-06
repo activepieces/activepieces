@@ -30,7 +30,7 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
         return data.map((deployment: any) => ({
             id: deployment.name,
             name: deployment.name,
-            type: AIProviderModelType.Text,
+            type: AIProviderModelType.TEXT,
         }));
     },
 };
