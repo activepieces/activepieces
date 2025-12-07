@@ -30,7 +30,6 @@ export const useGeneralSettingsMutation = (
       displayName: string;
       icon: ProjectIcon;
       externalId?: string;
-      plan: { aiCredits?: number | undefined };
     }
   >({
     mutationFn: (request) => {

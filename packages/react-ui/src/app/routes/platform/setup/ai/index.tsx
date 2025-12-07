@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
 import { PlatformRole, ApFlagId, ApEdition } from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
@@ -57,29 +56,7 @@ export default function AIProvidersPage() {
           }
         ></DashboardPageHeader>
         <div className="flex flex-col gap-4">
-          {SUPPORTED_AI_PROVIDERS.map((metadata) => {
-            const isConfigured =
-              providers?.data.some((p) => p.provider === metadata.provider) ??
-              false;
-            const showAzureOpenAI =
-              metadata.provider === 'openai' &&
-              edition === ApEdition.ENTERPRISE;
-
-            return isLoading ? (
-              <Skeleton key={metadata.provider} className="h-24 w-full" />
-            ) : (
-              <AIProviderCard
-                key={metadata.provider}
-                providerMetadata={metadata}
-                isConfigured={isConfigured}
-                isDeleting={isDeleting}
-                onDelete={() => deleteProvider(metadata.provider)}
-                onSave={() => refetch()}
-                allowWrite={allowWrite}
-                showAzureOpenAI={showAzureOpenAI}
-              />
-            );
-          })}
+    
         </div>
       </div>
     </LockedFeatureGuard>

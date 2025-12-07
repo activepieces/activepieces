@@ -54,22 +54,6 @@ export const projectsTableColumns = ({
       enableHiding: true,
     },
     {
-      accessorKey: 'ai-tokens',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
-            {!isNil(row.original.plan.aiCredits)
-              ? formatUtils.formatNumber(row.original.plan.aiCredits)
-              : '-'}
-          </div>
-        );
-      },
-    },
-    {
       accessorKey: 'users',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Active Users')} />

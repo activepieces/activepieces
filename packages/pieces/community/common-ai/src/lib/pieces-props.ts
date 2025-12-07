@@ -19,7 +19,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling
                 },
             });
 
-            const configured = supportedProviders.filter(supportedProvider => supportedProvider.isConfigured);
+            const configured = supportedProviders.filter(supportedProvider => supportedProvider.configured);
             if (configured.length === 0) {
                 return {
                     disabled: true,

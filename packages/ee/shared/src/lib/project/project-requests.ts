@@ -12,7 +12,6 @@ export const UpdateProjectPlatformRequest = Type.Object({
     plan: Type.Optional(Type.Object({
         pieces: Type.Optional(Type.Array(Type.String({}))),
         piecesFilterType: Type.Optional(Type.Enum(PiecesFilterType)),
-        aiCredits: Type.Optional(Type.Number({})),
     })),
 })
 
