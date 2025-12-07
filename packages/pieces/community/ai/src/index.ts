@@ -3,6 +3,10 @@ import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { PieceCategory } from '@activepieces/shared';
 import { askAI } from './lib/actions/text/ask-ai';
 import { summarizeText } from './lib/actions/text/summarize-text';
+import { generateImageAction } from "./lib/actions/image/generate-image";
+import { classifyText } from "./lib/actions/utility/classify-text";
+import { extractStructuredData } from "./lib/actions/utility/extract-structured-data";
+import { runAgent } from "./lib/actions/agents/run-agent";
 
 
 export const ai = createPiece({
@@ -15,10 +19,10 @@ export const ai = createPiece({
   ],
   logoUrl: "https://cdn.activepieces.com/pieces/text-ai.svg",
   authors: ['anasbarg', 'amrdb'],
-  actions: [askAI, summarizeText],
+  actions: [askAI, summarizeText, generateImageAction, classifyText, extractStructuredData, runAgent],
   triggers: [],
 });
- 
+
 
 export * from './lib/common/types';
 export * from './lib/common/props';
