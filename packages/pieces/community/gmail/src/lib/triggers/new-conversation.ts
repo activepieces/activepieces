@@ -29,7 +29,7 @@ export const gmailNewConversationTrigger = createTrigger({
     const lastFetchEpochMS = (await context.store.get<number>('lastPoll')) ?? 0;
     const seenThreadIdsJson =
       (await context.store.get<string>('seenThreadIds')) ?? '[]';
-    const seenThreadIds = new Set(JSON.parse(seenThreadIdsJson));
+    const seenThreadIds = new Set<string>(JSON.parse(seenThreadIdsJson));
 
     const items = await pollNewConversations({
       auth: context.auth,

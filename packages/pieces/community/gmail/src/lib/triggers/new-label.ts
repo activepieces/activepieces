@@ -37,7 +37,7 @@ export const gmailNewLabelTrigger = createTrigger({
   async run(context) {
     const knownLabelIdsJson =
       (await context.store.get<string>('knownLabelIds')) ?? '[]';
-    const knownLabelIds = new Set(JSON.parse(knownLabelIdsJson));
+    const knownLabelIds = new Set<string>(JSON.parse(knownLabelIdsJson));
 
     const newLabels = await pollNewLabels({
       auth: context.auth,
