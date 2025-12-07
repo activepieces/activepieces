@@ -1,9 +1,19 @@
+import {
+  AIProviderName,
+  AnthropicProviderConfig,
+  AzureProviderConfig,
+  CreateAIProviderRequest,
+  GoogleProviderConfig,
+  OpenAIProviderConfig,
+} from '@activepieces/piece-ai';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+
+import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -19,16 +29,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import {
-  AIProviderName,
-  AnthropicProviderConfig,
-  AzureProviderConfig,
-  CreateAIProviderRequest,
-  GoogleProviderConfig,
-  OpenAIProviderConfig,
-} from '@activepieces/common-ai';
-
-import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 type UpsertAIProviderDialogProps = {
   provider: AIProviderName;

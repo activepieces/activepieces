@@ -1,4 +1,4 @@
-import { AIProvider } from '@activepieces/common-ai'
+import { AIProvider } from '@activepieces/piece-ai'
 import {
     ApiKey,
     ApplicationEvent,
