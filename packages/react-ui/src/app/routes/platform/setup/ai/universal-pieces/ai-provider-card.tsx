@@ -1,11 +1,11 @@
+import { AIProviderName } from '@activepieces/common-ai';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
+import { UpsertAIProviderDialog } from './upsert-provider-dialog';
+
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-
-import { UpsertAIProviderDialog } from './upsert-provider-dialog';
-import { AIProviderName } from '@activepieces/common-ai';
 
 type AIProviderCardProps = {
   logoUrl: string;
@@ -34,17 +34,10 @@ const AIProviderCard = ({
     <Card className="w-full px-4 py-4">
       <div className="flex w-full gap-2 justify-center items-center">
         <div className="flex flex-col gap-2 text-center mr-2">
-          <img
-            src={logoUrl}
-            alt="icon"
-            width={32}
-            height={32}
-          />
+          <img src={logoUrl} alt="icon" width={32} height={32} />
         </div>
         <div className="flex flex-grow flex-col">
-          <div className="text-lg flex items-center">
-            {displayName}
-          </div>
+          <div className="text-lg flex items-center">{displayName}</div>
           {allowWrite && (
             <div className="text-sm text-muted-foreground">
               {t('Configure credentials for {providerName} AI provider.', {

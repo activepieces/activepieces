@@ -64,7 +64,8 @@ export async function createAIModel({
             }
             return provider.chat(modelId)
         }
-        case AIProviderName.OPENROUTER || AIProviderName.ACTIVEPIECES: {
+        case AIProviderName.ACTIVEPIECES: 
+        case AIProviderName.OPENROUTER: {
             const provider = createOpenRouter({ apiKey: config.apiKey })
             if (isImage) {
                 return provider.imageModel(modelId)

@@ -8,6 +8,7 @@ import {
 import {
   createAction,
   InputPropertyMap,
+  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { ModelMessage, ToolSet, generateText, stepCountIs } from 'ai';
@@ -51,6 +52,7 @@ export const askAI = createAction({
     webSearchOptions: Property.DynamicProperties({
       displayName: 'Web Search Options',
       required: false,
+      auth: PieceAuth.None(),
       refreshers: ['webSearch', 'provider', 'model'],
       props: async (propsValue) => {
         const webSearchEnabled = propsValue['webSearch'] as unknown as boolean;

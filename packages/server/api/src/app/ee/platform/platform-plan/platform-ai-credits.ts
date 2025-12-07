@@ -7,19 +7,26 @@ import { platformPlanService } from './platform-plan.service'
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/keys'
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
-    async isEnabled(): Promise<boolean> {
+    isEnabled(): boolean {
         return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
     },
     async getUsage(platformId: string): Promise<APIKeyUsage> {
+        if (!this.isEnabled()) {
+            return {
+                usageMonthly: 0,
+                limitMonthly: 0,
+                limitRemaining: 0,
+            }
+        }
         const response = await platformAiCreditsService(log).provisionKeyIfNeeded(platformId)
         const usage = await openRouterGetKey(response.hash)
-        assertNotNullOrUndefined(usage.data.usageMonthly, 'Usage monthly is not set')
+        assertNotNullOrUndefined(usage.data.usage_monthly, 'Usage monthly is not set')
         assertNotNullOrUndefined(usage.data.limit, 'Limit is not set')
-        assertNotNullOrUndefined(usage.data.limitRemaining, 'Limit remaining is not set')
+        assertNotNullOrUndefined(usage.data.limit_remaining, 'Limit remaining is not set')
         return {
-            usageMonthly: usage.data.usageMonthly * 1000,
+            usageMonthly: usage.data.usage_monthly * 1000,
             limitMonthly: usage.data.limit * 1000,
-            limitRemaining: usage.data.limitRemaining * 1000,
+            limitRemaining: usage.data.limit_remaining * 1000,
         }
     },
     async provisionKeyIfNeeded(platformId: string): Promise<ProvisionKeyResponse> {
@@ -27,7 +34,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         const openRouterApiKey = platformPlan.openRouterApiKey
         const openRouterApiKeyHash = platformPlan.openRouterApiKeyHash
         if (isNil(openRouterApiKey) || isNil(openRouterApiKeyHash)) {
-            const limit = (platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits
+            const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
             const { key, data } = await openRouterCreateKey(`Platform ${platformId}`, limit)
             await platformPlanService(log).update({
                 platformId,
@@ -72,8 +79,8 @@ async function openRouterGetKey(hash: string): Promise<OpenRouterGetKeyResponse>
     if (!res.ok) {
         throw new Error(`Failed to get OpenRouter key: ${res.status} ${await res.text()}`)
     }
-    const data = await res.json() as OpenRouterAPIKeyData
-    return { data }
+    const data = await res.json() as OpenRouterGetKeyResponse
+    return data
 }
 
 type ProvisionKeyResponse = {
@@ -99,13 +106,13 @@ type OpenRouterGetKeyResponse = {
 
 type OpenRouterAPIKeyDataWithHash = {
     hash: string
-    usageMonthly?: number
+    usage_monthly?: number
     limit?: number
-    limitRemaining?: number
+    limit_remaining?: number
 }
 
 type OpenRouterAPIKeyData = {
-    usageMonthly: number
+    usage_monthly: number
     limit: number
-    limitRemaining: number
+    limit_remaining: number
 }

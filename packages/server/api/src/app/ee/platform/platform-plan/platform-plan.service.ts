@@ -2,17 +2,17 @@ import { isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PRICE_ID_MAP, PRICE_NAME
 import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
 import { distributedLock, distributedStore } from '../../../database/redis-connections'
+import { flowRepo } from '../../../flows/flow/flow.repo'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
+import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
+import { platformAiCreditsService } from './platform-ai-credits'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
-import { flowRepo } from '../../../flows/flow/flow.repo'
-import { projectService } from '../../../project/project-service'
-import { In } from 'typeorm'
-import { platformAiCreditsService } from './platform-ai-credits'
 
 export const platformPlanRepo = repoFactory(PlatformPlanEntity)
 
@@ -55,7 +55,7 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
 
     async update(params: UpdatePlatformBillingParams): Promise<PlatformPlan> {
         const { platformId, ...update } = params
-        log.info({ platformId, update }, 'updating platform billing')
+        log.info({ platformId }, 'updating platform billing')
 
         const platformPlan = await platformPlanRepo().findOneByOrFail({
             platformId,
