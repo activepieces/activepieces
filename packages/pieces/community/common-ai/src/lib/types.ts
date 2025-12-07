@@ -1,4 +1,4 @@
-import { BaseModelSchema, SeekPage } from '@activepieces/shared'
+import { BaseModelSchema, DiscriminatedUnion, SeekPage } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const AnthropicProviderConfig = Type.Object({
@@ -36,7 +36,8 @@ export const AIProviderConfig = Type.Union([
 ])
 export type AIProviderConfig = Static<typeof AIProviderConfig>
 
-export enum AIProviderName {
+export enum 
+AIProviderName {
     OPENAI = 'openai',
     OPENROUTER = 'openrouter',
     ANTHROPIC = 'anthropic',
@@ -45,7 +46,7 @@ export enum AIProviderName {
     ACTIVEPIECES = 'activepieces',
 }
 
-const ProviderConfigUnion = Type.Union([
+const ProviderConfigUnion = DiscriminatedUnion('provider', [
     Type.Object({
         provider: Type.Literal(AIProviderName.OPENAI),
         config: OpenAIProviderConfig,

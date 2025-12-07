@@ -9,9 +9,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling
         required: true,
         refreshers: [],
         options: async (_, ctx) => {
-            const { body: { data: supportedProviders } } = await httpClient.sendRequest<
-                SeekPage<AIProviderWithoutSensitiveData>
-            >({
+            const { body: supportedProviders } = await httpClient.sendRequest<AIProviderWithoutSensitiveData[]>({
                 method: HttpMethod.GET,
                 url: `${ctx.server.apiUrl}v1/ai-providers`,
                 headers: {
@@ -53,7 +51,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling
                 };
             }
 
-            const { body: { data: allModels } } = await httpClient.sendRequest<SeekPage<AIProviderModel>>({
+            const { body: allModels } = await httpClient.sendRequest<AIProviderModel[]>({
                 method: HttpMethod.GET,
                 url: `${ctx.server.apiUrl}v1/ai-providers/${provider}/models`,
                 headers: {

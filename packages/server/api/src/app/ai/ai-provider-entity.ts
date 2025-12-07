@@ -1,4 +1,4 @@
-import { AIProvider } from '@activepieces/common-ai'
+import { AIProvider, AIProviderName } from '@activepieces/common-ai'
 import { Platform } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { EntitySchema } from 'typeorm'
@@ -13,6 +13,7 @@ type AIProviderEncrypted = Static<typeof AIProviderEncrypted>
 
 export type AIProviderSchema = AIProviderEncrypted & {
     platform: Platform
+    provider: AIProviderName
 }
 
 export const AIProviderEntity = new EntitySchema<AIProviderSchema>({

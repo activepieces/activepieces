@@ -35,7 +35,7 @@ const ListAIProviders = {
     },
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(AIProviderWithoutSensitiveData),
+            [StatusCodes.OK]: Type.Array(AIProviderWithoutSensitiveData),
         },
     },
 }

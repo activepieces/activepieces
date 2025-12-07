@@ -54,6 +54,7 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
 
 
         await filePiecesUtils(packages, log).clearPieceCache(packageName)
+        await devPiecesInstaller(packages, log).installDepsForSharedPackages()
         await devPiecesInstaller(packages, log).linkSharedActivepiecesPackagesToPiece(packageName)
         await devPiecesInstaller(packages, log).linkSharedActivepiecesPackagesToEachOther()
      

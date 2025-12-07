@@ -299,6 +299,7 @@ import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
+import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -616,6 +617,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
                 RemoveUnusedPaymentMethodColoumn1762709208569,
                 AddLastUsedAtToApiKey1763378445660,
                 RenameManageProjectsToTeamProjectLimits1764100884963,
+                AddOpenRouterKeyToPlatformPlan1765109187883,
             )
             break
         case ApEdition.COMMUNITY:
