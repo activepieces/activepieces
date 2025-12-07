@@ -18,6 +18,10 @@ export enum FileType {
     TRIGGER_EVENT_FILE = 'TRIGGER_EVENT_FILE',
     PROJECT_RELEASE = 'PROJECT_RELEASE',
     FLOW_VERSION_BACKUP = 'FLOW_VERSION_BACKUP',
+
+    PLATFORM_LOGO = 'PLATFORM_LOGO',
+    PLATFORM_ICON = 'PLATFORM_ICON',
+    PLATFORM_FAVICON = 'PLATFORM_FAVICON',
 }
 export enum FileCompression {
     NONE = 'NONE',
@@ -46,3 +50,9 @@ export const File = Type.Object({
 export type File = Static<typeof File> & {
     data: Buffer
 }
+
+export const UploadFileRequestBody = Type.Object({
+    fileType: Type.Enum(FileType),
+    file: Type.Unknown()
+})
+export type UploadFileRequestBody = Static<typeof UploadFileRequestBody>

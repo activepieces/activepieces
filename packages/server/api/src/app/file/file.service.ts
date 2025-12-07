@@ -193,6 +193,9 @@ function isExecutionDataFileThatExpires(type: FileType) {
         case FileType.FLOW_STEP_FILE:
         case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
+        case FileType.PLATFORM_LOGO:
+        case FileType.PLATFORM_ICON:
+        case FileType.PLATFORM_FAVICON:
             return true
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:

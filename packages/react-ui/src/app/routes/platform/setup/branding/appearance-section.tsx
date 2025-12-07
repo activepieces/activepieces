@@ -2,6 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -16,8 +17,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { fileHooks } from '@/hooks/file-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { fileUtils } from '@/lib/file-utils';
 import { platformApi } from '@/lib/platforms-api';
+import { FileType } from '@activepieces/shared';
 
 const FromSchema = Type.Object({
   name: Type.String(),
@@ -31,6 +36,16 @@ type FromSchema = Static<typeof FromSchema>;
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
+  const [fileNames, setFileNames] = useState<{
+    logoUrl: string;
+    iconUrl: string;
+    faviconUrl: string;
+  }>({
+    logoUrl: '',
+    iconUrl: '',
+    faviconUrl: '',
+  });
+
   const form = useForm({
     defaultValues: {
       name: platform?.name,
@@ -41,6 +56,63 @@ export const AppearanceSection = () => {
     },
     resolver: typeboxResolver(FromSchema),
   });
+
+  const typeMap: Partial<Record<FileType, keyof FromSchema>> = {
+    [FileType.PLATFORM_LOGO]: 'logoUrl',
+    [FileType.PLATFORM_ICON]: 'iconUrl',
+    [FileType.PLATFORM_FAVICON]: 'faviconUrl',
+  };
+
+  const changeFileName = (fileType: FileType, fileName: string) => {
+    setFileNames((prev) => ({
+      ...prev,
+      [typeMap[fileType] as keyof FromSchema]: fileName,
+    }));
+  };
+
+  fileHooks.useOnLoadDbFile(platform?.fullLogoUrl, (file) =>
+    changeFileName(FileType.PLATFORM_LOGO, file.fileName ?? 'Unnamed file'),
+  );
+  fileHooks.useOnLoadDbFile(platform?.logoIconUrl, (file) =>
+    changeFileName(FileType.PLATFORM_ICON, file.fileName ?? 'Unnamed file'),
+  );
+  fileHooks.useOnLoadDbFile(platform?.favIconUrl, (file) =>
+    changeFileName(FileType.PLATFORM_FAVICON, file.fileName ?? 'Unnamed file'),
+  );
+
+  const { mutate: uploadFile } = fileHooks.useUploadFile();
+  const [isUploading, setIsUploading] = useState<string[]>([]);
+
+  const handleFileChange = (
+    fileType: FileType,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setIsUploading((prev) => [...prev, fileType]);
+      uploadFile(
+        {
+          fileType,
+          file: file,
+        },
+        {
+          onSuccess: (data) => {
+            changeFileName(fileType, data.fileName ?? 'Unnamed file');
+            form.setValue(
+              typeMap[fileType] as keyof FromSchema,
+              fileUtils.fileIdUrl(data.id),
+              { shouldValidate: true },
+            );
+            setIsUploading((prev) => prev.filter((type) => type !== fileType));
+          },
+          onError: (error) => {
+            toast.error(error.message ?? t('Failed to upload file'));
+            setIsUploading((prev) => prev.filter((type) => type !== fileType));
+          },
+        },
+      );
+    }
+  };
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
@@ -54,7 +126,7 @@ export const AppearanceSection = () => {
         },
         platform.id,
       );
-      window.location.reload();
+      // window.location.reload();
     },
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), {
@@ -63,7 +135,7 @@ export const AppearanceSection = () => {
       form.reset(form.getValues());
     },
   });
-  console.log(form.formState.isValid, form.getValues());
+
   return (
     <>
       <Separator className="my-2" />
@@ -73,7 +145,10 @@ export const AppearanceSection = () => {
         <Form {...form}>
           <form
             className="grid space-y-4 mt-4"
-            onSubmit={form.handleSubmit(() => updatePlatform())}
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit(() => updatePlatform())();
+            }}
           >
             <div className="max-w-[600px] grid space-y-4">
               <FormField
@@ -95,51 +170,80 @@ export const AppearanceSection = () => {
 
               <FormField
                 name="logoUrl"
-                render={({ field }) => (
+                render={() => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="logoUrl">{t('Logo URL')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      id="logoUrl"
-                      placeholder="https://www.example.com/logo.png"
-                      className="rounded-sm"
-                    />
+                    <FormLabel htmlFor="logoFile">{t('Logo')}</FormLabel>
+                    <div className="flex flex-row gap-2 items-center">
+                      <Input
+                        defaultFileName={
+                          fileNames.logoUrl || platform?.fullLogoUrl
+                        }
+                        type="file"
+                        accept="image/*"
+                        id="logoFile"
+                        onChange={(e) =>
+                          handleFileChange(FileType.PLATFORM_LOGO, e)
+                        }
+                        className="rounded-sm"
+                      />
+                      {isUploading.includes(FileType.PLATFORM_LOGO) && (
+                        <LoadingSpinner />
+                      )}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 name="iconUrl"
-                render={({ field }) => (
+                render={() => (
                   <FormItem className="grid space-y-2">
-                    <FormLabel htmlFor="iconUrl">{t('Icon URL')}</FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      id="iconUrl"
-                      placeholder="https://www.example.com/icon.png"
-                      className="rounded-sm"
-                    />
+                    <FormLabel htmlFor="iconFile">{t('Icon')}</FormLabel>
+                    <div className="flex flex-row gap-2 items-center">
+                      <Input
+                        defaultFileName={
+                          fileNames.iconUrl || platform?.logoIconUrl
+                        }
+                        type="file"
+                        accept="image/*"
+                        id="iconFile"
+                        onChange={(e) =>
+                          handleFileChange(FileType.PLATFORM_ICON, e)
+                        }
+                        className="rounded-sm"
+                      />
+                      {isUploading.includes(FileType.PLATFORM_ICON) && (
+                        <LoadingSpinner />
+                      )}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
               <FormField
                 name="faviconUrl"
-                render={({ field }) => (
+                render={() => (
                   <FormItem className="grid space-y-2">
                     <FormLabel htmlFor="faviconUrl">
                       {t('Favicon URL')}
                     </FormLabel>
-                    <Input
-                      {...field}
-                      required
-                      id="faviconUrl"
-                      placeholder="https://www.example.com/favicon.png"
-                      className="rounded-sm"
-                    />
+                    <div className="flex flex-row gap-2 items-center">
+                      <Input
+                        defaultFileName={
+                          fileNames.faviconUrl || platform?.favIconUrl
+                        }
+                        type="file"
+                        accept="image/*"
+                        id="faviconFile"
+                        onChange={(e) =>
+                          handleFileChange(FileType.PLATFORM_FAVICON, e)
+                        }
+                        className="rounded-sm"
+                      />
+                      {isUploading.includes(FileType.PLATFORM_FAVICON) && (
+                        <LoadingSpinner />
+                      )}
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
