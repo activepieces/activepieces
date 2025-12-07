@@ -4,6 +4,7 @@ import {
   PieceAuth,
   createPiece,
 } from '@activepieces/pieces-framework';
+import { PieceCategory } from '@activepieces/shared';
 import { uploadAsset } from './lib/actions/upload-asset';
 import { createDesign } from './lib/actions/create-design';
 import { importDesign } from './lib/actions/import-design';
@@ -33,8 +34,8 @@ export const canva = createPiece({
   description: 'Online design platform for creating visual content',
   minimumSupportedRelease: '0.30.0',
   logoUrl: 'https://cdn.activepieces.com/pieces/canva.png',
-  categories: [],
-  authors: [],
+  categories: [PieceCategory.CONTENT_AND_FILES],
+  authors: ['badnewsgoonies'],
   auth: canvaAuth,
   actions: [
     uploadAsset,
