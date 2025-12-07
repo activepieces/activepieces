@@ -1,5 +1,5 @@
-import { AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
-import { PrincipalType, SeekPage } from '@activepieces/shared'
+import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'
@@ -7,16 +7,29 @@ import { aiProviderService } from './ai-provider-service'
 export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAIProviders, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService.list(platformId)
+        return aiProviderService(app.log).listProviders(platformId)
+    })
+    app.get('/models', ListAllModels, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiProviderService(app.log).listAllModels(platformId)
+    })
+    app.get('/:id/config', GetAIProviderConfig, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiProviderService(app.log).getConfig(platformId, request.params.id)
+    })
+    app.get('/:id/models', ListModels, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiProviderService(app.log).listModels(platformId, request.params.id)
     })
     app.post('/', CreateAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
-        await aiProviderService.upsert(platformId, request.body)
+        await aiProviderService(app.log).upsert(platformId, request.body)
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
-    app.delete('/:id', DeleteAIProvider, async (request) => {
+    app.delete('/:id', DeleteAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
-        return aiProviderService.delete(platformId, request.params.id)
+        await aiProviderService(app.log).delete(platformId, request.params.id)
+        return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
 
@@ -26,7 +39,46 @@ const ListAIProviders = {
     },
     schema: {
         response: {
-            [StatusCodes.OK]: SeekPage(AIProviderWithoutSensitiveData),
+            [StatusCodes.OK]: Type.Array(AIProviderWithoutSensitiveData),
+        },
+    },
+}
+
+const GetAIProviderConfig = {
+    config: {
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.Enum(AIProviderName),
+        }),
+        response: {
+            [StatusCodes.OK]: AIProviderConfig,
+        },
+    },
+}
+
+const ListAllModels = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: Type.Array(AIProviderModel),
+        },
+    },
+}
+
+const ListModels = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.Enum(AIProviderName),
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Array(AIProviderModel),
         },
     },
 }
@@ -46,7 +98,7 @@ const DeleteAIProvider = {
     },
     schema: {
         params: Type.Object({
-            id: Type.String(),
+            id: Type.Enum(AIProviderName),
         }),
     },
 }

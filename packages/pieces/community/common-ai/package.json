@@ -3,7 +3,6 @@
   "version": "0.5.1",
   "type": "commonjs",
   "dependencies": {
-    "tslib": "^2.3.0",
     "@activepieces/shared": "0.29.0",
     "@activepieces/pieces-framework": "0.22.2",
     "@activepieces/pieces-common": "0.10.1",
@@ -12,7 +11,10 @@
     "@ai-sdk/openai": "2.0.12",
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
+    "@openrouter/ai-sdk-provider": "^1.4.1",
+    "@sinclair/typebox": "0.34.11",
     "ai": "5.0.104",
-    "@sinclair/typebox": "0.34.11"
+    "openai": "^6.10.0",
+    "tslib": "^2.3.0"
   }
 }

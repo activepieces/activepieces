@@ -1,8 +1,11 @@
 import { ApFile, createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil, SeekPage } from '@activepieces/shared';
-import { AI_USAGE_FEATURE_HEADER, AIProviderWithoutSensitiveData, AIUsageFeature } from '@activepieces/common-ai';
-import OpenAI from 'openai';
+import {
+  AIProviderName,
+  AIProviderWithoutSensitiveData,
+  createOpenAIClient,
+} from '@activepieces/common-ai';
 import { ModerationMultiModalInput } from 'openai/resources/moderations';
 
 export const checkModeration = createAction({
@@ -17,28 +20,36 @@ export const checkModeration = createAction({
       required: true,
       refreshers: [],
       options: async (_, ctx) => {
-          const { body: { data: supportedProviders } } = await httpClient.sendRequest<
-              SeekPage<AIProviderWithoutSensitiveData>
-          >({
-              method: HttpMethod.GET,
-              url: `${ctx.server.apiUrl}v1/ai-providers`,
-              headers: {
-                  Authorization: `Bearer ${ctx.server.token}`,
-              },
-          });
+        const {
+          body: { data: supportedProviders },
+        } = await httpClient.sendRequest<
+          SeekPage<AIProviderWithoutSensitiveData>
+        >({
+          method: HttpMethod.GET,
+          url: `${ctx.server.apiUrl}v1/ai-providers`,
+          headers: {
+            Authorization: `Bearer ${ctx.server.token}`,
+          },
+        });
 
-          const openaiProvider = supportedProviders.find(provider => provider.provider === 'openai');
+        const openaiProvider = supportedProviders.find(
+          (provider) => provider.id === AIProviderName.OPENAI,
+        );
 
-          return {
-              placeholder: openaiProvider ? 'Select AI Provider' : `No OpenAI providers available for moderation`,
-              disabled: !openaiProvider,
-              options: openaiProvider ? [
+        return {
+          placeholder: openaiProvider
+            ? 'Select AI Provider'
+            : `No OpenAI providers available for moderation`,
+          disabled: !openaiProvider,
+          options: openaiProvider
+            ? [
                 {
-                  value: openaiProvider.provider,
-                  label: openaiProvider.provider
-                }
-              ] : [],
-          };
+                  value: openaiProvider.id,
+                  label: openaiProvider.name,
+                },
+              ]
+            : [],
+        };
       },
   }),
   model: Property.Dropdown({
@@ -48,29 +59,29 @@ export const checkModeration = createAction({
       defaultValue: 'omni-moderation-latest',
       refreshers: ['provider'],
       options: async (propsValue) => {
-          const provider = propsValue['provider'] as string;
-          if (isNil(provider)) {
-              return {
-                  disabled: true,
-                  options: [],
-                  placeholder: 'Select AI Provider',
-              };
-          }
-
-          const openaiModerationModels = [
-            {
-              label: 'omni-moderation-latest',
-              value: 'omni-moderation-latest',
-            },
-          ];
-
+        const provider = propsValue['provider'] as string;
+        if (isNil(provider)) {
           return {
-              placeholder: 'Select AI Model',
-              disabled: false,
-              options: openaiModerationModels,
+            disabled: true,
+            options: [],
+            placeholder: 'Select AI Provider',
           };
+        }
+
+        const openaiModerationModels = [
+          {
+            label: 'omni-moderation-latest',
+            value: 'omni-moderation-latest',
+          },
+        ];
+
+        return {
+          placeholder: 'Select AI Model',
+          disabled: false,
+          options: openaiModerationModels,
+        };
       },
-  }),
+    }),
     text: Property.LongText({
       displayName: 'Text',
       required: false,
@@ -87,28 +98,18 @@ export const checkModeration = createAction({
     }),
   },
   async run(context) {
-    const providerName = context.propsValue.provider as string;
     const text = context.propsValue.text;
     const images = (context.propsValue.images as Array<{ file: ApFile }>) ?? [];
-
-    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}/v1`;
-    const engineToken = context.server.token;
 
     if (!text && !images.length) {
       throw new Error('Please provide text or images to check moderation');
     }
 
-    const client = new OpenAI({
-      apiKey: engineToken,
-      baseURL,
-      defaultHeaders: {
-        [AI_USAGE_FEATURE_HEADER]: AIUsageFeature.UTILITY_AI,
-      },
-    });
+    const client = await createOpenAIClient(context.server.token, context.server.apiUrl)
 
     const input: ModerationMultiModalInput[] = [];
 
-    if (text) { 
+    if (text) {
       input.push({ type: 'text', text });
     }
 

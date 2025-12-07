@@ -1,7 +1,6 @@
 import { ApFile, createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
-import { AIUsageFeature, createAIModel } from '@activepieces/common-ai';
+import { createAIModel } from '@activepieces/common-ai';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
-import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import Ajv from 'ajv';
 import { aiProps } from '@activepieces/common-ai';
@@ -11,8 +10,8 @@ export const extractStructuredData = createAction({
 	displayName: 'Extract Structured Data',
 	description: 'Extract structured data from provided text,image or PDF.',
 	props: {
-		provider: aiProps({ modelType: 'language', functionCalling: true }).provider,
-		model: aiProps({ modelType: 'language', functionCalling: true }).model,
+		provider: aiProps({ modelType: 'text', functionCalling: true }).provider,
+		model: aiProps({ modelType: 'text', functionCalling: true }).model,
 		text: Property.LongText({
 			displayName: 'Text',
 			description: 'Text to extract structured data from.',
@@ -125,8 +124,8 @@ export const extractStructuredData = createAction({
 		}),
 	},
 	async run(context) {
-		const providerName = context.propsValue.provider as string;
-		const modelInstance = context.propsValue.model as LanguageModelV2;
+		const providerId = context.propsValue.provider;
+		const modelId = context.propsValue.model;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
 		const prompt = context.propsValue.prompt;
@@ -137,16 +136,11 @@ export const extractStructuredData = createAction({
 			throw new Error('Please provide text or image/PDF to extract data from.');
 		}
 
-		const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
-		const engineToken = context.server.token;
-		const model = createAIModel({
-			providerName,
-			modelInstance,
-			engineToken,
-			baseURL,
-			metadata: {
-				feature: AIUsageFeature.UTILITY_AI,
-			},
+		const model = await createAIModel({
+			providerId,
+			modelId,
+			engineToken: context.server.token,
+			apiUrl: context.server.apiUrl,
 		});
 
 		let schemaDefinition: any;
@@ -260,9 +254,6 @@ export const extractStructuredData = createAction({
 				},
 				toolChoice: 'required',
 				messages,
-				headers: {
-					'Authorization': `Bearer ${engineToken}`,
-				},
 			});
 
 			const toolCalls = result.toolCalls;

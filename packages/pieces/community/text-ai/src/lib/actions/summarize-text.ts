@@ -1,6 +1,5 @@
-import { AIUsageFeature, SUPPORTED_AI_PROVIDERS, createAIModel } from '@activepieces/common-ai';
-import { createAction, Property } from '@activepieces/pieces-framework';
-import { LanguageModelV2 } from '@ai-sdk/provider';
+import { AIProviderName, createAIModel } from '@activepieces/common-ai';
+import { createAction, Property, Action } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { aiProps } from '@activepieces/common-ai';
 
@@ -9,8 +8,8 @@ export const summarizeText = createAction({
   displayName: 'Summarize Text',
   description: '',
   props: {
-    provider: aiProps({ modelType: 'language' }).provider,
-    model: aiProps({ modelType: 'language' }).model,
+    provider: aiProps({ modelType: 'text' }).provider,
+    model: aiProps({ modelType: 'text' }).model,
     text: Property.LongText({
       displayName: 'Text',
       required: true,
@@ -28,24 +27,14 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const providerName = context.propsValue.provider as string;
-    const modelInstance = context.propsValue.model as LanguageModelV2;
+    const providerId = context.propsValue.provider;
+    const modelId = context.propsValue.model;
 
-    const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
-    if (!providerConfig) {
-      throw new Error(`Provider ${providerName} not found`);
-    }
-
-    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
-    const engineToken = context.server.token;
-    const model = createAIModel({
-      providerName,
-      modelInstance,
-      engineToken,
-      baseURL,
-      metadata: {
-        feature: AIUsageFeature.TEXT_AI,
-      },
+    const model = await createAIModel({
+      providerId,
+      modelId,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
     });
 
     const response = await generateText({
@@ -59,8 +48,8 @@ export const summarizeText = createAction({
       maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: 1,
       providerOptions: {
-        [providerName]: {
-          ...(providerName === 'openai' ? { reasoning_effort: 'minimal' } : {}),
+        [providerId]: {
+          ...(providerId === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
         }
       }
     });

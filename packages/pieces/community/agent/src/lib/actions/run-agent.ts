@@ -1,11 +1,23 @@
-import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { agentCommon, AI_MODELS } from '../common';
-import { AgentOutputField, AgentOutputFieldType, AgentPieceProps, AgentTaskStatus, isNil, AgentTool, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
+import {
+  createAction,
+  Property,
+  PieceAuth,
+} from '@activepieces/pieces-framework';
+import {
+  AgentOutputField,
+  AgentOutputFieldType,
+  AgentPieceProps,
+  AgentTaskStatus,
+  isNil,
+  AgentTool,
+  TASK_COMPLETION_TOOL_NAME,
+} from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from '../common/agent-output-builder';
-
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AIProviderModel, AIProviderModelType, AIProviderName, createAIModel } from '@activepieces/common-ai';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -18,15 +30,34 @@ export const runAgent = createAction({
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
-    [AgentPieceProps.AI_MODEL]: Property.StaticDropdown({
+    [AgentPieceProps.AI_MODEL]: Property.Dropdown({
       displayName: 'AI Model',
       required: true,
-      description: 'Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.',
-      options: {
-        options: AI_MODELS.map(model => ({
-          label: `(${model.provider}) ${model.displayName}`,
-          value: model.id,
-        })),
+      auth: PieceAuth.None(),
+      refreshers: [],
+      description:
+        'Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.',
+      options: async (propsValue, ctx) => {
+        const { body: allModels } = await httpClient.sendRequest<
+          AIProviderModel[]
+        >({
+          method: HttpMethod.GET,
+          url: `${ctx.server.apiUrl}v1/ai-providers/models`,
+          headers: {
+            Authorization: `Bearer ${ctx.server.token}`,
+          },
+        });
+
+        const models = allModels.filter((model) => model.type === AIProviderModelType.TEXT);
+
+        return {
+          placeholder: 'Select AI Model',
+          disabled: false,
+          options: models.map((model) => ({
+            label: model.name,
+            value: `${model.id}-${model.providerId}`,
+          })),
+        };
       },
     }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
@@ -35,11 +66,11 @@ export const runAgent = createAction({
       properties: {
         type: Property.ShortText({
           displayName: 'Tool Type',
-          required: true
+          required: true,
         }),
         toolName: Property.ShortText({
           displayName: 'Tool Name',
-          required: true
+          required: true,
         }),
         pieceMetadata: Property.Json({
           displayName: 'Piece Metadata',
@@ -47,9 +78,9 @@ export const runAgent = createAction({
         }),
         flowId: Property.ShortText({
           displayName: 'Flow Id',
-          required: false
-        })
-      }
+          required: false,
+        }),
+      },
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
@@ -58,17 +89,17 @@ export const runAgent = createAction({
       properties: {
         displayName: Property.ShortText({
           displayName: 'Display Name',
-          required: true
+          required: true,
         }),
         description: Property.ShortText({
           displayName: 'Description',
-          required: false
+          required: false,
         }),
         type: Property.ShortText({
           displayName: 'Type',
-          required: true
-        })
-      }
+          required: true,
+        }),
+      },
     }),
     [AgentPieceProps.MAX_STEPS]: Property.Number({
       displayName: 'Max steps',
@@ -78,22 +109,25 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, aiModel } = context.propsValue
-    const selectedModel = agentCommon.getModelById(aiModel as string)
-    const model = agentCommon.createModel({
-      model: selectedModel,
-      token: context.server.token,
-      baseURL: `${context.server.apiUrl}v1/ai-providers/proxy/${selectedModel.provider}`,
-      flowId: context.flows.current.id,
-    })
+    const { prompt, maxSteps, aiModel } = context.propsValue;
+    const [modelId, providerId] = aiModel.split('-');
 
-    const outputBuilder = agentOutputBuilder(prompt)
-    const hasStructuredOutput = !isNil(context.propsValue.structuredOutput) && context.propsValue.structuredOutput.length > 0
-    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[]
+    const model = await createAIModel({
+      modelId,
+      providerId,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
+    });
+
+    const outputBuilder = agentOutputBuilder(prompt);
+    const hasStructuredOutput =
+      !isNil(context.propsValue.structuredOutput) &&
+      context.propsValue.structuredOutput.length > 0;
+    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[];
     const agentTools = await context.agent.tools({
       tools: agentToolsMetadata,
       model: model,
-    })
+    });
     const stream = streamText({
       model: model,
       prompt: `
@@ -111,105 +145,128 @@ Today's date is ${new Date().toISOString().split('T')[0]}.
 
 Help the user finish their goal quickly and accurately.
         `.trim(),
-      stopWhen: [
-        stepCountIs(maxSteps),
-        hasToolCall(TASK_COMPLETION_TOOL_NAME),
-      ],
+      stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
       tools: {
         ...agentTools,
         [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
-          description: 'This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user\'s task, or if you are unable to continue. Once you call this tool, you should not take any further actions.',
+          description:
+            "This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user's task, or if you are unable to continue. Once you call this tool, you should not take any further actions.",
           inputSchema: z.object({
-            success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
-            ...(hasStructuredOutput ? {
-              output: z.object(
-                structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}
-              )
-                .nullable()
-                .describe('The structured output of your task. This is optional and can be omitted if you have not achieved the goal.')
-            } : {
-              output: z.string().nullable().describe('The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.')
-            }),
+            success: z
+              .boolean()
+              .describe(
+                'Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'
+              ),
+            ...(hasStructuredOutput
+              ? {
+                  output: z
+                    .object(
+                      structuredOutputSchema(
+                        context.propsValue
+                          .structuredOutput as AgentOutputField[]
+                      )?.shape ?? {}
+                    )
+                    .nullable()
+                    .describe(
+                      'The structured output of your task. This is optional and can be omitted if you have not achieved the goal.'
+                    ),
+                }
+              : {
+                  output: z
+                    .string()
+                    .nullable()
+                    .describe(
+                      'The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.'
+                    ),
+                }),
           }),
           execute: async (params) => {
-            const { success, output } = params as { success: boolean, output?: Record<string, unknown> }
-            outputBuilder.setStatus(success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED)
+            const { success, output } = params as {
+              success: boolean;
+              output?: Record<string, unknown>;
+            };
+            outputBuilder.setStatus(
+              success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
+            );
             if (hasStructuredOutput && !isNil(output)) {
-              outputBuilder.setStructuredOutput(output)
+              outputBuilder.setStructuredOutput(output);
             }
             if (!hasStructuredOutput && !isNil(output)) {
-              outputBuilder.addMarkdown(output as unknown as string)
+              outputBuilder.addMarkdown(output as unknown as string);
             }
-            return {}
+            return {};
           },
         }),
-
-      }
+      },
     });
 
     for await (const chuck of stream.fullStream) {
       switch (chuck.type) {
         case 'text-delta': {
-          outputBuilder.addMarkdown(chuck.text)
-          break
+          outputBuilder.addMarkdown(chuck.text);
+          break;
         }
         case 'tool-call': {
           if (isTaskCompletionToolCall(chuck.toolName)) {
-            continue
+            continue;
           }
           outputBuilder.startToolCall({
             toolName: chuck.toolName,
             toolCallId: chuck.toolCallId,
             input: chuck.input as Record<string, unknown>,
             agentTools: agentToolsMetadata,
-          })
-          break
+          });
+          break;
         }
         case 'tool-result': {
           if (isTaskCompletionToolCall(chuck.toolName)) {
-            continue
+            continue;
           }
           outputBuilder.finishToolCall({
             toolCallId: chuck.toolCallId,
             output: chuck.output as Record<string, unknown>,
-          })
+          });
           break;
         }
         case 'error': {
-          outputBuilder.fail({ message: "Error running agent: " + inspect(chuck.error) })
+          outputBuilder.fail({
+            message: 'Error running agent: ' + inspect(chuck.error),
+          });
           break;
         }
       }
-      await context.output.update({ data: outputBuilder.build() })
+      await context.output.update({ data: outputBuilder.build() });
     }
-    const { status } = outputBuilder.build()
+    const { status } = outputBuilder.build();
     if (status == AgentTaskStatus.IN_PROGRESS) {
-      outputBuilder.fail({})
+      outputBuilder.fail({});
     }
 
-    return outputBuilder.build()
-  }
+    return outputBuilder.build();
+  },
 });
 
+const isTaskCompletionToolCall = (toolName: string) =>
+  toolName === TASK_COMPLETION_TOOL_NAME;
 
-const isTaskCompletionToolCall = (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME
-
-function structuredOutputSchema(outputFields: AgentOutputField[]): ZodObject | undefined {
-  const shape: Record<string, z.ZodType> = {}
+function structuredOutputSchema(
+  outputFields: AgentOutputField[]
+): ZodObject | undefined {
+  const shape: Record<string, z.ZodType> = {};
 
   for (const field of outputFields) {
     switch (field.type) {
       case AgentOutputFieldType.TEXT:
-        shape[field.displayName] = z.string()
-        break
+        shape[field.displayName] = z.string();
+        break;
       case AgentOutputFieldType.NUMBER:
-        shape[field.displayName] = z.number()
-        break
+        shape[field.displayName] = z.number();
+        break;
       case AgentOutputFieldType.BOOLEAN:
-        shape[field.displayName] = z.boolean()
-        break
+        shape[field.displayName] = z.boolean();
+        break;
       default:
-        shape[field.displayName] = z.any()
+        shape[field.displayName] = z.any();
     }
   }
 

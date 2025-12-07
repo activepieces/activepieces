@@ -25,7 +25,6 @@ import { AddCustomDomain1698077078271 } from '../ee/database/migrations/postgres
 import { AddMetadataFieldToFlowTemplates1744780800000 } from '../ee/database/migrations/postgres/1744780800000-AddMetadataFieldToFlowTemplates'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
-import { AddMcpServer1764606838149 } from './migration/1764606838149-AddMcpServer'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { AddPieceTypeAndPackageTypeToFlowTemplate1696245170062 } from './migration/common/1696245170062-add-piece-type-and-package-type-to-flow-template'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -300,6 +299,8 @@ import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
 import { UnifyCommunityWithEnterprise1764567780604 } from './migration/postgres/1764567780604-UnifyCommunityWithEnterprise'
+import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
+import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -615,6 +616,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RenameManageProjectsToTeamProjectLimits1764100884963,
         UnifyCommunityWithEnterprise1764567780604,
         AddMcpServer1764606838149,
+        AddOpenRouterKeyToPlatformPlan1765109187883,
     ]
     return migrations
 }

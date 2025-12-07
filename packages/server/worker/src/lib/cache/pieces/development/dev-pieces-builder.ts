@@ -52,6 +52,7 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
 
+        await devPiecesInstaller(log).installDepsForSharedPackages()
         await devPiecesInstaller(log).linkSharedActivepiecesPackagesToPiece(packageName)
         await devPiecesInstaller(log).linkSharedActivepiecesPackagesToEachOther()
      

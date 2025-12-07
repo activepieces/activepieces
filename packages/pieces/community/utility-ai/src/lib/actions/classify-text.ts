@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { LanguageModelV2 } from '@ai-sdk/provider';
 import { generateText } from 'ai';
-import { AIUsageFeature, createAIModel, SUPPORTED_AI_PROVIDERS } from '@activepieces/common-ai';
+import { createAIModel } from '@activepieces/common-ai';
 import { aiProps } from '@activepieces/common-ai';
 
 export const classifyText = createAction({
@@ -9,8 +8,8 @@ export const classifyText = createAction({
   displayName: 'Classify Text',
   description: 'Classify your text into one of your provided categories.',
   props: {
-    provider: aiProps({ modelType: 'language' }).provider,
-    model: aiProps({ modelType: 'language' }).model,
+    provider: aiProps({ modelType: 'text' }).provider,
+    model: aiProps({ modelType: 'text' }).model,
     text: Property.LongText({
       displayName: 'Text to Classify',
       required: true,
@@ -24,24 +23,14 @@ export const classifyText = createAction({
   async run(context) {
     const categories = (context.propsValue.categories as string[]) ?? [];
 
-    const providerName = context.propsValue.provider as string;
-    const modelInstance = context.propsValue.model as LanguageModelV2;
+    const providerId = context.propsValue.provider;
+    const modelId = context.propsValue.model;
 
-    const providerConfig = SUPPORTED_AI_PROVIDERS.find(p => p.provider === providerName);
-    if (!providerConfig) {
-      throw new Error(`Provider ${providerName} not found`);
-    }
-
-    const baseURL = `${context.server.apiUrl}v1/ai-providers/proxy/${providerName}`;
-    const engineToken = context.server.token;
-    const model = createAIModel({
-      providerName,
-      modelInstance,
-      engineToken,
-      baseURL,
-      metadata: {
-        feature: AIUsageFeature.UTILITY_AI,
-      },
+    const model = await createAIModel({
+      providerId,
+      modelId,
+      engineToken: context.server.token,
+      apiUrl: context.server.apiUrl,
     });
 
     const response = await generateText({

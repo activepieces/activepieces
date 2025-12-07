@@ -1,7 +1,8 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -13,51 +14,70 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
+  AIProviderName,
+  AnthropicProviderConfig,
+  AzureProviderConfig,
   CreateAIProviderRequest,
-  SupportedAIProvider,
+  GoogleProviderConfig,
+  OpenAIProviderConfig,
 } from '@activepieces/common-ai';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 type UpsertAIProviderDialogProps = {
-  provider: string;
-  providerMetadata: SupportedAIProvider;
+  provider: AIProviderName;
+  configured: boolean;
+  logoUrl: string;
+  markdown: string;
+  displayName: string;
   children: React.ReactNode;
   onSave: () => void;
-  isConfigured?: boolean;
-  showAzureOpenAI?: boolean;
 };
 
 export const UpsertAIProviderDialog = ({
   children,
   onSave,
   provider,
-  providerMetadata,
-  isConfigured = false,
-  showAzureOpenAI = false,
+  configured,
+  displayName,
+  markdown,
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
+
+  const formSchema = useMemo(() => {
+    if (provider === AIProviderName.AZURE) {
+      return Type.Object({
+        provider: Type.Literal(AIProviderName.AZURE),
+        config: AzureProviderConfig,
+      });
+    }
+    return Type.Object({
+      provider: Type.Literal(provider),
+      config: Type.Union([
+        AnthropicProviderConfig,
+        GoogleProviderConfig,
+        OpenAIProviderConfig,
+      ]),
+    });
+  }, [provider]);
+
   const form = useForm<CreateAIProviderRequest>({
-    resolver: typeboxResolver(CreateAIProviderRequest),
-    defaultValues: {
-      provider,
-      apiKey: '',
-      useAzureOpenAI: false,
-      resourceName: '',
-    },
+    resolver: typeboxResolver(formSchema),
+    defaultValues: (provider === AIProviderName.AZURE
+      ? {
+          provider: AIProviderName.AZURE,
+          config: { apiKey: '', resourceName: '' },
+        }
+      : {
+          provider,
+          config: { apiKey: '' },
+        }) as CreateAIProviderRequest,
   });
 
   const { refetch } = flagsHooks.useFlags();
@@ -67,12 +87,7 @@ export const UpsertAIProviderDialog = ({
       return aiProviderApi.upsert(form.getValues());
     },
     onSuccess: () => {
-      form.reset({
-        provider,
-        apiKey: '',
-        useAzureOpenAI: false,
-        resourceName: '',
-      });
+      form.reset({});
       setOpen(false);
       refetch();
       onSave();
@@ -87,12 +102,7 @@ export const UpsertAIProviderDialog = ({
       open={open}
       onOpenChange={(open) => {
         if (!open) {
-          form.reset({
-            provider,
-            apiKey: '',
-            useAzureOpenAI: false,
-            resourceName: '',
-          });
+          form.reset({});
         }
         setOpen(open);
       }}
@@ -101,73 +111,22 @@ export const UpsertAIProviderDialog = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {isConfigured ? t('Update AI Provider') : t('Enable AI Provider')} (
-            {providerMetadata.displayName})
+            {configured ? t('Update AI Provider') : t('Enable AI Provider')} (
+            {displayName})
           </DialogTitle>
         </DialogHeader>
 
-        {providerMetadata.markdown && (
+        {markdown && (
           <div className="mb-4">
-            <ApMarkdown markdown={providerMetadata.markdown}></ApMarkdown>
+            <ApMarkdown markdown={markdown}></ApMarkdown>
           </div>
         )}
 
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
-            {showAzureOpenAI && (
+            {provider === AIProviderName.AZURE && (
               <FormField
-                name="useAzureOpenAI"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <Label className="text-sm font-medium">
-                      {t('Provider')}
-                    </Label>
-                    <FormControl>
-                      <RadioGroup
-                        value={field.value ? 'azure' : 'openai'}
-                        onValueChange={(value) =>
-                          field.onChange(value === 'azure')
-                        }
-                        className="flex gap-4"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="openai" id="openai" />
-                          <label
-                            htmlFor="openai"
-                            className="flex items-center gap-2 cursor-pointer text-sm"
-                          >
-                            <img
-                              src="https://cdn.activepieces.com/pieces/openai.png"
-                              alt="OpenAI"
-                              className="w-4 h-4"
-                            />
-                            OpenAI
-                          </label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="azure" id="azure" />
-                          <label
-                            htmlFor="azure"
-                            className="flex items-center gap-2 cursor-pointer text-sm"
-                          >
-                            <img
-                              src="https://cdn.activepieces.com/pieces/azure-openai.png"
-                              alt="Azure OpenAI"
-                              className="w-4 h-4"
-                            />
-                            Azure OpenAI
-                          </label>
-                        </div>
-                      </RadioGroup>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            )}
-
-            {showAzureOpenAI && form.watch('useAzureOpenAI') && (
-              <FormField
-                name="resourceName"
+                name="config.resourceName"
                 render={({ field }) => (
                   <FormItem className="grid space-y-3">
                     <Label htmlFor="resourceName">{t('Resource Name')}</Label>
@@ -187,7 +146,7 @@ export const UpsertAIProviderDialog = ({
             )}
 
             <FormField
-              name="apiKey"
+              name="config.apiKey"
               render={({ field }) => (
                 <FormItem className="grid space-y-3">
                   <Label htmlFor="apiKey">{t('API Key')}</Label>

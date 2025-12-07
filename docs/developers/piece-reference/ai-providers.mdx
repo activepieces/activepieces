@@ -25,9 +25,9 @@ export const askAI = createAction({
   description: 'Generate text using AI providers',
   props: {
     // AI provider selection (OpenAI, Anthropic, etc.)
-    provider: aiProps({ modelType: 'language' }).provider,
+    provider: aiProps({ modelType: 'text' }).provider,
     // Model selection within the chosen provider
-    model: aiProps({ modelType: 'language' }).model,
+    model: aiProps({ modelType: 'text' }).model,
     prompt: Property.LongText({
       displayName: 'Prompt',
       required: true,
@@ -120,11 +120,6 @@ advancedOptions: Property.DynamicProperties({
     refreshers: ['provider', 'model'],
     props: async (propsValue): Promise<InputPropertyMap> => {
         const provider = propsValue['provider'] as unknown as string;
-
-        const providerMetadata = SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider);
-        if (isNil(providerMetadata)) {
-            return {};
-        }
 
         if (modelType === 'image') {
             // Existing OpenAI options

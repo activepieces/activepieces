@@ -1,205 +1,94 @@
-import { createAnthropic } from '@ai-sdk/anthropic'
-import { createGoogleGenerativeAI } from '@ai-sdk/google'
-import { createOpenAI } from '@ai-sdk/openai'
+import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
+import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
+import { createOpenAI, openai } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
-import { createReplicate } from '@ai-sdk/replicate'
-import { ImageModel, ToolSet } from 'ai'
-import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers'
-import { AI_USAGE_AGENT_ID_HEADER, AI_USAGE_FEATURE_HEADER, AI_USAGE_MCP_ID_HEADER, AIUsageFeature, AIUsageMetadata } from './types'
-import { spreadIfDefined } from '@activepieces/shared'
+import { createAzure } from '@ai-sdk/azure'
+import { createOpenRouter } from '@openrouter/ai-sdk-provider'
+import { ImageModel } from 'ai'
+import { AIProviderConfig, AIProviderName, AzureProviderConfig } from './types'
+import { httpClient, HttpMethod } from '@activepieces/pieces-common'
+import OpenAI from 'openai'
 
+type CreateAIModelParams<IsImage extends boolean = false> = {
+    providerId: string;
+    modelId: string;
+    engineToken: string;
+    apiUrl: string;
+    openaiResponsesModel?: boolean;
+    isImage?: IsImage;
+}
 
-export function createAIModel<T extends LanguageModelV2 | ImageModel>({
-    providerName,
-    modelInstance,
+export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModelV2>;
+export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
+export async function createAIModel({
+    providerId,
+    modelId,
     engineToken,
-    baseURL,
-    metadata,
+    apiUrl,
     openaiResponsesModel = false,
-}: CreateAIModelParams<T>): T {
-    const modelId = typeof modelInstance === 'string' ? modelInstance : modelInstance.modelId
-    const isImageModel = SUPPORTED_AI_PROVIDERS
-        .flatMap(provider => provider.imageModels)
-        .some(model => {
-            const instanceModelId = typeof model.instance === 'string' ? model.instance : model.instance.modelId
-            return instanceModelId === modelId
-        })
+    isImage,
+}: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModelV2> {
+    const { body: config } = await httpClient.sendRequest<AIProviderConfig>({
+        method: HttpMethod.GET,
+        url: `${apiUrl}v1/ai-providers/${providerId}/config`,
+        headers: {
+            Authorization: `Bearer ${engineToken}`,
+        },
+    });
 
-    const getMetadataId = (): string | undefined => {
-        switch (metadata.feature) {
-            case AIUsageFeature.AGENTS:
-                return metadata.agentid
-            case AIUsageFeature.MCP:
-                return metadata.mcpid
-            default:
-                return undefined
-        }
-    }
-
-    const createHeaders = (): Record<string, string> => {
-        const baseHeaders: Record<string, string> = {
-            'Authorization': `Bearer ${engineToken}`,
-            [AI_USAGE_FEATURE_HEADER]: metadata.feature,
-        }
-        const id = getMetadataId()
-        if (id) {
-            const idHeader = metadata.feature === AIUsageFeature.AGENTS ? AI_USAGE_AGENT_ID_HEADER : AI_USAGE_MCP_ID_HEADER
-            baseHeaders[idHeader] = id
-        }
-        return baseHeaders
-    }
-
-    switch (providerName) {
-        case 'openai': {
-            const openaiVersion = 'v1'
-            const provider = createOpenAI({
-                apiKey: engineToken,
-                baseURL: `${baseURL}/${openaiVersion}`,
-                headers: createHeaders(),
-            })
-            if (isImageModel) {
-                return provider.imageModel(modelId) as T
+    switch (providerId) {
+        case AIProviderName.OPENAI: {
+            const provider = createOpenAI({ apiKey: config.apiKey })
+            if (isImage) {
+                return provider.imageModel(modelId)
             }
-            return openaiResponsesModel ? provider.responses(modelId) as T : provider.chat(modelId) as T
+            return (openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId))
         }
-        case 'anthropic': {
-            const anthropicVersion = 'v1'
-            const provider = createAnthropic({
-                apiKey: engineToken,
-                baseURL: `${baseURL}/${anthropicVersion}`,
-                headers: createHeaders(),
-            })
-            if (isImageModel) {
-                throw new Error(`Provider ${providerName} does not support image models`)
+        case AIProviderName.ANTHROPIC: {
+            const provider = createAnthropic({ apiKey: config.apiKey })
+            if (isImage) {
+                throw new Error(`Provider ${providerId} does not support image models`)
             }
-            return provider(modelId) as T
+            return provider(modelId)
         }
-        case 'replicate': {
-            const replicateVersion = 'v1'
-            const provider = createReplicate({
-                apiToken: engineToken,
-                baseURL: `${baseURL}/${replicateVersion}`,
-                headers: createHeaders(),
-            })
-            if (!isImageModel) {
-                throw new Error(`Provider ${providerName} does not support language models`)
-            }
-            return provider.imageModel(modelId) as unknown as T
-        }
-        case 'google': {
-            const googleVersion = 'v1beta'
-            const provider = createGoogleGenerativeAI({
-                apiKey: engineToken,
-                baseURL: `${baseURL}/${googleVersion}`,
-                headers: createHeaders(),
-            })
+        case AIProviderName.GOOGLE: {
+            const provider = createGoogleGenerativeAI({ apiKey: config.apiKey })
 
-            return provider(modelId) as T
+            return provider(modelId)
+        }
+        case AIProviderName.AZURE: {
+            const { apiKey, resourceName } = config as AzureProviderConfig
+            const provider = createAzure({ resourceName, apiKey })
+            if (isImage) {
+                return provider.imageModel(modelId)
+            }
+            return provider.chat(modelId)
+        }
+        case AIProviderName.ACTIVEPIECES: 
+        case AIProviderName.OPENROUTER: {
+            const provider = createOpenRouter({ apiKey: config.apiKey })
+            if (isImage) {
+                return provider.imageModel(modelId)
+            }
+            return provider.chat(modelId)
         }
         default:
-            throw new Error(`Provider ${providerName} is not supported`)
+            throw new Error(`Provider ${providerId} is not supported`)
     }
 }
 
-function buildUserLocation(options: UserLocationOptions): (UserLocationOptions & { type: 'approximate' }) | undefined {
-    if (!options.userLocationCity && !options.userLocationRegion && 
-        !options.userLocationCountry && !options.userLocationTimezone) {
-        return undefined
-    }
+export async function createOpenAIClient(engineToken: string, apiUrl: string): Promise<OpenAI> {
+    const { body: config } = await httpClient.sendRequest<AIProviderConfig>({
+        method: HttpMethod.GET,
+        url: `${apiUrl}v1/ai-providers/${AIProviderName.OPENAI}/config`,
+        headers: {
+            Authorization: `Bearer ${engineToken}`,
+        },
+    });
 
-    return {
-        type: 'approximate' as const,
-        ...spreadIfDefined('city', options.userLocationCity),
-        ...spreadIfDefined('region', options.userLocationRegion),
-        ...spreadIfDefined('country', options.userLocationCountry),
-        ...spreadIfDefined('timezone', options.userLocationTimezone),
-    }
+    return new OpenAI({ apiKey: config.apiKey });
 }
 
-export function createWebSearchTool(provider: string, options: WebSearchOptions = {}): ToolSet{
-    const defaultMaxUses = 5
-
-    switch (provider) {
-        case 'anthropic': {
-            const anthropicOptions = options as AnthropicWebSearchOptions
-            const anthropicProvider = createAnthropic({})
-            let allowedDomains: string[] | undefined
-            let blockedDomains: string[] | undefined
-
-            if (anthropicOptions.allowedDomains && anthropicOptions.allowedDomains.length > 0) {
-                allowedDomains = anthropicOptions.allowedDomains.map(({ domain }) => domain)
-            }
-
-            if (anthropicOptions.blockedDomains && anthropicOptions.blockedDomains.length > 0 && (!anthropicOptions.allowedDomains || anthropicOptions.allowedDomains.length === 0)) {
-                blockedDomains = anthropicOptions.blockedDomains.map(({ domain }) => domain)
-            }
-
-            return {
-                web_search: anthropicProvider.tools.webSearch_20250305({
-                    maxUses: anthropicOptions.maxUses ?? defaultMaxUses,
-                    ...spreadIfDefined('userLocation', buildUserLocation(anthropicOptions)),
-                    ...spreadIfDefined('allowedDomains', allowedDomains),
-                    ...spreadIfDefined('blockedDomains', blockedDomains),
-                }),
-            } as any
-        }
-
-        case 'openai': {
-            const openaiOptions = options as OpenAIWebSearchOptions
-            const openaiProvider = createOpenAI({})
-
-            return {
-                web_search_preview: openaiProvider.tools.webSearchPreview({
-                    ...spreadIfDefined('searchContextSize', openaiOptions.searchContextSize),
-                    ...spreadIfDefined('userLocation', buildUserLocation(openaiOptions)),
-                }),
-            } as any
-        }
-
-        case 'google': {
-            const googleProvider = createGoogleGenerativeAI({})
-
-            return {
-                google_search: googleProvider.tools.googleSearch({}),
-            } as any
-        }
-
-        default:
-            throw new Error(`Provider ${provider} is not supported for web search`)
-    }
-}
-
-type CreateAIModelParams<T extends LanguageModelV2 | ImageModel> = {
-    providerName: string
-    modelInstance: T
-    /**
-     * This is the engine token that will be replaced by the proxy with the api key
-     */
-    engineToken: string
-    baseURL: string
-    metadata: AIUsageMetadata
-    openaiResponsesModel?: boolean
-}
-
-type BaseWebSearchOptions = {
-    maxUses?: number
-    includeSources?: boolean
-}
-
-type UserLocationOptions = {
-    userLocationCity?: string
-    userLocationRegion?: string
-    userLocationCountry?: string
-    userLocationTimezone?: string
-}
-
-type AnthropicWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
-    allowedDomains?: { domain: string }[]
-    blockedDomains?: { domain: string }[]
-}
-
-type OpenAIWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
-    searchContextSize?: 'low' | 'medium' | 'high'
-}
-
-export type WebSearchOptions = AnthropicWebSearchOptions | OpenAIWebSearchOptions
+export const anthropicSearchTool = anthropic.tools.webSearch_20250305;
+export const openaiSearchTool = openai.tools.webSearchPreview;
+export const googleSearchTool = google.tools.googleSearch;

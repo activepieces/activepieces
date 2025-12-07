@@ -63,6 +63,8 @@
     "@modelcontextprotocol/sdk": "1.24.0",
     "@nx/devkit": "22.0.1",
     "@octokit/rest": "21.1.1",
+    "@openrouter/ai-sdk-provider": "1.4.1",
+    "@openrouter/sdk": "0.2.9",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/api-logs": "0.206.0",
     "@opentelemetry/auto-instrumentations-node": "0.65.0",
