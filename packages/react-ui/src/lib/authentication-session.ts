@@ -3,7 +3,6 @@ import { jwtDecode } from 'jwt-decode';
 
 import {
   AuthenticationResponse,
-  EndpointScope,
   isNil,
   UserPrincipal,
 } from '@activepieces/shared';
