@@ -34,7 +34,7 @@ export const templateService = () => ({
                 const newTemplate: NewTemplate = {
                     id: apId(),
                     name,
-                    type: TemplateType.CUSTOM,
+                    type,
                     description,
                     platformId,
                     tags: newTags,

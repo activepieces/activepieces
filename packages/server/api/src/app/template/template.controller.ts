@@ -56,11 +56,23 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         const { type } = request.body
         let platformId: string | undefined
 
-        if (type === TemplateType.CUSTOM) {
-            await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-            platformId = request.principal.platform.id
+        switch (type) {
+            case TemplateType.CUSTOM: {
+                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                platformId = request.principal.platform.id
+            }
+                break
+            case TemplateType.SHARED:
+                break
+            case TemplateType.OFFICIAL: {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Official templates are not supported to being created',
+                    },
+                })
+            }
         }
-        
         const result = await templateService().create({ platformId, params: request.body })
         return reply.status(StatusCodes.CREATED).send(result)
     })
