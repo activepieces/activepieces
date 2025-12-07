@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { TemplateCategory } from '../template/template'
 import { ApFlagId } from './flag'
 
+// eslint-disable-next-line @typescript-eslint/prefer-literal-enum-member
 export enum UpdateableApFlagId {
     PUBLIC_URL = ApFlagId.PUBLIC_URL,
     TELEMETRY_ENABLED = ApFlagId.TELEMETRY_ENABLED,
