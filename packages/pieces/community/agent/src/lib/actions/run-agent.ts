@@ -31,35 +31,6 @@ export const runAgent = createAction({
     }),
     [AgentPieceProps.AI_PROVIDER]: aiProps({ modelType: 'text' }).provider,
     [AgentPieceProps.AI_MODEL]: aiProps({ modelType: 'text' }).model,
-    //   displayName: 'AI Model',
-    //   required: true,
-    //   auth: PieceAuth.None(),
-    //   refreshers: [],
-    //   description:
-    //     'Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.',
-    //   options: async (propsValue, ctx) => {
-    //     const { body: allModels } = await httpClient.sendRequest<
-    //       AIProviderModel[]
-    //     >({
-    //       method: HttpMethod.GET,
-    //       url: `${ctx.server.apiUrl}v1/ai-providers/models`,
-    //       headers: {
-    //         Authorization: `Bearer ${ctx.server.token}`,
-    //       },
-    //     });
-
-    //     const models = allModels.filter((model) => model.type === AIProviderModelType.TEXT);
-
-    //     return {
-    //       placeholder: 'Select AI Model',
-    //       disabled: false,
-    //       options: models.map((model) => ({
-    //         label: model.name,
-    //         value: `${model.id}-${model.providerId}`,
-    //       })),
-    //     };
-    //   },
-    // }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',
       required: false,
