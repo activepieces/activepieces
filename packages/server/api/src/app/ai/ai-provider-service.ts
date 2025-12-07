@@ -46,29 +46,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return data.map(model => ({
             id: model.id,
             name: model.name,
-            providerId,
             type: model.type,
         }))
-    },
-
-    async listAllModels(platformId: PlatformId): Promise<AIProviderModel[]> {
-        const models: AIProviderModel[] = []
-
-        for (const providerId of Object.keys(aiProviders) as AIProviderName[]) {
-            const config = await this.getConfig(platformId, providerId)
-
-            const provider = aiProviders[providerId]
-            const data = await provider.listModels(config)
-
-            models.push(...data.map(model => ({
-                id: model.id,
-                name: model.name,
-                providerId,
-                type: model.type,
-            })))
-        }
-
-        return models
     },
 
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
