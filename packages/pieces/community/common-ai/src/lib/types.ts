@@ -99,7 +99,6 @@ export enum AIProviderModelType {
 export const AIProviderModel = Type.Object({
     id: Type.String(),
     name: Type.String(),
-    providerId: Type.Enum(AIProviderName),
     type: Type.Enum(AIProviderModelType),
 })
 export type AIProviderModel = Static<typeof AIProviderModel>

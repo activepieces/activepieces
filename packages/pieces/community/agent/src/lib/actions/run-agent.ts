@@ -17,7 +17,7 @@ import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from '../common/agent-output-builder';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AIProviderModel, AIProviderModelType, AIProviderName, createAIModel } from '@activepieces/common-ai';
+import { AIProviderModel, AIProviderModelType, createAIModel } from '@activepieces/common-ai';
 
 export const runAgent = createAction({
   name: 'run_agent',

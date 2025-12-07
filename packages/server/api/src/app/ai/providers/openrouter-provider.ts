@@ -4,12 +4,13 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const openRouterProvider: AIProviderStrategy<OpenRouterProviderConfig> = {
     name: 'OpenRouter',
-    async listModels(_config: OpenRouterProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(config: OpenRouterProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: OpenRouterModel[] }>({
-            url: 'https://openrouter.ai/api/v1/models',
+            url: 'https://openrouter.ai/api/v1/models/user',
             method: HttpMethod.GET,
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${config.apiKey}`,
             },
         })
 

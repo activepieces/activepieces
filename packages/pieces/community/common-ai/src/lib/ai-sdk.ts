@@ -7,7 +7,6 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { ImageModel } from 'ai'
 import { AIProviderConfig, AIProviderName, AzureProviderConfig } from './types'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import OpenAI from 'openai'
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     providerId: string;
@@ -67,26 +66,11 @@ export async function createAIModel({
         case AIProviderName.ACTIVEPIECES: 
         case AIProviderName.OPENROUTER: {
             const provider = createOpenRouter({ apiKey: config.apiKey })
-            if (isImage) {
-                return provider.imageModel(modelId)
-            }
             return provider.chat(modelId)
         }
         default:
             throw new Error(`Provider ${providerId} is not supported`)
     }
-}
-
-export async function createOpenAIClient(engineToken: string, apiUrl: string): Promise<OpenAI> {
-    const { body: config } = await httpClient.sendRequest<AIProviderConfig>({
-        method: HttpMethod.GET,
-        url: `${apiUrl}v1/ai-providers/${AIProviderName.OPENAI}/config`,
-        headers: {
-            Authorization: `Bearer ${engineToken}`,
-        },
-    });
-
-    return new OpenAI({ apiKey: config.apiKey });
 }
 
 export const anthropicSearchTool = anthropic.tools.webSearch_20250305;

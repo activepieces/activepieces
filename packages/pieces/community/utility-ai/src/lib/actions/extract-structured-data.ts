@@ -10,8 +10,8 @@ export const extractStructuredData = createAction({
 	displayName: 'Extract Structured Data',
 	description: 'Extract structured data from provided text,image or PDF.',
 	props: {
-		provider: aiProps({ modelType: 'text', functionCalling: true }).provider,
-		model: aiProps({ modelType: 'text', functionCalling: true }).model,
+		provider: aiProps({ modelType: 'text' }).provider,
+		model: aiProps({ modelType: 'text' }).model,
 		text: Property.LongText({
 			displayName: 'Text',
 			description: 'Text to extract structured data from.',

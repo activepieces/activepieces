@@ -1,9 +1,9 @@
 import { PieceAuth, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
-import { AIProviderModel, AIProviderWithoutSensitiveData } from './types';
+import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from './types';
 
-export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
+export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProviders }: AIPropsParams<T>) => ({
     provider: Property.Dropdown<string, true>({
         auth: PieceAuth.None(),
         displayName: 'Provider',
@@ -33,7 +33,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling
                 options: configured.map(supportedProvider => ({
                     label: supportedProvider.name,
                     value: supportedProvider.id,
-                })),
+                })).filter(provider => allowedProviders ? allowedProviders.includes(provider.value as AIProviderName) : true),
             };
         },
     }),
@@ -77,10 +77,6 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling
 
 type AIPropsParams<T extends 'text' | 'image'> = {
     modelType: T,
-    functionCalling?: T extends 'text' ? boolean : never
+    allowedProviders?: AIProviderName[]
 }
 
-type AIPropsReturn = {
-    provider: ReturnType<typeof Property.Dropdown<string, true>>;
-    model: ReturnType<typeof Property.Dropdown<string, true>>;
-}

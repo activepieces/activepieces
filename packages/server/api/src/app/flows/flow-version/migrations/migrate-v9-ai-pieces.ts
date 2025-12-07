@@ -1,11 +1,13 @@
 import { AIProviderName } from '@activepieces/common-ai'
 import {
+    ApEdition,
     FlowAction,
     FlowActionType,
     flowStructureUtil,
     FlowVersion,
     PieceAction,
 } from '@activepieces/shared'
+import { system } from '../../../helper/system/system'
 import { Migration } from '.'
 
 
@@ -122,6 +124,13 @@ function migrateImageai(step: PieceAction): FlowAction {
 }
 
 function migrateModel(provider: string, modelId: string): { model: string, provider: string } {
+    const edition = system.getEdition()
+    if (edition !== ApEdition.CLOUD) {
+        return {
+            provider,
+            model: modelId,
+        }
+    }
     return {
         provider: AIProviderName.ACTIVEPIECES,
         model: `${provider.toLocaleLowerCase()}/${modelId}`,
