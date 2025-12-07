@@ -48,14 +48,6 @@ export type AgentResult = {
     structuredOutput?: unknown
 }
 
-export enum AgentPieceProps {
-    AGENT_TOOLS = 'agentTools',
-    STRUCTURED_OUTPUT = 'structuredOutput',
-    PROMPT = 'prompt',
-    MAX_STEPS = 'maxSteps',
-    AI_MODEL = 'aiModel',
-}
-
 export const MarkdownContentBlock = Type.Object({
     type: Type.Literal(ContentBlockType.MARKDOWN),
     markdown: Type.String(),

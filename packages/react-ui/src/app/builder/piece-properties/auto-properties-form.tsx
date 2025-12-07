@@ -9,8 +9,6 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl, FormField } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { AgentTools } from '@/features/agents/agent-tools';
-import { AgentStructuredOutput } from '@/features/agents/structured-output';
 import {
   OAuth2Props,
   PieceProperty,
@@ -19,10 +17,10 @@ import {
   ArraySubProps,
 } from '@activepieces/pieces-framework';
 import {
-  AgentPieceProps,
   FlowActionType,
   FlowTriggerType,
   isNil,
+  PieceActionSettings,
   PropertyExecutionType,
   Step,
 } from '@activepieces/shared';
@@ -32,6 +30,7 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
+import { CustomPropertiesRegistry } from './custom-properties';
 import CustomProperty from './custom-property';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
@@ -90,6 +89,9 @@ const AutoPropertiesFormComponent = React.memo(
                         });
                       },
                     },
+                    actionPieceSettings: isPieceStep
+                      ? step.settings
+                      : undefined,
                     propertyName,
                     inputName: `${prefixValue}.${propertyName}`,
                     property: props[propertyName],
@@ -113,6 +115,7 @@ type selectFormComponentForPropertyParams = {
   field: ControllerRenderProps<Record<string, any>, string>;
   propertyName: string;
   inputName: string;
+  actionPieceSettings?: PieceActionSettings;
   property: PieceProperty;
   allowDynamicValues: boolean;
   markdownVariables: Record<string, string>;
@@ -125,6 +128,7 @@ export const selectFormComponentForProperty = ({
   field,
   propertyName,
   inputName,
+  actionPieceSettings,
   property,
   allowDynamicValues,
   markdownVariables,
@@ -132,15 +136,12 @@ export const selectFormComponentForProperty = ({
   disabled,
   dynamicInputModeToggled,
 }: selectFormComponentForPropertyParams) => {
-  if (propertyName === AgentPieceProps.AGENT_TOOLS) {
-    return <AgentTools disabled={disabled} agentToolsField={field} />;
-  } else if (propertyName === AgentPieceProps.STRUCTURED_OUTPUT) {
-    return (
-      <AgentStructuredOutput
-        disabled={disabled}
-        structuredOutputField={field}
-      />
-    );
+  if (!isNil(actionPieceSettings)) {
+    const key = `${actionPieceSettings.pieceName}:${actionPieceSettings.actionName}:${propertyName}`;
+    const registry = CustomPropertiesRegistry({ disabled, field });
+
+    const customPropertyComponent = registry[key];
+    if (customPropertyComponent) return customPropertyComponent;
   }
 
   switch (property.type) {

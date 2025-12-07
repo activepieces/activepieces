@@ -1,11 +1,10 @@
 import { isNil } from '../../common'
 import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
+import { AGENT_PIECE_NAME } from '../../custom-properties'
 import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
-
-export const AGENT_PIECE_NAME = '@activepieces/piece-agent'
 
 export type Step = FlowAction | FlowTrigger
 type StepWithIndex = Step & {
