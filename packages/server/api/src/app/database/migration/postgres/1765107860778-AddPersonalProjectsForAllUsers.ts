@@ -87,7 +87,7 @@ export class AddPersonalProjectsForAllUsers1765107860778 implements MigrationInt
         }, 'AddPersonalProjectsForAllUsers1765107860778 up COMPLETED')
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    public async down(_queryRunner: QueryRunner): Promise<void> {
         // No down migration needed
     }
 
