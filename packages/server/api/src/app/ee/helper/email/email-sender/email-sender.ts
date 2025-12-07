@@ -48,7 +48,8 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
 
 type IssuesSummaryTemplateData = BaseEmailTemplateData<'issues-summary', {
     issuesUrl: string
-    issues: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    issues: any
     issuesCount: string
     projectName: string
 }>

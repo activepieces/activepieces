@@ -176,7 +176,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
 
         const issuesUrl = await domainHelper.getPublicUrl({
             platformId: job.platformId,
-            path: 'runs?limit=10#Issues',
+            path: `projects/${job.projectId}/runs?limit=10&status=FAILED`,
         })
 
         const issuesWithFormattedDate = issuesForProject.map((issue) => ({
@@ -195,7 +195,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
                     issuesUrl,
                     issuesCount: issuesWithFormattedDate.length.toString(),
                     projectName: job.projectName,
-                    issues: JSON.stringify(issuesWithFormattedDate),
+                    issues: issuesWithFormattedDate,
                 },
             },
         })

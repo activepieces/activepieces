@@ -157,20 +157,18 @@
         <thead>
             <tr>
                 <th>Flow Name</th>
-                <th>Count</th>
-                <th>First Seen</th>
-                <th>Last Seen</th>
+                <th>Flow Run ID</th>
+                <th>Accured on</th>
             </tr>
         </thead>
         <tbody>
-            {{#renderIssues}}
+            {{#issues}}
             <tr>
-                <td>{{flowDisplayName}}</td>
-                <td>{{count}}</td>
-                <td>{{created}}</td>
-                <td>{{lastOccurrence}}</td>
+                <td>{{flowName}}</td>
+                <td>{{flowRunId}}</td>
+                <td>{{createdAt}}</td>
             </tr>
-            {{/renderIssues}}
+            {{/issues}}
         </tbody>
     </table>
     <div class="text-button black-button button">
