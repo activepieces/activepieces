@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, FileCompression, isMultipartFile, PrincipalType, UploadFileRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ErrorCode, FileCompression, isMultipartFile, PrincipalType, UploadFileRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { projectService } from '../project/project-service'
@@ -20,10 +20,13 @@ export const fileController: FastifyPluginAsyncTypebox = async (app) => {
             .send(data.data)
     }),
 
-    app.post('/upload', UploadFileRequest, async (request, reply) => {
+    app.post('/upload', UploadFileRequest, async (request) => {
         if (!request.isMultipart()) {
-            return reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'Request must be multipart/form-data',
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Request must be multipart/form-data',
+                },
             })
         }
 
@@ -31,8 +34,21 @@ export const fileController: FastifyPluginAsyncTypebox = async (app) => {
         const file = body.file
 
         if (!isMultipartFile(file)) {
-            return reply.status(StatusCodes.BAD_REQUEST).send({
-                message: 'File field is required and must be a valid file',
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'File field is required and must be a valid file',
+                },
+            })
+        }
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/webp', 'image/avif', 'image/apng']
+
+        if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'File type not allowed',
+                },
             })
         }
 
