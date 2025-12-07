@@ -64,7 +64,7 @@ import { createSqlLiteDataSource } from './sqlite-connection'
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
-    const entities: EntitySchema[] = [
+    return [
         TriggerEventEntity,
         AppEventRoutingEntity,
         FileEntity,
@@ -97,9 +97,7 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoActivityEntity,
         AIUsageEntity,
         TriggerSourceEntity,
-    ]
-
-    const enterpriseEntities = [
+        // Enterprise
         ProjectMemberEntity,
         ProjectPlanEntity,
         CustomDomainEntity,
@@ -118,11 +116,6 @@ function getEntities(): EntitySchema<unknown>[] {
         AppCredentialEntity,
         PlatformPlanEntity,
     ]
-    if (databaseType !== DatabaseType.SQLITE3) {
-        entities.push(...enterpriseEntities)
-    }
-
-    return entities
 }
 
 export const commonProperties = {
