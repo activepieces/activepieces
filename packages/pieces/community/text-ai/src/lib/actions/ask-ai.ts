@@ -218,9 +218,11 @@ export const askAI = createAction({
       await storage.put(conversationKey, conversation);
     }
 
-    return webSearchOptions.includeSources
-      ? { text: response.text, sources: response.sources }
-      : response.text;
+    const includeSources = webSearchOptions.includeSources;
+    if (includeSources) {
+      return { text: response.text, sources: response.sources };
+    }
+    return response.text;
   },
 });
 
