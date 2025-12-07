@@ -2,17 +2,14 @@ import { Static, Type } from '@sinclair/typebox'
 import { TemplateCategory } from '../template/template'
 import { ApFlagId } from './flag'
 
-// eslint-disable-next-line @typescript-eslint/prefer-literal-enum-member
-export enum UpdateableApFlagId {
-    PUBLIC_URL = ApFlagId.PUBLIC_URL,
-    TELEMETRY_ENABLED = ApFlagId.TELEMETRY_ENABLED,
-    USER_CREATED = ApFlagId.USER_CREATED,
-    WEBHOOK_URL_PREFIX = ApFlagId.WEBHOOK_URL_PREFIX,
-    TEMPLATES_CATEGORIES = ApFlagId.TEMPLATES_CATEGORIES,
-}
-
 export const UpdateFlagRequestParams = Type.Object({
-    id: Type.Enum(UpdateableApFlagId),
+    id: Type.Union([
+        Type.Literal(ApFlagId.PUBLIC_URL),
+        Type.Literal(ApFlagId.TELEMETRY_ENABLED),
+        Type.Literal(ApFlagId.USER_CREATED),
+        Type.Literal(ApFlagId.WEBHOOK_URL_PREFIX),
+        Type.Literal(ApFlagId.TEMPLATES_CATEGORIES),
+    ]),
 })
 export type UpdateFlagRequestParams = Static<typeof UpdateFlagRequestParams>
 
@@ -26,8 +23,8 @@ export const UpdateFlagRequestBody = Type.Object({
 export type UpdateFlagRequestBody = Static<typeof UpdateFlagRequestBody>
 
 export type UpdateableFlag = 
-    | { id: UpdateableApFlagId.PUBLIC_URL, value: string }
-    | { id: UpdateableApFlagId.TELEMETRY_ENABLED, value: boolean }
-    | { id: UpdateableApFlagId.USER_CREATED, value: boolean }
-    | { id: UpdateableApFlagId.WEBHOOK_URL_PREFIX, value: string }
-    | { id: UpdateableApFlagId.TEMPLATES_CATEGORIES, value: TemplateCategory[] }
+    | { id: ApFlagId.PUBLIC_URL, value: string }
+    | { id: ApFlagId.TELEMETRY_ENABLED, value: boolean }
+    | { id: ApFlagId.USER_CREATED, value: boolean }
+    | { id: ApFlagId.WEBHOOK_URL_PREFIX, value: string }
+    | { id: ApFlagId.TEMPLATES_CATEGORIES, value: TemplateCategory[] }
