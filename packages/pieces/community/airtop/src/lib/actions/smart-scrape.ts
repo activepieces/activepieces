@@ -59,7 +59,7 @@ export const smartScrapeAction = createAction({
 		}
 
 		const response = await airtopApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/sessions/${sessionId}/windows/${windowId}/scrape-content`,
 			body,

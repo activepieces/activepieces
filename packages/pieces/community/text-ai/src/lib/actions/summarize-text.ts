@@ -3,7 +3,7 @@ import { createAction, Property, Action } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { aiProps } from '@activepieces/common-ai';
 
-export const summarizeText: Action = createAction({
+export const summarizeText = createAction({
   name: 'summarizeText',
   displayName: 'Summarize Text',
   description: '',

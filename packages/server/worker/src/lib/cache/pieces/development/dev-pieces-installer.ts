@@ -28,14 +28,14 @@ const sharedPiecesPackages = () => {
 }
 
 
-export const devPiecesInstaller = (packages: string[], log: FastifyBaseLogger) => {
-    const utils = filePiecesUtils(packages, log)
+export const devPiecesInstaller = (log: FastifyBaseLogger) => {
+    const utils = filePiecesUtils(log)
 
     async function installPiecesDependencies(packageNames: string[]): Promise<void> {
         const deps = new Set<string>()
 
         for (const packageName of packageNames) {
-            const folderPath = await utils.findPieceDirectoryByFolderName(packageName)
+            const folderPath = await utils.findSourcePiecePathByPieceName(packageName)
             if (!folderPath) continue
 
             const pieceDependencies = await utils.getPieceDependencies(folderPath)
@@ -51,7 +51,7 @@ export const devPiecesInstaller = (packages: string[], log: FastifyBaseLogger) =
     }
  
     async function linkSharedActivepiecesPackagesToPiece(packageName: string) {
-        const packagePath = await utils.findDirectoryByPackageName(packageName)
+        const packagePath = await utils.findDistPiecePathByPackageName(packageName)
         if (!packagePath) return
 
         const dependencies = await utils.getPieceDependencies(packagePath)

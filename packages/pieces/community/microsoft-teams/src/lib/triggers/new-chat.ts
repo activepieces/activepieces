@@ -2,7 +2,7 @@ import { microsoftTeamsAuth } from '../../index';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
 	createTrigger,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
@@ -51,7 +51,7 @@ export const newChatTrigger = createTrigger({
 	},
 });
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftTeamsAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftTeamsAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, lastFetchEpochMS }) {
 		const client = Client.initWithMiddleware({

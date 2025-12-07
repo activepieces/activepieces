@@ -1,5 +1,7 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 const log = system.globalLogger()
 
@@ -7,6 +9,9 @@ export class AddAuditLogIndicies1731711188507 implements MigrationInterface {
     name = 'AddAuditLogIndicies1731711188507'
     transaction = false
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         log.info({
             name: this.name,
         }, 'up')
@@ -25,6 +30,9 @@ export class AddAuditLogIndicies1731711188507 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         log.info({
             name: this.name,
         }, 'down')

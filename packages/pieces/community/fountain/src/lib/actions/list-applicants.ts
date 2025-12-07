@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { fountainAuth } from '../../';
-import { getAuthHeaders } from '../common/auth';
+import { getAuthHeaders, getApiUrl } from '../common/auth';
 import { getFunnelsDropdown, getLocationsDropdown, getStagesForFunnelDropdown } from '../common/dropdowns';
 
 export const fountainListApplicants = createAction({
@@ -15,9 +15,10 @@ export const fountainListApplicants = createAction({
       description: 'Filter applicants by opening',
       required: false,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getFunnelsDropdown(auth as any) };
+        return { disabled: false, options: await getFunnelsDropdown(auth) };
       },
     }),
     location_id: Property.Dropdown({
@@ -25,9 +26,10 @@ export const fountainListApplicants = createAction({
       description: 'Filter applicants by location',
       required: false,
       refreshers: [],
+      auth: fountainAuth,
       options: async ({ auth }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
-        return { disabled: false, options: await getLocationsDropdown(auth as any) };
+        return { disabled: false, options: await getLocationsDropdown(auth) };
       },
     }),
     stage_id: Property.Dropdown({
@@ -35,10 +37,11 @@ export const fountainListApplicants = createAction({
       description: 'Filter applicants by stage',
       required: false,
       refreshers: ['funnel_id'],
+      auth: fountainAuth,
       options: async ({ auth, funnel_id }) => {
         if (!auth) return { disabled: true, options: [], placeholder: 'Connect account first' };
         if (!funnel_id) return { disabled: true, options: [], placeholder: 'Select opening first' };
-        return { disabled: false, options: await getStagesForFunnelDropdown(auth as any, funnel_id as string) };
+          return { disabled: false, options: await getStagesForFunnelDropdown(auth, funnel_id as string) };
       },
     }),
     stage: Property.ShortText({
@@ -96,7 +99,7 @@ export const fountainListApplicants = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: 'https://api.fountain.com/v2/applicants',
+      url: getApiUrl(context.auth, '/applicants'),
       headers: getAuthHeaders(context.auth),
       queryParams,
     });

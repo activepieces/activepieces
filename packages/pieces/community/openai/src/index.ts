@@ -35,7 +35,7 @@ It is strongly recommended that you add your credit card information to your Ope
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth as string,
+          token: auth.auth,
         },
       });
       return {

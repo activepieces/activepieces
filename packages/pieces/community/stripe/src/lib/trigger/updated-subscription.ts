@@ -91,7 +91,7 @@ export const stripeUpdatedSubscription = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'customer.subscription.updated',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>(
       '_updated_subscription_trigger',
@@ -108,7 +108,7 @@ export const stripeUpdatedSubscription = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
@@ -117,7 +117,7 @@ export const stripeUpdatedSubscription = createTrigger({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/charges',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {

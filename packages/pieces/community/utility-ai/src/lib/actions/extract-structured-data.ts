@@ -1,4 +1,4 @@
-import { ApFile, createAction, Property } from '@activepieces/pieces-framework';
+import { ApFile, createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { createAIModel } from '@activepieces/common-ai';
 import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from 'ai';
 import mime from 'mime-types';
@@ -48,6 +48,7 @@ export const extractStructuredData = createAction({
 			},
 		}),
 		schama: Property.DynamicProperties({
+			auth: PieceAuth.None(),
 			displayName: 'Data Definition',
 			required: true,
 			refreshers: ['mode'],

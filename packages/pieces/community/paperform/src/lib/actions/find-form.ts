@@ -18,7 +18,7 @@ export const findForm = createAction({
 
     try {
       const response = await paperformCommon.getForms({
-        auth: auth as string,
+        auth: auth.secret_text,
         search: search as string,
         limit: 100,
       });

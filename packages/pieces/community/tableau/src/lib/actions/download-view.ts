@@ -10,6 +10,7 @@ export const downloadView = createAction({
   auth: tableauAuth,
   props: {
     viewId: Property.Dropdown({
+ auth: tableauAuth,      
       displayName: 'View',
       description: 'Select the view to download',
       required: true,

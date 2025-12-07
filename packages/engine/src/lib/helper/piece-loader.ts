@@ -1,9 +1,8 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { Action, Piece, PiecePropertyMap, Trigger } from '@activepieces/pieces-framework'
-import { ActivepiecesError, ErrorCode, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias } from '@activepieces/shared'
+import { ActivepiecesError, EngineGenericError, ErrorCode, extractPieceFromModule, getPackageAliasForPiece, getPieceNameFromAlias, isNil, trimVersionFromAlias } from '@activepieces/shared'
 import { utils } from '../utils'
-import { EngineGenericError } from './execution-errors'
 
 export const pieceLoader = {
     loadPieceOrThrow: async (
@@ -89,9 +88,9 @@ export const pieceLoader = {
             })
         }
 
-        const prop = (actionOrTrigger.props as PiecePropertyMap)[propertyName]
+        const property = (actionOrTrigger.props as PiecePropertyMap)[propertyName]
 
-        if (isNil(prop)) {
+        if (isNil(property)) {
             throw new ActivepiecesError({
                 code: ErrorCode.CONFIG_NOT_FOUND,
                 params: {
@@ -103,7 +102,7 @@ export const pieceLoader = {
             })
         }
 
-        return prop
+        return { property, piece }
     },
 
     getPackageAlias: ({ pieceName, pieceVersion, devPieces }: GetPackageAliasParams) => {

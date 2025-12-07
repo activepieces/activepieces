@@ -54,7 +54,7 @@ export const zendeskSell = createPiece({
         auth: zendeskSellAuth,
         baseUrl: () => ZENDESK_SELL_API_URL,
         authMapping: async (auth) => {
-            const { email, api_token } = auth as ZendeskSellAuth;
+            const { email, api_token } = auth.props;
             const credentials = `${email}/token:${api_token}`;
             const encodedCredentials = Buffer.from(credentials).toString('base64');
             return {

@@ -82,7 +82,7 @@ export const sendEmail = createAction({
     }),
   },
   run: async ({ auth, propsValue }) => {
-    const transporter = smtpCommon.createSMTPTransport(auth);
+    const transporter = smtpCommon.createSMTPTransport(auth.props);
 
     const attachments = propsValue['attachments'] as {file: ApFile; name: string | undefined; }[];
 

@@ -1,10 +1,11 @@
-import { Property } from "@activepieces/pieces-framework";
+import { PieceAuth, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil, SeekPage } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 import { AIProviderModel, AIProviderWithoutSensitiveData } from './types';
 
 export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling }: AIPropsParams<T>): AIPropsReturn => ({
     provider: Property.Dropdown<string, true>({
+        auth: PieceAuth.None(),
         displayName: 'Provider',
         required: true,
         refreshers: [],
@@ -37,6 +38,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, functionCalling
         },
     }),
     model: Property.Dropdown({
+        auth: PieceAuth.None(),
         displayName: 'Model',
         required: true,
         defaultValue: 'gpt-4o',
