@@ -31,7 +31,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalAccessToken,
         )
 
-        const { project, isNewProject } = await getOrCreateProject({
+        const { project } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         })
@@ -49,7 +49,6 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
             log,
-            isNewProject,
         })
 
         const user = await getOrCreateUser(externalPrincipal, log)
@@ -98,13 +97,9 @@ type UpdateProjectLimitsParams =
         piecesTags: string[]
         piecesFilterType: PiecesFilterType
         log: FastifyBaseLogger
-        isNewProject: boolean
     }
 
-const updateProjectLimits = async (
-    { platformId, projectId, piecesTags, piecesFilterType, log, isNewProject }:
-    UpdateProjectLimitsParams,
-): Promise<void> => {
+const updateProjectLimits = async ({ platformId, projectId, piecesTags, piecesFilterType, log }: UpdateProjectLimitsParams): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
         projectId,

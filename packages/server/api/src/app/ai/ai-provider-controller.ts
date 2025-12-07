@@ -1,5 +1,5 @@
 import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
-import { PrincipalType, SeekPage } from '@activepieces/shared'
+import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'
@@ -60,8 +60,8 @@ const ListAllModels = {
     },
     schema: {
         response: {
-            [StatusCodes.OK]: Type.Array(AIProviderModel)
-        }
+            [StatusCodes.OK]: Type.Array(AIProviderModel),
+        },
     },
 }
 
@@ -74,8 +74,8 @@ const ListModels = {
             id: Type.Enum(AIProviderName),
         }),
         response: {
-            [StatusCodes.OK]: Type.Array(AIProviderModel)
-        }
+            [StatusCodes.OK]: Type.Array(AIProviderModel),
+        },
     },
 }
 

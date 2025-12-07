@@ -1,10 +1,10 @@
+import { AIProviderConfig, AIProviderName } from '@activepieces/common-ai'
+import { AIProviderStrategy } from './ai-provider'
 import { anthropicProvider } from './anthropic-provider'
+import { azureProvider } from './azure-provider'
 import { googleProvider } from './google-provider'
 import { openaiProvider } from './openai-provider'
-import { AIProviderStrategy } from './ai-provider'
 import { openRouterProvider } from './openrouter-provider'
-import { azureProvider } from './azure-provider'
-import { AIProviderConfig, AIProviderName } from '@activepieces/common-ai'
 
 export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderConfig>> = {
     [AIProviderName.OPENAI]: openaiProvider,
@@ -14,7 +14,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderCo
     [AIProviderName.GOOGLE]: googleProvider,
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
-        name: 'ActivePieces',
+        name: 'Activepieces',
     },
 }
 

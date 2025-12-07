@@ -1,33 +1,37 @@
-import { AIProviderStrategy } from './ai-provider';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AzureProviderConfig, AIProviderModel, AIProviderModelType } from '@activepieces/common-ai';
+import { AIProviderModel, AIProviderModelType, AzureProviderConfig } from '@activepieces/common-ai'
+import { httpClient, HttpMethod } from '@activepieces/pieces-common'
+import { AIProviderStrategy } from './ai-provider'
 
 export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
     name: 'Azure OpenAI',
     async listModels(config: AzureProviderConfig): Promise<AIProviderModel[]> {
-        const endpoint = `https://${config.resourceName}.openai.azure.com`;
-        const apiKey = config.apiKey;
-        const apiVersion = '2024-10-21';
+        const endpoint = `https://${config.resourceName}.openai.azure.com`
+        const apiKey = config.apiKey
+        const apiVersion = '2024-10-21'
 
         if (!endpoint || !apiKey) {
-            return [];
+            return []
         }
 
-        const res = await httpClient.sendRequest<{ data: any[] }>({
+        const res = await httpClient.sendRequest<{ data: AzureModel[] }>({
             url: `${endpoint}/openai/deployments?api-version=${apiVersion}`,
             method: HttpMethod.GET,
             headers: {
                 'api-key': config.apiKey,
                 'Content-Type': 'application/json',
             },
-        });
+        })
 
-        const { data } = res.body;
+        const { data } = res.body
 
-        return data.map((deployment: any) => ({
+        return data.map((deployment: AzureModel) => ({
             id: deployment.name,
             name: deployment.name,
             type: AIProviderModelType.TEXT,
-        }));
+        }))
     },
-};
+}
+
+type AzureModel = {
+    name: string
+}

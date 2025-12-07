@@ -5,7 +5,6 @@ import {
     PiecesFilterType,
     ProjectPlan,
     spreadIfDefined,
-    spreadIfNotUndefined,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -13,7 +12,7 @@ import { ProjectPlanEntity } from './project-plan.entity'
 
 const projectPlanRepo = repoFactory<ProjectPlan>(ProjectPlanEntity)
 
-export const projectLimitsService = (log: FastifyBaseLogger) => ({
+export const projectLimitsService = (_log: FastifyBaseLogger) => ({
     async upsert(
         planLimits: ProjectPlanLimits,
         projectId: string,

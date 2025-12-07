@@ -3,6 +3,7 @@ import {
   createAction,
   DynamicPropsValue,
   InputPropertyMap,
+  PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
 import { AIProviderName, createAIModel } from '@activepieces/common-ai';
@@ -121,6 +122,7 @@ export const generateImageAction = createAction({
     advancedOptions: Property.DynamicProperties({
       displayName: 'Advanced Options',
       required: false,
+      auth: PieceAuth.None(),
       refreshers: ['provider', 'model'],
       props: async (propsValue): Promise<InputPropertyMap> => {
         const providerId = propsValue['provider'] as unknown as string;
