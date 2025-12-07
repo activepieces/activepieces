@@ -46,6 +46,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             platformRole: PlatformRole.MEMBER,
             platformId: params.platformId,
         })
+
+        await projectService.create({
+            displayName: userIdentity.firstName + '\'s Project',
+            ownerId: user.id,
+            platformId: params.platformId,
+            type: ProjectType.PERSONAL,
+        })
+        
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
         })
