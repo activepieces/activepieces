@@ -13,11 +13,11 @@ import {
   TASK_COMPLETION_TOOL_NAME,
 } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
-import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
+import { inspect } from 'util';
 
 export const runAgent = createAction({
   name: 'run_agent',

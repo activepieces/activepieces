@@ -1,4 +1,3 @@
-import { AIProvider } from '@activepieces/piece-ai'
 import {
     ApiKey,
     ApplicationEvent,
@@ -17,8 +16,8 @@ import {
 } from '@activepieces/ee-shared'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
-import {
-    AiOverageState,
+import { AiOverageState,
+    AIProvider,
     apId,
     AppConnection,
     AppConnectionScope,

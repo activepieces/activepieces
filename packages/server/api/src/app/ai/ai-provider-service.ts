@@ -1,8 +1,7 @@
-import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/piece-ai'
-import {
-    ActivepiecesError,
+import { ActivepiecesError, AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     ApEdition,
     apId,
+    CreateAIProviderRequest,
     ErrorCode,
     PlatformId,
 } from '@activepieces/shared'

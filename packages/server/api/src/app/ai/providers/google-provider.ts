@@ -1,5 +1,5 @@
-import { AIProviderModel, AIProviderModelType, GoogleProviderConfig } from '@activepieces/piece-ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
+import { AIProviderModel, AIProviderModelType, GoogleProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
 

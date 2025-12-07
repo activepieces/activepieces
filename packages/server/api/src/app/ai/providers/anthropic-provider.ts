@@ -1,5 +1,5 @@
-import { AIProviderModel, AIProviderModelType, AnthropicProviderConfig } from '@activepieces/piece-ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
+import { AIProviderModel, AIProviderModelType, AnthropicProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
 export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {

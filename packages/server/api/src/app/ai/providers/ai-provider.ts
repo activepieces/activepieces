@@ -1,4 +1,4 @@
-import { AIProviderConfig, AIProviderModel } from '@activepieces/piece-ai'
+import { AIProviderConfig, AIProviderModel } from '@activepieces/shared'
 
 export type AIProviderStrategy<T extends AIProviderConfig> = {
     name: string

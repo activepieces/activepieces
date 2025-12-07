@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/piece-ai'
+import { AIProviderName } from '@activepieces/shared'
 import {
     ApEdition,
     FlowAction,

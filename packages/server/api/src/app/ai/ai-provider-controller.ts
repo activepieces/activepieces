@@ -1,5 +1,4 @@
-import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/piece-ai'
-import { PrincipalType } from '@activepieces/shared'
+import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'

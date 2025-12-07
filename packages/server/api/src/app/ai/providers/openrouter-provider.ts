@@ -1,5 +1,5 @@
-import { AIProviderModel, AIProviderModelType, OpenRouterProviderConfig } from '@activepieces/piece-ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
+import { AIProviderModel, AIProviderModelType, OpenRouterProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
 export const openRouterProvider: AIProviderStrategy<OpenRouterProviderConfig> = {

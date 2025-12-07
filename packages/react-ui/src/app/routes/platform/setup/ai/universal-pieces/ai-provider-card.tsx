@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/piece-ai';
+import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
 
