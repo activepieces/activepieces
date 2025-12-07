@@ -298,9 +298,10 @@ import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
-import { UnifyCommunityWithEnterprise1764567780604 } from './migration/postgres/1764567780604-UnifyCommunityWithEnterprise'
 import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
 import { CreateTemplateTable1764777773932 } from './migration/postgres/1764777773932-CreateTemplateTable'
+import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
+import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -614,7 +615,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemoveUnusedPaymentMethodColoumn1762709208569,
         AddLastUsedAtToApiKey1763378445660,
         RenameManageProjectsToTeamProjectLimits1764100884963,
-        UnifyCommunityWithEnterprise1764567780604,
+        DropProjectIdFromPieceMetadata1764866386989,
+        UnifyCommunityWithEnterprise1764867709704,
         AddMcpServer1764606838149,
         CreateTemplateTable1764777773932,
     ]
