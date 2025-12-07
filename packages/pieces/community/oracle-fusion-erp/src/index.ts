@@ -39,10 +39,14 @@ export const oracleFusionErpAuth = PieceAuth.CustomAuth({
         body: 'grant_type=client_credentials',
       });
 
-      if (tokenResponse.ok) {
-        return { valid: true };
+      if (!tokenResponse.ok) {
+        return {
+          valid: false,
+          error: `Failed to obtain OAuth token: ${tokenResponse.status} ${tokenResponse.statusText}`,
+        };
       }
-      return { valid: false, error: 'Invalid credentials or base URL' };
+
+      return { valid: true };
     } catch (e) {
       return { valid: false, error: 'Failed to connect to Oracle Fusion Cloud ERP' };
     }
@@ -65,17 +69,8 @@ export const oracleFusionErp = createPiece({
       baseUrl: (auth) => `${(auth as { baseUrl: string }).baseUrl}/fscmRestApi/resources/latest`,
       auth: oracleFusionErpAuth,
       authMapping: async (auth) => {
-        const a = auth as { baseUrl: string; clientId: string; clientSecret: string };
-        const tokenResponse = await fetch(`${a.baseUrl}/oauth2/v1/token`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Authorization': `Basic ${Buffer.from(`${a.clientId}:${a.clientSecret}`).toString('base64')}`,
-          },
-          body: 'grant_type=client_credentials',
-        });
-        const tokenData = await tokenResponse.json();
-        return { Authorization: `Bearer ${tokenData.access_token}` };
+        const accessToken = await getOAuthToken(auth as OracleFusionAuth);
+        return { Authorization: `Bearer ${accessToken}` };
       },
     }),
   ],
