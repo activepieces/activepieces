@@ -1,4 +1,4 @@
-import { AIProvider, AIProviderName } from '@activepieces/common-ai'
+import { AIProvider, AIProviderName } from '@activepieces/piece-ai'
 import { Platform } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { EntitySchema } from 'typeorm'

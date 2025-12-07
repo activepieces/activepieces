@@ -1,4 +1,4 @@
-import { AIProviderModel, AIProviderModelType, OpenRouterProviderConfig } from '@activepieces/common-ai'
+import { AIProviderModel, AIProviderModelType, OpenRouterProviderConfig } from '@activepieces/piece-ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderStrategy } from './ai-provider'
 

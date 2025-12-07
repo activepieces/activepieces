@@ -1,4 +1,4 @@
-import { AIProviderConfig, AIProviderName } from '@activepieces/common-ai'
+import { AIProviderConfig, AIProviderName } from '@activepieces/piece-ai'
 import { AIProviderStrategy } from './ai-provider'
 import { anthropicProvider } from './anthropic-provider'
 import { azureProvider } from './azure-provider'
