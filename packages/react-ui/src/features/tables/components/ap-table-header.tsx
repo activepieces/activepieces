@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
 
