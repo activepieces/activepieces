@@ -1,9 +1,19 @@
+import {
+  AIProviderName,
+  AnthropicProviderConfig,
+  AzureProviderConfig,
+  CreateAIProviderRequest,
+  GoogleProviderConfig,
+  OpenAIProviderConfig,
+} from '@activepieces/common-ai';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
+import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Type } from '@sinclair/typebox';
+
+import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,27 +24,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormMessage,
-} from '@/components/ui/form';
+import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import {
-  AIProviderName,
-  AnthropicProviderConfig,
-  AzureProviderConfig,
-  CreateAIProviderRequest,
-  GoogleProviderConfig,
-  OpenAIProviderConfig,
-} from '@activepieces/common-ai';
-
-import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
 type UpsertAIProviderDialogProps = {
   provider: AIProviderName;
@@ -51,7 +45,6 @@ export const UpsertAIProviderDialog = ({
   onSave,
   provider,
   configured,
-  logoUrl,
   displayName,
   markdown,
 }: UpsertAIProviderDialogProps) => {
@@ -61,7 +54,7 @@ export const UpsertAIProviderDialog = ({
     if (provider === AIProviderName.AZURE) {
       return Type.Object({
         provider: Type.Literal(AIProviderName.AZURE),
-        config: AzureProviderConfig
+        config: AzureProviderConfig,
       });
     }
     return Type.Object({
@@ -78,13 +71,13 @@ export const UpsertAIProviderDialog = ({
     resolver: typeboxResolver(formSchema),
     defaultValues: (provider === AIProviderName.AZURE
       ? {
-        provider: AIProviderName.AZURE,
-        config: { apiKey: '', resourceName: '' },
-      }
+          provider: AIProviderName.AZURE,
+          config: { apiKey: '', resourceName: '' },
+        }
       : {
-        provider,
-        config: { apiKey: '' },
-      }) as CreateAIProviderRequest,
+          provider,
+          config: { apiKey: '' },
+        }) as CreateAIProviderRequest,
   });
 
   const { refetch } = flagsHooks.useFlags();
@@ -131,8 +124,6 @@ export const UpsertAIProviderDialog = ({
 
         <Form {...form}>
           <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
-
-
             {provider === AIProviderName.AZURE && (
               <FormField
                 name="config.resourceName"

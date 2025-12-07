@@ -6,25 +6,27 @@ import {
     ErrorCode,
     PlatformId,
 } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
+import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
-import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits'
-import { FastifyBaseLogger } from 'fastify'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
-        const enableOpenRouterProvider = await platformAiCreditsService(log).isEnabled()
+        const enableOpenRouterProvider = platformAiCreditsService(log).isEnabled()
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
-        const formattedProviders: AIProviderWithoutSensitiveData[] = Object.values(AIProviderName).map(id => ({
-            id,
-            name: aiProviders[id].name,
-            configured: !!configuredProviders.find(c => c.provider === id),
-        }))
+        const formattedProviders: AIProviderWithoutSensitiveData[] = Object.values(AIProviderName).filter(id => id !== AIProviderName.ACTIVEPIECES).map(id => {
+            return {
+                id,
+                name: aiProviders[id].name,
+                configured: !!configuredProviders.find(c => c.provider === id),
+            }
+        })
         if (enableOpenRouterProvider) {
             formattedProviders.push({
                 id: AIProviderName.ACTIVEPIECES,
@@ -84,7 +86,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             platformId,
             provider: providerId,
         })
-        return await encryptUtils.decryptObject<AIProviderConfig>(aiProvider.config)
+        return encryptUtils.decryptObject<AIProviderConfig>(aiProvider.config)
     },
 })
 

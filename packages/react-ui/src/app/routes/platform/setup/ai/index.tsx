@@ -1,15 +1,16 @@
+import { AIProviderName } from '@activepieces/common-ai';
+import { PlatformRole, ApFlagId } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+
+import LockedFeatureGuard from '../../../../components/locked-feature-guard';
+
+import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { PlatformRole, ApFlagId } from '@activepieces/shared';
-
-import LockedFeatureGuard from '../../../../components/locked-feature-guard';
-import { AIProviderName } from '@activepieces/common-ai';
-import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
 const SUPPORTED_AI_PROVIDERS = [
   {
@@ -47,16 +48,20 @@ It is strongly recommended that you add your credit card information to your Ope
     provider: AIProviderName.AZURE,
     displayName: 'Azure',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
-    markdown: 'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
+    markdown:
+      'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
   },
-
+  {
+    provider: AIProviderName.OPENROUTER,
+    displayName: 'OpenRouter',
+    logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',
+    markdown: `Follow these instructions to get your OpenRouter API Key:
+1. Visit the following website: https://openrouter.ai/settings/keys.
+2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`,
+  },
 ];
 export default function AIProvidersPage() {
-  const {
-    data: providers,
-    refetch,
-    isLoading,
-  } = useQuery({
+  const { data: providers, refetch } = useQuery({
     queryKey: ['ai-providers'],
     queryFn: () => aiProviderApi.list(),
   });
@@ -101,7 +106,10 @@ export default function AIProvidersPage() {
               displayName={provider.displayName}
               logoUrl={provider.logoUrl}
               markdown={provider.markdown}
-              configured={providers?.data.find((p) => p.name === provider.provider)?.configured ?? false}
+              configured={
+                providers?.find((p) => p.id === provider.provider)
+                  ?.configured ?? false
+              }
               isDeleting={isDeleting}
               onDelete={() => deleteProvider(provider.provider)}
               onSave={() => refetch()}
