@@ -3,6 +3,7 @@ import { jwtDecode } from 'jwt-decode';
 
 import {
   AuthenticationResponse,
+  EndpointScope,
   isNil,
   UserPrincipal,
 } from '@activepieces/shared';
@@ -78,11 +79,11 @@ export const authenticationSession = {
     ApStorage.getInstance().setItem(tokenKey, result.token);
     window.location.href = '/';
   },
-  async switchToProject(projectId: string) {
+  async switchToProject(projectId: string, scope?: EndpointScope) {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    const result = await authenticationApi.switchProject({ projectId });
+    const result = await authenticationApi.switchProject({ projectId, scope });
     ApStorage.getInstance().setItem(tokenKey, result.token);
     window.dispatchEvent(new Event('storage'));
   },

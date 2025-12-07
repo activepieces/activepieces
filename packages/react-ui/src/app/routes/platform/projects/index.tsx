@@ -32,6 +32,7 @@ import { platformProjectApi } from '@/lib/platform-project-api';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import {
+  EndpointScope,
   ProjectType,
   ProjectWithLimits,
   TeamProjectsLimit,
@@ -331,7 +332,12 @@ export default function ProjectsPage() {
           )}
           emptyStateIcon={<Package className="size-14" />}
           onRowClick={async (project) => {
-            await setCurrentProject(queryClient, project);
+            await setCurrentProject(
+              queryClient,
+              project,
+              undefined,
+              EndpointScope.PLATFORM,
+            );
             navigate('/');
           }}
           filters={[
