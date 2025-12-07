@@ -25,7 +25,20 @@ export const deleteRowAction = createAction({
       },
     };
 
-    const response = await httpClient.sendRequest(request);
-    return response.body;
+    try {
+      const response = await httpClient.sendRequest(request);
+      return response.body;
+    } catch (error: any) {
+      if (error?.response?.status === 400) {
+        throw new Error('Bad request. Please check the sheet and row IDs.');
+      } else if (error?.response?.status === 403) {
+        throw new Error('Forbidden: You do not have permission to delete this row.');
+      } else if (error?.response?.status === 404) {
+        throw new Error('Row not found. Please verify the row ID.');
+      } else if (error?.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      throw new Error(`Failed to delete row: ${error?.message || error}`);
+    }
   },
 });

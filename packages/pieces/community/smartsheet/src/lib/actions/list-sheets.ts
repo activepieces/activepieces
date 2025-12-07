@@ -10,6 +10,17 @@ export const listSheetsAction = createAction({
   props: {},
   async run(context) {
     const accessToken = context.auth.secret_text;
-    return await listSheets(accessToken);
+    try {
+      return await listSheets(accessToken);
+    } catch (error: any) {
+      if (error?.response?.status === 401) {
+        throw new Error('Unauthorized: Invalid API token.');
+      } else if (error?.response?.status === 403) {
+        throw new Error('Forbidden: You do not have permission to access these sheets.');
+      } else if (error?.response?.status === 429) {
+        throw new Error('Rate limit exceeded. Please try again later.');
+      }
+      throw new Error(`Failed to list sheets: ${error?.message || error}`);
+    }
   },
 });
