@@ -2,7 +2,6 @@ import {
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
 } from '@activepieces/common-ai';
-import { SeekPage } from '@activepieces/shared';
 
 import { api } from '@/lib/api';
 
