@@ -1,8 +1,12 @@
 import {
     apId,
+    AppConnectionScope,
+    AppConnectionType,
     PackageType,
     PlatformRole,
     PrincipalType,
+    UpdateGlobalConnectionValueRequestBody,
+    UpsertGlobalConnectionRequestBody,
 } from '@activepieces/shared'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -64,16 +68,17 @@ describe('GlobalConnection API', () => {
                 },
             })
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
                 projectIds: [mockProject.id],
-                scope: 'PLATFORM',
-                type: 'SECRET_TEXT',
+                scope: AppConnectionScope.PLATFORM,
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             // act
@@ -117,16 +122,17 @@ describe('GlobalConnection API', () => {
                 },
             })
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
-                scope: 'PLATFORM',
-                projectIds: [],
-                type: 'SECRET_TEXT',
+                scope: AppConnectionScope.PLATFORM,
+                projectIds: [mockProject.id],
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             // act
@@ -166,16 +172,17 @@ describe('GlobalConnection API', () => {
                 },
             })
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
                 projectIds: [apId()], // Invalid project ID
-                scope: 'PLATFORM',
-                type: 'SECRET_TEXT',
+                scope: AppConnectionScope.PLATFORM,
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             // act
@@ -275,16 +282,17 @@ describe('GlobalConnection API', () => {
                 },
             })
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
-                scope: 'PLATFORM',
+                scope: AppConnectionScope.PLATFORM,
                 projectIds: [mockProject.id],
-                type: 'SECRET_TEXT',
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             const upsertResponse = await app?.inject({
@@ -338,16 +346,17 @@ describe('GlobalConnection API', () => {
                 },
             })
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
-                scope: 'PLATFORM',
+                scope: AppConnectionScope.PLATFORM,
                 projectIds: [mockProject.id],
-                type: 'SECRET_TEXT',
+                type: AppConnectionType.SECRET_TEXT,
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             const upsertResponse = await app?.inject({
@@ -407,16 +416,17 @@ describe('GlobalConnection API', () => {
                 },
             })
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
-                scope: 'PLATFORM',
-                type: 'SECRET_TEXT',
+                scope: AppConnectionScope.PLATFORM,
+                type: AppConnectionType.SECRET_TEXT,
                 projectIds: [mockProject.id],
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             const upsertResponse = await app?.inject({
@@ -430,7 +440,7 @@ describe('GlobalConnection API', () => {
 
             const connectionId = upsertResponse?.json().id
 
-            const mockUpdateGlobalConnectionRequest = {
+            const mockUpdateGlobalConnectionRequest: UpdateGlobalConnectionValueRequestBody = {
                 displayName: 'updated-global-connection',
             }
 
@@ -478,16 +488,17 @@ describe('GlobalConnection API', () => {
                 },
             })
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
-                scope: 'PLATFORM',
-                type: 'SECRET_TEXT',
+                scope: AppConnectionScope.PLATFORM,
+                type: AppConnectionType.SECRET_TEXT,
                 projectIds: [mockProject.id],
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             const upsertResponse = await app?.inject({
@@ -551,16 +562,17 @@ describe('GlobalConnection API', () => {
             })
 
 
-            const mockUpsertGlobalConnectionRequest = {
+            const mockUpsertGlobalConnectionRequest: UpsertGlobalConnectionRequestBody = {
                 displayName: 'test-global-connection',
                 pieceName: mockPieceMetadata.name,
-                scope: 'PLATFORM',
-                type: 'SECRET_TEXT',
+                scope: AppConnectionScope.PLATFORM,
+                type: AppConnectionType.SECRET_TEXT,
                 projectIds: [mockProject.id],
                 value: {
-                    type: 'SECRET_TEXT',
+                    type: AppConnectionType.SECRET_TEXT,
                     secret_text: 'test-secret-text',
                 },
+                pieceVersion: '0.0.0',
             }
 
             const upsertResponse = await app?.inject({
@@ -574,7 +586,7 @@ describe('GlobalConnection API', () => {
 
             const connectionId = upsertResponse?.json().id
 
-            const mockUpdateGlobalConnectionRequest = {
+            const mockUpdateGlobalConnectionRequest: UpdateGlobalConnectionValueRequestBody = {
                 projectIds: [apId()], // Invalid project ID
                 displayName: 'updated-global-connection',
             }
