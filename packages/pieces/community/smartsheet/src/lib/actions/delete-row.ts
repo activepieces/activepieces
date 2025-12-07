@@ -3,7 +3,7 @@ import { smartsheetAuth } from '../..';
 import { smartsheetCommon } from '../common';
 import { httpClient, HttpRequest, HttpMethod } from '@activepieces/pieces-common';
 
-export const deleteRowAction = createAction({
+export const deleteRow = createAction({
   auth: smartsheetAuth,
   name: 'smartsheet_delete_row',
   displayName: 'Delete Row',

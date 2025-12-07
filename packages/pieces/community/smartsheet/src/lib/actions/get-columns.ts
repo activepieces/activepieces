@@ -2,7 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { smartsheetAuth } from '../..';
 import { getSheetColumns, smartsheetCommon } from '../common';
 
-export const getColumnsAction = createAction({
+export const getColumns = createAction({
   auth: smartsheetAuth,
   name: 'smartsheet_get_columns',
   displayName: 'Get Columns',

@@ -47,8 +47,8 @@ export const uploadFile = createAction({
     });
 
     const response = await client.files.upload({
-      file: blob as any,
-      purpose: purpose as any,
+      file: blob,
+      purpose: purpose,
     });
 
     return response;

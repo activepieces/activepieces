@@ -9,10 +9,10 @@ import { attachFileToRow } from './lib/actions/attach-file-to-row';
 import { findRowsByQuery } from './lib/actions/find-rows-by-query';
 import { findAttachmentByRowId } from './lib/actions/find-attachment-by-row-id';
 import { findSheetByName } from './lib/actions/find-sheet-by-name';
-import { listSheetsAction } from './lib/actions/list-sheets';
-import { getSheetAction } from './lib/actions/get-sheet';
-import { deleteRowAction } from './lib/actions/delete-row';
-import { getColumnsAction } from './lib/actions/get-columns';
+import { listSheets } from './lib/actions/list-sheets';
+import { getSheetById } from './lib/actions/get-sheet';
+import { deleteRow } from './lib/actions/delete-row';
+import { getColumns } from './lib/actions/get-columns';
 
 // Webhook Triggers
 import { newRowAddedTrigger } from './lib/triggers/new-row-trigger';
@@ -75,13 +75,13 @@ export const smartsheet = createPiece({
 	categories: [PieceCategory.PRODUCTIVITY],
 	authors: ['onyedikachi-david', 'kishanprmr'],
 	actions: [
-		listSheetsAction,
-		getSheetAction,
+		listSheets,
+		getSheetById,
 		addRowToSheet,
 		updateRow,
-		deleteRowAction,
+		deleteRow,
 		findRowsByQuery,
-		getColumnsAction,
+		getColumns,
 		attachFileToRow,
 		findAttachmentByRowId,
 		findSheetByName,

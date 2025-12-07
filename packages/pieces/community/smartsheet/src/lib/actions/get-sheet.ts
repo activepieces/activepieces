@@ -2,7 +2,7 @@ import { createAction } from '@activepieces/pieces-framework';
 import { smartsheetAuth } from '../..';
 import { getSheet, smartsheetCommon } from '../common';
 
-export const getSheetAction = createAction({
+export const getSheetById = createAction({
   auth: smartsheetAuth,
   name: 'smartsheet_get_sheet',
   displayName: 'Get Sheet',

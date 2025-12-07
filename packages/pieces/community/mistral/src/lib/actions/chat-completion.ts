@@ -76,12 +76,6 @@ export const createChatCompletion = createAction({
         'Nucleus sampling: consider tokens with top_p probability mass',
       defaultValue: 1,
     }),
-    stream: Property.Checkbox({
-      displayName: 'Stream',
-      required: false,
-      description: 'Whether to stream the response',
-      defaultValue: false,
-    }),
   },
   async run({ auth, propsValue }) {
     const client = new Mistral({
@@ -94,23 +88,18 @@ export const createChatCompletion = createAction({
       temperature,
       maxTokens,
       topP,
-      stream,
     } = propsValue;
 
     const messagesArray = Array.isArray(messages) ? messages : [messages];
 
     const response = await client.chat.complete({
       model: model,
-      messages: messagesArray as any,
+      messages: messagesArray,
       temperature: temperature,
       maxTokens: maxTokens,
       topP: topP,
-      stream: stream,
     });
 
-    if (stream) {
-      return response;
-    }
 
     return response.choices?.[0]?.message?.content || '';
   },

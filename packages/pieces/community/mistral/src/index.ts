@@ -16,7 +16,7 @@ export const mistralAuth = PieceAuth.SecretText({
   description: 'Enter your Mistral AI API Key',
   displayName: 'API Key',
   required: true,
-  validate: async (auth) => {
+  validate: async ({ auth }) => {
     try {
       await httpClient.sendRequest<{
         data: { id: string }[];
@@ -25,7 +25,7 @@ export const mistralAuth = PieceAuth.SecretText({
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.auth,
+          token: auth,
         },
       });
       return {

@@ -48,7 +48,7 @@ export const createEmbeddings = createAction({
     const response = await client.embeddings.create({
       model: model,
       inputs: [input],
-      encodingFormat: encodingFormat as any,
+      encodingFormat: encodingFormat,
     });
 
     return response;
