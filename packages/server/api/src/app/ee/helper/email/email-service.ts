@@ -195,7 +195,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
                     issuesUrl,
                     issuesCount: issuesWithFormattedDate.length.toString(),
                     projectName: job.projectName,
-                    issues: issuesWithFormattedDate,
+                    issues: JSON.stringify(issuesWithFormattedDate),
                 },
             },
         })
