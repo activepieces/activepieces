@@ -29,7 +29,7 @@
       "ee-embed-sdk": [
         "../../packages/ee/ui/embed-sdk/src"
       ],
-      "@activepieces/pieces-ai": [
+      "@activepieces/piece-ai": [
         "../../packages/pieces/community/ai/src"
       ]
     }

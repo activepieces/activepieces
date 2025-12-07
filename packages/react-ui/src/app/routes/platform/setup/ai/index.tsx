@@ -1,4 +1,4 @@
-import { AIProviderName } from '@activepieces/pieces-ai';
+import { AIProviderName } from '@activepieces/piece-ai';
 import { PlatformRole, ApFlagId } from '@activepieces/shared';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';

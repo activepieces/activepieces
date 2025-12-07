@@ -16,7 +16,8 @@ import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from './agent-output-builder';
-import { aiProps, createAIModel } from '../../common/ai-sdk';
+import { createAIModel } from '../../common/ai-sdk';
+import { aiProps } from '../../common/props';
 
 export const runAgent = createAction({
   name: 'run_agent',

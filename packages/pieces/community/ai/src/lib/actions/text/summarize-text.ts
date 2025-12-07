@@ -1,7 +1,8 @@
-import { AIProviderName, createAIModel } from '@activepieces/piece-ai';
+import { AIProviderName } from '../../common/types';
+import { createAIModel } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
-import { aiProps } from '@activepieces/piece-ai';
+import { aiProps } from '../../common/props';
 
 export const summarizeText = createAction({
   name: 'summarizeText',

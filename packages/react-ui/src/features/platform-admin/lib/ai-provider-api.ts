@@ -1,7 +1,7 @@
 import {
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
-} from '@activepieces/pieces-ai';
+} from '@activepieces/piece-ai';
 
 import { api } from '@/lib/api';
 

@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
-import { createAIModel } from '@activepieces/piece-ai';
-import { aiProps } from '@activepieces/piece-ai';
+import { createAIModel } from '../../common/ai-sdk';
+import { aiProps } from '../../common/props';
 
 export const classifyText = createAction({
   name: 'classifyText',

@@ -5,7 +5,7 @@ import {
   CreateAIProviderRequest,
   GoogleProviderConfig,
   OpenAIProviderConfig,
-} from '@activepieces/pieces-ai';
+} from '@activepieces/piece-ai';
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
