@@ -3,6 +3,8 @@ import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
+    EndpointScope,
+    PlatformRole,
     PrincipalType,
     SignInRequest,
     SignUpRequest,
@@ -79,11 +81,13 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
     app.post('/switch-project', SwitchProjectRequestOptions, async (request) => {
         const user = await userService.getOneOrFail({ id: request.principal.id })
+        const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
+
         return authenticationService(request.log).switchProject({
             identityId: user.identityId,
             projectId: request.body.projectId,
             currentPlatformId: request.principal.platform.id,
-            scope: request.body.scope,
+            scope: isPrivilegedUser ? EndpointScope.PLATFORM : undefined,
         })
     })
 }

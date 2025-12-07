@@ -79,11 +79,11 @@ export const authenticationSession = {
     ApStorage.getInstance().setItem(tokenKey, result.token);
     window.location.href = '/';
   },
-  async switchToProject(projectId: string, scope?: EndpointScope) {
+  async switchToProject(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    const result = await authenticationApi.switchProject({ projectId, scope });
+    const result = await authenticationApi.switchProject({ projectId });
     ApStorage.getInstance().setItem(tokenKey, result.token);
     window.dispatchEvent(new Event('storage'));
   },

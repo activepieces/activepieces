@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../../common'
 import { ApId } from '../../common/id-generator'
 import { EmailType, PasswordType } from '../../user/user'
-import { EndpointScope } from '../model/principal-type'
 
 export const SignUpRequest = Type.Object({
     email: EmailType,
@@ -27,7 +26,6 @@ export type SwitchPlatformRequest = Static<typeof SwitchPlatformRequest>
 
 export const SwitchProjectRequest = Type.Object({
     projectId: ApId,
-    scope: Type.Optional(Type.Enum(EndpointScope)),
 })
 
 export type SwitchProjectRequest = Static<typeof SwitchProjectRequest>

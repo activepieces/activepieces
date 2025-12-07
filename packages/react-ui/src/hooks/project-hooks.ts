@@ -23,7 +23,6 @@ import {
   ProjectWithLimitsWithPlatform,
   SeekPage,
   ListProjectRequestForUserQueryParams,
-  EndpointScope,
 } from '@activepieces/shared';
 
 import { projectApi } from '../lib/project-api';
@@ -169,9 +168,8 @@ const setCurrentProject = async (
   queryClient: QueryClient,
   project: ProjectWithLimits,
   pathName?: string,
-  scope?: EndpointScope,
 ) => {
-  await authenticationSession.switchToProject(project.id, scope);
+  await authenticationSession.switchToProject(project.id);
   queryClient.setQueryData(['current-project'], project);
   if (pathName) {
     const pathNameWithNewProjectId = pathName.replace(
