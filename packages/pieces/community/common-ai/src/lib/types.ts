@@ -101,6 +101,8 @@ export const CreateAIProviderRequest = ProviderConfigUnion
 
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
 
+
+// ----- AI USAGE ----- 
 export const AI_USAGE_FEATURE_HEADER = 'ap-feature'
 export const AI_USAGE_AGENT_ID_HEADER = 'ap-agent-id'
 export const AI_USAGE_MCP_ID_HEADER = 'ap-mcp-id'
