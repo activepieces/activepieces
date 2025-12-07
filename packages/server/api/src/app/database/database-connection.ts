@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import {
     ArrayContains,
     DataSource,
@@ -63,9 +63,7 @@ import { createSqlLiteDataSource } from './sqlite-connection'
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
-    const edition = system.getEdition()
-
-    const entities: EntitySchema[] = [
+    return [
         TriggerEventEntity,
         AppEventRoutingEntity,
         FileEntity,
@@ -97,37 +95,25 @@ function getEntities(): EntitySchema<unknown>[] {
         McpServerEntity,
         TodoActivityEntity,
         TriggerSourceEntity,
+        // Enterprise
+        ProjectMemberEntity,
+        ProjectPlanEntity,
+        CustomDomainEntity,
+        SigningKeyEntity,
+        OAuthAppEntity,
+        OtpEntity,
+        ApiKeyEntity,
+        FlowTemplateEntity,
+        GitRepoEntity,
+        AuditEventEntity,
+        ProjectReleaseEntity,
+        PlatformAnalyticsReportEntity,
+        // CLOUD
+        AppSumoEntity,
+        ConnectionKeyEntity,
+        AppCredentialEntity,
+        PlatformPlanEntity,
     ]
-
-    switch (edition) {
-        case ApEdition.CLOUD:
-        case ApEdition.ENTERPRISE:
-        case ApEdition.COMMUNITY:
-            entities.push(
-                ProjectMemberEntity,
-                ProjectPlanEntity,
-                CustomDomainEntity,
-                SigningKeyEntity,
-                OAuthAppEntity,
-                OtpEntity,
-                ApiKeyEntity,
-                FlowTemplateEntity,
-                GitRepoEntity,
-                AuditEventEntity,
-                ProjectReleaseEntity,
-                PlatformAnalyticsReportEntity,
-                // CLOUD
-                AppSumoEntity,
-                ConnectionKeyEntity,
-                AppCredentialEntity,
-                PlatformPlanEntity,
-            )
-            break
-        default:
-            throw new Error(`Unsupported edition: ${edition}`)
-    }
-
-    return entities
 }
 
 export const commonProperties = {
