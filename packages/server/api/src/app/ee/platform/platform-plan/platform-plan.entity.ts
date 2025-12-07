@@ -120,6 +120,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
+        openRouterApiKey: {
+            type: String,
+            nullable: true,
+        },
         activeFlowsLimit: {
             type: Number,
             nullable: true,

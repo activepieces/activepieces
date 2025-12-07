@@ -11,6 +11,10 @@ export class AddOpenRouterKeyToPlatformPlan1765109187883 implements MigrationInt
             ALTER TABLE "platform_plan"
             ADD "openRouterApiKeyHash" character varying
         `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ADD "openRouterApiKey" character varying
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -20,6 +24,9 @@ export class AddOpenRouterKeyToPlatformPlan1765109187883 implements MigrationInt
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "openRouterApiKeyHash"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan" DROP COLUMN "openRouterApiKey"
         `)
     }
 }
