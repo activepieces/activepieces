@@ -126,7 +126,7 @@ export const AppearanceSection = () => {
         },
         platform.id,
       );
-      // window.location.reload();
+      window.location.reload();
     },
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), {
@@ -145,10 +145,7 @@ export const AppearanceSection = () => {
         <Form {...form}>
           <form
             className="grid space-y-4 mt-4"
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit(() => updatePlatform())();
-            }}
+            onSubmit={form.handleSubmit(() => updatePlatform())}
           >
             <div className="max-w-[600px] grid space-y-4">
               <FormField
