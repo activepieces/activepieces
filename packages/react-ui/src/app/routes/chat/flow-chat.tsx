@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
@@ -13,8 +13,6 @@ import {
   Messages,
 } from '@/features/chat/chat-message-list/index';
 import { humanInputApi } from '@/features/forms/lib/human-input-api';
-import { fileHooks } from '@/hooks/file-hooks';
-import { fileUtils } from '@/lib/file-utils';
 import { cn } from '@/lib/utils';
 import {
   ApErrorParams,
@@ -74,7 +72,6 @@ export function FlowChat({
     staleTime: Infinity,
     retry: false,
   });
-  const queryClient = useQueryClient();
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -91,14 +88,6 @@ export function FlowChat({
       onSetSessionId(nanoid());
     }
   }, [chatSessionId, onSetSessionId]);
-
-  fileHooks.useOnLoadDbFile(chatUI?.platformLogoUrl ?? '', (file) => {
-    if (chatUI) {
-      queryClient.setQueryData(['chat', flowId], (oldData: ChatUIResponse) => {
-        return { ...oldData, platformLogoUrl: fileUtils.fileToBase64(file) };
-      });
-    }
-  });
 
   const previousInputRef = useRef('');
   const previousFilesRef = useRef<File[]>([]);

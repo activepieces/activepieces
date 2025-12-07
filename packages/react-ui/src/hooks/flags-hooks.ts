@@ -1,11 +1,8 @@
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { useSuspenseQuery } from '@tanstack/react-query';
 
-import { fileUtils } from '@/lib/file-utils';
-import { ApFlagId, File } from '@activepieces/shared';
+import { ApFlagId } from '@activepieces/shared';
 
 import { flagsApi, FlagsMap } from '../lib/flags-api';
-
-import { fileHooks } from './file-hooks';
 
 type WebsiteBrand = {
   websiteName: string;
@@ -34,39 +31,6 @@ export const flagsHooks = {
   },
   useWebsiteBranding: () => {
     const { data: theme } = flagsHooks.useFlag<WebsiteBrand>(ApFlagId.THEME);
-    const queryClient = useQueryClient();
-
-    const changeLogo = (
-      file: File,
-      key: 'fullLogoUrl' | 'logoIconUrl' | 'favIconUrl',
-    ) => {
-      queryClient.setQueryData(['flags'], (previousFlags: FlagsMap) => {
-        const previousTheme = previousFlags[ApFlagId.THEME] as WebsiteBrand;
-        const updatedLogos = {
-          ...previousTheme?.logos,
-          [key]: fileUtils.fileToBase64(file),
-        };
-        const updatedTheme = {
-          ...previousTheme,
-          logos: updatedLogos,
-        };
-        return {
-          ...previousFlags,
-          [ApFlagId.THEME]: updatedTheme,
-        };
-      });
-    };
-
-    fileHooks.useOnLoadDbFile(theme?.logos.fullLogoUrl, (file) =>
-      changeLogo(file, 'fullLogoUrl'),
-    );
-    fileHooks.useOnLoadDbFile(theme?.logos.logoIconUrl, (file) =>
-      changeLogo(file, 'logoIconUrl'),
-    );
-    fileHooks.useOnLoadDbFile(theme?.logos.favIconUrl, (file) =>
-      changeLogo(file, 'favIconUrl'),
-    );
-
     return theme!;
   },
   useFlag: <T>(flagId: ApFlagId) => {

@@ -18,11 +18,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { fileHooks } from '@/hooks/file-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { fileUtils } from '@/lib/file-utils';
+import { API_URL } from '@/lib/api';
+import { fileApi } from '@/lib/file-api';
 import { platformApi } from '@/lib/platforms-api';
-import { FileType } from '@activepieces/shared';
+import { FileType, UploadFileRequestBody } from '@activepieces/shared';
 
 const FromSchema = Type.Object({
   name: Type.String(),
@@ -34,17 +34,10 @@ const FromSchema = Type.Object({
 
 type FromSchema = Static<typeof FromSchema>;
 
+const ASSETS_URL = `${API_URL}/v1/files`;
+
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [fileNames, setFileNames] = useState<{
-    logoUrl: string;
-    iconUrl: string;
-    faviconUrl: string;
-  }>({
-    logoUrl: '',
-    iconUrl: '',
-    faviconUrl: '',
-  });
 
   const form = useForm({
     defaultValues: {
@@ -63,24 +56,14 @@ export const AppearanceSection = () => {
     [FileType.PLATFORM_FAVICON]: 'faviconUrl',
   };
 
-  const changeFileName = (fileType: FileType, fileName: string) => {
-    setFileNames((prev) => ({
-      ...prev,
-      [typeMap[fileType] as keyof FromSchema]: fileName,
-    }));
-  };
-
-  fileHooks.useOnLoadDbFile(platform?.fullLogoUrl, (file) =>
-    changeFileName(FileType.PLATFORM_LOGO, file.fileName ?? 'Unnamed file'),
-  );
-  fileHooks.useOnLoadDbFile(platform?.logoIconUrl, (file) =>
-    changeFileName(FileType.PLATFORM_ICON, file.fileName ?? 'Unnamed file'),
-  );
-  fileHooks.useOnLoadDbFile(platform?.favIconUrl, (file) =>
-    changeFileName(FileType.PLATFORM_FAVICON, file.fileName ?? 'Unnamed file'),
-  );
-
-  const { mutate: uploadFile } = fileHooks.useUploadFile();
+  const { mutate: uploadFile } = useMutation({
+    mutationFn: (params: UploadFileRequestBody) => {
+      const formData = new FormData();
+      formData.append('fileType', params.fileType);
+      formData.append('file', params.file as Blob);
+      return fileApi.uploadFile(formData);
+    },
+  });
   const [isUploading, setIsUploading] = useState<string[]>([]);
 
   const handleFileChange = (
@@ -97,10 +80,9 @@ export const AppearanceSection = () => {
         },
         {
           onSuccess: (data) => {
-            changeFileName(fileType, data.fileName ?? 'Unnamed file');
             form.setValue(
               typeMap[fileType] as keyof FromSchema,
-              fileUtils.fileIdUrl(data.id),
+              `${ASSETS_URL}/${data.id}`,
               { shouldValidate: true },
             );
             setIsUploading((prev) => prev.filter((type) => type !== fileType));
@@ -172,10 +154,8 @@ export const AppearanceSection = () => {
                     <FormLabel htmlFor="logoFile">{t('Logo')}</FormLabel>
                     <div className="flex flex-row gap-2 items-center">
                       <Input
-                        defaultFileName={
-                          fileNames.logoUrl || platform?.fullLogoUrl
-                        }
                         type="file"
+                        defaultFileName={platform?.fullLogoUrl}
                         accept="image/*"
                         id="logoFile"
                         onChange={(e) =>
@@ -198,10 +178,8 @@ export const AppearanceSection = () => {
                     <FormLabel htmlFor="iconFile">{t('Icon')}</FormLabel>
                     <div className="flex flex-row gap-2 items-center">
                       <Input
-                        defaultFileName={
-                          fileNames.iconUrl || platform?.logoIconUrl
-                        }
                         type="file"
+                        defaultFileName={platform?.logoIconUrl}
                         accept="image/*"
                         id="iconFile"
                         onChange={(e) =>
@@ -226,10 +204,8 @@ export const AppearanceSection = () => {
                     </FormLabel>
                     <div className="flex flex-row gap-2 items-center">
                       <Input
-                        defaultFileName={
-                          fileNames.faviconUrl || platform?.favIconUrl
-                        }
                         type="file"
+                        defaultFileName={platform?.favIconUrl}
                         accept="image/*"
                         id="faviconFile"
                         onChange={(e) =>
