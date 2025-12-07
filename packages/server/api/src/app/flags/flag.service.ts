@@ -13,7 +13,7 @@ const flagRepo = repoFactory(FlagEntity)
 
 
 export const flagService = {
-    save: async (flag: FlagType): Promise<Flag> => {
+    save: async (flag: { id: string, value: unknown }): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
             value: flag.value,
@@ -53,6 +53,7 @@ export const flagService = {
                 ApFlagId.MAX_FIELDS_PER_TABLE,
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
+                ApFlagId.TEMPLATES_CATEGORIES,
             ]),
         })
         const now = new Date().toISOString()
@@ -290,15 +291,4 @@ function getSupportedAppWebhooks(): string[] {
     }
     const parsed = webhookSecretsUtils.parseWebhookSecrets(webhookSecrets)
     return Object.keys(parsed)
-}
-
-export type FlagType =
-    | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
-    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
-    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
-    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
-
-type BaseFlagStructure<K extends ApFlagId, V> = {
-    id: K
-    value: V
 }
