@@ -1,8 +1,7 @@
 import {
+	AppConnectionValueForAuthProperty,
 	createAction,
-	DynamicPropsValue,
-	InputPropertyMap,
-	OAuth2PropertyValue,
+	PiecePropValueSchema,
 	Property,
 } from '@activepieces/pieces-framework';
 import {
@@ -11,8 +10,9 @@ import {
 	HttpMethod,
 	HttpRequest,
 } from '@activepieces/pieces-common';
-import { drive_v3, google, sheets_v4 } from 'googleapis';
-import { createGoogleClient, getAccessToken, googleSheetsAuth, GoogleSheetsAuthValue } from '../common/common';
+import { google } from 'googleapis';
+import { includeTeamDrivesProp } from '../common/props';
+import { createGoogleClient, getAccessToken, googleSheetsAuth } from '../common/common';
 import { AppConnectionType, isNil } from '@activepieces/shared';
 
 export const createSpreadsheetAction = createAction({
@@ -26,44 +26,25 @@ export const createSpreadsheetAction = createAction({
 			description: 'The title of the new spreadsheet.',
 			required: true,
 		}),
-		includeTeamDrivesProp: Property.DynamicProperties({
-			displayName: 'Include Team Drives',
-			description: 'Determines if team drives should be included in the results.',
-			required: false,
-			refreshers: ['auth'],
+		includeTeamDrives: includeTeamDrivesProp(),
+		folder: Property.Dropdown({
 			auth: googleSheetsAuth,
-			props: async ({auth})=>{
-				const propsMap: InputPropertyMap = {};
-				if (!auth) {
-					return propsMap;
-				}
-				const authValue = auth;
-				if(authValue.type === AppConnectionType.CUSTOM_AUTH) { return propsMap; }
-				propsMap.includeTeamDrives = Property.Checkbox({
-					displayName: 'Include Team Drives',
-					description: 'Determines if shared drives should be included in the search for parent folder.',
-					required: false,
-					defaultValue: false,
-				});
-				return propsMap;
-			}
-		}),
-		folderProp: Property.DynamicProperties({
 			displayName: 'Parent Folder',
 			description:
 				'The folder to create the worksheet in.By default, the new worksheet is created in the root folder of drive.',
 			required: false,
-			refreshers: ['includeTeamDrivesProp','auth'],
-			auth: googleSheetsAuth,
-				props: async ({ auth, includeTeamDrivesProp }) => {
-				const propsMap: InputPropertyMap = {};
+			refreshers: [],
+			options: async ({ auth, includeTeamDrives }) => {
 				if (!auth) {
-					return propsMap;
+					return {
+						disabled: true,
+						options: [],
+						placeholder: 'Please authenticate first',
+					};
 				}
-				const authValue = auth;
-				const isServiceAccount = 'serviceAccount' in authValue;
-				const includeTeamDrives = (includeTeamDrivesProp as DynamicPropsValue)['includeTeamDrives']  || isServiceAccount;
+				const authProp = auth;
 				let folders: { id: string; name: string }[] = [];
+				const isServiceAccountWithoutImpersonation = authProp.type === AppConnectionType.CUSTOM_AUTH && authProp.props.userEmail?.length === 0;
 				let pageToken = null;
 				do {
 					const request: HttpRequest = {
@@ -71,12 +52,12 @@ export const createSpreadsheetAction = createAction({
 						url: `https://www.googleapis.com/drive/v3/files`,
 						queryParams: {
 							q: "mimeType='application/vnd.google-apps.folder' and trashed = false",
-							includeItemsFromAllDrives: includeTeamDrives ? 'true' : 'false',
+							includeItemsFromAllDrives: includeTeamDrives || isServiceAccountWithoutImpersonation ? 'true' : 'false',
 							supportsAllDrives: 'true',
 						},
 						authentication: {
 							type: AuthenticationType.BEARER_TOKEN,
-							token: await getAccessToken(authValue),
+							token: await getAccessToken(authProp),
 						},
 					};
 					if (pageToken) {
@@ -86,10 +67,10 @@ export const createSpreadsheetAction = createAction({
 					}
 					try {
 						const response = await httpClient.sendRequest<{
-							files: { id: string; name: string, teamDriveId?: string }[];
+							files: { id: string; name: string,teamDriveId?: string }[];
 							nextPageToken: string;
 						}>(request);
-						folders = folders.concat(response.body.files.filter((file) => !isNil(file.teamDriveId) || !isServiceAccount));
+						folders = folders.concat(response.body.files.filter(file => !isNil(file.teamDriveId) || !isServiceAccountWithoutImpersonation));
 						pageToken = response.body.nextPageToken;
 					} catch (e) {
 						throw new Error(`Failed to get folders\nError:${e}`);
@@ -97,40 +78,36 @@ export const createSpreadsheetAction = createAction({
 				} while (pageToken);
 
 				return {
-					folderId: Property.StaticDropdown({
-						displayName: isServiceAccount ? 'Shared Drive Folder' : 'Folder',
-						options: {
-							options:  folders.map((folder) => {
-								return {
-									label: folder.name,
-									value: folder.id,
-								};
-							})
-						},
-						required: isServiceAccount,
-					})
+					disabled: false,
+					options: folders.map((folder: { id: string; name: string }) => {
+						return {
+							label: folder.name,
+							value: folder.id,
+						};
+					}),
 				};
 			},
-			
 		}),
 	},
 	async run(context) {
-		const { title, folderProp } = context.propsValue;
-		const folderId =  folderProp?.['folderId'];
-		const response = await createSpreadsheet(context.auth, title, folderId);
+		const { title, folder } = context.propsValue;
+		const response = await createSpreadsheet(context.auth, title, folder);
+		const newSpreadsheetId = response.id;
+
+	
+
 		return {
-			id: response.id,
+			id: newSpreadsheetId,
 		};
 	},
 });
 
 async function createSpreadsheet(
-	auth: GoogleSheetsAuthValue,
+	auth: AppConnectionValueForAuthProperty<typeof googleSheetsAuth>,
 	title: string,
-	folderId: string | undefined,
+	folderId?: string,
 ) {
-	
-  const googleClient = await createGoogleClient(auth);
+	const googleClient = await createGoogleClient(auth);
   const driveApi = google.drive({ version: 'v3', auth: googleClient });
   const response = await driveApi.files.create({
     requestBody: {

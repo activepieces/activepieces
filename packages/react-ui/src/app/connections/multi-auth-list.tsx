@@ -47,13 +47,13 @@ export function MutliAuthList({
           piecesOAuth2AppsMap,
           pieceName,
         );
-        return createOAuth2Options(auth, displayName, predefinedOAuth2App);
+        return createOAuth2Options(auth, predefinedOAuth2App);
       }
 
       return {
         label: displayName,
         value: { authProperty: auth, grantType: null, oauth2App: null },
-        description: auth.description,
+        description: '',
       };
     },
   );
@@ -105,7 +105,6 @@ const getDisplayName = (auth: PieceAuthProperty): string => {
 
 function createOAuth2Options(
   auth: OAuth2Property<any>,
-  displayName: string,
   predefinedOAuth2App: OAuth2App | null,
 ): RadioGroupListItem<AuthListItem>[] {
   const options: RadioGroupListItem<AuthListItem>[] = [];

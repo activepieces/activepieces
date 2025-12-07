@@ -306,6 +306,7 @@ export async function createGoogleClient(auth: GoogleSheetsAuthValue): Promise<O
 			email: serviceAccount.client_email,
 			key: serviceAccount.private_key,
 			scopes: googleSheetsScopes,
+			subject: auth.props.userEmail,
 		});
 	}
 	const authClient = new OAuth2Client();
@@ -348,13 +349,35 @@ export const googleSheetsAuth =[PieceAuth.OAuth2({
 	scope:googleSheetsScopes ,
   }), PieceAuth.CustomAuth({
 	displayName: 'Service Account (Advanced)',
-	description: 'Allows you to authenticate on behalf of the organization via a service account, you can get one by going to https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key',
+	description: 'Authenticate via service account from https://console.cloud.google.com/ > IAM & Admin > Service Accounts > Create Service Account > Keys > Add key.  <br> <br> You can optionally use domain-wide delegation (https://support.google.com/a/answer/162106?hl=en#zippy=%2Cset-up-domain-wide-delegation-for-a-client) to access spreadsheets without adding the service account to each one. <br> <br> **Note:** Without a user email, the service account only has access to files/folders you explicitly share with it.',
 	required: true,
 	props: {
 	  serviceAccount: Property.ShortText({
 		displayName: 'Service Account JSON Key',
 		required: true,
-	  })}
+	  } 
+	) , 
+	userEmail: Property.ShortText({
+		displayName: 'User Email',
+		required: false,
+		description: 'Email address of the user to impersonate for domain-wide delegation.',
+	  }),},
+	  validate: async ({auth})=>{
+		try{
+			await getAccessToken({
+				type: AppConnectionType.CUSTOM_AUTH,
+				props: {...auth}
+			});
+		}catch(e){
+			return {
+				valid: false,
+				error: (e as Error).message,
+			};
+		}
+		return {
+			valid: true,
+		};
+	  }
 	})];
 
 	
