@@ -5,7 +5,7 @@ import { AnthropicProviderConfig, AIProviderModel, AIProviderModelType } from '@
 export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
     name: 'Anthropic',
     async listModels(config: AnthropicProviderConfig): Promise<AIProviderModel[]> {
-        const res = await httpClient.sendRequest<{ data: any[] }>({
+        const res = await httpClient.sendRequest<{ data: { id: string; display_name: string }[] }>({
             url: `https://api.anthropic.com/v1/models`,
             method: HttpMethod.GET,
             headers: {
@@ -16,7 +16,7 @@ export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
 
         const { data } = res.body;
 
-        return data.map((model: any) => ({
+        return data.map(model => ({
             id: model.id,
             name: model.display_name,
             type: AIProviderModelType.TEXT,

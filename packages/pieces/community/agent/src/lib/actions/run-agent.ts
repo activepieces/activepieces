@@ -16,8 +16,7 @@ import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { inspect } from 'util';
 import { z, ZodObject } from 'zod';
 import { agentOutputBuilder } from '../common/agent-output-builder';
-import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { AIProviderModel, AIProviderModelType, AIProviderName, createAIModel } from '@activepieces/common-ai';
+import { aiProps, createAIModel } from '@activepieces/common-ai';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -30,36 +29,37 @@ export const runAgent = createAction({
       description: 'Describe what you want the assistant to do.',
       required: true,
     }),
-    [AgentPieceProps.AI_MODEL]: Property.Dropdown({
-      displayName: 'AI Model',
-      required: true,
-      auth: PieceAuth.None(),
-      refreshers: [],
-      description:
-        'Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.',
-      options: async (propsValue, ctx) => {
-        const { body: allModels } = await httpClient.sendRequest<
-          AIProviderModel[]
-        >({
-          method: HttpMethod.GET,
-          url: `${ctx.server.apiUrl}v1/ai-providers/models`,
-          headers: {
-            Authorization: `Bearer ${ctx.server.token}`,
-          },
-        });
+    [AgentPieceProps.AI_PROVIDER]: aiProps({ modelType: 'text' }).provider,
+    [AgentPieceProps.AI_MODEL]: aiProps({ modelType: 'text' }).model,
+    //   displayName: 'AI Model',
+    //   required: true,
+    //   auth: PieceAuth.None(),
+    //   refreshers: [],
+    //   description:
+    //     'Choose your AI model and provider. Different models offer varying capabilities, speeds, and costs. OpenAI models are best for general tasks, Anthropic excels at analysis, and Google Gemini offers competitive pricing.',
+    //   options: async (propsValue, ctx) => {
+    //     const { body: allModels } = await httpClient.sendRequest<
+    //       AIProviderModel[]
+    //     >({
+    //       method: HttpMethod.GET,
+    //       url: `${ctx.server.apiUrl}v1/ai-providers/models`,
+    //       headers: {
+    //         Authorization: `Bearer ${ctx.server.token}`,
+    //       },
+    //     });
 
-        const models = allModels.filter((model) => model.type === AIProviderModelType.TEXT);
+    //     const models = allModels.filter((model) => model.type === AIProviderModelType.TEXT);
 
-        return {
-          placeholder: 'Select AI Model',
-          disabled: false,
-          options: models.map((model) => ({
-            label: model.name,
-            value: `${model.id}-${model.providerId}`,
-          })),
-        };
-      },
-    }),
+    //     return {
+    //       placeholder: 'Select AI Model',
+    //       disabled: false,
+    //       options: models.map((model) => ({
+    //         label: model.name,
+    //         value: `${model.id}-${model.providerId}`,
+    //       })),
+    //     };
+    //   },
+    // }),
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',
       required: false,
@@ -109,8 +109,7 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, aiModel } = context.propsValue;
-    const [modelId, providerId] = aiModel.split('-');
+    const { prompt, maxSteps, model: modelId, provider: providerId } = context.propsValue;
 
     const model = await createAIModel({
       modelId,
