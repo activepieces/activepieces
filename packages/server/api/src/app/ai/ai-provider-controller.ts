@@ -1,4 +1,4 @@
-import { AIProviderConfig, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
+import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -8,6 +8,10 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListAIProviders, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).listProviders(platformId)
+    })
+    app.get('/models', ListAllModels, async (request) => {
+        const platformId = request.principal.platform.id
+        return aiProviderService(app.log).listAllModels(platformId)
     })
     app.get('/:id/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
@@ -54,6 +58,17 @@ const GetAIProviderConfig = {
     },
 }
 
+const ListAllModels = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+    },
+    schema: {
+        response: {
+            [StatusCodes.OK]: Type.Array(AIProviderModel)
+        }
+    },
+}
+
 const ListModels = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
@@ -62,6 +77,9 @@ const ListModels = {
         params: Type.Object({
             id: Type.Enum(AIProviderName),
         }),
+        response: {
+            [StatusCodes.OK]: Type.Array(AIProviderModel)
+        }
     },
 }
 
