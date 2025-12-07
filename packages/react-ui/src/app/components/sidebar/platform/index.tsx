@@ -29,6 +29,7 @@ import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
 import { ApSidebareGroup, SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem } from '../ap-sidebar-item';
+import { SidebarThemeToggle } from '../sidebar-theme-toggle';
 import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
@@ -240,6 +241,7 @@ export function PlatformSidebar() {
             {t('Exit platform admin')}
           </SidebarMenuButton>
         </SidebarMenu>
+        <SidebarThemeToggle />
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>
