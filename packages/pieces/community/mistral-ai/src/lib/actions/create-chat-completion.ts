@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
+import { baseUrl } from '../common/common';
 import { modelDropdown, parseMistralError } from '../common/props';
 
 export const createChatCompletion = createAction({
@@ -54,10 +55,10 @@ export const createChatCompletion = createAction({
 			try {
 				const response = await httpClient.sendRequest<{choices:{message:{content:string}}[]}>({
 					method: HttpMethod.POST,
-					url: 'https://api.mistral.ai/v1/chat/completions',
+					url: `${baseUrl}/chat/completions`,
 					authentication: {
 						type: AuthenticationType.BEARER_TOKEN,
-						token: context.auth.secret_text,
+						token: context.auth,
 					},
 					body,
 					timeout: timeout ?? 30000,

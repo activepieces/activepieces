@@ -1,5 +1,6 @@
 import { Property, DropdownOption } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
+import { baseUrl } from './common';
 import { mistralAuth } from './auth';
 
 export const modelDropdown = Property.Dropdown({
@@ -19,10 +20,10 @@ export const modelDropdown = Property.Dropdown({
 		try {
 			const response = await httpClient.sendRequest<{data:{id:string,name:string}[]}>({
 				method: HttpMethod.GET,
-				url: 'https://api.mistral.ai/v1/models',
+				url: `${baseUrl}/models`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: auth.secret_text
+					token: auth
 				},
 			});
 			const models = response.body.data || [];

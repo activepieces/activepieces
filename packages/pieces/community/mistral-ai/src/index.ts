@@ -5,6 +5,7 @@ import { createEmbeddings } from "./lib/actions/create-embeddings";
 import { uploadFile } from "./lib/actions/upload-file";
 import { listModels } from "./lib/actions/list-models";
 import { mistralAuth } from "./lib/common/auth";
+import { baseUrl } from "./lib/common/common";
 import { createCustomApiCallAction } from "@activepieces/pieces-common";
 
 export const mistralAi = createPiece({
@@ -22,7 +23,7 @@ export const mistralAi = createPiece({
     listModels,
     createCustomApiCallAction({
       auth:mistralAuth,
-      baseUrl:()=>'https://api.mistral.ai/v1',
+      baseUrl:()=>baseUrl,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${auth}`
       })

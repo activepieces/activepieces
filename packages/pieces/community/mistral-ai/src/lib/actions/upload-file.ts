@@ -1,6 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
+import { baseUrl } from '../common/common';
 import FormData from 'form-data';
 import { parseMistralError } from '../common/props';
 
@@ -64,10 +65,10 @@ export const uploadFile = createAction({
 		try {
 			const response = await httpClient.sendRequest({
 				method: HttpMethod.POST,
-				url: 'https://api.mistral.ai/v1/files',
+				url: `${baseUrl}/files`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
-					token: context.auth.secret_text,
+					token: context.auth,
 				},
 				headers:{
 					...form.getHeaders()

@@ -1,6 +1,7 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { HttpMethod, httpClient, AuthenticationType } from '@activepieces/pieces-common';
 import { mistralAuth } from '../common/auth';
+import { baseUrl } from '../common/common';
 import { parseMistralError } from '../common/props';
 
 export const listModels = createAction({
@@ -13,10 +14,10 @@ export const listModels = createAction({
     try {
       const response = await httpClient.sendRequest({
         method: HttpMethod.GET,
-        url: 'https://api.mistral.ai/v1/models',
+        url: `${baseUrl}/models`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth.secret_text,
+          token: auth,
         },
       });
      

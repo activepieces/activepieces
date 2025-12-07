@@ -1,5 +1,6 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
+import { baseUrl } from './common';
 
 export const mistralAuth = PieceAuth.SecretText({
 	displayName: 'API Key',
@@ -9,7 +10,7 @@ export const mistralAuth = PieceAuth.SecretText({
 		try {
 			await httpClient.sendRequest({
 				method: HttpMethod.GET,
-				url: 'https://api.mistral.ai/v1/models',
+				url: `${baseUrl}/models`,
 				authentication: {
 					type: AuthenticationType.BEARER_TOKEN,
 					token: auth
