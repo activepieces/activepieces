@@ -123,7 +123,7 @@ async function pollStarredMessages({
           ),
         },
         thread: {
-          ...threadResponse,
+          ...threadResponse.data,
         },
       },
     });

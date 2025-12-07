@@ -117,7 +117,7 @@ async function pollAttachmentMessages({
 
   // Add file extension filter if provided
   if (props.file_extension) {
-    query.push(`filename:${props.file_extension}`);
+    query.push(`filename:${props.file_extension.replace(/^\./, '')}`);
   }
 
   // List Messages
@@ -161,7 +161,7 @@ async function pollAttachmentMessages({
             ),
           },
           thread: {
-            ...threadResponse,
+            ...threadResponse.data,
           },
         },
       });

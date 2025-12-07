@@ -20,7 +20,7 @@ export const gmailNewConversationTrigger = createTrigger({
   type: TriggerStrategy.POLLING,
   async onEnable(context) {
     await context.store.put('lastPoll', Date.now());
-    await context.store.put('seenThreadIds', JSON.stringify(new Set()));
+    await context.store.put('seenThreadIds', JSON.stringify([]));
   },
   async onDisable(context) {
     await context.store.delete('seenThreadIds');

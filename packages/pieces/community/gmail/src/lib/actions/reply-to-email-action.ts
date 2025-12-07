@@ -85,7 +85,6 @@ export const gmailReplyToEmailAction = createAction({
     const messageIdHeader = headers.find((h) => h.name === 'Message-ID');
     const subjectHeader = headers.find((h) => h.name === 'Subject');
     const fromHeader = headers.find((h) => h.name === 'From');
-    const toHeader = headers.find((h) => h.name === 'To');
 
     const threadId = originalMessage.data.threadId;
     const originalMessageId = messageIdHeader?.value || '';

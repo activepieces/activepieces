@@ -6,7 +6,7 @@ import { OAuth2Client } from 'googleapis-common';
 export const gmailDeleteEmailAction = createAction({
   auth: gmailAuth,
   name: 'delete_email',
-  description: 'Permanently move an email to Trash',
+  description: 'Move an email to Trash',
   displayName: 'Delete Email',
   props: {
     message_id: Property.ShortText({
