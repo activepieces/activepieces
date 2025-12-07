@@ -36,7 +36,7 @@ export const aiProviderService = {
     },
 
     async listModels(platformId: PlatformId, providerId: AIProviderName): Promise<SeekPage<AIProviderModel>> {
-        const { config } = await this.getConfig(platformId, providerId)
+        const config = await this.getConfig(platformId, providerId)
 
         const provider = aiProviders[providerId]
         const data = await provider.listModels(config)
@@ -69,7 +69,7 @@ export const aiProviderService = {
         })
     },
 
-    async getConfig(platformId: PlatformId, providerId: AIProviderName): Promise<GetProviderConfigResponse> {
+    async getConfig(platformId: PlatformId, providerId: AIProviderName): Promise<AIProviderConfig> {
         const aiProvider = await aiProviderRepo().findOneOrFail({
             where: {
                 provider: providerId,
@@ -85,11 +85,6 @@ export const aiProviderService = {
 
         const config = await encryptUtils.decryptObject<AIProviderConfig>(aiProvider.config)
 
-        return { config }
+        return config
     },
 }
-
-export type GetProviderConfigResponse = {
-    config: AIProviderConfig;
-}
-

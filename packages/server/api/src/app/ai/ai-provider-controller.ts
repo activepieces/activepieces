@@ -1,4 +1,4 @@
-import { AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
+import { AIProviderConfig, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest } from '@activepieces/common-ai'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -48,6 +48,9 @@ const GetAIProviderConfig = {
         params: Type.Object({
             id: Type.Enum(AIProviderName),
         }),
+        response: {
+            [StatusCodes.OK]: AIProviderConfig,
+        },
     },
 }
 

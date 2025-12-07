@@ -60,7 +60,6 @@ import { UserInvitationEntity } from '../user-invitations/user-invitation.entity
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPostgresDataSource } from './postgres-connection'
 import { createSqlLiteDataSource } from './sqlite-connection'
-import { OpenRouterApiKeyEntity } from '../ai/proxy/openrouter/openrouter-api-key-entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -100,7 +99,6 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoActivityEntity,
         AIUsageEntity,
         TriggerSourceEntity,
-        OpenRouterApiKeyEntity,
     ]
 
     switch (edition) {

@@ -8,7 +8,7 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
     },
 
     async listModels(config: AzureProviderConfig): Promise<AIProviderModel[]> {
-        const endpoint = `${config.resourceName}.openai.azure.com`;
+        const endpoint = `https://${config.resourceName}.openai.azure.com`;
         const apiKey = config.apiKey;
         const apiVersion = '2024-10-21';
 

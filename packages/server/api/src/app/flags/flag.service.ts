@@ -69,7 +69,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.AGENTS_CONFIGURED,
-                value: await aiProviderService.isAgentConfigured(),
+                value: true,
                 created,
                 updated,
             },
