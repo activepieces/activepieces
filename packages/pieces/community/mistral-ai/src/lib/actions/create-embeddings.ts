@@ -18,18 +18,18 @@ export const createEmbeddings = createAction({
 	},
 	async run(context) {
 		const { input, timeout } = context.propsValue;
-		let inputArr: string[] = [];
-		try {
-			if (typeof input === 'string') {
-				try {
-					inputArr = JSON.parse(input);
-				} catch {
-					inputArr = input;
-				}
+		let inputArr: string[];
+		if (typeof input === 'string') {
+			try {
+				const parsed = JSON.parse(input);
+				inputArr = Array.isArray(parsed) ? parsed : [input];
+			} catch {
+				inputArr = [input];
 			}
+		} else if (Array.isArray(input)) {
 			inputArr = input as string[];
-		} catch {
-			throw new Error('Input must be a non-empty string or a JSON array of non-empty strings');
+		} else {
+			throw new Error('Input must be a string or array of strings');
 		}
 		const body = {
 			model: 'mistral-embed',

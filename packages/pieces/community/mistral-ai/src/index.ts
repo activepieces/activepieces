@@ -23,11 +23,9 @@ export const mistralAi = createPiece({
     createCustomApiCallAction({
       auth:mistralAuth,
       baseUrl:()=>'https://api.mistral.ai/v1',
-      authMapping:async (auth)=>{
-        return{
-          Authorization:`Bearer ${auth.secret_text}`
-        }
-      }
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${auth}`
+      })
     })
   ],
   triggers: [],

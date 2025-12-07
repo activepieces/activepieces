@@ -46,7 +46,8 @@ export const createChatCompletion = createAction({
 			temperature,
 			top_p,
 			max_tokens,
-			random_seed
+			random_seed,
+			stream: false
 		};
 		let lastErr;
 		for (let attempt = 0; attempt <= 3; ++attempt) {
