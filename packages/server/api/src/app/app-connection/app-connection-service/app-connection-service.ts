@@ -64,7 +64,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata } = params
         const pieceVersion = params.pieceVersion ?? ( await pieceMetadataService(log).getOrThrow({
             name: pieceName,
-            projectId: projectIds?.[0],
+            projectId: projectIds[0],
             platformId,
         })).version
         validatePieceVersion(pieceVersion)
@@ -72,7 +72,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const validatedConnectionValue = await validateConnectionValue({
             value,
             pieceName,
-            projectId: projectIds?.[0],
+            projectId: projectIds[0],
             platformId,
         }, log)
 
