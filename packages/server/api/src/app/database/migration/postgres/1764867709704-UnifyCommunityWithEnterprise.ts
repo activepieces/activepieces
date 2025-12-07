@@ -1,10 +1,9 @@
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
-export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInterface {
-    name = 'UnifyCommunityWithEnterprise1764567780604'
+export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInterface {
+    name = 'UnifyCommunityWithEnterprise1764867709704'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         if (isNotOneOfTheseEditions([ApEdition.COMMUNITY])) {
@@ -18,18 +17,6 @@ export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInter
         `)
         await queryRunner.query(`
             ALTER TABLE "app_credential" DROP CONSTRAINT "FK_d82bfb4c7432a69dc2419083a0e"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_created_archived_at"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_flow_id_status_created_archived_"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_status_created_archived_at"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_flow_id_created_archived_at"
         `)
         await queryRunner.query(`
             DROP INDEX "public"."idx_ai_usage_project_created"
@@ -286,9 +273,6 @@ export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInter
             ALTER TABLE "flow_run" DROP COLUMN "tasks"
         `)
         await queryRunner.query(`
-            ALTER TABLE "piece_metadata" DROP COLUMN "projectId"
-        `)
-        await queryRunner.query(`
             ALTER TABLE "platform" DROP COLUMN "showPoweredBy"
         `)
         await queryRunner.query(`
@@ -373,42 +357,6 @@ export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInter
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD "aiCredits" integer
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "environment",
-                "archivedAt",
-                "created"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_status_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "environment",
-                "status",
-                "archivedAt",
-                "created"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_flow_id_environment_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "flowId",
-                "environment",
-                "archivedAt",
-                "created"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_flow_id_environment_status_archived_at_created_desc" ON "flow_run" (
-                "projectId",
-                "flowId",
-                "environment",
-                "status",
-                "archivedAt",
-                "created"
-            )
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("platformId", "created", "projectId")
@@ -498,7 +446,6 @@ export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInter
             ALTER TABLE "platform_plan"
             ADD CONSTRAINT "fk_platform_plan_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
-        system.globalLogger().info('UnifyCommunityWithEnterprise1764567780604 up')
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
@@ -570,18 +517,6 @@ export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInter
         `)
         await queryRunner.query(`
             DROP INDEX "public"."idx_ai_usage_project_created"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_flow_id_environment_status_archived_at_created_desc"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_flow_id_environment_archived_at_created_desc"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_status_archived_at_created_desc"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_run_project_id_environment_archived_at_created_desc"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "aiCredits"
@@ -687,10 +622,6 @@ export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInter
             ADD "showPoweredBy" boolean NOT NULL
         `)
         await queryRunner.query(`
-            ALTER TABLE "piece_metadata"
-            ADD "projectId" character varying(21)
-        `)
-        await queryRunner.query(`
             ALTER TABLE "flow_run"
             ADD "tasks" integer
         `)
@@ -777,42 +708,6 @@ export class UnifyCommunityWithEnterprise1764567780604 implements MigrationInter
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("created", "projectId")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_flow_id_created_archived_at" ON "flow_run" (
-                "created",
-                "projectId",
-                "flowId",
-                "environment",
-                "archivedAt"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_status_created_archived_at" ON "flow_run" (
-                "created",
-                "projectId",
-                "environment",
-                "status",
-                "archivedAt"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_flow_id_status_created_archived_" ON "flow_run" (
-                "created",
-                "projectId",
-                "flowId",
-                "environment",
-                "status",
-                "archivedAt"
-            )
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_run_project_id_environment_created_archived_at" ON "flow_run" (
-                "created",
-                "projectId",
-                "environment",
-                "archivedAt"
-            )
         `)
         await queryRunner.query(`
             ALTER TABLE "app_credential"
