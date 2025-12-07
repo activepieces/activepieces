@@ -18,8 +18,8 @@ type CreateAIModelParams<IsImage extends boolean = false> = {
     isImage?: IsImage;
 }
 
-export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
 export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModelV2>;
+export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
 export async function createAIModel({
     providerId,
     modelId,
