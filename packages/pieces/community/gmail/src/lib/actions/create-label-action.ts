@@ -39,7 +39,8 @@ export const gmailCreateLabelAction = createAction({
     }),
     message_list_visibility: Property.StaticDropdown({
       displayName: 'Message List Visibility',
-      description: 'Whether messages with this label are shown in the message list',
+      description:
+        'Whether messages with this label are shown in the message list',
       required: false,
       defaultValue: 'show',
       options: {
@@ -68,7 +69,8 @@ export const gmailCreateLabelAction = createAction({
       requestBody: {
         name: context.propsValue.name,
         labelListVisibility: context.propsValue.label_list_visibility as any,
-        messageListVisibility: context.propsValue.message_list_visibility as any,
+        messageListVisibility: context.propsValue
+          .message_list_visibility as any,
       },
     });
 

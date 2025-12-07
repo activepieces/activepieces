@@ -78,7 +78,7 @@ export const gmailReplyToEmailAction = createAction({
       userId: 'me',
       id: context.propsValue.message_id,
       format: 'metadata',
-      metadataHeaders: ['Message-ID', 'Subject', 'From', 'To'],
+      metadataHeaders: ['Message-ID', 'Subject', 'From'],
     });
 
     const headers = originalMessage.data.payload?.headers || [];

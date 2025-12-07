@@ -143,7 +143,7 @@ async function pollRecentMessages({
           ),
         },
         thread: {
-          ...threadResponse,
+          ...threadResponse.data,
         },
       },
     });

@@ -6,7 +6,8 @@ import { OAuth2Client } from 'googleapis-common';
 export const gmailArchiveEmailAction = createAction({
   auth: gmailAuth,
   name: 'archive_email',
-  description: 'Archive an email (move to "All Mail" by removing the INBOX label)',
+  description:
+    'Archive an email (move to "All Mail" by removing the INBOX label)',
   displayName: 'Archive Email',
   props: {
     message_id: Property.ShortText({
