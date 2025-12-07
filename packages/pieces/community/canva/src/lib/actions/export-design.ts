@@ -59,7 +59,14 @@ export const exportDesign = createAction({
     const exportQuality = context.propsValue.export_quality;
     const pagesStr = context.propsValue.pages;
 
-    const body: any = {
+    const body: {
+      design_id: string;
+      format: {
+        type: string;
+        export_quality?: string;
+        pages?: number[];
+      };
+    } = {
       design_id: designId,
       format: {
         type: formatType,

@@ -47,7 +47,10 @@ export const importDesign = createAction({
     const titleBase64 = Buffer.from(title).toString('base64');
 
     // Build metadata
-    const metadata: any = {
+    const metadata: {
+      title_base64: string;
+      mime_type?: string;
+    } = {
       title_base64: titleBase64,
     };
 

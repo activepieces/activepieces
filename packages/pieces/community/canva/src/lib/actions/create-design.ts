@@ -62,7 +62,7 @@ export const createDesign = createAction({
     const token = context.auth.access_token;
     const designType = context.propsValue.design_type;
 
-    const body: any = {};
+    const body: Record<string, string | number | undefined> = {};
 
     if (designType === 'preset') {
       body.type = 'preset';
