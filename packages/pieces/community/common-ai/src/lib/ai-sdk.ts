@@ -18,14 +18,16 @@ type CreateAIModelParams<IsImage extends boolean = false> = {
     isImage?: IsImage;
 }
 
-export async function createAIModel<IsImage extends boolean = false>({
+export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
+export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModelV2>;
+export async function createAIModel({
     providerId,
     modelId,
     engineToken,
     apiUrl,
     openaiResponsesModel = false,
-    isImage = false as IsImage,
-}: CreateAIModelParams<IsImage>): Promise<IsImage extends true ? ImageModel : LanguageModelV2> {
+    isImage,
+}: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModelV2> {
     const { body: config } = await httpClient.sendRequest<AIProviderConfig>({
         method: HttpMethod.GET,
         url: `${apiUrl}v1/ai-providers/${providerId}/config`,
@@ -38,36 +40,36 @@ export async function createAIModel<IsImage extends boolean = false>({
         case AIProviderName.OPENAI: {
             const provider = createOpenAI({ apiKey: config.apiKey })
             if (isImage) {
-                return provider.imageModel(modelId) as any
+                return provider.imageModel(modelId)
             }
-            return (openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId)) as any
+            return (openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId))
         }
         case AIProviderName.ANTHROPIC: {
             const provider = createAnthropic({ apiKey: config.apiKey })
             if (isImage) {
                 throw new Error(`Provider ${providerId} does not support image models`)
             }
-            return provider(modelId) as any
+            return provider(modelId)
         }
         case AIProviderName.GOOGLE: {
             const provider = createGoogleGenerativeAI({ apiKey: config.apiKey })
 
-            return provider(modelId) as any
+            return provider(modelId)
         }
         case AIProviderName.AZURE: {
             const { apiKey, resourceName } = config as AzureProviderConfig
             const provider = createAzure({ resourceName, apiKey })
             if (isImage) {
-                return provider.imageModel(modelId) as any
+                return provider.imageModel(modelId)
             }
-            return provider.chat(modelId) as any
+            return provider.chat(modelId)
         }
         case AIProviderName.OPENROUTER || AIProviderName.ACTIVEPIECES: {
             const provider = createOpenRouter({ apiKey: config.apiKey })
             if (isImage) {
-                return provider.imageModel(modelId) as any
+                return provider.imageModel(modelId)
             }
-            return provider.chat(modelId) as any
+            return provider.chat(modelId)
         }
         default:
             throw new Error(`Provider ${providerId} is not supported`)
