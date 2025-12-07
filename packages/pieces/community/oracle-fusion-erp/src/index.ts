@@ -6,7 +6,6 @@ import { PieceCategory } from '@activepieces/shared';
 import { getEmployeeAction } from './lib/actions/get-employee';
 import { createInvoiceAction } from './lib/actions/create-invoice';
 import { getPurchaseOrderAction } from './lib/actions/get-purchase-order';
-import { getOAuthToken, OracleFusionAuth } from './lib/auth';
 
 export const oracleFusionErpAuth = PieceAuth.CustomAuth({
   description: 'Oracle Fusion Cloud ERP Authentication',
@@ -74,7 +73,13 @@ export const oracleFusionErp = createPiece({
           },
           body: 'grant_type=client_credentials',
         });
+        if (!tokenResponse.ok) {
+          throw new Error('Failed to fetch access token from Oracle Fusion Cloud ERP');
+        }
         const tokenData = await tokenResponse.json();
+        if (!tokenData.access_token) {
+          throw new Error('Failed to get access token from OAuth response');
+        }
         return { Authorization: `Bearer ${tokenData.access_token}` };
       },
     }),
