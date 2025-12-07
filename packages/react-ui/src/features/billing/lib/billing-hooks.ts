@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { toast } from '@/components/ui/use-toast';
 import { api } from '@/lib/api';
-import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
@@ -18,8 +17,6 @@ import { platformBillingApi } from './api';
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
     ['platform-billing-subscription', platformId] as const,
-  aiCreditsUsage: (params: ListAICreditsUsageRequest) =>
-    ['platform-billing-ai-credits-usage', params] as const,
 };
 
 export const billingMutations = {
@@ -147,12 +144,6 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
-    });
-  },
-  useAiCreditsUsage: (params: ListAICreditsUsageRequest) => {
-    return useQuery({
-      queryKey: billingKeys.aiCreditsUsage(params),
-      queryFn: () => platformBillingApi.listAiCreditsUsage(params),
     });
   },
 };

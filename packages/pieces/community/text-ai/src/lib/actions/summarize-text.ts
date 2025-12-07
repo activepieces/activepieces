@@ -49,7 +49,7 @@ export const summarizeText: Action = createAction({
       temperature: 1,
       providerOptions: {
         [providerId]: {
-          ...(providerId === AIProviderName.OpenAI ? { reasoning_effort: 'minimal' } : {}),
+          ...(providerId === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
         }
       }
     });

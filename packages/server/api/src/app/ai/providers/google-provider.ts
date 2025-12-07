@@ -4,10 +4,7 @@ import { GoogleProviderConfig, AIProviderModel, AIProviderModelType } from '@act
 
 
 export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
-    name() {
-        return 'Google';
-    },
-
+    name: 'Google',
     async listModels(config: GoogleProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: any[] }>({
             url: `https://generativelanguage.googleapis.com/v1beta/models?api_key=${config.apiKey}`,
@@ -23,7 +20,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
         return data.map((model: any) => ({
             id: model.name,
             name: model.displayName,
-            type: AIProviderModelType.Text,
+            type: AIProviderModelType.TEXT,
         }));
     },
 };

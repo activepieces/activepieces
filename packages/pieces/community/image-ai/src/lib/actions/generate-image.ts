@@ -36,7 +36,7 @@ const getGeneratedImage = async ({
     isImage: true,
   });
 
-  if (providerId !== AIProviderName.Google) {
+  if (providerId !== AIProviderName.GOOGLE) {
     const response = await generateImage({
       model: model,
       prompt: prompt,
@@ -128,7 +128,7 @@ export const generateImageAction = createAction({
 
         let options: InputPropertyMap = {};
 
-        if (providerId === AIProviderName.OpenAI) {
+        if (providerId === AIProviderName.OPENAI) {
           options = {
             quality: Property.StaticDropdown({
               options: {
@@ -200,7 +200,7 @@ export const generateImageAction = createAction({
         }
 
         if (
-          providerId === AIProviderName.Google &&
+          providerId === AIProviderName.GOOGLE &&
           modelId === 'gemini-2.5-flash-image-preview'
         ) {
           options = {

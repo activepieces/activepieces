@@ -3,10 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { AnthropicProviderConfig, AIProviderModel, AIProviderModelType } from '@activepieces/common-ai';
 
 export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
-    name() {
-        return 'Anthropic';
-    },
-
+    name: 'Anthropic',
     async listModels(config: AnthropicProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: any[] }>({
             url: `https://api.anthropic.com/v1/models`,
@@ -22,7 +19,7 @@ export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
         return data.map((model: any) => ({
             id: model.id,
             name: model.display_name,
-            type: AIProviderModelType.Text,
+            type: AIProviderModelType.TEXT,
         }));
     },
 };

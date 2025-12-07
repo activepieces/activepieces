@@ -3,10 +3,7 @@ import { AIProviderStrategy } from './ai-provider';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
-    name() {
-        return 'OpenAI';
-    },
-
+    name: 'OpenAI',
     async listModels(config: OpenAIProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: any[] }>({
             url: `https://api.openai.com/v1/models`,
@@ -28,7 +25,7 @@ export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
         return data.map((model: any) => ({
             id: model.id,
             name: model.id,
-            type: openaiImageModels.includes(model.id) ? AIProviderModelType.Image : AIProviderModelType.Text,
+            type: openaiImageModels.includes(model.id) ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }));
     },
 };

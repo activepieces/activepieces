@@ -35,26 +35,26 @@ export async function createAIModel<IsImage extends boolean = false>({
     });
 
     switch (providerId) {
-        case AIProviderName.OpenAI: {
+        case AIProviderName.OPENAI: {
             const provider = createOpenAI({ apiKey: config.apiKey })
             if (isImage) {
                 return provider.imageModel(modelId) as any
             }
             return (openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId)) as any
         }
-        case AIProviderName.Anthropic: {
+        case AIProviderName.ANTHROPIC: {
             const provider = createAnthropic({ apiKey: config.apiKey })
             if (isImage) {
                 throw new Error(`Provider ${providerId} does not support image models`)
             }
             return provider(modelId) as any
         }
-        case AIProviderName.Google: {
+        case AIProviderName.GOOGLE: {
             const provider = createGoogleGenerativeAI({ apiKey: config.apiKey })
 
             return provider(modelId) as any
         }
-        case AIProviderName.Azure: {
+        case AIProviderName.AZURE: {
             const { apiKey, resourceName } = config as AzureProviderConfig
             const provider = createAzure({ resourceName, apiKey })
             if (isImage) {
@@ -62,7 +62,7 @@ export async function createAIModel<IsImage extends boolean = false>({
             }
             return provider.chat(modelId) as any
         }
-        case AIProviderName.OpenRouter: {
+        case AIProviderName.OPENROUTER || AIProviderName.ACTIVEPIECES: {
             const provider = createOpenRouter({ apiKey: config.apiKey })
             if (isImage) {
                 return provider.imageModel(modelId) as any
@@ -77,7 +77,7 @@ export async function createAIModel<IsImage extends boolean = false>({
 export async function createOpenAIClient(engineToken: string, apiUrl: string): Promise<OpenAI> {
     const { body: config } = await httpClient.sendRequest<AIProviderConfig>({
         method: HttpMethod.GET,
-        url: `${apiUrl}v1/ai-providers/${AIProviderName.OpenAI}/config`,
+        url: `${apiUrl}v1/ai-providers/${AIProviderName.OPENAI}/config`,
         headers: {
             Authorization: `Bearer ${engineToken}`,
         },

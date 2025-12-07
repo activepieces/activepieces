@@ -32,7 +32,7 @@ export const checkModeration = createAction({
         });
 
         const openaiProvider = supportedProviders.find(
-          (provider) => provider.id === AIProviderName.OpenAI,
+          (provider) => provider.id === AIProviderName.OPENAI,
         );
 
         return {

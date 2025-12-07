@@ -21,8 +21,6 @@ import {
 } from '@activepieces/shared';
 
 import { billingMutations } from '../lib/billing-hooks';
-
-import { AiCreditsUsageTable } from './ai-credits-usage-table';
 import { EnableAIOverageDialog } from './enable-ai-credits-overage';
 
 interface AiCreditUsageProps {
@@ -303,7 +301,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
         )}
 
         <Separator />
-        <AiCreditsUsageTable />
         <EnableAIOverageDialog isOpen={isOpen} onOpenChange={setIsOpen} />
       </CardContent>
     </Card>

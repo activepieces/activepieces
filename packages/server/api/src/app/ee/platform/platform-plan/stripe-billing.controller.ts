@@ -6,7 +6,6 @@ import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
-import { platformUsageService } from '../platform-usage-service'
 import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
@@ -50,7 +49,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
                         const subscriptionEnded = webhook.type === 'customer.subscription.deleted'
                         if (subscriptionEnded) {
-                            await platformUsageService(request.log).resetPlatformUsage(platformId)
                             await platformPlanService(request.log).update({ 
                                 ...newLimits,
                                 platformId,

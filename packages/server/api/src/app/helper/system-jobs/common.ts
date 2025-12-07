@@ -9,7 +9,6 @@ export enum SystemJobName {
     TRIAL_TRACKER = 'trial-tracker',
     ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
-    AI_USAGE_REPORT = 'ai-usage-report',
     DELETE_FLOW = 'delete-flow',
 }
 
@@ -19,11 +18,6 @@ type IssuesSummarySystemJobData = {
     platformId: string
 }
 
-type AiUsageReportSystemJobData = {
-    platformId: PlatformId
-    overage: string
-    idempotencyKey: string
-}
 
 type DeleteFlowDurableSystemJobData =  {
     flow: Flow
@@ -33,7 +27,6 @@ type DeleteFlowDurableSystemJobData =  {
 
 type SystemJobDataMap = {
     [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
-    [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>

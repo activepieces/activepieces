@@ -69,6 +69,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.AGENTS_CONFIGURED,
+                // TODO (@abuaboud): add new check
                 value: true,
                 created,
                 updated,

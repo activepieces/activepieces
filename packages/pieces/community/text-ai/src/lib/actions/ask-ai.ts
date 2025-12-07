@@ -103,7 +103,7 @@ export const askAI = createAction({
           }),
         };
 
-        if (provider === AIProviderName.Anthropic) {
+        if (provider === AIProviderName.ANTHROPIC) {
           options = {
             ...options,
             allowedDomains: Property.Array({
@@ -134,7 +134,7 @@ export const askAI = createAction({
           };
         }
 
-        if (provider === AIProviderName.OpenAI) {
+        if (provider === AIProviderName.OPENAI) {
           options = {
             ...options,
             searchContextSize: Property.StaticDropdown({
@@ -229,7 +229,7 @@ export function createWebSearchTool(
   const defaultMaxUses = 5;
 
   switch (provider) {
-    case AIProviderName.Anthropic: {
+    case AIProviderName.ANTHROPIC: {
       const anthropicOptions = options as AnthropicWebSearchOptions;
       
       let allowedDomains: string[] | undefined;
@@ -268,7 +268,7 @@ export function createWebSearchTool(
       } as any;
     }
 
-    case AIProviderName.OpenAI: {
+    case AIProviderName.OPENAI: {
       const openaiOptions = options as OpenAIWebSearchOptions;
 
       return {
@@ -282,7 +282,7 @@ export function createWebSearchTool(
       } as any;
     }
 
-    case AIProviderName.Google: {
+    case AIProviderName.GOOGLE: {
       return {
         google_search: googleSearchTool({}),
       } as any;
