@@ -42,6 +42,12 @@ export const unsubscribeProfile = createAction({
     if (!email && !phone_number) {
       throw new Error('Either email or phone_number is required');
     }
+    if (channel === 'email' && !email) {
+      throw new Error('Email is required when unsubscribing from the email channel');
+    }
+    if (channel === 'sms' && !phone_number) {
+      throw new Error('Phone number is required when unsubscribing from the SMS channel');
+    }
 
     const profileData: any = {
       type: 'profile-subscription-bulk-delete-job',

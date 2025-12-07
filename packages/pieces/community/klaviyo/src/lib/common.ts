@@ -1,9 +1,12 @@
 import { Property } from '@activepieces/pieces-framework';
-import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { klaviyoAuth } from './auth';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
 const BASE_URL = 'https://a.klaviyo.com/api';
 const API_REVISION = '2024-10-15';
+
+export const escapeFilterValue = (value: string): string => {
+  return value.replace(/"/g, '\\"');
+};
 
 export const klaviyoCommon = {
   baseUrl: BASE_URL,
@@ -35,7 +38,7 @@ export const klaviyoCommon = {
     displayName: 'List',
     description: 'Select a Klaviyo list',
     required: true,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -77,7 +80,7 @@ export const klaviyoCommon = {
     displayName: 'Segment',
     description: 'Select a Klaviyo segment',
     required: true,
-    refreshers: [],
+    refreshers: ['auth'],
     options: async ({ auth }) => {
       if (!auth) {
         return {

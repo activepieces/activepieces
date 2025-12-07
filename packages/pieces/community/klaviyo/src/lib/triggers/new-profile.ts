@@ -10,7 +10,6 @@ const polling: Polling<string, Record<string, never>> = {
     const apiKey = auth as string;
 
     // Get profiles created after lastFetchEpochMS
-    const currentTime = new Date().toISOString();
     const items: any[] = [];
 
     try {

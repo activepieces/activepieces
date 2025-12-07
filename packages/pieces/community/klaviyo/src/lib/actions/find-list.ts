@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../auth';
-import { klaviyoCommon } from '../common';
+import { klaviyoCommon, escapeFilterValue } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findList = createAction({
@@ -18,7 +18,7 @@ export const findList = createAction({
   async run(context) {
     const { name } = context.propsValue;
 
-    const filter = `equals(name,"${name}")`;
+    const filter = `equals(name,"${escapeFilterValue(name)}")`;
 
     const response = await klaviyoCommon.makeRequest(
       context.auth,

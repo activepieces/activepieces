@@ -42,8 +42,13 @@ export const subscribeProfile = createAction({
     if (!email && !phone_number) {
       throw new Error('Either email or phone_number is required');
     }
+    if (channel === 'email' && !email) {
+      throw new Error('Email is required when subscribing to the email channel');
+    }
+    if (channel === 'sms' && !phone_number) {
+      throw new Error('Phone number is required when subscribing to the SMS channel');
+    }
 
-    const profiles = [];
     const profileData: any = {
       type: 'profile-subscription-bulk-create-job',
       attributes: {

@@ -1,6 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { klaviyoAuth } from '../auth';
-import { klaviyoCommon } from '../common';
+import { klaviyoCommon, escapeFilterValue } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 
 export const findProfile = createAction({
@@ -29,9 +29,9 @@ export const findProfile = createAction({
 
     let filter = '';
     if (email) {
-      filter = `equals(email,"${email}")`;
+      filter = `equals(email,"${escapeFilterValue(email)}")`;
     } else if (phone_number) {
-      filter = `equals(phone_number,"${phone_number}")`;
+      filter = `equals(phone_number,"${escapeFilterValue(phone_number)}")`;
     }
 
     const response = await klaviyoCommon.makeRequest(
