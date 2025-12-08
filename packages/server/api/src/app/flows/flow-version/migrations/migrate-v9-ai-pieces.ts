@@ -160,7 +160,13 @@ function extractModelFromInput(input: Record<string, unknown>): string {
     return (model as { modelId: string })?.modelId
 }
 
-function migrateModel(provider: string, modelId: string): { model: string, provider: string } {
+function migrateModel(provider: string | undefined, modelId: string): { model: string | undefined, provider: string | undefined } {
+    if (isNil(provider)) {
+        return {
+            provider,
+            model: modelId,
+        }
+    }
     const edition = system.getEdition()
     if (edition !== ApEdition.CLOUD) {
         return {
