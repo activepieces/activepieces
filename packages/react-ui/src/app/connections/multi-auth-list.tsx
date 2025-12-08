@@ -115,7 +115,10 @@ function createOAuth2Options(
     clientId: null,
   };
 
-  const canConnectWithPredefinedOAuth2App = predefinedOAuth2App && (grantType === OAuth2GrantType.AUTHORIZATION_CODE || grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE);
+  const canConnectWithPredefinedOAuth2App =
+    predefinedOAuth2App &&
+    (grantType === OAuth2GrantType.AUTHORIZATION_CODE ||
+      grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE);
   if (canConnectWithPredefinedOAuth2App) {
     options.push({
       label: `OAuth2 (Recommended)`,
@@ -125,12 +128,14 @@ function createOAuth2Options(
         oauth2App: predefinedOAuth2App,
       },
       description: t(
-        'Quickly connect using a preconfigured OAuth2 app. No setup required.'
+        'Quickly connect using a preconfigured OAuth2 app. No setup required.',
       ),
     });
   }
 
-  const canConnectWithOwnOAuth2App = grantType === OAuth2GrantType.AUTHORIZATION_CODE || grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
+  const canConnectWithOwnOAuth2App =
+    grantType === OAuth2GrantType.AUTHORIZATION_CODE ||
+    grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
   if (canConnectWithOwnOAuth2App) {
     options.push({
       label: `Custom OAuth2 App (Advanced)`,
@@ -140,12 +145,14 @@ function createOAuth2Options(
         oauth2App: emptyOAuth2App,
       },
       description: t(
-        'Connect using your own OAuth2 credentials for more flexibility and control.'
+        'Connect using your own OAuth2 credentials for more flexibility and control.',
       ),
     });
   }
 
-  const canConnectWithClientCredentials = grantType === OAuth2GrantType.CLIENT_CREDENTIALS || grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
+  const canConnectWithClientCredentials =
+    grantType === OAuth2GrantType.CLIENT_CREDENTIALS ||
+    grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
   if (canConnectWithClientCredentials) {
     options.push({
       label: `Server-to-Server (Client Credentials)`,
@@ -155,7 +162,7 @@ function createOAuth2Options(
         oauth2App: emptyOAuth2App,
       },
       description: t(
-        'Authenticate securely from your server using the Client Credentials flow. Ideal for backend integrations.'
+        'Authenticate securely from your server using the Client Credentials flow. Ideal for backend integrations.',
       ),
     });
   }
