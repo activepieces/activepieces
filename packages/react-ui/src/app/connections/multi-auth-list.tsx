@@ -23,6 +23,7 @@ import {
   PieceAuthProperty,
   PropertyType,
   DEFAULT_CONNECTION_DISPLAY_NAME,
+  OAuth2Props,
 } from '@activepieces/pieces-framework';
 import {
   AppConnectionType,
@@ -46,13 +47,13 @@ export function MutliAuthList({
           piecesOAuth2AppsMap,
           pieceName,
         );
-        return createOAuth2Options(auth, displayName, predefinedOAuth2App);
+        return createOAuth2Options(auth, predefinedOAuth2App);
       }
 
       return {
         label: displayName,
         value: { authProperty: auth, grantType: null, oauth2App: null },
-        description: auth.description,
+        description: '',
       };
     },
   );
@@ -66,7 +67,7 @@ export function MutliAuthList({
       <DialogHeader className="mb-0">
         <DialogTitle className="px-5">
           <div className="flex items-center gap-2">
-            {t('Choose Authentication Method')}
+            {t('Select an Authentication Method')}
           </div>
         </DialogTitle>
       </DialogHeader>
@@ -82,7 +83,7 @@ export function MutliAuthList({
             <Button variant="outline">{t('Cancel')}</Button>
           </DialogClose>
           <Button variant="default" onClick={() => confirmSelectedItem()}>
-            {t('Continue')}
+            {t('Next')}
           </Button>
         </div>
       </DialogFooter>
@@ -104,7 +105,6 @@ const getDisplayName = (auth: PieceAuthProperty): string => {
 
 function createOAuth2Options(
   auth: OAuth2Property<any>,
-  displayName: string,
   predefinedOAuth2App: OAuth2App | null,
 ): RadioGroupListItem<AuthListItem>[] {
   const options: RadioGroupListItem<AuthListItem>[] = [];
@@ -115,54 +115,54 @@ function createOAuth2Options(
     clientId: null,
   };
 
-  if (
+  const canConnectWithPredefinedOAuth2App =
     predefinedOAuth2App &&
     (grantType === OAuth2GrantType.AUTHORIZATION_CODE ||
-      grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE)
-  ) {
+      grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE);
+  if (canConnectWithPredefinedOAuth2App) {
     options.push({
-      label: `${displayName} ${t('(Easiest)')}`,
+      label: `OAuth2 (Recommended)`,
       value: {
         authProperty: auth,
         grantType: OAuth2GrantType.AUTHORIZATION_CODE,
         oauth2App: predefinedOAuth2App,
       },
       description: t(
-        'Use a predefined OAuth2 app for authentication, no extra configuration needed.',
+        'Quickly connect using a preconfigured OAuth2 app. No setup required.',
       ),
     });
   }
 
-  if (
+  const canConnectWithOwnOAuth2App =
     grantType === OAuth2GrantType.AUTHORIZATION_CODE ||
-    grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
-  ) {
+    grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
+  if (canConnectWithOwnOAuth2App) {
     options.push({
-      label: `${displayName} ${t('(Advanced)')}`,
+      label: `Custom OAuth2 App (Advanced)`,
       value: {
         authProperty: auth,
         grantType: OAuth2GrantType.AUTHORIZATION_CODE,
         oauth2App: emptyOAuth2App,
       },
       description: t(
-        'This option gives you full control over the authentication process by using your own OAuth2 app credentials.',
+        'Connect using your own OAuth2 credentials for more flexibility and control.',
       ),
     });
   }
 
-  if (
+  const canConnectWithClientCredentials =
     grantType === OAuth2GrantType.CLIENT_CREDENTIALS ||
-    grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE
-  ) {
+    grantType === BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE;
+  if (canConnectWithClientCredentials) {
     options.push({
-      label: `${displayName} ${t('(Client Credentials Grant)')}`,
+      label: `Server-to-Server (Client Credentials)`,
       value: {
         authProperty: auth,
         grantType: OAuth2GrantType.CLIENT_CREDENTIALS,
         oauth2App: emptyOAuth2App,
       },
       description: t(
-        'Create a connection without having to use a personal account.',
+        'Authenticate securely from your server using the Client Credentials flow. Ideal for backend integrations.',
       ),
     });
   }
@@ -177,7 +177,7 @@ export type AuthListItem =
       oauth2App: null;
     }
   | {
-      authProperty: OAuth2Property<any>;
+      authProperty: OAuth2Property<OAuth2Props>;
       grantType: OAuth2GrantType;
       oauth2App: OAuth2App;
     };

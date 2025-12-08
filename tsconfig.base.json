@@ -199,6 +199,9 @@
       "@activepieces/piece-image-router": [
         "packages/pieces/community/image-router/src/index.ts"
       ],
+      "@activepieces/piece-pollybot-ai": [
+        "packages/pieces/community/pollybot-ai/src/index.ts"
+      ],
       "@activepieces/piece-documerge": [
         "packages/pieces/community/documerge/src/index.ts"
       ],
@@ -222,6 +225,15 @@
       ],
       "@activepieces/piece-parser-expert": [
         "packages/pieces/community/parser-expert/src/index.ts"
+      ],
+      "@activepieces/piece-vidlab7": [
+        "packages/pieces/community/vidlab7/src/index.ts"
+      ],
+      "@activepieces/piece-meetgeek-ai": [
+        "packages/pieces/community/meetgeek-ai/src/index.ts"
+      ],
+      "@activepieces/piece-fellow": [
+        "packages/pieces/community/fellow/src/index.ts"
       ]
     },
     "resolveJsonModule": true
