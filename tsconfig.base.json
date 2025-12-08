@@ -225,6 +225,9 @@
       ],
       "@activepieces/piece-parser-expert": [
         "packages/pieces/community/parser-expert/src/index.ts"
+      ],
+      "@activepieces/piece-vidlab7": [
+        "packages/pieces/community/vidlab7/src/index.ts"
       ]
     },
     "resolveJsonModule": true
