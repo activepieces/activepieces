@@ -1,0 +1,19 @@
+{
+  "name": "langchain-ai-pro",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/langchain-ai-pro/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/langchain-ai-pro",
+        "main": "packages/pieces/community/langchain-ai-pro/src/index.ts",
+        "tsConfig": "packages/pieces/community/langchain-ai-pro/tsconfig.lib.json",
+        "assets": ["packages/pieces/community/langchain-ai-pro/*.md"]
+      }
+    }
+  }
+}

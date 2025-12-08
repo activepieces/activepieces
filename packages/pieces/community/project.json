@@ -1,0 +1,19 @@
+{
+  "name": "community",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community",
+        "main": "packages/pieces/community/src/index.ts",
+        "tsConfig": "packages/pieces/community/tsconfig.lib.json",
+        "assets": ["packages/pieces/community/*.md"]
+      }
+    }
+  }
+}
