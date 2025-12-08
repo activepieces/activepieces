@@ -5,6 +5,7 @@ import { newsArticlesSearch } from './lib/actions/news-articles-search';
 import { organizationJobPostings } from './lib/actions/organization-job-postings';
 import { organizationSearch } from './lib/actions/organization-search';
 import { peopleSearch } from './lib/actions/people-search';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const apolloAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -39,6 +40,15 @@ export const apollo = createPiece({
     organizationJobPostings,
     organizationSearch,
     peopleSearch,
+    createCustomApiCallAction({
+      auth: apolloAuth,
+      baseUrl: () => 'https://api.apollo.io/api/v1',
+      authMapping: async (auth) => {
+        return {
+          'x-api-key': auth.secret_text,
+        };
+      },
+    }),
   ],
   triggers: [],
 });
