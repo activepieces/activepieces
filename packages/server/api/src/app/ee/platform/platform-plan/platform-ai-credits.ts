@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
