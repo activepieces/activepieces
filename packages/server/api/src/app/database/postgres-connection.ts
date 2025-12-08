@@ -293,7 +293,6 @@ import { RemoveUnusedPaymentMethodColoumn1762709208569 } from './migration/postg
 import { AddFailedStepAndDurationToRunPostgres1762886424449 } from './migration/postgres/1762886424449-AddFailedStepAndDurationToRunPostgres'
 import { AddIconToProject1763377380235 } from './migration/postgres/1763377380235-AddIconToProject'
 import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migration/postgres/1763378445659-RemoveDurationAndAddArchivedAtIdxPostgres'
-
 import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378445660-AddLastUsedAtToApiKey'
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
@@ -302,6 +301,7 @@ import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-Ad
 import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
+import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -618,6 +618,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DropProjectIdFromPieceMetadata1764866386989,
         UnifyCommunityWithEnterprise1764867709704,
         AddMcpServer1764606838149,
+        AddOpenRouterKeyToPlatformPlan1765109187883,
         AddPieceVersionToAppConnection1764841091811,
     ]
     return migrations
