@@ -393,17 +393,6 @@ It is strongly recommended that you add your credit card information to your Ope
                 },
             },
             {
-                displayName: 'Claude 3.7 Sonnet (DEPRECATED)',
-                instance: anthropic('claude-3-7-sonnet-20250219'),
-                functionCalling: true,
-                webSearchCost: 0.01,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
-                    type: 'flat',
-                },
-            },
-            {
                 displayName: 'Claude 3.5 Haiku',
                 instance: anthropic('claude-3-5-haiku-20241022'),
                 functionCalling: true,
@@ -411,37 +400,6 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.80,
                     output: 4.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3.5 Sonnet (DEPRECATED)',
-                instance: anthropic('claude-3-5-sonnet-latest'),
-                functionCalling: true,
-                webSearchCost: 0.01,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3 Opus (DEPRECATED)',
-                instance: anthropic('claude-3-opus-20240229'),
-                functionCalling: true,
-                pricing: {
-                    input: 15.00,
-                    output: 75.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3 Sonnet (DEPRECATED)',
-                instance: anthropic('claude-3-sonnet-20240229'),
-                functionCalling: true,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
                     type: 'flat',
                 },
             },
