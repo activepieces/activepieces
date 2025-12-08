@@ -3,6 +3,7 @@ import {
     AppConnection,
     Cell,
     Field,
+    File,
     Flow,
     Folder,
     Platform,

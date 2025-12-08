@@ -9,6 +9,7 @@ const commonAuthProps = {
     pieceName: Type.String({}),
     projectId: Type.String({}),
     metadata: Type.Optional(Metadata),
+    pieceVersion: Type.Optional(Type.String({})),
 }
 
 

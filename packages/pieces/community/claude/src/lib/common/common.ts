@@ -20,10 +20,6 @@ export const modelOptions = [
     { value: 'claude-haiku-4-5-20251001', label: 'Claude 4.5 Haiku' },
     { value: 'claude-opus-4-1-20250805', label: 'Claude 4.1 Opus' },
     { value: 'claude-sonnet-4-20250514', label: 'Claude 4 Sonnet' },
-    { value: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet (DEPRECATED)' },
     { value: 'claude-3-haiku-20240307', label: 'Claude 3 Haiku' },
-    { value: 'claude-3-sonnet-20240229', label: 'Claude 3 Sonnet (DEPRECATED)' },
-    { value: 'claude-3-opus-20240229', label: 'Claude 3 Opus (DEPRECATED)' },
-    { value: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet (DEPRECATED)' },
     { value: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
 ]
