@@ -11,6 +11,7 @@ import {
     PlatformRole,
     Project,
     ProjectRole,
+    ProjectType,
     User,
     UserStatus,
 } from '@activepieces/shared'
@@ -290,12 +291,26 @@ describe('Authentication API', () => {
 
             const responseBody = response?.json()
 
+            const projects = await databaseConnection().getRepository('project').find({ where: { ownerId: responseBody?.id } })
+            expect(projects.length).toBe(1)
+            expect(projects[0].type).toBe(ProjectType.PERSONAL)
+
+            const teamProject = await databaseConnection().getRepository('project').findOne({ where: { displayName: mockProject.displayName } })
+            expect(teamProject).toBeDefined()
+
+            const projectMember = await databaseConnection().getRepository('project_member').findOne({ where: { projectId: teamProject?.id, userId: responseBody?.id } })
+            
+            expect(projectMember).toBeDefined()
+            expect(projectMember?.userId).toBe(responseBody?.id)
+            expect(projectMember?.projectId).toBe(teamProject?.id)
+            expect(projectMember?.platformId).toBe(mockPlatform.id)
+            expect(projectMember?.projectRoleId).toBe(editorRole.id)
+
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
             expect(responseBody?.platformId).toBeDefined()
             expect(responseBody?.status).toBe('ACTIVE')
             expect(responseBody?.verified).toBe(true)
-            expect(responseBody?.projectId).toBe(mockProject.id)
         })
 
         it('fails to sign up invited user platform if no project exist', async () => {
