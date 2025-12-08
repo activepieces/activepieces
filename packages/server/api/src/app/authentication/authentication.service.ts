@@ -41,21 +41,11 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             ...params,
             verified: true,
         })
-        const user = await userService.create({
-            identityId: userIdentity.id,
-            platformRole: PlatformRole.MEMBER,
-            platformId: params.platformId,
-        })
+        const user = await getUserOrCreate(userIdentity, params.platformId)
 
-        await projectService.create({
-            displayName: userIdentity.firstName + '\'s Project',
-            ownerId: user.id,
-            platformId: params.platformId,
-            type: ProjectType.PERSONAL,
-        })
-        
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
+            user,
         })
 
         return authenticationUtils.getProjectAndToken({
@@ -127,14 +117,13 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 password: await cryptoUtils.generateRandomPassword(),
             })
         }
+        const user = await getUserOrCreate(userIdentity, platformId)
+
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
+            user,
         })
-        const user = await userService.getOneByIdentityAndPlatform({
-            identityId: userIdentity.id,
-            platformId,
-        })
-        assertNotNullOrUndefined(user, 'User Identity is found but not the user')
+
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId,
@@ -276,6 +265,29 @@ async function getPersonalPlatformIdForIdentity(identityId: string): Promise<str
         return platform?.id ?? null
     }
     return null
+}
+
+async function getUserOrCreate(identity: UserIdentity, platformId: string): Promise<User> {
+    const user = await userService.getOneByIdentityAndPlatform({
+        identityId: identity.id,
+        platformId,
+    })
+    if (isNil(user)) {
+        const newUser = await userService.create({
+            identityId: identity.id,
+            platformId,
+            platformRole: PlatformRole.MEMBER,
+        })
+
+        await projectService.create({
+            displayName: identity.firstName + '\'s Project',
+            ownerId: newUser.id,
+            platformId,
+            type: ProjectType.PERSONAL,
+        })
+        return newUser
+    }
+    return user
 }
 
 
