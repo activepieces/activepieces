@@ -46,6 +46,23 @@ export const createPGliteDataSource = (): DataSource => {
                 },
 
             },
+            parsers: {
+                [types.BYTEA]: (val: unknown): Buffer => {
+                    if (val instanceof Buffer) {
+                        return val
+                    }
+                    if (typeof val === 'string') {
+                        if (val.startsWith('\\x')) {
+                            return Buffer.from(val.slice(2), 'hex')
+                        }
+                        return Buffer.from(val)
+                    }
+                    if (val && typeof val === 'object' && 'length' in val) {
+                        return Buffer.from(val as Uint8Array)
+                    }
+                    throw new Error(`Unexpected bytea value type: ${typeof val}`)
+                },
+            },
         }).driver,
         migrationsRun: true,
         migrationsTransactionMode: 'each',
