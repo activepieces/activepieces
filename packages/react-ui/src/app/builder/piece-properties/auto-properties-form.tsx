@@ -30,7 +30,7 @@ import { MultiSelectPieceProperty } from '../../../components/custom/multi-selec
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
 import { BuilderJsonEditorWrapper } from './builder-json-wrapper';
-import { CustomPropertiesRegistry } from './custom-properties';
+import { getCustomPropertiesRegistry } from './custom-properties';
 import CustomProperty from './custom-property';
 import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
@@ -138,7 +138,7 @@ export const selectFormComponentForProperty = ({
 }: selectFormComponentForPropertyParams) => {
   if (!isNil(actionPieceSettings)) {
     const key = `${actionPieceSettings.pieceName}:${actionPieceSettings.actionName}:${propertyName}`;
-    const registry = CustomPropertiesRegistry({ disabled, field });
+    const registry = getCustomPropertiesRegistry({ disabled, field });
 
     const customPropertyComponent = registry[key];
     if (customPropertyComponent) return customPropertyComponent;

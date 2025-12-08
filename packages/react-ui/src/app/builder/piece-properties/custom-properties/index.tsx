@@ -8,24 +8,28 @@ import {
   AgentPieceProps,
 } from '@activepieces/shared';
 
-type CustomPropertiesRegistryParams = {
+function input(pieceName: string, actionName: string, propertyName: string) {
+  return `${pieceName}:${actionName}:${propertyName}`
+}
+
+type GetCustomPropertiesRegistryParams = {
   field: ControllerRenderProps<Record<string, any>, string>;
   disabled: boolean;
 };
 
-export const CustomPropertiesRegistry = ({
+export const getCustomPropertiesRegistry = ({
   disabled,
   field,
-}: CustomPropertiesRegistryParams): Record<string, JSX.Element> => {
+}: GetCustomPropertiesRegistryParams): Record<string, JSX.Element> => {
   return {
-    [`${AGENT_PIECE_NAME}:${AGENT_ACTION_NAME}:${AgentPieceProps.AGENT_TOOLS}`]:
-      <AgentTools disabled={disabled} agentToolsField={field} />,
-    [`${AGENT_PIECE_NAME}:${AGENT_ACTION_NAME}:${AgentPieceProps.STRUCTURED_OUTPUT}`]:
-      (
-        <AgentStructuredOutput
-          disabled={disabled}
-          structuredOutputField={field}
-        />
-      ),
+    [input(AGENT_PIECE_NAME, AGENT_ACTION_NAME, AgentPieceProps.AGENT_TOOLS)]: (
+      <AgentTools disabled={disabled} agentToolsField={field} />
+    ),
+    [input(AGENT_PIECE_NAME, AGENT_ACTION_NAME, AgentPieceProps.STRUCTURED_OUTPUT)]: (
+      <AgentStructuredOutput
+        disabled={disabled}
+        structuredOutputField={field}
+      />
+    )
   };
 };
