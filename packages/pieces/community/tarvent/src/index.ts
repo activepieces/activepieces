@@ -1,6 +1,6 @@
 
 import { createPiece, PieceAuth, Property } from "@activepieces/pieces-framework";
-import { PieceCategory } from "@activepieces/shared";
+import { AppConnectionType, PieceCategory } from "@activepieces/shared";
 import { makeClient } from "./lib/common";
 import { campaignSendFinishedTrigger, contactAddedTrigger, contactBouncedTrigger, contactClickedTrigger, contactGroupUpdatedTrigger, contactNoteAddedTrigger, contactOpenedTrigger, contactRepliedTrigger, contactStatusUpdatedTrigger, contactTagUpdatedTrigger, contactUnsubscribedTrigger, contactUpdatedTrigger, formSubmittedTrigger, pagePerformedTrigger, surveySubmittedTrigger, transactionCreatedTrigger, transactionSentTrigger } from "./lib/triggers";
 import { updateContactTags, sendCampaign, createAudienceGroup, updateContactGroup, createContactNote, updateContactJourney, updateContactStatus, generateCustomEvent, updateJourneyStatus, createSuppressionFilter, getAudiences, getAudienceGroups, getCampaigns, getContact, getCustomEvent, getJourney, createContact, createTransaction } from "./lib/actions";
@@ -29,7 +29,10 @@ export const tarventAuth = PieceAuth.CustomAuth({
   },
   validate: async ({ auth }) => {
     try {
-      const client = makeClient(auth);
+      const client = makeClient({
+        props:auth,
+        type: AppConnectionType.CUSTOM_AUTH,
+      });
       await client.authenticate();
       return { valid: true };
     } catch (error) {

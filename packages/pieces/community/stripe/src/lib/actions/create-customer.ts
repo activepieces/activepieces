@@ -64,7 +64,7 @@ export const stripeCreateCustomer = createAction({
       method: HttpMethod.POST,
       url: 'https://api.stripe.com/v1/customers',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       body: {

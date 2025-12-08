@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getTransactionTimes = createAction({
+ auth:PieceAuth.None(),
   name: 'get_transaction_times',
   displayName: 'Get Transaction Times',
   description: 'Get timing information for a transaction including first seen and block entry times',

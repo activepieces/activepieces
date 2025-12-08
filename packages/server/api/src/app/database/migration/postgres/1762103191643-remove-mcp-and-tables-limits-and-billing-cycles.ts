@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 implements MigrationInterface {
     name = 'RemoveMcpAndTablesLimitsAndBillingCycles1762103191643'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "tablesLimit"
         `)
@@ -16,6 +21,9 @@ export class RemoveMcpAndTablesLimitsAndBillingCycles1762103191643 implements Mi
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ADD "stripeBillingCycle" character varying NOT NULL

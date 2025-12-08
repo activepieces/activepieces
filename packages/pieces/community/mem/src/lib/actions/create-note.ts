@@ -32,7 +32,7 @@ export const createNoteAction = createAction({
       add_to_collections,
     } = context.propsValue;
 
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const body: Record<string, unknown> = {
       content,

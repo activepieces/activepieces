@@ -1,4 +1,3 @@
-import { AIProvider } from '@activepieces/common-ai'
 import {
     ApiKey,
     ApplicationEvent,
@@ -15,9 +14,10 @@ import {
     ProjectMember,
     SigningKey,
 } from '@activepieces/ee-shared'
+import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
-import {
-    AiOverageState,
+import { AiOverageState,
+    AIProvider,
     apId,
     AppConnection,
     AppConnectionScope,
@@ -157,7 +157,6 @@ export const createMockPlan = (plan?: Partial<ProjectPlan>): ProjectPlan => {
         updated: plan?.updated ?? faker.date.recent().toISOString(),
         projectId: plan?.projectId ?? apId(),
         name: plan?.name ?? faker.lorem.word(),
-        aiCredits: plan?.aiCredits ?? 0,
         locked: plan?.locked ?? false,
         pieces: plan?.pieces ?? [],
         piecesFilterType: plan?.piecesFilterType ?? PiecesFilterType.NONE,
@@ -416,6 +415,7 @@ export const createMockPieceMetadata = (
             pieceMetadata?.packageType ?? faker.helpers.enumValue(PackageType),
         archiveId: pieceMetadata?.archiveId,
         categories: pieceMetadata?.categories ?? [],
+        contextInfo: pieceMetadata?.contextInfo ?? { version: LATEST_CONTEXT_VERSION },
     }
 }
 
@@ -548,6 +548,7 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
         metadata: connection?.metadata ?? {},
         externalId: connection?.externalId ?? apId(),
         owner: null,
+        pieceVersion: connection?.pieceVersion ?? '0.0.0',
     }
 }
 

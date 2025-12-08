@@ -4,6 +4,7 @@ import {
   PiecePropValueSchema,
   Property,
   StaticPropsValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -20,13 +21,13 @@ const props = {
     required: false,
   }),
 };
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof appfollowAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     if (lastItemId === undefined || lastItemId === null) {
       lastItemId = '0';
     }
-    const response = await makeRequest(auth, HttpMethod.GET, `/account/apps`);
+    const response = await makeRequest(auth.secret_text, HttpMethod.GET, `/account/apps`);
     const tags = response.apps.tags;
     return tags.reverse().map((item: any) => ({
       id: item.id,
@@ -54,13 +55,11 @@ export const newTag = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

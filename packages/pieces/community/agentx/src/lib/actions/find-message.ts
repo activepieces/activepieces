@@ -38,7 +38,7 @@ export const findMessage = createAction({
     const { agentId, conversationId, searchTerm } = propsValue;
 
     const conversation = await makeRequest(
-      auth,
+      auth.secret_text,
       HttpMethod.GET,
       `/agents/${agentId}/conversations/${conversationId}`
     ) as ConversationDetail;

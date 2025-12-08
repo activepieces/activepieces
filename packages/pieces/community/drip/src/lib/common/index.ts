@@ -1,15 +1,17 @@
-import { Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, Property } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
   HttpMethod,
   httpClient,
 } from '@activepieces/pieces-common';
+import { dripAuth } from '../..';
 
 export const dripCommon = {
   baseUrl: (accountId: string) => {
     return `https://api.getdrip.com/v2/${accountId}`;
   },
   account_id: Property.Dropdown({
+    auth: dripAuth,
     displayName: 'Account',
     required: true,
     refreshers: [],
@@ -26,7 +28,7 @@ export const dripCommon = {
         method: HttpMethod.GET,
         url: 'https://api.getdrip.com/v2/accounts',
         headers: {
-          Authorization: `Basic ${Buffer.from(auth as string).toString(
+          Authorization: `Basic ${Buffer.from(auth.secret_text  ).toString(
             'base64'
           )}`,
         },
@@ -58,6 +60,6 @@ export const dripCommon = {
     required: false,
     description: 'Custom field data about the subscriber',
   }),
-  authorizationHeader: (apiKey: string) =>
-    `Basic ${Buffer.from(apiKey).toString('base64')}`,
+  authorizationHeader: (apiKey: AppConnectionValueForAuthProperty<typeof dripAuth>) =>
+    `Basic ${Buffer.from(apiKey.secret_text).toString('base64')}`,
 };

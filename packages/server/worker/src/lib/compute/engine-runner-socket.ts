@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil, SendFlowResponseRequest, UpdateRunProgressRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { type Socket, Server as SocketIOServer } from 'socket.io'
 
@@ -113,6 +113,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             onStdout,
             onStderr,
             updateRunProgress,
+            updateStepProgress,
             sendFlowResponse,
         }: {
             workerId: string
@@ -120,6 +121,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             onStdout: (stdout: EngineStdout) => void
             onStderr: (stderr: EngineStderr) => void
             updateRunProgress: (data: UpdateRunProgressRequest, log: FastifyBaseLogger) => Promise<void>
+            updateStepProgress: (data: UpdateStepProgressRequest, log: FastifyBaseLogger) => Promise<void>
             sendFlowResponse: (data: SendFlowResponseRequest, log: FastifyBaseLogger) => Promise<void>
         }): void {
             const socket = sockets[workerId]
@@ -144,6 +146,11 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
 
             socket.on(EngineSocketEvent.UPDATE_RUN_PROGRESS, async (data: UpdateRunProgressRequest, callback: () => void) => {
                 await updateRunProgress(data, log)
+                callback()
+            })
+            
+            socket.on(EngineSocketEvent.UPDATE_STEP_PROGRESS, async (data: UpdateStepProgressRequest, callback: () => void) => {
+                await updateStepProgress(data, log)
                 callback()
             })
 

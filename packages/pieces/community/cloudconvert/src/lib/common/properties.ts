@@ -1,5 +1,6 @@
 import { Property } from '@activepieces/pieces-framework';
 import { CloudConvertClient } from './client';
+import { cloudconvertAuth } from './auth';
 
 const outputFormatDropdown = () =>
   Property.Dropdown({
@@ -7,6 +8,7 @@ const outputFormatDropdown = () =>
     description: 'The target format to convert to',
     required: true,
     refreshers: ['auth'],
+    auth: cloudconvertAuth,
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -17,7 +19,7 @@ const outputFormatDropdown = () =>
       }
 
       try {
-        const client = new CloudConvertClient(auth);
+        const client = new CloudConvertClient(auth.props);
         const formats = await client.getSupportedFormats();
 
         if (formats.length === 0) {
@@ -76,67 +78,11 @@ const outputFormatDropdown = () =>
     },
   });
 
-const inputFormatDropdown = ({ required = false }: { required?: boolean }) =>
-  Property.Dropdown({
-    displayName: 'Input Format',
-    description: 'The current format of the file. If not set, the extension of the input file is used',
-    required,
-    refreshers: ['auth'],
-    options: async ({ auth }) => {
-      if (!auth) {
-        return {
-          disabled: true,
-          placeholder: 'Connect your CloudConvert account first',
-          options: [],
-        };
-      }
 
-      try {
-        const client = new CloudConvertClient(auth);
-        const formats = await client.getSupportedFormats();
-
-        if (formats.length === 0) {
-          return {
-            disabled: true,
-            placeholder: 'No supported formats found',
-            options: [],
-          };
-        }
-
-        const inputFormats = new Set<string>();
-        formats.forEach((format: any) => {
-          inputFormats.add(format.input_format);
-        });
-
-        const options = Array.from(inputFormats).map(format => ({
-          label: format.toUpperCase(),
-          value: format,
-        }));
-
-        const popularFormats = ['pdf', 'docx', 'jpg', 'png', 'mp4', 'mp3'];
-        options.sort((a, b) => {
-          const aPopular = popularFormats.includes(a.value);
-          const bPopular = popularFormats.includes(b.value);
-          if (aPopular && !bPopular) return -1;
-          if (!aPopular && bPopular) return 1;
-          return a.label.localeCompare(b.label);
-        });
-
-        return {
-          options: options.slice(0, 50),
-        };
-      } catch (error) {
-        return {
-          disabled: true,
-          placeholder: 'Error loading formats - please try again',
-          options: [],
-        };
-      }
-    },
-  });
 
 const engineDropdown = ({ required = false }: { required?: boolean }) =>
   Property.Dropdown({
+    auth: cloudconvertAuth,
     displayName: 'Engine',
     description: 'Use a specific engine for the conversion',
     required,

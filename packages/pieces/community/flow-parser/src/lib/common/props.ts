@@ -8,6 +8,7 @@ export const templateDropdown = Property.Dropdown({
   displayName: 'Template',
   description: 'Select a template to monitor for new parsed documents',
   required: true,
+  auth: flowParserAuth,
   refreshers: ['auth'],
   options: async ({ auth }) => {
     if (!auth) {
@@ -28,7 +29,7 @@ export const templateDropdown = Property.Dropdown({
         method: HttpMethod.GET,
         url: `${BASE_URL}/documents/templates`,
         headers: {
-          flow_api_key: auth as string,
+          flow_api_key: auth.secret_text,
         },
       });
 

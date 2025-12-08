@@ -1,5 +1,6 @@
 import { createAction, Property, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { netlifyAuth } from "../common/auth";
 
 export const listSiteDeploys = createAction({
   name: "list_site_deploys",
@@ -7,7 +8,7 @@ export const listSiteDeploys = createAction({
   description: "Returns a list of all deploys for a specific site.",
   props: {
     siteId: Property.Dropdown({
-      displayName: "Site",
+      auth: netlifyAuth,      displayName: "Site",
       description: "Select the site to list deploys for",
       required: true,
       refreshers: ['auth'],

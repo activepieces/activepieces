@@ -22,7 +22,7 @@ export const getTaskStatusAction = createAction({
       method: HttpMethod.GET,
       url: BASE_URL + `/task_status/${taskId}`,
       headers: {
-        'X-API-key': apiKey,
+        'X-API-key': apiKey.secret_text,
       },
     });
 

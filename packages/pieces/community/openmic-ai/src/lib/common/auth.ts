@@ -1,6 +1,7 @@
 import { PieceAuth } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const openmicAiAuth = PieceAuth.SecretText({
   displayName: 'Openmic AI API Key',
@@ -15,7 +16,10 @@ To get your Openmic AI API key:
   validate: async ({ auth }) => {
     if (auth) {
       try {
-        await makeRequest(auth as string, HttpMethod.GET, '/calls');
+        await makeRequest({
+          secret_text: auth,
+          type: AppConnectionType.SECRET_TEXT,
+        }, HttpMethod.GET, '/calls');
         return {
           valid: true,
         };

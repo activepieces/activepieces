@@ -40,11 +40,12 @@ export const trimVersionFromAlias = (alias: string): string => {
 export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams): T => {
     const { module, pieceName, pieceVersion } = params
     const exports = Object.values(module)
-
+    const constructors = []
     for (const e of exports) {
         if (e !== null && e !== undefined && e.constructor.name === 'Piece') {
             return e as T
         }
+        constructors.push(e?.constructor?.name)
     }
 
     throw new ActivepiecesError({
@@ -52,7 +53,7 @@ export const extractPieceFromModule = <T>(params: ExtractPieceFromModuleParams):
         params: {
             pieceName,
             pieceVersion,
-            message: 'Failed to extract piece from module.',
+            message: `Failed to extract piece from module, found constructors: ${constructors.join(', ')}`,
         },
     })
 }

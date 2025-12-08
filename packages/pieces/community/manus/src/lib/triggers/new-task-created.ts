@@ -3,12 +3,14 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { manusAuth } from '../common/auth';
 
 export const newTaskCreated = createTrigger({
   name: 'new_task_created',
   displayName: 'New Task Created',
   description: 'Triggers when a new task is successfully created in Manus',
   props: {},
+  auth: manusAuth,
   sampleData: {
     event_id: "task_created_task_abc123",
     event_type: "task_created",
@@ -16,7 +18,7 @@ export const newTaskCreated = createTrigger({
       task_id: "task_abc123",
       task_title: "Generate quarterly sales report",
       task_url: "https://manus.im/app/task_abc123"
-    }
+    },
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable({ webhookUrl, store, auth }) {
@@ -27,7 +29,7 @@ export const newTaskCreated = createTrigger({
         headers: {
           'accept': 'application/json',
           'content-type': 'application/json',
-          'API_KEY': auth as string,
+          'API_KEY': auth.secret_text,
         },
         body: {
           webhook: {
@@ -52,7 +54,7 @@ export const newTaskCreated = createTrigger({
           url: `https://api.manus.ai/v1/webhooks/${webhookId}`,
           headers: {
             'accept': 'application/json',
-            'API_KEY': auth as string,
+            'API_KEY': auth.secret_text,
           },
         });
       }

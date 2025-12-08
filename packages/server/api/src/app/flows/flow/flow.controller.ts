@@ -100,13 +100,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             )
         }
         await assertThatFlowIsNotBeingUsed(flow, userId)
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
-            action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                request: request.body,
-                flowVersion: flow.version,
-            },
-        })
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
@@ -114,13 +107,19 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             operation: cleanOperation(request.body),
         })
-
+        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+            action: ApplicationEventName.FLOW_UPDATED,
+            data: {
+                request: request.body,
+                flowVersion: flow.version,
+            },
+        })
         return updatedFlow
     })
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
         return flowService(request.log).list({
-            projectId: request.principal.projectId,
+            projectIds: [request.principal.projectId],
             folderId: request.query.folderId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,

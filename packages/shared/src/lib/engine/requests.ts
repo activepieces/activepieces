@@ -27,6 +27,12 @@ export const UpdateRunProgressRequest = Type.Object({
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 
 
+export const UpdateStepProgressRequest = Type.Object({
+    projectId: Type.String(),
+    stepResponse: StepRunResponse,
+})
+export type UpdateStepProgressRequest = Static<typeof UpdateStepProgressRequest>
+
 export const UploadLogsQueryParams = Type.Object({
     token: Type.String(),
 })

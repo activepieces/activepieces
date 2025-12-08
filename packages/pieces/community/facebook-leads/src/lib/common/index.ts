@@ -7,10 +7,12 @@ import {
 	FacebookPageDropdown,
 	FacebookPaginatedResponse,
 } from './types';
+import { facebookLeadsAuth } from '../../index';
 
 export const facebookLeadsCommon = {
 	baseUrl: 'https://graph.facebook.com',
 	page: Property.Dropdown({
+		auth: facebookLeadsAuth,
 		displayName: 'Page',
 		required: true,
 		refreshers: [],
@@ -69,6 +71,7 @@ export const facebookLeadsCommon = {
 		},
 	}),
 	form: Property.Dropdown({
+		auth: facebookLeadsAuth,
 		displayName: 'Form',
 		required: false,
 		refreshers: ['page'],

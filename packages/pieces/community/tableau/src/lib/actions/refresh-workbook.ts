@@ -16,7 +16,7 @@ export const refreshWorkbook = createAction({
   auth: tableauAuth,
   props: {
     workbookId: Property.Dropdown({
-      displayName: 'Workbook',
+ auth: tableauAuth,     displayName: 'Workbook',
       description: 'Select the workbook to refresh',
       required: true,
       refreshers: ['auth'],

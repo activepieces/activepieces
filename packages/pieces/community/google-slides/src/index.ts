@@ -31,7 +31,7 @@ export const googleSlide = createPiece({
       baseUrl: () => 'https://slides.googleapis.com/v1/presentations/',
       auth: googleSlidesAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${(auth).access_token}`,
       }),
     }),
   ],

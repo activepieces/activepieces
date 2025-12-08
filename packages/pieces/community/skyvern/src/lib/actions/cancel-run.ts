@@ -18,7 +18,7 @@ export const cancelRunAction = createAction({
 		const { runId } = context.propsValue;
 
 		const response = await skyvernApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/runs/${runId}/cancel`,
 		});

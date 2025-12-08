@@ -17,9 +17,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@activepieces/common-ai": [
-        "packages/pieces/community/common-ai/src/index.ts"
-      ],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
@@ -178,6 +175,9 @@
       "@activepieces/piece-chaindesk": [
         "packages/pieces/community/chaindesk/src/index.ts"
       ],
+      "@activepieces/piece-orimon": [
+        "packages/pieces/community/orimon/src/index.ts"
+      ],
       "@activepieces/piece-linkup": [
         "packages/pieces/community/linkup/src/index.ts"
       ],
@@ -187,7 +187,55 @@
       "@activepieces/piece-flow-parser": [
         "packages/pieces/community/flow-parser/src/index.ts"
       ],
-      "@pragmaia/mineru": ["packages/pieces/custom/mineru/src/index.ts"]
+      "@activepieces/piece-writesonic-bulk": [
+        "packages/pieces/community/writesonic-bulk/src/index.ts"
+      ],
+      "@activepieces/piece-documentpro": [
+        "packages/pieces/community/documentpro/src/index.ts"
+      ],
+      "@activepieces/piece-image-router": [
+        "packages/pieces/community/image-router/src/index.ts"
+      ],
+      "@activepieces/piece-pollybot-ai": [
+        "packages/pieces/community/pollybot-ai/src/index.ts"
+      ],
+      "@activepieces/piece-documerge": [
+        "packages/pieces/community/documerge/src/index.ts"
+      ],
+      "@activepieces/piece-letta": [
+        "packages/pieces/community/letta/src/index.ts"
+      ],
+      "@activepieces/piece-logrocket": [
+        "packages/pieces/community/logrocket/src/index.ts"
+      ],
+      "@activepieces/piece-couchbase": [
+        "packages/pieces/community/couchbase/src/index.ts"
+      ],
+      "@activepieces/piece-cursor": [
+        "packages/pieces/community/cursor/src/index.ts"
+      ],
+      "@activepieces/piece-gptzero-detect-ai": [
+        "packages/pieces/community/gptzero-detect-ai/src/index.ts"
+      ],
+      "@activepieces/piece-bursty-ai": [
+        "packages/pieces/community/bursty-ai/src/index.ts"
+      ],
+      "@activepieces/piece-tl-dv": [
+        "packages/pieces/community/tl-dv/src/index.ts"
+      ],
+      "@activepieces/piece-parser-expert": [
+        "packages/pieces/community/parser-expert/src/index.ts"
+      ],
+      "@activepieces/piece-vidlab7": [
+        "packages/pieces/community/vidlab7/src/index.ts"
+      ],
+      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
+      "@activepieces/piece-meetgeek-ai": [
+        "packages/pieces/community/meetgeek-ai/src/index.ts"
+      ],
+      "@activepieces/piece-fellow": [
+        "packages/pieces/community/fellow/src/index.ts"
+      ]
     },
     "resolveJsonModule": true
   },

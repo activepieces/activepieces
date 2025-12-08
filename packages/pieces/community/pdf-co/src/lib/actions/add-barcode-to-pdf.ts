@@ -129,7 +129,7 @@ export const addBarcodeToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/barcode/generate`,
 				headers: {
-					'x-api-key': auth as string,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: generateBarcodeBody,
@@ -189,7 +189,7 @@ export const addBarcodeToPdf = createAction({
 				method: HttpMethod.POST,
 				url: `${BASE_URL}/pdf/edit/add`,
 				headers: {
-					'x-api-key': auth as string,
+					'x-api-key': auth.secret_text,
 					'Content-Type': 'application/json',
 				},
 				body: addImageBody,

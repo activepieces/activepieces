@@ -46,6 +46,7 @@ export const findRecords = createAction({
             }
         }),
         fieldName: Property.Dropdown({
+            auth: insightlyAuth,
             displayName: 'Field Name',
             description: 'Select the field to search by',
             required: true,

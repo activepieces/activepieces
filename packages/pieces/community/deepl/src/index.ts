@@ -60,7 +60,7 @@ export const deepl = createPiece({
           : 'https://api.deepl.com/v2', // Replace with the actual base URL
       auth: deeplAuth,
       authMapping: async (auth) => ({
-        Authorization: `DeepL-Auth-Key ${(auth as { key: string }).key}`,
+        Authorization: `DeepL-Auth-Key ${auth.props.key}`,
       }),
     }),
   ],

@@ -35,7 +35,7 @@ export const getPartnership = createAction({
           context.propsValue.siret,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
       })
     ).body;

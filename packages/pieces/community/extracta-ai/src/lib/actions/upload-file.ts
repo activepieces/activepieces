@@ -28,7 +28,7 @@ export const uploadFile = createAction({
     })
   },
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
     const { file, extractionId, batchId } = context.propsValue;
 
     const fileExtension = file.filename.split('.').pop()?.toLowerCase();

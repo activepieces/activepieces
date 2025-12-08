@@ -1,11 +1,15 @@
 import { ApEdition, TeamProjectsLimit } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class RenameManageProjectsToTeamProjectLimits1764100884963 implements MigrationInterface {
     name = 'RenameManageProjectsToTeamProjectLimits1764100884963'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         const edition = system.getEdition()
         
         await queryRunner.query(`
@@ -34,6 +38,9 @@ export class RenameManageProjectsToTeamProjectLimits1764100884963 implements Mig
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ADD "manageProjectsEnabled" boolean

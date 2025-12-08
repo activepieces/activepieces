@@ -2,6 +2,7 @@ import {
   Property,
   OAuth2PropertyValue,
   DropdownOption,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   HttpRequest,
@@ -9,6 +10,7 @@ import {
   AuthenticationType,
   httpClient,
 } from '@activepieces/pieces-common';
+import { typeformAuth } from '../..';
 
 type FormListResponse = {
   page_count: number;
@@ -19,13 +21,14 @@ type FormListResponse = {
   }[];
 };
 
-export const formsDropdown = Property.Dropdown<string>({
+export const formsDropdown = Property.Dropdown<string, true, typeof typeformAuth>({
+  auth: typeformAuth,
   displayName: 'Form',
   description: 'Form Name',
   required: true,
   refreshers: [],
   async options({ auth: authentication }) {
-    const auth = authentication as OAuth2PropertyValue;
+    const auth = authentication;
 
     if (!auth) {
       return {

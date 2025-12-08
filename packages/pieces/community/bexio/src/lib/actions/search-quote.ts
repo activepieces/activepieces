@@ -1,4 +1,4 @@
-import { createAction, Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { bexioAuth } from '../../index';
 import { BexioClient } from '../common/client';
 

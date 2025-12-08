@@ -1,11 +1,15 @@
 import { ApEdition, apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class RenameProjectBillingToPlatformPLan1747819919988 implements MigrationInterface {
     name = 'RenameProjectBillingToPlatformPLan1747819919988'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         const tableExists = await queryRunner.hasTable('platform_billing')
 
         if (tableExists) {
@@ -199,6 +203,9 @@ export class RenameProjectBillingToPlatformPLan1747819919988 implements Migratio
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         // Add columns back to platform table
         await queryRunner.query(`
             ALTER TABLE "platform" 

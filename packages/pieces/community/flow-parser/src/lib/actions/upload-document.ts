@@ -37,7 +37,7 @@ export const uploadDocument = createAction({
         method: HttpMethod.POST,
         url: `${BASE_URL}/documents`,
         headers: {
-          flow_api_key: auth as string,
+          flow_api_key: auth.secret_text,
         },
         body: formData,
       });

@@ -25,7 +25,7 @@ export const presentation = createPiece({
       baseUrl: () => 'https://api.presenton.ai/api/v1',
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

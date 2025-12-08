@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   StaticPropsValue,
@@ -13,12 +14,12 @@ import dayjs from 'dayjs';
 import { zohoCampaignsAuth, zohoCampaignsCommon } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof zohoCampaignsAuth>,
+  AppConnectionValueForAuthProperty<typeof zohoCampaignsAuth>,
   StaticPropsValue<any>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
     const accessToken = auth.access_token;
     const { listkey } = propsValue;
 

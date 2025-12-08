@@ -76,11 +76,11 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
             platformId,
             version: undefined,
         })
-        const auth = pieceMetadata.auth
-        assertNotNullOrUndefined(auth, 'auth')
-        switch (auth.type) {
+        const pieceAuth = Array.isArray(pieceMetadata.auth) ? pieceMetadata.auth.find(auth => auth.type === PropertyType.OAUTH2) : pieceMetadata.auth
+        assertNotNullOrUndefined(pieceAuth, 'auth')
+        switch (pieceAuth.type) {
             case PropertyType.OAUTH2:
-                return resolveValueFromProps(props, auth.tokenUrl)
+                return resolveValueFromProps(props, pieceAuth.tokenUrl)
             default:
                 throw new ActivepiecesError({
                     code: ErrorCode.INVALID_APP_CONNECTION,
@@ -110,5 +110,5 @@ type OAuth2TokenUrlParams = {
     projectId: string | undefined
     platformId: PlatformId
     pieceName: string
-    props?: Record<string, string>
+    props?: Record<string, unknown>
 }

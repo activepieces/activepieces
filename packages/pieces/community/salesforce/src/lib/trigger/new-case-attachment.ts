@@ -5,6 +5,7 @@ import {
     pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+    AppConnectionValueForAuthProperty,
     OAuth2PropertyValue,
     TriggerStrategy,
     createTrigger,
@@ -43,7 +44,7 @@ export const newCaseAttachment = createTrigger({
     },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof salesforceAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, lastFetchEpochMS }) => {
         const isoDate = dayjs(lastFetchEpochMS).toISOString();

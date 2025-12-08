@@ -1,31 +1,29 @@
+import { instabaseAuth } from '../../index';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
-export interface InstabaseAuth {
-  apiToken: string;
-  ibContext?: string;
-  apiRoot: string;
-}
 
-export const createInstabaseHeaders = (auth: InstabaseAuth): Record<string, string> => {
+
+export const createInstabaseHeaders = (auth: AppConnectionValueForAuthProperty<typeof instabaseAuth>): Record<string, string> => {
   const headers: Record<string, string> = {
-    'Authorization': `Bearer ${auth.apiToken}`,
+    'Authorization': `Bearer ${auth.props.apiToken}`,
     'Content-Type': 'application/json',
   };
 
-  if (auth.ibContext) {
-    headers['IB-Context'] = auth.ibContext;
+  if (auth.props.ibContext) {
+    headers['IB-Context'] = auth.props.ibContext;
   }
 
   return headers;
 };
 
 export const makeInstabaseApiCall = async <T = any>(
-  auth: InstabaseAuth,
+  auth: AppConnectionValueForAuthProperty<typeof instabaseAuth>,
   endpoint: string,
   method: HttpMethod = HttpMethod.GET,
   body?: any
 ): Promise<T> => {
-  const url = `${auth.apiRoot}${endpoint}`;
+  const url = `${auth.props.apiRoot}${endpoint}`;
   const headers = createInstabaseHeaders(auth);
 
   const response = await httpClient.sendRequest<T>({
@@ -35,7 +33,7 @@ export const makeInstabaseApiCall = async <T = any>(
     body,
     authentication: {
       type: AuthenticationType.BEARER_TOKEN,
-      token: auth.apiToken,
+      token: auth.props.apiToken,
     },
   });
 

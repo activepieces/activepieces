@@ -32,7 +32,7 @@ export const googleContacts = createPiece({
       baseUrl: () => googleContactsCommon.baseUrl,
       auth: googleContactsAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${(auth).access_token}`,
       }),
     }),
   ],

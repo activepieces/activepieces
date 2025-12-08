@@ -157,7 +157,7 @@ export const generatePresentations = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const apiKey = auth as string;
+    const apiKey = auth.secret_text;
     const {
       content,
       slides_markdown,

@@ -185,7 +185,7 @@ export const findTicketsAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       search_type,
       ticket_id,
@@ -205,12 +205,13 @@ export const findTicketsAction = createAction({
 
     let query = 'type:ticket';
 
+    // https://support.zendesk.com/hc/en-us/articles/4408886879258-Zendesk-Support-search-reference
     switch (search_type) {
       case 'id':
         if (!ticket_id) {
           throw new Error('Ticket ID is required when searching by ID.');
         }
-        query += ` id:${ticket_id}`;
+        query += ` ${ticket_id}`;
         break;
       case 'status':
         if (!status) {
@@ -287,13 +288,13 @@ export const findTicketsAction = createAction({
     try {
       const response = await httpClient.sendRequest({
         url: `https://${
-          authentication.subdomain
+          authentication.props.subdomain
         }.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
       });
 

@@ -36,7 +36,7 @@ export const searchRecordsAction = createAction({
       context.propsValue;
 
     const client = makeClient(context.auth);
-    const authVersion = context.auth.version || 3;
+    const authVersion = context.auth.props.version || 3;
     const response = await client.listRecords(
       baseId,
       tableId,

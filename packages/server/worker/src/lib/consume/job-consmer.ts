@@ -36,7 +36,6 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                     switch (jobData.jobType) {
                         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                         case WorkerJobType.EXECUTE_PROPERTY:
-                        case WorkerJobType.EXECUTE_TOOL:
                         case WorkerJobType.EXECUTE_VALIDATION:
                         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
                             await userInteractionJobExecutor(log).execute(jobData, engineToken, timeoutInSeconds)
@@ -90,7 +89,6 @@ const getTimeoutForWorkerJob = (jobType: WorkerJobType): number => {
             return dayjs.duration(workerMachine.getSettings().TRIGGER_HOOKS_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-        case WorkerJobType.EXECUTE_TOOL:
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_POLLING:

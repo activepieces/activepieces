@@ -34,6 +34,7 @@ export const createProjectAction = createAction({
       required: false,
     }),
     pr_state_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Project Status',
       description: 'Status of the project',
       required: true,
@@ -48,7 +49,7 @@ export const createProjectAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const states = await client.get<Array<{ id: number; name: string }>>('/2.0/pr_project_state');
 
           return {
@@ -68,6 +69,7 @@ export const createProjectAction = createAction({
       },
     }),
     pr_project_type_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Project Type',
       description: 'Type of project',
       required: true,
@@ -82,7 +84,7 @@ export const createProjectAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const types = await client.get<Array<{ id: number; name: string }>>('/2.0/pr_project_type');
 
           return {
@@ -102,6 +104,7 @@ export const createProjectAction = createAction({
       },
     }),
     contact_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Contact',
       description: 'Contact associated with this project',
       required: true,
@@ -116,7 +119,7 @@ export const createProjectAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -148,6 +151,7 @@ export const createProjectAction = createAction({
       },
     }),
     contact_sub_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Contact Sub',
       description: 'Contact sub-address (optional)',
       required: false,
@@ -162,7 +166,7 @@ export const createProjectAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -232,6 +236,7 @@ export const createProjectAction = createAction({
       required: false,
     }),
     user_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'User',
       description: 'User responsible for this project',
       required: true,
@@ -246,7 +251,7 @@ export const createProjectAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const users = await client.get<Array<{
             id: number;
             firstname?: string | null;

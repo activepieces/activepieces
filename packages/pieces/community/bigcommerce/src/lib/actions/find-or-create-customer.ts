@@ -48,7 +48,7 @@ export const findOrCreateCustomer = createAction({
       params.append('phone:in', context.propsValue.phone);
 
     const response = await bigCommerceApiService.fetchCustomers({
-      auth: context.auth,
+      auth: context.auth.props,
       queryString: params.toString(),
     });
 
@@ -57,8 +57,8 @@ export const findOrCreateCustomer = createAction({
     }
 
     const newCustomer = await bigCommerceApiService.createCustomer({
-      auth: context.auth,
-      payload: [
+      auth: context.auth.props,
+      payload: [  
         {
           email: context.propsValue.email,
           first_name: context.propsValue.first_name,

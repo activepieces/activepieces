@@ -1,6 +1,7 @@
 import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { appfollowAuth } from './auth';
 
 export function formatDate(epochMS: any) {
   const d = new Date(epochMS);
@@ -10,6 +11,7 @@ export function formatDate(epochMS: any) {
   return `${year}-${month}-${day}`;
 }
 export const collection_idDropdown = Property.Dropdown({
+  auth: appfollowAuth,
   displayName: 'Collection Name',
   description: 'Select the collection name',
   required: true,
@@ -25,7 +27,7 @@ export const collection_idDropdown = Property.Dropdown({
 
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/account/apps`
       );
@@ -48,6 +50,7 @@ export const collection_idDropdown = Property.Dropdown({
 });
 
 export const application_ext_idDropdown = Property.Dropdown({
+  auth: appfollowAuth,
   displayName: 'Application',
   description: 'Select the application',
   required: true,
@@ -69,7 +72,7 @@ export const application_ext_idDropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/account/apps/app?apps_id=${collection_id}`
       );
@@ -93,6 +96,7 @@ export const application_ext_idDropdown = Property.Dropdown({
 });
 
 export const review_ID_Dropdown = Property.Dropdown({
+  auth: appfollowAuth,
   displayName: 'Review ID',
   description: 'Select the Review ID',
   required: true,
@@ -114,7 +118,7 @@ export const review_ID_Dropdown = Property.Dropdown({
     }
     try {
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.GET,
         `/reviews?ext_id=${app_ext_id}&from=${fromDate}&to=${toDate}`
       );
