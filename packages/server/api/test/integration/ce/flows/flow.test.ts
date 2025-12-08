@@ -204,7 +204,7 @@ describe('Flow API', () => {
             const responseBody: PopulatedFlow | undefined = response?.json()
             expect(responseBody).toBeDefined()
             if (responseBody) {
-                expect(Object.keys(responseBody)).toHaveLength(11)
+                expect(Object.keys(responseBody)).toHaveLength(12)
                 expect(responseBody.id).toBe(mockFlow.id)
                 expect(responseBody.created).toBeDefined()
                 expect(responseBody.updated).toBeDefined()
