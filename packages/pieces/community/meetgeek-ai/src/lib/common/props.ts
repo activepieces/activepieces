@@ -24,7 +24,13 @@ export const meetingIdDropdwon = Property.Dropdown({
         HttpMethod.GET,
         '/meetings'
       );
-
+      if (!response.meetings || response.meetings.length === 0) {
+        return {
+          disabled: true,
+          placeholder: 'No meetings found',
+          options: [],
+        };
+      }
       return {
         disabled: false,
         options: response.meetings.map((meeting: any) => ({

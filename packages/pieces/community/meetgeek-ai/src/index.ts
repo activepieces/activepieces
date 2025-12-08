@@ -5,7 +5,6 @@ import { getMeetingsSummaryInsights } from './lib/actions/get-meetings-summary-i
 import { getTeamMeetings } from './lib/actions/get-team-meetings';
 import { getTranscript } from './lib/actions/get-transcript';
 import { uploadRecording } from './lib/actions/upload-recording';
-import { newHighlight } from './lib/triggers/new-highlight';
 import { newMeeting } from './lib/triggers/new-meeting';
 import { meetgeekaiAuth } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';
@@ -28,5 +27,5 @@ export const meetgeekAi = createPiece({
     getTranscript,
     uploadRecording,
   ],
-  triggers: [newHighlight, newMeeting],
+  triggers: [newMeeting],
 });
