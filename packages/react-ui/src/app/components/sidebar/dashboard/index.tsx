@@ -45,6 +45,7 @@ import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
 import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
+import { SidebarThemeToggle } from '../sidebar-theme-toggle';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
@@ -363,6 +364,7 @@ export function ProjectDashboardSidebar() {
               <SidebarUsageLimits />
             </div>
           )}
+          <SidebarThemeToggle />
           <SidebarUser />
         </SidebarFooter>
       </Sidebar>

@@ -16,6 +16,7 @@ import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 import { AllowOnlyLoggedInUserOnlyGuard } from '../../allow-logged-in-user-only-guard';
 import { AppSidebarHeader } from '../sidebar-header';
+import { SidebarThemeToggle } from '../sidebar-theme-toggle';
 import { SidebarUser } from '../sidebar-user';
 
 import { FlowsNavigation } from './flows-navigation';
@@ -42,6 +43,7 @@ function BuilderSidebarContent() {
         <TablesNavigation />
       </SidebarContent>
       <SidebarFooter onClick={(e) => e.stopPropagation()}>
+        <SidebarThemeToggle />
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>
