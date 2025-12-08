@@ -10,7 +10,7 @@ import { meetgeekaiAuth } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';
 
 export const meetgeekAi = createPiece({
-  displayName: 'Meetgeek-ai',
+  displayName: 'Meetgeek',
   auth: meetgeekaiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/meetgeek-ai.png',
@@ -18,6 +18,7 @@ export const meetgeekAi = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.COMMUNICATION,
   ],
+  description: 'AI-powered meeting assistant that automates note-taking, summarization, and insights generation for your meetings.',
   authors: ['sanket-a11y'],
   actions: [
     getHighlights,
