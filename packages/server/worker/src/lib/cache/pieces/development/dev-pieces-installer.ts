@@ -1,5 +1,3 @@
-
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { filePiecesUtils, spawnWithKill } from '@activepieces/server-shared'
@@ -19,11 +17,7 @@ const sharedPiecesPackages = () => {
             path: resolve(cwd(), 'dist', 'packages', 'shared'),
         },
     }
-    if (existsSync(baseDistPath + '/pieces/community/common-ai')) {
-        packages['@activepieces/common-ai'] = {
-            path: resolve(cwd(), baseDistPath, 'pieces', 'community', 'common-ai'),
-        }
-    }
+
     return packages
 }
 
@@ -79,6 +73,16 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
         ))
     }
 
+    async function installDepsForSharedPackages() {
+        await Promise.all(Object.values(sharedPiecesPackages()).map(pkg =>
+            spawnWithKill({ cmd: `bun install --cwd ${pkg.path} --silent`, printOutput: true }).catch(e => {
+                log.error({
+                    name: 'installDepsForSharedPackages',
+                    message: JSON.stringify(e),
+                }, 'Error installing dependencies for shared packages')
+            }),
+        ))
+    }
     async function linkSharedActivepiecesPackagesToEachOther() {
         await initSharedPackagesLinks()
 
@@ -90,6 +94,7 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
     }
 
     return {
+        installDepsForSharedPackages,
         installPiecesDependencies,
         linkSharedActivepiecesPackagesToPiece,
         linkSharedActivepiecesPackagesToEachOther,

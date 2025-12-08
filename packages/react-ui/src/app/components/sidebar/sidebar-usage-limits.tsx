@@ -106,8 +106,11 @@ const SidebarUsageLimits = React.memo(() => {
           </div>
           <UsageProgress
             name={t('AI Credits')}
-            value={project.usage.aiCredits}
-            max={project.plan.aiCredits}
+            value={platform.usage?.aiCredits ?? 0}
+            max={
+              platform.plan.includedAiCredits +
+              (platform.plan.aiCreditsOverageLimit ?? 0)
+            }
           />
           <UsageProgress
             name={t('Active Flows')}
@@ -118,7 +121,9 @@ const SidebarUsageLimits = React.memo(() => {
         <div className="text-xs text-muted-foreground flex justify-between w-full">
           <span>
             {t('Usage resets in')}{' '}
-            {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+            {getTimeUntilNextReset(
+              dayjs().add(1, 'month').startOf('month').valueOf(),
+            )}{' '}
           </span>
           {isPlatformAdmin && (
             <FlagGuard flag={ApFlagId.SHOW_BILLING}>

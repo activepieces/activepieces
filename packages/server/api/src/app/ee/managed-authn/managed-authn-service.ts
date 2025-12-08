@@ -31,7 +31,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             externalAccessToken,
         )
 
-        const { project, isNewProject } = await getOrCreateProject({
+        const { project } = await getOrCreateProject({
             platformId: externalPrincipal.platformId,
             externalProjectId: externalPrincipal.externalProjectId,
         })
@@ -48,9 +48,7 @@ export const managedAuthnService = (log: FastifyBaseLogger) => ({
             projectId: project.id,
             piecesTags: externalPrincipal.pieces.tags,
             piecesFilterType: externalPrincipal.pieces.filterType,
-            aiCredits: externalPrincipal.aiCredits,
             log,
-            isNewProject,
         })
 
         const user = await getOrCreateUser(externalPrincipal, log)
@@ -98,25 +96,18 @@ type UpdateProjectLimitsParams =
         projectId: string
         piecesTags: string[]
         piecesFilterType: PiecesFilterType
-        aiCredits: number | undefined
         log: FastifyBaseLogger
-        isNewProject: boolean
     }
 
-const updateProjectLimits = async (
-    { platformId, projectId, piecesTags, piecesFilterType, aiCredits, log, isNewProject }:
-    UpdateProjectLimitsParams,
-): Promise<void> => {
+const updateProjectLimits = async ({ platformId, projectId, piecesTags, piecesFilterType, log }: UpdateProjectLimitsParams): Promise<void> => {
     const pieces = await getPiecesList({
         platformId,
         projectId,
         piecesTags,
         piecesFilterType,
     })
-    const aiCreditsLimit = isNewProject ? (aiCredits ?? 200) : aiCredits
     await projectLimitsService(log).upsert({
         nickname: 'default-embeddings-limit',
-        aiCredits: aiCreditsLimit,
         pieces,
         piecesFilterType,
     }, projectId)
