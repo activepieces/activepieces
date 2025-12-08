@@ -1,6 +1,6 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { DatabaseType, system } from '../../../helper/system/system'
+import { system } from '../../../helper/system/system'
 
 const log = system.globalLogger()
 const databaseType = system.get(AppSystemProp.DB_TYPE)

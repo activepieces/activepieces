@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import {
     DataSource,
@@ -32,7 +32,7 @@ import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
-import { DatabaseType, system } from '../helper/system/system'
+import { system } from '../helper/system/system'
 import { McpServerEntity } from '../mcp/mcp-entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
@@ -53,7 +53,6 @@ import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-en
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { WorkerMachineEntity } from '../workers/machine/machine-entity'
-import { migrateSqliteToPGlite, shouldMigrateSqliteToPGlite } from './migration/sqlite-to-pglite'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 
@@ -120,7 +119,6 @@ export const commonProperties = {
 }
 
 let _databaseConnection: DataSource | null = null
-let _migrationCompleted = false
 
 const createDataSource = (): DataSource => {
     switch (databaseType) {
@@ -129,13 +127,6 @@ const createDataSource = (): DataSource => {
         case DatabaseType.POSTGRES:
         default:
             return createPostgresDataSource()
-    }
-}
-
-export const migrateSqliteToPGliteIfNeeded = async (): Promise<void> => {
-    if (databaseType === DatabaseType.PGLITE && !_migrationCompleted && await shouldMigrateSqliteToPGlite()) {
-        await migrateSqliteToPGlite()
-        _migrationCompleted = true
     }
 }
 

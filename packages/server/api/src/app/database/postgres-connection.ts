@@ -301,6 +301,7 @@ import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migratio
 import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
+import { MigrateSqliteToPglite1765200617000 } from './migration/postgres/1765200617000-MigrateSqliteToPglite'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -617,6 +618,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         DropProjectIdFromPieceMetadata1764866386989,
         UnifyCommunityWithEnterprise1764867709704,
         AddMcpServer1764606838149,
+        MigrateSqliteToPglite1765200617000,
     ]
     return migrations
 }

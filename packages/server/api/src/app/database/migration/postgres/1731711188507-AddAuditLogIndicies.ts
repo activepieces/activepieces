@@ -1,7 +1,7 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { DatabaseType, system } from '../../../helper/system/system'
+import { system } from '../../../helper/system/system'
 import { isNotOneOfTheseEditions } from '../../database-common'
 
 const log = system.globalLogger()
