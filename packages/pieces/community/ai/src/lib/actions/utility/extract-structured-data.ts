@@ -144,6 +144,8 @@ export const extractStructuredData = createAction({
 		});
 
 		let schemaDefinition: any;
+		// Track sanitized-to-original name mapping to restore output keys.
+		const sanitizedNameMap: Record<string, string> = {};
 		
 		if (context.propsValue.mode === 'advanced') {
 			const ajv = new Ajv();
@@ -171,17 +173,16 @@ export const extractStructuredData = createAction({
 			const required: string[] = [];
 
 			fields.forEach((field) => {
-				if (!/^[a-zA-Z0-9_.-]+$/.test(field.name)) {
-					throw new Error(`Invalid field name: ${field.name}. Field names can only contain letters, numbers, underscores, dots and hyphens.`);
-				}
+				const sanitizedFieldName = field.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+				sanitizedNameMap[sanitizedFieldName] = field.name;
 
-				properties[field.name] = {
+				properties[sanitizedFieldName] = {
 					type: field.type,
 					description: field.description,
 				};
 
 				if (field.isRequired) {
-					required.push(field.name);
+					required.push(sanitizedFieldName);
 				}
 			});
 
@@ -262,6 +263,16 @@ export const extractStructuredData = createAction({
 			}
 
 			const extractedData = toolCalls[0].input;
+
+			if (Object.keys(sanitizedNameMap).length > 0 && extractedData && typeof extractedData === 'object') {
+				const restoredData: Record<string, unknown> = {};
+				for (const [key, value] of Object.entries(extractedData)) {
+					const originalName = sanitizedNameMap[key] ?? key;
+					restoredData[originalName] = value;
+				}
+				return restoredData;
+			}
+
 			return extractedData;
 
 		} catch (error) {
