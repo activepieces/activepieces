@@ -24,13 +24,12 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import { CreateTodoDialog } from './add-todo-step-dialog';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
-import RunAgentActionItem from './run-agent-action-item';
 type PieceActionsOrTriggersListProps = {
   hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions | null;
   operation: PieceSelectorOperation;
 };
-const convertStepMetadataToPieceSelectorItems = (
+export const convertStepMetadataToPieceSelectorItems = (
   stepMetadataWithSuggestions: StepMetadataWithSuggestions,
 ): PieceSelectorItem[] => {
   switch (stepMetadataWithSuggestions.type) {
@@ -99,23 +98,10 @@ export const PieceActionsOrTriggersList: React.FC<
             const isCreateTodoAction =
               item.type === FlowActionType.PIECE &&
               item.actionOrTrigger.name === 'createTodo';
-            const isRunAgentAction =
-              item.type === FlowActionType.PIECE &&
-              item.actionOrTrigger.name === 'run_agent';
 
             if (isCreateTodoAction) {
               return (
                 <CreateTodoDialog
-                  key={index}
-                  pieceSelectorItem={item}
-                  operation={operation}
-                  hidePieceIconAndDescription={hidePieceIconAndDescription}
-                />
-              );
-            }
-            if (isRunAgentAction) {
-              return (
-                <RunAgentActionItem
                   key={index}
                   pieceSelectorItem={item}
                   operation={operation}

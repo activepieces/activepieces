@@ -31,10 +31,6 @@ export const ProjectPlanEntity = new EntitySchema<ProjectPlanSchema>({
         piecesFilterType: {
             type: String,
         },
-        aiCredits: {
-            type: Number,
-            nullable: true,
-        },
     },
     indices: [
         {

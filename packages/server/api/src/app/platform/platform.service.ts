@@ -18,7 +18,6 @@ import {
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../ee/platform/platform-usage-service'
 import { defaultTheme } from '../flags/theme'
 import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
@@ -182,7 +181,7 @@ async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> 
     if (edition === ApEdition.COMMUNITY) {
         return undefined
     }
-    return platformUsageService(system.globalLogger()).getAllPlatformUsage(platform.id)
+    return platformPlanService(system.globalLogger()).getUsage(platform.id)
 }
 
 async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
