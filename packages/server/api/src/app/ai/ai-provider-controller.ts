@@ -53,17 +53,6 @@ const GetAIProviderConfig = {
     },
 }
 
-const ListAllModels = {
-    config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
-    },
-    schema: {
-        response: {
-            [StatusCodes.OK]: Type.Array(AIProviderModel),
-        },
-    },
-}
-
 const ListModels = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,

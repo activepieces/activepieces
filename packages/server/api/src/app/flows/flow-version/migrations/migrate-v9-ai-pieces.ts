@@ -5,6 +5,7 @@ import {
     FlowActionType,
     flowStructureUtil,
     FlowVersion,
+    isNil,
     PieceAction,
 } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
@@ -105,6 +106,7 @@ function migrateTextai(step: PieceAction): FlowAction {
 
 function migrateImageai(step: PieceAction): FlowAction {
     const input = step.settings?.input as Record<string, unknown>
+    const files = 'image' in input && !isNil(input.image) ? [{ file: input.image }] : input.files
     return {
         ...step,
         settings: {
@@ -113,6 +115,7 @@ function migrateImageai(step: PieceAction): FlowAction {
             pieceVersion: '0.0.1',
             input: {
                 ...input,
+                images: files,
                 ...migrateModel(input.provider as string, extractModelFromInput(input)),
                 resolution: undefined,
                 advancedOptions: {
@@ -128,14 +131,14 @@ const modelIdToOpenRouter: Record<string, string> = {
     // Anthropic
     'claude-haiku-4-5-20251001': 'claude-haiku-4.5',
     'claude-sonnet-4-5-20250929': 'claude-sonnet-4.5',
-    'claude-sonnet-4-20250514': 'claude-sonnet-4',
-    'claude-3-5-haiku-20241022': 'claude-3.5-haiku',
+    'claude-sonnet-4-20250514': 'claude-sonnet-4.5',
+    'claude-3-5-haiku-20241022': 'claude-haiku-4.5',
     'claude-opus-4-1-20250805': 'claude-opus-4.1',
-    'claude-3-7-sonnet-20250219': 'claude-3.7-sonnet',
-    'claude-3-5-sonnet-latest': 'claude-3.5-sonnet',
-    'claude-3-opus-20240229': 'claude-3.opus',
-    'claude-3-sonnet-20240229': 'claude-3.sonnet',
-    'claude-3-haiku-20240307': 'claude-3.haiku',
+    'claude-3-7-sonnet-20250219': 'claude-sonnet-4.5',
+    'claude-3-5-sonnet-latest': 'claude-sonnet-4.5',
+    'claude-3-opus-20240229': 'claude-opus-4.1',
+    'claude-3-sonnet-20240229': 'claude-sonnet-4.5',
+    'claude-3-haiku-20240307': 'claude-haiku-4.5',
 
     // Google Gemini models
     'gemini-3-pro-preview': 'gemini-3-pro-preview',
@@ -144,6 +147,9 @@ const modelIdToOpenRouter: Record<string, string> = {
     'gemini-2.5-flash-lite': 'gemini-2.5-flash-lite',
     'gemini-2.5-flash-lite-preview-06-17': 'gemini-2.5-flash-lite-preview-09-2025',
     'gemini-2.0-flash-lite': 'gemini-2.0-flash-lite-001',
+
+    // OpenAI models
+    'gpt-5-chat-latest': 'gpt-5-chat',
 }
 
 function extractModelFromInput(input: Record<string, unknown>): string {
