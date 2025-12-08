@@ -29,12 +29,12 @@ type AIPieceActionsListProps = {
 };
 
 const ACTION_ICON_MAP: Record<string, string> = {
-  run_agent: 'https://cdn.activepieces.com/pieces/image-ai.svg',
-  generateImage: 'https://cdn.activepieces.com/pieces/text-ai.svg',
-  askAi: 'https://cdn.activepieces.com/pieces/video-ai.svg',
-  summarizeText: 'https://cdn.activepieces.com/pieces/image-ai.svg',
-  classifyText: 'https://cdn.activepieces.com/pieces/image-ai.svg',
-  extractStructuredData: 'https://cdn.activepieces.com/pieces/image-ai.svg',
+  run_agent: 'https://cdn.activepieces.com/pieces/agent.png',
+  generateImage: 'https://cdn.activepieces.com/pieces/image-ai.svg',
+  askAi: 'https://cdn.activepieces.com/pieces/text-ai.svg',
+  summarizeText: 'https://cdn.activepieces.com/pieces/text-ai.svg',
+  classifyText: 'https://cdn.activepieces.com/pieces/text-ai.svg',
+  extractStructuredData: 'https://cdn.activepieces.com/pieces/ai-utility.svg',
 };
 
 export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({

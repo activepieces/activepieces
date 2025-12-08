@@ -28,7 +28,6 @@ const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
 
 const AIActionItem = ({
   item,
-  hidePieceIconAndDescription,
   stepMetadataWithSuggestions,
   onClick,
 }: AIActionItemProps) => {
@@ -36,7 +35,7 @@ const AIActionItem = ({
 
   return (
     <CardListItem
-      className="p-4 w-full h-full rounded-md flex flex-col justify-between"
+      className="p-4 w-full h-full rounded-md flex flex-col justify-between h-[125px]"
       onClick={onClick}
     >
       <div className="flex flex-col gap-3">
@@ -45,20 +44,13 @@ const AIActionItem = ({
             logoUrl={stepMetadataWithSuggestions.logoUrl}
             displayName={stepMetadataWithSuggestions.displayName}
             showTooltip={false}
-            size={'md'}
+            size={'lg'}
           />
         </div>
         <div className="flex flex-col gap-1 text-center">
           <div className="text-sm font-medium leading-tight">
             {pieceSelectorItemInfo.displayName}
           </div>
-          {!hidePieceIconAndDescription && (
-            <div className="text-xs text-muted-foreground line-clamp-2">
-              {pieceSelectorItemInfo.description.endsWith('.')
-                ? pieceSelectorItemInfo.description.slice(0, -1)
-                : pieceSelectorItemInfo.description}
-            </div>
-          )}
         </div>
       </div>
     </CardListItem>

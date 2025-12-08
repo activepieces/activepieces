@@ -5,8 +5,8 @@ import { ActivepiecesError, AIProviderConfig, AIProviderModel, AIProviderName, A
     ErrorCode,
     PlatformId,
 } from '@activepieces/shared'
-import cron from 'node-cron'
 import { FastifyBaseLogger } from 'fastify'
+import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits'
 import { encryptUtils } from '../helper/encryption'
@@ -21,9 +21,9 @@ const modelsCache = new Map<string, AIProviderModel[]>()
 export const aiProviderService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         cron.schedule('0 0 * * *', () => {
-            log.info('Clearing AI provider models cache');
-            modelsCache.clear();
-        });
+            log.info('Clearing AI provider models cache')
+            modelsCache.clear()
+        })
     },
 
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
