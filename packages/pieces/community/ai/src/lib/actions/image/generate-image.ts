@@ -6,7 +6,13 @@ import {
   PieceAuth,
   Property,
 } from '@activepieces/pieces-framework';
-import { generateText, ImagePart } from 'ai';
+import {
+  GeneratedFile,
+  generateText,
+  GenerateTextResult,
+  ImagePart,
+  ToolSet,
+} from 'ai';
 import { experimental_generateImage as generateImage } from 'ai';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
@@ -14,100 +20,6 @@ import { isNil } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
 import { AIProviderName } from '../../common/types';
 import { aiProps } from '../../common/props';
-
-const getGeneratedImage = async ({
-  providerId,
-  modelId,
-  engineToken,
-  apiUrl,
-  prompt,
-  advancedOptions,
-}: {
-  providerId: string;
-  modelId: string;
-  engineToken: string;
-  apiUrl: string;
-  prompt: string;
-  advancedOptions?: DynamicPropsValue;
-}) => {
-  const model = await createAIModel({
-    providerId,
-    modelId,
-    engineToken,
-    apiUrl,
-    isImage: true,
-  });
-
-  if (providerId !== AIProviderName.GOOGLE) {
-    const response = await generateImage({
-      model: model,
-      prompt: prompt,
-      providerOptions: {
-        [providerId]: {
-          ...advancedOptions,
-        },
-      },
-    });
-    return response.image;
-  } else {
-    const images =
-      (advancedOptions?.['image'] as Array<{ file: ApFile }> | undefined) ?? [];
-
-    const imageFiles = images.map<ImagePart>((image) => {
-      const fileType = image.file.extension
-        ? mime.lookup(image.file.extension)
-        : 'image/jpeg';
-      return {
-        type: 'image',
-        image: `data:${fileType};base64,${image.file.base64}`,
-      };
-    });
-
-    const result = await generateText({
-      //this casting is done on purpose for some reason to use the google models we need to use it this way https://ai-sdk.dev/cookbook/guides/google-gemini-image-generation#editing-images
-      model: model as unknown as LanguageModelV2,
-      providerOptions: {
-        google: { responseModalities: ['TEXT', 'IMAGE'] },
-      },
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: prompt,
-            },
-            ...imageFiles,
-          ],
-        },
-      ],
-    });
-
-    const responseBody =
-      result.response.body &&
-      typeof result.response.body === 'object' &&
-      'candidates' in result.response.body
-        ? result.response.body
-        : { candidates: [] };
-
-    const responseCandidates = Array.isArray(responseBody?.candidates)
-      ? responseBody?.candidates
-      : [];
-
-    responseCandidates.forEach((candidate) => {
-      if (candidate.finishReason !== 'STOP') {
-        throw new Error(
-          'Image generation failed Reason:\n ' +
-            JSON.stringify(responseCandidates, null, 2)
-        );
-      }
-    });
-    if (isNil(result.files) || result.files.length === 0) {
-      throw new Error('No image generated');
-    }
-    return result.files[0];
-  }
-};
 
 export const generateImageAction = createAction({
   name: 'generateImage',
@@ -249,3 +161,117 @@ export const generateImageAction = createAction({
     });
   },
 });
+
+const getGeneratedImage = async ({
+  providerId,
+  modelId,
+  engineToken,
+  apiUrl,
+  prompt,
+  advancedOptions,
+}: {
+  providerId: string;
+  modelId: string;
+  engineToken: string;
+  apiUrl: string;
+  prompt: string;
+  advancedOptions?: DynamicPropsValue;
+}): Promise<GeneratedFile> => {
+  const model = await createAIModel({
+    providerId,
+    modelId,
+    engineToken,
+    apiUrl,
+    isImage: true,
+  });
+
+  switch (providerId) {
+    case AIProviderName.GOOGLE:
+    case AIProviderName.ACTIVEPIECES:
+    case AIProviderName.OPENROUTER:
+      return generateImageUsingGenerateText({
+        model: model as unknown as LanguageModelV2,
+        prompt,
+        advancedOptions,
+      });
+    default:
+      const { image } = await generateImage({
+        model,
+        prompt,
+        providerOptions: {
+          [providerId]: { ...advancedOptions },
+        },
+      });
+      return image;
+  }
+};
+
+const generateImageUsingGenerateText = async ({
+  model,
+  prompt,
+  advancedOptions,
+}: {
+  model: LanguageModelV2;
+  prompt: string;
+  advancedOptions?: DynamicPropsValue;
+}): Promise<GeneratedFile> => {
+  const images =
+    (advancedOptions?.['image'] as Array<{ file: ApFile }> | undefined) ?? [];
+
+  const imageFiles = images.map<ImagePart>((image) => {
+    const fileType = image.file.extension
+      ? mime.lookup(image.file.extension)
+      : 'image/jpeg';
+
+    return {
+      type: 'image',
+      image: `data:${fileType};base64,${image.file.base64}`,
+    };
+  });
+
+  const result = await generateText({
+    model,
+    providerOptions: {
+      google: { responseModalities: ['TEXT', 'IMAGE'] },
+      openrouter: { modalities: ['image', 'text'] },
+    },
+    messages: [
+      {
+        role: 'user',
+        content: [{ type: 'text', text: prompt }, ...imageFiles],
+      },
+    ],
+  });
+
+  assertImageGenerationSuccess(result);
+
+  return result.files[0];
+};
+
+const assertImageGenerationSuccess = (
+  result: GenerateTextResult<ToolSet, never>
+): void => {
+  const responseBody =
+    result.response.body &&
+    typeof result.response.body === 'object' &&
+    'candidates' in result.response.body
+      ? result.response.body
+      : { candidates: [] };
+
+  const responseCandidates = Array.isArray(responseBody?.candidates)
+    ? responseBody?.candidates
+    : [];
+
+  responseCandidates.forEach((candidate: { finishReason: string }) => {
+    if (candidate.finishReason !== 'STOP') {
+      throw new Error(
+        'Image generation failed Reason:\n ' +
+          JSON.stringify(responseCandidates, null, 2)
+      );
+    }
+  });
+
+  if (isNil(result.files) || result.files.length === 0) {
+    throw new Error('No image generated');
+  }
+};
