@@ -68,7 +68,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProvider
                         return true;
                     }
                     return Object.values([AIProviderName.OPENAI, AIProviderName.ANTHROPIC, AIProviderName.GOOGLE]).some(allowedProvider => model.id.toLowerCase().startsWith(allowedProvider.toLowerCase() + '/'));
-                });
+                }).sort((a, b) => a.name.localeCompare(b.name));
             return {
                 placeholder: 'Select AI Model',
                 disabled: false,
