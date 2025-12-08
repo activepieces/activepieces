@@ -146,7 +146,7 @@ export const extractStructuredData = createAction({
 		let schemaDefinition: any;
 		// Track sanitized-to-original name mapping to restore output keys.
 		const sanitizedNameMap: Record<string, string> = {};
-		
+
 		if (context.propsValue.mode === 'advanced') {
 			const ajv = new Ajv();
 			const isValidSchema = ajv.validateSchema(schema['fields']);
@@ -205,7 +205,7 @@ export const extractStructuredData = createAction({
 
 		const messages: Array<ModelMessage> = [];
 
-		const contentParts: UserModelMessage['content']= [];
+		const contentParts: UserModelMessage['content'] = [];
 
 		let textContent = prompt || 'Extract the following data from the provided data.';
 		if (text) {
@@ -225,18 +225,18 @@ export const extractStructuredData = createAction({
 				}
 				const fileType = file.extension ? mime.lookup(file.extension) : 'image/jpeg';
 
-				if (fileType && fileType.startsWith('image')  && file.base64) {
+				if (fileType && fileType.startsWith('image') && file.base64) {
 					contentParts.push({
 						type: 'image',
 						image: `data:${fileType};base64,${file.base64}`,
 					});
 				} else if (fileType && fileType.startsWith('application/pdf') && file.base64) {
 					contentParts.push({
-                        type: 'file',
+						type: 'file',
 						data: `data:${fileType};base64,${file.base64}`,
-                        mediaType: fileType,
+						mediaType: fileType,
 						filename: file.filename,
-                    });
+					});
 				}
 			}
 		}
