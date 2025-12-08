@@ -1,6 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { distributedLock } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformPlanService } from './platform-plan.service'
 
@@ -33,17 +34,29 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const openRouterApiKey = platformPlan.openRouterApiKey
         const openRouterApiKeyHash = platformPlan.openRouterApiKeyHash
-        if (isNil(openRouterApiKey) || isNil(openRouterApiKeyHash)) {
-            const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
-            const { key, data } = await openRouterCreateKey(`Platform ${platformId}`, limit)
-            await platformPlanService(log).update({
-                platformId,
-                openRouterApiKeyHash: data.hash,
-                openRouterApiKey: key,
-            })
-            return { key, hash: data.hash }
+        if (!isNil(openRouterApiKey) && !isNil(openRouterApiKeyHash)) {
+            return { key: openRouterApiKey, hash: openRouterApiKeyHash }
         }
-        return { key: openRouterApiKey, hash: openRouterApiKeyHash }
+        return distributedLock(log).runExclusive({
+            key: `platform_ai_credits_${platformId}`,
+            timeoutInSeconds: 60,
+            fn: async () => {
+                const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+                const openRouterApiKey = platformPlan.openRouterApiKey
+                const openRouterApiKeyHash = platformPlan.openRouterApiKeyHash
+                if (isNil(openRouterApiKey) || isNil(openRouterApiKeyHash)) {
+                    const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
+                    const { key, data } = await openRouterCreateKey(`Platform ${platformId}`, limit)
+                    await platformPlanService(log).update({
+                        platformId,
+                        openRouterApiKeyHash: data.hash,
+                        openRouterApiKey: key,
+                    })
+                    return { key, hash: data.hash }
+                }
+                return { key: openRouterApiKey, hash: openRouterApiKeyHash }
+            },
+        })
     },
 })
 
