@@ -338,6 +338,17 @@ It is strongly recommended that you add your credit card information to your Ope
         streaming: false,
         languageModels: [
             {
+                displayName: 'Claude 4.5 Opus',
+                instance: anthropic('claude-opus-4-5-20251101'),
+                functionCalling: true,
+                webSearchCost: 0.01,
+                pricing: {
+                    input: 5.00,
+                    output: 25.00,
+                    type: 'flat',
+                },
+            },
+            {
                 displayName: 'Claude 4.5 Sonnet',
                 instance: anthropic('claude-sonnet-4-5-20250929'),
                 functionCalling: true,
@@ -360,6 +371,17 @@ It is strongly recommended that you add your credit card information to your Ope
                 },
             },
             {
+                displayName: 'Claude 4.1 Opus',
+                instance: anthropic('claude-opus-4-1-20250805'),
+                functionCalling: true,
+                webSearchCost: 0.01,
+                pricing: {
+                    input: 15.00,
+                    output: 75.00,
+                    type: 'flat',
+                },
+            },
+            {
                 displayName: 'Claude 4 Sonnet',
                 instance: anthropic('claude-sonnet-4-20250514'),
                 functionCalling: true,
@@ -378,69 +400,6 @@ It is strongly recommended that you add your credit card information to your Ope
                 pricing: {
                     input: 0.80,
                     output: 4.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 4.1 Opus',
-                instance: anthropic('claude-opus-4-1-20250805'),
-                functionCalling: true,
-                webSearchCost: 0.01,
-                pricing: {
-                    input: 15.00,
-                    output: 75.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3.7 Sonnet',
-                instance: anthropic('claude-3-7-sonnet-20250219'),
-                functionCalling: true,
-                webSearchCost: 0.01,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3.5 Sonnet',
-                instance: anthropic('claude-3-5-sonnet-latest'),
-                functionCalling: true,
-                webSearchCost: 0.01,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3.5 Sonnet',
-                instance: anthropic('claude-3-5-sonnet-latest'),
-                functionCalling: true,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3 Opus',
-                instance: anthropic('claude-3-opus-20240229'),
-                functionCalling: true,
-                pricing: {
-                    input: 15.00,
-                    output: 75.00,
-                    type: 'flat',
-                },
-            },
-            {
-                displayName: 'Claude 3 Sonnet',
-                instance: anthropic('claude-3-sonnet-20240229'),
-                functionCalling: true,
-                pricing: {
-                    input: 3.00,
-                    output: 15.00,
                     type: 'flat',
                 },
             },
