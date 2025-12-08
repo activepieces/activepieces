@@ -5,6 +5,7 @@ import { ActivepiecesError, AIProviderConfig, AIProviderModel, AIProviderName, A
     ErrorCode,
     PlatformId,
 } from '@activepieces/shared'
+import cron from 'node-cron'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits'
@@ -15,7 +16,16 @@ import { aiProviders } from './providers'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
+const modelsCache = new Map<string, AIProviderModel[]>()
+
 export const aiProviderService = (log: FastifyBaseLogger) => ({
+    async setup(): Promise<void> {
+        cron.schedule('0 0 * * *', () => {
+            log.info('Clearing AI provider models cache');
+            modelsCache.clear();
+        });
+    },
+
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
         const enableOpenRouterProvider = platformAiCreditsService(log).isEnabled()
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
@@ -38,15 +48,22 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
     async listModels(platformId: PlatformId, providerId: AIProviderName): Promise<AIProviderModel[]> {
         const config = await this.getConfig(platformId, providerId)
+        
+        const cacheKey = `${providerId}-${config.apiKey}`
+        if (modelsCache.has(cacheKey)) {
+            return modelsCache.get(cacheKey)!
+        }
 
         const provider = aiProviders[providerId]
         const data = await provider.listModels(config)
 
-        return data.map(model => ({
+        modelsCache.set(cacheKey, data.map(model => ({
             id: model.id,
             name: model.name,
             type: model.type,
-        }))
+        })))
+
+        return modelsCache.get(cacheKey)!
     },
 
     async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
