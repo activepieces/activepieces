@@ -33,7 +33,7 @@ export const createSpreadsheetAction = createAction({
 			description:
 				'The folder to create the worksheet in.By default, the new worksheet is created in the root folder of drive.',
 			required: false,
-			refreshers: [],
+			refreshers: ['auth', 'includeTeamDrives'],
 			options: async ({ auth, includeTeamDrives }) => {
 				if (!auth) {
 					return {
