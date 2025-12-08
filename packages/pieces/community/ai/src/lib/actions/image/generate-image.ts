@@ -50,16 +50,16 @@ export const generateImageAction = createAction({
                 options:
                   modelId === 'dall-e-3'
                     ? [
-                        { label: 'Standard', value: 'standard' },
-                        { label: 'HD', value: 'hd' },
-                      ]
+                      { label: 'Standard', value: 'standard' },
+                      { label: 'HD', value: 'hd' },
+                    ]
                     : modelId === 'gpt-image-1'
-                    ? [
+                      ? [
                         { label: 'High', value: 'high' },
                         { label: 'Medium', value: 'medium' },
                         { label: 'Low', value: 'low' },
                       ]
-                    : [],
+                      : [],
                 disabled: modelId === 'dall-e-2',
               },
               defaultValue: modelId === 'dall-e-3' ? 'standard' : 'high',
@@ -71,17 +71,17 @@ export const generateImageAction = createAction({
                 options:
                   modelId === 'dall-e-3'
                     ? [
-                        { label: '1024x1024', value: '1024x1024' },
-                        { label: '1792x1024', value: '1792x1024' },
-                        { label: '1024x1792', value: '1024x1792' },
-                      ]
+                      { label: '1024x1024', value: '1024x1024' },
+                      { label: '1792x1024', value: '1792x1024' },
+                      { label: '1024x1792', value: '1024x1792' },
+                    ]
                     : modelId === 'gpt-image-1'
-                    ? [
+                      ? [
                         { label: '1024x1024', value: '1024x1024' },
                         { label: '1536x1024', value: '1536x1024' },
                         { label: '1024x1536', value: '1024x1536' },
                       ]
-                    : [
+                      : [
                         { label: '256x256', value: '256x256' },
                         { label: '512x512', value: '512x512' },
                         { label: '1024x1024', value: '1024x1024' },
@@ -194,7 +194,7 @@ const getGeneratedImage = async ({
         prompt,
         advancedOptions,
       });
-    default:
+    default: {
       const { image } = await generateImage({
         model,
         prompt,
@@ -202,7 +202,8 @@ const getGeneratedImage = async ({
           [providerId]: { ...advancedOptions },
         },
       });
-      return image;
+      return image
+    };
   }
 };
 
@@ -253,8 +254,8 @@ const assertImageGenerationSuccess = (
 ): void => {
   const responseBody =
     result.response.body &&
-    typeof result.response.body === 'object' &&
-    'candidates' in result.response.body
+      typeof result.response.body === 'object' &&
+      'candidates' in result.response.body
       ? result.response.body
       : { candidates: [] };
 
@@ -266,7 +267,7 @@ const assertImageGenerationSuccess = (
     if (candidate.finishReason !== 'STOP') {
       throw new Error(
         'Image generation failed Reason:\n ' +
-          JSON.stringify(responseCandidates, null, 2)
+        JSON.stringify(responseCandidates, null, 2)
       );
     }
   });
