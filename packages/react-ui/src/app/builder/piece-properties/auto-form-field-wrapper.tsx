@@ -40,10 +40,12 @@ function AutoFormFieldWrapper({
   disabled,
   field,
   dynamicInputModeToggled,
+  //we have to pass this prop, because props inside custom auth can be secret text, which means their labels will become (Connection)
+  isForConnectionSelect = false,
 }: AutoFormFieldWrapperProps) {
   const isArrayProperty =
     !isPieceAuthProperty(property) && property.type === PropertyType.ARRAY;
-  const isAuthProperty = isPieceAuthProperty(property);
+  const isAuthProperty = isForConnectionSelect || Array.isArray(property);
   return (
     <AutoFormFielWrapperErrorBoundary
       field={field}
@@ -98,9 +100,11 @@ function AutoFormFieldWrapper({
           <div>{children}</div>
         )}
 
-        {!isAuthProperty && property.description && (
-          <ReadMoreDescription text={t(property.description)} />
-        )}
+        {!isForConnectionSelect &&
+          !Array.isArray(property) &&
+          property.description && (
+            <ReadMoreDescription text={t(property.description)} />
+          )}
       </FormItem>
     </AutoFormFielWrapperErrorBoundary>
   );
@@ -310,6 +314,7 @@ type AutoFormFieldWrapperProps = {
   inputName: string;
   dynamicInputModeToggled?: boolean;
   property: PieceProperty | PieceAuthProperty[];
+  isForConnectionSelect?: boolean;
 };
 type AutoFormFielWrapperErrorBoundaryProps = {
   children: React.ReactNode;

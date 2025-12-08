@@ -1,11 +1,11 @@
 {
   "name": "@activepieces/common-ai",
-  "version": "0.5.0",
+  "version": "0.5.2",
   "type": "commonjs",
   "dependencies": {
     "tslib": "^2.3.0",
-    "@activepieces/shared": "0.28.0",
-    "@activepieces/pieces-framework": "0.22.1",
+    "@activepieces/shared": "0.29.0",
+    "@activepieces/pieces-framework": "0.22.2",
     "@activepieces/pieces-common": "0.10.1",
     "@ai-sdk/anthropic": "2.0.3",
     "@ai-sdk/google": "2.0.6",
