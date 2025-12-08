@@ -548,6 +548,7 @@ export const createMockConnection = (connection: Partial<AppConnection>, ownerId
         metadata: connection?.metadata ?? {},
         externalId: connection?.externalId ?? apId(),
         owner: null,
+        pieceVersion: connection?.pieceVersion ?? '0.0.0',
     }
 }
 
