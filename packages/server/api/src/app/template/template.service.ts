@@ -83,6 +83,10 @@ export const templateService = () => ({
         }
     },
 
+    async useTemplate({ id }: UseTemplateParams): Promise<void> {
+        await templateRepo().increment({ id }, 'usageCount', 1)
+    },  
+
     async list({ platformId, requestQuery }: ListParams): Promise<SeekPage<Template>> {
         const { pieces, tags, search, type } = requestQuery
         const commonFilters: Record<string, unknown> = {}
@@ -133,4 +137,8 @@ type DeleteParams = {
 type UpdateParams = {
     id: string
     params: UpdateTemplateRequestBody
+}
+
+type UseTemplateParams = {
+    id: string
 }

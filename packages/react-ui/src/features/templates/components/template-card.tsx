@@ -55,6 +55,7 @@ export const TemplateCard = ({
           displayName: template.name,
           trigger: template.flows![0].trigger,
           schemaVersion: template.flows![0].schemaVersion,
+          templateId: template.id,
         },
       });
     },
