@@ -1,9 +1,5 @@
 import { api } from '@/lib/api';
 import {
-  ListAICreditsUsageRequest,
-  ListAICreditsUsageResponse,
-} from '@activepieces/common-ai';
-import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateActiveFlowsAddonParams,
@@ -41,10 +37,5 @@ export const platformBillingApi = {
       '/v1/platform-billing/update-ai-overage-state',
       params,
     );
-  },
-  listAiCreditsUsage(
-    params: ListAICreditsUsageRequest,
-  ): Promise<ListAICreditsUsageResponse> {
-    return api.get('/v1/platform-billing/ai-credits-usage', params);
   },
 };
