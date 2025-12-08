@@ -231,6 +231,9 @@
       ],
       "@activepieces/piece-meetgeek-ai": [
         "packages/pieces/community/meetgeek-ai/src/index.ts"
+      ],
+      "@activepieces/piece-fellow": [
+        "packages/pieces/community/fellow/src/index.ts"
       ]
     },
     "resolveJsonModule": true
