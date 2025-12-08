@@ -38,7 +38,6 @@ import { pieceListUtils } from './utils'
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
-
     return {
         async setup(): Promise<void> {
             await localPieceCache(log).setup()

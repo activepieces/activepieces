@@ -231,6 +231,12 @@
       ],
       "@activepieces/piece-vidlab7": [
         "packages/pieces/community/vidlab7/src/index.ts"
+      ],
+      "@activepieces/piece-meetgeek-ai": [
+        "packages/pieces/community/meetgeek-ai/src/index.ts"
+      ],
+      "@activepieces/piece-fellow": [
+        "packages/pieces/community/fellow/src/index.ts"
       ]
     },
     "resolveJsonModule": true
