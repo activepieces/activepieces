@@ -34,11 +34,25 @@
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
         "updateBuildableProjectDepsInPackageJson": true
-      }
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
+      }
+    },
+    "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/couchbase",
+        "commands": "bun install --no-save --silent"
       }
     },
     "lint": {
