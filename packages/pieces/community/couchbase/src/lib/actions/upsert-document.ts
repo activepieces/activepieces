@@ -1,35 +1,72 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { couchbaseAuth } from '../..';
-import { couchbaseCommonProps, apiPost, checkForErrors } from '../common';
-import {v4 as uuid } from 'uuid';
-import { httpClient } from '@activepieces/pieces-common';
+import {
+  couchbaseCommonProps,
+  createCouchbaseClient,
+  getCollection,
+  closeCluster,
+  formatMutationResult,
+  CouchbaseAuthValue,
+} from '../common';
+import { randomUUID } from 'crypto';
+import { UpsertOptions, DurabilityLevel } from 'couchbase';
 
 export default createAction({
   auth: couchbaseAuth,
   name: 'upsert_document',
   displayName: 'Upsert Document',
-  description: 'Updates or creates a document in a Couchbase collection.',
+  description: 'Create or update a document. Creates if it doesn\'t exist, updates if it does.',
   props: {
+    bucket: couchbaseCommonProps.bucket,
+    scope: couchbaseCommonProps.scope,
     collection: couchbaseCommonProps.collection,
-    id: couchbaseCommonProps.identifier(false),
+    documentId: couchbaseCommonProps.documentIdOptional,
     document: couchbaseCommonProps.document,
+    expiry: couchbaseCommonProps.expiry,
+    durabilityLevel: couchbaseCommonProps.durabilityLevel,
+    timeout: couchbaseCommonProps.timeout,
   },
   async run(context) {
-    const collectionName = context.propsValue.collection || '_default';
-    const id = context.propsValue.id || uuid();
+    const auth = context.auth as unknown as CouchbaseAuthValue;
+    const { bucket, scope, collection, documentId, document, expiry, durabilityLevel, timeout } = context.propsValue;
 
-    if (!context.propsValue.document) {
-      throw new Error("Document value is required.");
+    if (!bucket) {
+      throw new Error('Bucket is required');
     }
 
-    const response = await httpClient.sendRequest(apiPost(
-      context.auth.props,
+    if (!document) {
+      throw new Error('Document is required');
+    }
 
-      "UPSERT INTO `" + collectionName + "` ( KEY, VALUE ) VALUES (?, " + JSON.stringify(context.propsValue.document) + ")",
-      [id]
-    ));
+    const docId = documentId || randomUUID();
+    const cluster = await createCouchbaseClient(auth);
 
-    checkForErrors(response);
-    return response.body;
-  }
+    try {
+      const coll = getCollection(
+        cluster,
+        bucket,
+        scope || undefined,
+        collection || undefined
+      );
+
+      const options: UpsertOptions = {};
+
+      if (expiry && expiry > 0) {
+        options.expiry = expiry;
+      }
+
+      if (durabilityLevel !== undefined && durabilityLevel !== null) {
+        options.durabilityLevel = durabilityLevel as DurabilityLevel;
+      }
+
+      if (timeout && timeout > 0) {
+        options.timeout = timeout;
+      }
+
+      const result = await coll.upsert(docId, document, options);
+      return formatMutationResult(result, docId);
+    } finally {
+      await closeCluster(cluster);
+    }
+  },
 });

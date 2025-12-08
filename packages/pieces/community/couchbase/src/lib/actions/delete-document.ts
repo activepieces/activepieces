@@ -2,34 +2,63 @@ import { createAction } from '@activepieces/pieces-framework';
 import { couchbaseAuth } from '../..';
 import {
   couchbaseCommonProps,
-  apiPost,
-  checkForErrors,
+  createCouchbaseClient,
+  getCollection,
+  closeCluster,
+  formatMutationResult,
+  CouchbaseAuthValue,
 } from '../common';
-import { httpClient } from '@activepieces/pieces-common';
+import { RemoveOptions, DurabilityLevel } from 'couchbase';
 
 export default createAction({
   auth: couchbaseAuth,
   name: 'delete_document',
-  displayName: 'Delete Document By Key',
-  description: 'Delete a document in collection using key as parameter',
+  displayName: 'Delete Document',
+  description: 'Remove a document by its ID',
   props: {
+    bucket: couchbaseCommonProps.bucket,
+    scope: couchbaseCommonProps.scope,
     collection: couchbaseCommonProps.collection,
-    id: couchbaseCommonProps.identifier(true),
+    documentId: couchbaseCommonProps.documentId,
+    durabilityLevel: couchbaseCommonProps.durabilityLevel,
+    timeout: couchbaseCommonProps.timeout,
   },
   async run(context) {
-    const collectionName = context.propsValue.collection || '_default';
+    const auth = context.auth as unknown as CouchbaseAuthValue;
+    const { bucket, scope, collection, documentId, durabilityLevel, timeout } = context.propsValue;
 
-    if (!context.propsValue.id) {
-      throw new Error('Document identifier is required');
+    if (!bucket) {
+      throw new Error('Bucket is required');
     }
 
-    const response = await httpClient.sendRequest(apiPost(
-      context.auth.props,
-      "DELETE FROM `" + collectionName + "` USE KEYS ?",
-      [context.propsValue.id]
-    ));
+    if (!documentId) {
+      throw new Error('Document ID is required');
+    }
 
-    checkForErrors(response);
-    return response.body;
-  }
+    const cluster = await createCouchbaseClient(auth);
+
+    try {
+      const coll = getCollection(
+        cluster,
+        bucket,
+        scope || undefined,
+        collection || undefined
+      );
+
+      const options: RemoveOptions = {};
+
+      if (durabilityLevel !== undefined && durabilityLevel !== null) {
+        options.durabilityLevel = durabilityLevel as DurabilityLevel;
+      }
+
+      if (timeout && timeout > 0) {
+        options.timeout = timeout;
+      }
+
+      const result = await coll.remove(documentId, options);
+      return formatMutationResult(result, documentId);
+    } finally {
+      await closeCluster(cluster);
+    }
+  },
 });

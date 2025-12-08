@@ -2,36 +2,58 @@ import { createAction } from '@activepieces/pieces-framework';
 import { couchbaseAuth } from '../..';
 import {
   couchbaseCommonProps,
-  apiGet,
-  checkForErrors,
+  createCouchbaseClient,
+  getCollection,
+  closeCluster,
+  formatGetResult,
+  CouchbaseAuthValue,
 } from '../common';
-import { httpClient } from '@activepieces/pieces-common';
+import { GetOptions } from 'couchbase';
 
 export default createAction({
   auth: couchbaseAuth,
   name: 'get_document',
-  displayName: 'Get Document By Key',
-  description: 'Find a document in collection using key as parameter',
+  displayName: 'Get Document',
+  description: 'Retrieve a document by its ID',
   props: {
+    bucket: couchbaseCommonProps.bucket,
+    scope: couchbaseCommonProps.scope,
     collection: couchbaseCommonProps.collection,
-    id: couchbaseCommonProps.identifier(true),
+    documentId: couchbaseCommonProps.documentId,
+    timeout: couchbaseCommonProps.timeout,
   },
   async run(context) {
-    const collectionName = context.propsValue.collection || '_default';
+    const auth = context.auth as unknown as CouchbaseAuthValue;
+    const { bucket, scope, collection, documentId, timeout } = context.propsValue;
 
-    if (!context.propsValue.id) {
-      throw new Error('Document identifier is required');
+    if (!bucket) {
+      throw new Error('Bucket is required');
     }
 
-    const response = await httpClient.sendRequest(apiGet(
-      context.auth.props,
-      "SELECT RAW data FROM `" + collectionName + "` data USE KEYS $1",
-      [context.propsValue.id]
-    ));
+    if (!documentId) {
+      throw new Error('Document ID is required');
+    }
 
-    checkForErrors(response);
+    const cluster = await createCouchbaseClient(auth);
 
-    console.debug("Response:", response.body);
-    return response.body;
-  }
+    try {
+      const coll = getCollection(
+        cluster,
+        bucket,
+        scope || undefined,
+        collection || undefined
+      );
+
+      const options: GetOptions = {};
+
+      if (timeout && timeout > 0) {
+        options.timeout = timeout;
+      }
+
+      const result = await coll.get(documentId, options);
+      return formatGetResult(result, documentId);
+    } finally {
+      await closeCluster(cluster);
+    }
+  },
 });

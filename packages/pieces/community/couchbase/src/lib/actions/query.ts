@@ -1,107 +1,170 @@
-import { createAction } from '@activepieces/pieces-framework';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { couchbaseAuth } from '../..';
 import {
   couchbaseCommonProps,
-  apiGet,
+  createCouchbaseClient,
+  closeCluster,
+  CouchbaseAuthValue,
   LooseObject,
-  checkForErrors,
 } from '../common';
-import { httpClient } from '@activepieces/pieces-common';
+import { QueryOptions, QueryScanConsistency } from 'couchbase';
 
 export default createAction({
   auth: couchbaseAuth,
   name: 'query',
-  displayName: 'Select via SQL++ Query',
-  description: 'Executes SQL++ SELECT query with optional vector filters and returns its results as array with counter',
+  displayName: 'Execute SQL++ Query',
+  description: 'Run a SQL++ (N1QL) query with optional vector search filters',
   props: {
+    bucket: couchbaseCommonProps.bucket,
+    scope: couchbaseCommonProps.scope,
     query: couchbaseCommonProps.query,
     arguments: couchbaseCommonProps.arguments,
     vectorFilters: couchbaseCommonProps.vectorFilters,
     vectorOrder: couchbaseCommonProps.vectorOrder,
-    offset: couchbaseCommonProps.offset,
     limit: couchbaseCommonProps.limit,
+    offset: couchbaseCommonProps.offset,
+    scanConsistency: Property.StaticDropdown({
+      displayName: 'Scan Consistency',
+      description: 'Query consistency level',
+      required: false,
+      options: {
+        options: [
+          { label: 'Not Bounded (Fastest)', value: QueryScanConsistency.NotBounded },
+          { label: 'Request Plus (Consistent)', value: QueryScanConsistency.RequestPlus },
+        ],
+      },
+    }),
+    timeout: couchbaseCommonProps.timeout,
   },
-  run: async function(context) {
-    const limit = Math.round(context.propsValue.limit || 0);
-    const offset = Math.round(context.propsValue.offset || 0);
+  async run(context) {
+    const auth = context.auth as unknown as CouchbaseAuthValue;
+    const {
+      bucket,
+      scope,
+      query,
+      arguments: queryArgs,
+      vectorFilters,
+      vectorOrder,
+      limit,
+      offset,
+      scanConsistency,
+      timeout,
+    } = context.propsValue;
 
-    if (!context.propsValue.query) {
-      throw new Error('Query statement is required');
+    if (!query) {
+      throw new Error('Query is required');
     }
 
-    let userQuery = context.propsValue.query;
+    const limitValue = Math.round(limit || 0);
+    const offsetValue = Math.round(offset || 0);
+
+    let userQuery = query;
     const userQueryUpperCase = userQuery.toUpperCase();
-    const queryArgs = context.propsValue.arguments as string[];
+    const args: string[] = [...((queryArgs as string[]) || [])];
 
-    const orderClauseParts: string[] = new Array<string>();
-    const whereClauseParts: string[] = new Array<string>();
+    if (userQueryUpperCase.includes('LIMIT') || userQueryUpperCase.includes('OFFSET')) {
+      throw new Error('Do not include LIMIT or OFFSET in the query. Use the Limit and Offset fields instead.');
+    }
 
-    if (context.propsValue.vectorFilters) {
-      for (const elem of context.propsValue.vectorFilters) {
+    const whereClauseParts: string[] = [];
+    const orderClauseParts: string[] = [];
+
+    // Process vector filters
+    if (vectorFilters && Array.isArray(vectorFilters)) {
+      for (const elem of vectorFilters) {
         const filter = elem as LooseObject;
-        const funcname = filter['preciseDistance'] ? 'vector_distance' : 'approx_vector_distance';
-        whereClauseParts.push(funcname + '(' + (filter['vectorExpr'] as string) + ', ' + (filter['targetVector'] as string) + ', "' + (filter['vectorSimilarity'] as string) + '") < ?');
-        queryArgs.push(
-          filter['maxDistance'] as string
+        const funcName = filter['preciseDistance'] ? 'VECTOR_DISTANCE' : 'APPROX_VECTOR_DISTANCE';
+        whereClauseParts.push(
+          `${funcName}(${filter['vectorExpr']}, ${filter['targetVector']}, "${filter['vectorSimilarity']}") < ?`
+        );
+        args.push(String(filter['maxDistance']));
+      }
+    }
+
+    // Process vector ordering
+    if (vectorOrder && Array.isArray(vectorOrder)) {
+      for (const elem of vectorOrder) {
+        const order = elem as LooseObject;
+        const funcName = order['preciseDistance'] ? 'VECTOR_DISTANCE' : 'APPROX_VECTOR_DISTANCE';
+        orderClauseParts.push(
+          `${funcName}(${order['vectorExpr']}, ${order['targetVector']}, "${order['vectorSimilarity']}")`
         );
       }
     }
 
-    if (context.propsValue.vectorOrder) {
-      for (const elem of context.propsValue.vectorOrder) {
-        const filter = elem as LooseObject;
-        const funcname = filter['preciseDistance'] ? 'vector_distance' : 'approx_vector_distance';
-        orderClauseParts.push(funcname + '(' + (filter['vectorExpr'] as string) + ', ' + (filter['targetVector'] as string) + ', "' + (filter['vectorSimilarity'] as string) + '")');
-      }
-    }
-
-    const limitIndex = userQueryUpperCase.indexOf("LIMIT")
-    const offsetIndex = userQueryUpperCase.indexOf("OFFSET")
-    const orderByIndex = userQueryUpperCase.indexOf("ORDER BY")
-
-    if (limitIndex > -1 || offsetIndex > -1) {
-      throw new Error("LIMIT and OFFSET clause usage directly in SQL++ query is not supported, please use limit and offset fields")
-    }
-
+    // Insert WHERE clause for vector filters
     if (whereClauseParts.length > 0) {
-      const whereClause= whereClauseParts.join(' AND ') + " "
-      if (userQuery.includes("WHERE")) {
-        // bingo!
-        userQuery = userQuery.replace("WHERE", "WHERE " + whereClause + " AND");
+      const whereClause = whereClauseParts.join(' AND ');
+      const orderByIndex = userQueryUpperCase.indexOf('ORDER BY');
+
+      if (userQueryUpperCase.includes('WHERE')) {
+        userQuery = userQuery.replace(/WHERE/i, `WHERE ${whereClause} AND `);
       } else if (orderByIndex > -1) {
-          userQuery = userQuery.replace("ORDER BY", "WHERE" + whereClause + " ORDER BY");
+        userQuery = userQuery.slice(0, orderByIndex) + `WHERE ${whereClause} ` + userQuery.slice(orderByIndex);
       } else {
-        userQuery += " WHERE " + whereClause;
+        userQuery += ` WHERE ${whereClause}`;
       }
     }
 
+    // Insert ORDER BY clause for vector ordering
     if (orderClauseParts.length > 0) {
-      const orderClause = orderClauseParts.join(', ') + " ";
-      if (orderByIndex > -1) {
-        // user query already includes ORDER BY clause
-        // ORDER BY is the last clause, so simply adding generated clause at the end
-        userQuery += ", " + orderClause;
+      const orderClause = orderClauseParts.join(', ');
+      if (userQueryUpperCase.indexOf('ORDER BY') > -1) {
+        userQuery += `, ${orderClause}`;
       } else {
-        // user query does not include ORDER BY clause
-        userQuery += " ORDER BY " + orderClause;
+        userQuery += ` ORDER BY ${orderClause}`;
       }
     }
 
-    let query = "SELECT RAW data FROM (" + userQuery + ") data";
+    // Wrap query and add LIMIT/OFFSET
+    let finalQuery = `SELECT RAW data FROM (${userQuery}) data`;
 
-    if (limit > 0) {
-      query += " LIMIT " + limit;
+    if (limitValue > 0) {
+      finalQuery += ` LIMIT ${limitValue}`;
     }
 
-    if (offset > 0) {
-      query += " OFFSET " + offset;
+    if (offsetValue > 0) {
+      finalQuery += ` OFFSET ${offsetValue}`;
     }
 
-    const response = await httpClient.sendRequest(
-      apiGet(context.auth.props, query, (context.propsValue.arguments || []) as string[])
-    );
+    const cluster = await createCouchbaseClient(auth);
 
-    checkForErrors(response);
-    return response.body;
-  }
+    try {
+      const options: QueryOptions = {};
+
+      if (args.length > 0) {
+        options.parameters = args;
+      }
+
+      if (scanConsistency !== undefined && scanConsistency !== null) {
+        options.scanConsistency = scanConsistency as QueryScanConsistency;
+      }
+
+      if (timeout && timeout > 0) {
+        options.timeout = timeout;
+      }
+
+      let result;
+
+      // If bucket and scope are specified, use scope-level query for proper context
+      if (bucket && scope) {
+        const bucketObj = cluster.bucket(bucket);
+        const scopeObj = bucketObj.scope(scope);
+        result = await scopeObj.query(finalQuery, options);
+      } else {
+        result = await cluster.query(finalQuery, options);
+      }
+
+      return {
+        rows: result.rows,
+        meta: {
+          requestId: result.meta.requestId,
+          status: result.meta.status,
+          metrics: result.meta.metrics,
+        },
+      };
+    } finally {
+      await closeCluster(cluster);
+    }
+  },
 });

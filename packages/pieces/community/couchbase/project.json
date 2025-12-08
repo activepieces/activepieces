@@ -46,14 +46,14 @@
       }
     },
     "prebuild": {
-      "dependsOn": [
-        "^build"
-      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/couchbase",
-        "commands": "bun install --no-save --silent"
-      }
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",

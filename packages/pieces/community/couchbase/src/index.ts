@@ -1,88 +1,62 @@
+import { createPiece, PieceAuth, Property } from '@activepieces/pieces-framework';
+import { createCouchbaseClient, closeCluster, CouchbaseAuthValue } from './lib/common';
+import actions from './lib/actions';
 
-    import {
-      createPiece,
-      PieceAuth,
-      PiecePropValueSchema,
-      Property,
-    } from '@activepieces/pieces-framework';
-    import { httpClient, propsValidation } from '@activepieces/pieces-common';
-    import { z } from 'zod';
-    import actions from './lib/actions';
-    import { apiGet } from './lib/common';
-
-    export const couchbaseAuth = PieceAuth.CustomAuth({
-      validate: async ({auth}) => {
-        try {
-          await validateAuth(auth);
-          return {valid: true};
-        } catch (error) {
-          return {valid: false, error: (error as Error)?.message};
-        }
-      },
-      props: {
-        queryApi: Property.ShortText({
-          displayName: 'Couchbase Query API URL',
-          required: false,
-          description: 'URL for couchbase Query API endpoint: http{s?}://{host}:{port}/query/service'
-        }),
-        username: Property.ShortText({
-          displayName: 'Username',
-          required: true,
-          description: 'The username for the Couchbase cluster'
-        }),
-        password: Property.ShortText({
-          displayName: 'Password',
-          required: true,
-          description: 'The password for the Couchbase cluster'
-        }),
-        bucket: Property.ShortText({
-          displayName: 'Bucket name',
-          required: true,
-          description: 'Name of the bucket to use on the Couchbase cluster'
-        }),
-        scope:Property.ShortText({
-          displayName: 'Scope name',
-          required: false,
-          description: 'Name of the scope to use on the Couchbase cluster. Leave blank for default scope.'
-        }),
-      },
+export const couchbaseAuth = PieceAuth.CustomAuth({
+  description: 'Connect to your Couchbase cluster',
+  required: true,
+  props: {
+    connectionString: Property.ShortText({
+      displayName: 'Connection String',
+      description: 'Couchbase connection string (e.g., couchbase://localhost or couchbases://cloud.couchbase.com)',
       required: true,
-    });
+    }),
+    username: Property.ShortText({
+      displayName: 'Username',
+      description: 'Username for authentication',
+      required: true,
+    }),
+    password: PieceAuth.SecretText({
+      displayName: 'Password',
+      description: 'Password for authentication',
+      required: true,
+    }),
+  },
+  validate: async ({ auth }) => {
+    const authValue = auth as CouchbaseAuthValue;
 
-    const validateAuth = async (auth: PiecePropValueSchema<typeof couchbaseAuth>) => {
-      console.log("Validating couchbase auth...");
-      await propsValidation.validateZod(auth, {
-        username: z.string().min(1),
-        password: z.string().min(1),
-        bucket: z.string().min(1),
-      });
-
-      if (!(auth.queryApi)) {
-        return {valid: false, error: "A URL for Query or Search API is required."};
-      }
-
-      try {
-        const request = apiGet(auth, "SELECT 1");
-        const response = await httpClient.sendRequest(request);
-        if (response.status !== 200) {
-          console.error(response);
-          return {valid: false, error: "Response " + response.status + ": " + response.body};
-        }
-      } catch (e) {
-        console.error(e);
-        return {valid: false, error: (e as Error)?.message};
-      }
-      console.log("Couchbase settings validated successfully.");
-
-      return {valid: true};
+    if (!authValue.connectionString) {
+      return { valid: false, error: 'Connection string is required' };
+    }
+    if (!authValue.username) {
+      return { valid: false, error: 'Username is required' };
+    }
+    if (!authValue.password) {
+      return { valid: false, error: 'Password is required' };
     }
 
-    export const couchbasePiece = createPiece({
-      displayName: "Couchbase",
-      auth: couchbaseAuth,
-      minimumSupportedRelease: '0.36.1',
-      logoUrl: "https://cdn.activepieces.com/pieces/couchbase.png",
-      authors: ['chedim'],
-      actions,
-      triggers: [],
-    });
+    try {
+      const cluster = await createCouchbaseClient(authValue);
+      // Test the connection by pinging the cluster
+      await cluster.ping();
+      await closeCluster(cluster);
+      return { valid: true };
+    } catch (error) {
+      return {
+        valid: false,
+        error: `Connection failed: ${(error as Error).message}`,
+      };
+    }
+  },
+});
+
+export const couchbasePiece = createPiece({
+  displayName: 'Couchbase',
+  description: 'NoSQL document database for modern applications',
+  auth: couchbaseAuth,
+  minimumSupportedRelease: '0.36.1',
+  logoUrl: 'https://cdn.activepieces.com/pieces/couchbase.png',
+  authors: ['chedim'],
+  actions,
+  triggers: [],
+});
