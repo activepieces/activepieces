@@ -15,6 +15,7 @@ import { cn, formatUtils } from '@/lib/utils';
 import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 
 import { FlagGuard } from '../flag-guard';
+import { billingQueries } from '@/features/billing/lib/billing-hooks';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
@@ -50,6 +51,7 @@ const getTimeUntilNextReset = (nextResetDate: number) => {
 const SidebarUsageLimits = React.memo(() => {
   const { project, isPending } = projectHooks.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: billingInfo, isLoading } = billingQueries.usePlatformSubscription(platform.id);
   const currentUser = userHooks.useCurrentUser();
   const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -58,7 +60,7 @@ const SidebarUsageLimits = React.memo(() => {
     return null;
   }
 
-  if (isPending || isNil(project)) {
+  if (isPending || isNil(project) || isLoading) {
     return (
       <div className="flex flex-col gap-2 w-full px-2  broder rounded-md bg-background">
         <div className="flex flex-col gap-4">
@@ -122,7 +124,7 @@ const SidebarUsageLimits = React.memo(() => {
           <span>
             {t('Usage resets in')}{' '}
             {getTimeUntilNextReset(
-              dayjs().add(1, 'month').startOf('month').valueOf(),
+              Date.now() + billingInfo!.nextBillingDate,
             )}{' '}
           </span>
           {isPlatformAdmin && (
