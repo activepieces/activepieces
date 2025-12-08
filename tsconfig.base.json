@@ -228,6 +228,9 @@
       ],
       "@activepieces/piece-vidlab7": [
         "packages/pieces/community/vidlab7/src/index.ts"
+      ],
+      "@activepieces/piece-bookedin": [
+        "packages/pieces/community/bookedin/src/index.ts"
       ]
     },
     "resolveJsonModule": true
