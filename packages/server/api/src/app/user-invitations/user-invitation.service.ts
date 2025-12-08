@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, SeekPage, spreadIfDefined, User, UserIdentity, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, SeekPage, spreadIfDefined, User, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -190,7 +190,10 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 registered: false,
             }
         }
-        const user = await getUserOrThrow(identity, invitation.platformId)
+        const user = await userService.getOrCreateWithProject({
+            identity,
+            platformId: invitation.platformId,
+        })
 
         await this.provisionUserInvitation({
             email: invitation.email,
@@ -225,22 +228,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
 })
 
 
-async function getUserOrThrow(identity: UserIdentity, platformId: string): Promise<User> {
-    const user = await userService.getOneByIdentityAndPlatform({
-        identityId: identity.id,
-        platformId,
-    })
-    if (isNil(user)) {
-        throw new ActivepiecesError({
-            code: ErrorCode.ENTITY_NOT_FOUND,
-            params: {
-                entityId: `identityId=${identity.id} and platformId=${platformId}`,
-                entityType: 'User',
-            },
-        })
-    }
-    return user
-}
 async function generateInvitationLink(userInvitation: UserInvitation, expireyInSeconds: number): Promise<string> {
     const token = await jwtUtils.sign({
         payload: {

@@ -41,7 +41,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             ...params,
             verified: true,
         })
-        const user = await getUserOrCreate(userIdentity, params.platformId)
+        const user = await userService.getOrCreateWithProject({
+            identity: userIdentity,
+            platformId: params.platformId,
+        })
 
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
@@ -117,7 +120,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 password: await cryptoUtils.generateRandomPassword(),
             })
         }
-        const user = await getUserOrCreate(userIdentity, platformId)
+        const user = await userService.getOrCreateWithProject({
+            identity: userIdentity,
+            platformId,
+        })
 
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
@@ -266,31 +272,6 @@ async function getPersonalPlatformIdForIdentity(identityId: string): Promise<str
     }
     return null
 }
-
-async function getUserOrCreate(identity: UserIdentity, platformId: string): Promise<User> {
-    const user = await userService.getOneByIdentityAndPlatform({
-        identityId: identity.id,
-        platformId,
-    })
-    if (isNil(user)) {
-        const newUser = await userService.create({
-            identityId: identity.id,
-            platformId,
-            platformRole: PlatformRole.MEMBER,
-        })
-
-        await projectService.create({
-            displayName: identity.firstName + '\'s Project',
-            ownerId: newUser.id,
-            platformId,
-            type: ProjectType.PERSONAL,
-        })
-        return newUser
-    }
-    return user
-}
-
-
 
 type FederatedAuthnParams = {
     email: string
