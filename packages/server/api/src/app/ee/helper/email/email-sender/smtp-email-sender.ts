@@ -13,12 +13,12 @@ import { EmailSender, EmailTemplateData } from './email-sender'
 
 type SMTPEmailSender = EmailSender & {
     isSmtpConfigured: (platform: Platform | null) => boolean
-    validateOrThrow: (smtp: SMTPInformation) => Promise<void>
+    validateOrThrow: (smtp?: SMTPInformation) => Promise<void>
 }
 
 export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
     return {
-        async validateOrThrow(smtp: SMTPInformation) {
+        async validateOrThrow(smtp) {
             const disableSmtpValidationInTesting = system.getOrThrow(AppSystemProp.ENVIRONMENT) === ApEnvironment.TESTING
             if (disableSmtpValidationInTesting) {
                 return

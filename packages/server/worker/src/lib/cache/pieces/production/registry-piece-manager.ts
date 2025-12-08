@@ -49,7 +49,7 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
             pieceName: '@activepieces/piece-webhook',
             pieceVersion: '0.1.25',
         }
-        await rollbackInstallation(GLOBAL_CACHE_COMMON_PATH, [testPiece])
+        await tryCatch(async () => rollbackInstallation(GLOBAL_CACHE_COMMON_PATH, [testPiece]))
         const { error } = await tryCatch(async () => registryPieceManager(log).install({
             pieces: [testPiece],
             includeFilters: false,
