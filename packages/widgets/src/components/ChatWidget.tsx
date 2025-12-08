@@ -16,6 +16,13 @@ export interface ThemeOptions {
   inputBorderColor?: string;
 }
 
+export interface PositionOptions {
+  vertical: 'bottom' | 'top';
+  horizontal: 'right' | 'left';
+  offsetX?: number;
+  offsetY?: number;
+}
+
 export const defaultTheme: ThemeOptions = {
   headerColor: '#333',
   headerTextColor: '#fff',
@@ -27,7 +34,14 @@ export const defaultTheme: ThemeOptions = {
   buttonColor: '#333',
   buttonTextColor: '#fff',
   inputBorderColor: '#ccc',
-};
+} as const;
+
+const defaultPosition: PositionOptions = {
+  vertical: 'bottom',
+  horizontal: 'right',
+  offsetX: 24,
+  offsetY: 24,
+} as const;
 
 export interface ChatWidgetProps {
   webhookUrl: string;
@@ -35,6 +49,7 @@ export interface ChatWidgetProps {
   welcomeMessage?: string;
   theme?: ThemeOptions;
   icon?: string | React.ReactNode;
+  position?: PositionOptions;
 }
 
 const DEFAULT_WELCOME_MSG = '👋 Hi there! How can I help you today?';
@@ -55,6 +70,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   title,
   welcomeMessage = DEFAULT_WELCOME_MSG,
   theme: userTheme = {},
+  position: userPosition = {},
   icon,
 }) => {
   const [messages, setMessages] = useState([
@@ -134,6 +150,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
 
   // Fill in missing theme options with default ones
   const theme = { ...defaultTheme, ...userTheme };
+  const position = { ...defaultPosition, ...userPosition };
 
   const headerStyle = {
     backgroundColor: theme.headerColor,
@@ -166,7 +183,12 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
   return (
     <div
       className={`ax-chat-container ${isMinimized ? 'ax-minimized' : ''}`}
-      style={bodyStyle}
+      style={{
+        ...bodyStyle,
+        position: 'fixed',
+        [position.vertical]: position.offsetY,
+        [position.horizontal]: position.offsetX,
+      }}
     >
       <div
         className="ax-chat-header"
@@ -212,7 +234,13 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
                 ></div>
               </div>
             ))}
-            {loading && <div className="ax-message ax-bot">...</div>}
+            {loading && (
+              <div className="ax-message ax-bot ax-typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
@@ -222,6 +250,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               placeholder="Type a message..."
               value={input}
               style={inputStyle}
+              disabled={loading}
               onChange={(e) => {
                 setInput(e.target.value);
               }}

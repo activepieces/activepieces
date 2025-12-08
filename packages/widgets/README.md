@@ -101,8 +101,20 @@ Ones with "?" can be left empty as they will fallback to default values
     buttonTextColor?: string; // #fff
     inputBorderColor?: string; // #ccc
   };
+  position?: {
+    vertical: 'bottom' | 'top',
+    horizontal: 'right' | 'left',
+    offsetX?: number,
+    offsetY?: number,
+  };
 }
 ```
+
+### Positioning
+
+- Supports custom positioning of the chat widget "pill" and the expanded window at 4 locations that are handled by the "position" parameter.
+- These positions include top-left, top-right, bottom-right and bottom-left with optional `offsetX` and `offsetY` parameters.
+- Default position is bottom-right with offset (24, 24)
 
 ### Look & Feel
 

@@ -1,9 +1,6 @@
 .ax-chat-container {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
   width: 360px;
-  max-height: 80vh;
+  max-height: 60vh;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     sans-serif;
   border-radius: 16px;
@@ -107,6 +104,11 @@
   background: transparent;
 }
 
+.ax-chat-footer textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .ax-chat-footer input:focus {
   box-shadow: 0 0 0 3px rgba(0, 91, 181, 0.2);
 }
@@ -165,4 +167,41 @@
 .ax-chat-body::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.15);
   border-radius: 3px;
+}
+
+/* Loading Indicator */
+.ax-typing-indicator {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.ax-typing-indicator span {
+  width: 8px;
+  height: 8px;
+  background-color: #ffffff; /* always visible */
+  border-radius: 50%;
+  display: inline-block;
+  animation: ax-bounce 0.6s infinite alternate;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4) inset; /* crisp visibility on dark */
+}
+
+.ax-typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.ax-typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes ax-bounce {
+  from {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  to {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
 }
