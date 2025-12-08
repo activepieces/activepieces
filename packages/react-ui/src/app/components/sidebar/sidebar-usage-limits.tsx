@@ -18,8 +18,7 @@ import { FlagGuard } from '../flag-guard';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
-  const nextReset = dayjs.unix(nextResetDate);
-
+  const nextReset = dayjs(new Date(nextResetDate));
   if (nextReset.isBefore(now)) {
     return t('Today');
   }
