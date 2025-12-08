@@ -194,7 +194,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             identity,
             platformId: invitation.platformId,
         })
-
         await this.provisionUserInvitation({
             email: invitation.email,
             user,

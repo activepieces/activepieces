@@ -45,7 +45,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             identity: userIdentity,
             platformId: params.platformId,
         })
-
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
             user,
@@ -124,12 +123,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             identity: userIdentity,
             platformId,
         })
-
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
             user,
         })
-
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId,
@@ -272,6 +269,8 @@ async function getPersonalPlatformIdForIdentity(identityId: string): Promise<str
     }
     return null
 }
+
+
 
 type FederatedAuthnParams = {
     email: string
