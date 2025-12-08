@@ -262,6 +262,4 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
             }))
         }
     }
-
-    await smtpEmailSender(log).validateOrThrow()
 }
