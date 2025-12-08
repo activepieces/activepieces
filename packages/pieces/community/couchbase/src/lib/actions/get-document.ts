@@ -19,11 +19,11 @@ export default createAction({
     bucket: couchbaseCommonProps.bucket,
     scope: couchbaseCommonProps.scope,
     collection: couchbaseCommonProps.collection,
-    documentId: couchbaseCommonProps.documentId,
+    documentId: couchbaseCommonProps.documentIdDropdown,
     timeout: couchbaseCommonProps.timeout,
   },
   async run(context) {
-    const auth = context.auth as unknown as CouchbaseAuthValue;
+    const auth = (context.auth as { props: CouchbaseAuthValue }).props;
     const { bucket, scope, collection, documentId, timeout } = context.propsValue;
 
     if (!bucket) {

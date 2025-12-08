@@ -18,20 +18,15 @@ export interface CouchbaseAuthValue {
   password: string;
 }
 
-/**
- * Generic object type for dynamic data
- */
+
 export interface LooseObject {
   [key: string]: unknown;
 }
 
-/**
- * Creates a Couchbase cluster connection using the SDK
- */
+
 export async function createCouchbaseClient(
   auth: CouchbaseAuthValue
 ): Promise<Cluster> {
-  // Use wanDevelopment profile for cloud/Capella connections (longer timeouts)
   const isCloudConnection = auth.connectionString.includes('cloud.couchbase.com');
   
   return await connect(auth.connectionString, {
@@ -47,9 +42,7 @@ export async function createCouchbaseClient(
   });
 }
 
-/**
- * Gets a collection from the cluster
- */
+
 export function getCollection(
   cluster: Cluster,
   bucketName: string,
@@ -61,9 +54,7 @@ export function getCollection(
   return collectionName ? scope.collection(collectionName) : scope.collection('_default');
 }
 
-/**
- * Safely closes a cluster connection
- */
+
 export async function closeCluster(cluster: Cluster): Promise<void> {
   try {
     await cluster.close();
@@ -72,9 +63,7 @@ export async function closeCluster(cluster: Cluster): Promise<void> {
   }
 }
 
-/**
- * Formats a MutationResult for user-friendly output
- */
+
 export function formatMutationResult(
   result: MutationResult,
   documentId: string
@@ -86,9 +75,7 @@ export function formatMutationResult(
   };
 }
 
-/**
- * Formats a GetResult for user-friendly output
- */
+
 export function formatGetResult(
   result: GetResult,
   documentId: string
@@ -100,9 +87,7 @@ export function formatGetResult(
   };
 }
 
-/**
- * Dynamic dropdown for selecting a bucket
- */
+
 export const bucketDropdown = Property.Dropdown({
   displayName: 'Bucket',
   description: 'Select the bucket',
@@ -118,17 +103,7 @@ export const bucketDropdown = Property.Dropdown({
       };
     }
 
-    const authValue = auth as unknown as CouchbaseAuthValue;
-    
-    // Validate auth has required properties
-    if (!authValue.connectionString || !authValue.username || !authValue.password) {
-      return {
-        disabled: true,
-        placeholder: 'Invalid connection - please reconnect',
-        options: [],
-      };
-    }
-
+    const authValue = (auth as { props: CouchbaseAuthValue }).props;
     let cluster: Cluster | null = null;
 
     try {
@@ -166,9 +141,7 @@ export const bucketDropdown = Property.Dropdown({
   },
 });
 
-/**
- * Dynamic dropdown for selecting a scope within a bucket
- */
+
 export const scopeDropdown = Property.Dropdown({
   displayName: 'Scope',
   description: 'Select the scope (leave empty for default)',
@@ -184,16 +157,7 @@ export const scopeDropdown = Property.Dropdown({
       };
     }
 
-    const authValue = auth as unknown as CouchbaseAuthValue;
-    
-    if (!authValue.connectionString || !authValue.username || !authValue.password) {
-      return {
-        disabled: true,
-        placeholder: 'Invalid connection - please reconnect',
-        options: [],
-      };
-    }
-
+    const authValue = (auth as { props: CouchbaseAuthValue }).props;
     let cluster: Cluster | null = null;
 
     try {
@@ -231,9 +195,7 @@ export const scopeDropdown = Property.Dropdown({
   },
 });
 
-/**
- * Dynamic dropdown for selecting a collection within a scope
- */
+
 export const collectionDropdown = Property.Dropdown({
   displayName: 'Collection',
   description: 'Select the collection (leave empty for default)',
@@ -249,16 +211,7 @@ export const collectionDropdown = Property.Dropdown({
       };
     }
 
-    const authValue = auth as unknown as CouchbaseAuthValue;
-    
-    if (!authValue.connectionString || !authValue.username || !authValue.password) {
-      return {
-        disabled: true,
-        placeholder: 'Invalid connection - please reconnect',
-        options: [],
-      };
-    }
-
+    const authValue = (auth as { props: CouchbaseAuthValue }).props;
     let cluster: Cluster | null = null;
 
     try {
@@ -300,9 +253,66 @@ export const collectionDropdown = Property.Dropdown({
   },
 });
 
-/**
- * Durability level dropdown using SDK enum
- */
+
+export const documentIdDropdown = Property.Dropdown({
+  displayName: 'Document ID',
+  description: 'Select an existing document or type a custom ID',
+  required: true,
+  refreshers: ['auth', 'bucket', 'scope', 'collection'],
+  auth: couchbaseAuth,
+  options: async ({ auth, bucket, scope, collection }) => {
+    if (!auth || !bucket) {
+      return {
+        disabled: true,
+        placeholder: 'Select a bucket first',
+        options: [],
+      };
+    }
+
+    const authValue = (auth as { props: CouchbaseAuthValue }).props;
+    let cluster: Cluster | null = null;
+
+    try {
+      cluster = await createCouchbaseClient(authValue);
+      
+      const scopeName = (scope as string) || '_default';
+      const collectionName = (collection as string) || '_default';
+      const keyspace = `\`${bucket}\`.\`${scopeName}\`.\`${collectionName}\``;
+      
+      const query = `SELECT META().id AS docId FROM ${keyspace} LIMIT 100`;
+      const result = await cluster.query(query);
+
+      if (!result.rows || result.rows.length === 0) {
+        return {
+          disabled: false,
+          placeholder: 'No documents found - type a document ID',
+          options: [],
+        };
+      }
+
+      return {
+        disabled: false,
+        options: result.rows.map((row: { docId: string }) => ({
+          label: row.docId,
+          value: row.docId,
+        })),
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      return {
+        disabled: false,
+        placeholder: `Could not load documents: ${errorMessage}`,
+        options: [],
+      };
+    } finally {
+      if (cluster) {
+        await closeCluster(cluster);
+      }
+    }
+  },
+});
+
+
 export const durabilityLevelDropdown = Property.StaticDropdown({
   displayName: 'Durability Level',
   description: 'How durable the write should be before returning success',
@@ -317,13 +327,13 @@ export const durabilityLevelDropdown = Property.StaticDropdown({
   },
 });
 
-/**
- * Common properties for Couchbase actions
- */
+
 export const couchbaseCommonProps = {
   bucket: bucketDropdown,
   scope: scopeDropdown,
   collection: collectionDropdown,
+
+  documentIdDropdown: documentIdDropdown,
 
   documentId: Property.ShortText({
     displayName: 'Document ID',

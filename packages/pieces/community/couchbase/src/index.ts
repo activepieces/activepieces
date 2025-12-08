@@ -37,7 +37,6 @@ export const couchbaseAuth = PieceAuth.CustomAuth({
 
     try {
       const cluster = await createCouchbaseClient(authValue);
-      // Test the connection by pinging the cluster
       await cluster.ping();
       await closeCluster(cluster);
       return { valid: true };
@@ -56,7 +55,7 @@ export const couchbasePiece = createPiece({
   auth: couchbaseAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/couchbase.png',
-  authors: ['chedim'],
+  authors: ['chedim', 'onyedikachi-david'],
   actions,
   triggers: [],
 });

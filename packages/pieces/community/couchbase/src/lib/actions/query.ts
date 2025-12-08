@@ -37,7 +37,7 @@ export default createAction({
     timeout: couchbaseCommonProps.timeout,
   },
   async run(context) {
-    const auth = context.auth as unknown as CouchbaseAuthValue;
+    const auth = (context.auth as { props: CouchbaseAuthValue }).props;
     const {
       bucket,
       scope,
@@ -69,7 +69,6 @@ export default createAction({
     const whereClauseParts: string[] = [];
     const orderClauseParts: string[] = [];
 
-    // Process vector filters
     if (vectorFilters && Array.isArray(vectorFilters)) {
       for (const elem of vectorFilters) {
         const filter = elem as LooseObject;
@@ -81,7 +80,6 @@ export default createAction({
       }
     }
 
-    // Process vector ordering
     if (vectorOrder && Array.isArray(vectorOrder)) {
       for (const elem of vectorOrder) {
         const order = elem as LooseObject;
@@ -92,7 +90,6 @@ export default createAction({
       }
     }
 
-    // Insert WHERE clause for vector filters
     if (whereClauseParts.length > 0) {
       const whereClause = whereClauseParts.join(' AND ');
       const orderByIndex = userQueryUpperCase.indexOf('ORDER BY');
@@ -106,7 +103,6 @@ export default createAction({
       }
     }
 
-    // Insert ORDER BY clause for vector ordering
     if (orderClauseParts.length > 0) {
       const orderClause = orderClauseParts.join(', ');
       if (userQueryUpperCase.indexOf('ORDER BY') > -1) {
@@ -116,7 +112,6 @@ export default createAction({
       }
     }
 
-    // Wrap query and add LIMIT/OFFSET
     let finalQuery = `SELECT RAW data FROM (${userQuery}) data`;
 
     if (limitValue > 0) {
@@ -146,7 +141,6 @@ export default createAction({
 
       let result;
 
-      // If bucket and scope are specified, use scope-level query for proper context
       if (bucket && scope) {
         const bucketObj = cluster.bucket(bucket);
         const scopeObj = bucketObj.scope(scope);

@@ -27,7 +27,7 @@ export default createAction({
     timeout: couchbaseCommonProps.timeout,
   },
   async run(context) {
-    const auth = context.auth as unknown as CouchbaseAuthValue;
+    const auth = (context.auth as { props: CouchbaseAuthValue }).props;
     const { bucket, scope, collection, documentId, document, expiry, durabilityLevel, timeout } = context.propsValue;
 
     if (!bucket) {
