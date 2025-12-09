@@ -15,8 +15,8 @@ import {
   KeyRound,
   FileJson2,
   Settings2,
-  FileHeart,
   MousePointerClick,
+  CheckCircle,
 } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -61,6 +61,11 @@ export function PlatformSidebar() {
     {
       label: t('General'),
       items: [
+        {
+          to: '/platform/onboarding',
+          label: t('Onboarding'),
+          icon: CheckCircle,
+        },
         {
           to: '/platform/analytics',
           label: t('Overview'),
@@ -162,11 +167,6 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
           icon: Server,
-        },
-        {
-          to: '/platform/infrastructure/health',
-          label: t('Health'),
-          icon: FileHeart,
         },
         {
           to: '/platform/infrastructure/triggers',

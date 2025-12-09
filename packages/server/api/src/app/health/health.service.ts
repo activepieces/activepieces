@@ -24,7 +24,6 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
             disk: (await getDiskInfo()).total > gigaBytes(30),
             ram: (await getContainerMemoryUsage()).totalRamInBytes > gigaBytes(4),
             smtp: !isNil(smtp.data),
-            slackSecret: false,
         }
     },
 })

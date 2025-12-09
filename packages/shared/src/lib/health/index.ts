@@ -5,7 +5,6 @@ export const GetSystemHealthChecksResponse = Type.Object({
     disk: Type.Boolean(),
     ram: Type.Boolean(),
     smtp: Type.Boolean(),
-    slackSecret: Type.Boolean(),
 })
 
 export type GetSystemHealthChecksResponse = Static<typeof GetSystemHealthChecksResponse>

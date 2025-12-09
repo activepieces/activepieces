@@ -121,6 +121,17 @@ export const formatUtils = {
     }
     return short ? `${seconds} s` : `${seconds} seconds`;
   },
+  urlIsNotLocalhostOrIp(url: string): boolean {
+    const parsed = new URL(url);
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '::1') {
+      return false;
+    }
+    const ipv4Regex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+    if (ipv4Regex.test(parsed.hostname)) {
+      return false;
+    }
+    return parsed.protocol === 'https:';
+  },
 };
 
 export const validationUtils = {
