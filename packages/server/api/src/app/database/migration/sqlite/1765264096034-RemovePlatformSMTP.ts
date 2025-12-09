@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class RemovePlatformSMTP1765264096034 implements MigrationInterface {
     name = 'RemovePlatformSMTP1765264096034'
@@ -28,7 +28,7 @@ export class RemovePlatformSMTP1765264096034 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "temporary_platform"(
                     "id",
@@ -67,33 +67,33 @@ export class RemovePlatformSMTP1765264096034 implements MigrationInterface {
                 "federatedAuthProviders",
                 "pinnedPieces"
             FROM "platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "platform"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "temporary_platform"
                 RENAME TO "platform"
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_app_connection_platform_id_and_external_id" ON "app_connection" ("platformId", "externalId")
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_app_connection_owner_id" ON "app_connection" ("ownerId")
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             DROP INDEX "idx_app_connection_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "idx_app_connection_platform_id_and_external_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform"
                 RENAME TO "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             CREATE TABLE "platform" (
                 "id" varchar(21) PRIMARY KEY NOT NULL,
@@ -119,7 +119,7 @@ export class RemovePlatformSMTP1765264096034 implements MigrationInterface {
                 CONSTRAINT "REL_94d6fd6494f0322c6f0e099141" UNIQUE ("ownerId"),
                 CONSTRAINT "fk_platform_user" FOREIGN KEY ("ownerId") REFERENCES "user" ("id") ON DELETE RESTRICT ON UPDATE RESTRICT
             )
-        `);
+        `)
         await queryRunner.query(`
             INSERT INTO "platform"(
                     "id",
@@ -158,10 +158,10 @@ export class RemovePlatformSMTP1765264096034 implements MigrationInterface {
                 "federatedAuthProviders",
                 "pinnedPieces"
             FROM "temporary_platform"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "temporary_platform"
-        `);
+        `)
     }
 
 }
