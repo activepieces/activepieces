@@ -5,12 +5,12 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowRepo } from '../../../flows/flow/flow.repo'
+import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
 import { adminPlatformService } from './admin-platform.service'
-import { flowRepo } from '../../../flows/flow/flow.repo'
-import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 
 const API_KEY_HEADER = 'api-key'
 const API_KEY = system.get(AppSystemProp.API_KEY)
@@ -39,7 +39,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
     app.post('/migrate-flows', MigrateFlowsRequest, async (req, res) => {
         const { flowIds, pieceVersion } = req.body
         const allFlowIds = isNil(flowIds) ? (await flowRepo().find()).map((flow) => flow.id) : flowIds
-        let updatedFlowVersions = 0;
+        let updatedFlowVersions = 0
         for (const flowId of allFlowIds) {
             const flow = await flowRepo().findOneBy({ id: flowId })
             if (!flow) {
@@ -47,7 +47,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
             }
             const allFlowVersions = await flowVersionRepo().findBy({ flowId: flow.id })
             for (const flowVersion of allFlowVersions) {
-                const newFlowVersion = await flowStructureUtil.transferFlow(flowVersion, (step) => {
+                const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
                     if (step.type === FlowActionType.PIECE
                         && step.settings.pieceName === '@activepieces/piece-webhook'
                         && step.settings.actionName === 'return_response' && 'fields' in step.settings.input) {
@@ -57,7 +57,7 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
                             settings: {
                                 ...step.settings,
                                 pieceName: '@activepieces/piece-volubile',
-                                pieceVersion: pieceVersion,
+                                pieceVersion,
                                 actionName: 'returnContext',
                                 input: {
                                     body: fields,
