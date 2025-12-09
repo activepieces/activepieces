@@ -34,7 +34,7 @@ export const createFormAction = createAction({
         >({
           method: HttpMethod.GET,
           url: '/form/',
-          auth: auth as unknown as string,
+          apiKey: auth.secret_text,
         });
 
         return {
@@ -623,7 +623,7 @@ export const createFormAction = createAction({
     }>({
       method: HttpMethod.POST,
       url: '/form/',
-      auth: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       body,
     });
 

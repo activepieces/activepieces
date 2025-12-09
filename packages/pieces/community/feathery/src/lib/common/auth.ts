@@ -11,7 +11,7 @@ export const featheryAuth = PieceAuth.SecretText({
       await featheryCommon.apiCall({
         method: HttpMethod.GET,
         url: '/account/',
-        auth: auth as string,
+        apiKey: auth,
       });
       
       return {

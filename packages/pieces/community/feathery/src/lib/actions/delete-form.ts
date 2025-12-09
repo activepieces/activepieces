@@ -29,7 +29,7 @@ export const deleteFormAction = createAction({
         >({
           method: HttpMethod.GET,
           url: '/form/',
-          auth: auth as unknown as string,
+          apiKey: auth.secret_text,
         });
 
         return {
@@ -58,7 +58,7 @@ export const deleteFormAction = createAction({
     await featheryCommon.apiCall({
       method: HttpMethod.DELETE,
       url: `/form/${form_id}/`,
-      auth: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       body: { confirm_delete: true },
     });
 

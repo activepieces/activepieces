@@ -25,40 +25,52 @@ const polling: Polling<
     let url: string;
     if (lookup_type === 'document') {
       if (!document_id) {
-        throw new Error('Document ID is required when lookup type is Document');
+        throw new Error('Please enter a Document ID to monitor for file submissions.');
       }
       url = `/document/envelope/?type=document&id=${encodeURIComponent(document_id)}`;
-    } else {
+    } else if (lookup_type === 'user') {
       if (!user_id) {
-        throw new Error('User ID is required when lookup type is User');
+        throw new Error('Please select a User to monitor for file submissions.');
       }
       url = `/document/envelope/?type=user&id=${encodeURIComponent(user_id)}`;
+    } else {
+      throw new Error('Please select a lookup type (Document Template or User).');
     }
 
-    const envelopes = await featheryCommon.apiCall<
-      Array<{
-        id: string;
-        document: string;
-        user: string;
-        signer: string;
-        sender: string;
-        file: string;
-        type: string;
-        viewed: boolean;
-        signed: boolean;
-        tags: string[];
-        created_at: string;
-      }>
-    >({
-      method: HttpMethod.GET,
-      url,
-      auth: auth as unknown as string,
-    });
+    try {
+      const envelopes = await featheryCommon.apiCall<
+        Array<{
+          id: string;
+          document: string;
+          user: string;
+          signer: string;
+          sender: string;
+          file: string;
+          type: string;
+          viewed: boolean;
+          signed: boolean;
+          tags: string[];
+          created_at: string;
+        }>
+      >({
+        method: HttpMethod.GET,
+        url,
+        apiKey: auth.secret_text,
+      });
 
-    return envelopes.map((envelope) => ({
-      epochMilliSeconds: dayjs(envelope.created_at).valueOf(),
-      data: envelope,
-    }));
+      // Handle case where API returns error object instead of array
+      if (!Array.isArray(envelopes)) {
+        return [];
+      }
+
+      return envelopes.map((envelope) => ({
+        epochMilliSeconds: dayjs(envelope.created_at).valueOf(),
+        data: envelope,
+      }));
+    } catch {
+      // Return empty if no documents/users found
+      return [];
+    }
   },
 };
 
@@ -105,7 +117,7 @@ export const fileSubmittedTrigger = createTrigger({
         >({
           method: HttpMethod.GET,
           url: '/user/',
-          auth: auth as unknown as string,
+          apiKey: auth.secret_text,
         });
 
         return {
@@ -133,33 +145,15 @@ export const fileSubmittedTrigger = createTrigger({
     created_at: '2024-06-03T00:00:00Z',
   },
   async onEnable(context) {
-    await pollingHelper.onEnable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onEnable(polling, context);
   },
   async onDisable(context) {
-    await pollingHelper.onDisable(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-    });
+    await pollingHelper.onDisable(polling, context);
   },
   async run(context) {
-    return await pollingHelper.poll(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.poll(polling, context);
   },
   async test(context) {
-    return await pollingHelper.test(polling, {
-      auth: context.auth,
-      store: context.store,
-      propsValue: context.propsValue,
-      files: context.files,
-    });
+    return await pollingHelper.test(polling, context);
   },
 });

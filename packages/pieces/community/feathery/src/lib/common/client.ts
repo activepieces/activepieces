@@ -7,20 +7,20 @@ export const featheryCommon = {
     method,
     url,
     body,
-    auth,
+    apiKey,
     headers,
   }: {
     method: HttpMethod;
     url: string;
     body?: any;
-    auth: string;
+    apiKey: string;
     headers?: Record<string, string>;
   }): Promise<T> {
     const response = await httpClient.sendRequest<T>({
       method,
       url: `${this.baseUrl}${url}`,
       headers: {
-        'Authorization': `Token ${auth}`,
+        'Authorization': `Token ${apiKey}`,
         'Content-Type': 'application/json',
         ...headers,
       },

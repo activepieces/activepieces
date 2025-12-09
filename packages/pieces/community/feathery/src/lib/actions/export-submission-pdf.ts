@@ -29,7 +29,7 @@ export const exportSubmissionPdfAction = createAction({
         >({
           method: HttpMethod.GET,
           url: '/form/',
-          auth: auth as unknown as string,
+          apiKey: auth.secret_text,
         });
 
         return {
@@ -61,7 +61,7 @@ export const exportSubmissionPdfAction = createAction({
         >({
           method: HttpMethod.GET,
           url: '/user/',
-          auth: auth as unknown as string,
+          apiKey: auth.secret_text,
         });
 
         return {
@@ -82,7 +82,7 @@ export const exportSubmissionPdfAction = createAction({
     }>({
       method: HttpMethod.POST,
       url: '/form/submission/pdf/',
-      auth: context.auth as unknown as string,
+      apiKey: context.auth.secret_text,
       body: {
         form_id,
         user_id,
