@@ -1,7 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSpeechRecognition } from 'react-speech-kit';
 import showdown from 'showdown';
 
 import './ChatWidget.css';
+import { microphoneSvgIcon } from './MicrophoneIcon';
 
 export interface ThemeOptions {
   headerColor?: string;
@@ -77,8 +79,43 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
     { from: 'bot', text: welcomeMessage },
   ]);
   const [input, setInput] = useState('');
+  const [speechContent, setSpeechContent] = useState('');
   const [isMinimized, setIsMinimized] = useState(true);
   const [loading, setLoading] = useState(false);
+
+  const onSpeechEnd = () => {
+    setInput((prev) => (prev ? `${prev} ${speechContent}` : speechContent));
+    setSpeechContent('');
+    console.log('Speech ended');
+  };
+
+  const onSpeechResult = (result: SpeechRecognitionResult | string) => {
+    if (typeof result === 'string') {
+      setSpeechContent(result);
+    } else {
+      console.error('Unable to recognize speech');
+    }
+  };
+
+  const onSpeechError = (event: ErrorEvent) => {
+    if (event.error === 'not-allowed') {
+      console.error('Speech input not allowed, check browser permissions');
+    } else {
+      console.error('Error', event.error);
+    }
+  };
+
+  const { listen, listening, stop } = useSpeechRecognition({
+    onResult: onSpeechResult,
+    onEnd: onSpeechEnd,
+    onError: onSpeechError,
+  });
+
+  const toggleSpeech = listening
+    ? stop
+    : () => {
+        listen({ lang: 'en-TH' });
+      };
 
   const sessionIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -247,10 +284,10 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
           <div className="ax-chat-footer">
             <textarea
               ref={textAreaRef}
-              placeholder="Type a message..."
-              value={input}
+              placeholder={listening ? 'Listening...' : 'Type a message...'}
+              value={listening ? speechContent : input}
               style={inputStyle}
-              disabled={loading}
+              disabled={loading || listening}
               onChange={(e) => {
                 setInput(e.target.value);
               }}
@@ -263,6 +300,17 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               }}
               rows={1}
             />
+            <button onClick={toggleSpeech} style={{ padding: 10 }}>
+              {listening
+                ? microphoneSvgIcon({
+                    type: 'off',
+                    strokeColor: userTheme.buttonTextColor,
+                  })
+                : microphoneSvgIcon({
+                    type: 'on',
+                    strokeColor: userTheme.buttonTextColor,
+                  })}
+            </button>
             <button
               onClick={sendMessage}
               disabled={loading}

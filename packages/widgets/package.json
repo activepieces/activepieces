@@ -12,12 +12,14 @@
     "url": "https://github.com/rupalbarman"
   },
   "homepage": "https://github.com/avalang-global/AutomationX",
-  "version": "0.0.13",
+  "version": "0.0.16",
   "type": "module",
   "module": "index.esm.js",
   "main": "index.umd.js",
   "types": "index.d.ts",
-  "dependencies": {},
+  "dependencies": {
+    "react-speech-kit": "^3.0.1"
+  },
   "peerDependencies": {
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

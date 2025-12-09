@@ -16,6 +16,8 @@ Sessions are persisted in local-storage to allow chat continuity
 
 Display text supports markdown
 
+Supports `speech-to-text` (Version 0.0.15 onward)
+
 ## Usage
 
 ### Prerequisites
