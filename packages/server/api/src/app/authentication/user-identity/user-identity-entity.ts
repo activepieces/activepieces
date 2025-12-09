@@ -24,8 +24,7 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
         },
         verified: {
             type: Boolean,
-            nullable: false,
-            default: false,
+            nullable: true,
         },
         firstName: {
             type: String,
