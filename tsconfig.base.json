@@ -232,6 +232,9 @@
       ],
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-leexi": [
+        "packages/pieces/community/leexi/src/index.ts"
       ]
     },
     "resolveJsonModule": true
