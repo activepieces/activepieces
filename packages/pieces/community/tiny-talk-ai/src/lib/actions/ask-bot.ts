@@ -1,6 +1,5 @@
 import { createAction, Property } from "@activepieces/pieces-framework";
 import { tinyTalkAiAuth } from "../common/auth";
-import { httpClient, HttpMethod } from "@activepieces/pieces-common"
 
 export const askBotAction = createAction({
     name: 'ask-bot',
@@ -21,28 +20,67 @@ export const askBotAction = createAction({
     async run(context) {
         const { botId, prompt } = context.propsValue;
 
-        const response = await httpClient.sendRequest({
-            method: HttpMethod.POST,
-            url: 'https://api.tinytalk.ai/v1/chat/completions',
+        const response = await fetch("https://api.tinytalk.ai/v1/chat/completions", {
+            method: "POST",
             headers: {
-                'Api-Key': context.auth.secret_text
+                'Api-Key': context.auth.secret_text,
+                'Content-Type': 'application/json',
             },
-            body: {
+            body: JSON.stringify({
                 botId,
                 messages: [
-                   
+
                     {
-                        "role": "assistant",
-                        "content": "Hello, how can I help you?"
-                    },
-                     {
                         "role": "user",
                         "content": prompt
                     },
                 ]
-            }
+            }),
+            redirect: "follow",
         })
 
-        return response.body;
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw Error(errorData.message);
+        }
+
+        const stream = response.body;
+
+        if (!stream) {
+            throw new Error("No stream returned from TinyTalk API");
+        }
+
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+
+        let fullText = "";
+        let done = false;
+
+        while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+
+            if (!value) continue;
+
+            const chunk = decoder.decode(value, { stream: true });
+
+            chunk.split("\n").forEach((line) => {
+                if (line.startsWith("data: ") && !line.includes("[DONE]")) {
+                    try {
+                        const json = JSON.parse(line.replace("data: ", ""));
+                        const delta = json?.choices?.[0]?.delta;
+                        if (delta?.content) {
+                            fullText += delta.content;
+                            process.stdout.write(delta.content); 
+                        }
+                    } catch {
+                        // ignore malformed lines
+                    }
+                }
+            });
+        }
+
+        return fullText;
+
     }
 })
