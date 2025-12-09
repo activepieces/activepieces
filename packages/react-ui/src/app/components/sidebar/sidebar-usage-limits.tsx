@@ -1,7 +1,10 @@
+import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React from 'react';
 import { Link } from 'react-router-dom';
+
+import { FlagGuard } from '../flag-guard';
 
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -12,14 +15,10 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
-
-import { FlagGuard } from '../flag-guard';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
-  const nextReset = dayjs.unix(nextResetDate);
-
+  const nextReset = dayjs(new Date(nextResetDate));
   if (nextReset.isBefore(now)) {
     return t('Today');
   }
@@ -106,7 +105,7 @@ const SidebarUsageLimits = React.memo(() => {
           </div>
           <UsageProgress
             name={t('AI Credits')}
-            value={platform.usage?.aiCredits ?? 0}
+            value={Math.floor(platform.usage?.aiCredits ?? 0)}
             max={
               platform.plan.includedAiCredits +
               (platform.plan.aiCreditsOverageLimit ?? 0)
