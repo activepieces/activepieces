@@ -123,7 +123,11 @@ export const formatUtils = {
   },
   urlIsNotLocalhostOrIp(url: string): boolean {
     const parsed = new URL(url);
-    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1' || parsed.hostname === '::1') {
+    if (
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '::1'
+    ) {
       return false;
     }
     const ipv4Regex = /^(?:\d{1,3}\.){3}\d{1,3}$/;

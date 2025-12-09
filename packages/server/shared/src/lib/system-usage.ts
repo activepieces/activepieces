@@ -8,38 +8,38 @@ import { fileSystemUtils } from './file-system-utils'
 const execAsync = promisify(exec)
 
 async function calcMemory(memLimitPath: string, memUsagePath: string) {
-  try {
-    const exists = await fileSystemUtils.fileExists(memLimitPath) && await fileSystemUtils.fileExists(memUsagePath)
-    if (!exists) return null
-    const memLimit = parseInt(await fs.promises.readFile(memLimitPath, 'utf8'))
-    const memUsage = parseInt(await fs.promises.readFile(memUsagePath, 'utf8'))
-    return {
-      totalRamInBytes: memLimit,
-      ramUsage: (memUsage / memLimit) * 100,
+    try {
+        const exists = await fileSystemUtils.fileExists(memLimitPath) && await fileSystemUtils.fileExists(memUsagePath)
+        if (!exists) return null
+        const memLimit = parseInt(await fs.promises.readFile(memLimitPath, 'utf8'))
+        const memUsage = parseInt(await fs.promises.readFile(memUsagePath, 'utf8'))
+        return {
+            totalRamInBytes: memLimit,
+            ramUsage: (memUsage / memLimit) * 100,
+        }
     }
-  }
-  catch {
-    return null
-  }
+    catch {
+        return null
+    }
 }
 
 export async function getContainerMemoryUsage() {
-  const memLimitPathV1 = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
-  const memUsagePathV1 = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
+    const memLimitPathV1 = '/sys/fs/cgroup/memory/memory.limit_in_bytes'
+    const memUsagePathV1 = '/sys/fs/cgroup/memory/memory.usage_in_bytes'
 
-  const memLimitPathV2 = '/sys/fs/cgroup/memory.max'
-  const memUsagePathV2 = '/sys/fs/cgroup/memory.current'
+    const memLimitPathV2 = '/sys/fs/cgroup/memory.max'
+    const memUsagePathV2 = '/sys/fs/cgroup/memory.current'
 
-  const memoryV2 = await calcMemory(memLimitPathV2, memUsagePathV2)
-  if (memoryV2) return memoryV2
+    const memoryV2 = await calcMemory(memLimitPathV2, memUsagePathV2)
+    if (memoryV2) return memoryV2
 
-  const memoryV1 = await calcMemory(memLimitPathV1, memUsagePathV1)
-  if (memoryV1) return memoryV1
+    const memoryV1 = await calcMemory(memLimitPathV1, memUsagePathV1)
+    if (memoryV1) return memoryV1
 
-  return {
-    totalRamInBytes: os.totalmem(),
-    ramUsage: (os.totalmem() - os.freemem()) / os.totalmem() * 100,
-  }
+    return {
+        totalRamInBytes: os.totalmem(),
+        ramUsage: (os.totalmem() - os.freemem()) / os.totalmem() * 100,
+    }
 }
 
 export async function getDiskInfo(): Promise<MachineInformation['diskInfo']> {

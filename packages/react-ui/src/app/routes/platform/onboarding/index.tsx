@@ -4,13 +4,13 @@ import React from 'react';
 import semver from 'semver';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { healthApi } from '@/lib/health-api';
 import { platformUserApi } from '@/lib/platform-user-api';
-import { ApFlagId } from '@activepieces/shared';
 import { formatUtils } from '@/lib/utils';
+import { ApFlagId } from '@activepieces/shared';
+
 import { CheckItem } from './check-item';
 
 export default function OnboardingPage() {
@@ -23,9 +23,7 @@ export default function OnboardingPage() {
   const { data: supportedAppWebhooks } = flagsHooks.useFlag<string[]>(
     ApFlagId.SUPPORTED_APP_WEBHOOKS,
   );
-  const { data: publicUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.PUBLIC_URL,
-  );
+  const { data: publicUrl } = flagsHooks.useFlag<string>(ApFlagId.PUBLIC_URL);
   const { data: systemHealth, isPending } = useQuery({
     queryKey: ['system-health'],
     queryFn: () => healthApi.getSystemHealthChecks(),
@@ -46,15 +44,25 @@ export default function OnboardingPage() {
     return semver.gte(currentVersion, latestVersion);
   }, [currentVersion, latestVersion]);
 
-  const slackSecretConfigured = React.useMemo(() => supportedAppWebhooks?.includes('@activepieces/piece-slack'), [supportedAppWebhooks]);
+  const slackSecretConfigured = React.useMemo(
+    () => supportedAppWebhooks?.includes('@activepieces/piece-slack'),
+    [supportedAppWebhooks],
+  );
 
-  const httpsPublicUrl = React.useMemo(() => !!publicUrl && formatUtils.urlIsNotLocalhostOrIp(publicUrl), [publicUrl]);
+  const httpsPublicUrl = React.useMemo(
+    () => !!publicUrl && formatUtils.urlIsNotLocalhostOrIp(publicUrl),
+    [publicUrl],
+  );
 
-  const hasConfiguredAiProvider = React.useMemo(() => !!aiProviders?.some(
-    (provider) => provider.configured,
-  ), [aiProviders]);
+  const hasConfiguredAiProvider = React.useMemo(
+    () => !!aiProviders?.some((provider) => provider.configured),
+    [aiProviders],
+  );
 
-  const hasInvitedUsers = React.useMemo(() => users?.data && users.data.length > 1, [users]);
+  const hasInvitedUsers = React.useMemo(
+    () => users?.data && users.data.length > 1,
+    [users],
+  );
 
   const technicalChecks = [
     {
@@ -127,8 +135,8 @@ export default function OnboardingPage() {
         ? t('Slack Secret is configured')
         : t('Slack Secret is not configured'),
       loading: isPending,
-      link: 'https://www.activepieces.com/docs/install/configuration/setup-app-webhooks#slack'
-    }
+      link: 'https://www.activepieces.com/docs/install/configuration/setup-app-webhooks#slack',
+    },
   ];
 
   const onBoardingChecks = [
