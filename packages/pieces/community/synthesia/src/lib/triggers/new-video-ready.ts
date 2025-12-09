@@ -32,7 +32,7 @@ export const newVideoReady = createTrigger({
     await context.store.put<WebhookData>('webhookData', {
       webhookId: response.body.id,
     });
-    console.log('Webhook subscription response:', response);
+  
   },
   async onDisable(context) {
     const webhookData = await context.store.get<WebhookData>('webhookData');
