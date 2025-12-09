@@ -28,13 +28,13 @@ export const askAgent = createAction({
   },
   async run(context) {
     const { message, model, security } = context.propsValue;
-    const accessToken = (context.auth as OAuth2PropertyValue).access_token;
+    const accessToken = context.auth.secret_text
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: 'https://api.wordlift.io/ask',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: {
