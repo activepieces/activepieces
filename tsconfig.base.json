@@ -235,6 +235,9 @@
       ],
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-mind-studio": [
+        "packages/pieces/community/mind-studio/src/index.ts"
       ]
     },
     "resolveJsonModule": true
