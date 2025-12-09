@@ -1,19 +1,30 @@
 import { HttpMethod, httpClient, HttpRequest, QueryParams } from "@activepieces/pieces-common";
 import { sapAribaAuth } from "../auth";
 import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
+import { AppConnectionType } from "@activepieces/shared";
 
-type SapAribaAuth = AppConnectionValueForAuthProperty<typeof sapAribaAuth>;
+export type SapAribaAuth = AppConnectionValueForAuthProperty<typeof sapAribaAuth>;
 
 export const sapAribaCommon = {
-    async getAccessToken(auth: SapAribaAuth): Promise<string> {
-        const credentials = Buffer.from(`${auth.props.clientId}:${auth.props.clientSecret}`).toString('base64');
+    async getAccessToken(auth: SapAribaAuth): Promise<string | null> {
+        if (auth.type === AppConnectionType.CUSTOM_AUTH && !('clientId' in auth.props)) {
+            return null;
+        }
+
+        const oauthAuth = auth.props as {
+            clientId: string;
+            clientSecret: string;
+            oauthServerUrl: string;
+        };
+
+        const credentials = Buffer.from(`${oauthAuth.clientId}:${oauthAuth.clientSecret}`).toString('base64');
         
         const params = new URLSearchParams();
         params.append('grant_type', 'openapi_2lo');
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${auth.props.oauthServerUrl}/v2/oauth/token`,
+            url: `${oauthAuth.oauthServerUrl}/v2/oauth/token`,
             headers: {
                 Authorization: `Basic ${credentials}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -39,17 +50,24 @@ export const sapAribaCommon = {
         additionalHeaders?: Record<string, string>
     ): Promise<T> {
         const accessToken = await this.getAccessToken(auth);
+        const apiKey = auth.props.apiKey;
+        const baseUrl = auth.props.baseUrl;
+
+        const headers: Record<string, string> = {
+            apiKey: apiKey,
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            ...additionalHeaders,
+        };
+
+        if (accessToken) {
+            headers['Authorization'] = `Bearer ${accessToken}`;
+        }
 
         const request: HttpRequest = {
             method,
-            url: `${auth.props.baseUrl}${endpoint}`,
-            headers: {
-                Authorization: `Bearer ${accessToken}`,
-                apiKey: auth.props.apiKey,
-                Accept: 'application/json',
-                'Content-Type': 'application/json',
-                ...additionalHeaders,
-            },
+            url: `${baseUrl}${endpoint}`,
+            headers,
             queryParams,
             body,
         };
