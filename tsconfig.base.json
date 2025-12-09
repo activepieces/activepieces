@@ -235,6 +235,9 @@
       ],
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-air-ops": [
+        "packages/pieces/community/air-ops/src/index.ts"
       ]
     },
     "resolveJsonModule": true
