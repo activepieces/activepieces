@@ -624,8 +624,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         RemovePlatformSMTP1764945141702,
         AddOpenRouterKeyToPlatformPlan1765109187883,
         AddPieceVersionToAppConnection1764841091811,
-        MigrateSqliteToPglite1765308234291,
         AddPersonalProjectsForAllUsers1765107860778,
+        MigrateSqliteToPglite1765308234291,
     ]
     return migrations
 }
