@@ -242,6 +242,18 @@
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
       ],
+      "@activepieces/piece-feathery": [
+        "packages/pieces/community/feathery/src/index.ts"
+      ],
+      "@activepieces/piece-chatling": [
+        "packages/pieces/community/chatling/src/index.ts"
+      ],
+      "@activepieces/piece-air-ops": [
+        "packages/pieces/community/air-ops/src/index.ts"
+      ],
+      "@activepieces/piece-mind-studio": [
+        "packages/pieces/community/mind-studio/src/index.ts"
+      ],
       "@activepieces/piece-easy-peasy-ai": [
         "packages/pieces/community/easy-peasy-ai/src/index.ts"
       ],
