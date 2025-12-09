@@ -297,6 +297,7 @@ import { AddLastUsedAtToApiKey1763378445660 } from './migration/postgres/1763378
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
+import { RemovePlatformSMTP1764945141702 } from './migration/postgres/1764945141702-RemovePlatformSMTP'
 import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
 import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
@@ -619,6 +620,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DropProjectIdFromPieceMetadata1764866386989,
         UnifyCommunityWithEnterprise1764867709704,
         AddMcpServer1764606838149,
+        RemovePlatformSMTP1764945141702,
         AddOpenRouterKeyToPlatformPlan1765109187883,
         AddPieceVersionToAppConnection1764841091811,
         AddPersonalProjectsForAllUsers1765107860778,
