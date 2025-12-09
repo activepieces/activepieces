@@ -241,6 +241,9 @@
       ],
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-easy-peasy-ai": [
+        "packages/pieces/community/easy-peasy-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
