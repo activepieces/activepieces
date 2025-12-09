@@ -35,6 +35,7 @@ const CreateFlowTemplateSchema = Type.Object({
     minLength: 1,
     errorMessage: t('Name is required'),
   }),
+  summary: Type.String(),
   description: Type.String(),
   blogUrl: Type.String(),
   template: FlowVersionTemplate,
@@ -56,6 +57,7 @@ export const CreateTemplateDialog = ({
     defaultValues: {
       displayName: '',
       blogUrl: '',
+      summary: '',
       description: '',
       tags: [],
       categories: [],
@@ -84,6 +86,7 @@ export const CreateTemplateDialog = ({
         flows: [flowTemplate],
         type: TemplateType.CUSTOM,
         name: formValue.displayName,
+        summary: formValue.summary,
         description: formValue.description,
         tags: formValue.tags || [],
         blogUrl: formValue.blogUrl,

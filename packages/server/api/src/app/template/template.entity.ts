@@ -14,21 +14,22 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
     name: 'template',
     columns: {
         ...BaseColumnSchemaPart,
-        platformId: {
-            type: String,
-            nullable: true,
-        },
-        type: {
-            type: String,
-            nullable: false,
-        },
         name: {
+            type: String,
+        },
+        summary: {
             type: String,
             nullable: false,
         },
         description: {
             type: String,
-            nullable: false,
+        },
+        type: {
+            type: String,
+        },
+        platformId: {
+            type: String,
+            nullable: true,
         },
         flows: {
             type: JSONB_COLUMN_TYPE,

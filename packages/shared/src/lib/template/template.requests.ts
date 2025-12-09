@@ -4,6 +4,7 @@ import { FlowVersionTemplate, TemplateCategory, TemplateTag, TemplateType } from
 
 export const CreateTemplateRequestBody = Type.Object({
     name: Type.String(),
+    summary: Type.String(),
     description: Type.String(),
     tags: Type.Optional(Type.Array(TemplateTag)),
     blogUrl: Type.Optional(Type.String()),
@@ -17,6 +18,7 @@ export type CreateTemplateRequestBody = Static<typeof CreateTemplateRequestBody>
 
 export const UpdateFlowTemplateRequestBody = Type.Object({
     name: Type.Optional(Type.String()),
+    summary: Type.Optional(Type.String()),
     description: Type.Optional(Type.String()),
     tags: Type.Optional(Type.Array(TemplateTag)),
     blogUrl: Type.Optional(Type.String()),

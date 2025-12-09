@@ -71,6 +71,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
                 "platformId" character varying,
                 "type" character varying NOT NULL,
                 "name" character varying NOT NULL,
+                "summary" character varying NOT NULL,
                 "description" character varying NOT NULL,
                 "flows" jsonb NOT NULL,
                 "tags" jsonb NOT NULL,
@@ -108,6 +109,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
         for (const flowTemplate of flowTemplates) {
             const id = apId()
             const name = flowTemplate.name
+            const summary = flowTemplate.description || ''
             const description = flowTemplate.description || ''
             const flows: FlowVersionTemplate[] = [flowTemplate.template]
             const tags: TemplateTag[] = flowTemplate.tags.map((tag: string) => ({
@@ -127,6 +129,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             templateValues.push([
                 id,
                 name,
+                summary,
                 description,
                 JSON.stringify(flows),
                 JSON.stringify(tags),
@@ -142,14 +145,14 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
         }
 
         const valuesPlaceholders = templateValues.map((_, index) => {
-            const offset = index * 13
-            return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13})`
+            const offset = index * 14
+            return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14})`
         }).join(', ')
 
         const flattenedValues = templateValues.flat()
 
         await queryRunner.query(`
-            INSERT INTO "template" ("id", "name", "description", "flows", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId") 
+            INSERT INTO "template" ("id", "name", "summary", "description", "flows", "tags", "blogUrl", "metadata", "usageCount", "author", "categories", "pieces", "type", "platformId") 
             VALUES ${valuesPlaceholders}
         `, flattenedValues)
         

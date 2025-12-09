@@ -23,7 +23,7 @@ export const templateService = () => ({
         return template
     },
     async create({ platformId, params }: CreateParams): Promise<Template> {
-        const { name, description, tags, blogUrl, metadata, author, categories, type } = params
+        const { name, summary, description, tags, blogUrl, metadata, author, categories, type } = params
         const newTags = tags ?? []
         const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
         const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
@@ -35,6 +35,7 @@ export const templateService = () => ({
                     id: apId(),
                     name,
                     type,
+                    summary,
                     description,
                     platformId,
                     tags: newTags,
@@ -49,13 +50,13 @@ export const templateService = () => ({
                 return templateRepo().save(newTemplate)
             }
             case TemplateType.CUSTOM: {
-                return platformTemplateService().create({ platformId, name, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows: sanatizedFlows })
+                return platformTemplateService().create({ platformId, name, summary, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows: sanatizedFlows })
             }
         }
     },
 
     async update({ id, params }: UpdateParams): Promise<Template> {
-        const { name, description, tags, blogUrl, metadata, categories } = params
+        const { name, summary, description, tags, blogUrl, metadata, categories } = params
         const template = await templateService().getOneOrThrow({ id })
 
         const newTags = tags ?? []
@@ -66,6 +67,7 @@ export const templateService = () => ({
             case TemplateType.SHARED: {
                 await templateRepo().update(id, {
                     ...spreadIfDefined('name', name),
+                    ...spreadIfDefined('summary', summary),
                     ...spreadIfDefined('description', description),
                     ...spreadIfDefined('tags', tags),
                     ...spreadIfDefined('blogUrl', blogUrl),
