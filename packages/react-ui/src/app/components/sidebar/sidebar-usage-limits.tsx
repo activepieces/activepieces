@@ -18,8 +18,7 @@ import { FlagGuard } from '../flag-guard';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
-  const nextReset = dayjs.unix(nextResetDate);
-
+  const nextReset = dayjs(new Date(nextResetDate));
   if (nextReset.isBefore(now)) {
     return t('Today');
   }
@@ -106,7 +105,7 @@ const SidebarUsageLimits = React.memo(() => {
           </div>
           <UsageProgress
             name={t('AI Credits')}
-            value={platform.usage?.aiCredits ?? 0}
+            value={Math.floor(platform.usage?.aiCredits ?? 0)}
             max={
               platform.plan.includedAiCredits +
               (platform.plan.aiCreditsOverageLimit ?? 0)
