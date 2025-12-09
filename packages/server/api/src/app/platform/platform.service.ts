@@ -115,7 +115,6 @@ export const platformService = {
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
-            smtp: params.smtp,
         }
         if (!isNil(params.plan)) {
             await platformPlanService(system.globalLogger()).update({
