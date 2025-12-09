@@ -44,6 +44,7 @@ import {
 
 import { FormError } from '../../../components/ui/form';
 import { flowsApi } from '../lib/flows-api';
+import { templateUtils } from '../lib/template-parser';
 
 export type ImportFlowDialogProps =
   | {
@@ -63,17 +64,8 @@ const readTemplateJson = async (
     const reader = new FileReader();
 
     reader.onload = () => {
-      try {
-        const template = JSON.parse(reader.result as string) as Template;
-        const { flows, name } = template;
-        if (!flows?.[0] || !name || !flows[0].trigger) {
-          resolve(null);
-        } else {
-          resolve(template);
-        }
-      } catch {
-        resolve(null);
-      }
+      const template = templateUtils.parseTemplate(reader.result as string);
+      resolve(template);
     };
     reader.readAsText(templateFile);
   });
@@ -125,6 +117,7 @@ const ImportFlowDialog = (
             displayName: template.name,
             trigger: template.flows![0].trigger,
             schemaVersion: template.flows![0].schemaVersion,
+            templateId: template.id,
           },
         });
       });

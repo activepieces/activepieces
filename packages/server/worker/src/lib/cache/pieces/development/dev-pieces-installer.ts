@@ -1,5 +1,3 @@
-
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { filePiecesUtils, spawnWithKill } from '@activepieces/server-shared'
@@ -19,11 +17,7 @@ const sharedPiecesPackages = () => {
             path: resolve(cwd(), 'dist', 'packages', 'shared'),
         },
     }
-    if (existsSync(baseDistPath + '/pieces/community/common-ai')) {
-        packages['@activepieces/common-ai'] = {
-            path: resolve(cwd(), baseDistPath, 'pieces', 'community', 'common-ai'),
-        }
-    }
+
     return packages
 }
 
@@ -59,7 +53,7 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
         const apDependencies = Object.keys(dependencies ?? {}).filter(dep => dep.startsWith('@activepieces/') && packageName !== dep)
 
         apDependencies.forEach(async (dependency) => {
-            await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency} --silent`, printOutput: true }).catch(e => {
+            await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency} --quiet`, printOutput: true }).catch(e => {
                 log.error({
                     name: 'linkSharedActivepiecesPackagesToPiece',
                     message: JSON.stringify(e),
@@ -70,7 +64,7 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
 
     async function initSharedPackagesLinks() {
         await Promise.all(Object.values(sharedPiecesPackages()).map(pkg => 
-            spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --silent`, printOutput: true }).catch(e => {
+            spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --quiet`, printOutput: true }).catch(e => {
                 log.error({
                     name: 'initSharedPackagesLinks',
                     message: JSON.stringify(e),
@@ -79,6 +73,16 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
         ))
     }
 
+    async function installDepsForSharedPackages() {
+        await Promise.all(Object.values(sharedPiecesPackages()).map(pkg =>
+            spawnWithKill({ cmd: `bun install --cwd ${pkg.path} --silent`, printOutput: true }).catch(e => {
+                log.error({
+                    name: 'installDepsForSharedPackages',
+                    message: JSON.stringify(e),
+                }, 'Error installing dependencies for shared packages')
+            }),
+        ))
+    }
     async function linkSharedActivepiecesPackagesToEachOther() {
         await initSharedPackagesLinks()
 
@@ -90,6 +94,7 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
     }
 
     return {
+        installDepsForSharedPackages,
         installPiecesDependencies,
         linkSharedActivepiecesPackagesToPiece,
         linkSharedActivepiecesPackagesToEachOther,

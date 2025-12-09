@@ -61,6 +61,9 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: JSONB_COLUMN_TYPE,
             nullable: true,
         },
+        pieceVersion: {
+            type: String,
+        },
     },
     indices: [
         {

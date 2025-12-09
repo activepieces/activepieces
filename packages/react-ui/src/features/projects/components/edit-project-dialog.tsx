@@ -88,7 +88,6 @@ export function EditProjectDialog({
     {
       displayName: string;
       externalId?: string;
-      plan: { aiCredits?: number | undefined };
     }
   >({
     mutationFn: (request) => {
@@ -145,11 +144,6 @@ export function EditProjectDialog({
               mutation.mutate({
                 displayName: values.projectName,
                 externalId: values.externalId,
-                plan: {
-                  aiCredits: values.aiCredits
-                    ? parseInt(values.aiCredits)
-                    : undefined,
-                },
               }),
             )}
           >

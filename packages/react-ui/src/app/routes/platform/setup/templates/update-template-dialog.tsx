@@ -18,6 +18,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { templateUtils } from '@/features/flows/lib/template-parser';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
 import {
@@ -184,11 +185,10 @@ export const UpdateTemplateDialog = ({
                     onChange={(e) => {
                       e.target.files &&
                         e.target.files[0].text().then((text) => {
-                          try {
-                            const flowTemplate = JSON.parse(text)
-                              .template as FlowVersionTemplate;
+                          const flowTemplate = templateUtils.extractFlow(text);
+                          if (flowTemplate) {
                             field.onChange(flowTemplate);
-                          } catch (e) {
+                          } else {
                             form.setError('template', {
                               message: t('Invalid JSON'),
                             });

@@ -33,6 +33,7 @@ import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-r
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
+import { templateService } from '../../template/template.service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { flowService } from './flow.service'
 
@@ -105,6 +106,13 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.principal.projectId,
             operation: cleanOperation(request.body),
         })
+        
+        if (request.body.type === FlowOperationType.IMPORT_FLOW && !isNil(request.body.request.templateId)) {
+            await templateService().useTemplate({
+                id: request.body.request.templateId,
+            })
+        }
+        
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
