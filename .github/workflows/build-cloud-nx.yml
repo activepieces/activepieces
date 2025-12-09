@@ -95,36 +95,7 @@ jobs:
           npx nx run server-api:test-cloud &
           pids+=($!)
 
-          # Check for missing database migrations
-          (
-            echo "🔍 Checking for schema changes without migrations..."
-            # Load test environment variables
-            export $(cat packages/server/api/.env.tests | xargs)
-            export AP_DEV_PIECES=""
-            export AP_ENVIRONMENT=dev
-
-            # Run existing migrations to establish baseline database state
-            echo "Running existing migrations..."
-            nx db server-api -- migration:run -d packages/server/api/src/app/database/migration-data-source.ts
-            
-            # Use --check flag to verify no new migrations are needed
-            # This compares entity schemas with the migrated database state
-            echo "Checking for schema drift..."
-            if ! nx db-migration server-api --name=CHECK --check; then
-              echo ""
-              echo "❌ ERROR: Schema changes detected without corresponding migration!"
-              echo ""
-              echo "The PR contains database schema changes without corresponding migration."
-              echo "Please generate a migration using:"
-              echo "  nx db-migration server-api --name=<DESCRIPTIVE_NAME>"
-              echo ""
-              echo "For more information, see: docs/handbook/engineering/playbooks/database-migration.mdx"
-              echo ""
-              exit 1
-            fi
-            
-            echo "✅ No missing migrations detected"
-          ) &
+          npx nx run server-api:check-migrations &
           pids+=($!)
 
           status=0

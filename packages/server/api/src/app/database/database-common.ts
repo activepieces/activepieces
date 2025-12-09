@@ -1,6 +1,11 @@
+import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
 import { EntitySchemaColumnOptions } from 'typeorm'
 import { system } from '../helper/system/system'
+
+const databaseType = system.get(AppSystemProp.DB_TYPE)
+
+export const COLLATION = databaseType === DatabaseType.PGLITE ? undefined : 'en_natural'
 
 export const ApIdSchema = {
     type: String,
