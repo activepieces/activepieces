@@ -49,10 +49,15 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                 status: InvitationStatus.ACCEPTED,
             })
             .getMany()
-
         log.info({ count: invitations.length }, '[provisionUserInvitation] list invitations')
         for (const invitation of invitations) {
             log.info({ invitation }, '[provisionUserInvitation] provision')
+            
+            const isUserExists = await userService.getOneByIdentityAndPlatform({
+                identityId: identity.id,
+                platformId: invitation.platformId,
+            })
+
             const user = await getOrCreateUser(identity, invitation.platformId)
             switch (invitation.type) {
                 case InvitationType.PLATFORM: {
@@ -89,9 +94,11 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
                     break
                 }
             }
-            await repo().delete({
-                id: invitation.id,
-            })
+            if (!isNil(isUserExists)) {
+                await repo().delete({
+                    id: invitation.id,
+                })
+            }
         }
     },
     async create({
@@ -188,7 +195,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
         const invitation = await this.getOneOrThrow({ id: invitationId, platformId })
         await repo().update(invitation.id, {
             status: InvitationStatus.ACCEPTED,
-        })
+        }) 
         const identity = await userIdentityService(log).getIdentityByEmail(invitation.email)
         if (isNil(identity)) {
             return {
@@ -205,6 +212,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     async hasAnyAcceptedInvitations({
         email,
         platformId,
+
     }: HasAnyAcceptedInvitationsParams): Promise<boolean> {
         const invitations = await repo().createQueryBuilder().where({
             platformId,
@@ -226,7 +234,6 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
     },
 })
 
-
 async function getOrCreateUser(identity: UserIdentity, platformId: string): Promise<User> {
     const user = await userService.getOneByIdentityAndPlatform({
         identityId: identity.id,
@@ -241,6 +248,7 @@ async function getOrCreateUser(identity: UserIdentity, platformId: string): Prom
     }
     return user
 }
+
 async function generateInvitationLink(userInvitation: UserInvitation, expireyInSeconds: number): Promise<string> {
     const token = await jwtUtils.sign({
         payload: {
@@ -269,6 +277,8 @@ const enrichWithInvitationLink = async (platform: Platform, userInvitation: User
     })
     return userInvitation
 }
+
+
 type ListUserParams = {
     platformId: string
     type: InvitationType
@@ -317,3 +327,4 @@ type GetOneByPlatformIdAndEmailParams = {
     platformId: string
     projectId: string | null
 }
+
