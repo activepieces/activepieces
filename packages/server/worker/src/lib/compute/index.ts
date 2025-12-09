@@ -1,5 +1,5 @@
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, AGENT_PIECE_NAME, AgentPieceProps, AgentToolType, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { ActivepiecesError, AgentPieceProps, AgentToolType, AI_PIECE_NAME, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteTriggerOperation, ExecuteValidateAuthOperation, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
@@ -152,7 +152,7 @@ async function prepareFlowSandbox(log: FastifyBaseLogger, engineToken: string, f
                     pieceVersion,
                     platformId,
                 })]
-                if (pieceName === AGENT_PIECE_NAME) {
+                if (pieceName === AI_PIECE_NAME) {
                     const agentTools = step.settings.input?.[AgentPieceProps.AGENT_TOOLS]
                     for (const tool of agentTools ?? []) {
                         if (tool.type === AgentToolType.PIECE) {

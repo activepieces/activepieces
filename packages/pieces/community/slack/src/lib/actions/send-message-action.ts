@@ -23,8 +23,8 @@ export const slackSendMessageAction = createAction({
     channel: slackChannel(true),
     text: Property.LongText({
       displayName: 'Message',
-      description: 'The text of your message',
-      required: true,
+      description: 'The text of your message. When using Block Kit blocks, this is used as a fallback for notifications.',
+      required: false,
     }),
     threadTs,
     username,
@@ -53,9 +53,18 @@ export const slackSendMessageAction = createAction({
     const { text, channel, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
     
-    const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
+    if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      throw new Error('Either Message or Block Kit blocks must be provided');
+    }
 
-    if(blocks && Array.isArray(blocks)) { 
+    const blockList: (KnownBlock | Block)[] = [];
+
+
+    if (text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
+      blockList.push({ type: 'section', text: { type: 'mrkdwn', text } });
+    }
+
+    if(blocks && Array.isArray(blocks) && blocks.length > 0) { 
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
     }
 
@@ -70,13 +79,13 @@ export const slackSendMessageAction = createAction({
 
     return slackSendMessage({
       token,
-      text,
+      text: text || undefined,
       username,
       profilePicture,
       conversationId: channel,
       threadTs: threadTs ? processMessageTimestamp(threadTs) : undefined,
       file,
-      blocks: blockList,
+      blocks: blockList.length > 0 ? blockList : undefined,
       replyBroadcast,
       unfurlLinks,
     });

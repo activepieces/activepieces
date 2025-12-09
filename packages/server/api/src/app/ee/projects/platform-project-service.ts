@@ -29,13 +29,10 @@ import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { Order } from '../../helper/pagination/paginator'
-import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../platform/platform-usage-service'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
@@ -74,7 +71,6 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
                 )
@@ -214,19 +210,11 @@ async function enrichProject(
     })
 
 
-    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-
-    const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
-    const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
-        plan: await projectLimitsService(log).getPlanWithPlatformLimits(
+        plan: await projectLimitsService(log).getOrCreateDefaultPlan(
             project.id,
         ),
-        usage: {
-            aiCredits: projectAICreditUsage,
-            nextLimitResetDate: endDate,
-        },
         analytics: {
             activeFlows,
             totalFlows,
