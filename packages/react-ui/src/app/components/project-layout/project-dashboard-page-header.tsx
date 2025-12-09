@@ -44,10 +44,12 @@ export const ProjectDashboardPageHeader = ({
   title,
   children,
   description,
+  showPrivateProjectBadge = false,
 }: {
   title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
+  showPrivateProjectBadge?: boolean;
 }) => {
   const { project } = projectHooks.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -133,7 +135,8 @@ export const ProjectDashboardPageHeader = ({
                 titleClassName="text-lg font-semibold"
                 projectType={project.type}
               />
-              {project.type === ProjectType.PERSONAL &&
+              {showPrivateProjectBadge &&
+                project.type === ProjectType.PERSONAL &&
                 user?.platformRole === PlatformRole.ADMIN &&
                 currentUser?.id === project.ownerId && (
                   <Badge variant={'outline'} className="text-xs font-medium">

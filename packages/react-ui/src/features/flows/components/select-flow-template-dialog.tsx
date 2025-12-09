@@ -32,9 +32,9 @@ const SelectFlowTemplateDialog = ({
   children: React.ReactNode;
   folderId: string;
 }) => {
-  const { filteredTemplates, isLoading, search, setSearch } = useTemplates({
-    type: TemplateType.CUSTOM,
-  });
+  const { templates, isLoading, search, setSearch } = useTemplates(
+    TemplateType.CUSTOM,
+  );
   const carousel = useRef<CarouselApi>();
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null,
@@ -86,7 +86,7 @@ const SelectFlowTemplateDialog = ({
                     </div>
                   ) : (
                     <>
-                      {filteredTemplates?.length === 0 && (
+                      {templates?.length === 0 && (
                         <div className="flex flex-col items-center justify-center gap-2 text-center ">
                           <SearchX className="w-10 h-10" />
                           {t('No templates found, try adjusting your search')}
@@ -94,7 +94,7 @@ const SelectFlowTemplateDialog = ({
                       )}
                       <ScrollArea className="min-h-[260px] h-[calc(70vh-80px)] max-h-[740px]   overflow-y-auto px-1">
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {filteredTemplates?.map((template) => (
+                          {templates?.map((template) => (
                             <TemplateCard
                               key={template.id}
                               template={template}

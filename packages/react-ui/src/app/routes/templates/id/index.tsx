@@ -7,7 +7,7 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
 import { isNil } from '@activepieces/shared';
 
-const ShareTemplatePage = () => {
+const TemplateDetailsPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const token = authenticationSession.getToken();
   const location = useLocation();
@@ -33,4 +33,4 @@ const ShareTemplatePage = () => {
   );
 };
 
-export { ShareTemplatePage };
+export { TemplateDetailsPage };

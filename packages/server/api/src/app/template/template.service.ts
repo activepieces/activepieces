@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
-import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
+import { ArrayContains, ArrayOverlap, Equal } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -90,7 +90,7 @@ export const templateService = () => ({
     },  
 
     async list({ platformId, requestQuery }: ListParams): Promise<SeekPage<Template>> {
-        const { pieces, tags, search, type } = requestQuery
+        const { pieces, tags, search, type, category } = requestQuery
         const commonFilters: Record<string, unknown> = {}
         if (pieces) {
             commonFilters.pieces = ArrayOverlap(pieces)
@@ -98,16 +98,24 @@ export const templateService = () => ({
         if (tags) {
             commonFilters.tags = ArrayContains(tags)
         }
-        if (search) {
-            commonFilters.name = ILike(`%${search}%`)
-            commonFilters.description = ILike(`%${search}%`)
+        if (category) {
+            commonFilters.categories = ArrayContains([category])
         }
         commonFilters.platformId = Equal(platformId)
         commonFilters.type = Equal(type)
-        const templates = await templateRepo()
+        
+        const queryBuilder = templateRepo()
             .createQueryBuilder('template')
             .where(commonFilters)
-            .getMany()
+        
+        if (search) {
+            queryBuilder.andWhere(
+                '(template.name ILIKE :search OR template.summary ILIKE :search OR template.description ILIKE :search)',
+                { search: `%${search}%` },
+            )
+        }
+        
+        const templates = await queryBuilder.getMany()
         return paginationHelper.createPage(templates, null)
     },
 

@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search, Loader2, Plus } from 'lucide-react';
+import { LayoutGrid, Search, Loader2, Plus } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -159,10 +159,10 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: '/explore',
-    label: t('Explore'),
+    to: '/templates',
+    label: t('Templates'),
     show: true,
-    icon: Compass,
+    icon: LayoutGrid,
     hasPermission: true,
     isSubItem: false,
   };
