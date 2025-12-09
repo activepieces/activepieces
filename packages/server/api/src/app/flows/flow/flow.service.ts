@@ -519,6 +519,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         const template: SharedTemplate = {
             name: flow.version.displayName,
+            summary: '',
             description: '',
             pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
             flows: [flow.version],

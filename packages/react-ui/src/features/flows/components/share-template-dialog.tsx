@@ -58,6 +58,7 @@ const ShareTemplateDialog: React.FC<{
       const flowTemplate = await templatesApi.create({
         name: template.name,
         description: shareTemplateForm.getValues().description,
+        summary: template.summary,
         tags: template.tags,
         blogUrl: template.blogUrl ?? undefined,
         metadata: null,

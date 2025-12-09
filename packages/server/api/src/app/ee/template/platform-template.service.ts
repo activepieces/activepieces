@@ -6,12 +6,13 @@ import { TemplateEntity } from '../../template/template.entity'
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
 export const platformTemplateService = () => ({
-    async create({ platformId, name, description, pieces, tags, blogUrl, metadata, author, categories, flows }: CreateParams): Promise<Template> {
+    async create({ platformId, name, summary, description, pieces, tags, blogUrl, metadata, author, categories, flows }: CreateParams): Promise<Template> {
         const newTags = tags ?? []
         const newTemplate: NewTemplate = {
             id: apId(),
             name,
             type: TemplateType.CUSTOM,
+            summary,
             description,
             platformId,
             tags: newTags,
@@ -46,6 +47,7 @@ export const platformTemplateService = () => ({
 type CreateParams = {
     platformId: string | undefined
     name: string
+    summary: string
     description: string
     tags: TemplateTag[]
     blogUrl: string | undefined

@@ -43,6 +43,7 @@ export const Template = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
     type: Type.Enum(TemplateType),
+    summary: Type.String(),
     description: Type.String(),
     tags: Type.Array(TemplateTag),
     blogUrl: Nullable(Type.String()),
