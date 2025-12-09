@@ -41,13 +41,13 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             ...params,
             verified: true,
         })
-        const user = await userService.create({
-            identityId: userIdentity.id,
-            platformRole: PlatformRole.MEMBER,
+        const user = await userService.getOrCreateWithProject({
+            identity: userIdentity,
             platformId: params.platformId,
         })
         await userInvitationsService(log).provisionUserInvitation({
             email: params.email,
+            user,
         })
 
         return authenticationUtils.getProjectAndToken({
@@ -119,14 +119,14 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
                 password: await cryptoUtils.generateRandomPassword(),
             })
         }
-        await userInvitationsService(log).provisionUserInvitation({
-            email: params.email,
-        })
-        const user = await userService.getOneByIdentityAndPlatform({
-            identityId: userIdentity.id,
+        const user = await userService.getOrCreateWithProject({
+            identity: userIdentity,
             platformId,
         })
-        assertNotNullOrUndefined(user, 'User Identity is found but not the user')
+        await userInvitationsService(log).provisionUserInvitation({
+            email: params.email,
+            user,
+        })
         return authenticationUtils.getProjectAndToken({
             userId: user.id,
             platformId,
