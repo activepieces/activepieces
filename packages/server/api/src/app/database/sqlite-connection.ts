@@ -169,6 +169,7 @@ import { AddFlowOperationStatusFieldSqlite1764239872251 } from './migration/sqli
 import { AddMcpServerSqlite1764524983756 } from './migration/sqlite/1764524983756-AddMcpServerSqlite'
 import { AddPieceVersionToAppConnection1764856239445 } from './migration/sqlite/1764856239445-addPieceVersionToAppConnection'
 import { FixFlowRunIndexes1764871079154 } from './migration/sqlite/1764871079154-FixFlowRunIndexesSqlite'
+import { AddUserLastActiveDate1765291224228 } from './migration/sqlite/1765291224228-AddUserLastActiveDate'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -354,6 +355,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpServerSqlite1764524983756,
         AddPieceVersionToAppConnection1764856239445,
         FixFlowRunIndexes1764871079154,
+        AddUserLastActiveDate1765291224228,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

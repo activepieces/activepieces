@@ -302,6 +302,7 @@ import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgre
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
 import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
+import { AddUserLastActiveDate1765293261477 } from './migration/postgres/1765293261477-AddUserLastActiveDate'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -620,6 +621,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpServer1764606838149,
         AddOpenRouterKeyToPlatformPlan1765109187883,
         AddPieceVersionToAppConnection1764841091811,
+        AddUserLastActiveDate1765293261477,
     ]
     return migrations
 }
