@@ -235,6 +235,9 @@
       ],
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-chatling": [
+        "packages/pieces/community/chatling/src/index.ts"
       ]
     },
     "resolveJsonModule": true
