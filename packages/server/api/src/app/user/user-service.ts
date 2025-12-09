@@ -9,10 +9,12 @@ import {
     PlatformId,
     PlatformRole,
     ProjectId,
+    ProjectType,
     SeekPage,
     spreadIfDefined,
     User,
     UserId,
+    UserIdentity,
     UserStatus,
     UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -24,6 +26,7 @@ import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
+import { projectService } from '../project/project-service'
 import { UserEntity, UserSchema } from './user-entity'
 
 
@@ -40,6 +43,28 @@ export const userService = {
             platformId: params.platformId,
         }
         return userRepo().save(user)
+    },
+    async getOrCreateWithProject({ identity, platformId }: GetOrCreateWithProjectParams): Promise<User> {
+        const user = await this.getOneByIdentityAndPlatform({
+            identityId: identity.id,
+            platformId,
+        })
+        if (isNil(user)) {
+            const newUser = await this.create({
+                identityId: identity.id,
+                platformId,
+                platformRole: PlatformRole.MEMBER,
+            })
+    
+            await projectService.create({
+                displayName: identity.firstName + '\'s Project',
+                ownerId: newUser.id,
+                platformId,
+                type: ProjectType.PERSONAL,
+            })
+            return newUser
+        }
+        return user
     },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
@@ -243,5 +268,10 @@ type IdParams = {
 
 type UpdatePlatformIdParams = {
     id: UserId
+    platformId: string
+}
+
+type GetOrCreateWithProjectParams = {
+    identity: UserIdentity
     platformId: string
 }
