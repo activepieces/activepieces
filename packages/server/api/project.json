@@ -158,7 +158,7 @@
       "options": {
         "commands": [
           "echo '🔍 Checking for schema changes without migrations...'",
-          "export $(cat packages/server/api/.env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && nx db server-api -- migration:run -d packages/server/api/src/app/database/migration-data-source.ts",
+          "export $(cat packages/server/api/.env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && nx db server-api -- migration:run -d packages/server/api/src/app/database/migration-data-source.ts > /dev/null 2>&1",
           "echo 'Checking for schema drift...'",
           "export $(cat packages/server/api/.env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && nx db-migration server-api --flags='--dryrun --check' || (echo '' && echo '❌ ERROR: Schema changes detected without corresponding migration!' && echo '' && echo 'The PR contains database schema changes without corresponding migration.' && echo 'Please generate a migration using:' && echo '  nx db-migration server-api --name=<DESCRIPTIVE_NAME>' && echo '' && echo 'For more information, see: docs/handbook/engineering/playbooks/database-migration.mdx' && echo '' && exit 1)",
           "echo '✅ No missing migrations detected'"
