@@ -232,6 +232,9 @@
       "@activepieces/piece-customgpt": [
         "packages/pieces/community/customgpt/src/index.ts"
       ],
+      "@activepieces/piece-synthesia": [
+        "packages/pieces/community/synthesia/src/index.ts"
+      ],
       "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
       "@activepieces/piece-meetgeek-ai": [
         "packages/pieces/community/meetgeek-ai/src/index.ts"
