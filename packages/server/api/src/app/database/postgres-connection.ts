@@ -302,6 +302,7 @@ import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgre
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
 import { RemovePlatformSMTP1764945141702 } from './migration/postgres/1764945141702-RemovePlatformSMTP'
+import { AddPersonalProjectsForAllUsers1765107860778 } from './migration/postgres/1765107860778-AddPersonalProjectsForAllUsers'
 import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -622,6 +623,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         RemovePlatformSMTP1764945141702,
         AddOpenRouterKeyToPlatformPlan1765109187883,
         AddPieceVersionToAppConnection1764841091811,
+        AddPersonalProjectsForAllUsers1765107860778,
     ]
     return migrations
 }
