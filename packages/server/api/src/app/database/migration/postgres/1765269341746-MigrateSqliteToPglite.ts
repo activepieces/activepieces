@@ -6,8 +6,8 @@ import { createSqlLiteDataSourceForMigrations } from '../../sqlite-connection'
 
 const log = system.globalLogger()
 
-export class MigrateSqliteToPglite1765200617000 implements MigrationInterface {
-    name = 'MigrateSqliteToPglite1765200617000'
+export class MigrateSqliteToPglite1765269341746 implements MigrationInterface {
+    name = 'MigrateSqliteToPglite1765269341746'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const databaseType = system.get(AppSystemProp.DB_TYPE)
