@@ -247,6 +247,9 @@
       ],
       "@activepieces/piece-tiny-talk-ai": [
         "packages/pieces/community/tiny-talk-ai/src/index.ts"
+      ],
+      "@activepieces/piece-sap-ariba": [
+        "packages/pieces/community/sap-ariba/src/index.ts"
       ]
     },
     "resolveJsonModule": true
