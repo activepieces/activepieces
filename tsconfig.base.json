@@ -242,6 +242,9 @@
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
       ],
+      "@activepieces/piece-echowin": [
+        "packages/pieces/community/echowin/src/index.ts"
+      ],
       "@activepieces/piece-feathery": [
         "packages/pieces/community/feathery/src/index.ts"
       ],
