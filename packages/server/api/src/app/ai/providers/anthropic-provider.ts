@@ -11,6 +11,7 @@ export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
             headers: {
                 'x-api-key': config.apiKey,
                 'Content-Type': 'application/json',
+                'anthropic-version': '2023-06-01',
             },
         })
 
