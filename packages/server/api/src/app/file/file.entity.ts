@@ -21,7 +21,7 @@ export const FileEntity = new EntitySchema<FileSchema>({
         },
         location: {
             type: String,
-            nullable: true,
+            nullable: false,
         },
         fileName: {
             type: String,
