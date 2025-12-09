@@ -31,7 +31,7 @@ export const omniCo = createPiece({
       baseUrl: () => 'https://blobsrus.omniapp.co/api/v1',
       auth: omniAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

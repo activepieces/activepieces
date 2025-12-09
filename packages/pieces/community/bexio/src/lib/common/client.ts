@@ -4,11 +4,10 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { bexioCommon } from './index';
 
 export class BexioClient {
-  constructor(private auth: OAuth2PropertyValue) {}
+  constructor(private auth: {access_token: string}) {}
 
   async makeRequest<T>(
     method: HttpMethod,

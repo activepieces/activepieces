@@ -59,7 +59,7 @@ export const stripeNewCharge = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'charge.succeeded',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>('_new_charge_trigger', {
       webhookId: webhook.id,
@@ -73,7 +73,7 @@ export const stripeNewCharge = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
@@ -82,7 +82,7 @@ export const stripeNewCharge = createTrigger({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/checkout/charges',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {

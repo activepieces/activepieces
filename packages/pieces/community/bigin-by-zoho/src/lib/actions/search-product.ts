@@ -26,9 +26,10 @@ export const searchProductRecord = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { searchTerm, mode } = propsValue as any;
+    const { searchTerm, mode } = propsValue;
 
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
 
     const criteriaValue = ['Product_Name', 'Product_Code']
       .flatMap((key) => [

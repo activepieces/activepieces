@@ -38,7 +38,7 @@ export const makePhoneCall = createAction({
     }),
   },
   async run(context) {
-    const auth = context.auth as string;
+    const auth = context.auth.secret_text;
     const payload: Record<string, unknown> = {
       agent_id: context.propsValue.agentId,
       recipient_phone_number: context.propsValue.recipientPhoneNumber,

@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import { ButtonWithTooltip } from '@/components/custom/button-with-tooltip';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { CollapsibleJson } from '@/components/custom/collapsible-json';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -27,6 +28,17 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
   const maskToken = (tokenValue: string) => {
     if (tokenValue.length <= 8) return '••••••••';
     return '••••••••' + tokenValue.slice(-4);
+  };
+
+  const jsonConfiguration = {
+    mcpServers: {
+      activepieces: {
+        url: serverUrl,
+        headers: {
+          Authorization: `Bearer ${mcpServer?.token ?? ''}`,
+        },
+      },
+    },
   };
 
   return (
@@ -93,6 +105,16 @@ export function McpCredentials({ mcpServer }: McpCredentialsProps) {
           )}
         </p>
       </div>
+
+      {/* JSON Configuration */}
+      <CollapsibleJson
+        json={jsonConfiguration}
+        label={t('MCP Client Configuration (JSON)')}
+        description={t(
+          'Copy this configuration to your MCP client settings file (e.g., Cursor).',
+        )}
+        defaultOpen={false}
+      />
     </div>
   );
 }

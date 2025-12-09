@@ -70,7 +70,7 @@ export const bika = createPiece({
       baseUrl: () => 'https://bika.ai/api/openapi/bika',
       auth: BikaAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as { token: string }).token}`,
+        Authorization: `Bearer ${(auth).props.token}`,
       }),
     }),
   ],

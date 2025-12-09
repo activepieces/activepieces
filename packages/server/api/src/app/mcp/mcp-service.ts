@@ -1,5 +1,5 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { apId, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
+import { apId, FlowStatus, FlowTriggerType, FlowVersionState, isNil, MCP_TRIGGER_PIECE_NAME, McpProperty, McpPropertyType, McpServer as McpServerSchema, McpServerStatus, McpTrigger, PopulatedFlow, PopulatedMcpServer, TelemetryEventName } from '@activepieces/shared'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { FastifyBaseLogger } from 'fastify'
 import { z } from 'zod'
@@ -14,7 +14,7 @@ export const mcpServerRepository = repoFactory(McpServerEntity)
 
 export const mcpServerService = (log: FastifyBaseLogger) => {
     return {
-        getPopulatedByProjectId: async (projectId: string) => {
+        getPopulatedByProjectId: async (projectId: string): Promise<PopulatedMcpServer> => {
             const mcp = await mcpServerService(log).getByProjectId(projectId)
             const flows = await listFlows(mcp, log)
             return {
@@ -22,7 +22,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
                 flows,
             }
         },
-        getByProjectId: async (projectId: string) => {
+        getByProjectId: async (projectId: string): Promise<McpServerSchema> => {
             const mcpServer = await mcpServerRepository().findOneBy({ projectId })
             if (isNil(mcpServer)) {
                 await mcpServerRepository().upsert({
@@ -35,7 +35,7 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             }
             return mcpServer
         },
-        rotateToken: async ({ projectId }: RotateTokenRequest) => {
+        rotateToken: async ({ projectId }: RotateTokenRequest): Promise<PopulatedMcpServer> => {
             const mcp = await mcpServerService(log).getByProjectId(projectId)
             await mcpServerRepository().update(mcp.id, {
                 token: apId(72),
@@ -49,17 +49,18 @@ export const mcpServerService = (log: FastifyBaseLogger) => {
             })
             return mcpServerService(log).getPopulatedByProjectId(projectId)
         },
-        buildServer: async ({ mcp }: BuildServerRequest) => {
+        buildServer: async ({ mcp }: BuildServerRequest): Promise<McpServer> => {
             const server = new McpServer({
                 name: 'Activepieces',
                 version: '1.0.0',
             })
-            for (const flow of mcp.flows) {
+            const enabledFlows = mcp.flows.filter((flow) => flow.status === FlowStatus.ENABLED)
+            for (const flow of enabledFlows) {
                 const mcpTrigger = flow.version.trigger.settings as McpTrigger
                 const mcpInputs = mcpTrigger.input?.inputSchema ?? []
                 const zodFromInputSchema = Object.fromEntries(mcpInputs.map((property) => [property.name, mcpPropertyToZod(property)]))
                 
-                const toolName = (mcpTrigger.input?.toolName ?? flow.version.displayName).toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_')
+                const toolName = (mcpTrigger.input?.toolName ?? flow.version.displayName).toLowerCase().replace(/[^a-zA-Z0-9_]/g, '_') + '_' + flow.id.substring(0, 4)
                 const toolDescription: string = mcpTrigger.input?.toolDescription ?? ''
 
                 server.tool(toolName, toolDescription, zodFromInputSchema, { title: toolName }, async (args) => {

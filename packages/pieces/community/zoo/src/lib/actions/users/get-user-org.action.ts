@@ -14,7 +14,7 @@ export const getUserOrgAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/user/org',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

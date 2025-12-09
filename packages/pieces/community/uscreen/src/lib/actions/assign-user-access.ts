@@ -29,7 +29,7 @@ export const assignUserAccess = createAction({
 
     async run(context) {
         const { customer_id, product_id, productType, perform_action_at, with_manual_billing } = context.propsValue;
-        const client = new UscreenClient(context.auth);
+        const client = new UscreenClient(context.auth.secret_text);
 
         const body: Record<string, unknown> = {
             product_id: product_id,

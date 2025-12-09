@@ -1,5 +1,5 @@
 import {
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
@@ -15,7 +15,7 @@ import { circleAuth } from '../common/auth';
 import { ListBasicPostsResponse } from '../common/types';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof circleAuth>, { space_id?: number }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof circleAuth>, { space_id?: number }> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const spaceId = propsValue.space_id!;

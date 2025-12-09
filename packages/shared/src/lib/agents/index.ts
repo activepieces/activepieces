@@ -24,6 +24,11 @@ export enum ToolCallStatus {
     COMPLETED = 'completed',
 }
 
+export enum ExecutionToolStatus {
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
+
 export enum ToolCallType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
@@ -48,7 +53,8 @@ export enum AgentPieceProps {
     STRUCTURED_OUTPUT = 'structuredOutput',
     PROMPT = 'prompt',
     MAX_STEPS = 'maxSteps',
-    AI_MODEL = 'aiModel',
+    AI_PROVIDER = 'provider',
+    AI_MODEL = 'model',
 }
 
 export const MarkdownContentBlock = Type.Object({

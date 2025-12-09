@@ -31,7 +31,7 @@ export const newRecord = createTrigger({
 					},
 					kinds: [WEBHOOK_EVENTS.RECORD_CREATED],
 					locator: {
-						account_id: context.auth.accountId, // This will be filled by SmartSuite based on the API key
+						account_id: context.auth.props.accountId, // This will be filled by SmartSuite based on the API key
 						solution_id: solutionId,
 					},
 					notification_status: {
@@ -42,8 +42,8 @@ export const newRecord = createTrigger({
 				},
 			},
 			headers: {
-				Authorization: `Token ${context.auth.apiKey}`,
-				'ACCOUNT-ID': context.auth.accountId,
+				Authorization: `Token ${context.auth.props.apiKey}`,
+				'ACCOUNT-ID': context.auth.props.accountId,
 			},
 		});
 		await context.store.put('new_record', response.body.webhook.webhook_id);
@@ -60,8 +60,8 @@ export const newRecord = createTrigger({
 					webhook_id: webhookId,
 				},
 				headers: {
-					Authorization: `Token ${context.auth.apiKey}`,
-					'ACCOUNT-ID': context.auth.accountId,
+					Authorization: `Token ${context.auth.props.apiKey}`,
+					'ACCOUNT-ID': context.auth.props.accountId,
 				},
 			});
 		}
@@ -70,8 +70,8 @@ export const newRecord = createTrigger({
 	async test(context) {
 		const { tableId } = context.propsValue;
 		const response = await smartSuiteApiCall<{ items: Record<string, any>[] }>({
-			accountId: context.auth.accountId,
-			apiKey: context.auth.apiKey,
+			accountId: context.auth.props.accountId,
+			apiKey: context.auth.props.apiKey,
 			method: HttpMethod.POST,
 			resourceUri: `/applications/${tableId}/records/list/`,
 			query: { limit: '5', offset: '0' },
@@ -81,8 +81,8 @@ export const newRecord = createTrigger({
 		const tableResponse = await smartSuiteApiCall<{
 			structure: TableStucture[];
 		}>({
-			apiKey: context.auth.apiKey,
-			accountId: context.auth.accountId,
+			apiKey: context.auth.props.apiKey,
+			accountId: context.auth.props.accountId,
 			method: HttpMethod.GET,
 			resourceUri: `/applications/${context.propsValue.tableId}`,
 		});
@@ -123,8 +123,8 @@ export const newRecord = createTrigger({
 					page_token: pageToken,
 				},
 				headers: {
-					Authorization: `Token ${context.auth.apiKey}`,
-					'ACCOUNT-ID': context.auth.accountId,
+					Authorization: `Token ${context.auth.props.apiKey}`,
+					'ACCOUNT-ID': context.auth.props.accountId,
 				},
 			});
 
@@ -142,8 +142,8 @@ export const newRecord = createTrigger({
 		const tableResponse = await smartSuiteApiCall<{
 			structure: TableStucture[];
 		}>({
-			apiKey: context.auth.apiKey,
-			accountId: context.auth.accountId,
+			apiKey: context.auth.props.apiKey,
+			accountId: context.auth.props.accountId,
 			method: HttpMethod.GET,
 			resourceUri: `/applications/${context.propsValue.tableId}`,
 		});

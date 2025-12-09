@@ -31,11 +31,11 @@ type Message = {
 
 function buildImapClient(auth: ImapAuth): ImapFlow {
   const imapConfig = {
-    host: auth.host,
-    port: auth.port,
-    secure: auth.tls,
-    auth: { user: auth.username, pass: auth.password },
-    tls: { rejectUnauthorized: auth.validateCertificates },
+    host: auth.props.host,
+    port: auth.props.port,
+    secure: auth.props.tls,
+    auth: { user: auth.props.username, pass: auth.props.password },
+    tls: { rejectUnauthorized: auth.props.validateCertificates },
   };
 
   return new ImapFlow({ ...imapConfig, logger: false });
@@ -255,7 +255,7 @@ async function performMailboxOperation<T>(
     let lock: MailboxLockObject | null = null;
 
     try {
-      lock = await imapClient.getMailboxLock(mailbox, { readOnly });
+      lock = await imapClient.getMailboxLock(mailbox, { readOnly: readOnly });
       return await callback(imapClient);
     } catch (error) {
       detectMissingMailbox(error);

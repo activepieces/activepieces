@@ -1,4 +1,4 @@
-import { PieceAuth } from "@activepieces/pieces-framework";
+import { AppConnectionValueForAuthProperty, PieceAuth } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
 
 // Action imports
@@ -97,7 +97,7 @@ export const housecallProAuth = PieceAuth.SecretText({
 
 // Common API functions
 export async function makeHousecallProRequest(
-  auth: string,
+  auth: AppConnectionValueForAuthProperty<typeof housecallProAuth>,
   endpoint: string,
   method: HttpMethod = HttpMethod.GET,
   body?: any,
@@ -109,7 +109,7 @@ export async function makeHousecallProRequest(
     url: fullUrl,
     method,
     headers: {
-      "Authorization": `Token ${auth}`,
+      "Authorization": `Token ${auth.secret_text}`,
       "Content-Type": "application/json",
     },
     body,

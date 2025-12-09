@@ -58,7 +58,7 @@ export const sendPromptAction = createAction({
       method: HttpMethod.POST,
       url: 'https://app.rapidtextai.com/openai/completion',
       queryParams: {
-        gigsixkey: context.auth,
+        gigsixkey: context.auth.secret_text,
       },
       body: {
         model,

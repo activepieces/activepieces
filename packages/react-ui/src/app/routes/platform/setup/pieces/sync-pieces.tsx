@@ -1,9 +1,9 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { RefreshCcw } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/use-toast';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId, PieceSyncMode } from '@activepieces/shared';
@@ -17,8 +17,7 @@ const SyncPiecesButton = () => {
       await piecesApi.syncFromCloud();
     },
     onSuccess: () => {
-      toast({
-        title: t('Pieces synced'),
+      toast.success(t('Pieces synced'), {
         description: t('Pieces have been synced from the activepieces cloud.'),
       });
     },

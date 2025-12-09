@@ -7,9 +7,10 @@ import {
     ExecutePropsOptions,
     ExecuteTriggerOperation,    
     ExecuteValidateAuthOperation,
-    TriggerHookType,
+    ExecutionError,
+    ExecutionErrorType,
+    TriggerHookType, 
 } from '@activepieces/shared'
-import { ExecutionError, ExecutionErrorType } from '../helper/execution-errors'
 import { authValidationOperation } from './auth-validation.operation'
 import { flowOperation } from './flow.operation'
 import { pieceMetadataOperation } from './piece-metadata.operation'

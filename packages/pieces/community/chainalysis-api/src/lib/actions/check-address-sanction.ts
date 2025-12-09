@@ -16,7 +16,7 @@ export const checkAddressSanction = createAction({
   },
   async run({ auth, propsValue }) {
     const address = propsValue.address;
-    const apiKey = auth;
+    const apiKey = auth.secret_text;
 
     try {
       const response = await fetch(`https://public.chainalysis.com/api/v1/address/${address}`, {

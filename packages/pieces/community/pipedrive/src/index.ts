@@ -42,6 +42,7 @@ import { findOrganizationAction } from './lib/actions/find-organization';
 import { findPersonAction } from './lib/actions/find-person';
 import { findDealAction } from './lib/actions/find-deal';
 import { findActivityAction } from './lib/actions/find-activity';
+import { updateProductAction } from './lib/actions/update-product';
 
 export const pipedriveAuth = PieceAuth.OAuth2({
 	description: '',
@@ -85,6 +86,7 @@ export const pipedrive = createPiece({
 		createPersonAction,
 		updatePersonAction,
 		createProductAction,
+		updateProductAction,
 		findDealsAssociatedWithPersonAction,
 		findProductAction,
 		findProductsAction,
@@ -103,7 +105,7 @@ export const pipedrive = createPiece({
 			}),
 		}),
 	],
-	authors: ['ashrafsamhouri', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud'],
+	authors: ['ashrafsamhouri', 'kishanprmr', 'MoShizzle', 'khaledmashaly', 'abuaboud', 'leocottaz'],
 	triggers: [
 		newPerson,
 		newDeal,

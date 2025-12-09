@@ -10,13 +10,21 @@ export const queryAgentAction = createAction({
   description: 'Send a message to a Contextual AI agent and get a response',
   props: {
     agentId: Property.Dropdown({
+      auth: contextualAiAuth,
       displayName: 'Agent',
       description: 'Select the agent to query',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
         try {
-          const { apiKey, baseUrl } = auth as { apiKey: string; baseUrl?: string };
+          if (!auth) {
+            return {
+              disabled: true,
+              options: [],
+              placeholder: 'Please connect your account first',
+            };
+          }
+          const { apiKey, baseUrl } = auth.props;
           const client = new ContextualAI({
             apiKey: apiKey,
             baseURL: baseUrl || 'https://api.contextual.ai/v1',
@@ -25,7 +33,7 @@ export const queryAgentAction = createAction({
           const allAgents: Agent[] = [];
           for await (const agent of client.agents.list()) {
             allAgents.push(agent);
-          }
+          } 
 
           return {
             options: allAgents.map((agent: Agent) => ({
@@ -59,7 +67,7 @@ export const queryAgentAction = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const { agentId, message, conversationId, includeRetrievalContent } = propsValue;
 
     const client = new ContextualAI({

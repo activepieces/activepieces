@@ -27,7 +27,7 @@ export const discordAddRoleToMember = createAction({
       method: HttpMethod.PUT,
       url: `https://discord.com/api/v9/guilds/${configValue.propsValue.guild_id}/members/${configValue.propsValue.user_id}/roles/${configValue.propsValue.role_id}`,
       headers: {
-        authorization: `Bot ${configValue.auth}`,
+        authorization: `Bot ${configValue.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
     };

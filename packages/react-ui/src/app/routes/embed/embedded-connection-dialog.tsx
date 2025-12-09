@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { memoryRouter } from '@/app/router';
+import { memoryRouter } from '@/app/guards';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { cn, parentWindow } from '@/lib/utils';
 import {
   apId,
@@ -58,11 +59,12 @@ const EmbeddedConnectionDialogContent = ({
   const hasErrorRef = useRef(false);
 
   const {
-    pieceModel,
+    data: pieceModel,
     isLoading: isLoadingPiece,
     isSuccess,
-  } = piecesHooks.usePiece({
-    name: pieceName ?? '',
+  } = piecesHooks.usePieceForEmbeddingConnection({
+    pieceName: pieceName ?? '',
+    connectionExternalId: connectionName ?? '',
   });
   const hideConnectionIframe = (
     connection?: Pick<AppConnectionWithoutSensitiveData, 'id' | 'externalId'>,
@@ -113,6 +115,8 @@ const EmbeddedConnectionDialogContent = ({
     }
   }, [isSuccess, isLoadingPiece, pieceName]);
 
+  const { data: piecesOAuth2AppsMap, isPending: loadingPiecesOAuth2AppsMap } =
+    oauthAppsQueries.usePiecesOAuth2AppsMap();
   return (
     <Dialog
       open={isDialogOpen}
@@ -135,15 +139,17 @@ const EmbeddedConnectionDialogContent = ({
         )}
         withCloseButton={!isLoadingPiece}
       >
-        {isLoadingPiece && (
-          <div className="flex justify-center items-center">
-            <LoadingSpinner className="stroke-background size-[50px]"></LoadingSpinner>
-          </div>
-        )}
+        {isLoadingPiece ||
+          (loadingPiecesOAuth2AppsMap && (
+            <div className="flex justify-center items-center">
+              <LoadingSpinner className="stroke-background size-[50px]"></LoadingSpinner>
+            </div>
+          ))}
 
-        {!isLoadingPiece && pieceModel && (
+        {!isLoadingPiece && pieceModel && piecesOAuth2AppsMap && (
           <CreateOrEditConnectionDialogContent
             reconnectConnection={null}
+            piecesOAuth2AppsMap={piecesOAuth2AppsMap}
             piece={pieceModel}
             externalIdComingFromSdk={connectionName}
             isGlobalConnection={false}

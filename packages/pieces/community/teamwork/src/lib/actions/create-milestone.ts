@@ -10,6 +10,7 @@ export const createMilestone = createAction({
 	auth: teamworkAuth,
 	props: {
 		projectId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project',
 			description: 'The project to create the milestone in.',
 			required: true,
@@ -22,7 +23,7 @@ export const createMilestone = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects.json',
 				});
@@ -47,6 +48,7 @@ export const createMilestone = createAction({
 			required: true,
 		}),
 		'responsible-party-ids': Property.MultiSelectDropdown({
+auth: teamworkAuth,
 			displayName: 'Responsible Parties',
 			description: 'The users responsible for the milestone.',
 			required: true,
@@ -59,7 +61,7 @@ export const createMilestone = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: `/projects/${projectId}/people.json`,
 				});

@@ -7,9 +7,11 @@ import {
   PaperformSpace,
 } from './types';
 import { isNil } from '@activepieces/shared';
+import { paperformAuth } from './auth';
 
 export const paperformCommonProps = {
   spaceId: Property.Dropdown({
+auth: paperformAuth,
     displayName: 'Space',
     required: true,
     refreshers: ['auth'],
@@ -24,7 +26,7 @@ export const paperformCommonProps = {
 
       try {
         const spaces = await paperformCommon.getSpaces({
-          auth: auth as string,
+          auth: auth.secret_text,
           limit: 100,
         });
 
@@ -45,6 +47,7 @@ export const paperformCommonProps = {
     },
   }),
   formId: Property.Dropdown({
+auth: paperformAuth,
     displayName: 'Form',
     required: true,
     refreshers: ['auth'],
@@ -59,7 +62,7 @@ export const paperformCommonProps = {
 
       try {
         const forms = await paperformCommon.getForms({
-          auth: auth as string,
+          auth: auth.secret_text,
           limit: 100,
         });
 
@@ -80,6 +83,7 @@ export const paperformCommonProps = {
     },
   }),
   productFieldKey: Property.Dropdown({
+auth: paperformAuth,
     displayName: 'Product Field',
     required: true,
     refreshers: ['auth', 'formId'],
@@ -95,7 +99,7 @@ export const paperformCommonProps = {
       try {
         const fields = await paperformCommon.getFormFields({
           formSlugOrId: formId as string,
-          auth: auth as string,
+          auth: auth.secret_text,
         });
 
         const productFields = fields.results.fields.filter(
@@ -127,6 +131,7 @@ export const paperformCommonProps = {
     },
   }),
   productSku: Property.Dropdown({
+auth: paperformAuth,
     displayName: 'Product',
     required: true,
     refreshers: ['auth', 'formId'],
@@ -142,7 +147,7 @@ export const paperformCommonProps = {
       try {
         const products = await paperformCommon.getProducts({
           formSlugOrId: formId as string,
-          auth: auth as string,
+          auth: auth.secret_text,
           limit: 100,
         });
 
@@ -168,6 +173,7 @@ export const paperformCommonProps = {
     },
   }),
   couponCode: Property.Dropdown({
+auth: paperformAuth,
     displayName: 'Coupon',
     required: true,
     refreshers: ['auth', 'formId'],
@@ -183,7 +189,7 @@ export const paperformCommonProps = {
       try {
         const coupons = await paperformCommon.getCoupons({
           formSlugOrId: formId as string,
-          auth: auth as string,
+          auth: auth.secret_text,
           limit: 100,
         });
 

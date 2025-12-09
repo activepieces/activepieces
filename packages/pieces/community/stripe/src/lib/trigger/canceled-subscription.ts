@@ -80,7 +80,7 @@ export const stripeCanceledSubscription = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'customer.subscription.deleted',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>(
       '_canceled_subscription_trigger',
@@ -97,7 +97,7 @@ export const stripeCanceledSubscription = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
@@ -106,7 +106,7 @@ export const stripeCanceledSubscription = createTrigger({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/subscriptions',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {

@@ -7,6 +7,7 @@ import {
   fetchTags,
 } from '../service';
 import { Tag, AuthEmail } from '../types';
+import { convertkitAuth } from '../../..';
 
 export const tagId = Property.ShortText({
   displayName: 'Tag Id',
@@ -25,6 +26,7 @@ export const tags = Property.MultiSelectDropdown({
   description: 'Choose the Tags',
   required: false,
   refreshers: ['auth'],
+  auth: convertkitAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -33,7 +35,7 @@ export const tags = Property.MultiSelectDropdown({
         options: [],
       };
     }
-    const tags = await fetchTags(auth.toString());
+    const tags = await fetchTags(auth.secret_text);
     const options = tags.map((tag: Tag) => {
       return {
         label: tag.name,
@@ -54,6 +56,7 @@ export const tag = Property.Dropdown({
   description: 'Choose a Tag',
   required: true,
   refreshers: ['auth'],
+  auth: convertkitAuth,
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -63,7 +66,7 @@ export const tag = Property.Dropdown({
       };
     }
 
-    const tags = await fetchTags(auth.toString());
+    const tags = await fetchTags(auth.secret_text);
 
     // loop through data and map to options
     const options = tags.map((tag: Tag) => {
@@ -116,8 +119,9 @@ export const tagIdByEmail = Property.Dropdown({
   description: 'The tag to remove',
   required: true,
   refreshers: ['auth', 'email'],
-  options: async (params: unknown) => {
-    const { auth, email } = params as AuthEmail;
+  auth: convertkitAuth,
+  options: async (params) => {
+    const { auth, email } = params;
     if (!auth) {
       return {
         disabled: true,
@@ -171,6 +175,7 @@ export const tagIdBySubscriberId = Property.Dropdown({
   displayName: 'Tag',
   description: 'The tag to remove',
   required: true,
+  auth: convertkitAuth,
   refreshers: ['auth', 'subscriberId'],
   options: async ({ auth, subscriberId }) => {
     if (!auth) {
@@ -191,7 +196,7 @@ export const tagIdBySubscriberId = Property.Dropdown({
 
     {
       const tags = await fetchSubscribedTags(
-        auth.toString(),
+        auth.secret_text,
         subscriberId.toString()
       );
       if (!tags) {

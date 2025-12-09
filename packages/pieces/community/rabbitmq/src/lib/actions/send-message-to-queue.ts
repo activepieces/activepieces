@@ -29,7 +29,7 @@ export const sendMessageToQueue = createAction({
     let connection;
     let channel;
     try {
-      connection = await rabbitmqConnect(context.auth);
+      connection = await rabbitmqConnect(context.auth.props);
       channel = await connection.createChannel();
 
       await channel.checkQueue(queue);

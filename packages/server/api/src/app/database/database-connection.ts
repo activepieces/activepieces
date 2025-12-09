@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import {
     ArrayContains,
     DataSource,
@@ -10,7 +10,6 @@ import {
     SelectQueryBuilder,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
-import { AIUsageEntity } from '../ai/ai-usage-entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
@@ -64,9 +63,7 @@ import { createSqlLiteDataSource } from './sqlite-connection'
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
-    const edition = system.getEdition()
-
-    const entities: EntitySchema[] = [
+    return [
         TriggerEventEntity,
         AppEventRoutingEntity,
         FileEntity,
@@ -97,41 +94,26 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoEntity,
         McpServerEntity,
         TodoActivityEntity,
-        AIUsageEntity,
         TriggerSourceEntity,
+        // Enterprise
+        ProjectMemberEntity,
+        ProjectPlanEntity,
+        CustomDomainEntity,
+        SigningKeyEntity,
+        OAuthAppEntity,
+        OtpEntity,
+        ApiKeyEntity,
+        FlowTemplateEntity,
+        GitRepoEntity,
+        AuditEventEntity,
+        ProjectReleaseEntity,
+        PlatformAnalyticsReportEntity,
+        // CLOUD
+        AppSumoEntity,
+        ConnectionKeyEntity,
+        AppCredentialEntity,
+        PlatformPlanEntity,
     ]
-
-    switch (edition) {
-        case ApEdition.CLOUD:
-        case ApEdition.ENTERPRISE:
-            entities.push(
-                ProjectMemberEntity,
-                ProjectPlanEntity,
-                CustomDomainEntity,
-                SigningKeyEntity,
-                OAuthAppEntity,
-                OtpEntity,
-                ApiKeyEntity,
-                FlowTemplateEntity,
-                GitRepoEntity,
-                AuditEventEntity,
-                ProjectReleaseEntity,
-                PlatformAnalyticsReportEntity,
-                // CLOUD
-                AppSumoEntity,
-                ConnectionKeyEntity,
-                AppCredentialEntity,
-                PlatformPlanEntity,
-           
-            )
-            break
-        case ApEdition.COMMUNITY:
-            break
-        default:
-            throw new Error(`Unsupported edition: ${edition}`)
-    }
-
-    return entities
 }
 
 export const commonProperties = {

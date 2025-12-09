@@ -7,6 +7,7 @@ import {
   createTrigger,
   TriggerStrategy,
   OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { notionCommon } from '../common';
@@ -93,7 +94,10 @@ export const newComment = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, { page_id: string | undefined }> = {
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof notionAuth>,
+  { page_id: string | undefined }
+> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, propsValue, lastItemId }) => {
     const lastItem = lastItemId as string;

@@ -21,7 +21,7 @@ export const getListDefinition = createAction({
         `public/v4/lists/${listId}/definition?used-with-activepieces=`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
     });
     if (response.status === 200) {

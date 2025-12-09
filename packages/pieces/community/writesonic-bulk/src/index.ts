@@ -1,5 +1,4 @@
 import { createPiece } from '@activepieces/pieces-framework';
-;
 import { blogIdeas } from './lib/actions/blog-ideas';
 import { blogIntros } from './lib/actions/blog-intros';
 import { blogOutlines } from './lib/actions/blog-outlines';
@@ -17,7 +16,7 @@ import { writesonicBulkAuth } from './lib/common/auth';
 import { BASE_URL } from './lib/common/client';
 
 export const writesonicBulk = createPiece({
-  displayName: 'Writesonic-bulk',
+  displayName: 'Writesonic',
   auth: writesonicBulkAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/writesonic-bulk.png',
@@ -26,7 +25,7 @@ export const writesonicBulk = createPiece({
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.CONTENT_AND_FILES,
   ],
-  description: 'Writesonic-bulk AI-powered writing assistant',
+  description: 'Writesonic AI-powered writing assistant',
   actions: [
     blogIdeas,
     blogIntros,
@@ -43,7 +42,7 @@ export const writesonicBulk = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          'X-API-KEY': `${auth as string}`,
+          'X-API-KEY': `${auth.secret_text}`,
         };
       },
     }),

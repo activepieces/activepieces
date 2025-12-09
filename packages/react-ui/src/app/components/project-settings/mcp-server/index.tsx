@@ -82,31 +82,42 @@ export const McpServerSettings = () => {
                   {t('No MCP flows available')}
                 </div>
               ) : (
-                mcpServer.flows.map((flow) => {
-                  const isEnabled = flow.status === FlowStatus.ENABLED;
-                  // Construct the URL to the flow
-                  const flowUrl = `/flow/${flow.id}`;
-                  return (
-                    <div key={flow.id} className="flex items-center gap-4">
-                      <Button
-                        variant="link"
-                        className="text-sm font-medium p-0 h-auto min-w-0 text-secondary"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          window.open(flowUrl, '_blank', 'noopener,noreferrer');
-                        }}
-                        tabIndex={-1}
+                <div className="flex flex-col gap-2 max-w-xs">
+                  {mcpServer.flows.map((flow) => {
+                    const isEnabled = flow.status === FlowStatus.ENABLED;
+                    const flowUrl = `/flow/${flow.id}`;
+                    return (
+                      <div
+                        key={flow.id}
+                        className="flex items-center gap-2 w-full max-w-xs"
+                        style={{ minHeight: 32 }}
                       >
-                        {flow.version.displayName}
-                      </Button>
-                      <StatusIconWithText
-                        icon={isEnabled ? CheckCircle : CircleDot}
-                        text={isEnabled ? t('On') : t('Off')}
-                        variant={isEnabled ? 'success' : 'default'}
-                      />
-                    </div>
-                  );
-                })
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <Button
+                            variant="link"
+                            className="text-sm font-medium p-0 h-auto min-w-0 text-secondary break-all"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              window.open(
+                                flowUrl,
+                                '_blank',
+                                'noopener,noreferrer',
+                              );
+                            }}
+                            tabIndex={-1}
+                          >
+                            {flow.version.displayName}
+                          </Button>
+                        </div>
+                        <StatusIconWithText
+                          icon={isEnabled ? CheckCircle : CircleDot}
+                          text={isEnabled ? t('On') : t('Off')}
+                          variant={isEnabled ? 'success' : 'default'}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </div>

@@ -45,11 +45,11 @@ export const postStatus = createAction({
     }),
   },
   async run(context) {
-    const token = context.auth.access_token;
+    const token = context.auth.props.access_token;
     const status = context.propsValue.status;
     const media = context.propsValue.media;
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
 
     let mediaId: string | undefined = undefined;
     if (media) {

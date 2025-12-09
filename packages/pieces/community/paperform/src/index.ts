@@ -48,7 +48,7 @@ export const paperform = createPiece({
       baseUrl:()=>paperformCommon.baseUrl,
       authMapping:async (auth)=>{
         return{
-          Authorization:`Bearer ${auth}`
+          Authorization:`Bearer ${auth.secret_text}`
         }
       }
     })

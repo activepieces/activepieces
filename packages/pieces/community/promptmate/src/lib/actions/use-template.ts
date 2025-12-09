@@ -21,7 +21,7 @@ export const useTemplate = createAction({
       method: HttpMethod.POST,
       url: 'https://api.promptmate.io/v1/templates/use',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: {

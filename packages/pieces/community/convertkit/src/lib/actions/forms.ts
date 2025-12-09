@@ -19,8 +19,8 @@ export const listForms = createAction({
   displayName: 'List Forms',
   description: 'Returns a list of all forms',
   props: {},
-  run(context) {
-    return fetchForms(context.auth);
+  run(context) {  
+    return fetchForms(context.auth.secret_text);
   },
 });
 

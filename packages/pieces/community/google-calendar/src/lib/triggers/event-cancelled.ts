@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   Property,
@@ -20,12 +21,9 @@ import {
 } from '@activepieces/pieces-common';
 import { getEvents } from '../common/helper';
 
-interface GoogleCalendarEventList {
-  items: GoogleCalendarEvent[];
-}
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleCalendarAuth>,
+  AppConnectionValueForAuthProperty<typeof googleCalendarAuth>,
   {
     calendar_id: string | undefined;
     specific_event: boolean | undefined;

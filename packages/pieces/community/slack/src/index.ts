@@ -107,7 +107,7 @@ export const slack = createPiece({
             (payload.body as { payload: string }).payload
           ) as InteractionPayloadBody;
           if (interactionPayloadBody.type === 'block_actions') {
-            const action = interactionPayloadBody.actions?.at(0);
+            const action = interactionPayloadBody.actions?.[0];
             if (
               action &&
               action.type === 'button' &&

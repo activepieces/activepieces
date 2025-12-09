@@ -1,3 +1,4 @@
+import { PieceAuth } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 
 export const CreateChatbotDto = z.object({
@@ -141,3 +142,8 @@ export const UpdateChatbotSettingsDto = z.object({
 });
 
 export type UpdateChatbotSettingsDto = z.infer<typeof UpdateChatbotSettingsDto>;
+export const chatDataAuth =   PieceAuth.SecretText({
+  displayName: 'API Key',
+  description: 'Enter your Chat Data API key',
+  required: true,
+})

@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PieceAuth,
   Property,
   ShortTextProperty,
@@ -8,6 +9,7 @@ import { getUsers, sendJiraRequest } from './lib/common';
 import { HttpError, HttpMethod } from '@activepieces/pieces-common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const jiraCloudAuth = PieceAuth.CustomAuth({
   description: `
@@ -41,7 +43,10 @@ You can generate your API token from:
       });
 
       await sendJiraRequest({
-        auth: auth,
+        auth: {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        },
         method: HttpMethod.GET,
         url: 'myself',
       });
@@ -58,9 +63,4 @@ You can generate your API token from:
   },
 });
 
-export type JiraAuth = {
-  instanceUrl: string;
-  email: string;
-  apiToken: string;
-
-}
+export type JiraAuth = AppConnectionValueForAuthProperty<typeof jiraCloudAuth>;

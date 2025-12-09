@@ -1,6 +1,7 @@
 import {
   createTrigger,
   DynamicPropsValue,
+  PieceAuth,
   Property,
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
@@ -66,6 +67,7 @@ export const catchWebhook = createTrigger({
       },
     }),
     authFields: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Authentication Fields',
       required: false,
       refreshers: ['authType'],

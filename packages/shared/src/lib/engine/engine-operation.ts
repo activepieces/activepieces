@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { ExecutionToolStatus } from '../agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
@@ -210,11 +211,6 @@ export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends Trigge
             H extends TriggerHookType.RENEW ? Record<string, never> :
                 H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
                     ExecuteOnEnableTriggerResponse
-
-export enum ExecutionToolStatus {
-    SUCCESS = 'SUCCESS',
-    FAILED = 'FAILED',
-}
 
 export type ExecuteToolResponse = {
     status: ExecutionToolStatus

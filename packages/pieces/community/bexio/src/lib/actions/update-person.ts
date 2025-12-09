@@ -9,6 +9,7 @@ export const updatePersonAction = createAction({
   description: 'Update an existing person contact',
   props: {
     contact_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Person',
       description: 'Select the person to update',
       required: true,
@@ -23,7 +24,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -72,6 +73,7 @@ export const updatePersonAction = createAction({
       required: false,
     }),
     salutation_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Salutation',
       description: 'Salutation for the person',
       required: false,
@@ -86,7 +88,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const salutations = await client.get<Array<{ id: number; name: string }>>('/2.0/salutation');
 
           return {
@@ -111,6 +113,7 @@ export const updatePersonAction = createAction({
       required: false,
     }),
     title_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Title',
       description: 'Title for the person (e.g., Dr., Prof.)',
       required: false,
@@ -125,7 +128,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const titles = await client.get<Array<{ id: number; name: string }>>('/2.0/title');
 
           return {
@@ -175,6 +178,7 @@ export const updatePersonAction = createAction({
       required: false,
     }),
     country_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Country',
       description: 'Country',
       required: false,
@@ -189,7 +193,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const countries = await client.get<Array<{ id: number; name: string; name_short: string; iso3166_alpha2: string }>>('/2.0/country');
 
           return {
@@ -254,6 +258,7 @@ export const updatePersonAction = createAction({
       required: false,
     }),
     language_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Language',
       description: 'Preferred language',
       required: false,
@@ -268,7 +273,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const languages = await client.get<Array<{ id: number; name: string }>>('/2.0/language');
 
           return {
@@ -288,6 +293,7 @@ export const updatePersonAction = createAction({
       },
     }),
     contact_group_ids: Property.MultiSelectDropdown({
+      auth: bexioAuth,
       displayName: 'Contact Groups',
       description: 'Select contact groups',
       required: false,
@@ -302,7 +308,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const groups = await client.get<Array<{ id: number; name: string }>>('/2.0/contact_group');
 
           return {
@@ -322,6 +328,7 @@ export const updatePersonAction = createAction({
       },
     }),
     contact_branch_ids: Property.MultiSelectDropdown({
+      auth: bexioAuth,
       displayName: 'Contact Sectors',
       description: 'Select contact sectors',
       required: false,
@@ -336,7 +343,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const branches = await client.get<Array<{ id: number; name: string }>>('/2.0/contact_branch');
 
           return {
@@ -356,6 +363,7 @@ export const updatePersonAction = createAction({
       },
     }),
     user_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'User',
       description: 'User assigned to this contact',
       required: false,
@@ -370,7 +378,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const users = await client.get<Array<{ id: number; firstname: string | null; lastname: string | null; email: string }>>('/3.0/users');
 
           return {
@@ -390,6 +398,7 @@ export const updatePersonAction = createAction({
       },
     }),
     owner_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Owner',
       description: 'Owner of this contact',
       required: false,
@@ -404,7 +413,7 @@ export const updatePersonAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const users = await client.get<Array<{ id: number; firstname: string | null; lastname: string | null; email: string }>>('/3.0/users');
 
           return {

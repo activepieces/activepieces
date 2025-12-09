@@ -33,11 +33,11 @@ export const openai = createPiece({
   actions: [
     askLocalAI,
     createCustomApiCallAction({
-      baseUrl: (auth) => (auth as { base_url: string }).base_url,
+      baseUrl: (auth) => (auth)?.props.base_url ?? '',
       auth: localaiAuth,
       authMapping: async (auth) => ({
         Authorization: `Bearer ${
-          (auth as { access_token: string }).access_token || ''
+          auth.props.access_token || ''
         }`,
       }),
     }),

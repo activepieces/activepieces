@@ -26,6 +26,7 @@ export const clicksendCommon = {
   }),
 
   contact_list_id: Property.Dropdown({
+    auth: clicksendAuth,
     displayName: 'Contact List ID',
     required: true,
     refreshers: [],
@@ -38,7 +39,7 @@ export const clicksendCommon = {
         };
       }
 
-      const authValue = auth as PiecePropValueSchema<typeof clicksendAuth>;
+      const authValue = auth;
 
       const options: DropdownOption<number>[] = [];
 
@@ -76,6 +77,7 @@ export const clicksendCommon = {
   }),
 
   contact_id: Property.Dropdown({
+    auth: clicksendAuth,
     displayName: 'Contact ID',
     required: true,
     refreshers: ['contact_list_id'],
@@ -88,7 +90,7 @@ export const clicksendCommon = {
         };
       }
 
-      const authValue = auth as PiecePropValueSchema<typeof clicksendAuth>;
+      const authValue = auth;
 
       const options: DropdownOption<number>[] = [];
 
@@ -126,6 +128,7 @@ export const clicksendCommon = {
     },
   }),
   sender_id: Property.Dropdown({
+    auth: clicksendAuth,
     displayName: 'From',
     refreshers: [],
     required: true,
@@ -137,7 +140,7 @@ export const clicksendCommon = {
           placeholder: 'Please connect your account first.',
         };
       }
-      const authValue = auth as PiecePropValueSchema<typeof clicksendAuth>;
+      const authValue = auth;
 
       const response = await callClickSendApi<{
         data: { user_id: number; username: string };

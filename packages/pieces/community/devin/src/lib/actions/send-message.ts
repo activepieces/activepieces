@@ -24,7 +24,7 @@ export const sendMessage = createAction({
       method: HttpMethod.POST,
       url: `https://api.devin.ai/v1/session/${propsValue.sessionId}/messages`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         message: propsValue.message,

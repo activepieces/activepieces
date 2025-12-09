@@ -20,8 +20,9 @@ export const drupalListEntitiesAction = createAction({
       displayName: 'Entity Type',
       description: 'Choose what type of content to list.',
       required: true,
-      refreshers: [],
-      options: async ({ auth }) => fetchEntityTypesForReading(auth as DrupalAuthType),
+      refreshers: [], 
+      auth: drupalAuth,
+      options: async ({ auth }) => fetchEntityTypesForReading(auth),
     }),
     published_status: Property.StaticDropdown({
       displayName: 'Published Status',
@@ -41,6 +42,7 @@ export const drupalListEntitiesAction = createAction({
       description: 'Choose how to sort the entities',
       required: false,
       refreshers: ['entity_type'],
+      auth: drupalAuth,
       props: async (propsValue) => {
         const entityInfo = propsValue['entity_type'] as any;
         if (!entityInfo) return {} as any;
@@ -97,6 +99,7 @@ export const drupalListEntitiesAction = createAction({
       displayName: 'Output Options',
       required: false,
       refreshers: ['entity_type'],
+      auth: drupalAuth,
       props: async (propsValue) => {
         const entityInfo = propsValue['entity_type'] as any;
         if (!entityInfo) return {};
@@ -142,7 +145,7 @@ export const drupalListEntitiesAction = createAction({
     const sortField = (propsValue.sort_by as any)?.sort_field;
 
     let entities = await drupal.listEntities(
-      auth as DrupalAuthType,
+      auth,
       entityInfo.entity_type,
       entityInfo.bundle,
       {

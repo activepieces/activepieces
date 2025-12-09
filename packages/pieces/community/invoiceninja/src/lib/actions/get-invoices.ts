@@ -47,7 +47,7 @@ export const getInvoices = createAction({
   },
 
   async run(context) {
-    const INapiToken = context.auth.access_token;
+    const INapiToken = context.auth.props.access_token;
 
     const headers = {
       'X-Api-Token': INapiToken,
@@ -72,7 +72,7 @@ export const getInvoices = createAction({
     ); // otherwise it only returns 20 per page hopefully
 
     // Remove trailing slash from base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const url = `${baseUrl}/api/v1/invoices/?${queryParams.toString()}`;
     // console.log("INVOICENINJA: " + url);
     const httprequestdata = {

@@ -159,7 +159,7 @@ export const stripePaymentFailed = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'charge.failed',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store?.put<WebhookInformation>('_payment_failed_trigger', {
       webhookId: webhook.id,
@@ -170,7 +170,7 @@ export const stripePaymentFailed = createTrigger({
       '_payment_failed_trigger'
     );
     if (response !== null && response !== undefined) {
-      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth);
+      await stripeCommon.unsubscribeWebhook(response.webhookId, context.auth.secret_text);
     }
   },
   async test(context) {
@@ -178,7 +178,7 @@ export const stripePaymentFailed = createTrigger({
       method: HttpMethod.GET,
       url: 'https://api.stripe.com/v1/charges',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {

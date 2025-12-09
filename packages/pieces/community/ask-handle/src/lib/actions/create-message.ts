@@ -47,7 +47,7 @@ export const createMessage = createAction({
     if (phone_number) payload.phone_number = phone_number;
 
     return await askHandleApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/messages/',
       payload

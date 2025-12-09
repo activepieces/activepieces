@@ -63,7 +63,7 @@ export const stripeCreateRefund = createAction({
       url: `${stripeCommon.baseUrl}/refunds`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

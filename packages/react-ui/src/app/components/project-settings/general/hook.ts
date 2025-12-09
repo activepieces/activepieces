@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
+import { toast } from 'sonner';
 
-import { INTERNAL_ERROR_TOAST, useToast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { projectApi } from '@/lib/project-api';
@@ -21,7 +22,6 @@ export const useGeneralSettingsMutation = (
 ) => {
   const queryClient = useQueryClient();
   const { updateCurrentProject } = projectHooks.useCurrentProject();
-  const { toast } = useToast();
 
   return useMutation<
     ProjectWithLimits,
@@ -30,7 +30,6 @@ export const useGeneralSettingsMutation = (
       displayName: string;
       icon: ProjectIcon;
       externalId?: string;
-      plan: { aiCredits?: number | undefined };
     }
   >({
     mutationFn: (request) => {
@@ -42,9 +41,7 @@ export const useGeneralSettingsMutation = (
       });
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Your changes have been saved.'),
+      toast.success(t('Your changes have been saved.'), {
         duration: 3000,
       });
       queryClient.invalidateQueries({
@@ -65,7 +62,7 @@ export const useGeneralSettingsMutation = (
             break;
           }
           default: {
-            toast(INTERNAL_ERROR_TOAST);
+            internalErrorToast();
             break;
           }
         }

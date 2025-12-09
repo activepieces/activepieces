@@ -10,17 +10,25 @@ export const addUsersToGroup = createAction({
   displayName: 'Add Users to Group',
   props: {
     group_id: Property.Dropdown({
+      auth: discourseAuth,
       description: 'Id of the group',
       displayName: 'Group Id',
       required: true,
       refreshers: [],
-      options: async ({ auth }: any) => {
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your discourse account',
+          };
+        }
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${auth.website_url.trim()}/groups.json`,
+          url: `${auth.props.website_url.trim()}/groups.json`,
           headers: {
-            'Api-Key': auth.api_key,
-            'Api-Username': auth.api_username,
+            'Api-Key': auth.props.api_key,
+            'Api-Username': auth.props.api_username,
           },
         });
         const options = response.body['groups'].map(
@@ -49,10 +57,10 @@ export const addUsersToGroup = createAction({
     users.join(',');
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: `${context.auth.website_url.trim()}/groups/${group_id}/members.json`,
+      url: `${context.auth.props.website_url.trim()}/groups/${group_id}/members.json`,
       headers: {
-        'Api-Key': context.auth.api_key,
-        'Api-Username': context.auth.api_username,
+        'Api-Key': context.auth.props.api_key,
+        'Api-Username': context.auth.props.api_username,
       },
       body: {
         usernames: users.join(','),
