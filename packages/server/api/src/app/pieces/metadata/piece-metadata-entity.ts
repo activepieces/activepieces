@@ -7,6 +7,7 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
+    COLLATION,
 } from '../../database/database-common'
 
 export type PieceMetadataSchema = BaseModel<ApId> & PieceMetadataModel
@@ -49,17 +50,17 @@ export const PieceMetadataEntity =
           version: {
               type: String,
               nullable: false,
-              collation: 'en_natural',
+              collation: COLLATION,
           },
           minimumSupportedRelease: {
               type: String,
               nullable: false,
-              collation: 'en_natural',
+              collation: COLLATION,
           },
           maximumSupportedRelease: {
               type: String,
               nullable: false,
-              collation: 'en_natural',
+              collation: COLLATION,
           },
           auth: {
               type: 'json',
