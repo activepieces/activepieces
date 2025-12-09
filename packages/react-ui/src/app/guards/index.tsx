@@ -40,10 +40,10 @@ import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
 import SettingsBilling from '../routes/platform/billing';
+import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
-import OnboardingPage from '../routes/platform/onboarding';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
@@ -342,16 +342,6 @@ const routes = [
     ),
   },
   {
-    path: '/platform/onboarding',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Onboarding">
-          <OnboardingPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
     path: '/platform/analytics',
     element: (
       <PlatformLayout>
@@ -369,7 +359,7 @@ const routes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Platform">
-          <Navigate to="/platform/onboarding" />
+          <Navigate to="/platform/analytics" />
         </PageTitle>
       </PlatformLayout>
     ),
@@ -450,6 +440,16 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="Workers">
           <SettingsWorkersPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/health',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="System Health">
+          <SettingsHealthPage />
         </PageTitle>
       </PlatformLayout>
     ),
