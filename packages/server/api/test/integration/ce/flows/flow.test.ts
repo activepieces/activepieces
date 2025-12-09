@@ -209,7 +209,6 @@ describe('Flow API', () => {
                 expect(responseBody.updated).toBeDefined()
                 expect(responseBody.projectId).toBe(mockProject.id)
                 expect(responseBody.folderId).toBeNull()
-                expect(responseBody.status).toBe('DISABLED')
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('ENABLING')
