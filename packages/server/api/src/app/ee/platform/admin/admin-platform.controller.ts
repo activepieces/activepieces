@@ -1,10 +1,12 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { AdminRetryRunsRequestBody, ALL_PRINCIPAL_TYPES, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ALL_PRINCIPAL_TYPES, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, FlowActionType, flowStructureUtil, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { flowRepo } from '../../../flows/flow/flow.repo'
+import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
@@ -33,6 +35,46 @@ export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
 const adminPlatformController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
+
+    app.post('/migrate-flows', MigrateFlowsRequest, async (req, res) => {
+        const { flowIds, pieceVersion } = req.body
+        const allFlowIds = isNil(flowIds) ? (await flowRepo().find()).map((flow) => flow.id) : flowIds
+        let updatedFlowVersions = 0
+        for (const flowId of allFlowIds) {
+            const flow = await flowRepo().findOneBy({ id: flowId })
+            if (!flow) {
+                continue
+            }
+            const allFlowVersions = await flowVersionRepo().findBy({ flowId: flow.id })
+            for (const flowVersion of allFlowVersions) {
+                const newFlowVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+                    if (step.type === FlowActionType.PIECE
+                        && step.settings.pieceName === '@activepieces/piece-webhook'
+                        && step.settings.actionName === 'return_response' && 'fields' in step.settings.input) {
+                        const fields = (step.settings.input.fields as Record<string, unknown>)['body']
+                        return {
+                            ...step,
+                            settings: {
+                                ...step.settings,
+                                pieceName: '@activepieces/piece-volubile',
+                                pieceVersion,
+                                actionName: 'returnContext',
+                                input: {
+                                    body: fields,
+                                },
+                            },
+                        }
+                    }
+                    return step
+                })
+                updatedFlowVersions++
+                await flowVersionRepo().update(flowVersion.id, {
+                    trigger: newFlowVersion.trigger,
+                })
+            }
+        }
+        return res.status(StatusCodes.OK).send({ updatedFlowVersions })
+    })
 
     app.post('/pieces', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
         return pieceMetadataService(req.log).create({
@@ -78,6 +120,18 @@ const ConfigureDedicatedWorkersRequest = {
     },
 }
 
+
+const MigrateFlowsRequest = {
+    schema: {
+        body: Type.Object({
+            flowIds: Type.Union([Type.Array(Type.String()), Type.Null()]),
+            pieceVersion: Type.String(),
+        }),
+    },
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+}
 
 const AdminRetryRunsRequest = {
     schema: {
