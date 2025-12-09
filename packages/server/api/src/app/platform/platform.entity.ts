@@ -37,7 +37,6 @@ export const PlatformEntity = new EntitySchema<PlatformSchema>({
             type: String,
             nullable: false,
         },
-
         cloudAuthEnabled: {
             type: Boolean,
             nullable: false,
