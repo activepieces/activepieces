@@ -58,6 +58,9 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             type: 'jsonb',
             nullable: true,
         },
+        pieceVersion: {
+            type: String,
+        },
     },
     indices: [
         {

@@ -115,6 +115,14 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         agentsEnabled: {
             type: Boolean,
         },
+        openRouterApiKeyHash: {
+            type: String,
+            nullable: true,
+        },
+        openRouterApiKey: {
+            type: String,
+            nullable: true,
+        },
         activeFlowsLimit: {
             type: Number,
             nullable: true,

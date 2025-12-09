@@ -10,9 +10,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             return
         }
         await queryRunner.query(`
-            ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
-        `)
-        await queryRunner.query(`
             ALTER TABLE "connection_key" DROP CONSTRAINT "FK_03177dc6779e6e147866d43c050"
         `)
         await queryRunner.query(`
@@ -270,70 +267,10 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             CREATE UNIQUE INDEX "idx_platform_plan_platform_id" ON "platform_plan" ("platformId")
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN "tasks"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "showPoweredBy"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "embeddingEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "environmentsEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "ssoEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "auditLogEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "customDomainsEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "customAppearanceEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "manageProjectsEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "managePiecesEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "manageTemplatesEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "apiKeysEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "projectRolesEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "flowIssuesEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "alertsEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "analyticsEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "licenseKey"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "globalConnectionsEnabled"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform" DROP COLUMN "customRolesEnabled"
-        `)
-        await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "stripeCustomerId"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "stripeSubscriptionId"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "project_plan" DROP COLUMN "tasks"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "subscriptionStartDatetime"
@@ -360,10 +297,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
         `)
         await queryRunner.query(`
             CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("platformId", "created", "projectId")
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "flow"
-            ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
         await queryRunner.query(`
             ALTER TABLE "project"
@@ -513,9 +446,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             ALTER TABLE "project" DROP CONSTRAINT "fk_project_platform_id"
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
-        `)
-        await queryRunner.query(`
             DROP INDEX "public"."idx_ai_usage_project_created"
         `)
         await queryRunner.query(`
@@ -539,91 +469,11 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan"
-            ADD "tasks" integer NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "project_plan"
             ADD "stripeSubscriptionId" character varying NOT NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD "stripeCustomerId" character varying NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "customRolesEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "globalConnectionsEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "licenseKey" character varying
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "analyticsEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "alertsEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "flowIssuesEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "projectRolesEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "apiKeysEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "manageTemplatesEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "managePiecesEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "manageProjectsEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "customAppearanceEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "customDomainsEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "auditLogEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "ssoEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "environmentsEnabled" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "embeddingEnabled" boolean NOT NULL DEFAULT true
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform"
-            ADD "showPoweredBy" boolean NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "flow_run"
-            ADD "tasks" integer
         `)
         await queryRunner.query(`
             DROP INDEX "public"."idx_platform_plan_platform_id"
@@ -716,10 +566,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
         await queryRunner.query(`
             ALTER TABLE "connection_key"
             ADD CONSTRAINT "FK_03177dc6779e6e147866d43c050" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE NO ACTION ON UPDATE NO ACTION
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "flow"
-            ADD CONSTRAINT "fk_flow_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE RESTRICT ON UPDATE NO ACTION
         `)
     }
 

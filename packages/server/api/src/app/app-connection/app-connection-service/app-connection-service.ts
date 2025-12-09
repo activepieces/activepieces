@@ -32,6 +32,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import semver from 'semver'
 import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-worker'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -55,18 +56,22 @@ import {
 import { appConnectionHandler } from './app-connection.handler'
 import { oauth2Handler } from './oauth2'
 import { oauth2Util } from './oauth2/oauth2-util'
-
 export const appConnectionsRepo = repoFactory(AppConnectionEntity)
 
 export const appConnectionService = (log: FastifyBaseLogger) => ({
     async upsert(params: UpsertParams): Promise<AppConnectionWithoutSensitiveData> {
         const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata } = params
-
+        const pieceVersion = params.pieceVersion ?? ( await pieceMetadataService(log).getOrThrow({
+            name: pieceName,
+            projectId: projectIds[0],
+            platformId,
+        })).version
+        validatePieceVersion(pieceVersion)
         await assertProjectIds(projectIds, platformId)
         const validatedConnectionValue = await validateConnectionValue({
             value,
             pieceName,
-            projectId: projectIds?.[0],
+            projectId: projectIds[0],
             platformId,
         }, log)
 
@@ -96,6 +101,7 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds,
             platformId,
             ...spreadIfDefined('metadata', metadata),
+            pieceVersion,
         }
 
         await appConnectionsRepo().upsert(connection, ['id'])
@@ -601,6 +607,16 @@ function mapToUserWithMetaInformation(owner: (User & { identity?: UserIdentity }
     }
 }
 
+function validatePieceVersion(pieceVersion: string): void {
+    if (!semver.valid(pieceVersion)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Invalid piece version',
+            },
+        })
+    }
+}
 type UpsertParams = {
     projectIds: ProjectId[]
     ownerId: string | null
@@ -613,6 +629,7 @@ type UpsertParams = {
     status?: AppConnectionStatus
     pieceName: string
     metadata?: Metadata
+    pieceVersion?: string
 }
 
 
