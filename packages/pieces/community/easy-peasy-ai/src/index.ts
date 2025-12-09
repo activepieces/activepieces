@@ -8,6 +8,8 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const easyPeasyAi = createPiece({
   displayName: 'Easy-Peasy.AI',
+  description:
+    'Create professional-quality music in any genre with just a text prompt. From hip-hop to classical, our AI generates custom tracks for your projects in seconds.',
   auth: easyPeasyAiAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/easy-peasy-ai.png',

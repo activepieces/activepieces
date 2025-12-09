@@ -100,6 +100,6 @@ export const generateAiImage = createAction({
       payload
     );
 
-    return response.body;
+    return response;
   },
 });

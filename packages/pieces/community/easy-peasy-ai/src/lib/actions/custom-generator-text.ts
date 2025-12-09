@@ -81,6 +81,6 @@ export const customGeneratorText = createAction({
       payload
     );
 
-    return response.body;
+    return response;
   },
 });

@@ -101,6 +101,6 @@ export const getAiTranscription = createAction({
       payload
     );
 
-    return response.body;
+    return response;
   },
 });
