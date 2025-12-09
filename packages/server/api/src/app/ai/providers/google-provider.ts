@@ -7,7 +7,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
     name: 'Google',
     async listModels(config: GoogleProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: GoogleModel[] }>({
-            url: `https://generativelanguage.googleapis.com/v1beta/models`,
+            url: 'https://generativelanguage.googleapis.com/v1beta/models',
             method: HttpMethod.GET,
             headers: {
                 'x-goog-api-key': config.apiKey,
