@@ -354,7 +354,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpServerSqlite1764524983756,
         AddPieceVersionToAppConnection1764856239445,
         FixFlowRunIndexes1764871079154,
-        RemovePlatformSMTP1765264096034
+        RemovePlatformSMTP1765264096034,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
