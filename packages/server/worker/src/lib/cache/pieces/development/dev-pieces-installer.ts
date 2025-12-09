@@ -1,5 +1,3 @@
-
-import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { filePiecesUtils, spawnWithKill } from '@activepieces/server-shared'
@@ -19,11 +17,7 @@ const sharedPiecesPackages = () => {
             path: resolve(cwd(), 'dist', 'packages', 'shared'),
         },
     }
-    if (existsSync(baseDistPath + '/pieces/community/common-ai')) {
-        packages['@activepieces/common-ai'] = {
-            path: resolve(cwd(), baseDistPath, 'pieces', 'community', 'common-ai'),
-        }
-    }
+
     return packages
 }
 

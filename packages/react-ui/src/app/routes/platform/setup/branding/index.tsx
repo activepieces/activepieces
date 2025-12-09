@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AppearanceSection } from '@/app/routes/platform/setup/branding/appearance-section';
-import { CustomDomainsCard } from '@/app/routes/platform/setup/branding/custom-domain-section';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export const BrandingPage = () => {
@@ -23,7 +22,6 @@ export const BrandingPage = () => {
           title={t('Branding')}
           description={t('Configure the appearance for your platform.')}
         />
-        <CustomDomainsCard />
         <AppearanceSection />
       </div>
     </LockedFeatureGuard>

@@ -249,7 +249,6 @@ export const ProjectDashboardPageHeader = ({
         initialTab={settingsInitialTab}
         initialValues={{
           projectName: project?.displayName,
-          aiCredits: project?.plan?.aiCredits?.toString() ?? '',
         }}
       />
     </div>
