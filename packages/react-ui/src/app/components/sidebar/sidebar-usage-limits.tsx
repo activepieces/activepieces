@@ -1,7 +1,10 @@
+import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
 import React from 'react';
 import { Link } from 'react-router-dom';
+
+import { FlagGuard } from '../flag-guard';
 
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -12,14 +15,10 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn, formatUtils } from '@/lib/utils';
-import { ApEdition, ApFlagId, isNil, PlatformRole } from '@activepieces/shared';
-
-import { FlagGuard } from '../flag-guard';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
-  const nextReset = dayjs.unix(nextResetDate);
-
+  const nextReset = dayjs(new Date(nextResetDate));
   if (nextReset.isBefore(now)) {
     return t('Today');
   }
@@ -106,8 +105,11 @@ const SidebarUsageLimits = React.memo(() => {
           </div>
           <UsageProgress
             name={t('AI Credits')}
-            value={project.usage.aiCredits}
-            max={project.plan.aiCredits}
+            value={Math.floor(platform.usage?.aiCredits ?? 0)}
+            max={
+              platform.plan.includedAiCredits +
+              (platform.plan.aiCreditsOverageLimit ?? 0)
+            }
           />
           <UsageProgress
             name={t('Active Flows')}
@@ -118,7 +120,9 @@ const SidebarUsageLimits = React.memo(() => {
         <div className="text-xs text-muted-foreground flex justify-between w-full">
           <span>
             {t('Usage resets in')}{' '}
-            {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+            {getTimeUntilNextReset(
+              dayjs().add(1, 'month').startOf('month').valueOf(),
+            )}{' '}
           </span>
           {isPlatformAdmin && (
             <FlagGuard flag={ApFlagId.SHOW_BILLING}>
