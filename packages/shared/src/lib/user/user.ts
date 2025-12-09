@@ -16,7 +16,7 @@ export enum PlatformRole {
      */
     MEMBER = 'MEMBER',
     /**
-     * Platform operator with automatic access to all projects in the
+     * Platform operator with automatic access to all projects except (others' private projects) in the
      * platform but no platform administration capabilities
      */
     OPERATOR = 'OPERATOR',
