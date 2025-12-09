@@ -69,8 +69,8 @@ export default function SettingsHealthPage() {
       id: 'cpu',
       title: t('CPU Cores'),
       icon: <Cpu />,
-      isChecked: !systemHealth?.cpu,
-      message: !systemHealth?.cpu
+      isChecked: systemHealth?.cpu,
+      message: systemHealth?.cpu
         ? t('Minimum amount of CPU cores is available')
         : t('Minimum 1 CPU core is required'),
       link: 'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications',
