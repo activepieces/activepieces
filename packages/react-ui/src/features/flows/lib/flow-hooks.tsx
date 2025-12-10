@@ -137,7 +137,7 @@ export const flowHooks = {
           errorCode === ErrorCode.FLOW_OPERATION_IN_PROGRESS &&
           errorMessage
         ) {
-          toast.error(t('Flow Operation In Progress'), {
+          toast.error(t('Flow Is Busy'), {
             description: errorMessage,
             duration: 5000,
           });

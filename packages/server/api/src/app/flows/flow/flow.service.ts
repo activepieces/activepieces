@@ -331,7 +331,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 throw new ActivepiecesError({
                     code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
                     params: {
-                        message: `Flow ${id} is already in progress of ${flow.operationStatus} operation`,
+                        message: `Flow is busy with ${flow.operationStatus.toLocaleLowerCase()} operation. Please try again in a moment.`,
                     },
                 })
             }
