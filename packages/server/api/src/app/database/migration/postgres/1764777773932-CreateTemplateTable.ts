@@ -7,21 +7,6 @@ import { system } from '../../../helper/system/system'
 const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
 const logger = system.globalLogger()
 
-enum ColorName {
-    RED = 'RED',
-    BLUE = 'BLUE',
-    YELLOW = 'YELLOW',
-    PURPLE = 'PURPLE',
-    GREEN = 'GREEN',
-    PINK = 'PINK',
-    VIOLET = 'VIOLET',
-    ORANGE = 'ORANGE',
-    DARK_GREEN = 'DARK_GREEN',
-    CYAN = 'CYAN',
-    LAVENDER = 'LAVENDER',
-    DEEP_ORANGE = 'DEEP_ORANGE',
-}
-
 enum TemplateCategory {
     ANALYTICS = 'ANALYTICS',
     COMMUNICATION = 'COMMUNICATION',
@@ -36,10 +21,15 @@ enum TemplateCategory {
     PRODUCTIVITY = 'PRODUCTIVITY',
     SALES = 'SALES',
 }
+const ColorHex = Type.String({
+    pattern: '^#[0-9A-Fa-f]{6}$',
+})
+type ColorHex = Static<typeof ColorHex>
+
 
 const TemplateTag = Type.Object({
     title: Type.String(),
-    color: Type.Enum(ColorName),
+    color: ColorHex,
     icon: Type.Optional(Type.String()),
 })
 type TemplateTag = Static<typeof TemplateTag>
@@ -114,7 +104,7 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             const flows: FlowVersionTemplate[] = [flowTemplate.template]
             const tags: TemplateTag[] = flowTemplate.tags.map((tag: string) => ({
                 title: tag,
-                color: ColorName.BLUE,
+                color: '#e4fded',
                 icon: undefined,
             }))
             const blogUrl = flowTemplate.blogUrl

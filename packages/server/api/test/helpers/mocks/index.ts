@@ -144,6 +144,7 @@ export const createMockTemplate = (
         name: template?.name ?? faker.lorem.word(),
         type: template?.type ?? TemplateType.CUSTOM,
         description: template?.description ?? faker.lorem.sentence(),
+        summary: template?.summary ?? faker.lorem.sentence(),
         tags: template?.tags ?? [],
         blogUrl: template?.blogUrl ?? faker.internet.url(),
         metadata: template?.metadata ?? null,
