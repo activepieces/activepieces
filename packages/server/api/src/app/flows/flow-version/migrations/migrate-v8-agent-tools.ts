@@ -1,5 +1,4 @@
 import {
-    AGENT_PIECE_NAME,
     AgentPieceProps,
     FlowActionType,
     flowStructureUtil,
@@ -12,7 +11,7 @@ export const cleanUpAgentTools: Migration = {
     targetSchemaVersion: '8',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
-            if (step.type === FlowActionType.PIECE && step.settings.pieceName === AGENT_PIECE_NAME) {
+            if (step.type === FlowActionType.PIECE && step.settings.pieceName === '@activepieces/piece-agent') {
                 const tools = (step.settings.input['agentTools'] as { type: string, toolName: string, pieceMetadata: { pieceName: string, pieceVersion: string, actionName: string, connectionExternalId: string }, flowId: string }[]) ?? []
                 const newTools = tools.map(tool => {
                     switch (tool.type) {
