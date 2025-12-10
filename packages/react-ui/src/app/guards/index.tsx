@@ -175,9 +175,11 @@ const routes = [
   {
     path: '/templates/:templateId',
     element: (
-      <PageTitle title="Template Details">
-        <TemplateDetailsPage />
-      </PageTitle>
+      <ProjectDashboardLayout>
+        <PageTitle title="Template Details">
+          <TemplateDetailsPage />
+        </PageTitle>
+      </ProjectDashboardLayout>
     ),
   },
   ...ProjectRouterWrapper({

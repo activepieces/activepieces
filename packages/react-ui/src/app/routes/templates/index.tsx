@@ -1,18 +1,10 @@
 import { t } from 'i18next';
-import { ArrowLeft, Search } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Search } from 'lucide-react';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { ProjectDashboardPageHeader } from '@/app/components/project-layout/project-dashboard-page-header';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
-import { Button } from '@/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
 import { useTemplates } from '@/features/templates/hooks/templates-hook';
 import { userHooks } from '@/hooks/user-hooks';
 import {
@@ -32,11 +24,9 @@ import {
 } from './skeletons';
 
 const TemplatesPage = () => {
+  const navigate = useNavigate();
   const { templates, isLoading, search, setSearch, category, setCategory } =
     useTemplates(TemplateType.OFFICIAL);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
-    null,
-  );
   const selectedCategory = category as TemplateCategory | 'All';
   const { data: user } = userHooks.useCurrentUser();
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
@@ -45,8 +35,8 @@ const TemplatesPage = () => {
     setSearch(event.target.value);
   };
 
-  const unselectTemplate = () => {
-    setSelectedTemplate(null);
+  const handleTemplateSelect = (template: Template) => {
+    navigate(`/templates/${template.id}`);
   };
 
   const categories: (TemplateCategory | 'All')[] = [
@@ -125,13 +115,13 @@ const TemplatesPage = () => {
                   <AllCategoriesView
                     templatesByCategory={templatesByCategory}
                     onCategorySelect={setCategory}
-                    onTemplateSelect={setSelectedTemplate}
+                    onTemplateSelect={handleTemplateSelect}
                   />
                 ) : (
                   <SelectedCategoryView
                     category={selectedCategory}
                     templates={selectedCategoryTemplates}
-                    onTemplateSelect={setSelectedTemplate}
+                    onTemplateSelect={handleTemplateSelect}
                   />
                 )}
               </>
@@ -139,24 +129,6 @@ const TemplatesPage = () => {
           </>
         )}
       </div>
-
-      <Dialog open={!!selectedTemplate} onOpenChange={unselectTemplate}>
-        <DialogContent className="lg:min-w-[850px] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex min-h-9 flex-row items-center justify-start gap-2 items-center h-full">
-              <Button variant="ghost" size="sm" onClick={unselectTemplate}>
-                <ArrowLeft className="w-4 h-4" />
-              </Button>
-              {t('Template Details')}
-            </DialogTitle>
-          </DialogHeader>
-          {selectedTemplate && (
-            <DialogDescription>
-              <TemplateDetailsView template={selectedTemplate} />
-            </DialogDescription>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
