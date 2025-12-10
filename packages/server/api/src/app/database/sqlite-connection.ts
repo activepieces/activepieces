@@ -28,6 +28,8 @@ import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
+import { AddErrorHandlingOptionsToSteps1765362243294 } from './migration/common/1765362243294-AddErrorHandlingOptionsToSteps'
+import { AddErrorHandlingOptionsToTemplateSteps1765362243295 } from './migration/common/1765362243295-AddErrorHandlingOptionsToTemplateSteps'
 import { InitialSql3Migration1690195839899 } from './migration/sqlite/1690195839899-InitialSql3Migration'
 import { AddAppConnectionTypeToTopLevel1691706020626 } from './migration/sqlite/1691706020626-add-app-connection-type-to-top-level'
 import { AddTagsToRunSqlite1692056190942 } from './migration/sqlite/1692056190942-AddTagsToRunSqlite'
@@ -352,6 +354,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddFlowOperationStatusFieldSqlite1764239872251,
         AddMcpServerSqlite1764524983756,
         FixFlowRunIndexes1764871079154,
+        AddErrorHandlingOptionsToSteps1765362243294,
+        AddErrorHandlingOptionsToTemplateSteps1765362243295,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {

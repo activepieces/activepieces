@@ -49,6 +49,8 @@ import { SplitUpPieceMetadataIntoTools1752004202722 } from './migration/common/1
 import { AddIndexToIssues1756775080449 } from './migration/common/1756775080449-AddIndexToIssues'
 import { AddFlowIndexToTriggerSource1757555419075 } from './migration/common/1757555283659-AddFlowIndexToTriggerSource'
 import { AddIndexForAppEvents1759392852559 } from './migration/common/1759392852559-AddIndexForAppEvents'
+import { AddErrorHandlingOptionsToSteps1765362243294 } from './migration/common/1765362243294-AddErrorHandlingOptionsToSteps'
+import { AddErrorHandlingOptionsToTemplateSteps1765362243295 } from './migration/common/1765362243295-AddErrorHandlingOptionsToTemplateSteps'
 import { AddAuthToPiecesMetadata1688922241747 } from './migration/postgres//1688922241747-AddAuthToPiecesMetadata'
 import { FlowAndFileProjectId1674788714498 } from './migration/postgres/1674788714498-FlowAndFileProjectId'
 import { initializeSchema1676238396411 } from './migration/postgres/1676238396411-initialize-schema'
@@ -617,6 +619,8 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DropProjectIdFromPieceMetadata1764866386989,
         UnifyCommunityWithEnterprise1764867709704,
         AddMcpServer1764606838149,
+        AddErrorHandlingOptionsToSteps1765362243294,
+        AddErrorHandlingOptionsToTemplateSteps1765362243295,
     ]
     return migrations
 }
