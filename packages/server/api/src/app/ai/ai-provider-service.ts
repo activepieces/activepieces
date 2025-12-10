@@ -50,7 +50,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const config = await this.getConfig(platformId, providerId)
         
         const cacheKey = `${providerId}-${config.apiKey}`
-        if (modelsCache.has(cacheKey)) {
+        if (modelsCache.has(cacheKey) && providerId !== AIProviderName.CLOUDFLARE_GATEWAY) {
             return modelsCache.get(cacheKey)!
         }
 
