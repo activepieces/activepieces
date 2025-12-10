@@ -27,6 +27,7 @@ import {
   WebsocketClientEvent,
   FlowStatusUpdatedResponse,
   isNil,
+  ErrorCode,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -128,8 +129,21 @@ export const flowHooks = {
         }
         onSuccess?.(response);
       },
-      onError: (_uncaughtError: unknown) => {
-        internalErrorToast();
+      onError: (error: unknown) => {
+        const errorCode = (error as any)?.response?.data?.code;
+        const errorMessage = (error as any)?.response?.data?.params?.message;
+
+        if (
+          errorCode === ErrorCode.FLOW_OPERATION_IN_PROGRESS &&
+          errorMessage
+        ) {
+          toast.error(t('Flow Is Busy'), {
+            description: errorMessage,
+            duration: 5000,
+          });
+        } else {
+          internalErrorToast();
+        }
       },
     });
   },
