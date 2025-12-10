@@ -85,6 +85,13 @@ export class CreateTemplateTable1764777773932 implements MigrationInterface {
             ADD CONSTRAINT "fk_template_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
 
+        const isTableExists = await queryRunner.hasTable('flow_template')
+
+        if (!isTableExists) {
+            logger.info('flow_template table does not exist, skipping migration')
+            return
+        }
+
         const flowTemplates = await queryRunner.query(`
             SELECT * FROM "flow_template"
         `)
