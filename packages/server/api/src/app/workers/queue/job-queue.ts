@@ -30,10 +30,10 @@ export const jobQueue = (log: FastifyBaseLogger) => ({
 
         log.info('[jobQueue#init] Dynamic queue system initialized')
     },
-    async promoteChildRuns({ jobId }: PromoteChildRunsParams): Promise<void> {
+    async promoteChildRuns(jobId: string): Promise<void> {
         const redisConnection = await redisConnections.useExisting()
         const childRunData = (await redisConnection.smembers(CHILD_RUNS_KEY(jobId))).map(childRunData => JSON.parse(childRunData) as ChildRunData)
-        log.error({
+        log.info({
             jobId,
             childRunData,
         }, '[jobQueue#promoteChildRuns] Promoting child runs')
@@ -193,11 +193,6 @@ async function getQueueName(platformId: string | null, log: FastifyBaseLogger): 
     return isDedicatedWorkersEnabled ? getPlatformQueueName(platformId) : QueueName.WORKER_JOBS
 }
 
-
-
-type PromoteChildRunsParams = {
-    jobId: ApId
-}
 
 type ChildRunData = {
     jobId: ApId

@@ -106,7 +106,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                 await flowRunSideEffects(log).onFinish(savedFlowRun)
                             }
                             if (runMetadata.status === FlowRunStatus.PAUSED) {
-                                await jobQueue(log).promoteChildRuns({ jobId: savedFlowRun.id })
+                                await jobQueue(log).promoteChildRuns(savedFlowRun.id)
                             }
 
                             websocketService.to(savedFlowRun.projectId).emit(WebsocketClientEvent.FLOW_RUN_PROGRESS, {
