@@ -67,7 +67,7 @@ export const userService = {
         return user
     },
     async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
-        await userRepo().update({ id }, { lastActiveDate: new Date() })
+        await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
     },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
