@@ -1,11 +1,10 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Logs } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
   createSearchParams,
-  useLocation,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
@@ -48,7 +47,6 @@ import { BuilderFlowStatusSection } from '../builder-flow-status-section';
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
@@ -147,7 +145,7 @@ export const BuilderHeader = () => {
           </div>
           {!embedState.hideFlowNameInBuilder && (
             <FlowActionMenu
-              onVersionsListClick={()=>{
+              onVersionsListClick={() => {
                 setRightSidebar(RightSideBarType.VERSIONS);
               }}
               insideBuilder={true}
@@ -190,8 +188,6 @@ export const BuilderHeader = () => {
               {t('Runs')}
             </Button>
           )}
-
-      
 
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
         </div>

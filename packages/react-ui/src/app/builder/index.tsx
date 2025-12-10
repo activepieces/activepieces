@@ -279,7 +279,6 @@ const BuilderPage = () => {
                 </StepSettingsProvider>
               )}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}
-
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
