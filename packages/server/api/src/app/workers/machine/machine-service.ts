@@ -139,16 +139,3 @@ async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWo
 type OnDisconnectParams = {
     workerId: string
 }
-
-type OnHeartbeatParams = {
-    socket: Socket
-    workerId: string
-    cpuUsagePercentage: number
-    diskInfo: MachineInformation['diskInfo']
-    ramUsagePercentage: number
-    totalAvailableRamInBytes: number
-    ip: string
-    totalSandboxes: number
-    freeSandboxes: number
-    workerProps: Record<string, string>
-}
