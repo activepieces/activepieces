@@ -150,14 +150,21 @@ export default function UsersPage() {
             {
               accessorKey: 'lastActiveDate',
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Last Active')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Last Active')}
+                />
               ),
               cell: ({ row }) => {
                 return row.original.lastActiveDate ? (
                   <div className="text-left">
-                    {formatUtils.formatDate(new Date(row.original.lastActiveDate))}
+                    {formatUtils.formatDate(
+                      new Date(row.original.lastActiveDate),
+                    )}
                   </div>
-                ) : '-';
+                ) : (
+                  '-'
+                );
               },
             },
             {
