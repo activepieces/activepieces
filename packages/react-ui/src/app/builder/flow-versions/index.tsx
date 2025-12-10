@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import {
-  LeftSideBarType,
+  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
@@ -15,8 +15,8 @@ import { SidebarHeader } from '../sidebar-header';
 import { FlowVersionDetailsCard } from './flow-versions-card';
 
 const FlowVersionsList = () => {
-  const [flow, setLeftSidebar, selectedFlowVersion] = useBuilderStateContext(
-    (state) => [state.flow, state.setLeftSidebar, state.flowVersion],
+  const [flow, setRightSidebar, selectedFlowVersion] = useBuilderStateContext(
+    (state) => [state.flow, state.setRightSidebar, state.flowVersion],
   );
 
   const {
@@ -35,7 +35,7 @@ const FlowVersionsList = () => {
 
   return (
     <>
-      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
+      <SidebarHeader onClose={() => setRightSidebar(RightSideBarType.NONE)}>
         {t('Version History')}
       </SidebarHeader>
       <CardList>
