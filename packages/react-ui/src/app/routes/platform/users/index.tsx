@@ -148,6 +148,19 @@ export default function UsersPage() {
               },
             },
             {
+              accessorKey: 'lastActiveDate',
+              header: ({ column }) => (
+                <DataTableColumnHeader column={column} title={t('Last Active')} />
+              ),
+              cell: ({ row }) => {
+                return row.original.lastActiveDate ? (
+                  <div className="text-left">
+                    {formatUtils.formatDate(new Date(row.original.lastActiveDate))}
+                  </div>
+                ) : '-';
+              },
+            },
+            {
               accessorKey: 'status',
               header: ({ column }) => (
                 <DataTableColumnHeader column={column} title={t('Status')} />
