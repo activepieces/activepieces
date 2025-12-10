@@ -64,7 +64,9 @@ It is strongly recommended that you add your credit card information to your Ope
     logoUrl: 'https://cdn.activepieces.com/pieces/cloudflare-gateway.png',
     markdown: `Follow these instructions to get your Cloudflare AI Gateway API Key:
 1. Visit the following website: https://developers.cloudflare.com/ai-gateway/get-started/.
-2. Once on the website, follow the instructions to get your account id, gateway id and create an API Key.`,
+2. Once on the website, follow the instructions to get your account id, gateway id and create an API Key.
+3. After creating the gateway, make sure to enable the Authenticated Gateway Option in your settings.
+4. For each provider you are using, include your keys in the Provider Keys tab.`,
   }
 ];
 export default function AIProvidersPage() {

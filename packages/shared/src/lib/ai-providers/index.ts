@@ -1,6 +1,11 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, DiscriminatedUnion } from '../common/base-model'
 
+export enum AIProviderModelType {
+    IMAGE = 'image',
+    TEXT = 'text',
+}
+
 export const AnthropicProviderConfig = Type.Object({
     apiKey: Type.String(),
 })
@@ -10,6 +15,13 @@ export const CloudflareGatewayProviderConfig = Type.Object({
     apiKey: Type.String(),
     accountId: Type.String(),
     gatewayId: Type.String(),
+    models: Type.Array(
+        Type.Object({
+            modelId: Type.String(),
+            modelName: Type.String(),
+            modelType: Type.Enum(AIProviderModelType),
+        })
+    )
 })
 export type CloudflareGatewayProviderConfig = Static<typeof CloudflareGatewayProviderConfig>
 
@@ -102,11 +114,6 @@ export const AIProviderWithoutSensitiveData = Type.Object({
     configured: Type.Boolean(),
 })
 export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSensitiveData>
-
-export enum AIProviderModelType {
-    IMAGE = 'image',
-    TEXT = 'text',
-}
 
 export const AIProviderModel = Type.Object({
     id: Type.String(),
