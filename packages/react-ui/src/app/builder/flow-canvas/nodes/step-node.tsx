@@ -117,7 +117,7 @@ const ApStepCanvasNode = React.memo(
           className={cn(
             'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
             {
-              'border-t-[2px] border-primary/70 border-solid':
+              'border-t-2 border-primary/70 border-solid':
                 isSelected && !isDragging,
             },
           )}

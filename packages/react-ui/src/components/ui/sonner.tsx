@@ -39,17 +39,17 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: `
-            data-[type=error]:!text-destructive-300
-            data-[type=warning]:!text-warning-300
-            data-[type=success]:!text-success-300
+            data-[type=error]:text-destructive-300!
+            data-[type=warning]:text-warning-300!
+            data-[type=success]:text-success-300!
           `,
           description: `
-            data-[type=error]:!text-destructive-300
-            data-[type=warning]:!text-warning-300
-            data-[type=success]:!text-success-300
+            data-[type=error]:text-destructive-300!
+            data-[type=warning]:text-warning-300!
+            data-[type=success]:text-success-300!
           `,
         },
-        descriptionClassName: '!text-inherit',
+        descriptionClassName: 'text-inherit!',
       }}
       icons={{
         success: <CircleCheckIcon className="size-4" />,

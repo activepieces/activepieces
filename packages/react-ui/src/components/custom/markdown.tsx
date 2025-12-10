@@ -63,7 +63,7 @@ const Container = ({
           )}
         </>
       )}
-      <AlertDescription className="flex-grow w-full">
+      <AlertDescription className="grow w-full">
         {children}
       </AlertDescription>
     </Alert>
@@ -105,7 +105,7 @@ const ApMarkdown = React.memo(
     return (
       <Container variant={variant}>
         <ReactMarkdown
-          className={cn('flex-grow w-full ', className)}
+          className={cn('grow w-full ', className)}
           remarkPlugins={[gfm, breaks]}
           components={{
             code(props) {
@@ -157,7 +157,7 @@ const ApMarkdown = React.memo(
             ),
             p: ({ node, ...props }) => (
               <p
-                className="leading-7 [&:not(:first-child)]:mt-2 w-full"
+                className="leading-7 not-first:mt-2 w-full"
                 {...props}
               />
             ),

@@ -46,7 +46,7 @@ export const FolderActions = ({
       {showFlowCount && (
         <span
           className={cn(
-            'text-muted-foreground !text-xs !font-semibold self-end transition-opacity duration-150',
+            'text-muted-foreground text-xs! font-semibold! self-end transition-opacity duration-150',
             buttonVariants({ size: 'icon', variant: 'ghost' }),
             {
               'opacity-100 group-hover/item:opacity-0':

@@ -107,7 +107,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       ref={containerRef}
       tabIndex={0}
       className={cn(
-        'absolute bottom-[0px]  mr-5 mb-5  right-[0px]  z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
+        'absolute bottom-0  mr-5 mb-5  right-0  z-50 transition-all  border border-solid border-outline overflow-x-hidden bg-background shadow-lg rounded-md',
         {
           'opacity-0 pointer-events-none': !showDataSelector,
         },
@@ -115,7 +115,7 @@ const DataSelector = ({ parentHeight, parentWidth }: DataSelectorProps) => {
       )}
     >
       <div className="text-lg items-center font-semibold px-5 py-2 flex gap-2">
-        {t('Data Selector')} <div className="flex-grow"></div>{' '}
+        {t('Data Selector')} <div className="grow"></div>{' '}
         <DataSelectorSizeTogglers
           state={DataSelectorSize}
           setListSizeState={setDataSelectorSize}

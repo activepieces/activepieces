@@ -1,6 +1,285 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
+
+@plugin 'tailwindcss-animate';
+@plugin 'tailwind-scrollbar';
+
+@custom-variant dark (&:is(.dark *));
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 2rem;
+  @media (width >= --theme(--breakpoint-sm)) {
+    max-width: none;
+  }
+  @media (width >= 1400px) {
+    max-width: 1400px;
+  }
+}
+
+@theme {
+  --ease-*: initial;
+  --ease-expand-out: cubic-bezier(0.35, 0, 0.25, 1);
+
+  --width-4_5: 1.125rem;
+
+  --height-4_5: 1.125rem;
+
+  --transition-duration-1500: 1500ms;
+
+  --color-light-blue: hsl(var(--light-blue));
+
+  --color-warning-100: hsl(var(--warning-100));
+  --color-warning-300: hsl(var(--warning-300));
+  --color-warning: hsl(var(--warning));
+
+  --color-border: hsl(var(--border));
+
+  --color-sidebar: hsl(var(--sidebar-background));
+  --color-sidebar-foreground: hsl(var(--sidebar-foreground));
+  --color-sidebar-primary: hsl(var(--sidebar-primary));
+  --color-sidebar-primary-foreground: hsl(var(--sidebar-primary-foreground));
+  --color-sidebar-accent: hsl(var(--sidebar-accent));
+  --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
+  --color-sidebar-border: hsl(var(--sidebar-border));
+  --color-sidebar-ring: hsl(var(--sidebar-ring));
+  --color-sidebar-active: hsl(var(--sidebar-active));
+  --color-sidebar-progress: hsl(var(--sidebar-progress));
+
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+
+  --color-primary-100: hsl(var(--primary-100));
+  --color-primary-300: hsl(var(--primary-300));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+
+  --color-success-100: hsl(var(--success-100));
+  --color-success-300: hsl(var(--success-300));
+  --color-success: hsl(var(--success));
+
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+
+  --color-destructive-100: hsl(var(--destructive-100));
+  --color-destructive-300: hsl(var(--destructive-300));
+  --color-destructive: hsl(var(--destructive));
+
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xs: calc(var(--radius) - 8px);
+  --radius-xss: calc(var(--radius) - 10px);
+
+  --font-inter: Inter, sans-serif;
+
+  --text-xss: 0.65rem;
+  --text-3xl: 1.75rem;
+  --text-4xl: 2rem;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-fade: fade 0.2s ease-out;
+  --animate-highlight: highlight 1s ease-out;
+  --animate-typing: typing 0.7s steps(7) alternate;
+  --animate-typing-sm: typing 0.5s steps(5) alternate;
+  --animate-ask-ai-background: ask-ai-background 4s ease-in-out infinite;
+  --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
+  --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
+    alternate;
+
+  --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.4);
+  --shadow-add-button: var(--add-button-shadow);
+
+  @keyframes primary-color-pulse {
+    from {
+      color: hsl(var(--primary));
+    }
+    to {
+      color: hsl(var(--primary) / 0.7);
+    }
+  }
+  @keyframes accordion-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-accordion-content-height);
+    }
+  }
+  @keyframes accordion-up {
+    from {
+      height: var(--radix-accordion-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+  @keyframes fade {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes highlight {
+    0% {
+      background-color: hsl(var(--primary-100));
+    }
+    100% {
+      background-color: hsl(var(--secondary));
+    }
+  }
+  @keyframes typing {
+    0% {
+      width: 0%;
+      visibility: hidden;
+    }
+    100% {
+      width: 100%;
+    }
+  }
+  @keyframes ask-ai-background {
+    0% {
+      background-position: 0%;
+    }
+    50% {
+      background-position: 100%;
+    }
+    100% {
+      background-position: 0%;
+    }
+  }
+  @keyframes slide-in-from-bottom {
+    0% {
+      transform: translateY(100%);
+    }
+    100% {
+      transform: translateY(0%);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility scrollbar-hover {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: transparent;
+    border-radius: 9999px;
+    transition: opacity 0.2s;
+  }
+
+  &:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .group:hover &::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark &:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .group:hover &::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &:hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark &:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .group:hover & {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark .group:hover & {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
+
+@utility group {
+  &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.2);
+  }
+
+  .dark &:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  &:hover .scrollbar-hover {
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .dark &:hover .scrollbar-hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
+
+@utility dark {
+  & .scrollbar-hover:hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  & .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  & .scrollbar-hover:hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  & .group:hover .scrollbar-hover {
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+}
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
 
 /* You can add global styles to this file, and also import other style files */
 @layer base {
@@ -139,85 +418,34 @@
   }
 }
 
-.react-flow__panel.react-flow__attribution.bottom.right {
-  display: none;
-}
-
-.react-flow {
-  --xy-edge-stroke-selected-default: #b1b1b7 !important;
-  --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7 !important;
-  --selection-border-default: 0px solid #b1b1b7 !important;
-  --node-border-default: 0px solid #b1b1b7 !important;
-  --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
-  --xy-selection-background-color-default: hsl(var(--primary-100)/0.25) !important;
-}
-
-.react-flow__pane.selection,
-.react-flow__nodesselection-rect {
-  cursor: default !important;
-}
-
-.react-flow__edge.selectable>path {
-  /* If necessary, add !important to the rule */
-  pointer-events: none !important;
-}
-
-/* This is a hack to fix the issue with the pointer events being set to none when the vaul drawer is open */
-body {
-  pointer-events: auto !important;
-}
-
 @layer utilities {
-  .scrollbar-hover {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-  }
-
-  .scrollbar-hover::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .scrollbar-hover::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: transparent;
-    border-radius: 9999px;
-    transition: opacity 0.2s;
-  }
-
-  .scrollbar-hover:hover::-webkit-scrollbar-thumb,
-  .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
-  }
-
-  .dark .scrollbar-hover:hover::-webkit-scrollbar-thumb,
-  .dark .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
-    background-color: rgba(255, 255, 255, 0.2);
-  }
-
-  .scrollbar-hover:hover {
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  }
-
-  .dark .scrollbar-hover:hover {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  }
-
-  .group:hover .scrollbar-hover {
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
-  }
-
-  .dark .group:hover .scrollbar-hover {
-    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
-  }
-
-  .scrollbar-none {
-    scrollbar-width: none;
-  }
-
-  .scrollbar-none::-webkit-scrollbar {
+  .react-flow__panel.react-flow__attribution.bottom.right {
     display: none;
+  }
+
+  .react-flow {
+    --xy-edge-stroke-selected-default: #b1b1b7 !important;
+    --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7 !important;
+    --selection-border-default: 0px solid #b1b1b7 !important;
+    --node-border-default: 0px solid #b1b1b7 !important;
+    --xy-selection-border-default: 1px dotted hsl(var(--primary-300)) !important;
+    --xy-selection-background-color-default: hsl(
+      var(--primary-100) / 0.25
+    ) !important;
+  }
+
+  .react-flow__pane.selection,
+  .react-flow__nodesselection-rect {
+    cursor: default !important;
+  }
+
+  .react-flow__edge.selectable > path {
+    /* If necessary, add !important to the rule */
+    pointer-events: none !important;
+  }
+
+  /* This is a hack to fix the issue with the pointer events being set to none when the vaul drawer is open */
+  body {
+    pointer-events: auto !important;
   }
 }

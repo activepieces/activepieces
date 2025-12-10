@@ -9,7 +9,7 @@ const ApGraphEndWidgetNode = ({ data }: Omit<ApGraphEndNode, 'position'>) => {
   const elementRef = useRef<HTMLDivElement>(null);
   return (
     <>
-      <div className="h-[1px] w-[1px] relative">
+      <div className="h-px w-px relative">
         {data.showWidget && (
           <div
             ref={elementRef}

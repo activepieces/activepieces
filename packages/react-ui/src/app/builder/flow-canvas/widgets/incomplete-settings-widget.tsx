@@ -50,7 +50,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
     !flowVersion.valid && (
       <Button
         variant="ghost"
-        className="h-8 bg-warning-100 text-warning-300 hover:!bg-warning-100 hover:!border-warning hover:!text-warning-300 border border-solid border-warning/50 rounded-full animate-fade"
+        className="h-8 bg-warning-100 text-warning-300 hover:bg-warning-100! hover:border-warning! hover:text-warning-300! border border-solid border-warning/50 rounded-full animate-fade"
         key={'complete-flow-button'}
         onClick={(e) => {
           onClick();

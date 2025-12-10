@@ -205,7 +205,7 @@ const BranchSingleCondition = ({
             )}
           />
         )}
-        <div className="flex-grow"></div>
+        <div className="grow"></div>
         <div>
           {showDelete && (
             <Button

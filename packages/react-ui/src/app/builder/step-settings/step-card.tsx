@@ -48,7 +48,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
       </div>
       <div className="flex h-full grow justify-center gap-2 text-start">
         <div className="text-base flex flex-col grow gap-1">
-          <div className="flex-grow">
+          <div className="grow">
             {!isNil(modifiedTitle) ? (
               modifiedTitle
             ) : (

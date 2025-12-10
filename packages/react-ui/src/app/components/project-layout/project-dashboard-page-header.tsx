@@ -162,7 +162,7 @@ export const ProjectDashboardPageHeader = ({
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-2 shadow-sm"
+                className="gap-2 shadow-xs"
                 onClick={() => setInviteOpen(true)}
               >
                 <UserPlus className="w-4 h-4" />
@@ -175,7 +175,7 @@ export const ProjectDashboardPageHeader = ({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="shadow-sm px-2"
+                    className="shadow-xs px-2"
                   >
                     <DotsHorizontalIcon className="w-4 h-4" />
                   </Button>

@@ -28,7 +28,7 @@ export function StatusProgressBar({ days, className }: StatusProgressBarProps) {
               <div
                 className={cn(
                   'w-3 h-6 rounded-sm cursor-pointer transition-colors',
-                  'hover:scale-110 hover:shadow-sm',
+                  'hover:scale-110 hover:shadow-xs',
                   {
                     'bg-emerald-500 hover:bg-emerald-600':
                       day.status === 'success',

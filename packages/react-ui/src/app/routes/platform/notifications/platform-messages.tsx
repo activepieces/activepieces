@@ -23,7 +23,7 @@ export const PlatformMessages = () => {
           ) : (
             <SparklesIcon className="h-4 w-4" />
           )}
-          <div className="flex-grow">
+          <div className="grow">
             <AlertTitle>{message.title}</AlertTitle>
             <AlertDescription>{message.description}</AlertDescription>
           </div>

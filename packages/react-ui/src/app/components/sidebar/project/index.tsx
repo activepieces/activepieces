@@ -62,7 +62,7 @@ const ProjectSideBarItem = ({
                 onClick={() => handleProjectSelect(project.id)}
                 className={cn(
                   isCurrentProject &&
-                    'bg-sidebar-active hover:!bg-sidebar-active',
+                    'bg-sidebar-active hover:bg-sidebar-active!',
                   'relative flex items-center justify-center',
                 )}
               >
@@ -79,7 +79,7 @@ const ProjectSideBarItem = ({
           asChild
           className={cn(
             'px-2 py-5 cursor-pointer',
-            isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
+            isCurrentProject && 'bg-sidebar-active hover:bg-sidebar-active!',
           )}
         >
           <div

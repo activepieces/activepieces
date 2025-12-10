@@ -233,7 +233,7 @@ function DefaultFolder({
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
-            <Shapes className="!size-3.5" />
+            <Shapes className="size-3.5!" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
               <CreateFlowDropdown
@@ -289,8 +289,8 @@ function RegularFolder({
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
-            <Folder className="!size-3.5 group-data-[state=open]/collapsible:hidden" />
-            <FolderOpen className="!size-3.5 hidden group-data-[state=open]/collapsible:block" />
+            <Folder className="size-3.5! group-data-[state=open]/collapsible:hidden" />
+            <FolderOpen className="size-3.5! hidden group-data-[state=open]/collapsible:block" />
             <span className="truncate">{folder.displayName}</span>
             <div className="flex items-center justify-center ml-auto">
               <CreateFlowDropdown

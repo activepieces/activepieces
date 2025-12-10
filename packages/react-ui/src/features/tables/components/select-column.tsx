@@ -49,7 +49,7 @@ export function SelectCell({
     >
       {!locked && (
         <div
-          className={cn('group-hover:block hidden', isRowSelected && '!block')}
+          className={cn('group-hover:block hidden', isRowSelected && 'block!')}
         >
           <Checkbox
             aria-label="Select row"
@@ -69,7 +69,7 @@ export function SelectCell({
       <div
         className={cn(
           locked ? 'block select-none' : 'group-hover:hidden block select-none',
-          isRowSelected && !locked && '!hidden',
+          isRowSelected && !locked && 'hidden!',
         )}
       >
         {locked ? (
