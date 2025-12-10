@@ -185,7 +185,7 @@ const BuilderPage = () => {
           maxSize={39}
           order={1}
           ref={leftHandleRef}
-          className={cn('min-w-0 bg-background z-20 ', {
+          className={cn('min-w-0 bg-border z-20 ', {
             [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
@@ -200,9 +200,7 @@ const BuilderPage = () => {
           disabled={leftSidebar === LeftSideBarType.NONE}
           withHandle={leftSidebar !== LeftSideBarType.NONE}
           onDragging={setIsDraggingHandle}
-          className={
-            leftSidebar === LeftSideBarType.NONE ? 'bg-transparent' : ''
-          }
+      
         />
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">

@@ -98,7 +98,7 @@ export const BuilderHeader = () => {
 
   return (
     <div className="border-b select-none">
-      <div className="relative items-center flex  w-full px-4 py-3">
+      <div className="relative items-center flex  w-full px-4 py-3 border-l border">
         <div className="flex items-center gap-2">
           {!embedState.isEmbedded && <ApSidebarToggle />}
           {embedState.isEmbedded && <HomeButton />}
