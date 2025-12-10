@@ -31,6 +31,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
             cursorRequest: request.query.cursor ?? null,
             displayName: request.query.displayName,
             limit: request.query.limit ?? 10,
+            types: request.query.types,
         })
     })
 

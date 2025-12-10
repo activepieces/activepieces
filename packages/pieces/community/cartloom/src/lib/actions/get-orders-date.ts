@@ -20,7 +20,7 @@ export const getOrderDateAction = createAction({
     }),
   },
   async run(context) {
-    return await getOrdersByDate(context.auth, {
+    return await getOrdersByDate(context.auth.props, {
       start_date: context.propsValue.start.split('T')[0],
       end_date:
         context.propsValue.end || new Date().toISOString().split('T')[0],

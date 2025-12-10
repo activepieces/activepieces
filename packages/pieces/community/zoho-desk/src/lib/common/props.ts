@@ -11,6 +11,7 @@ interface DropdownParams {
 
 export const organizationId = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: zohoDeskAuth,
 		displayName: params.displayName,
 		description: params.description,
 		refreshers: [],
@@ -45,6 +46,7 @@ export const organizationId = (params: DropdownParams) =>
 
 export const departmentId = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: zohoDeskAuth,
 		displayName: params.displayName,
 		description: params.description,
 		refreshers: ['orgId'],

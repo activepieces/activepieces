@@ -23,6 +23,7 @@ const ExploreTabContent = ({
     usePieceSelectorTabs();
   const { data: categories, isLoading: isLoadingPieces } =
     piecesHooks.usePiecesSearch({
+      shouldCaptureEvent: false,
       searchQuery: '',
       type:
         operation.type === FlowOperationType.UPDATE_TRIGGER

@@ -94,12 +94,21 @@ export const createDiscountAction = createAction({
       required: false,
     }),
     targetPids: Property.MultiSelectDropdown({
+      auth: cartloomAuth,
       displayName: 'Target Products',
       description: 'Select the products to apply the discount to',
       required: false,
       refreshers: [],
       options: async ({ auth }) =>
-        await buildProductsDropdown(auth as CartloomAuthType),
+       { if(!auth)
+        {
+           return {
+             options: [],
+             disabled:true,
+             placeholder:"please authenticate"
+           }
+        }
+       return await buildProductsDropdown(auth.props)},
     }),
     targetAmount: Property.Number({
       displayName: 'Target Amount',
@@ -121,7 +130,7 @@ export const createDiscountAction = createAction({
     }),
   },
   async run(context) {
-    return await createDiscount(context.auth, {
+    return await createDiscount(context.auth.props, {
       enabled: context.propsValue.enabled ? 1 : 0,
       auto: context.propsValue.auto ? 1 : 0,
       unlimited: context.propsValue.unlimited ? 1 : 0,

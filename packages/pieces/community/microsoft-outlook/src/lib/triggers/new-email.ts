@@ -1,5 +1,6 @@
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import {
+	AppConnectionValueForAuthProperty,
 	PiecePropValueSchema,
 	TriggerStrategy,
 	createTrigger,
@@ -9,7 +10,7 @@ import { Message } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
 import { microsoftOutlookAuth } from '../common/auth';
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftOutlookAuth>, Record<string,any>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftOutlookAuth>, Record<string,any>> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, lastFetchEpochMS }) => {
 		const client = Client.initWithMiddleware({

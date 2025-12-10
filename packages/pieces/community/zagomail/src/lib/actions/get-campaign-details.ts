@@ -14,6 +14,6 @@ export const getCampaignDetails = createAction({
   async run({propsValue, auth}) {
     const campaignUid = propsValue.campaignUid;
 
-    return await zagoMailApiService.getCampaignDetails(auth, campaignUid)
+    return await zagoMailApiService.getCampaignDetails(auth.secret_text, campaignUid)
   },
 });

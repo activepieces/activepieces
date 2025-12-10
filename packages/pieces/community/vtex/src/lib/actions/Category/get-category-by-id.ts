@@ -15,7 +15,7 @@ export const getCategoryById = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const { categoryId } = context.propsValue;
 
     const category = new Category(hostUrl, appKey, appToken);

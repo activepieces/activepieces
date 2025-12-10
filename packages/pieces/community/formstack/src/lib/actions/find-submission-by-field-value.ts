@@ -50,7 +50,7 @@ export const findSubmissionByFieldValue = createAction({
     }),
   },
   async run(context) {
-    const authentication = context.auth as OAuth2PropertyValue;
+    const authentication = context.auth;
     const accessToken = authentication['access_token'];
     
     const {

@@ -4,12 +4,14 @@ import {
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { outlookCalendarAuth } from '../..';
 
 export const outlookCalendarCommon = {
   baseUrl: 'https://graph.microsoft.com/v1.0/me',
   calendarDropdown: Property.Dropdown({
     displayName: 'Calendar',
     required: true,
+    auth: outlookCalendarAuth,
     options: async ({ auth }) => {
       if (!auth) {
         return {
@@ -46,6 +48,7 @@ export const outlookCalendarCommon = {
   timezoneDropdown: Property.Dropdown({
     displayName: 'Timezone',
     required: true,
+    auth: outlookCalendarAuth,
     options: async ({ auth }) => {
       if (!auth) {
         return {

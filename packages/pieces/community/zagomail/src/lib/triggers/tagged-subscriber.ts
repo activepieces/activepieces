@@ -35,7 +35,7 @@ export const taggedSubscriber = createTrigger({
   async onEnable(context) {
     const tagName = context.propsValue.tagName;
 
-    const tags = (await zagoMailApiService.getTags(context.auth)) as Tag[];
+    const tags = (await zagoMailApiService.getTags(context.auth.secret_text)) as Tag[];
 
     const tagExists = tags.find((t) => t.ztag_name === tagName);
 
@@ -44,12 +44,12 @@ export const taggedSubscriber = createTrigger({
     if (tagExists) {
       tag = tagExists;
     } else {
-      tag = (await zagoMailApiService.createTag(context.auth, tagName)) as Tag;
+      tag = (await zagoMailApiService.createTag(context.auth.secret_text, tagName)) as Tag;
     }
 
     try {
       const response = (await zagoMailApiService.createWebhook(
-        context.auth,
+        context.auth.secret_text,
         context.webhookUrl,
         'tag-added',
         {
@@ -67,7 +67,7 @@ export const taggedSubscriber = createTrigger({
   async onDisable(context) {
     const webhook = await context.store.get<StoredWebhookId>(CACHE_KEY);
     if (!isNil(webhook) && !isNil(webhook.webhookId)) {
-      await zagoMailApiService.deleteWebhook(context.auth, webhook.webhookId);
+      await zagoMailApiService.deleteWebhook(context.auth.secret_text, webhook.webhookId);
     }
   },
   async run(context) {

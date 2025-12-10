@@ -17,9 +17,6 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@activepieces/common-ai": [
-        "packages/pieces/community/common-ai/src/index.ts"
-      ],
       "@activepieces/ee-auth": ["packages/ee/auth/src/index.ts"],
       "@activepieces/ee-shared": ["packages/ee/shared/src/index.ts"],
       "@activepieces/ee/billing/ui": ["packages/ee/billing/ui/src/index.ts"],
@@ -130,8 +127,147 @@
       "@activepieces/piece-opportify": [
         "packages/pieces/community/opportify/src/index.ts"
       ],
+      "@activepieces/piece-promptmate": [
+        "packages/pieces/community/promptmate/src/index.ts"
+      ],
+      "@activepieces/piece-guidelite": [
+        "packages/pieces/community/guidelite/src/index.ts"
+      ],
       "@activepieces/piece-bolna": [
         "packages/pieces/community/bolna/src/index.ts"
+      ],
+      "@activepieces/piece-appfollow": [
+        "packages/pieces/community/appfollow/src/index.ts"
+      ],
+      "@activepieces/piece-griptape": [
+        "packages/pieces/community/griptape/src/index.ts"
+      ],
+      "@activepieces/piece-bexio": [
+        "packages/pieces/community/bexio/src/index.ts"
+      ],
+      "@activepieces/piece-pushbullet": [
+        "packages/pieces/community/pushbullet/src/index.ts"
+      ],
+      "@activepieces/piece-denser-ai": [
+        "packages/pieces/community/denser-ai/src/index.ts"
+      ],
+      "@activepieces/piece-ask-handle": [
+        "packages/pieces/community/ask-handle/src/index.ts"
+      ],
+      "@activepieces/piece-phantombuster": [
+        "packages/pieces/community/phantombuster/src/index.ts"
+      ],
+      "@activepieces/piece-openmic-ai": [
+        "packages/pieces/community/openmic-ai/src/index.ts"
+      ],
+      "@activepieces/piece-datafuel": [
+        "packages/pieces/community/datafuel/src/index.ts"
+      ],
+      "@activepieces/piece-doctly": [
+        "packages/pieces/community/doctly/src/index.ts"
+      ],
+      "@activepieces/piece-chatnode": [
+        "packages/pieces/community/chatnode/src/index.ts"
+      ],
+      "@activepieces/piece-greip": [
+        "packages/pieces/community/greip/src/index.ts"
+      ],
+      "@activepieces/piece-chaindesk": [
+        "packages/pieces/community/chaindesk/src/index.ts"
+      ],
+      "@activepieces/piece-orimon": [
+        "packages/pieces/community/orimon/src/index.ts"
+      ],
+      "@activepieces/piece-linkup": [
+        "packages/pieces/community/linkup/src/index.ts"
+      ],
+      "@activepieces/piece-youform": [
+        "packages/pieces/community/youform/src/index.ts"
+      ],
+      "@activepieces/piece-flow-parser": [
+        "packages/pieces/community/flow-parser/src/index.ts"
+      ],
+      "@activepieces/piece-writesonic-bulk": [
+        "packages/pieces/community/writesonic-bulk/src/index.ts"
+      ],
+      "@activepieces/piece-documentpro": [
+        "packages/pieces/community/documentpro/src/index.ts"
+      ],
+      "@activepieces/piece-image-router": [
+        "packages/pieces/community/image-router/src/index.ts"
+      ],
+      "@activepieces/piece-pollybot-ai": [
+        "packages/pieces/community/pollybot-ai/src/index.ts"
+      ],
+      "@activepieces/piece-documerge": [
+        "packages/pieces/community/documerge/src/index.ts"
+      ],
+      "@activepieces/piece-letta": [
+        "packages/pieces/community/letta/src/index.ts"
+      ],
+      "@activepieces/piece-logrocket": [
+        "packages/pieces/community/logrocket/src/index.ts"
+      ],
+      "@activepieces/piece-couchbase": [
+        "packages/pieces/community/couchbase/src/index.ts"
+      ],
+      "@activepieces/piece-cursor": [
+        "packages/pieces/community/cursor/src/index.ts"
+      ],
+      "@activepieces/piece-gptzero-detect-ai": [
+        "packages/pieces/community/gptzero-detect-ai/src/index.ts"
+      ],
+      "@activepieces/piece-bursty-ai": [
+        "packages/pieces/community/bursty-ai/src/index.ts"
+      ],
+      "@activepieces/piece-tl-dv": [
+        "packages/pieces/community/tl-dv/src/index.ts"
+      ],
+      "@activepieces/piece-parser-expert": [
+        "packages/pieces/community/parser-expert/src/index.ts"
+      ],
+      "@activepieces/piece-vidlab7": [
+        "packages/pieces/community/vidlab7/src/index.ts"
+      ],
+      "@activepieces/piece-customgpt": [
+        "packages/pieces/community/customgpt/src/index.ts"
+      ],
+      "@activepieces/piece-synthesia": [
+        "packages/pieces/community/synthesia/src/index.ts"
+      ],
+      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
+      "@activepieces/piece-meetgeek-ai": [
+        "packages/pieces/community/meetgeek-ai/src/index.ts"
+      ],
+      "@activepieces/piece-fellow": [
+        "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-echowin": [
+        "packages/pieces/community/echowin/src/index.ts"
+      ],
+      "@activepieces/piece-feathery": [
+        "packages/pieces/community/feathery/src/index.ts"
+      ],
+      "@activepieces/piece-chatling": [
+        "packages/pieces/community/chatling/src/index.ts"
+      ],
+      "@activepieces/piece-air-ops": [
+        "packages/pieces/community/air-ops/src/index.ts"
+      ],
+      "@activepieces/piece-mind-studio": [
+        "packages/pieces/community/mind-studio/src/index.ts"
+      ],
+      "@activepieces/piece-easy-peasy-ai": [
+        "packages/pieces/community/easy-peasy-ai/src/index.ts"
+      ],
+      "@activepieces/piece-leexi": [
+        "packages/pieces/community/leexi/src/index.ts"
+      ],
+      "@activepieces/piece-tiny-talk-ai": [
+        "packages/pieces/community/tiny-talk-ai/src/index.ts"
+      ],
+      "@activepieces/piece-hastewire": [
+        "packages/pieces/community/hastewire/src/index.ts"
       ]
     },
     "resolveJsonModule": true

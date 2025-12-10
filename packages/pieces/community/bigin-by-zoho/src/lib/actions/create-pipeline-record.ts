@@ -48,11 +48,12 @@ export const createPipelineRecord = createAction({
     associatedProducts: productsDropdown,
     tag: tagsDropdown('Pipelines'),
     additionalFields: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Additional Fields',
       description: 'Optional fields from the Pipelines module',
       refreshers: ['auth'],
       required: false,
-      props: async ({ auth }: any): Promise<InputPropertyMap> => {
+      props: async ({ auth }): Promise<InputPropertyMap> => {
         if (!auth) return {} as InputPropertyMap;
         const { access_token, api_domain } = auth as any;
 
@@ -203,7 +204,8 @@ export const createPipelineRecord = createAction({
     }
 
     try {
-      const { access_token, api_domain } = auth as any;
+      const { access_token, data } = auth;
+      const api_domain = data['api_domain'];
 
       const response = await biginApiService.createPipelineRecord(
         access_token,

@@ -5,15 +5,18 @@ import {
     ActivepiecesError,
     assertNotNullOrUndefined,
     Cursor,
+    EndpointScope,
     ErrorCode,
     FlowStatus,
     isNil,
     PlatformId,
     Project,
     ProjectId,
+    ProjectType,
     ProjectWithLimits,
     SeekPage,
     spreadIfDefined,
+    TeamProjectsLimit,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -25,13 +28,11 @@ import { flowRepo } from '../../flows/flow/flow.repo'
 import { flowService } from '../../flows/flow/flow.service'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
+import { Order } from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
 import { ProjectEntity } from '../../project/project-entity'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformPlanService } from '../platform/platform-plan/platform-plan.service'
-import { platformUsageService } from '../platform/platform-usage-service'
 import { ProjectMemberEntity } from './project-members/project-member.entity'
 import { projectLimitsService } from './project-plan/project-plan.service'
 const projectRepo = repoFactory(ProjectEntity)
@@ -47,6 +48,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             platformId: user.platformId,
             userId: params.userId,
             displayName: params.displayName,
+            scope: params.scope,
         })
         return getProjects({
             ...params,
@@ -57,16 +59,18 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
         projectId,
         request,
     }: UpdateParams): Promise<ProjectWithLimits> {
-        await projectService.update(projectId, request)
+        const project = await projectService.getOneOrThrow(projectId)
+        await projectService.update(projectId, {
+            type: project.type,
+            ...request,
+        })
         if (!isNil(request.plan)) {
-            const project = await projectService.getOneOrThrow(projectId)
             const platform = await platformService.getOneWithPlanOrThrow(project.platformId)
-            if (platform.plan.manageProjectsEnabled) {
+            if (platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE) {
                 await projectLimitsService(log).upsert(
                     {
                         ...spreadIfDefined('pieces', request.plan.pieces),
                         ...spreadIfDefined('piecesFilterType', request.plan.piecesFilterType),
-                        aiCredits: request.plan.aiCredits ?? null,
                     },
                     projectId,
                 )
@@ -113,15 +117,28 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
 })
 
 async function getProjects(params: GetAllParams & { projectIds?: string[] }, log: FastifyBaseLogger): Promise<SeekPage<ProjectWithLimits>> {
-    const { cursorRequest, limit, platformId, displayName, externalId, projectIds } = params
+    const { cursorRequest, limit, platformId, displayName, externalId, projectIds, types } = params
     const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
     const paginator = buildPaginator({
         entity: ProjectEntity,
         query: {
             limit,
-            order: 'ASC',
             afterCursor: decodedCursor.nextCursor,
             beforeCursor: decodedCursor.previousCursor,
+            orderBy: [
+                {
+                    field: 'type',
+                    order: Order.ASC,
+                },
+                {
+                    field: 'displayName',
+                    order: Order.ASC,
+                },
+                {
+                    field: 'id',
+                    order: Order.ASC,
+                },
+            ],
         },
     })
     const displayNameFilter = displayName ? ILike(`%${displayName}%`) : undefined
@@ -130,6 +147,7 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
         ...spreadIfDefined('externalId', externalId),
         ...spreadIfDefined('displayName', displayNameFilter),
         ...(projectIds ? { id: In(projectIds) } : {}),
+        ...(types ? { type: In(types) } : {}),
     }
 
     const queryBuilder = projectRepo()
@@ -153,6 +171,7 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
 
 type GetAllForParamsAndUser = {
     userId: string
+    scope?: EndpointScope
 } & GetAllParams
 
 type GetAllParams = {
@@ -161,6 +180,7 @@ type GetAllParams = {
     externalId?: string
     cursorRequest: Cursor | null
     limit: number
+    types?: ProjectType[]
 }
 
 async function enrichProject(
@@ -190,19 +210,11 @@ async function enrichProject(
     })
 
 
-    const platformBilling = await platformPlanService(log).getOrCreateForPlatform(project.platformId)
-
-    const { startDate, endDate } = await platformPlanService(system.globalLogger()).getBillingDates(platformBilling)
-    const projectAICreditUsage = await platformUsageService(log).getProjectUsage({ projectId: project.id, metric: 'ai_credits', startDate, endDate })
     return {
         ...project,
-        plan: await projectLimitsService(log).getPlanWithPlatformLimits(
+        plan: await projectLimitsService(log).getOrCreateDefaultPlan(
             project.id,
         ),
-        usage: {
-            aiCredits: projectAICreditUsage,
-            nextLimitResetDate: endDate,
-        },
         analytics: {
             activeFlows,
             totalFlows,

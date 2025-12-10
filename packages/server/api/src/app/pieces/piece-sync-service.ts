@@ -40,7 +40,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
             const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
             const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
-            const limit = pLimit(20)
+            const limit = pLimit(5)
             const newPiecesMetadata = await Promise.all(newPiecesToFetch.map(piece => limit(async () => {
                 const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
                 const response = await fetch(url)

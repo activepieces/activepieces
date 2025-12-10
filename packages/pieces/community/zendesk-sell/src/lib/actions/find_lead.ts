@@ -59,7 +59,7 @@ export const findLead = createAction({
         const response = await callZendeskApi(
             HttpMethod.GET,
             'v2/leads',
-            auth as ZendeskSellAuth,
+            auth,
             undefined, 
             params     
         );

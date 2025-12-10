@@ -5,6 +5,7 @@ import {
   tableDropdown,
   recordDropdown,
   createServiceNowClient,
+  servicenowAuth,
 } from '../common/props';
 
 const UpdateRecordInputSchema = z.object({
@@ -18,6 +19,7 @@ const UpdateRecordInputSchema = z.object({
 });
 
 export const updateRecordAction = createAction({
+  auth: servicenowAuth,
   name: 'update_record',
   displayName: 'Update Record',
   description: 'Update an existing record in a specified table',

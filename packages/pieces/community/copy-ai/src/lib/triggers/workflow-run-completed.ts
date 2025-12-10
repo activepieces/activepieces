@@ -40,7 +40,7 @@ export const workflowRunCompletedTrigger = createTrigger({
       },
     async onEnable(context) {
         const response = await makeRequest(
-            context.auth as string,
+            context.auth.secret_text,
             HttpMethod.POST,
             '/webhook',
             {
@@ -59,7 +59,7 @@ export const workflowRunCompletedTrigger = createTrigger({
         if(!isNil(response) && !isNil(response.webhookId))
         {
              await makeRequest(
-                context.auth as string,
+                context.auth.secret_text,
                 HttpMethod.DELETE,
                 `/webhook/${response.webhookId}`,
                 {}

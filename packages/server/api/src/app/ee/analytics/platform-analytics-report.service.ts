@@ -1,13 +1,12 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, flowPieceUtil, FlowStatus, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, ProjectId, RunEnvironment } from '@activepieces/shared'
+import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, assertNotNullOrUndefined, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { In, MoreThan } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { distributedLock } from '../../database/redis-connections'
-import { flowRepo } from '../../flows/flow/flow.repo'
+import { flowService } from '../../flows/flow/flow.service'
 import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
-import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
 import { userRepo } from '../../user/user-service'
@@ -51,13 +50,16 @@ const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Pr
 
 
 const generateReport = async ({ platformId, log, id }: { platformId: PlatformId, log: FastifyBaseLogger, id: string }): Promise<PlatformAnalyticsReport> => {
-    const flows = await listAllFlows(log, platformId, undefined)
+    const flows = await listAllFlows(log, platformId)
     const activeFlows = countFlows(flows, FlowStatus.ENABLED)
     const totalFlows = countFlows(flows, undefined)
     const totalProjects = await countProjects(platformId)
     const { totalUsers, activeUsers } = await analyzeUsers(platformId)
-    const { uniquePiecesUsed, topPieces } = await analyzePieces(log, flows, platformId)
-    const activeFlowsWithAI = await numberOfFlowsWithAI(log, flows, platformId)
+    
+    const pieceMetadataMap = await pieceMetadataService(log).getAllUnfiltered(platformId)    
+    const { uniquePiecesUsed, topPieces } = analyzePieces(flows, pieceMetadataMap)
+    const activeFlowsWithAI = numberOfFlowsWithAI(flows, pieceMetadataMap)
+
     const { topProjects, activeProjects } = await analyzeProjects(flows)
     const runsUsage = await analyzeRuns(platformId)
     return {
@@ -80,10 +82,15 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
 }
 
 async function analyzeProjects(flows: PopulatedFlow[]) {
+    const projectIds = [...new Set(flows.map(flow => flow.projectId))]
+    const projects = await projectRepo().findBy(projectIds.map(id => ({ id })))
+    const projectMap = new Map(projects.map(project => [project.id, project]))
+
     const projectUsage: Record<string, AnalyticsProjectReportItem> = {}
     for (const flow of flows) {
         const projectId = flow.projectId
-        const project = await projectRepo().findOneByOrFail({ id: projectId })
+        const project = projectMap.get(projectId)
+        assertNotNullOrUndefined(project, 'project')
         if (!projectUsage[projectId]) {
             projectUsage[projectId] = { id: projectId, activeFlows: 0, totalFlows: 0, displayName: project.displayName }
         }
@@ -104,34 +111,29 @@ async function analyzeProjects(flows: PopulatedFlow[]) {
 }
 
 
-async function numberOfFlowsWithAI(log: FastifyBaseLogger, flows: PopulatedFlow[], platformId: PlatformId) {
-    const aiPiecePromises = flows.flatMap(flow => {
+
+function numberOfFlowsWithAI(flows: PopulatedFlow[], pieceMetadataMap: Map<string, PieceMetadataModel>): number {
+    let count = 0
+    for (const flow of flows) {
         const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
-        return usedPieces.map(piece => pieceMetadataService(log).get({
-            name: piece,
-            version: undefined,
-            projectId: flow.projectId,
-            platformId,
-            entityManager: undefined,
-        }))
-    }).filter((f) => f !== undefined)
-    const pieceMetadataList = await Promise.all(aiPiecePromises)
-    return pieceMetadataList.filter(pieceMetadata => pieceMetadata?.categories?.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)).length
+        const hasAIPiece = usedPieces.some(pieceName => {
+            const metadata = pieceMetadataMap.get(pieceName)
+            return metadata?.categories?.includes(PieceCategory.ARTIFICIAL_INTELLIGENCE)
+        })
+        if (hasAIPiece) {
+            count++
+        }
+    }
+    return count
 }
 
-async function analyzePieces(log: FastifyBaseLogger, flows: PopulatedFlow[], platformId: PlatformId) {
+function analyzePieces(flows: PopulatedFlow[], pieceMetadataMap: Map<string, PieceMetadataModel>) {
     const pieces: Record<string, AnalyticsPieceReportItem> = {}
     for (const flow of flows) {
         const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
         for (const piece of usedPieces) {
             if (!pieces[piece]) {
-                const pieceMetadata = await pieceMetadataService(log).get({
-                    name: piece,
-                    version: undefined,
-                    projectId: flow.projectId,
-                    platformId,
-                    entityManager: undefined,
-                })
+                const pieceMetadata = pieceMetadataMap.get(piece)
                 if (!isNil(pieceMetadata)) {
                     pieces[piece] = {
                         name: piece,
@@ -161,97 +163,43 @@ async function countProjects(platformId: PlatformId) {
 
 
 async function analyzeUsers(platformId: PlatformId) {
-    const users = await userRepo().findBy({
-        platformId,
-    })
-    const activeUsersPromises = users.map(async (user) => {
-        const lastLoggined = await auditLogRepo().createQueryBuilder('audit_event')
-            .where('audit_event."userId" = :userId', { userId: user.id })
-            .andWhere({
-                action: In([ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP]),
-            })
-            .andWhere({
-                created: MoreThan(dayjs().subtract(1, 'month').toISOString()),
-            })
-            .getCount()
-        return lastLoggined > 0
-    })
+    const oneMonthAgo = dayjs().subtract(1, 'month').toISOString()
+    
+    const totalUsersResult = await userRepo()
+        .createQueryBuilder('usr')
+        .select('COUNT(DISTINCT usr.id)', 'totalUsers')
+        .where('usr.platformId = :platformId', { platformId })
+        .getRawOne()
 
-    const activeUsersResults = await Promise.all(activeUsersPromises)
-    const activeUsers = activeUsersResults.filter(Boolean).length
+    const activeUsersResult = await auditLogRepo()
+        .createQueryBuilder('ae')
+        .select('COUNT(DISTINCT ae.userId)', 'activeUsers')
+        .innerJoin('user', 'usr', 'usr.id = ae.userId')
+        .where('ae.platformId = :platformId', { platformId })
+        .andWhere('usr.platformId = :platformId', { platformId })
+        .andWhere('ae.action IN (:...actions)', { 
+            actions: [ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP],
+        })
+        .andWhere('ae.created > :oneMonthAgo', { oneMonthAgo })
+        .getRawOne()
+    
     return {
-        activeUsers,
-        totalUsers: users.length,
+        activeUsers: parseInt(activeUsersResult.activeUsers),
+        totalUsers: parseInt(totalUsersResult.totalUsers),
     }
 }
 
 
 
-async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId, projectId: ProjectId | undefined): Promise<PopulatedFlow[]> {
-    const queryBuilder = flowRepo().createQueryBuilder('flow')
-        .addCommonTableExpression(
-            `
-            SELECT DISTINCT ON ("flowId") *
-            FROM flow_version
-            ORDER BY "flowId", created DESC
-            `,
-            'latest_versions',
-        )
-        .leftJoin('latest_versions', 'latest_version', 'latest_version."flowId" = flow.id')
-        .innerJoin('project', 'project', 'flow."projectId" = project.id')
-        .select([
-            'flow.id as "flow_id"',
-            'flow.projectId as "flow_projectId"',
-            'flow.folderId as "flow_folderId"',
-            'flow.status as "flow_status"',
-            'flow.created as "flow_created"',
-            'flow.updated as "flow_updated"',
-            'flow.externalId as "flow_externalId"',
-            'flow.publishedVersionId as "flow_publishedVersionId"',
-            'flow.metadata as "flow_metadata"',
-            'latest_version.id as "version_id"',
-            'latest_version."displayName" as "version_displayName"',
-            'latest_version."schemaVersion" as "version_schemaVersion"',
-            'latest_version.trigger as "version_trigger"',
-            'latest_version."connectionIds" as "version_connectionIds"',
-            'latest_version."updatedBy" as "version_updatedBy"',
-            'latest_version.valid as "version_valid"',
-            'latest_version.state as "version_state"',
-            'latest_version.created as "version_created"',
-            'latest_version.updated as "version_updated"',
-        ])
-        .andWhere('project."platformId" = :platformId', { platformId })
+async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId): Promise<PopulatedFlow[]> {
+    const page = await flowService(log).list({
+        platformId,
+        cursorRequest: null,
+        versionState: FlowVersionState.DRAFT,
+        includeTriggerSource: false,
+    })
 
-    if (projectId) {
-        queryBuilder.andWhere('flow."projectId" = :projectId', { projectId })
-    }
-
-    const results = await queryBuilder.getRawMany()
-    return results.map(row => ({
-        id: row.flow_id,
-        projectId: row.flow_projectId,
-        folderId: row.flow_folderId,
-        status: row.flow_status,
-        created: row.flow_created,
-        updated: row.flow_updated,
-        externalId: row.flow_externalId,
-        publishedVersionId: row.flow_publishedVersionId,
-        metadata: row.flow_metadata,
-        version: flowVersionService(log).removeConnectionsAndSampleDataFromFlowVersion({
-            id: row.version_id,
-            flowId: row.flow_id,
-            displayName: row.version_displayName,
-            schemaVersion: row.version_schemaVersion,
-            trigger: row.version_trigger,
-            connectionIds: row.version_connectionIds,
-            updatedBy: row.version_updatedBy,
-            valid: row.version_valid,
-            state: row.version_state,
-            created: row.version_created,
-            updated: row.version_updated,
-            agentIds: row.version_agentIds,
-        }, false, false),
-    }))
+    return page.data
 }
 
 function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
@@ -262,15 +210,13 @@ function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
 }
 
 async function analyzeRuns(platformId: PlatformId): Promise<AnalyticsRunsUsageItem[]> {
-    const threeMonthsAgo = dayjs().subtract(3, 'months').toDate()
-    
     const runsData = await flowRunRepo()
         .createQueryBuilder('flow_run')
         .select('DATE(flow_run.created)', 'day')
         .addSelect('COUNT(*)', 'totalRuns')
         .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
         .where('project."platformId" = :platformId', { platformId })
-        .andWhere('flow_run.created >= :threeMonthsAgo', { threeMonthsAgo })
+        .andWhere('flow_run.created >= now() - interval \'3 months\'')
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
         .groupBy('DATE(flow_run.created)')
         .orderBy('DATE(flow_run.created)', 'ASC')

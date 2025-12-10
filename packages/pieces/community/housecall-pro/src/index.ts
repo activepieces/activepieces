@@ -118,7 +118,7 @@ export const housecallPro = createPiece({
       baseUrl: () => baseUrl,
       auth: housecallProAuth,
       authMapping: async (auth) => ({
-        "Authorization": `Token ${auth}`,
+        "Authorization": `Token ${auth.secret_text}`,
         "Content-Type": "application/json",
       }),
     }),

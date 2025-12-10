@@ -35,7 +35,7 @@
           baseUrl: () => `https://api.harvestapp.com/v2/`,
           auth: harvestAuth,
           authMapping: async (auth) => ({
-            Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+            Authorization: `Bearer ${(auth).access_token}`,
           }),
             }),
       ],

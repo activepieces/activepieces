@@ -16,7 +16,7 @@ export const bolna = createPiece({
       auth: bolnaaiAuth,
       baseUrl: () => 'https://api.bolna.ai',
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

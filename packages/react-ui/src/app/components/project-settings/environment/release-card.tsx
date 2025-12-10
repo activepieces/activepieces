@@ -1,10 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Package } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { toast } from '@/components/ui/use-toast';
 import { projectHooks } from '@/hooks/project-hooks';
 import { projectApi } from '@/lib/project-api';
 import { cn } from '@/lib/utils';
@@ -20,11 +20,17 @@ const ReleaseCard = () => {
     },
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Releases Enabled'),
-        description: t('You have successfully enabled releases'),
-        duration: 3000,
-      });
+      toast.success(
+        !project.releasesEnabled
+          ? t('Releases Enabled')
+          : t('Releases Disabled'),
+        {
+          description: !project.releasesEnabled
+            ? t('You have successfully enabled releases')
+            : t('You have successfully disabled releases'),
+          duration: 3000,
+        },
+      );
     },
   });
 

@@ -1,3 +1,5 @@
+import { User } from 'lucide-react';
+
 import { Avatar } from '@/components/ui/avatar';
 import {
   Tooltip,
@@ -5,7 +7,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PROJECT_COLOR_PALETTE, ProjectIcon } from '@activepieces/shared';
+import {
+  isNil,
+  PROJECT_COLOR_PALETTE,
+  ProjectIcon,
+  ProjectType,
+} from '@activepieces/shared';
 
 type ApProjectDisplayProps = {
   title: string;
@@ -13,6 +20,7 @@ type ApProjectDisplayProps = {
   containerClassName?: string;
   titleClassName?: string;
   maxLengthToNotShowTooltip?: number;
+  projectType: ProjectType;
 };
 
 export const ApProjectDisplay = ({
@@ -21,8 +29,10 @@ export const ApProjectDisplay = ({
   containerClassName = '',
   titleClassName = '',
   maxLengthToNotShowTooltip = 30,
+  projectType,
 }: ApProjectDisplayProps) => {
-  const projectAvatar = icon ? (
+  const projectAvatar = isNil(icon) ? null : projectType ===
+    ProjectType.TEAM ? (
     <Avatar
       className="size-6 flex items-center justify-center rounded-sm"
       style={{
@@ -32,7 +42,9 @@ export const ApProjectDisplay = ({
     >
       {title.charAt(0).toUpperCase()}
     </Avatar>
-  ) : null;
+  ) : (
+    <User className="size-5 flex items-center justify-center" />
+  );
 
   const shouldShowTooltip = title.length > maxLengthToNotShowTooltip;
   const displayText = shouldShowTooltip

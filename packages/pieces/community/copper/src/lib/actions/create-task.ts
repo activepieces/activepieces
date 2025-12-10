@@ -34,6 +34,7 @@ export const createTask = createAction({
     }),
 
     entityItemId: Property.Dropdown({
+      auth: CopperAuth,
       displayName: 'Related Record',
       description:
         'Select the specific record (from the chosen type above) that this task should be attached to. For example, pick the Person or Opportunity the task relates to.',

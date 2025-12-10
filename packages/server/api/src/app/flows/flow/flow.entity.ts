@@ -1,5 +1,6 @@
 import {
     Flow,
+    FlowOperationStatus,
     FlowRun,
     FlowStatus,
     FlowVersion,
@@ -12,7 +13,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 export type FlowSchema = Flow & {
@@ -53,8 +53,13 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             unique: true,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
+        },
+        operationStatus: {
+            type: String,
+            nullable: false,
+            default: FlowOperationStatus.NONE,
         },
     },
     indices: [

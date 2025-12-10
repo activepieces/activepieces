@@ -1,14 +1,12 @@
 import {
   createTrigger,
   TriggerStrategy,
-  PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
   Polling,
   pollingHelper,
 } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
 import { CopperActivity, CopperAuth, CopperAuthType } from '../common/constants';
 import { CopperApiService } from '../common/requests';
 

@@ -2,12 +2,13 @@ import { httpClient } from '@activepieces/pieces-common';
 import { AuthenticationType } from '@activepieces/pieces-common';
 import { HttpRequest } from '@activepieces/pieces-common';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { PauseType } from '@activepieces/shared';
 import { ExecutionType } from '@activepieces/shared';
 
 export const waitForApproval = createAction({
   name: 'wait_for_approval',
+  auth: PieceAuth.None(),
   displayName: 'Wait for Approval',
   description: 'Pauses the flow and wait for the approval from the user',
   props: {

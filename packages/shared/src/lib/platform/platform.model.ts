@@ -10,16 +10,6 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 
-export const SMTPInformation = Type.Object({
-    user: Type.String(),
-    senderEmail: Type.String(),
-    senderName: Type.String(),
-    password: Type.String(),
-    host: Type.String(),
-    port: Type.Number(),
-})
-export type SMTPInformation = Static<typeof SMTPInformation>
-
 export enum PlatformUsageMetric {
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
@@ -49,10 +39,18 @@ export enum PlanName {
     APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
 }
 
+export enum TeamProjectsLimit {
+    NONE = 'NONE',
+    ONE = 'ONE',
+    UNLIMITED = 'UNLIMITED',
+}
+
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
     // TODO: We have to use the enum when we finalize the plan names
     plan: Type.Optional(Type.String()),
+    openRouterApiKeyHash: Type.Optional(Type.String()),
+    openRouterApiKey: Type.Optional(Type.String()),
     platformId: Type.String(),
     includedAiCredits: Type.Number(),
     aiCreditsOverageLimit: Type.Optional(Type.Number()),
@@ -70,7 +68,7 @@ export const PlatformPlan = Type.Object({
     managePiecesEnabled: Type.Boolean(),
     manageTemplatesEnabled: Type.Boolean(),
     customAppearanceEnabled: Type.Boolean(),
-    manageProjectsEnabled: Type.Boolean(),
+    teamProjectsLimit: Type.Enum(TeamProjectsLimit),
     projectRolesEnabled: Type.Boolean(),
     customDomainsEnabled: Type.Boolean(),
     globalConnectionsEnabled: Type.Boolean(),
@@ -115,7 +113,6 @@ export const Platform = Type.Object({
     * @deprecated Use projects filter instead.
     */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
@@ -127,7 +124,6 @@ export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
-    smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
     usage: Type.Optional(PlatformUsage),
 }), Type.Pick(Platform, [

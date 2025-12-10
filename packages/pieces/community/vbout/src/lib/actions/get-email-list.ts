@@ -11,7 +11,7 @@ export const getEmailListAction = createAction({
     listid: vboutCommon.listid(true),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth as string);
+    const client = makeClient(auth.secret_text);
     const listId = propsValue.listid!;
 
     return await client.getEmailList(listId);

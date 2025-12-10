@@ -1,6 +1,6 @@
 import { rm, writeFile } from 'node:fs/promises'
 import path, { dirname, join } from 'node:path'
-import { exceptionHandler, fileSystemUtils, memoryLock, pubsubFactory, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { exceptionHandler, fileSystemUtils, memoryLock, pubsubFactory, redisHelper, rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     ExecutionMode,
     groupBy,
@@ -62,9 +62,9 @@ export const registryPieceManager = (log: FastifyBaseLogger) => ({
         log.info('[registryPieceManager] Warming up pieces cache')
         const startTime = performance.now()
         const redis = await workerRedisConnections.useExisting()
-        const usedPiecesKey = await redis.keys(`${REDIS_USED_PIECES_CACHE_KEY}:*`)
+        const usedPiecesKey = await redisHelper.scanAll(redis, `${REDIS_USED_PIECES_CACHE_KEY}:*`)
         const usedPiecesValues = usedPiecesKey.length > 0 ? await redis.mget(...usedPiecesKey) : []
-        const usedPieces = usedPiecesKey.filter((_key, index) => usedPiecesValues[index] !== null).map((_key, index) => JSON.parse(usedPiecesValues[index] as string))
+        const usedPieces = usedPiecesKey.filter((_key, index) => !isNil(usedPiecesValues[index])).map((_key, index) => JSON.parse(usedPiecesValues[index] as string))
         await registryPieceManager(log).install({
             pieces: usedPieces,
             includeFilters: false,
@@ -252,10 +252,10 @@ async function createPiecePackageJson({ rootWorkspace, piecePackage }: {
 async function partitionPiecesToInstallAndToPersist(rootWorkspace: string, pieces: PiecePackage[]): Promise<PieceInstallationResult> {
     const piecesWithCheck = await Promise.all(
         pieces.map(async (piece) => {
-            const check = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece);
-            return { piece, check };
-        })
-    );
+            const check = await pieceCheckIfAlreadyInstalled(rootWorkspace, piece)
+            return { piece, check }
+        }),
+    )
 
     const piecesToInstall = piecesWithCheck.filter(({ check }) => !check.installed).map(({ piece }) => piece)
     const piecesToPersistOnRedis = piecesWithCheck.filter(({ check }) => check.installed && check.source === 'disk').map(({ piece }) => piece)

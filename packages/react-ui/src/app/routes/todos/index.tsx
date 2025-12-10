@@ -24,7 +24,7 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { projectMembersHooks } from '@/features/team/lib/project-members-hooks';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
 import { userHooks } from '@/hooks/user-hooks';

@@ -31,7 +31,7 @@ export const getExtractionResults = createAction({
     }),
   },
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const requestBody: GetResultsBody = {
       extractionId: context.propsValue.extractionId,

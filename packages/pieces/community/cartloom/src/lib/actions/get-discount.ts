@@ -15,6 +15,6 @@ export const getDiscountAction = createAction({
     }),
   },
   async run(context) {
-    return await getDiscount(context.auth, context.propsValue.discountId);
+    return await getDiscount(context.auth.props, context.propsValue.discountId);
   },
 });

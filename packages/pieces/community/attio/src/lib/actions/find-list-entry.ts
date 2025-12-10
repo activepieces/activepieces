@@ -18,7 +18,7 @@ export const findListEntryAction = createAction({
 		attributes: listFields(true),
 	},
 	async run(context) {
-		const accessToken = context.auth;
+		const accessToken = context.auth.secret_text;
 		const { listId } = context.propsValue;
 		const inputFields = context.propsValue.attributes ?? {};
 

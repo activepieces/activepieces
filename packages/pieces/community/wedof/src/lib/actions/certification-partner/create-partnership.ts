@@ -30,7 +30,7 @@ export const createPartnership = createAction({
         url: wedofCommon.baseUrl + '/certifications/partners/' + context.propsValue.siret,
         headers: {
           'Content-Type': 'application/json',
-          'X-Api-Key': context.auth as string,
+          'X-Api-Key': context.auth.secret_text,
         },
         body:{
           'certifInfo': context.propsValue.certifInfo,

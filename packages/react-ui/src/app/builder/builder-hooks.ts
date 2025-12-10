@@ -76,7 +76,6 @@ export function useBuilderStateContext<T>(
 
 export enum LeftSideBarType {
   RUNS = 'runs',
-  VERSIONS = 'versions',
   RUN_DETAILS = 'run-details',
   NONE = 'none',
 }
@@ -84,6 +83,7 @@ export enum LeftSideBarType {
 export enum RightSideBarType {
   NONE = 'none',
   PIECE_SETTINGS = 'piece-settings',
+  VERSIONS = 'versions',
 }
 
 export enum ChatDrawerSource {

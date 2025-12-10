@@ -49,7 +49,7 @@ export const updateOrCreateContact = createAction({
       },
     };
 
-    const response = await clickfunnelsApiService.upsertContact(auth, propsValue.workspaceId as string, payload);
+    const response = await clickfunnelsApiService.upsertContact(auth.props, propsValue.workspaceId as string, payload);
 
     return response
   },

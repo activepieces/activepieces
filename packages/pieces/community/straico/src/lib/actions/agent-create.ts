@@ -57,6 +57,8 @@ export const agentCreate = createAction({
       description: 'A model that the agent will use for processing prompts',
     }),
     default_llm: Property.Dropdown({
+  auth: straicoAuth,
+
       displayName: 'Default LLM',
       required: true,
       description: 'The language model which the agent will use for processing prompts',
@@ -83,7 +85,7 @@ export const agentCreate = createAction({
             method: HttpMethod.GET,
             authentication: {
               type: AuthenticationType.BEARER_TOKEN,
-              token: auth as string,
+              token: auth.secret_text,
             },
           });
           return {
@@ -127,7 +129,7 @@ export const agentCreate = createAction({
       method: HttpMethod.POST,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: auth as string,
+        token: auth.secret_text,
       },
       body: requestBody,
     });

@@ -26,9 +26,9 @@ export const cartCreated = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const webhook = await bigCommerceApiService.createWebhook({
-      auth: context.auth,
+      auth: context.auth.props,
       payload: {
-        scope: TRIGGER_SCOPE,
+        scope: TRIGGER_SCOPE  ,
         destination: context.webhookUrl,
         is_active: true,
       },
@@ -42,7 +42,7 @@ export const cartCreated = createTrigger({
     if (webhookId) {
       await bigCommerceApiService
         .deleteWebhook({
-          auth: context.auth,
+          auth: context.auth.props,
           webhookId,
         })
         .then(async () => {

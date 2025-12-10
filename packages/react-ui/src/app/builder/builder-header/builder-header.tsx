@@ -1,17 +1,17 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Logs } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
   createSearchParams,
-  useLocation,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
 
 import {
   LeftSideBarType,
+  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -47,16 +47,12 @@ import { BuilderFlowStatusSection } from '../builder-flow-status-section';
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  const isInRunsPage = useMemo(
-    () => location.pathname.includes('/runs'),
-    [location.pathname],
-  );
+
   const hasPermissionToReadRuns = useAuthorization().checkAccess(
     Permission.READ_FLOW,
   );
@@ -66,12 +62,14 @@ export const BuilderHeader = () => {
     setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
+    setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
+    state.setRightSidebar,
   ]);
 
   const { embedState } = useEmbedding();
@@ -89,31 +87,28 @@ export const BuilderHeader = () => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
   }, []);
 
+  const goToFolder = () => {
+    navigate({
+      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      search: createSearchParams({
+        folderId: folderData?.id ?? UncategorizedFolderId,
+      }).toString(),
+    });
+  };
+
   return (
     <div className="border-b select-none">
-      <div className="relative items-center flex h-[55px] w-full p-4">
+      <div className="relative items-center flex  w-full px-4 py-3">
         <div className="flex items-center gap-2">
           {!embedState.isEmbedded && <ApSidebarToggle />}
           {embedState.isEmbedded && <HomeButton />}
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center text-lg">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (
                 <>
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger
-                        onClick={() =>
-                          navigate({
-                            pathname:
-                              authenticationSession.appendProjectRoutePrefix(
-                                '/flows',
-                              ),
-                            search: createSearchParams({
-                              folderId: folderData?.id ?? UncategorizedFolderId,
-                            }).toString(),
-                          })
-                        }
-                      >
+                      <TooltipTrigger onClick={goToFolder}>
                         {folderName}
                       </TooltipTrigger>
                       <TooltipContent>
@@ -138,7 +133,7 @@ export const BuilderHeader = () => {
                       },
                     },
                     () => {
-                      flowsHooks.invalidateFlowsQuery(queryClient);
+                      flowHooks.invalidateFlowsQuery(queryClient);
                     },
                   );
                 }}
@@ -150,13 +145,14 @@ export const BuilderHeader = () => {
           </div>
           {!embedState.hideFlowNameInBuilder && (
             <FlowActionMenu
+              onVersionsListClick={() => {
+                setRightSidebar(RightSideBarType.VERSIONS);
+              }}
               insideBuilder={true}
               flow={flow}
               flowVersion={flowVersion}
               readonly={!isLatestVersion}
-              onDelete={() => {
-                flowsHooks.invalidateFlowsQuery(queryClient);
-              }}
+              onDelete={goToFolder}
               onRename={() => {
                 setIsEditingFlowName(true);
               }}
@@ -190,17 +186,6 @@ export const BuilderHeader = () => {
             >
               <Logs className="w-4 h-4" />
               {t('Runs')}
-            </Button>
-          )}
-
-          {!isInRunsPage && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-            >
-              <History className="w-4 h-4" />
-              {t('Versions')}
             </Button>
           )}
 

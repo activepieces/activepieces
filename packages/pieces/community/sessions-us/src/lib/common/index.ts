@@ -126,7 +126,7 @@ export enum SessionsUsWebhookTrigger {
 
 export function createSessionsUsWebhookTrigger(
   data: CreateWebhookTriggerDto
-): Trigger {
+) {
   return createTrigger({
     auth: sessionAuth,
     name: data.name,
@@ -140,7 +140,7 @@ export function createSessionsUsWebhookTrigger(
     async onEnable({ auth, store, webhookUrl, propsValue }) {
       const webhookId = await createWebhook(
         data.trigger,
-        auth,
+        auth.secret_text,
         webhookUrl,
         propsValue.permission
       );
@@ -154,7 +154,7 @@ export function createSessionsUsWebhookTrigger(
         webhookId: string;
       } | null = await store.get(data.storeKey);
       if (webhookId) {
-        await deleteWebhook(webhookId.webhookId, auth);
+        await deleteWebhook(webhookId.webhookId, auth.secret_text);
       }
     },
     async run({ payload }) {

@@ -1,34 +1,45 @@
 import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Avatar } from '@/components/ui/avatar';
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
   ApFlagId,
   isNil,
   Permission,
-  PROJECT_COLOR_PALETTE,
+  PlatformRole,
+  ProjectType,
 } from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
+import { ProjectAvatar } from '../project-avatar';
 
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
 import { useGeneralSettingsMutation } from './general/hook';
+import { McpServerSettings } from './mcp-server';
+import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
-import { TeamSettings } from './team';
 
-type TabId = 'general' | 'team' | 'alerts' | 'pieces' | 'environment';
+type TabId =
+  | 'general'
+  | 'members'
+  | 'alerts'
+  | 'pieces'
+  | 'environment'
+  | 'mcp';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -36,7 +47,6 @@ interface ProjectSettingsDialogProps {
   initialTab?: TabId;
   initialValues?: {
     projectName?: string;
-    aiCredits?: string;
     externalId?: string;
   };
 }
@@ -50,16 +60,19 @@ export function ProjectSettingsDialog({
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
   const { project } = projectHooks.useCurrentProject();
+  const previousOpenRef = useRef(open);
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
   const { data: showProjectMembers } = flagsHooks.useFlag(
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
+  const { platform } = platformHooks.useCurrentPlatform();
+  const platformRole = userHooks.getCurrentUserPlatformRole();
+
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
       icon: project.icon,
-      aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -72,41 +85,49 @@ export function ProjectSettingsDialog({
       displayName: values.projectName,
       icon: values.icon,
       externalId: values.externalId,
-      plan: {
-        aiCredits: values.aiCredits ? parseInt(values.aiCredits) : undefined,
-      },
     });
   };
 
   useEffect(() => {
-    if (open && !isNil(project)) {
+    const dialogJustOpened = open && !previousOpenRef.current;
+    if (dialogJustOpened && !isNil(project)) {
       form.reset({
         ...initialValues,
         icon: project.icon,
       });
       setActiveTab(initialTab);
     }
+    previousOpenRef.current = open;
   }, [open, project]);
+
+  const hasGeneralSettings =
+    project.type === ProjectType.TEAM ||
+    (platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN);
 
   const tabs = [
     {
       id: 'general' as TabId,
       label: t('General'),
       icon: <Settings className="w-4 h-4" />,
-      disabled: false,
+      disabled: !hasGeneralSettings,
     },
     {
-      id: 'team' as TabId,
-      label: t('Team'),
+      id: 'members' as TabId,
+      label: t('Members'),
       icon: <Users className="w-4 h-4" />,
       disabled:
-        !checkAccess(Permission.READ_PROJECT_MEMBER) || !showProjectMembers,
+        project.type !== ProjectType.TEAM ||
+        !checkAccess(Permission.READ_PROJECT_MEMBER) ||
+        !showProjectMembers,
     },
     {
       id: 'alerts' as TabId,
       label: t('Alerts'),
       icon: <Bell className="w-4 h-4" />,
-      disabled: !checkAccess(Permission.READ_ALERT) || !showAlerts,
+      disabled:
+        project.type !== ProjectType.TEAM ||
+        !checkAccess(Permission.READ_ALERT) ||
+        !showAlerts,
     },
     {
       id: 'pieces' as TabId,
@@ -120,6 +141,12 @@ export function ProjectSettingsDialog({
       icon: <GitBranch className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
+    {
+      id: 'mcp' as TabId,
+      label: t('MCP Server'),
+      icon: <McpSvg className="w-4 h-4" />,
+      disabled: false,
+    },
   ].filter((tab) => !tab.disabled);
 
   const renderTabContent = () => {
@@ -128,14 +155,16 @@ export function ProjectSettingsDialog({
         return (
           <GeneralSettings form={form} isSaving={projectMutation.isPending} />
         );
-      case 'team':
-        return <TeamSettings />;
+      case 'members':
+        return <MembersSettings />;
       case 'alerts':
         return <AlertsSettings />;
       case 'pieces':
         return <PiecesSettings />;
       case 'environment':
         return <EnvironmentSettings />;
+      case 'mcp':
+        return <McpServerSettings />;
       default:
         return null;
     }
@@ -193,6 +222,7 @@ export function ProjectSettingsDialog({
                 containerClassName="px-3 my-4"
                 titleClassName="text-md font-bold"
                 maxLengthToNotShowTooltip={18}
+                projectType={project.type}
               />
               <div className="flex flex-col px-2 gap-1">
                 {tabs.map((tab) => (
@@ -217,27 +247,13 @@ export function ProjectSettingsDialog({
             <div className="flex-1 min-h-0 overflow-hidden">
               <ScrollArea className="h-full">
                 {activeTab === 'general' && (
-                  <div
-                    className="flex items-center justify-center w-full h-[114px] rounded-tr-md"
-                    style={{
-                      backgroundColor:
-                        PROJECT_COLOR_PALETTE[project.icon.color].color + '26',
-                    }}
-                  >
-                    <Avatar
-                      className="h-[50px] w-[50px] flex items-center justify-center rounded-sm"
-                      style={{
-                        backgroundColor:
-                          PROJECT_COLOR_PALETTE[project.icon.color].color,
-                        color:
-                          PROJECT_COLOR_PALETTE[project.icon.color].textColor,
-                      }}
-                    >
-                      <span className="text-xl">
-                        {project.displayName.charAt(0).toUpperCase()}
-                      </span>
-                    </Avatar>
-                  </div>
+                  <ProjectAvatar
+                    displayName={project.displayName}
+                    projectType={project.type}
+                    iconColor={project.icon.color}
+                    size="md"
+                    showBackground={true}
+                  />
                 )}
                 <div className="flex flex-col gap-3 px-10 pt-4">
                   {renderTabHeader()}

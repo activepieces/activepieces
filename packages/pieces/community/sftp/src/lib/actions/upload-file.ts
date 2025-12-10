@@ -38,10 +38,10 @@ export const uploadFileAction = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
+    const client = await getClient(context.auth.props);
     const fileName = context.propsValue['fileName'];
     const fileContent = context.propsValue['fileContent'];
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
       switch (protocolBackwardCompatibility) {
         case 'ftps':
@@ -62,7 +62,7 @@ export const uploadFileAction = createAction({
         status: 'error',
       };
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.props.protocol);
     }
   },
 });

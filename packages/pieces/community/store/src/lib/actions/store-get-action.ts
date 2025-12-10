@@ -11,7 +11,7 @@ import { getScopeAndKey, PieceStoreScope } from './common';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
-async function executeStorageGet(context: ActionContext<PieceAuthProperty, {
+async function executeStorageGet(context: ActionContext<PieceAuthProperty | undefined, {
   key: ShortTextProperty<true>;
   defaultValue: ShortTextProperty<false>;
   store_scope: StaticDropdownProperty<PieceStoreScope, true>;

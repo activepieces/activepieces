@@ -38,7 +38,7 @@ export const updateSubscriberAction = createAction({
       try {
         const phoneResult = await sendpulseApiCall<{ result: boolean }>({
           method: HttpMethod.PUT,
-          auth: context.auth,
+          auth: context.auth.props,
           resourceUri: `/addressbooks/${mailingListId}/phone`,
           body: { email, phone },
         });
@@ -63,7 +63,7 @@ export const updateSubscriberAction = createAction({
       try {
         const variableResult = await sendpulseApiCall<{ result: boolean }>({
           method: HttpMethod.POST,
-          auth: context.auth,
+          auth: context.auth.props,
           resourceUri: `/addressbooks/${mailingListId}/emails/variable`,
           body: { email, variables: variableUpdates },
         });

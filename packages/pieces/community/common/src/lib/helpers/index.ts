@@ -8,6 +8,8 @@ import {
   InputPropertyMap,
   FilesService,
   DynamicPropsValue,
+  AppConnectionValueForAuthProperty,
+  ExtractPieceAuthPropertyTypeForMethods,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -47,9 +49,9 @@ const joinBaseUrlWithRelativePath = ({
   return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
 };
 
-const getBaseUrlForDescription = (
-  baseUrl: (auth?: unknown) => string,
-  auth?: unknown
+const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>(
+  baseUrl: BaseUrlGetter<PieceAuth>,
+  auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>
 ) => {
   const exampleBaseUrl = `https://api.example.com`;
   try {
@@ -65,7 +67,8 @@ const getBaseUrlForDescription = (
     }
   }
 };
-export function createCustomApiCallAction({
+type BaseUrlGetter<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined> = (auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>) => string
+export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>({
   auth,
   baseUrl,
   authMapping,
@@ -76,10 +79,10 @@ export function createCustomApiCallAction({
   extraProps,
   authLocation = 'headers',
 }: {
-  auth?: PieceAuthProperty;
-  baseUrl: (auth?: unknown) => string;
+  auth?: PieceAuth;
+  baseUrl: BaseUrlGetter<PieceAuth>;
   authMapping?: (
-    auth: unknown,
+    auth: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>,
     propsValue: StaticPropsValue<any>
   ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
@@ -104,10 +107,11 @@ export function createCustomApiCallAction({
     description: description
       ? description
       : 'Make a custom API call to a specific endpoint',
-    auth: auth ? auth : undefined,
+    auth,
     requireAuth: auth ? true : false,
     props: {
       url: Property.DynamicProperties({
+        auth,
         displayName: '',
         required: true,
         refreshers: [],
@@ -118,7 +122,7 @@ export function createCustomApiCallAction({
               description: `You can either use the full URL or the relative path to the base URL
 i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               required: true,
-              defaultValue: baseUrl(auth),
+              defaultValue: auth ? baseUrl(auth) : '',
               ...(props?.url ?? {}),
             }),
           };
@@ -176,6 +180,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         },
       }),
       body: Property.DynamicProperties({
+        auth,
         displayName: 'Body',
         refreshers: ['body_type'],
         required: false,
@@ -244,7 +249,6 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         timeout,
         response_is_binary,
       } = context.propsValue;
-
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
 

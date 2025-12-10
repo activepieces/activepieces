@@ -18,6 +18,7 @@ export const createProjectAction = createAction({
   description: 'Create a new Project in Capsule CRM.',
   props: {
     partyId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Party',
       description: 'The main contact for this project.',
       required: true,
@@ -30,7 +31,7 @@ export const createProjectAction = createAction({
             placeholder: 'Please connect your Capsule CRM account first',
           };
         const contacts = await capsuleCrmClient.searchContacts(
-          auth as CapsuleCrmAuthType,
+          auth,
           ''
         );
         return {
@@ -60,6 +61,7 @@ export const createProjectAction = createAction({
         'An optional link to the opportunity that this project was created to support.',
       required: false,
       refreshers: [],
+      auth: capsuleCrmAuth,
       options: async ({ auth }) => {
         if (!auth)
           return {
@@ -68,7 +70,7 @@ export const createProjectAction = createAction({
             placeholder: 'Please connect your Capsule CRM account first',
           };
         const opportunities = await capsuleCrmClient.searchOpportunities(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: opportunities.map((opportunity) => ({
@@ -83,6 +85,7 @@ export const createProjectAction = createAction({
       description: 'The stage that this project is on.',
       required: false,
       refreshers: [],
+      auth: capsuleCrmAuth,
       options: async ({ auth }) => {
         if (!auth)
           return {
@@ -91,7 +94,7 @@ export const createProjectAction = createAction({
             placeholder: 'Please connect your Capsule CRM account first',
           };
         const stages = await capsuleCrmClient.listStages(
-          auth as CapsuleCrmAuthType
+            auth
         );
         return {
           options: stages.map((stage) => ({
@@ -118,6 +121,7 @@ export const createProjectAction = createAction({
       required: false,
     }),
     ownerId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Owner',
       description: 'The user this project is assigned to.',
       required: false,
@@ -130,7 +134,7 @@ export const createProjectAction = createAction({
             placeholder: 'Please connect your Capsule CRM account first',
           };
         const users = await capsuleCrmClient.listUsers(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: users.map((user) => ({
@@ -141,6 +145,7 @@ export const createProjectAction = createAction({
       },
     }),
     teamId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Team',
       description: 'The team this project is assigned to.',
       required: false,
@@ -153,7 +158,7 @@ export const createProjectAction = createAction({
             placeholder: 'Please connect your Capsule CRM account first',
           };
         const teams = await capsuleCrmClient.listTeams(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: teams.map((team) => ({
@@ -164,6 +169,7 @@ export const createProjectAction = createAction({
       },
     }),
     tags: Property.MultiSelectDropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Tags',
       description: 'An array of tags that are added to this project.',
       required: false,
@@ -175,7 +181,7 @@ export const createProjectAction = createAction({
             disabled: true,
             placeholder: 'Please connect your Capsule CRM account first',
           };
-        const tags = await capsuleCrmClient.listTags(auth as CapsuleCrmAuthType);
+        const tags = await capsuleCrmClient.listTags(auth);
         return {
           options: tags.map((tag) => ({
             label: tag.name,
@@ -185,6 +191,7 @@ export const createProjectAction = createAction({
       },
     }),
     customFields: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Custom Fields',
       description: 'An array of custom fields that are defined for this project.',
       required: false,
@@ -193,7 +200,7 @@ export const createProjectAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth) return fields;
         const customFields = await capsuleCrmClient.listCustomFields(
-          auth as CapsuleCrmAuthType
+          auth
         );
         for (const field of customFields) {
           switch (field.type) {

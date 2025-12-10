@@ -3,7 +3,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../../database/database-common'
 
 export type PlatformPlanSchema = PlatformPlan & {
@@ -66,8 +65,8 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         customAppearanceEnabled: {
             type: Boolean,
         },
-        manageProjectsEnabled: {
-            type: Boolean,
+        teamProjectsLimit: {
+            type: String,
         },
         projectRolesEnabled: {
             type: Boolean,
@@ -116,6 +115,14 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         agentsEnabled: {
             type: Boolean,
         },
+        openRouterApiKeyHash: {
+            type: String,
+            nullable: true,
+        },
+        openRouterApiKey: {
+            type: String,
+            nullable: true,
+        },
         activeFlowsLimit: {
             type: Number,
             nullable: true,
@@ -124,7 +131,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         dedicatedWorkers: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
     },

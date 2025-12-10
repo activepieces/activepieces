@@ -10,7 +10,7 @@ import { TriggerField } from '../../common/constants';
 async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<CustomAuthProperty<any>>, opKey: keyof typeof VEHICLE_EVENTS_OPERATIONS }) {
   const op = VEHICLE_EVENTS_OPERATIONS[opKey];
   const { webhookId, tokenId, data, operator, triggerNumber, triggerExpression, coolDownPeriod, targetURL, status, verificationToken, description, displayName } = ctx.propsValue;
-  const { clientId, apiKey, redirectUri } = ctx.auth;
+  const { clientId, apiKey, redirectUri } = ctx.auth.props;
   const dimo = new DimoClient({ clientId, apiKey, redirectUri });
 
   const developerJwt = await dimo.getDeveloperJwt();
@@ -295,7 +295,7 @@ const upsertWebhookEventAction = createAction({
   },
   async run(ctx) {
     const { webhookId, eventType, coolDownPeriod, targetURL, status, verificationToken, displayName, description } = ctx.propsValue;
-    const { clientId, apiKey, redirectUri } = ctx.auth;
+    const { clientId, apiKey, redirectUri } = ctx.auth.props;
     const dimo = new DimoClient({ clientId, apiKey, redirectUri });
 
     const developerJwt = await dimo.getDeveloperJwt();
@@ -416,7 +416,7 @@ const subscribeVehicleAction = createAction({
   },
   async run(ctx) {
     const { webhookId, tokenId } = ctx.propsValue;
-    const { clientId, apiKey, redirectUri } = ctx.auth;
+    const { clientId, apiKey, redirectUri } = ctx.auth.props;
     const dimo = new DimoClient({ clientId, apiKey, redirectUri });
 
     const developerJwt = await dimo.getDeveloperJwt();
@@ -466,7 +466,7 @@ const unsubscribeVehicleAction = createAction({
   },
   async run(ctx) {
     const { webhookId, tokenId } = ctx.propsValue;
-    const { clientId, apiKey, redirectUri } = ctx.auth;
+    const { clientId, apiKey, redirectUri } = ctx.auth.props;
     const dimo = new DimoClient({ clientId, apiKey, redirectUri });
 
     const developerJwt = await dimo.getDeveloperJwt();
