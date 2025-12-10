@@ -1,12 +1,13 @@
 import { anthropic, createAnthropic } from '@ai-sdk/anthropic'
 import { createGoogleGenerativeAI, google } from '@ai-sdk/google'
 import { createOpenAI, openai } from '@ai-sdk/openai'
+import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { ImageModel } from 'ai'
-import { AIProviderConfig, AIProviderName, AzureProviderConfig } from './types'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
+import { AIProviderConfig, AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig } from '@activepieces/shared'
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     providerId: string;
@@ -62,6 +63,21 @@ export async function createAIModel({
                 return provider.imageModel(modelId)
             }
             return provider.chat(modelId)
+        }
+        case AIProviderName.CLOUDFLARE_GATEWAY: {
+            const { accountId, apiKey, gatewayId } = config as CloudflareGatewayProviderConfig
+
+            const provider = createOpenAICompatible({ 
+                name: 'cloudflare',
+                baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
+                headers: {
+                    'cf-aig-authorization': `Bearer ${apiKey}`
+                }
+            })
+            if (isImage) {
+                return provider.imageModel(modelId)
+            }
+            return provider.chatModel(modelId)
         }
         case AIProviderName.ACTIVEPIECES: 
         case AIProviderName.OPENROUTER: {

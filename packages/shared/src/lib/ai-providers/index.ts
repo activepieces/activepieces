@@ -6,6 +6,13 @@ export const AnthropicProviderConfig = Type.Object({
 })
 export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
 
+export const CloudflareGatewayProviderConfig = Type.Object({
+    apiKey: Type.String(),
+    accountId: Type.String(),
+    gatewayId: Type.String(),
+})
+export type CloudflareGatewayProviderConfig = Static<typeof CloudflareGatewayProviderConfig>
+
 export const AzureProviderConfig = Type.Object({
     apiKey: Type.String(),
     resourceName: Type.String(),
@@ -33,17 +40,18 @@ export const AIProviderConfig = Type.Union([
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
+    CloudflareGatewayProviderConfig,
 ])
 export type AIProviderConfig = Static<typeof AIProviderConfig>
 
-export enum 
-    AIProviderName {
+export enum AIProviderName {
     OPENAI = 'openai',
     OPENROUTER = 'openrouter',
     ANTHROPIC = 'anthropic',
     AZURE = 'azure',
     GOOGLE = 'google',
     ACTIVEPIECES = 'activepieces',
+    CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
 }
 
 const ProviderConfigUnion = DiscriminatedUnion('provider', [
@@ -70,6 +78,10 @@ const ProviderConfigUnion = DiscriminatedUnion('provider', [
     Type.Object({
         provider: Type.Literal(AIProviderName.ACTIVEPIECES),
         config: OpenRouterProviderConfig,
+    }),
+    Type.Object({
+        provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
+        config: CloudflareGatewayProviderConfig,
     }),
 ])
 

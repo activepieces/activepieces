@@ -47,9 +47,6 @@ const GetAIProviderConfig = {
         params: Type.Object({
             id: Type.Enum(AIProviderName),
         }),
-        response: {
-            [StatusCodes.OK]: AIProviderConfig,
-        },
     },
 }
 

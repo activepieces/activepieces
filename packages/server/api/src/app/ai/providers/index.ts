@@ -5,6 +5,7 @@ import { azureProvider } from './azure-provider'
 import { googleProvider } from './google-provider'
 import { openaiProvider } from './openai-provider'
 import { openRouterProvider } from './openrouter-provider'
+import { cloudflareGatewayProvider } from './cloudflare-gateway-provider'
 
 export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderConfig>> = {
     [AIProviderName.OPENAI]: openaiProvider,
@@ -12,6 +13,7 @@ export const aiProviders: Record<AIProviderName, AIProviderStrategy<AIProviderCo
     [AIProviderName.OPENROUTER]: openRouterProvider,
     [AIProviderName.AZURE]: azureProvider,
     [AIProviderName.GOOGLE]: googleProvider,
+    [AIProviderName.CLOUDFLARE_GATEWAY]: cloudflareGatewayProvider,
     [AIProviderName.ACTIVEPIECES]: {
         ...openRouterProvider,
         name: 'Activepieces',

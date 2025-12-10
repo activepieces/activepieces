@@ -18,7 +18,7 @@ import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import { isNil } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
-import { AIProviderName } from '../../common/types';
+import { AIProviderName } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
 
 export const generateImageAction = createAction({

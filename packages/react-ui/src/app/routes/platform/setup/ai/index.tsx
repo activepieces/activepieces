@@ -58,6 +58,14 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Visit the following website: https://openrouter.ai/settings/keys.
 2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`,
   },
+  {
+    provider: AIProviderName.CLOUDFLARE_GATEWAY,
+    displayName: 'Cloudflare AI Gateway',
+    logoUrl: 'https://cdn.activepieces.com/pieces/cloudflare-gateway.png',
+    markdown: `Follow these instructions to get your Cloudflare AI Gateway API Key:
+1. Visit the following website: https://developers.cloudflare.com/ai-gateway/get-started/.
+2. Once on the website, follow the instructions to get your account id, gateway id and create an API Key.`,
+  }
 ];
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({

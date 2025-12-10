@@ -158,6 +158,7 @@
         "i18next-browser-languagedetector": "8.0.0",
         "i18next-http-backend": "2.5.2",
         "i18next-icu": "2.3.0",
+        "install": "0.13.0",
         "intercom-client": "6.0.0",
         "intl-messageformat": "10.5.14",
         "ioredis": "5.4.1",
@@ -3892,6 +3893,8 @@
     "inquirer": ["inquirer@8.2.7", "", { "dependencies": { "@inquirer/external-editor": "^1.0.0", "ansi-escapes": "^4.2.1", "chalk": "^4.1.1", "cli-cursor": "^3.1.0", "cli-width": "^3.0.0", "figures": "^3.0.0", "lodash": "^4.17.21", "mute-stream": "0.0.8", "ora": "^5.4.1", "run-async": "^2.4.0", "rxjs": "^7.5.5", "string-width": "^4.1.0", "strip-ansi": "^6.0.0", "through": "^2.3.6", "wrap-ansi": "^6.0.1" } }, "sha512-UjOaSel/iddGZJ5xP/Eixh6dY1XghiBw4XK13rCCIJcJfyhhoul/7KhLLUGtebEj6GDYM6Vnx/mVsjx2L/mFIA=="],
 
     "inspect-with-kind": ["inspect-with-kind@1.0.5", "", { "dependencies": { "kind-of": "^6.0.2" } }, "sha512-MAQUJuIo7Xqk8EVNP+6d3CKq9c80hi4tjIbIAT6lmGW9W6WzlHiu9PS8uSuUYU+Do+j1baiFp3H25XEVxDIG2g=="],
+
+    "install": ["install@0.13.0", "", {}, "sha512-zDml/jzr2PKU9I8J/xyZBQn8rPCAY//UOYNmR01XwNwyfhEWObo2SWfSl1+0tm1u6PhxLwDnfsT/6jB7OUxqFA=="],
 
     "intercom-client": ["intercom-client@6.0.0", "", { "dependencies": { "form-data": "^4.0.0", "formdata-node": "^6.0.3", "js-base64": "3.7.2", "node-fetch": "2.7.0", "qs": "6.11.2", "readable-stream": "^4.5.2", "url-join": "4.0.1" } }, "sha512-gd1msd9cmg56Fz4HN1A/G4gD7czBlR6CV8YXPJbTPkB+kkifKKCwzZNyBgYnFD5KCY124jTToFiGrKmnO8gG1w=="],
 

@@ -23,6 +23,7 @@ import {
   AIProviderName,
   AnthropicProviderConfig,
   AzureProviderConfig,
+  CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
   GoogleProviderConfig,
   OpenAIProviderConfig,
@@ -57,6 +58,12 @@ export const UpsertAIProviderDialog = ({
         config: AzureProviderConfig,
       });
     }
+    if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+      return Type.Object({
+        provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
+        config: CloudflareGatewayProviderConfig,
+      });
+    }
     return Type.Object({
       provider: Type.Literal(provider),
       config: Type.Union([
@@ -73,6 +80,11 @@ export const UpsertAIProviderDialog = ({
       ? {
           provider: AIProviderName.AZURE,
           config: { apiKey: '', resourceName: '' },
+        }
+      : provider === AIProviderName.CLOUDFLARE_GATEWAY
+      ? {
+          provider: AIProviderName.CLOUDFLARE_GATEWAY,
+          config: { apiKey: '', accountId: '', gatewayId: '' },
         }
       : {
           provider,
@@ -143,6 +155,47 @@ export const UpsertAIProviderDialog = ({
                   </FormItem>
                 )}
               />
+            )}
+            {provider === AIProviderName.CLOUDFLARE_GATEWAY && (
+              <>
+                <FormField
+                  name="config.accountId"
+                  render={({ field }) => (
+                    <FormItem className="grid space-y-3">
+                      <Label htmlFor="accountId">{t('Account ID')}</Label>
+                      <div className="flex gap-2 items-center justify-center">
+                        <Input
+                          {...field}
+                          required
+                          id="accountId"
+                          placeholder={t('your-account-id')}
+                          className="rounded-sm"
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  name="config.gatewayId"
+                  render={({ field }) => (
+                    <FormItem className="grid space-y-3">
+                      <Label htmlFor="gatewayId">{t('Gateway ID')}</Label>
+                      <div className="flex gap-2 items-center justify-center">
+                        <Input
+                          {...field}
+                          required
+                          id="gatewayId"
+                          placeholder={t('your-gateway-id')}
+                          className="rounded-sm"
+                        />
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
 
             <FormField

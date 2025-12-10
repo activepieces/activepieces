@@ -5,9 +5,8 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { ModelMessage, ToolSet, generateText, stepCountIs } from 'ai';
-import { spreadIfDefined } from '@activepieces/shared';
+import { spreadIfDefined, AIProviderName } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
-import { AIProviderName } from '../../common/types';
 import { anthropicSearchTool, openaiSearchTool, googleSearchTool, createAIModel } from '../../common/ai-sdk';
 
 export const askAI = createAction({
