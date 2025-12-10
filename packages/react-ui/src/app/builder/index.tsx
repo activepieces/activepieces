@@ -185,7 +185,7 @@ const BuilderPage = () => {
           maxSize={39}
           order={1}
           ref={leftHandleRef}
-          className={cn('min-w-0 bg-border z-20 ', {
+          className={cn('min-w-0 z-20 ', {
             [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}

@@ -18,7 +18,7 @@ export function SelectHeaderCell() {
     >
       <Checkbox
         aria-label="Select all rows"
-        variant="secondary"
+        
         checked={Boolean(isRowSelected)}
         onCheckedChange={(checked) => {
           onRowSelectionChange({ checked: Boolean(checked) });
@@ -53,7 +53,7 @@ export function SelectCell({
         >
           <Checkbox
             aria-label="Select row"
-            variant="secondary"
+            
             checked={Boolean(isRowSelected)}
             onCheckedChange={(checked) => {
               onRowSelectionChange({

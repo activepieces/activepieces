@@ -77,7 +77,7 @@ const GlobalConnectionsTable = () => {
       id: 'select',
       header: ({ table }) => (
         <Checkbox
-          variant="secondary"
+          
           checked={
             table.getIsAllPageRowsSelected() ||
             table.getIsSomePageRowsSelected()
@@ -115,7 +115,7 @@ const GlobalConnectionsTable = () => {
         );
         return (
           <Checkbox
-            variant="secondary"
+            
             checked={isChecked}
             onCheckedChange={(value) => {
               const isChecked = !!value;
