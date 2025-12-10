@@ -2,7 +2,7 @@
 . "$(dirname -- "$0")/_/husky.sh"
 
 # If it's a merge commit, skip the .env check
-if ! grep -q "^Merge:" "$1"; then
+if ! grep -q "^Merge" "$1"; then
   # Check if the commit includes changes to the backend's .env file
   if git diff --cached --name-only -- packages/server/api/.env | grep -q '^packages/server/api/.env$'; then
     echo "Error: You're attempting to commit the backend's .env file. Please avoid committing this file."

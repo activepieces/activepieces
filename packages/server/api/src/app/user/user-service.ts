@@ -66,6 +66,9 @@ export const userService = {
         }
         return user
     },
+    async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
+        await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
+    },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
         assertNotNullOrUndefined(user.platformId, 'platformId')
@@ -182,6 +185,7 @@ export const userService = {
             externalId: user.externalId,
             created: user.created,
             updated: user.updated,
+            lastActiveDate: user.lastActiveDate,
         }
     },
 
@@ -206,6 +210,10 @@ async function getUsersForProject(platformId: PlatformId, projectId: string): Pr
     }
     const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
     return [...platformAdmins, ...projectMembers]
+}
+
+type UpdateLastActiveDateParams = {
+    id: UserId
 }
 
 type ListUsersForProjectParams = {

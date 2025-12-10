@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Globe } from 'lucide-react';
+import { CheckIcon, Trash, Globe, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -40,6 +40,12 @@ import {
 
 const STATUS_QUERY_PARAM = 'status';
 const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
+  {
+    type: 'input',
+    title: t('Search'),
+    accessorKey: 'displayName',
+    icon: Search,
+  },
   {
     type: 'select',
     title: t('Status'),
@@ -241,6 +247,7 @@ const GlobalConnectionsTable = () => {
     refetch: refetchGlobalConnections,
   } = globalConnectionsQueries.useGlobalConnections({
     request: {
+      displayName: searchParams.get('displayName') ?? undefined,
       cursor: searchParams.get(CURSOR_QUERY_PARAM) ?? undefined,
       limit: searchParams.get(LIMIT_QUERY_PARAM)
         ? parseInt(searchParams.get(LIMIT_QUERY_PARAM)!)
