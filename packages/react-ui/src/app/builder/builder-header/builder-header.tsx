@@ -12,6 +12,7 @@ import {
 
 import {
   LeftSideBarType,
+  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
@@ -63,12 +64,14 @@ export const BuilderHeader = () => {
     setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
+    setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
+    state.setRightSidebar,
   ]);
 
   const { embedState } = useEmbedding();
@@ -97,11 +100,11 @@ export const BuilderHeader = () => {
 
   return (
     <div className="border-b select-none">
-      <div className="relative items-center flex h-[55px] w-full p-4">
+      <div className="relative items-center flex  w-full px-4 py-3">
         <div className="flex items-center gap-2">
           {!embedState.isEmbedded && <ApSidebarToggle />}
           {embedState.isEmbedded && <HomeButton />}
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center text-lg">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (
                 <>
@@ -145,7 +148,7 @@ export const BuilderHeader = () => {
           {!embedState.hideFlowNameInBuilder && (
             <FlowActionMenu
               onVersionsListClick={()=>{
-                setLeftSidebar(LeftSideBarType.VERSIONS);
+                setRightSidebar(RightSideBarType.VERSIONS);
               }}
               insideBuilder={true}
               flow={flow}
