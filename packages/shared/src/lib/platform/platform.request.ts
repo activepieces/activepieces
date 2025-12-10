@@ -3,15 +3,23 @@ import { SAFE_STRING_PATTERN } from '../common'
 import { ApId } from '../common/id-generator'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
 import { FilteredPieceBehavior } from './platform.model'
+import { ApMultipartFile } from '../common/multipart-file'
+
+export const Base64EncodedFile = Type.Object({
+    base64: Type.String(),
+    mimetype: Type.String(),
+})
+
+export type Base64EncodedFile = Static<typeof Base64EncodedFile>
 
 export const UpdatePlatformRequestBody = Type.Object({
     name: Type.Optional(Type.String({
         pattern: SAFE_STRING_PATTERN,
     })),
     primaryColor: Type.Optional(Type.String()),
-    logoIconUrl: Type.Optional(Type.String()),
-    fullLogoUrl: Type.Optional(Type.String()),
-    favIconUrl: Type.Optional(Type.String()),
+    logoIcon: Type.Optional(ApMultipartFile),
+    fullLogo: Type.Optional(ApMultipartFile),
+    favIcon: Type.Optional(ApMultipartFile),
     filteredPieceNames: Type.Optional(Type.Array(Type.String())),
     filteredPieceBehavior: Type.Optional(Type.Enum(FilteredPieceBehavior)),
     federatedAuthProviders: Type.Optional(FederatedAuthnProviderConfig),

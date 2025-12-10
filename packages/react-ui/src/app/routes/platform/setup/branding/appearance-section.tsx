@@ -2,7 +2,7 @@ import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Static, Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { useState } from 'react';
+import { useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
@@ -17,12 +17,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { API_URL } from '@/lib/api';
-import { fileApi } from '@/lib/file-api';
 import { platformApi } from '@/lib/platforms-api';
-import { FileType, UploadFileRequestBody } from '@activepieces/shared';
 
 const FromSchema = Type.Object({
   name: Type.String(),
@@ -33,8 +29,6 @@ const FromSchema = Type.Object({
 });
 
 type FromSchema = Static<typeof FromSchema>;
-
-const ASSETS_URL = `${API_URL}/v1/files`;
 
 export const AppearanceSection = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -49,61 +43,26 @@ export const AppearanceSection = () => {
     },
     resolver: typeboxResolver(FromSchema),
   });
-
-  const typeMap: Partial<Record<FileType, keyof FromSchema>> = {
-    [FileType.PLATFORM_LOGO]: 'logoUrl',
-    [FileType.PLATFORM_ICON]: 'iconUrl',
-    [FileType.PLATFORM_FAVICON]: 'faviconUrl',
-  };
-
-  const { mutate: uploadFile } = useMutation({
-    mutationFn: (params: UploadFileRequestBody) => {
-      const formData = new FormData();
-      formData.append('fileType', params.fileType);
-      formData.append('file', params.file as Blob);
-      return fileApi.uploadFile(formData);
-    },
-  });
-  const [isUploading, setIsUploading] = useState<string[]>([]);
-
-  const handleFileChange = (
-    fileType: FileType,
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setIsUploading((prev) => [...prev, fileType]);
-      uploadFile(
-        {
-          fileType,
-          file: file,
-        },
-        {
-          onSuccess: (data) => {
-            form.setValue(
-              typeMap[fileType] as keyof FromSchema,
-              `${ASSETS_URL}/${data.id}`,
-              { shouldValidate: true },
-            );
-            setIsUploading((prev) => prev.filter((type) => type !== fileType));
-          },
-          onError: (error) => {
-            toast.error(error.message ?? t('Failed to upload file'));
-            setIsUploading((prev) => prev.filter((type) => type !== fileType));
-          },
-        },
-      );
-    }
-  };
+  const logoRef = useRef<HTMLInputElement>(null);
+  const iconRef = useRef<HTMLInputElement>(null);
+  const faviconRef = useRef<HTMLInputElement>(null);
 
   const { mutate: updatePlatform, isPending } = useMutation({
     mutationFn: async () => {
-      platformApi.update(
+      const logo = logoRef.current?.files?.[0];
+      const icon = iconRef.current?.files?.[0];
+      const favicon = faviconRef.current?.files?.[0];
+
+      const formdata = new FormData();
+      formdata.append('name', form.getValues().name);
+      formdata.append('primaryColor', form.getValues().color);
+      if (logo) formdata.append('fullLogo', logo);
+      if (icon) formdata.append('logoIcon', icon);
+      if (favicon) formdata.append('favIcon', favicon);
+
+      await platformApi.update(
         {
           name: form.getValues().name,
-          fullLogoUrl: form.getValues().logoUrl,
-          logoIconUrl: form.getValues().iconUrl,
-          favIconUrl: form.getValues().faviconUrl,
           primaryColor: form.getValues().color,
         },
         platform.id,
@@ -155,17 +114,12 @@ export const AppearanceSection = () => {
                     <div className="flex flex-row gap-2 items-center">
                       <Input
                         type="file"
+                        ref={logoRef}
                         defaultFileName={platform?.fullLogoUrl}
                         accept="image/*"
                         id="logoFile"
-                        onChange={(e) =>
-                          handleFileChange(FileType.PLATFORM_LOGO, e)
-                        }
                         className="rounded-sm"
                       />
-                      {isUploading.includes(FileType.PLATFORM_LOGO) && (
-                        <LoadingSpinner />
-                      )}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -179,17 +133,12 @@ export const AppearanceSection = () => {
                     <div className="flex flex-row gap-2 items-center">
                       <Input
                         type="file"
+                        ref={iconRef}
                         defaultFileName={platform?.logoIconUrl}
                         accept="image/*"
                         id="iconFile"
-                        onChange={(e) =>
-                          handleFileChange(FileType.PLATFORM_ICON, e)
-                        }
                         className="rounded-sm"
                       />
-                      {isUploading.includes(FileType.PLATFORM_ICON) && (
-                        <LoadingSpinner />
-                      )}
                     </div>
                     <FormMessage />
                   </FormItem>
@@ -205,17 +154,12 @@ export const AppearanceSection = () => {
                     <div className="flex flex-row gap-2 items-center">
                       <Input
                         type="file"
+                        ref={faviconRef}
                         defaultFileName={platform?.favIconUrl}
                         accept="image/*"
                         id="faviconFile"
-                        onChange={(e) =>
-                          handleFileChange(FileType.PLATFORM_FAVICON, e)
-                        }
                         className="rounded-sm"
                       />
-                      {isUploading.includes(FileType.PLATFORM_FAVICON) && (
-                        <LoadingSpinner />
-                      )}
                     </div>
                     <FormMessage />
                   </FormItem>

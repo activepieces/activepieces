@@ -4,7 +4,6 @@ import { entitiesMustBeOwnedByCurrentProject } from '../authentication/authoriza
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { fileController } from './file.controller'
 import { fileService } from './file.service'
 import { stepFileController } from './step-file/step-file.controller'
 
@@ -21,6 +20,5 @@ export const fileModule: FastifyPluginAsyncTypebox = async (app) => {
             cron: '30 */1 * * *',
         },
     })
-    await app.register(fileController, { prefix: '/v1/files' })
     await app.register(stepFileController, { prefix: '/v1/step-files' })
 }
