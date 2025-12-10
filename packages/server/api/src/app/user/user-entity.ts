@@ -1,6 +1,6 @@
 import { Project, User, UserIdentity } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart, TIMESTAMP_COLUMN_TYPE } from '../database/database-common'
+import { BaseColumnSchemaPart } from '../database/database-common'
 
 export type UserSchema = User & {
     projects: Project[]
@@ -31,7 +31,7 @@ export const UserEntity = new EntitySchema<UserSchema>({
             nullable: true,
         },
         lastActiveDate: {
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
             nullable: true,
         },
     },

@@ -305,6 +305,7 @@ import { RemovePlatformSMTP1764945141702 } from './migration/postgres/1764945141
 import { AddPersonalProjectsForAllUsers1765107860778 } from './migration/postgres/1765107860778-AddPersonalProjectsForAllUsers'
 import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
 import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308234291-MigrateSqliteToPglite'
+import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -626,6 +627,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPieceVersionToAppConnection1764841091811,
         AddPersonalProjectsForAllUsers1765107860778,
         MigrateSqliteToPglite1765308234291,
+        AddLastActiveToUser1765325909187,
     ]
     return migrations
 }

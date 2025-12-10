@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm'
 
-export class AddUserLastActiveDate1765293261477 implements MigrationInterface {
-    name = 'AddUserLastActiveDate1765293261477'
+export class AddLastActiveToUser1765325909187 implements MigrationInterface {
+    name = 'AddLastActiveToUser1765325909187'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
