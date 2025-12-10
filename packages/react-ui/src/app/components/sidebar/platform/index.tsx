@@ -40,6 +40,7 @@ import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function PlatformSidebar() {
   const navigate = useNavigate();
@@ -179,7 +180,7 @@ export function PlatformSidebar() {
 
   return (
     <Sidebar className="px-4" variant="inset">
-      <SidebarHeader>
+      <SidebarHeader className="px-0">
         <div className="w-full pb-2 flex items-center gap-2">
           <Link
             to={defaultRoute}
@@ -204,11 +205,14 @@ export function PlatformSidebar() {
           </SidebarMenuButton>
         </SidebarMenu>
       </SidebarHeader>
+      <ScrollArea className="h-full">
       <SidebarContent>
-        {groups.map((group) => (
+        {groups.map((group, idx) => (
           <SidebarGroup
             key={group.label}
-            className="px-0 border-t border-gray-300 pt-4 list-none"
+            className={cn("px-0 pt-4 list-none gap-2", {
+              "border-t border-gray-300 ": idx>0
+            })}
           >
             <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
             {group.items.map((item) => (
@@ -224,6 +228,8 @@ export function PlatformSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
+      </ScrollArea>
+   
       <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>
