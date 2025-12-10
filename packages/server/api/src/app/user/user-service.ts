@@ -66,7 +66,10 @@ export const userService = {
         }
         return user
     },
-    async update({ id, status, platformId, platformRole, externalId, lastActiveDate }: UpdateParams): Promise<UserWithMetaInformation> {
+    async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
+        await userRepo().update({ id }, { lastActiveDate: new Date() })
+    },
+    async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
         assertNotNullOrUndefined(user.platformId, 'platformId')
 
@@ -97,7 +100,6 @@ export const userService = {
             ...spreadIfDefined('status', status),
             ...spreadIfDefined('platformRole', platformRole),
             ...spreadIfDefined('externalId', externalId),
-            ...spreadIfDefined('lastActiveDate', lastActiveDate),
         })
 
         return this.getMetaInformation({ id })
@@ -210,6 +212,10 @@ async function getUsersForProject(platformId: PlatformId, projectId: string): Pr
     return [...platformAdmins, ...projectMembers]
 }
 
+type UpdateLastActiveDateParams = {
+    id: UserId
+}
+
 type ListUsersForProjectParams = {
     projectId: ProjectId
     platformId: PlatformId
@@ -248,7 +254,6 @@ type UpdateParams = {
     platformId: PlatformId
     platformRole?: PlatformRole
     externalId?: string
-    lastActiveDate?: Date
 }
 
 type CreateParams = {

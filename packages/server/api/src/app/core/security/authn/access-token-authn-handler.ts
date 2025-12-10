@@ -20,7 +20,7 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
         const accessToken = this.extractAccessTokenOrThrow(request)
         const principal = await accessTokenManager.verifyPrincipal(accessToken)
         if (principal.type === PrincipalType.USER) {
-            await userService.update({ id: principal.id, platformId: principal.platform.id, lastActiveDate: new Date() })
+            await userService.updateLastActiveDate({ id: principal.id })
         }
         request.principal = principal
     }
