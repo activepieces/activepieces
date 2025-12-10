@@ -51,7 +51,6 @@ import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.enti
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
-import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 
@@ -77,7 +76,6 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceTagEntity,
         AlertEntity,
         UserInvitationEntity,
-        WorkerMachineEntity,
         AIProviderEntity,
         ProjectRoleEntity,
         TableEntity,
