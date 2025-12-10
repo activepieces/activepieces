@@ -1,10 +1,9 @@
 import { Badge } from '@/components/ui/badge';
-import { PROJECT_COLOR_PALETTE, ColorName } from '@activepieces/shared';
 
 type TagWithBrightProps = {
   prefix?: string;
   title: string;
-  color: ColorName;
+  color: string;
   icon?: string;
   size?: 'sm' | 'md';
 };
@@ -33,8 +32,8 @@ export const TagWithBright = ({
           size === 'sm' ? 'text-xs px-2 py-1' : 'text-sm'
         }`}
         style={{
-          backgroundColor: PROJECT_COLOR_PALETTE[color].color,
-          color: PROJECT_COLOR_PALETTE[color].textColor,
+          backgroundColor: color,
+          color: '#000000',
         }}
       >
         <span
