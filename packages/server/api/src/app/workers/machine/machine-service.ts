@@ -2,7 +2,6 @@ import { AppSystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ExecutionMode,
     isNil,
-    MachineInformation,
     partition,
     WebsocketServerEvent,
     WorkerMachineHealthcheckRequest,
@@ -14,7 +13,6 @@ import {
 import dayjs from 'dayjs'
 import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
-import { Socket } from 'socket.io'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
 import { domainHelper } from '../../ee/custom-domains/domain-helper'
@@ -35,7 +33,7 @@ export const machineService = (log: FastifyBaseLogger) => {
             await workerMachineCache().delete([request.workerId])
         },
         async onConnection(request: WorkerMachineHealthcheckRequest, platformIdForDedicatedWorker?: string | undefined): Promise<WorkerSettingsResponse> {
-            await workerMachineCache().create({
+            await workerMachineCache().upsert({
                 id: request.workerId,
                 information: request,
             })
@@ -88,22 +86,26 @@ export const machineService = (log: FastifyBaseLogger) => {
         },
         async list(): Promise<WorkerMachineWithStatus[]> {
 
-            const settings = await websocketService.emitWithAck<WorkerMachineHealthcheckRequest[]>( WebsocketServerEvent.WORKER_HEALTHCHECK)
-                .catch(error => {
-                    log.error({
-                        message: 'Failed to get workers healthcheck',
-                        error,
+            let allWorkers = await workerMachineCache().find()
+
+            await Promise.all(allWorkers.map(async worker => {
+                const settings = await websocketService.emitWithAck<WorkerMachineHealthcheckRequest[]>( WebsocketServerEvent.WORKER_HEALTHCHECK, worker.id)
+                    .catch(error => {
+                        log.error({
+                            message: 'Failed to get worker healthcheck',
+                            error,
+                            workerId: worker.id,
+                        })
                     })
-                })
+                if (settings && settings[0]) {
+                    await workerMachineCache().upsert({
+                        id: worker.id,
+                        information: settings[0],
+                    })
+                }
+            }))
 
-            if (settings && settings.length > 0) {
-                await Promise.all(settings.map(async (setting) => workerMachineCache().update({
-                    id: setting.workerId,
-                    information: setting,
-                })))
-            }
-
-            const allWorkers = await workerMachineCache().find()
+            allWorkers = await workerMachineCache().find()
 
             const offlineThreshold = dayjs().subtract(60, 'seconds').utc()
 

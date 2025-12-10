@@ -16,8 +16,6 @@ const listener = {
     [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
 }
 
-const WORKERS_ROOM = 'workers'
-
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
@@ -43,7 +41,7 @@ export const websocketService = {
                     message: 'Worker connected',
                     workerId,
                 })
-                await socket.join([WORKERS_ROOM, workerId])
+                await socket.join(workerId)
                 break
             }
             default: {
@@ -86,7 +84,7 @@ export const websocketService = {
             }
         }
     },
-    emitWithAck<T = unknown>(event: WebsocketServerEvent, data?: unknown): Promise<T> {
-        return app!.io.to(WORKERS_ROOM).emitWithAck(event, data)
+    emitWithAck<T = unknown>(event: WebsocketServerEvent, workerId: string, data?: unknown): Promise<T> {
+        return app!.io.to([workerId]).timeout(4000).emitWithAck(event, data)
     },
 }
