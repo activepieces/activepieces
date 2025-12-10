@@ -39,15 +39,9 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
         await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
 
-        const mapped = {
-            [FileType.PLATFORM_ICON]: req.body.logoIcon,
-            [FileType.PLATFORM_LOGO]: req.body.fullLogo,
-            [FileType.PLATFORM_FAVICON]: req.body.favIcon,
-        }
-
-      
+        const assets = [req.body.logoIcon, req.body.fullLogo, req.body.favIcon]
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all(
-            Object.entries(mapped).map(async ([type, file]) => {
+            assets.map(async (file) => {
 
                 if (!isNil(file) && !req.isMultipart() && !isMultipartFile(file)) {
                     throw new ActivepiecesError({
@@ -63,7 +57,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                 const savedFile = await fileService(app.log).save({
                     data: file.data,
                     size: file.data.length,
-                    type: type as FileType,
+                    type: FileType.PLATFORM_ASSET,
                     compression: FileCompression.NONE,
                     platformId: req.principal.platform.id,
                     fileName: file.filename,
@@ -99,8 +93,8 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/assets/:id', GetAssetRequest, async (req, reply) => {
-        const file = await fileService(app.log).getFileOrThrow({ fileId: req.params.id })
-        const data = await fileService(app.log).getDataOrThrow({ fileId: req.params.id })
+        const file = await fileService(app.log).getFileOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET })
+        const data = await fileService(app.log).getDataOrThrow({ fileId: req.params.id, type: FileType.PLATFORM_ASSET })
 
         return reply
             .header(

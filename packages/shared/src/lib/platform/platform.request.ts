@@ -1,9 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
 import { SAFE_STRING_PATTERN } from '../common'
 import { ApId } from '../common/id-generator'
+import { ApMultipartFile } from '../common/multipart-file'
 import { FederatedAuthnProviderConfig } from '../federated-authn'
 import { FilteredPieceBehavior } from './platform.model'
-import { ApMultipartFile } from '../common/multipart-file'
 
 export const Base64EncodedFile = Type.Object({
     base64: Type.String(),
