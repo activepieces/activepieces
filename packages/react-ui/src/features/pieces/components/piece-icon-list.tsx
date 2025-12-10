@@ -33,10 +33,18 @@ export function PieceIconList({
   maxNumberOfIconsToShow,
   trigger,
   size,
+  className,
+  circle = true,
+  background,
+  shadow,
 }: {
   trigger: FlowTrigger;
   maxNumberOfIconsToShow: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  className?: string;
+  circle?: boolean;
+  background?: string;
+  shadow?: boolean;
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
   const stepsMetadata: StepMetadata[] = stepsHooks
@@ -56,16 +64,18 @@ export function PieceIconList({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex gap-2">
+        <div className={className || "flex gap-2"}>
           {visibleMetadata.map((metadata) => (
             <PieceIcon
               logoUrl={metadata.logoUrl}
               showTooltip={false}
-              circle={true}
+              circle={circle}
               size={size ?? 'md'}
               border={true}
               displayName={metadata.displayName}
               key={metadata.logoUrl}
+              background={background}
+              shadow={shadow}
             />
           ))}
           {extraPieces > 0 && (

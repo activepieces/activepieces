@@ -163,6 +163,7 @@ const TemplateDetailsPage = () => {
                     {template.tags.map((tag, index) => (
                       <TagWithBright
                         key={index}
+                        prefix={t('Save')}
                         title={tag.title}
                         color={tag.color}
                         size="sm"

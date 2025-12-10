@@ -5,8 +5,12 @@ import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { extractColors } from 'extract-colors';
 
-import { LocalesEnum, Permission } from '@activepieces/shared';
+import { LocalesEnum, Permission, FlowTrigger, flowStructureUtil } from '@activepieces/shared';
+
+import { StepMetadata } from './types';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 
 import { authenticationSession } from './authentication-session';
 
@@ -333,4 +337,89 @@ export const routesThatRequireProjectId = {
   settings: '/settings',
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
+};
+
+export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
+  const [gradient, setGradient] = useState<string>('');
+
+  const steps = trigger ? flowStructureUtil.getAllSteps(trigger) : [];
+  const stepsMetadata: StepMetadata[] = stepsHooks
+    .useStepsMetadata(steps)
+    .map((data) => data.data)
+    .filter((data) => !!data) as StepMetadata[];
+
+  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
+    (item, index, self) =>
+      self.findIndex(
+        (secondItem) => item.displayName === secondItem.displayName,
+      ) === index,
+  );
+
+  useEffect(() => {
+    const extractColorsFromPieces = async () => {
+      if (uniqueMetadata.length === 0) {
+        setGradient('');
+        return;
+      }
+
+      try {
+        const allColors: string[] = [];
+
+        // Extract colors from up to 4 piece logos
+        const logosToProcess = uniqueMetadata
+          .slice(0, 4)
+          .filter((metadata) => metadata.logoUrl);
+
+        for (const metadata of logosToProcess) {
+          try {
+            const colors = await extractColors(metadata.logoUrl, {
+              crossOrigin: 'anonymous',
+              pixels: 10000,
+              distance: 0.2,
+            });
+
+            // Get the most prominent colors (sorted by area)
+            const topColors = colors
+              .sort((a, b) => b.area - a.area)
+              .slice(0, 2)
+              .map((color) => color.hex);
+
+            allColors.push(...topColors);
+          } catch (error) {
+            console.error(
+              `Failed to extract colors from ${metadata.displayName}:`,
+              error,
+            );
+          }
+        }
+
+        if (allColors.length > 0) {
+          // Create a gradient with the extracted colors
+          const uniqueColors = Array.from(new Set(allColors)).slice(0, 4);
+          
+          if (uniqueColors.length === 1) {
+            // Single color - use a lighter variant gradient
+            setGradient(
+              `linear-gradient(135deg, ${uniqueColors[0]}15, ${uniqueColors[0]}30)`,
+            );
+          } else {
+            // Multiple colors - create a gradient
+            const gradientColors = uniqueColors
+              .map((color) => `${color}20`)
+              .join(', ');
+            setGradient(`linear-gradient(135deg, ${gradientColors})`);
+          }
+        } else {
+          setGradient('');
+        }
+      } catch (error) {
+        console.error('Failed to extract colors:', error);
+        setGradient('');
+      }
+    };
+
+    extractColorsFromPieces();
+  }, [uniqueMetadata.map((m) => m.logoUrl).join(',')]);
+
+  return gradient;
 };

@@ -2,13 +2,15 @@ import { Badge } from '@/components/ui/badge';
 import { PROJECT_COLOR_PALETTE, ColorName } from '@activepieces/shared';
 
 type TagWithBrightProps = {
+  prefix?: string;
   title: string;
-  color: ColorName;
+  color: string;
   icon?: string;
   size?: 'sm' | 'md';
 };
 
 export const TagWithBright = ({ 
+  prefix,
   title, 
   color, 
   size = 'sm' 
@@ -31,8 +33,8 @@ export const TagWithBright = ({
           size === 'sm' ? 'text-xs px-2 py-1' : 'text-sm'
         }`}
         style={{
-          backgroundColor: PROJECT_COLOR_PALETTE[color].color,
-          color: PROJECT_COLOR_PALETTE[color].textColor,
+          backgroundColor: '#e4fded',
+          color: '#000000',
         }}
       >
         <span
@@ -44,7 +46,10 @@ export const TagWithBright = ({
             transform: 'translateX(-100%)',
           }}
         />
-        <span className="relative z-10">{title}</span>
+        {prefix && (
+          <span className="relative z-10 font-medium mr-1">{prefix}</span>
+        )}
+        <span className="relative z-10 font-bold">{title}</span>
       </Badge>
     </>
   );

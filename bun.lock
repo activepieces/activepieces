@@ -1,6 +1,5 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 0,
   "workspaces": {
     "": {
       "name": "activepieces",
@@ -137,6 +136,7 @@
         "drip-nodejs": "3.1.2",
         "embla-carousel-react": "8.1.8",
         "eventsource-parser": "3.0.2",
+        "extract-colors": "4.2.1",
         "fast-glob": "3.3.3",
         "fastify": "5.4.0",
         "fastify-favicon": "5.0.0",
@@ -3450,6 +3450,8 @@
     "ext-name": ["ext-name@5.0.0", "", { "dependencies": { "ext-list": "^2.0.0", "sort-keys-length": "^1.0.0" } }, "sha512-yblEwXAbGv1VQDmow7s38W77hzAgJAO50ztBLMcUyUBfxv1HC+LGwtiEN+Co6LtlqT/5uwVOxsD4TNIilWhwdQ=="],
 
     "extend": ["extend@3.0.2", "", {}, "sha512-fjquC59cD7CyW6urNXK0FBufkZcoiGG80wTuPujX590cB5Ttln20E2UB4S/WARVqhXffZl2LNgS+gQdPIIim/g=="],
+
+    "extract-colors": ["extract-colors@4.2.1", "", {}, "sha512-QAWcuwxnL9pisK7YfuG8qab6IF7UD6bbKTjiM+QTJ9Xvfi7fBymQd/xTFaPhkzkB5kyq+wla3AHanM7LInFLaQ=="],
 
     "extract-zip": ["extract-zip@2.0.1", "", { "dependencies": { "debug": "^4.1.1", "get-stream": "^5.1.0", "yauzl": "^2.10.0" }, "optionalDependencies": { "@types/yauzl": "^2.9.1" }, "bin": { "extract-zip": "cli.js" } }, "sha512-GDhU9ntwuKyGXdZBUgTIe+vXnWj0fppUEtMDL0+idd5Sta8TGpHssn/eusA9mrPr9qNDym6SxAYZjNvCn/9RBg=="],
 
