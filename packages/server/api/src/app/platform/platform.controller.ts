@@ -40,9 +40,10 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
         await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
 
         const assets = [req.body.logoIcon, req.body.fullLogo, req.body.favIcon]
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/webp', 'image/avif', 'image/apng']
+
         const [logoIconUrl, fullLogoUrl, favIconUrl] = await Promise.all(
             assets.map(async (file) => {
-
                 if (!isNil(file) && !req.isMultipart() && !isMultipartFile(file)) {
                     throw new ActivepiecesError({
                         code: ErrorCode.VALIDATION,
@@ -51,9 +52,20 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                         },
                     })
                 }
+
                 if (isNil(file) || !isMultipartFile(file)) {
                     return undefined
                 }
+
+                if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'Invalid file type',
+                        },
+                    })
+                }
+
                 const savedFile = await fileService(app.log).save({
                     data: file.data,
                     size: file.data.length,
