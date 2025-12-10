@@ -66,10 +66,32 @@
       {
         "tab": "Admin Guide",
         "groups": [
+    
           {
-            "group": "Overview",
+            "group": "Security",
             "pages": [
-              "admin-guide/overview"
+                            {
+                "group": "Audit Logs",
+                "icon": "book",
+                "pages": [
+                  "admin-guide/security/audit-logs/overview",
+                  "admin-guide/security /audit-logs/flow-created",
+                  "admin-guide/security/audit-logs/flow-updated",
+                  "admin-guide/security/audit-logs/flow-deleted",
+                  "admin-guide/security/audit-logs/connection-upserted",
+                  "admin-guide/security/audit-logs/connection-deleted",
+                  "admin-guide/security/audit-logs/flow-run-started",
+                  "admin-guide/security/audit-logs/flow-run-finished",
+                  "admin-guide/security/audit-logs/folder-created",
+                  "admin-guide/security/audit-logs/folder-updated",
+                  "admin-guide/security/audit-logs/folder-deleted",
+                  "admin-guide/security/audit-logs/user-signed-in",
+                  "admin-guide/security/audit-logs/user-signed-up",
+                  "admin-guide/security/audit-logs/user-email-verified",
+                  "admin-guide/security/audit-logs/user-password-reset",
+                  "admin-guide/security/audit-logs/signing-key-created"
+                ]
+              }
             ]
           }
         ]
