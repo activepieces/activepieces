@@ -1,4 +1,4 @@
-import { apVersionUtil, environmentVariables, exceptionHandler, getContainerMemoryUsage, getCpuUsage, getDiskInfo, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, getContainerMemoryUsage, getCpuCores, getCpuUsage, getDiskInfo, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineProcessManager } from '../compute/process/engine-process-manager'
@@ -18,12 +18,14 @@ export const workerMachine = {
         const cpuUsage = getCpuUsage()
         const ip = (await networkUtils.getPublicIp()).ip
         const diskInfo = await getDiskInfo()
+        const cpuCores = await getCpuCores()
 
         return {
             diskInfo,
             cpuUsagePercentage: cpuUsage,
             ramUsagePercentage: ramUsage,
             totalAvailableRamInBytes: totalRamInBytes,
+            totalCpuCores: cpuCores,
             ip,
             workerProps: {
                 ...spreadIfDefined('SANDBOX_PROPAGATED_ENV_VARS', settings?.SANDBOX_PROPAGATED_ENV_VARS?.join(',')),

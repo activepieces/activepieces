@@ -2,10 +2,11 @@ import { getContainerMemoryUsage, getCpuCores, getDiskInfo } from '@activepieces
 import { GetSystemHealthChecksResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
+import { workerMachineCache } from '../workers/machine/machine-cache'
 
 let workerHealthStatus = false
 
-export const healthStatusService = (log: FastifyBaseLogger) => ({
+export const healthStatusService = (_log: FastifyBaseLogger) => ({
     markWorkerHealthy: async (): Promise<void> => {
         workerHealthStatus = true
     },
@@ -16,10 +17,14 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         return true
     },
     getSystemHealthChecks: async (): Promise<GetSystemHealthChecksResponse> => {
+        const workers = await workerMachineCache().find()
+        const allWorkersPassedHealthcheck = workers.every(worker => worker.information.totalCpuCores > 1)
+        const allWorkersHaveEnoughRam = workers.every(worker => worker.information.totalAvailableRamInBytes > gigaBytes(4))
+        
         return {
-            cpu: await getCpuCores() >= 1,
+            cpu: await getCpuCores() >= 1 && allWorkersPassedHealthcheck,
             disk: (await getDiskInfo()).total > gigaBytes(30),
-            ram: (await getContainerMemoryUsage()).totalRamInBytes > gigaBytes(4),
+            ram: (await getContainerMemoryUsage()).totalRamInBytes > gigaBytes(4) && allWorkersHaveEnoughRam,
         }
     },
 })
