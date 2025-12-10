@@ -4,7 +4,7 @@ import { PROJECT_COLOR_PALETTE, ColorName } from '@activepieces/shared';
 type TagWithBrightProps = {
   prefix?: string;
   title: string;
-  color: string;
+  color: ColorName;
   icon?: string;
   size?: 'sm' | 'md';
 };
@@ -33,8 +33,8 @@ export const TagWithBright = ({
           size === 'sm' ? 'text-xs px-2 py-1' : 'text-sm'
         }`}
         style={{
-          backgroundColor: '#e4fded',
-          color: '#000000',
+          backgroundColor: PROJECT_COLOR_PALETTE[color].color,
+          color: PROJECT_COLOR_PALETTE[color].textColor,
         }}
       >
         <span
