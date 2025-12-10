@@ -18,6 +18,7 @@ import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
 import { AiOverageState,
     AIProvider,
+    AIProviderName,
     apId,
     AppConnection,
     AppConnectionScope,
@@ -143,6 +144,7 @@ export const createMockTemplate = (
         name: template?.name ?? faker.lorem.word(),
         type: template?.type ?? TemplateType.CUSTOM,
         description: template?.description ?? faker.lorem.sentence(),
+        summary: template?.summary ?? faker.lorem.sentence(),
         tags: template?.tags ?? [],
         blogUrl: template?.blogUrl ?? faker.internet.url(),
         metadata: template?.metadata ?? null,
@@ -271,7 +273,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         filteredPieceBehavior:
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
-        smtp: platform?.smtp,
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
     }
 }
@@ -772,7 +773,8 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         created: aiProvider?.created ?? faker.date.recent().toISOString(),
         updated: aiProvider?.updated ?? faker.date.recent().toISOString(),
         platformId: aiProvider?.platformId ?? apId(),
-        provider: aiProvider?.provider ?? 'openai',
+        provider: aiProvider?.provider ?? faker.helpers.enumValue(AIProviderName),
+        displayName: aiProvider?.displayName ?? faker.lorem.word(),
         config: await encryptUtils.encryptObject({
             apiKey: aiProvider?.config?.apiKey ?? process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),

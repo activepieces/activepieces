@@ -1,11 +1,10 @@
 import { Omit, Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema, Metadata, Nullable } from '../common'
+import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../common'
 import { FlowVersion } from '../flows/flow-version'
-import { ColorName } from '../project'
 
 export const TemplateTag = Type.Object({
     title: Type.String(),
-    color: Type.Enum(ColorName),
+    color: ColorHex,
     icon: Type.Optional(Type.String()),
 })
 export type TemplateTag = Static<typeof TemplateTag>

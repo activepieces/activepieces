@@ -45,7 +45,7 @@ function migrateUtilityAction(step: PieceAction): FlowAction {
         settings: {
             ...step.settings,
             pieceName: '@activepieces/piece-ai',
-            pieceVersion: '0.0.1',
+            pieceVersion: '0.0.2',
             input: {
                 ...input,
                 ...migrateModel(input.provider as string, extractModelFromInput(input)),
@@ -73,7 +73,7 @@ function migrateTextai(step: PieceAction): FlowAction {
                 ...step.settings,
                 pieceName: '@activepieces/piece-ai',
                 actionName: 'askAi',
-                pieceVersion: '0.0.1',
+                pieceVersion: '0.0.2',
                 input: {
                     ...input,
                     webSearchOptions: {
@@ -93,7 +93,7 @@ function migrateTextai(step: PieceAction): FlowAction {
         settings: {
             ...step.settings,
             pieceName: '@activepieces/piece-ai',
-            pieceVersion: '0.0.1',
+            pieceVersion: '0.0.2',
             input: {
                 ...step.settings.input,
                 ...migrateModel(input.provider as string, extractModelFromInput(input)),
@@ -112,7 +112,7 @@ function migrateImageai(step: PieceAction): FlowAction {
         settings: {
             ...step.settings,
             pieceName: '@activepieces/piece-ai',
-            pieceVersion: '0.0.1',
+            pieceVersion: '0.0.2',
             input: {
                 ...input,
                 images: files,
@@ -160,7 +160,13 @@ function extractModelFromInput(input: Record<string, unknown>): string {
     return (model as { modelId: string })?.modelId
 }
 
-function migrateModel(provider: string, modelId: string): { model: string, provider: string } {
+function migrateModel(provider: string | undefined, modelId: string): { model: string | undefined, provider: string | undefined } {
+    if (isNil(provider)) {
+        return {
+            provider,
+            model: modelId,
+        }
+    }
     const edition = system.getEdition()
     if (edition !== ApEdition.CLOUD) {
         return {

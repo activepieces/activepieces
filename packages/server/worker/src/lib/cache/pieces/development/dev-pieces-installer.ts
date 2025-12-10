@@ -73,16 +73,6 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
         ))
     }
 
-    async function installDepsForSharedPackages() {
-        await Promise.all(Object.values(sharedPiecesPackages()).map(pkg =>
-            spawnWithKill({ cmd: `bun install --cwd ${pkg.path} --silent`, printOutput: true }).catch(e => {
-                log.error({
-                    name: 'installDepsForSharedPackages',
-                    message: JSON.stringify(e),
-                }, 'Error installing dependencies for shared packages')
-            }),
-        ))
-    }
     async function linkSharedActivepiecesPackagesToEachOther() {
         await initSharedPackagesLinks()
 
@@ -94,7 +84,6 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
     }
 
     return {
-        installDepsForSharedPackages,
         installPiecesDependencies,
         linkSharedActivepiecesPackagesToPiece,
         linkSharedActivepiecesPackagesToEachOther,

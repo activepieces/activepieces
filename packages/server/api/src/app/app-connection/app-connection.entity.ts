@@ -6,10 +6,7 @@ import {
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    isPostgres,
-    JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
@@ -47,18 +44,18 @@ export const AppConnectionEntity = new EntitySchema<AppConnectionSchema>({
             nullable: true,
         },
         projectIds: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
             nullable: false,
         },
         scope: {
             type: String,
         },
         value: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
         pieceVersion: {

@@ -1,14 +1,9 @@
-import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface {
     name = 'RemoveTasksAndTasksLimit1761570485475'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
         await queryRunner.query(`
             ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
         `)
@@ -48,9 +43,6 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
         await queryRunner.query(`
             ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
         `)
