@@ -1,0 +1,67 @@
+---
+title: "Overview"
+description: ""
+icon: "cube"
+---
+
+This page focuses on describing the main components of Activepieces and focus mainly on workflow executions.
+
+## Components
+
+![Architecture](/resources/architecture.png)
+
+**Activepieces:**
+
+- **App**: The main application that organizes everything from APIs to scheduled jobs.
+- **Worker**: Polls for new jobs and executes the flows with the engine, ensuring proper sandboxing, and sends results back to the app through the API.
+- **Engine**: TypeScript code that parses flow JSON and executes it. It is compiled into a single JS file.
+- **UI**: Frontend written in React.
+
+**Third Party**:
+- **Postgres**: The main database for Activepieces.
+- **Redis**: This is used to power the queue using [BullMQ](https://docs.bullmq.io/).
+
+## Reliability & Scalability
+
+<Tip>
+Postgres and Redis availability is outside the scope of this documentation, as many cloud providers already implement best practices to ensure their availability.
+</Tip>
+
+- **Webhooks**:  
+  All webhooks are sent to the Activepieces app, which performs basic validation and adds them to the queue. In case of a spike, webhooks will be added to the queue.
+
+- **Polling Trigger**:  
+  All recurring jobs are added to Redis. In case of a failure, the missed jobs will be executed again.
+
+- **Flow Execution**:  
+  Workers poll jobs from the queue. In the event of a spike, the flow execution will still work but may be delayed depending on the size of the spike.
+
+To scale Activepieces, you typically need to increase the replicas of either workers, the app, or the Postgres database. A small Redis instance is sufficient as it can handle thousands of jobs per second and rarely acts as a bottleneck.
+
+## Repository Structure
+
+
+The repository is structured as a monorepo using the NX build system, with TypeScript as the primary language. It is divided into several packages:
+
+```
+.
+├── packages
+│   ├── react-ui
+│   ├── server
+|       |── api
+|       |── worker
+|       |── shared
+|   ├── ee
+│   ├── engine
+│   ├── pieces
+│   ├── shared
+```
+
+- `react-ui`: This package contains the user interface, implemented using the React framework.
+- `server-api`: This package contains the main application written in TypeScript with the Fastify framework.
+- `server-worker`: This package contains the logic of accepting flow jobs and executing them using the engine.
+- `server-shared`: this package contains the shared logic between worker and app.
+- `engine`: This package contains the logic for flow execution within the sandbox.
+- `pieces`: This package contains the implementation of triggers and actions for third-party apps.
+- `shared`: This package contains shared data models and helper functions used by the other packages.
+- `ee`: This package contains features that are only available in the paid edition.

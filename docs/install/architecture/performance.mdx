@@ -1,0 +1,107 @@
+---
+title: "Performance & Benchmarking"
+icon: "chart-line"
+---
+
+## Performance
+
+On average, Activepieces (self-hosted) can handle 95 flow executions per second on a single instance (including PostgreSQL and Redis) with under 300ms latency.\
+It can scale up much more with increasing instance resources and/or adding more instances.\
+\
+The result of **5000** requests with concurrency of **25**
+
+```
+This is ApacheBench, Version 2.3 <$Revision: 1913912 $>
+Copyright 1996 Adam Twiss, Zeus Technology Ltd, http://www.zeustech.net/
+Licensed to The Apache Software Foundation, http://www.apache.org/
+
+Benchmarking localhost (be patient)
+Completed 500 requests
+Completed 1000 requests
+Completed 1500 requests
+Completed 2000 requests
+Completed 2500 requests
+Completed 3000 requests
+Completed 3500 requests
+Completed 4000 requests
+Completed 4500 requests
+Completed 5000 requests
+Finished 5000 requests
+
+
+Server Software:        
+Server Hostname:        localhost
+Server Port:            4200
+
+Document Path:          /api/v1/webhooks/GMtpNwDsy4mbJe3369yzy/sync
+Document Length:        16 bytes
+
+Concurrency Level:      25
+Time taken for tests:   52.087 seconds
+Complete requests:      5000
+Failed requests:        0
+Total transferred:      1375000 bytes
+HTML transferred:       80000 bytes
+Requests per second:    95.99 [#/sec] (mean)
+Time per request:       260.436 [ms] (mean)
+Time per request:       10.417 [ms] (mean, across all concurrent requests)
+Transfer rate:          25.78 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.0      0       1
+Processing:    32  260  23.8    254     756
+Waiting:       31  260  23.8    254     756
+Total:         32  260  23.8    254     756
+
+Percentage of the requests served within a certain time (ms)
+  50%    254
+  66%    261
+  75%    267
+  80%    272
+  90%    289
+  95%    306
+  98%    327
+  99%    337
+ 100%    756 (longest request)
+```
+
+#### Benchmarking
+
+Here is how to reproduce the benchmark:
+
+1. Run Activepieces with PostgreSQL and Redis with the following environment variables:
+
+```env
+AP_EXECUTION_MODE=SANDBOX_CODE_ONLY
+AP_FLOW_WORKER_CONCURRENCY=25
+```
+
+2. Create a flow with a Catch Webhook trigger and a webhook Return Response action.
+   
+
+   ![Simple Webhook Flow](/resources/screenshots/simple-webhook-flow.png)
+3. Get the webhook URL from the webhook trigger and append `/sync` to it.
+4. Install a benchmark tool like [ab](https://httpd.apache.org/docs/2.4/programs/ab.html):
+
+```bash
+sudo apt-get install apache2-utils
+```
+
+5. Run the benchmark:
+
+```bash
+ab -c 25 -n 5000 http://localhost:4200/api/v1/webhooks/GMtpNwDsy4mbJe3369yzy/sync
+```
+
+6. Check the results:
+
+Instance specs used to get the above results:
+
+- 16GB RAM
+- AMD Ryzen 7 8845HS (8 cores, 16 threads)
+- Ubuntu 24.04 LTS
+
+<Tip>
+  These benchmarks are based on running Activepieces in `SANDBOX_CODE_ONLY` mode. This does **not** represent the performance of Activepieces Cloud, which uses a different sandboxing mechanism to support multi-tenancy. For more information, see [Sandboxing](/install/architecture/workers#sandboxing).
+</Tip>

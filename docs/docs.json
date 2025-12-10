@@ -41,6 +41,14 @@
             "pages": [
               "overview/welcome"
             ]
+          },
+          {
+            "group": "About",
+            "pages": [
+              "about/i18n",
+              "about/changelog",
+              "about/license"
+            ]
           }
         ]
       },
@@ -67,12 +75,49 @@
         ]
       },
       {
-        "tab": "Deployment",
+        "tab": "Deploy",
         "groups": [
           {
-            "group": "Overview",
+            "group": "Get Started",
             "pages": [
-              "deplyment/overview"
+              "install/overview",
+              "install/options/docker",
+              "install/options/docker-compose",
+              {
+                "group": "Others Options",
+                "pages": [
+                  "install/options/helm",
+                  "install/options/easypanel",
+                  "install/options/aws",
+                  "install/options/gcp",
+                  "install/options/railway",
+                  "install/options/elestio"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Configuration",
+            "pages": [
+              "install/configuration/overview",
+              "install/configuration/environment-variables",
+              "install/configuration/separate-workers",
+              "install/configuration/setup-app-webhooks",
+              "install/configuration/hardware",
+              "install/configuration/setup-ssl",
+              "install/configuration/troubleshooting",
+              "install/configuration/breaking-changes",
+              "install/configuration/telemetry"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "install/architecture/overview",
+              "install/architecture/workers",
+              "install/architecture/engine",
+              "install/architecture/stack",
+              "install/architecture/performance"
             ]
           }
         ]
@@ -323,11 +368,74 @@
             ]
           }
         ]
+      },
+      {
+        "tab": "Handbook",
+        "groups": [
+          {
+            "group": "Handbook",
+            "pages": [
+              "handbook/overview",
+              "handbook/team"
+            ]
+          },
+          {
+            "group": "Hiring",
+            "icon": "user",
+            "pages": [
+              "handbook/hiring/hiring",
+              "handbook/hiring/levels",
+              "handbook/hiring/team",
+              "handbook/hiring/compensation"
+            ]
+          },
+          {
+            "group": "Customer Support",
+            "icon": "hero",
+            "pages": [
+              "handbook/customer-support/overview",
+              "handbook/customer-support/tone",
+              "handbook/customer-support/pylon",
+              "handbook/customer-support/handle-requests"
+            ]
+          },
+          {
+            "group": "Engineering Onboarding",
+            "icon": "code",
+            "pages": [
+              "handbook/engineering/overview",
+              "handbook/engineering/onboarding/onboarding-check-list",
+              "handbook/engineering/onboarding/how-we-work",
+              "handbook/engineering/onboarding/on-call",
+              "handbook/engineering/onboarding/downtime-incident"
+            ]
+          },
+          {
+            "group": "Engineering Playbooks",
+            "icon": "code",
+            "pages": [
+              "handbook/engineering/playbooks/run-ee",
+              "handbook/engineering/playbooks/setup-incident-io",
+              "handbook/engineering/playbooks/releases",
+              "handbook/engineering/playbooks/infrastructure",
+              "handbook/engineering/playbooks/bullboard",
+              "handbook/engineering/playbooks/database-migration",
+              "handbook/engineering/playbooks/product-announcement",
+              "handbook/engineering/playbooks/frontend-best-practices",
+              "handbook/engineering/playbooks/e2e-tests"
+            ]
+          },
+          {
+            "group": "Product",
+            "icon": "tool",
+            "pages": [
+              "handbook/product/interface-design"
+            ]
+          }
+        ]
       }
-
     ],
-    "global": {
-    }
+    "global": {}
   },
   "logo": {
     "light": "./resources/logo/light.svg",
@@ -339,8 +447,6 @@
       "openapi.json"
     ]
   },
-
-  
   "footer": {
     "socials": {
       "x": "https://x.com/activepieces",

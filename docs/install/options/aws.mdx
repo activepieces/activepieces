@@ -1,0 +1,139 @@
+---
+title: "AWS (Pulumi)"
+description: "Get Activepieces up & running on AWS with Pulumi for IaC"
+---
+
+# Infrastructure-as-Code (IaC) with Pulumi
+
+Pulumi is an IaC solution akin to Terraform or CloudFormation that lets you deploy & manage your infrastructure using popular programming languages e.g. Typescipt (which we'll use), C#, Go etc.
+
+## Deploy from Pulumi Cloud
+
+If you're already familiar with Pulumi Cloud and have [integrated their services with your AWS account](https://www.pulumi.com/docs/pulumi-cloud/deployments/oidc/aws/#configuring-openid-connect-for-aws), you can use the button below to deploy Activepieces in a few clicks. 
+The template will deploy the latest Activepieces image that's available on [Docker Hub](https://hub.docker.com/r/activepieces/activepieces).
+
+[![Deploy with Pulumi](https://get.pulumi.com/new/button.svg)](https://app.pulumi.com/new?template=https://github.com/activepieces/activepieces/tree/main/deploy/pulumi)
+
+## Deploy from a local environment
+
+Or, if you're currently using an S3 bucket to maintain your Pulumi state, you can scaffold and deploy Activepieces direct from Docker Hub using the template below in just few commands:
+
+```bash
+$ mkdir deploy-activepieces && cd deploy-activepieces 
+$ pulumi new https://github.com/activepieces/activepieces/tree/main/deploy/pulumi
+$ pulumi up
+```
+
+## What's Deployed?
+
+The template is setup to be somewhat flexible, supporting what could be a development or more production-ready configuration.
+The configuration options that are presented during stack configuration will allow you to optionally add any or all of:
+
+* PostgreSQL RDS instance. Opting out of this will use a local SQLite3 Db.
+* Single node Redis 7 cluster. Opting out of this will mean using an in-memory cache.
+* Fully qualified domain name with SSL. Note that the hosted zone must already be configured in Route 53. 
+Opting out of this will mean relying on using the application load balancer's url over standard HTTP to access your Activepieces deployment.
+
+For a full list of all the currently available configuration options, take a look at the [Activepieces Pulumi template file on GitHub](https://github.com/activepieces/activepieces/tree/main/deploy/pulumi/Pulumi.yaml).
+
+## Setting up Pulumi for the first time
+
+If you're new to Pulumi then read on to get your local dev environment setup to be able to deploy Activepieces.
+
+### Prerequisites
+
+1. Make sure you have [Node](https://nodejs.org/en/download) and [Pulumi](https://www.pulumi.com/docs/install/) installed.
+2. [Install and configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html).   
+3. [Install and configure Pulumi](https://www.pulumi.com/docs/clouds/aws/get-started/begin/).   
+4. Create an S3 bucket which we'll use to maintain the state of all the various service we'll provision for our Activepieces deployment:
+
+```bash
+aws s3api create-bucket --bucket pulumi-state --region us-east-1
+```
+
+<Tip>
+    Note: [Pulumi supports to two different state management approaches](https://www.pulumi.com/docs/concepts/state/#deciding-on-a-state-backend). 
+    If you'd rather use Pulumi Cloud instead of S3 then feel free to skip this step and setup an account with Pulumi.
+</Tip>
+
+5. Login to the Pulumi backend:
+
+```bash
+pulumi login s3://pulumi-state?region=us-east-1
+```
+6. Next we're going to use the Activepieces Pulumi deploy template to create a new project, a stack in that project and then kick off the deploy:
+
+```bash
+$ mkdir deploy-activepieces && cd deploy-activepieces 
+$ pulumi new https://github.com/activepieces/activepieces/tree/main/deploy/pulumi
+```
+
+This step will prompt you to create you stack and to populate a series of config options, such as whether or not to provision a PostgreSQL RDS instance or use SQLite3.
+
+<Tip>
+    Note: When choosing a stack name, use something descriptive like `activepieces-dev`, `ap-prod` etc. 
+    This solution uses the stack name as a prefix for every AWS service created    
+    e.g. your VPC will be named `<stack name>-vpc`.
+</Tip>
+
+7. Nothing left to do now but kick off the deploy:
+
+```bash
+pulumi up
+```
+
+8. Now choose `yes` when prompted. Once the deployment has finished, you should see a bunch of Pulumi output variables that look like the following:
+```json
+    _: {
+        activePiecesUrl: "http://<alb name & id>.us-east-1.elb.amazonaws.com"
+        activepiecesEnv: [
+         . . . .
+        ]
+       }
+```
+
+The config value of interest here is the `activePiecesUrl` as that is the URL for our Activepieces deployment. 
+If you chose to add a fully qualified domain during your stack configuration, that will be displayed here. 
+Otherwise you'll see the URL to the application load balancer. And that's it. 
+
+Congratulations! You have successfully deployed Activepieces to AWS.
+
+## Deploy a locally built Activepieces Docker image
+
+To deploy a locally built image instead of using the official Docker Hub image, read on.
+
+1. Clone the Activepieces repo locally:
+
+```bash
+git clone https://github.com/activepieces/activepieces
+```
+2. Move into the `deploy/pulumi` folder & install the necessary npm packages:
+
+```bash
+cd deploy/pulumi && npm i
+```
+3. This folder already has two Pulumi stack configuration files reday to go: `Pulumi.activepieces-dev.yaml` and `Pulumi.activepieces-prod.yaml`. 
+These files already contain all the configurations we need to create our environments. Feel free to have a look & edit the values as you see fit.
+Lets continue by creating a development stack that uses the existing `Pulumi.activepieces-dev.yaml` file & kick off the deploy.
+
+```bash
+pulumi stack init activepieces-dev && pulumi up
+```
+
+<Tip>
+    Note: Using `activepieces-dev` or `activepieces-prod` for the `pulumi stack init` command is required here as the stack name needs to match the existing stack file name in the folder. 
+</Tip>
+
+4. You should now see a preview in the terminal of all the services that will be provisioned, before you continue. 
+Once you choose `yes`, a new image will be built based on the `Dockerfile` in the root of the solution (make sure Docker Desktop is running) and then pushed up to a new ECR, along with provisioning all the other AWS services for the stack.
+
+Congratulations! You have successfully deployed Activepieces into AWS using a locally built Docker image.
+
+## Customising the deploy
+
+All of the current configuration options, as well as the low-level details associated with the provisioned services are fully customisable, as you would expect from any IaC. 
+For example, if you'd like to have three availability zones instead of two for the VPC, use an older version of Redis or add some additional security group rules for PostgreSQL, you can update all of these and more in the `index.ts` file inside the `deploy` folder.
+
+Or maybe you'd still like to deploy the official Activepieces Docker image instead of a local build, but would like to change some of the services. Simply set the `deployLocalBuild` config option in the stack file to `false` and make whatever changes you'd like to the `index.ts` file.   
+
+Checking out the [Pulumi docs](https://www.pulumi.com/docs/clouds/aws/) before doing so is highly encouraged.

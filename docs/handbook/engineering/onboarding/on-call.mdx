@@ -1,0 +1,64 @@
+---
+title: 'On-Call'
+icon: 'phone'
+---
+
+## Prerequisites:
+- [Setup Incident IO](../playbooks/setup-incident-io)
+
+## Why On-Call?
+
+We need to ensure there is **exactly one person** at the same time who is the main point of contact for the users and the **first responder** for the issues. It's also a great way to learn about the product and the users and have some fun.
+
+<Tip>
+  You can listen to [Queen - Under Pressure](https://www.youtube.com/watch?v=a01QQZyl-_I) while on-call, it's fun and motivating.
+</Tip>
+
+<Tip>
+  If you ever feel burn out in middle of your rotation, please reach out to the team and we will help you with the rotation or take over the responsibility.
+</Tip>
+
+## On-Call Schedule
+
+The on-call rotation is managed through Incident.io, with each engineer taking a one-week shift. You can:
+- View the current schedule and upcoming rotations on [Incident.io On-Call Schedule](https://app.incident.io/activepieces/on-call/schedules)
+- Add the schedule to your Google Calendar using [this link](https://calendar.google.com/calendar/r?cid=webcal://app.incident.io/api/schedule_feeds/cc024d13704b618cbec9e2c4b2415666dfc8b1efdc190659ebc5886dfe2a1e4b)
+
+<Warning>
+Make sure to update the on-call schedule in Incident.io if you cannot be available during your assigned rotation. This ensures alerts are routed to the correct person and maintains our incident response coverage.
+
+To modify the schedule:
+1. Go to [Incident.io On-Call Schedule](https://app.incident.io/activepieces/on-call/schedules)
+2. Find your rotation slot
+3. Click "Override schedule" to mark your unavailability
+4. Coordinate with the team to find coverage for your slot
+</Warning>
+
+
+## What it means to be on-call
+
+The primary objective of being on-call is to triage issues and assist users. It is not about fixing the issues or coding missing features. Delegation is key whenever possible.
+
+You are responsible for the following:
+
+* Respond to Slack messages as soon as possible, referring to the [customer support guidelines](/handbook/customer-support/overview).
+
+* Check [community.activepieces.com](https://community.activepieces.com) for any new issues or to learn about existing issues.
+
+* Monitor your Incident.io notifications and respond promptly when paged.
+
+<Tip>
+  **Friendly Tip #1**: always escalate to the team if you are unsure what to do.
+</Tip>
+
+## How do you get paged?
+
+Monitor and respond to incidents that come through these channels:
+
+#### Slack Fire Emoji (🔥)
+When a customer reports an issue in Slack and someone reacts with 🔥, you'll be automatically paged and a dedicated incident channel will be created.
+  
+#### Automated Alerts
+Watch for notifications from:
+  - Digital Ocean about CPU, Memory, or Disk outages 
+  - Checkly about e2e test failures or website downtime
