@@ -53,10 +53,7 @@ export const BuilderHeader = () => {
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
-  const isInRunsPage = useMemo(
-    () => location.pathname.includes('/runs'),
-    [location.pathname],
-  );
+
   const hasPermissionToReadRuns = useAuthorization().checkAccess(
     Permission.READ_FLOW,
   );
@@ -147,6 +144,9 @@ export const BuilderHeader = () => {
           </div>
           {!embedState.hideFlowNameInBuilder && (
             <FlowActionMenu
+              onVersionsListClick={()=>{
+                setLeftSidebar(LeftSideBarType.VERSIONS);
+              }}
               insideBuilder={true}
               flow={flow}
               flowVersion={flowVersion}
@@ -188,16 +188,7 @@ export const BuilderHeader = () => {
             </Button>
           )}
 
-          {!isInRunsPage && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-            >
-              <History className="w-4 h-4" />
-              {t('Versions')}
-            </Button>
-          )}
+      
 
           <BuilderFlowStatusSection></BuilderFlowStatusSection>
         </div>

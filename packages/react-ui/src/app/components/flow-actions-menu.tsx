@@ -4,6 +4,7 @@ import {
   Copy,
   CornerUpLeft,
   Download,
+  History,
   Import,
   Pencil,
   Share2,
@@ -44,8 +45,9 @@ import {
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
+import { useLocation } from 'react-router-dom';
 
-interface FlowActionMenuProps {
+type FlowActionMenuProps = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   children?: React.ReactNode;
@@ -54,8 +56,8 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  insideBuilder: boolean;
-}
+} & ({insideBuilder: true, onVersionsListClick: () => void} | {insideBuilder: false, onVersionsListClick: null})
+
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flow,
@@ -66,8 +68,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onMoveTo,
   onDuplicate,
   onDelete,
+  onVersionsListClick,
   insideBuilder,
 }) => {
+  const isRunsPage = useLocation().pathname.includes('/runs');
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
@@ -168,6 +172,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             )}
           </>
         )}
+       
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
           <PublishedNeededTooltip allowPush={allowPush}>
             <PushToGitDialog type="flow" flows={[flow]}>
@@ -230,6 +235,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </PermissionNeededTooltip>
         )}
 
+{insideBuilder && !isRunsPage && (
+          <DropdownMenuItem onClick={onVersionsListClick}>
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
+              <History className="h-4 w-4" />
+              <span>{t('Versions')}</span>
+            </div>
+          </DropdownMenuItem>
+        )}
         {!readonly && insideBuilder && !embedState.hideExportAndImportFlow && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
