@@ -31,10 +31,12 @@ export enum TemplateCategory {
     SALES = 'SALES',
 }
 
-export const FlowVersionTemplate = Type.Omit(
+export const FlowVersionTemplate = Type.Composite([Type.Omit(
     FlowVersion,
     ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
-)
+), Type.Object({
+    description: Type.Optional(Type.String()),
+})])
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 
 

@@ -26,7 +26,7 @@ export const templateService = () => ({
         const { name, summary, description, tags, blogUrl, metadata, author, categories, type } = params
         const newTags = tags ?? []
         const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
-        const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
+        const pieces = Array.from(new Set(sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()))
 
         switch (type) {
             case TemplateType.OFFICIAL:
@@ -61,7 +61,7 @@ export const templateService = () => ({
 
         const newTags = tags ?? []
         const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
-        const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
+        const pieces = Array.from(new Set(sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()))
         switch (template.type) {
             case TemplateType.OFFICIAL:
             case TemplateType.SHARED: {
