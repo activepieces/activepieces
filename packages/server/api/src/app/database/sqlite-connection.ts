@@ -156,7 +156,7 @@ import { RestrictOnDeleteProjectForFlowSqlite1760376811542 } from './migration/s
 import { RemoveTriggerRunEntity1760992394073 } from './migration/sqlite/1760992394073-RemoveTriggerRunEntity'
 import { RemoveProjectNotifyStatus1761056855716 } from './migration/sqlite/1761056855716-RemoveProjectNotifyStatus'
 import { DeprecateCopilotSQLITE1761223879376 } from './migration/sqlite/1761223879376-DeprecateCopilotSQLITE'
-import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761428653922-remove-agentid-from-mcp-entity' 
+import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761428653922-remove-agentid-from-mcp-entity'
 import { AddMaximumConcurrentJobsPerProjectSqlite1761499100171 } from './migration/sqlite/1761499100171-AddMaximumConcurrentJobsPerProjectSqlite'
 import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/1761574814842-RemoveTasksAndTasksLimitSqlite'
 import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
@@ -355,7 +355,6 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMcpServerSqlite1764524983756,
         AddPieceVersionToAppConnection1764856239445,
         FixFlowRunIndexes1764871079154,
-        AddUserLastActiveDate1765291224228,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
