@@ -74,6 +74,7 @@ export const webhookHandler = {
                         failParentOnFailure,
                         traceContext,
                     },
+                    dependOnJobId: parentRunId,
                 })
                 logger.info('Async webhook request completed')
                 span.setAttribute('webhook.queuedSuccessfully', true)
