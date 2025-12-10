@@ -1,17 +1,17 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, History, Logs } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, Logs } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
   createSearchParams,
-  useLocation,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
 
 import {
   LeftSideBarType,
+  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
@@ -47,7 +47,6 @@ import { BuilderFlowStatusSection } from '../builder-flow-status-section';
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
   const navigate = useNavigate();
-  const location = useLocation();
   const queryClient = useQueryClient();
   const openNewWindow = useNewWindow();
   const { data: showSupport } = flagsHooks.useFlag<boolean>(
@@ -69,12 +68,14 @@ export const BuilderHeader = () => {
     setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
+    setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
     state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
+    state.setRightSidebar,
   ]);
 
   const { embedState } = useEmbedding();
@@ -103,11 +104,11 @@ export const BuilderHeader = () => {
 
   return (
     <div className="border-b select-none">
-      <div className="relative items-center flex h-[55px] w-full p-4">
+      <div className="relative items-center flex  w-full px-4 py-3">
         <div className="flex items-center gap-2">
           {!embedState.isEmbedded && <ApSidebarToggle />}
           {embedState.isEmbedded && <HomeButton />}
-          <div className="flex gap-2 items-center">
+          <div className="flex gap-2 items-center text-lg">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (
                 <>
@@ -150,6 +151,9 @@ export const BuilderHeader = () => {
           </div>
           {!embedState.hideFlowNameInBuilder && (
             <FlowActionMenu
+              onVersionsListClick={() => {
+                setRightSidebar(RightSideBarType.VERSIONS);
+              }}
               insideBuilder={true}
               flow={flow}
               flowVersion={flowVersion}
@@ -188,17 +192,6 @@ export const BuilderHeader = () => {
             >
               <Logs className="w-4 h-4" />
               {t('Runs')}
-            </Button>
-          )}
-
-          {!isInRunsPage && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => setLeftSidebar(LeftSideBarType.VERSIONS)}
-            >
-              <History className="w-4 h-4" />
-              {t('Versions')}
             </Button>
           )}
 

@@ -1,8 +1,9 @@
 import { ExecutionMode } from '@activepieces/shared'
+import { DatabaseType } from './database-type'
 import { RedisType } from './redis/types'
 import { AppSystemProp } from './system-props'
 
-const envPrefix = (prop: string) => `AP_${prop}`
+const envPrefix = (prop: string): string => `AP_${prop}`
 
 export const environmentMigrations = {
     migrate(): Record<string, string | undefined> {
@@ -11,6 +12,7 @@ export const environmentMigrations = {
             ...process.env,
             [envPrefix(AppSystemProp.EXECUTION_MODE)]: migrateExecutionMode(getRawValue(AppSystemProp.EXECUTION_MODE)),
             [envPrefix(AppSystemProp.REDIS_TYPE)]: migrateRedisType(getRawValue(AppSystemProp.REDIS_TYPE)),
+            [envPrefix(AppSystemProp.DB_TYPE)]: migrateDbType(getRawValue(AppSystemProp.DB_TYPE)),
         }
     },
 }
@@ -28,6 +30,13 @@ function migrateExecutionMode(currentExecutionMode: string | undefined): string 
         return ExecutionMode.SANDBOX_PROCESS
     }
     return currentExecutionMode
+}
+
+function migrateDbType(currentDbType: string | undefined): string | undefined {
+    if (currentDbType === 'SQLITE3') {
+        return DatabaseType.PGLITE
+    }
+    return currentDbType
 }
 
 function getRawValue(prop: string): string | undefined {

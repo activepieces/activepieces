@@ -182,6 +182,7 @@ export const flowsTableColumns = ({
         <div onClick={(e) => e.stopPropagation()}>
           <FlowActionMenu
             insideBuilder={false}
+            onVersionsListClick={null}
             flow={flow}
             readonly={false}
             flowVersion={flow.version}

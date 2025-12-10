@@ -2,7 +2,6 @@ import { FlowTemplate, Platform, Project, User } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 type FlowTemplateSchema = FlowTemplate & {
@@ -33,7 +32,7 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
             nullable: true,
         },
         template: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
         },
         tags: {
             type: String,
@@ -48,7 +47,7 @@ export const FlowTemplateEntity = new EntitySchema<FlowTemplateSchema>({
             nullable: true,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
     },

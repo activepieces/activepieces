@@ -162,7 +162,7 @@ async function validateAction(
 
     const props = { ...action.props }
   
-    return validateProps(props, settings.input, piece.auth)
+    return validateProps(props, settings.input, piece.auth, action.requireAuth)
 }
 
 async function validateTrigger(
@@ -195,15 +195,17 @@ async function validateTrigger(
     }
     const props = { ...trigger.props } 
    
-    return validateProps(props, settings.input, piece.auth)
+    return validateProps(props, settings.input, piece.auth, trigger.requireAuth)
 }
 
 function validateProps(
     props: PiecePropertyMap,
     input: Record<string, unknown> | undefined,
     auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
+    //if require auth is not defined, we default to true, because at first all auth was required
+    requireAuth: boolean | undefined = true,
 ): ValidationResult {
-    const propsWithAuthSchema = piecePropertiesUtils.buildSchema(props, auth)
+    const propsWithAuthSchema = piecePropertiesUtils.buildSchema(props, auth,  requireAuth)
     const inputValidator = TypeCompiler.Compile(propsWithAuthSchema)
     const cleanInput = !isNil(input) ? Object.fromEntries(
         Object.keys(propsWithAuthSchema.properties).map(key => [key, input?.[key]]),
