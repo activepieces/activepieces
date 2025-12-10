@@ -60,10 +60,7 @@ export const AppearanceSection = () => {
       if (icon) formdata.append('logoIcon', icon);
       if (favicon) formdata.append('favIcon', favicon);
 
-      await platformApi.updateWithFormData(
-        formdata,
-        platform.id,
-      );
+      await platformApi.updateWithFormData(formdata, platform.id);
       window.location.reload();
     },
     onSuccess: () => {
