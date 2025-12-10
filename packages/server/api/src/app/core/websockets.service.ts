@@ -16,6 +16,7 @@ const listener = {
     [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
 }
 
+const WORKERS_ROOM = 'workers'
 
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
@@ -42,7 +43,7 @@ export const websocketService = {
                     message: 'Worker connected',
                     workerId,
                 })
-                await socket.join(workerId)
+                await socket.join([WORKERS_ROOM, workerId])
                 break
             }
             default: {
@@ -84,5 +85,8 @@ export const websocketService = {
                 break
             }
         }
+    },
+    emitWithAck<T = unknown>(event: WebsocketServerEvent, data?: unknown): Promise<T> {
+        return app!.io.to(WORKERS_ROOM).emitWithAck(event, data)
     },
 }
