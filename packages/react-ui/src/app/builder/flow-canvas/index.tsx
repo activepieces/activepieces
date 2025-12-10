@@ -244,10 +244,10 @@ export const FlowCanvas = React.memo(
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background
                 gap={30}
-                size={4}
+                size={2}
                 variant={BackgroundVariant.Dots}
-                bgColor={theme === 'dark' ? ' #1a1e23' : '#ffffff'}
-                color={theme === 'dark' ? 'rgba(77, 77, 77, 0.45)' : '#F2F2F2'}
+                bgColor={theme === 'dark' ? 'hsla(0, 0%, 9%, 1)' : 'hsla(0, 0%, 98%, 1)'}
+                color={theme === 'dark' ? 'hsla(0, 0%, 45%, 1)' : 'hsla(0, 0%, 64%, 1)'}
               />
             </ReactFlow>
           </CanvasContextMenu>
