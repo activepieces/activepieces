@@ -1,18 +1,22 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import { extractColors } from 'extract-colors';
 import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
-import { extractColors } from 'extract-colors';
 
-import { LocalesEnum, Permission, FlowTrigger, flowStructureUtil } from '@activepieces/shared';
-
-import { StepMetadata } from './types';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import {
+  LocalesEnum,
+  Permission,
+  FlowTrigger,
+  flowStructureUtil,
+} from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
+import { StepMetadata } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -396,7 +400,7 @@ export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
         if (allColors.length > 0) {
           // Create a gradient with the extracted colors
           const uniqueColors = Array.from(new Set(allColors)).slice(0, 4);
-          
+
           if (uniqueColors.length === 1) {
             // Single color - use a lighter variant gradient
             setGradient(

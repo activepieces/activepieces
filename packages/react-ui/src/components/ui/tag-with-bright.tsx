@@ -8,11 +8,11 @@ type TagWithBrightProps = {
   size?: 'sm' | 'md';
 };
 
-export const TagWithBright = ({ 
+export const TagWithBright = ({
   prefix,
-  title, 
-  color, 
-  size = 'sm' 
+  title,
+  color,
+  size = 'sm',
 }: TagWithBrightProps) => {
   return (
     <>

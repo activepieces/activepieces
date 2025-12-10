@@ -1,9 +1,10 @@
+import { t } from 'i18next';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { Template } from '@activepieces/shared';
 import { useGradientFromPieces } from '@/lib/utils';
-import { t } from 'i18next';
+import { Template } from '@activepieces/shared';
 
 type TemplateCardProps = {
   template: Template;
@@ -36,15 +37,17 @@ export const ExploreTemplateCard = ({
 
         <div className="h-8 flex gap-2 flex-wrap overflow-hidden">
           {displayTags.length > 0 ? (
-            displayTags.slice(0, 1).map((tag, index) => (
-              <TagWithBright
-                key={index}
-                prefix={t('Save')}
-                title={tag.title}
-                color={tag.color}
-                size="sm"
-              />
-            ))
+            displayTags
+              .slice(0, 1)
+              .map((tag, index) => (
+                <TagWithBright
+                  key={index}
+                  prefix={t('Save')}
+                  title={tag.title}
+                  color={tag.color}
+                  size="sm"
+                />
+              ))
           ) : (
             <div />
           )}

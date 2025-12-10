@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+import { ApProjectDisplay } from '@/app/components/ap-project-display';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -13,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -20,11 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { projectHooks } from '@/hooks/project-hooks';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { foldersApi } from '@/features/folders/lib/folders-api';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
@@ -33,7 +34,6 @@ import {
   UncategorizedFolderId,
   isNil,
 } from '@activepieces/shared';
-import { ApProjectDisplay } from '@/app/components/ap-project-display';
 
 type UseTemplateDialogProps = {
   template: Template;
@@ -74,9 +74,9 @@ export const UseTemplateDialog = ({
     mutationFn: async ({ projectId, folderId }) => {
       const flows = template.flows || [];
       const hasMultipleFlows = flows.length > 1;
-      
+
       let folderName: string | undefined;
-      
+
       if (hasMultipleFlows) {
         const newFolder = await foldersApi.create({
           displayName: template.name,
@@ -87,7 +87,7 @@ export const UseTemplateDialog = ({
         const folder = await foldersApi.get(folderId);
         folderName = folder.displayName;
       }
-      
+
       return Promise.all(
         flows.map(async (flowTemplate) => {
           const newFlow = await flowsApi.create({
@@ -95,7 +95,7 @@ export const UseTemplateDialog = ({
             projectId: projectId,
             folderName: folderName,
           });
-          
+
           return flowsApi.update(newFlow.id, {
             type: FlowOperationType.IMPORT_FLOW,
             request: {
@@ -105,7 +105,7 @@ export const UseTemplateDialog = ({
               templateId: template.id,
             },
           });
-        })
+        }),
       );
     },
     onSuccess: (flows) => {
@@ -114,7 +114,11 @@ export const UseTemplateDialog = ({
         toast.success(t('Flow created successfully'));
         navigate(`/flows/${flows[0].id}`);
       } else {
-        toast.success(t('{count} flows created successfully in a new folder', { count: flows.length }));
+        toast.success(
+          t('{count} flows created successfully in a new folder', {
+            count: flows.length,
+          }),
+        );
         navigate(`/flows`);
       }
     },
@@ -142,8 +146,13 @@ export const UseTemplateDialog = ({
           <DialogTitle>{t('Duplicate Template')}</DialogTitle>
           <DialogDescription>
             {hasMultipleFlows
-              ? t('This template includes {count} flows with all dependencies. A new folder will be created to organize them.', { count: flowCount })
-              : t('Select the project and folder where you want to duplicate this template.')}
+              ? t(
+                  'This template includes {count} flows with all dependencies. A new folder will be created to organize them.',
+                  { count: flowCount },
+                )
+              : t(
+                  'Select the project and folder where you want to duplicate this template.',
+                )}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">

@@ -64,7 +64,7 @@ export function PieceIconList({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className={className || "flex gap-2"}>
+        <div className={className || 'flex gap-2'}>
           {visibleMetadata.map((metadata) => (
             <PieceIcon
               logoUrl={metadata.logoUrl}

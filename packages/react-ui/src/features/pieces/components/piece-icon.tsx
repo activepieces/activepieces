@@ -53,7 +53,7 @@ const PieceIcon = React.memo(
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div 
+          <div
             className={cn(
               pieceIconVariants({ border, size, circle }),
               shadow && 'shadow-md',

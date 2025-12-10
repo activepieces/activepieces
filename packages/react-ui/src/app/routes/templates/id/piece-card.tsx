@@ -15,12 +15,10 @@ export const PieceCard = ({ pieceName }: PieceCardProps) => {
   return (
     <Card>
       <CardContent className="p-3 w-[180px] flex items-center gap-3">
-        <PieceIconWithPieceName
-          pieceName={pieceName}
-          size="md"
-        />
+        <PieceIconWithPieceName pieceName={pieceName} size="md" />
         <span className="text-sm font-medium">
-          {pieceModel?.displayName || formatUtils.convertEnumToHumanReadable(pieceName)}
+          {pieceModel?.displayName ||
+            formatUtils.convertEnumToHumanReadable(pieceName)}
         </span>
       </CardContent>
     </Card>

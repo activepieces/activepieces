@@ -2,8 +2,8 @@ import { t } from 'i18next';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { FlowVersionTemplate } from '@activepieces/shared';
 import { useGradientFromPieces } from '@/lib/utils';
+import { FlowVersionTemplate } from '@activepieces/shared';
 
 type FlowDependencyCardProps = {
   flow: FlowVersionTemplate;
@@ -18,7 +18,7 @@ export const FlowDependencyCard = ({ flow }: FlowDependencyCardProps) => {
         <h3 className="font-bold text-lg leading-tight line-clamp-2">
           {flow.displayName}
         </h3>
-        
+
         <p className="text-muted-foreground text-sm line-clamp-3">
           {flow.description}
         </p>
