@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared'
+import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { distributedLock } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
@@ -19,11 +19,16 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
                 limitRemaining: 0,
             }
         }
-        const response = await platformAiCreditsService(log).provisionKeyIfNeeded(platformId)
-        const usage = await openRouterGetKey(response.hash)
-        assertNotNullOrUndefined(usage.data.usage_monthly, 'Usage monthly is not set')
-        assertNotNullOrUndefined(usage.data.limit, 'Limit is not set')
-        assertNotNullOrUndefined(usage.data.limit_remaining, 'Limit remaining is not set')
+        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        if (isNil(platformPlan.openRouterApiKey) || isNil(platformPlan.openRouterApiKeyHash)) {
+            const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits)
+            return {
+                usageMonthly: 0,
+                limitMonthly: limit,
+                limitRemaining: limit,
+            }
+        }
+        const usage = await openRouterGetKey(platformPlan.openRouterApiKeyHash)
         return {
             usageMonthly: usage.data.usage_monthly * 1000,
             limitMonthly: usage.data.limit * 1000,
