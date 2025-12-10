@@ -4,7 +4,6 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
-import { commonProperties } from './database-connection'
 import 'sqlite3'
 import { AddPieceTypeAndPackageTypeToFlowVersion1696245170061 } from './migration/common/1696245170061-add-piece-type-and-package-type-to-flow-version'
 import { StoreCodeInsideFlow1697969398200 } from './migration/common/1697969398200-store-code-inside-flow'
@@ -158,7 +157,7 @@ import { RestrictOnDeleteProjectForFlowSqlite1760376811542 } from './migration/s
 import { RemoveTriggerRunEntity1760992394073 } from './migration/sqlite/1760992394073-RemoveTriggerRunEntity'
 import { RemoveProjectNotifyStatus1761056855716 } from './migration/sqlite/1761056855716-RemoveProjectNotifyStatus'
 import { DeprecateCopilotSQLITE1761223879376 } from './migration/sqlite/1761223879376-DeprecateCopilotSQLITE'
-import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761428653922-remove-agentid-from-mcp-entity' 
+import { RemoveAgentidFromMcpEntity1761428653922 } from './migration/sqlite/1761428653922-remove-agentid-from-mcp-entity'
 import { AddMaximumConcurrentJobsPerProjectSqlite1761499100171 } from './migration/sqlite/1761499100171-AddMaximumConcurrentJobsPerProjectSqlite'
 import { RemoveTasksAndTasksLimitSqlite1761574814842 } from './migration/sqlite/1761574814842-RemoveTasksAndTasksLimitSqlite'
 import { DeleteLastChangelogDismissedAtSqlite1762018344394 } from './migration/sqlite/1762018344394-DeleteLastChangelogDismissedAtSqlite'
@@ -169,7 +168,9 @@ import { RemoveFlowRunDurationSqlite1763417279729 } from './migration/sqlite/176
 import { AddProjectTypeSqlite1763896147042 } from './migration/sqlite/1763896147042-AddProjectTypeSqlite'
 import { AddFlowOperationStatusFieldSqlite1764239872251 } from './migration/sqlite/1764239872251-AddFlowOperationStatusFieldSqlite'
 import { AddMcpServerSqlite1764524983756 } from './migration/sqlite/1764524983756-AddMcpServerSqlite'
+import { AddPieceVersionToAppConnection1764856239445 } from './migration/sqlite/1764856239445-addPieceVersionToAppConnection'
 import { FixFlowRunIndexes1764871079154 } from './migration/sqlite/1764871079154-FixFlowRunIndexesSqlite'
+import { RemovePlatformSMTP1765264096034 } from './migration/sqlite/1765264096034-RemovePlatformSMTP'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -181,7 +182,7 @@ const getSqliteDatabaseInMemory = (): string => {
     return ':memory:'
 }
 
-const getSqliteDatabase = (): string => {
+export const getSqliteDatabase = (): string => {
     const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
@@ -353,9 +354,11 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         AddProjectTypeSqlite1763896147042,
         AddFlowOperationStatusFieldSqlite1764239872251,
         AddMcpServerSqlite1764524983756,
+        AddPieceVersionToAppConnection1764856239445,
         FixFlowRunIndexes1764871079154,
         AddErrorHandlingOptionsToSteps1765362243294,
         AddErrorHandlingOptionsToTemplateSteps1765362243295,
+        RemovePlatformSMTP1765264096034,
     ]
     const edition = system.getEdition()
     if (edition !== ApEdition.COMMUNITY) {
@@ -378,26 +381,17 @@ const getMigrationConfig = (): MigrationConfig => {
     }
 }
 
-const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-
-    const value: Partial<Record<ApEnvironment, boolean>> = {
-        [ApEnvironment.TESTING]: true,
-    }
-
-    return value[env] ?? false
-}
-
-
-export const createSqlLiteDataSource = (): DataSource => {
-    const migrationConfig = getMigrationConfig()
-
+/**
+ * @deprecated SQLite3 is deprecated and only exists for migration purposes. Use PGLite instead.
+ */
+export const createSqlLiteDataSourceForMigrations = (): DataSource => {
     return new DataSource({
         type: 'sqlite',
         database: getSqliteDatabase(),
-        ...migrationConfig,
-        ...commonProperties,
-        synchronize: getSynchronize(),
+        ...getMigrationConfig(),
+        entities: [],
+        subscribers: [],
+        synchronize: false,
     })
 }
 

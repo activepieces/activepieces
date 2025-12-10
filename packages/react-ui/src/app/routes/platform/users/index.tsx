@@ -73,7 +73,7 @@ export default function UsersPage() {
         <DashboardPageHeader
           title={t('Users')}
           description={t(
-            'Manage, delete, active and desactivate users on platfrom',
+            'Manage, delete, activate and deactivate users on platform',
           )}
         />
         <DataTable
@@ -144,6 +144,26 @@ export default function UsersPage() {
                   <div className="text-left">
                     {formatUtils.formatDate(new Date(row.original.created))}
                   </div>
+                );
+              },
+            },
+            {
+              accessorKey: 'lastActiveDate',
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Last Active')}
+                />
+              ),
+              cell: ({ row }) => {
+                return row.original.lastActiveDate ? (
+                  <div className="text-left">
+                    {formatUtils.formatDate(
+                      new Date(row.original.lastActiveDate),
+                    )}
+                  </div>
+                ) : (
+                  '-'
                 );
               },
             },
