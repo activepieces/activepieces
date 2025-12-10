@@ -5,6 +5,9 @@ export const jsonProcessor: ProcessorFn = (_property, value) => {
     if (isNil(value)) {
         return value
     }
+    if (value === '') {
+        return null
+    }
     try {
         if (typeof value === 'object') {
             return value
@@ -13,6 +16,6 @@ export const jsonProcessor: ProcessorFn = (_property, value) => {
     }
     catch (error) {
         console.error(error)
-        return undefined
+        return false
     }
 }
