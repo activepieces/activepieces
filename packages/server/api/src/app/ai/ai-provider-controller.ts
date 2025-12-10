@@ -10,7 +10,28 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     })
     app.get('/:id/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).getConfig(platformId, request.params.id)
+
+        const config = await aiProviderService(app.log).getConfig(platformId, request.params.id)
+      
+        if (request.principal.type === PrincipalType.USER) {
+            if (config.apiKey) {
+                const apiKey = config.apiKey
+                if (apiKey.length > 5) {
+                    const firstTwo = apiKey.substring(0, 2)
+                    const lastThree = apiKey.substring(apiKey.length - 3)
+                    const stars = '*'.repeat(apiKey.length - 5)
+                    config.apiKey = `${firstTwo}${stars}${lastThree}`
+                } else {
+                    // If the key is 5 characters or less, redact it completely for security,
+                    // as the "first 2 and last 3" rule doesn't apply cleanly.
+                    config.apiKey = '*'.repeat(apiKey.length)
+                }
+            }
+
+        }
+
+
+        return config;
     })
     app.get('/:id/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
@@ -41,7 +62,7 @@ const ListAIProviders = {
 
 const GetAIProviderConfig = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
     },
     schema: {
         params: Type.Object({
