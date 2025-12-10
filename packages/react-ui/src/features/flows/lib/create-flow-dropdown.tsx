@@ -106,7 +106,7 @@ export const CreateFlowDropdown = ({
             {t('New flow')}
           </TooltipContent>
         </Tooltip>
-        <DropdownMenuContent>
+        <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
