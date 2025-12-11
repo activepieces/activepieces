@@ -9,7 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
-import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { formatUtils } from '@/lib/utils';
 import { PopulatedFlow } from '@activepieces/shared';
@@ -122,24 +121,6 @@ export const flowsTableColumns = ({
           trigger={row.original.version.trigger}
           maxNumberOfIconsToShow={2}
         />
-      );
-    },
-  },
-  {
-    accessorKey: 'folderId',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Folder')} />
-    ),
-    cell: ({ row }) => {
-      const folderId = row.original.folderId;
-      return (
-        <div className="text-left min-w-[150px]">
-          {folderId ? (
-            <FolderBadge folderId={folderId} />
-          ) : (
-            <span>{t('Uncategorized')}</span>
-          )}
-        </div>
       );
     },
   },

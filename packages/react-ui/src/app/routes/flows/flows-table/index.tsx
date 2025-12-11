@@ -147,10 +147,7 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
           emptyStateTextTitle={t('No flows found')}
           emptyStateTextDescription={t('Create a workflow to start automating')}
           emptyStateIcon={<Workflow className="size-14" />}
-          columns={columns.filter(
-            (column) =>
-              !embedState.hideFolders || column.accessorKey !== 'folderId',
-          )}
+          columns={columns}
           page={data}
           isLoading={isLoading || isLoadingConnections}
           filters={filters}
