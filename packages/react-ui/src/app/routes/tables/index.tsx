@@ -55,48 +55,50 @@ const ApTablesPage = () => {
       id: 'select',
       accessorKey: 'select',
       header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          variant="secondary"
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-              setSelectedRows(allRows);
-            } else {
-              setSelectedRows([]);
+        <div className="flex items-center h-full">
+          <Checkbox
+            checked={
+              table.getIsAllPageRowsSelected() ||
+              table.getIsSomePageRowsSelected()
             }
-          }}
-        />
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
+              table.toggleAllPageRowsSelected(isChecked);
+              if (isChecked) {
+                const allRows = table
+                  .getRowModel()
+                  .rows.map((row) => row.original);
+                setSelectedRows(allRows);
+              } else {
+                setSelectedRows([]);
+              }
+            }}
+          />
+        </div>
       ),
       cell: ({ row }) => {
         const isChecked = selectedRows.some(
           (selectedRow) => selectedRow.id === row.original.id,
         );
         return (
-          <Checkbox
-            variant="secondary"
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                newSelectedRows.push(row.original);
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
+          <div className="flex items-center h-full">
+            <Checkbox
+              checked={isChecked}
+              onCheckedChange={(value) => {
+                const isChecked = !!value;
+                let newSelectedRows = [...selectedRows];
+                if (isChecked) {
+                  newSelectedRows.push(row.original);
+                } else {
+                  newSelectedRows = newSelectedRows.filter(
+                    (selectedRow) => selectedRow.id !== row.original.id,
+                  );
+                }
+                setSelectedRows(newSelectedRows);
+                row.toggleSelected(!!value);
+              }}
+            />
+          </div>
         );
       },
     },

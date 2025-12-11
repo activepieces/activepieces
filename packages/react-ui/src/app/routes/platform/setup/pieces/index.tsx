@@ -50,25 +50,27 @@ const PlatformPiecesPage = () => {
         {
           id: 'select',
           header: ({ table }) => (
-            <Checkbox
-              checked={
-                table.getIsAllPageRowsSelected() ||
-                (table.getIsSomePageRowsSelected() && 'indeterminate')
-              }
-              variant="secondary"
-              onCheckedChange={(value) =>
-                table.toggleAllPageRowsSelected(!!value)
-              }
-            />
+            <div className="flex items-center h-full">
+              <Checkbox
+                checked={
+                  table.getIsAllPageRowsSelected() ||
+                  (table.getIsSomePageRowsSelected() && 'indeterminate')
+                }
+                onCheckedChange={(value) =>
+                  table.toggleAllPageRowsSelected(!!value)
+                }
+              />
+            </div>
           ),
           cell: ({ row }) => (
-            <Checkbox
-              variant="secondary"
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => {
-                row.toggleSelected(!!value);
-              }}
-            />
+            <div className="flex items-center h-full">
+              <Checkbox
+                checked={row.getIsSelected()}
+                onCheckedChange={(value) => {
+                  row.toggleSelected(!!value);
+                }}
+              />
+            </div>
           ),
         },
         {

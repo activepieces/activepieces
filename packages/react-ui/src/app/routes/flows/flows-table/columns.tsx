@@ -38,39 +38,40 @@ export const flowsTableColumns = ({
   {
     id: 'select',
     header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected()
-        }
-        variant="secondary"
-        onCheckedChange={(value) => {
-          const isChecked = !!value;
-          table.toggleAllPageRowsSelected(isChecked);
-
-          if (isChecked) {
-            const allRowIds = table
-              .getRowModel()
-              .rows.map((row) => row.original);
-
-            const newSelectedRowIds = [...allRowIds, ...selectedRows];
-
-            const uniqueRowIds = Array.from(
-              new Map(
-                newSelectedRowIds.map((item) => [item.id, item]),
-              ).values(),
-            );
-
-            setSelectedRows(uniqueRowIds);
-          } else {
-            const filteredRowIds = selectedRows.filter((row) => {
-              return !table
-                .getRowModel()
-                .rows.some((r) => r.original.version.id === row.version.id);
-            });
-            setSelectedRows(filteredRowIds);
+      <div className="flex items-center h-full">
+        <Checkbox
+          checked={
+            table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected()
           }
-        }}
-      />
+          onCheckedChange={(value) => {
+            const isChecked = !!value;
+            table.toggleAllPageRowsSelected(isChecked);
+
+            if (isChecked) {
+              const allRowIds = table
+                .getRowModel()
+                .rows.map((row) => row.original);
+
+              const newSelectedRowIds = [...allRowIds, ...selectedRows];
+
+              const uniqueRowIds = Array.from(
+                new Map(
+                  newSelectedRowIds.map((item) => [item.id, item]),
+                ).values(),
+              );
+
+              setSelectedRows(uniqueRowIds);
+            } else {
+              const filteredRowIds = selectedRows.filter((row) => {
+                return !table
+                  .getRowModel()
+                  .rows.some((r) => r.original.version.id === row.version.id);
+              });
+              setSelectedRows(filteredRowIds);
+            }
+          }}
+        />
+      </div>
     ),
     cell: ({ row }) => {
       const isChecked = selectedRows.some(
@@ -79,28 +80,29 @@ export const flowsTableColumns = ({
           selectedRow.status === row.original.status,
       );
       return (
-        <Checkbox
-          variant="secondary"
-          checked={isChecked}
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            let newSelectedRows = [...selectedRows];
-            if (isChecked) {
-              const exists = newSelectedRows.some(
-                (selectedRow) => selectedRow.id === row.original.id,
-              );
-              if (!exists) {
-                newSelectedRows.push(row.original);
+        <div className="flex items-center h-full">
+          <Checkbox
+            checked={isChecked}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
+              let newSelectedRows = [...selectedRows];
+              if (isChecked) {
+                const exists = newSelectedRows.some(
+                  (selectedRow) => selectedRow.id === row.original.id,
+                );
+                if (!exists) {
+                  newSelectedRows.push(row.original);
+                }
+              } else {
+                newSelectedRows = newSelectedRows.filter(
+                  (selectedRow) => selectedRow.id !== row.original.id,
+                );
               }
-            } else {
-              newSelectedRows = newSelectedRows.filter(
-                (selectedRow) => selectedRow.id !== row.original.id,
-              );
-            }
-            setSelectedRows(newSelectedRows);
-            row.toggleSelected(!!value);
-          }}
-        />
+              setSelectedRows(newSelectedRows);
+              row.toggleSelected(!!value);
+            }}
+          />
+        </div>
       );
     },
     accessorKey: 'select',
