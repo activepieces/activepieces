@@ -1,33 +1,16 @@
 import { t } from 'i18next';
-import React from 'react';
-import { ControllerRenderProps, useFormContext } from 'react-hook-form';
+import { ControllerRenderProps } from 'react-hook-form';
 
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
+import { MultiSelectPieceProperty } from '@/components/custom/multi-select-piece-property';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { ColorPicker } from '@/components/ui/color-picker';
-import { FormControl, FormField } from '@/components/ui/form';
+import { FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { AgentTools } from '@/features/agents/agent-tools';
-import { AgentStructuredOutput } from '@/features/agents/structured-output';
-import {
-  OAuth2Props,
-  PieceProperty,
-  PiecePropertyMap,
-  PropertyType,
-  ArraySubProps,
-} from '@activepieces/pieces-framework';
-import {
-  AgentPieceProps,
-  FlowActionType,
-  FlowTriggerType,
-  isNil,
-  PropertyExecutionType,
-  Step,
-} from '@activepieces/shared';
-
-import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
+import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
@@ -38,78 +21,7 @@ import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property'
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
-type AutoFormProps = {
-  props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
-  allowDynamicValues: boolean;
-  prefixValue: string;
-  markdownVariables?: Record<string, string>;
-  useMentionTextInput: boolean;
-  disabled?: boolean;
-  onValueChange?: (val: { value: unknown; propertyName: string }) => void;
-};
-
-const AutoPropertiesFormComponent = React.memo(
-  ({
-    markdownVariables,
-    props,
-    allowDynamicValues,
-    prefixValue,
-    disabled,
-    useMentionTextInput,
-    onValueChange,
-  }: AutoFormProps) => {
-    const form = useFormContext();
-    const step = form.getValues() as Step;
-
-    return (
-      Object.keys(props).length > 0 && (
-        <div className="flex flex-col gap-4 w-full">
-          {Object.entries(props).map(([propertyName]) => {
-            const isPieceStep =
-              step.type === FlowActionType.PIECE ||
-              step.type === FlowTriggerType.PIECE;
-            const dynamicInputModeToggled = isPieceStep
-              ? step.settings.propertySettings[propertyName]?.type ===
-                PropertyExecutionType.DYNAMIC
-              : false;
-            return (
-              <FormField
-                key={propertyName}
-                name={`${prefixValue}.${propertyName}`}
-                control={form.control}
-                render={({ field }) =>
-                  selectFormComponentForProperty({
-                    field: {
-                      ...field,
-                      onChange: (value) => {
-                        field.onChange(value);
-                        //must come after because the form value won't be updated yet otherwise
-                        onValueChange?.({
-                          value,
-                          propertyName,
-                        });
-                      },
-                    },
-                    propertyName,
-                    inputName: `${prefixValue}.${propertyName}`,
-                    property: props[propertyName],
-                    allowDynamicValues,
-                    markdownVariables: markdownVariables ?? {},
-                    useMentionTextInput: useMentionTextInput,
-                    disabled: disabled ?? false,
-                    dynamicInputModeToggled,
-                  })
-                }
-              />
-            );
-          })}
-        </div>
-      )
-    );
-  },
-);
-
-type selectFormComponentForPropertyParams = {
+export type SelectGenericFormComponentForPropertyParams = {
   field: ControllerRenderProps<Record<string, any>, string>;
   propertyName: string;
   inputName: string;
@@ -121,7 +33,7 @@ type selectFormComponentForPropertyParams = {
   dynamicInputModeToggled: boolean;
 };
 
-export const selectFormComponentForProperty = ({
+export const selectGenericFormComponentForProperty = ({
   field,
   propertyName,
   inputName,
@@ -131,18 +43,7 @@ export const selectFormComponentForProperty = ({
   useMentionTextInput,
   disabled,
   dynamicInputModeToggled,
-}: selectFormComponentForPropertyParams) => {
-  if (propertyName === AgentPieceProps.AGENT_TOOLS) {
-    return <AgentTools disabled={disabled} agentToolsField={field} />;
-  } else if (propertyName === AgentPieceProps.STRUCTURED_OUTPUT) {
-    return (
-      <AgentStructuredOutput
-        disabled={disabled}
-        structuredOutputField={field}
-      />
-    );
-  }
-
+}: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
       return (
@@ -376,5 +277,3 @@ export const selectFormComponentForProperty = ({
       );
   }
 };
-AutoPropertiesFormComponent.displayName = 'AutoFormComponent';
-export { AutoPropertiesFormComponent };
