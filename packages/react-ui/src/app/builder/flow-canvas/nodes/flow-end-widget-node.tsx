@@ -8,7 +8,7 @@ import FlowEndWidget from '../widgets/flow-end-widget';
 const ApGraphEndWidgetNode = ({ data }: Omit<ApGraphEndNode, 'position'>) => {
   return (
     <>
-      <div className="h-px w-px relative">
+      <div className="h-px w-px relative ">
         {data.showWidget && (
           <FlowEndWidget></FlowEndWidget>
         )}
