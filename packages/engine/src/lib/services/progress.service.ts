@@ -127,7 +127,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
                 ignoreInternalError: false,
             }) ? dayjs().toISOString() : undefined,
             tags: Array.from(flowExecutorContext.tags),
-            executedStepsCount: flowExecutorContext.executedStepsCount,
+            stepsCount: flowExecutorContext.stepsCount,
         }
 
    
