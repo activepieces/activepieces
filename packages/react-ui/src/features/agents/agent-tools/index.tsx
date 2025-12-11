@@ -28,7 +28,7 @@ export const AgentTools = ({ disabled, agentToolsField }: AgentToolsProps) => {
     const newTools = tools.filter((tool) =>
       tool.type === AgentToolType.PIECE
         ? !toolIds.includes(tool.toolName)
-        : !toolIds.includes(tool.flowId),
+        : !toolIds.includes(tool.externalFlowId),
     );
     onToolsUpdate(newTools);
   };
@@ -45,7 +45,7 @@ export const AgentTools = ({ disabled, agentToolsField }: AgentToolsProps) => {
     const key =
       tool.type === AgentToolType.PIECE
         ? tool.pieceMetadata?.pieceName
-        : tool.flowId;
+        : tool.externalFlowId;
 
     if (key) {
       acc[key] = acc[key] || [];

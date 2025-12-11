@@ -48,12 +48,15 @@ export const FlowDialogContent = ({
   const handleSelectFlow = (flowTool: AgentFlowTool) => {
     setSelectedFlows((prev: AgentFlowTool[]) => {
       const alreadyExists = prev.find(
-        (prevTool) => flowTool.flowId === prevTool.flowId,
+        (prevTool) => flowTool.externalFlowId === prevTool.externalFlowId,
       )
         ? true
         : false;
       const newSelected = alreadyExists
-        ? prev.filter((tool: AgentFlowTool) => tool.flowId !== flowTool.flowId)
+        ? prev.filter(
+            (tool: AgentFlowTool) =>
+              tool.externalFlowId !== flowTool.externalFlowId,
+          )
         : [...prev, flowTool];
       return newSelected;
     });
@@ -75,15 +78,16 @@ export const FlowDialogContent = ({
                   className={`border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg relative ${
                     !isSelectable ? 'opacity-50' : ''
                   } ${
-                    selectedFlows.find((tool) => tool.flowId === flow.id)
+                    selectedFlows.find(
+                      (tool) => tool.externalFlowId === flow.externalId,
+                    )
                       ? 'bg-accent'
                       : ''
                   }`}
                   onClick={() =>
                     isSelectable &&
                     handleSelectFlow({
-                      externalId: flow.externalId,
-                      flowId: flow.id,
+                      externalFlowId: flow.externalId,
                       toolName: `${flow.version.displayName}_${flow.id}`,
                       type: AgentToolType.FLOW,
                     })
@@ -91,15 +95,16 @@ export const FlowDialogContent = ({
                 >
                   <Checkbox
                     checked={
-                      selectedFlows.find((tool) => tool.flowId === flow.id)
+                      selectedFlows.find(
+                        (tool) => tool.externalFlowId === flow.externalId,
+                      )
                         ? true
                         : false
                     }
                     onCheckedChange={() =>
                       isSelectable &&
                       handleSelectFlow({
-                        externalId: flow.externalId,
-                        flowId: flow.id,
+                        externalFlowId: flow.externalId,
                         toolName: `${flow.version.displayName}_${flow.id}`,
                         type: AgentToolType.FLOW,
                       })

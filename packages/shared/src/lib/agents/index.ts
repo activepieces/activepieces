@@ -86,7 +86,7 @@ export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
         ...ToolCallBaseSchema.properties,
         toolCallType: Type.Literal(ToolCallType.FLOW),
         displayName: Type.String(),
-        flowId: Type.String(),
+        externalFlowId: Type.String(),
     }),
 ])
 

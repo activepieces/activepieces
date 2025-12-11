@@ -1,6 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
 import { DiscriminatedUnion } from '../common'
-import { ApId } from '../common/id-generator'
 
 export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
 
@@ -31,8 +30,7 @@ export type AgentPieceTool = Static<typeof AgentPieceTool>
 export const AgentFlowTool = Type.Object({
     type: Type.Literal(AgentToolType.FLOW),
     ...AgentToolBase,
-    flowId: ApId,
-    externalId: Type.String(),
+    externalFlowId: Type.String(),
 })
 export type AgentFlowTool = Static<typeof AgentFlowTool>
 

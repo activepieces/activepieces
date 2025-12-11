@@ -45,12 +45,12 @@ export const agentCommon = {
                 }
             }
             case AgentToolType.FLOW: {
-                assertNotNullOrUndefined(tool.flowId, 'Flow ID is required')
+                assertNotNullOrUndefined(tool.externalFlowId, 'Flow ID is required')
                 return {
                     ...baseTool,
                     toolCallType: ToolCallType.FLOW,
                     displayName: tool.toolName,
-                    flowId: tool.flowId,
+                    externalFlowId: tool.externalFlowId,
                 }
             }
         }
@@ -85,11 +85,11 @@ export const agentCommon = {
     },
     async constructFlowsTools(params: ConstructFlowsTools) {
         const flowTools = params.agentToolsMetadata.filter(tool => tool.type === AgentToolType.FLOW)
-        const flowExternalIds = flowTools.map((tool) => tool.externalId)
+        const flowExternalIds = flowTools.map((tool) => tool.externalFlowId)
         const flows = await params.fetchFlows({ externalIds: flowExternalIds })
 
         const flowToolsWithPopulatedFlows = flowTools.map((tool) => {
-            const populatedFlow = flows.data.find(f => f.externalId === tool.externalId);
+            const populatedFlow = flows.data.find(f => f.externalId === tool.externalFlowId);
             return !isNil(populatedFlow) ? { ...tool, flow: populatedFlow } : undefined
         }).filter(tool => !isNil(tool));
 
@@ -110,7 +110,7 @@ export const agentCommon = {
                 inputSchema: z.object(inputSchema),
                 execute: async (_inputs: unknown) => {
                     return runMcpFlowTool({
-                        flowId: tool.flowId,
+                        flowId: tool.flow.id,
                         publicUrl: params.publicUrl,
                         token: params.token,
                         async: !returnsResponse

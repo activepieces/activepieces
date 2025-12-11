@@ -44,12 +44,8 @@ export const runAgent = createAction({
           displayName: 'Piece Metadata',
           required: false,
         }),
-        flowId: Property.ShortText({
-          displayName: 'Flow Id',
-          required: false
-        }),
-        externalId: Property.ShortText({
-          displayName: 'External Id',
+        externalFlowId: Property.ShortText({
+          displayName: 'External Flow Id',
           required: false
         })
       }
