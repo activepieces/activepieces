@@ -12,7 +12,7 @@ async function calcMemory(memLimitPath: string, memUsagePath: string) {
         const exists = await fileSystemUtils.fileExists(memLimitPath) && await fileSystemUtils.fileExists(memUsagePath)
         if (!exists) return null
         const memLimit = await fs.promises.readFile(memLimitPath, 'utf8')
-        if (memLimit === 'max') return null
+        if (memLimit.trim() === 'max') return null
         const memUsage = await fs.promises.readFile(memUsagePath, 'utf8')
         return {
             totalRamInBytes: parseInt(memLimit),
