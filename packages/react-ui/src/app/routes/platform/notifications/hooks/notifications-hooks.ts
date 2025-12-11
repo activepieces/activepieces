@@ -6,7 +6,7 @@ import semver from 'semver';
 import { useSocket } from '@/components/socket-provider';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApEdition, ApFlagId } from '@activepieces/shared';
+import { ApEdition, ApFlagId, ApVersion, isNil } from '@activepieces/shared';
 
 export interface Message {
   title: string;
@@ -18,10 +18,10 @@ export interface Message {
 
 export const notificationHooks = {
   useNotifications: () => {
-    const { data: currentVersion } = flagsHooks.useFlag<string>(
+    const { data: currentVersion } = flagsHooks.useFlag<ApVersion>(
       ApFlagId.CURRENT_VERSION,
     );
-    const { data: latestVersion } = flagsHooks.useFlag<string>(
+    const { data: latestVersion } = flagsHooks.useFlag<ApVersion>(
       ApFlagId.LATEST_VERSION,
     );
     const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -59,14 +59,34 @@ export const notificationHooks = {
     const notifications = useMemo(() => {
       const allMessages: Message[] = [];
 
-      const isVersionUpToDate = semver.gte(currentVersion!, latestVersion!);
+      const isVersionUpToDate = semver.gte(
+        currentVersion!.version,
+        latestVersion!.version,
+      );
 
       if (!isVersionUpToDate) {
         allMessages.push({
           title: t('Update Available'),
-          description: `Version ${latestVersion} is now available. Update to get the latest features and security improvements.`,
+          description: `Version ${
+            latestVersion!.version
+          } is now available. Update to get the latest features and security improvements.`,
           actionText: t('Update Now'),
           actionLink: '/platform/infrastructure/health',
+        });
+      }
+
+      const isUsingRcVersion = !isNil(currentVersion?.rcVersion);
+      if (isUsingRcVersion) {
+        allMessages.push({
+          title: t('Using RC Version'),
+          description: `You are using a release candidate version of Activepieces (${
+            currentVersion!.version
+          }-rc.${
+            currentVersion!.rcVersion
+          }). This version is not yet stable and may contain bugs or breaking changes.`,
+          actionText: t('Learn More'),
+          actionLink: 'https://activepieces.com/docs/release-notes',
+          type: 'default',
         });
       }
 
