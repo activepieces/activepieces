@@ -301,7 +301,11 @@ import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-Ad
 import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
+import { RemovePlatformSMTP1764945141702 } from './migration/postgres/1764945141702-RemovePlatformSMTP'
+import { AddPersonalProjectsForAllUsers1765107860778 } from './migration/postgres/1765107860778-AddPersonalProjectsForAllUsers'
 import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
+import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308234291-MigrateSqliteToPglite'
+import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -313,7 +317,7 @@ const getSslConfig = (): boolean | TlsOptions => {
     return false
 }
 
-const getMigrations = (): (new () => MigrationInterface)[] => {
+export const getMigrations = (): (new () => MigrationInterface)[] => {
     const migrations = [
         FlowAndFileProjectId1674788714498,
         initializeSchema1676238396411,
@@ -618,8 +622,12 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         DropProjectIdFromPieceMetadata1764866386989,
         UnifyCommunityWithEnterprise1764867709704,
         AddMcpServer1764606838149,
+        RemovePlatformSMTP1764945141702,
         AddOpenRouterKeyToPlatformPlan1765109187883,
         AddPieceVersionToAppConnection1764841091811,
+        AddPersonalProjectsForAllUsers1765107860778,
+        MigrateSqliteToPglite1765308234291,
+        AddLastActiveToUser1765325909187,
     ]
     return migrations
 }

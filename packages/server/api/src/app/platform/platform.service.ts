@@ -115,7 +115,6 @@ export const platformService = {
             ),
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
-            smtp: params.smtp,
         }
         if (!isNil(params.plan)) {
             await platformPlanService(system.globalLogger()).update({
@@ -210,6 +209,9 @@ type NewPlatform = Omit<Platform, 'created' | 'updated'>
 type UpdateParams = UpdatePlatformRequestBody & {
     id: PlatformId
     plan?: Partial<PlatformPlanLimits>
+    logoIconUrl?: string
+    fullLogoUrl?: string
+    favIconUrl?: string
 }
 
 type ListPlatformsForIdentityParams = {

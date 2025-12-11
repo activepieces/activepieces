@@ -116,6 +116,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                 inputName="settings.input.auth"
                 allowDynamicValues={!params.isTrigger}
                 dynamicInputModeToggled={dynamicInputModeToggled}
+                isForConnectionSelect={true}
               >
                 <CreateOrEditConnectionDialog
                   reconnectConnection={reconnectConnection}

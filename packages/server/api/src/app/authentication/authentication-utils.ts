@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, EnginePrincipal, ErrorCode, isNil, PrincipalType, Project, ServicePrincipal, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserPrincipal, UserStatus } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApEnvironment, AuthenticationResponse, EndpointScope, EnginePrincipal, ErrorCode, isNil, PrincipalType, Project, ServicePrincipal, TelemetryEventName, User, UserIdentity, UserIdentityProvider, UserPrincipal, UserStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
 import { telemetry } from '../helper/telemetry.utils'
@@ -35,6 +35,7 @@ export const authenticationUtils = {
         const projects = await projectService.getAllForUser({
             platformId: params.platformId,
             userId: params.userId,
+            scope: params.scope,
         })
         const project = isNil(params.projectId) ? projects?.[0] : projects.find((project) => project.id === params.projectId)
         if (isNil(project)) {
@@ -179,7 +180,7 @@ export const authenticationUtils = {
                     body: JSON.stringify({ email: identity.email }),
                 },
             )
-            return await response.json()
+            await response.json()
         }
         catch (error) {
             log.warn(error)
@@ -223,4 +224,5 @@ type GetProjectAndTokenParams = {
     userId: string
     platformId: string
     projectId: string | null
+    scope?: EndpointScope
 }
