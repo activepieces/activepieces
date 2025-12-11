@@ -3,41 +3,15 @@ import { greenptAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-interface ChatCompletionResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: Array<{
-    index: number;
-    message: {
-      role: string;
-      content: string;
-      reasoning_content: string | null;
-      tool_calls: Array<unknown>;
-    };
-    logprobs: null;
-    finish_reason: string;
-    stop_reason: number;
-  }>;
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-    prompt_tokens_details: null;
-  };
-  prompt_logprobs: null;
-}
-
 export const chatCompletion = createAction({
   auth: greenptAuth,
   name: 'chatCompletion',
-  displayName: 'Chat Completion',
-  description: 'Send a message to GreenPT and get a chat completion response',
+  displayName: 'Ask GreenPT',
+  description: '',
   props: {
     model: Property.StaticDropdown({
       displayName: 'Model',
-      description: 'The model to use for chat completion',
+      description: 'The model to use ',
       required: true,
       options: {
         disabled: false,
@@ -61,18 +35,14 @@ export const chatCompletion = createAction({
         ],
       },
     }),
-    messages: Property.Array({
+    messages: Property.LongText({
       displayName: 'Message',
-      description: 'Array of messages to send to GreenPT',
+      description: 'Message to send',
       required: true,
     }),
   },
   async run(context) {
     const { model, messages } = context.propsValue;
-    const formattedMessages = messages.map((msg: any) => ({
-      role: 'user',
-      content: msg,
-    }));
 
     const response = await makeRequest(
       context.auth.secret_text,
@@ -80,11 +50,11 @@ export const chatCompletion = createAction({
       '/chat/completions',
       {
         model,
-        messages: formattedMessages,
+        messages: [{ role: 'user', content: messages }],
         stream: false,
       }
     );
 
-    return response;
+    return response.choices[0].message.content;
   },
 });
