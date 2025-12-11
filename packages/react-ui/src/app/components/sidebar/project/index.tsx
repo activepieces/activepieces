@@ -1,8 +1,6 @@
-import { Settings, User } from 'lucide-react';
-import { useState } from 'react';
+import { User } from 'lucide-react';
 
 import {
-  PlatformRole,
   PROJECT_COLOR_PALETTE,
   ProjectType,
   ProjectWithLimits,
@@ -23,10 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformHooks } from '@/hooks/platform-hooks';
-import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import { ProjectSettingsDialog } from '../../project-settings';
 import { PERSONAL_PROJECT_NAME } from '@/hooks/project-hooks';
 
 type ProjectSideBarItemProps = {
@@ -41,29 +36,6 @@ const ProjectSideBarItem = ({
   handleProjectSelect,
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsInitialTab, setSettingsInitialTab] = useState<
-    'general' | 'members' | 'alerts' | 'pieces' | 'environment'
-  >('general');
-  const { platform } = platformHooks.useCurrentPlatform();
-  const { data: user } = userHooks.useCurrentUser();
-
-  const getFirstAvailableTab = ():
-    | 'general'
-    | 'members'
-    | 'alerts'
-    | 'pieces'
-    | 'environment' => {
-    const hasGeneralSettings =
-      project.type === ProjectType.TEAM ||
-      (platform.plan.embeddingEnabled && user?.platformRole === PlatformRole.ADMIN);
-
-    if (hasGeneralSettings) return 'general';
-    return 'pieces';
-  };
-
-  const showSettings = !platform.plan.embeddingEnabled
-
   const projectAvatar =
     project.type === ProjectType.TEAM ? (
       <Avatar
@@ -128,34 +100,11 @@ const ProjectSideBarItem = ({
                   projectType={project.type}
                 />
               </div>
-              <div className="flex items-center gap-1">
-                {showSettings && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover/project:opacity-100 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSettingsInitialTab(getFirstAvailableTab());
-                      setSettingsOpen(true);
-                    }}
-                  >
-                    <Settings className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-              </div>
             </div>
           </SidebarMenuButton>
         )}
       </SidebarMenuItem>
-      <ProjectSettingsDialog
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        initialTab={settingsInitialTab}
-        initialValues={{
-          projectName: project?.displayName,
-        }}
-      />
+
     </>
   );
 };
