@@ -15,7 +15,6 @@ import { useLocation } from 'react-router-dom';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   DataTable,
   RowDataWithActions,
@@ -156,75 +155,6 @@ function TodosPage() {
 
   const columns: ColumnDef<RowDataWithActions<PopulatedTodo>, unknown>[] = [
     {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          variant="secondary"
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-
-              const newSelectedRows = [...allRows, ...selectedRows];
-
-              const uniqueRows = Array.from(
-                new Map(
-                  newSelectedRows.map((item) => [item.id, item]),
-                ).values(),
-              );
-
-              setSelectedRows(uniqueRows);
-            } else {
-              const filteredRows = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.id === row.id);
-              });
-              setSelectedRows(filteredRows);
-            }
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <Checkbox
-            variant="secondary"
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
-      accessorKey: 'select',
-    },
-    {
       accessorKey: 'title',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Title')} />
@@ -356,6 +286,8 @@ function TodosPage() {
           setSelectedTask(row);
           setDrawerOpen(true);
         }}
+        selectColumn={true}
+        onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
       />
       {selectedTask && (

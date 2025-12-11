@@ -1,6 +1,7 @@
 import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -127,7 +128,10 @@ export const ProjectDashboardPageHeader = ({
                       <Lock className="w-4 h-4" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>This is your private project. Only you can see and access it.</p>
+                      <p>
+                        This is your private project. Only you can see and
+                        access it.
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
