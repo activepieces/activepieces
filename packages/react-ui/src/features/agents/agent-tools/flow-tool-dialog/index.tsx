@@ -54,7 +54,7 @@ export function AgentFlowToolDialog({
   const { data: flows } = useQuery({
     queryKey: ['flows', projectId],
     queryFn: async () => {
-      const flows = await flowsApi
+      const flows = flowsApi
         .list({
           cursor: undefined,
           limit: 1000,

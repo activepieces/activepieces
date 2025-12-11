@@ -28,7 +28,7 @@ export const AgentFlowTool = ({
   return (
     <Card key={`flow-${tool.toolName}`}>
       <CardContent className="flex items-center justify-between p-3 min-h-[48px]">
-        <div className="flex items-center gap-3 min-w-0 group cursor-pointer">
+        <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
             <Workflow className="h-5 w-5 text-muted-foreground" />
           </div>
