@@ -1,12 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import {
-  ArrowDownZA,
-  ArrowUpAz,
-  Folder,
-  Shapes,
-  TableProperties,
-} from 'lucide-react';
+import { ArrowDownZA, ArrowUpAz, Folder, Shapes, TableProperties } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
