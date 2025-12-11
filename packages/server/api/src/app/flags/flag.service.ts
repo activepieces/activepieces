@@ -1,5 +1,5 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil, TemplateCategory } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
@@ -11,7 +11,7 @@ import { defaultTheme } from './theme'
 const flagRepo = repoFactory(FlagEntity)
 
 export const flagService = {
-    save: async (flag: { id: string, value: unknown }): Promise<Flag> => {
+    save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
             value: flag.value,
@@ -290,4 +290,16 @@ function getSupportedAppWebhooks(): string[] {
     }
     const parsed = webhookSecretsUtils.parseWebhookSecrets(webhookSecrets)
     return Object.keys(parsed)
+}
+
+export type FlagType =
+    | BaseFlagStructure<ApFlagId.PUBLIC_URL, string>
+    | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
+    | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
+    | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
+    | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, TemplateCategory[]>
+
+type BaseFlagStructure<K extends ApFlagId, V> = {
+    id: K
+    value: V
 }
