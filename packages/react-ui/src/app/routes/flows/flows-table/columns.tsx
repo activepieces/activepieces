@@ -8,6 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { FolderBadge } from '@/features/folders/component/folder-badge';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
@@ -107,8 +112,17 @@ export const flowsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Name')} />
     ),
     cell: ({ row }) => {
-      const status = row.original.version.displayName;
-      return <div className="text-left">{status}</div>;
+      const displayName = row.original.version.displayName;
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="text-left truncate">{displayName}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{displayName}</p>
+          </TooltipContent>
+        </Tooltip>
+      );
     },
   },
   {
