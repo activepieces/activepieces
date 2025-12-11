@@ -67,7 +67,6 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         await redisConnection.expire(globalAlertsKey, DAY_IN_SECONDS)
 
         await sendAlertOnFlowFailure(log, alertsInfo)
-        await scheduleIssuesSummary(log, alertsInfo)
     },
     async add({ projectId, channel, receiver }: AddPrams): Promise<void> {
         const alertId = apId()
@@ -120,14 +119,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         await repo().delete({
             id: alertId,
         })
-    },
-    async runScheduledReminderJob(data: SystemJobData<SystemJobName.ISSUES_SUMMARY>): Promise<void> {
-        await emailService(log).sendIssuesSummary({
-            projectId: data.projectId,
-            projectName: data.projectName,
-            platformId: data.platformId,
-        })
-    },
+    }
 })
 
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
@@ -142,25 +134,6 @@ async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParam
         ...params,
         issueOrRunsPath: issueUrl,
         isIssue: true,
-    })
-}
-
-async function scheduleIssuesSummary(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
-    const endOfDay = dayjs().endOf('day')
-    await systemJobsSchedule(log).upsertJob({
-        job: {
-            name: SystemJobName.ISSUES_SUMMARY,
-            data: {
-                projectId: params.projectId,
-                platformId: params.platformId,
-                projectName: params.projectName,
-            },
-            jobId: `issues-reminder-${params.projectId}`,
-        },
-        schedule: {
-            type: 'one-time',
-            date: endOfDay,
-        },
     })
 }
 
