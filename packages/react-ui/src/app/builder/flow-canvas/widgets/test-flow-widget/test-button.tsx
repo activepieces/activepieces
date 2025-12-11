@@ -53,8 +53,9 @@ const TestButton = ({
         <div className='bg-builder-background'>
       <Button
           variant="ghost"
-          className="h-8 bg-primary-100/50! text-primary disabled:pointer-events-auto hover:border-primary! hover:text-primary-300! border-primary/50 border border-solid rounded-lg animate-fade"
+          className="h-8 bg-primary-100/50! dark:text-primary-foreground  text-primary hover:text-primary disabled:pointer-events-auto hover:border-primary!  border-primary/50 border border-solid rounded-lg animate-fade"
           loading={loading}
+          disabled={disabled}
           onClick={onClick}
         >
           <div className="flex justify-center items-center gap-2">

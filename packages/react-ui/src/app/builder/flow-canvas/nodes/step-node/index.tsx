@@ -14,7 +14,7 @@ import {
 import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
-import { SelectedNodeTopBorder, StepNodeChevron, StepNodeDisplayName, StepNodeLogo, StepNodeName } from './utils';
+import { StepNodeChevron, StepNodeDisplayName, StepNodeLogo, StepNodeName, Triggerwidget } from './utils';
 
 
 const ApStepCanvasNode = React.memo(
@@ -85,6 +85,7 @@ const ApStepCanvasNode = React.memo(
             'border-none': isDragging,
             'shadow-none': isDragging,
             'bg-accent/90': isSkipped,
+            'rounded-tl-none': isTrigger,
           },
         )}
         onClick={(e) => handleStepClick(e)}
@@ -93,8 +94,7 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivAttributes}
         {...stepNodeDivListeners}
       >
-         <SelectedNodeTopBorder isSelected={isSelected} isDragging={isDragging}/>
-          
+        {isTrigger && <Triggerwidget />}
         <StepNodeName stepName={step.name} />
        
         <div className="px-3 h-full w-full overflow-hidden">
