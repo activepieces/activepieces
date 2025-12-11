@@ -36,7 +36,6 @@ export function SelectCell({
   rowIndex: number;
   onClick?: () => void;
 }) {
-  // Always unlocked: show select checkbox, never locked state.
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
   return (
     <div
