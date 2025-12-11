@@ -17,11 +17,7 @@ type IncompleteSettingsButtonProps = {
   flowVersion: FlowVersion;
   selectStepByName: BuilderState['selectStepByName'];
 };
-const filterValidOrSkippedSteps = (step: Step) =>
-  (flowStructureUtil.isTrigger(step.type) && !step.valid) ||
-  (flowStructureUtil.isAction(step.type) &&
-    !(step as FlowAction).skip &&
-    !step.valid);
+
 const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
   flowVersion,
   selectStepByName,
@@ -66,3 +62,7 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 
 IncompleteSettingsButton.displayName = 'IncompleteSettingsButton';
 export default IncompleteSettingsButton;
+function filterValidOrSkippedSteps(step: Step) {
+ if((step as FlowAction).skip) return false;
+ return !step.valid;
+}

@@ -1,29 +1,18 @@
-import { t } from 'i18next';
-import { RouteOff } from 'lucide-react';
 import { useMemo } from 'react';
-
-import { InvalidStepIcon } from '@/components/custom/alert-icon';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
-import { flowStructureUtil } from '@activepieces/shared';
-
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { cn } from '@/lib/utils';
 
 const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
-  const [run, loopIndexes, flowVersion, step] = useBuilderStateContext(
+  const [run, loopIndexes, flowVersion] = useBuilderStateContext(
     (state) => [
       state.run,
       state.loopsIndexes,
       state.flowVersion,
-      flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
     ],
   );
-
   const stepStatusInRun = useMemo(() => {
     return flowCanvasUtils.getStepStatus(
       stepName,
@@ -32,41 +21,21 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
       flowVersion,
     );
   }, [stepName, run, loopIndexes, flowVersion]);
-  const isSkipped = flowCanvasUtils.isSkipped(stepName, flowVersion.trigger);
-
+  if(!stepStatusInRun) return null;
+  const { variant, text } = flowRunUtils.getStatusIconForStep(stepStatusInRun);
   return (
-    <div className="w-4 flex mt-0.5 items-center justify-center h-[20px]">
-      {stepStatusInRun && (
+    <div className={cn("flex gap-1 items-center justify-center px-2  rounded-md absolute right-[1px] text-sm h-[20px] -top-[25px]", {
+      'hidden': !stepStatusInRun,
+      'text-green-800 bg-green-100 border border-green-200': variant === 'success',
+      'text-red-800 bg-red-100 border border-red-200': variant === 'error',
+      'bg-background border border-border text-foreground': variant === 'default',
+    })}>
         <StepStatusIcon
           status={stepStatusInRun}
-          size="4"
-          runStatus={run?.status}
+          size="3"
+          hideTooltip={true}
         ></StepStatusIcon>
-      )}
-      {isSkipped && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <RouteOff className="w-4 h-4"> </RouteOff>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">{t('Skipped')}</TooltipContent>
-        </Tooltip>
-      )}
-      {!step?.valid && !isSkipped && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="mr-3">
-              <InvalidStepIcon
-                size={16}
-                viewBox="0 0 16 15"
-                className="stroke-0 animate-fade"
-              ></InvalidStepIcon>
-            </div>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {t('Incomplete settings')}
-          </TooltipContent>
-        </Tooltip>
-      )}
+      {text}
     </div>
   );
 };

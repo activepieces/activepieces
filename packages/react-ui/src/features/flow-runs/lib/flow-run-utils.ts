@@ -23,6 +23,7 @@ import {
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
+import { t } from 'i18next';
 
 export const flowRunUtils = {
   findLastStepWithStatus,
@@ -57,28 +58,33 @@ export const flowRunUtils = {
       | typeof CircleCheck
       | typeof PauseCircleIcon
       | typeof CircleX;
+      text: string;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:
         return {
           variant: 'default',
           Icon: Timer,
+          text: t('Running'),
         };
       case StepOutputStatus.PAUSED:
         return {
           variant: 'default',
           Icon: PauseCircleIcon,
+          text: t('Paused'),
         };
       case StepOutputStatus.STOPPED:
       case StepOutputStatus.SUCCEEDED:
         return {
           variant: 'success',
           Icon: CircleCheck,
+          text: t('Succeeded'),
         };
       case StepOutputStatus.FAILED:
         return {
           variant: 'error',
           Icon: CircleX,
+          text: t('Failed'),
         };
     }
   },

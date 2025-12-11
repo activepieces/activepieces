@@ -9,12 +9,12 @@ import {
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { cn } from '@/lib/utils';
-import { FlowRunStatus, StepOutputStatus } from '@activepieces/shared';
+import { StepOutputStatus } from '@activepieces/shared';
 
 type StepStatusIconProps = {
   status: StepOutputStatus;
-  runStatus?: FlowRunStatus;
   size: '3' | '4' | '5';
+  hideTooltip?: boolean;
 };
 
 const statusText = {
@@ -26,11 +26,10 @@ const statusText = {
 };
 
 const StepStatusIcon = React.memo(
-  ({ status, size, runStatus }: StepStatusIconProps) => {
+  ({ status, size, hideTooltip = false }: StepStatusIconProps) => {
     const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
 
     if (
-      runStatus === FlowRunStatus.RUNNING &&
       status === StepOutputStatus.RUNNING
     ) {
       return <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>;
@@ -46,13 +45,13 @@ const StepStatusIcon = React.memo(
               'h-4': size === '4',
               'w-5': size === '5',
               'h-5': size === '5',
-              'text-success': variant === 'success',
-              'text-destructive': variant === 'error',
+              'text-green-700': variant === 'success',
+              'text-red-700': variant === 'error',
               'text-foreground': variant === 'default',
             })}
           ></Icon>
         </TooltipTrigger>
-        <TooltipContent side="bottom">{statusText[status]}</TooltipContent>
+        {!hideTooltip && <TooltipContent side="bottom">{statusText[status]}</TooltipContent>}
       </Tooltip>
     );
   },

@@ -1,10 +1,12 @@
 import { cn } from "@/lib/utils"
 import { flowUtilConsts } from "../../utils/consts"
 import { Button } from "@/components/ui/button"
-import { ChevronDown, Goal } from "lucide-react"
+import { ChevronDown, Goal, RouteOff } from "lucide-react"
 import ImageWithFallback from "@/components/ui/image-with-fallback"
 import { TextWithTooltip } from "@/components/custom/text-with-tooltip"
 import { t } from "i18next"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { InvalidStepIcon } from "@/components/custom/alert-icon"
 
 const StepNodeName = ({stepName}: {stepName: string})=>{
     return (
@@ -80,14 +82,12 @@ const StepNodeName = ({stepName}: {stepName: string})=>{
           {stepIndex}. {stepDisplayName}
         </div>
        </TextWithTooltip>
-  
-   
       </div>
-  
       <div className="flex justify-between w-full items-center">
         <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
           {pieceDisplayName}
         </div>
+       
       </div>
     </div>)
   }
@@ -99,4 +99,40 @@ const StepNodeName = ({stepName}: {stepName: string})=>{
       </div>
     )
   }
-  export { StepNodeName, StepNodeChevron, StepNodeLogo, StepNodeDisplayName, Triggerwidget }
+
+  const StepInvalidOrSkippedIcon = ({isValid, isSkipped}: {isValid: boolean, isSkipped: boolean})=>{
+    return (
+      <div className="absolute flex items-center -left-[20px] bg-builder-background " style={{height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`}}>
+      <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                      {
+                      !isValid && !isSkipped && <InvalidStepIcon 
+                        size={16}
+                        viewBox="0 0 16 16"
+                        className="stroke-0 animate-fade shrink-0"
+                      ></InvalidStepIcon>
+                    }
+                    {
+                      isSkipped && <RouteOff className="w-3.5 h-3.5 animate-fade text-muted-foreground"></RouteOff>
+                    }
+                      </div>
+                   
+                    </TooltipTrigger>
+                    {
+                      (!isValid || isSkipped) && <TooltipContent>
+                      <div>
+                      {
+                          !isValid && !isSkipped && t('Incomplete step')
+                        }
+                        {
+                          isSkipped && t('Skipped')
+                        }
+                      </div>
+                      </TooltipContent>
+                    }
+                   </Tooltip>
+                   </div>
+    )
+  }
+  export { StepNodeName,StepInvalidOrSkippedIcon, StepNodeChevron, StepNodeLogo, StepNodeDisplayName, Triggerwidget }

@@ -14,7 +14,8 @@ import {
 import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
-import { StepNodeChevron, StepNodeDisplayName, StepNodeLogo, StepNodeName, Triggerwidget } from './utils';
+import { StepInvalidOrSkippedIcon, StepNodeChevron, StepNodeDisplayName, StepNodeLogo, StepNodeName, Triggerwidget } from './utils';
+import { ApStepNodeStatus } from '../step-node-status';
 
 
 const ApStepCanvasNode = React.memo(
@@ -28,6 +29,7 @@ const ApStepCanvasNode = React.memo(
       setSelectedBranchIndex,
       isPieceSelectorOpened,
       setOpenedPieceSelectorStepNameOrAddButtonId,
+      isStepValid,
     ] = useBuilderStateContext((state) => [
       state.selectStepByName,
       state.selectedStep === step.name,
@@ -37,6 +39,7 @@ const ApStepCanvasNode = React.memo(
       state.setSelectedBranchIndex,
       state.openedPieceSelectorStepNameOrAddButtonId === step.name,
       state.setOpenedPieceSelectorStepNameOrAddButtonId,
+      flowStructureUtil.getStep(step.name, state.flowVersion.trigger)?.valid,
     ]);
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
@@ -95,8 +98,9 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <Triggerwidget />}
+        <StepInvalidOrSkippedIcon isValid={!!isStepValid}  isSkipped={isSkipped} />
+        <ApStepNodeStatus stepName={step.name} />
         <StepNodeName stepName={step.name} />
-       
         <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (
             <PieceSelector
@@ -117,7 +121,7 @@ const ApStepCanvasNode = React.memo(
                 }}
               >
                 <StepNodeLogo isSkipped={isSkipped} logoUrl={stepMetadata?.logoUrl ?? ''} displayName={stepMetadata?.displayName ?? ''} />
-                <StepNodeDisplayName stepDisplayName={step.displayName} stepIndex={stepIndex} isSkipped={isSkipped} pieceDisplayName={stepMetadata?.displayName ?? ''} />
+                <StepNodeDisplayName stepDisplayName={step.displayName} stepIndex={stepIndex} isSkipped={isSkipped}  pieceDisplayName={stepMetadata?.displayName ?? ''} />                   
                 {(!readonly) && <StepNodeChevron />}
               </div>
             </PieceSelector>

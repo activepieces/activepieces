@@ -121,23 +121,23 @@ const ApBigAddButtonCanvasNode = React.memo(
                   height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
                   width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
                 }}
-                className="border cursor-auto border-solid border-none flex items-center justify-center relative "
+                className=" cursor-auto  flex items-center justify-center relative "
               >
                 <svg
                   height={flowUtilConsts.AP_NODE_SIZE.STEP.height}
                   width={flowUtilConsts.AP_NODE_SIZE.STEP.width}
-                  className="overflow-visible  "
+                  className="overflow-visible border-transparent "
                   style={{
                     stroke:
-                      'var(--xy-edge-stroke, var(--xy-edge-stroke-default))',
+                      'var(--xy-edge-stroke, var(--xy-edge-stroke))',
                   }}
                   shapeRendering="auto"
                 >
                   <g>
                     <path
-                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -5 v ${
+                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -10 v ${
                         flowUtilConsts.AP_NODE_SIZE.STEP.height +
-                       10
+                       14
                       }`}
                       fill="transparent"
                       strokeWidth="1.5"

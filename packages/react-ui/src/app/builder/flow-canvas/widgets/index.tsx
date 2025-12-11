@@ -18,7 +18,7 @@ const AboveFlowWidgets = React.memo(() => {
       <div
         style={{
           transform: `translate(0px,-${
-            flowUtilConsts.AP_NODE_SIZE.STEP.height *1.25
+            flowUtilConsts.AP_NODE_SIZE.STEP.height
           }px )`,
           position: 'absolute',
           pointerEvents: 'auto',
