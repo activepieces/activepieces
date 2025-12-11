@@ -183,7 +183,6 @@ export function ProjectDashboardSidebar() {
       <Sidebar
         variant="inset"
         collapsible="icon"
-        onClick={() => setOpen(true)}
         className={cn(
           state === 'collapsed' ? 'cursor-nesw-resize' : '',
           'group',
@@ -205,7 +204,13 @@ export function ProjectDashboardSidebar() {
             'overflow-hidden',
           )}
         >
-          <SidebarGroup className="cursor-default flex-shrink-0">
+          <SidebarGroup
+            className="cursor-default flex-shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+          >
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
@@ -318,7 +323,10 @@ export function ProjectDashboardSidebar() {
                   ? 'flex flex-col items-center scrollbar-none'
                   : 'scrollbar-hover',
               )}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(true);
+              }}
             >
               <SidebarMenu
                 className={cn(

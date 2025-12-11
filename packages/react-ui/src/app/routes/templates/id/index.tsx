@@ -27,6 +27,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar-shadcn';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
 import { useTemplates } from '@/features/templates/hooks/templates-hook';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -45,6 +46,7 @@ import {
 import { FlowDependencyCard } from './flow-dependency-card';
 import { PieceCard } from './piece-card';
 import { UseTemplateDialog } from './use-template-dialog';
+import { useEffectOnce } from 'react-use';
 
 const TemplateDetailsPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -56,6 +58,11 @@ const TemplateDetailsPage = () => {
     useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { setOpen } = useSidebar();
+
+  useEffectOnce(() => {
+    setOpen(false);
+  });
 
   if (!templateId) {
     return <Navigate to="/templates" replace />;
@@ -156,16 +163,20 @@ const TemplateDetailsPage = () => {
   return (
     <div className="h-screen w-full flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="border-b py-4 px-4 flex items-center justify-between shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/templates')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm font-semibold">{t('Back')}</span>
-        </Button>
+      <div className="border-b py-4 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="h-5" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/templates')}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span className="text-sm font-semibold">{t('Back')}</span>
+          </Button>
+        </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={handleExportJson}>
             <Download className="w-4 h-4 mr-2" />

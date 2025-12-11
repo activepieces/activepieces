@@ -369,7 +369,6 @@ export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
       try {
         const allColors: string[] = [];
 
-        // Extract colors from up to 4 piece logos
         const logosToProcess = uniqueMetadata
           .slice(0, 4)
           .filter((metadata) => metadata.logoUrl);
@@ -382,7 +381,6 @@ export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
               distance: 0.2,
             });
 
-            // Get the most prominent colors (sorted by area)
             const topColors = colors
               .sort((a, b) => b.area - a.area)
               .slice(0, 2)
@@ -398,16 +396,13 @@ export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
         }
 
         if (allColors.length > 0) {
-          // Create a gradient with the extracted colors
           const uniqueColors = Array.from(new Set(allColors)).slice(0, 4);
 
           if (uniqueColors.length === 1) {
-            // Single color - use a lighter variant gradient
             setGradient(
               `linear-gradient(135deg, ${uniqueColors[0]}15, ${uniqueColors[0]}30)`,
             );
           } else {
-            // Multiple colors - create a gradient
             const gradientColors = uniqueColors
               .map((color) => `${color}20`)
               .join(', ');
