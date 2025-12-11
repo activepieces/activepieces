@@ -1,8 +1,6 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
-import dayjs from 'dayjs'
+import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { redisConnections } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
@@ -131,75 +129,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async sendIssuesSummary(job: {
-        projectId: string
-        platformId: string
-        projectName: string
-    }): Promise<void> {
-        const redisConnection = await redisConnections.useExisting()
-        const globalAlertsKey = `alerts:flowFailures:${job.platformId}:${job.projectId}`
-
-        const storedAlerts = await redisConnection.lrange(globalAlertsKey, 0, -1)
-        if (storedAlerts.length === 0) {
-            return
-        }
-
-        const parsedAlerts = storedAlerts.map((a) => {
-            try {
-                return JSON.parse(a)
-            }
-            catch {
-                return null
-            }
-        }).filter((a) => !isNil(a))
-
-        const issuesForProject = parsedAlerts.filter(
-            (a) => a.projectId === job.projectId,
-        )
-
-        if (issuesForProject.length === 0) {
-            return
-        }
-
-        const alerts = await alertsService(log).list({
-            projectId: job.projectId,
-            cursor: undefined,
-            limit: 50,
-        })
-        const emails = alerts.data
-            .filter((alert) => alert.channel === AlertChannel.EMAIL)
-            .map((alert) => alert.receiver)
-
-        if (emails.length === 0) {
-            return
-        }
-
-        const issuesUrl = await domainHelper.getPublicUrl({
-            platformId: job.platformId,
-            path: 'runs?limit=10#Issues',
-        })
-
-        const issuesWithFormattedDate = issuesForProject.map((issue) => ({
-            ...issue,
-            createdAt: issue.createdAt
-                ? issue.createdAt
-                : dayjs().format('MMM D, h:mm a'),
-        }))
-
-        await emailSender(log).send({
-            emails,
-            platformId: job.platformId,
-            templateData: {
-                name: 'issues-summary',
-                vars: {
-                    issuesUrl,
-                    issuesCount: issuesWithFormattedDate.length.toString(),
-                    projectName: job.projectName,
-                    issues: JSON.stringify(issuesWithFormattedDate),
-                },
-            },
-        })
-    },
     async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
         const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
         const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
