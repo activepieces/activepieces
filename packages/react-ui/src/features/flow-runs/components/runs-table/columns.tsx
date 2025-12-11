@@ -82,7 +82,7 @@ export const runsTableColumns = ({
         {selectedRows.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="xs">
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>

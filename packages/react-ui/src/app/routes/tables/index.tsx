@@ -16,7 +16,6 @@ import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   BulkAction,
   DataTable,
@@ -51,57 +50,6 @@ const ApTablesPage = () => {
     tableHooks.useCreateTable();
   const navigate = useNavigate();
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
-    {
-      id: 'select',
-      accessorKey: 'select',
-      header: ({ table }) => (
-        <div className="flex items-center h-full">
-          <Checkbox
-            checked={
-              table.getIsAllPageRowsSelected() ||
-              table.getIsSomePageRowsSelected()
-            }
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              table.toggleAllPageRowsSelected(isChecked);
-              if (isChecked) {
-                const allRows = table
-                  .getRowModel()
-                  .rows.map((row) => row.original);
-                setSelectedRows(allRows);
-              } else {
-                setSelectedRows([]);
-              }
-            }}
-          />
-        </div>
-      ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <div className="flex items-center h-full">
-            <Checkbox
-              checked={isChecked}
-              onCheckedChange={(value) => {
-                const isChecked = !!value;
-                let newSelectedRows = [...selectedRows];
-                if (isChecked) {
-                  newSelectedRows.push(row.original);
-                } else {
-                  newSelectedRows = newSelectedRows.filter(
-                    (selectedRow) => selectedRow.id !== row.original.id,
-                  );
-                }
-                setSelectedRows(newSelectedRows);
-                row.toggleSelected(!!value);
-              }}
-            />
-          </div>
-        );
-      },
-    },
     {
       accessorKey: 'name',
       header: ({ column }) => (
@@ -265,6 +213,8 @@ const ApTablesPage = () => {
               navigate(path);
             }
           }}
+          selectColumn={true}
+          onSelectedRowsChange={setSelectedRows}
           bulkActions={bulkActions}
         />
       </div>

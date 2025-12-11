@@ -5,7 +5,6 @@ import { Dispatch, SetStateAction } from 'react';
 
 import FlowActionMenu from '@/app/components/flow-actions-menu';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
@@ -22,91 +21,15 @@ type FlowsTableColumnsProps = {
   refetch: () => void;
   refresh: number;
   setRefresh: Dispatch<SetStateAction<number>>;
-  selectedRows: PopulatedFlow[];
-  setSelectedRows: Dispatch<SetStateAction<PopulatedFlow[]>>;
 };
 
 export const flowsTableColumns = ({
   refetch,
   refresh,
   setRefresh,
-  selectedRows,
-  setSelectedRows,
 }: FlowsTableColumnsProps): (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
   accessorKey: string;
 })[] => [
-  {
-    id: 'select',
-    header: ({ table }) => (
-      <div className="flex items-center h-full">
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() || table.getIsSomePageRowsSelected()
-          }
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-
-            if (isChecked) {
-              const allRowIds = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-
-              const newSelectedRowIds = [...allRowIds, ...selectedRows];
-
-              const uniqueRowIds = Array.from(
-                new Map(
-                  newSelectedRowIds.map((item) => [item.id, item]),
-                ).values(),
-              );
-
-              setSelectedRows(uniqueRowIds);
-            } else {
-              const filteredRowIds = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.version.id === row.version.id);
-              });
-              setSelectedRows(filteredRowIds);
-            }
-          }}
-        />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const isChecked = selectedRows.some(
-        (selectedRow) =>
-          selectedRow.id === row.original.id &&
-          selectedRow.status === row.original.status,
-      );
-      return (
-        <div className="flex items-center h-full">
-          <Checkbox
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        </div>
-      );
-    },
-    accessorKey: 'select',
-  },
   {
     accessorKey: 'name',
     header: ({ column }) => (

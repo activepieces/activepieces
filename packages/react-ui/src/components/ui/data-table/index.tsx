@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { apId, isNil, SeekPage } from '@activepieces/shared';
 
 import { Button } from '../button';
+import { Checkbox } from '../checkbox';
 import {
   Select,
   SelectTrigger,
@@ -78,6 +79,7 @@ interface DataTableProps<
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
+  selectColumn?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -109,10 +111,37 @@ export function DataTable<
   emptyStateTextDescription,
   emptyStateIcon,
   customFilters,
+  selectColumn = false,
 }: DataTableProps<TData, TValue, Keys>) {
+  const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
+    id: 'select',
+    accessorKey: 'select',
+    notClickable: true,
+    header: ({ table }) => (
+      <div className="flex items-center h-full">
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center h-full">
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      </div>
+    ),
+  };
+
+  const columnsWithSelect = selectColumn
+    ? [selectColumnDef, ...columnsInitial]
+    : columnsInitial;
+
   const columns =
     actions.length > 0
-      ? columnsInitial.concat([
+      ? columnsWithSelect.concat([
           {
             accessorKey: '__actions',
             header: ({ column }) => (
@@ -133,7 +162,7 @@ export function DataTable<
             },
           },
         ])
-      : columnsInitial;
+      : columnsWithSelect;
 
   const columnVisibility = columnsInitial.reduce((acc, column) => {
     if (column.enableHiding && 'accessorKey' in column) {
@@ -314,7 +343,7 @@ export function DataTable<
                     )?.cellIndex;
                     if (
                       clickedCellIndex !== undefined &&
-                      columnsInitial[clickedCellIndex]?.notClickable
+                      columns[clickedCellIndex]?.notClickable
                     ) {
                       return; // Don't trigger onRowClick for not clickable columns
                     }
@@ -327,7 +356,7 @@ export function DataTable<
                     )?.cellIndex;
                     if (
                       clickedCellIndex !== undefined &&
-                      columnsInitial[clickedCellIndex]?.notClickable
+                      columns[clickedCellIndex]?.notClickable
                     ) {
                       return;
                     }

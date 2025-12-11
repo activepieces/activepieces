@@ -1,13 +1,5 @@
 import { User } from 'lucide-react';
 
-import {
-  PROJECT_COLOR_PALETTE,
-  ProjectType,
-  ProjectWithLimits,
-} from '@activepieces/shared';
-
-import { ApProjectDisplay } from '../../ap-project-display';
-
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,8 +13,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import { PERSONAL_PROJECT_NAME } from '@/hooks/project-hooks';
+import { cn } from '@/lib/utils';
+import {
+  PROJECT_COLOR_PALETTE,
+  ProjectType,
+  ProjectWithLimits,
+} from '@activepieces/shared';
+
+import { ApProjectDisplay } from '../../ap-project-display';
 
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
@@ -52,60 +51,57 @@ const ProjectSideBarItem = ({
     );
 
   return (
-    <>
-      <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
-        {state === 'collapsed' ? (
-          <TooltipProvider delayDuration={0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleProjectSelect(project.id)}
-                  className={cn(
-                    isCurrentProject &&
-                    'bg-sidebar-active hover:!bg-sidebar-active',
-                    'relative flex items-center justify-center',
-                  )}
-                >
-                  {projectAvatar}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" align="center">
-                {project.displayName}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : (
-          <SidebarMenuButton
-            asChild
-            className={cn(
-              'px-2 py-5 cursor-pointer group/project',
-              isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
-            )}
-          >
-            <div className="w-full flex items-center justify-between gap-2">
-              <div
+    <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
+      {state === 'collapsed' ? (
+        <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => handleProjectSelect(project.id)}
-                className="flex-1 flex items-center gap-2 min-w-0"
+                className={cn(
+                  isCurrentProject &&
+                    'bg-sidebar-active hover:!bg-sidebar-active',
+                  'relative flex items-center justify-center',
+                )}
               >
-                <ApProjectDisplay
-                  title={
-                    project.type === ProjectType.PERSONAL
-                      ? PERSONAL_PROJECT_NAME
-                      : project.displayName
-                  }
-                  icon={project.icon}
-                  maxLengthToNotShowTooltip={28}
-                  projectType={project.type}
-                />
-              </div>
+                {projectAvatar}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" align="center">
+              {project.displayName}
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        <SidebarMenuButton
+          asChild
+          className={cn(
+            'px-2 py-5 cursor-pointer group/project',
+            isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
+          )}
+        >
+          <div className="w-full flex items-center justify-between gap-2">
+            <div
+              onClick={() => handleProjectSelect(project.id)}
+              className="flex-1 flex items-center gap-2 min-w-0"
+            >
+              <ApProjectDisplay
+                title={
+                  project.type === ProjectType.PERSONAL
+                    ? PERSONAL_PROJECT_NAME
+                    : project.displayName
+                }
+                icon={project.icon}
+                maxLengthToNotShowTooltip={28}
+                projectType={project.type}
+              />
             </div>
-          </SidebarMenuButton>
-        )}
-      </SidebarMenuItem>
-
-    </>
+          </div>
+        </SidebarMenuButton>
+      )}
+    </SidebarMenuItem>
   );
 };
 

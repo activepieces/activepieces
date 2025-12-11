@@ -40,9 +40,7 @@ export function SelectCell({
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
   return (
     <div
-      className={cn(
-        'flex items-center justify-start h-full pl-4 group',
-      )}
+      className={cn('flex items-center justify-start h-full pl-4 group')}
       onClick={onClick}
     >
       <div
