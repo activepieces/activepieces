@@ -7,7 +7,9 @@ import {
     WorkerMachineWithStatus,
     WorkerSettingsResponse,
 } from '@activepieces/shared'
+
 import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { In } from 'typeorm'
@@ -20,6 +22,7 @@ import { system } from '../../helper/system/system'
 import { WorkerMachineEntity } from './machine-entity'
 import { domainHelper } from '../../helper/domain-helper'
 
+dayjs.extend(utc)
 const workerRepo = repoFactory(WorkerMachineEntity)
 
 export const machineService = (_log: FastifyBaseLogger) => {

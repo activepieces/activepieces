@@ -38,7 +38,8 @@ export const sendEmail = createAction({
       description: undefined,
       required: true,
     }),
-    content_type: Property.Dropdown<'text' | 'html'>({
+    content_type: Property.Dropdown<'text' | 'html', true, typeof azureCommunicationServiceAuth>({
+      auth: azureCommunicationServiceAuth,
       displayName: 'Content Type',
       refreshers: [],
       required: true,
@@ -80,7 +81,7 @@ export const sendEmail = createAction({
         bcc: (bcc || []).map((address) => ({ address })),
       },
     } as EmailMessage;
-    const client = new EmailClient(context.auth);
+    const client = new EmailClient(context.auth.secret_text);
     const poller = await client.beginSend(message);
     return await poller.pollUntilDone();
   },

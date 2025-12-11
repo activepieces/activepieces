@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -23,7 +24,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { Flow, FlowOperationType, PopulatedFlow } from '@activepieces/shared';
 
@@ -69,9 +69,7 @@ const MoveFlowDialog = ({ children, flows, onMoveTo }: MoveFlowDialogProps) => {
     onSuccess: () => {
       onMoveTo(form.getValues().folder);
       setIsDialogOpened(false);
-      toast({
-        title: t('Moved flows successfully'),
-      });
+      toast.success(t('Moved flows successfully'));
     },
   });
 

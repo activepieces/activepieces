@@ -60,7 +60,7 @@ export const createLead = createAction({
     if (referrer) payload.referrer = referrer;
 
     return await askHandleApiCall(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.POST,
       '/leads/',
       payload

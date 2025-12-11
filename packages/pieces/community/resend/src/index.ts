@@ -23,7 +23,7 @@ export const resend = createPiece({
       baseUrl: () => 'https://api.resend.com',
       auth: resendAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

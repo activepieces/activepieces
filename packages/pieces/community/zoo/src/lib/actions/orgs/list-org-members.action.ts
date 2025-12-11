@@ -25,7 +25,7 @@ export const listOrgMembersAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/org/members',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

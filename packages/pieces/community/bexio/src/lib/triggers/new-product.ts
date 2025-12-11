@@ -1,10 +1,10 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { bexioAuth } from '../../index';
 import { BexioClient } from '../common/client';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof bexioAuth>,
+  AppConnectionValueForAuthProperty<typeof bexioAuth>,
   Record<string, never>
 > = {
   strategy: DedupeStrategy.LAST_ITEM,

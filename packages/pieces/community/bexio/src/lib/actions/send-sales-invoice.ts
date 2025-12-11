@@ -9,6 +9,7 @@ export const sendSalesInvoiceAction = createAction({
   description: 'Send a sales invoice to an email address',
   props: {
     invoice_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Invoice',
       description: 'Select the invoice to send',
       required: true,
@@ -23,7 +24,7 @@ export const sendSalesInvoiceAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const invoices = await client.get<Array<{
             id: number;
             document_nr: string;

@@ -8,7 +8,7 @@ import {
 import { ApEdition, SeekPage } from '@activepieces/shared';
 
 export const oauthAppsApi = {
-  listCloudOAuthApps(
+  listCloudOAuth2Apps(
     edition: ApEdition,
   ): Promise<Record<string, { clientId: string }>> {
     return api.get<Record<string, { clientId: string }>>(
@@ -21,7 +21,7 @@ export const oauthAppsApi = {
   listGlobalOAuthAppsCredentials(request: ListOAuth2AppRequest) {
     return api.get<SeekPage<GlobalOAuthApp>>('/v1/global-oauth-apps', request);
   },
-  listOAuthAppsCredentials(request: ListOAuth2AppRequest) {
+  listPlatformOAuth2Apps(request: ListOAuth2AppRequest) {
     return api.get<SeekPage<OAuthApp>>('/v1/oauth-apps', request);
   },
   delete(credentialId: string) {

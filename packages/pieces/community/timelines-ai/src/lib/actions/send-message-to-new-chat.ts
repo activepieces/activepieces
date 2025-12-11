@@ -31,10 +31,9 @@ export const sendMessageToNewChat = createAction({
         'Select the contact identifier based on the chosen contact type',
       required: true,
       refreshers: ['contactType'],
+      auth: timelinesAiAuth,
       props: async ({
         contactType,
-      }: {
-        contactType?: string;
       }): Promise<DynamicPropsValue> => {
         if (contactType === 'phone_number') {
           return {

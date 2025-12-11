@@ -51,6 +51,7 @@ export const generateFromTemplate = createAction({
               },
         }),
         table_data: Property.DynamicProperties({
+            auth: googleSlidesAuth,
             displayName: 'Table Data',
             required: true,
             refreshers: ['template_presentation_id', 'placeholder_format'],

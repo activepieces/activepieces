@@ -1,8 +1,10 @@
 import { Property } from "@activepieces/pieces-framework";
 import { makeRequest } from "./client";
 import { HttpMethod } from "@activepieces/pieces-common";
+import { cloudinaryAuth } from "./auth";
 
 export const resourceTypeDropdown = Property.Dropdown({
+    auth: cloudinaryAuth,
     displayName: 'Resource Type',
     description: 'Select the type of resource to upload to Cloudinary.',
     required: true,
@@ -20,6 +22,7 @@ export const resourceTypeDropdown = Property.Dropdown({
 });
 
 export const resourceDropdown = Property.Dropdown({
+    auth: cloudinaryAuth,
     displayName: 'Resource ID',
     description: 'Select the team containing the database',
     required: true,
@@ -53,6 +56,7 @@ export const resourceDropdown = Property.Dropdown({
 });
 
 export const resourceAssetIdsDropdown = Property.MultiSelectDropdown({
+    auth: cloudinaryAuth,
     displayName: 'Resource Ids',
     description: 'Select the Resource',
     required: true,
@@ -86,6 +90,7 @@ export const resourceAssetIdsDropdown = Property.MultiSelectDropdown({
 });
 
 export const folderDropdown = Property.Dropdown({
+    auth: cloudinaryAuth,
     displayName: 'Folder',
     description: 'Select an existing folder or type a new folder path',
     required: false,
@@ -125,6 +130,7 @@ export const folderDropdown = Property.Dropdown({
 });
 
 export const tagsDropdown = Property.Dropdown({
+    auth: cloudinaryAuth,
     displayName: 'Tags',
     description: 'Select existing tags or type new ones (comma-separated)',
     required: false,
@@ -163,6 +169,7 @@ export const tagsDropdown = Property.Dropdown({
 });
 
 export const multiTagsDropdown = Property.MultiSelectDropdown({
+    auth: cloudinaryAuth,
     displayName: 'Tags',
     description: 'Select multiple existing tags',
     required: false,
@@ -200,6 +207,7 @@ export const multiTagsDropdown = Property.MultiSelectDropdown({
 });
 
 export const subfolderDropdown = Property.Dropdown({
+    auth: cloudinaryAuth,
     displayName: 'Subfolder',
     description: 'Select a subfolder within the parent folder',
     required: false,
@@ -238,6 +246,7 @@ export const subfolderDropdown = Property.Dropdown({
 });
 
 export const publicIdsDropdown = Property.MultiSelectDropdown({
+    auth: cloudinaryAuth,
     displayName: 'Public IDs',
     description: 'Select assets to delete by their public IDs',
     required: false,
@@ -277,6 +286,7 @@ export const publicIdsDropdown = Property.MultiSelectDropdown({
 
 // Single-select version for finding a specific resource
 export const publicIdDropdown = Property.Dropdown({
+    auth: cloudinaryAuth,
     displayName: 'Public ID',
     description: 'Select an asset to find by its public ID',
     required: false,

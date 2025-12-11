@@ -126,7 +126,7 @@ export const attachFileToRow = createAction({
         const fileName = attachment_name || file?.filename || 'attachment';
 
         // Create blob with proper MIME type
-        const blob = new Blob([file!.data], { type: fileMimeType });
+        const blob = new Blob([file!.data as unknown as ArrayBuffer], { type: fileMimeType });
         formData.append('file', blob, fileName);
 
         request = {

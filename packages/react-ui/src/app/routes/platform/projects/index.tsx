@@ -5,6 +5,7 @@ import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -23,7 +24,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
@@ -42,7 +42,6 @@ import { NewProjectDialog } from './new-project-dialog';
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
@@ -229,8 +228,7 @@ export default function ProjectsPage() {
                   setSelectedRows([]);
                 }}
                 onError={(error) => {
-                  toast({
-                    title: t('Error'),
+                  toast.error(t('Error'), {
                     description: errorToastMessage(error),
                     duration: 3000,
                   });
@@ -285,7 +283,6 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
-                    aiCredits: row.plan?.aiCredits?.toString() ?? '',
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);

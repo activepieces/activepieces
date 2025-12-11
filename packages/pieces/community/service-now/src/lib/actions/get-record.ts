@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { ServiceNowRecordSchema } from '../common/types';
-import { tableDropdown, recordDropdown, createServiceNowClient } from '../common/props';
+import { tableDropdown, recordDropdown, createServiceNowClient, servicenowAuth } from '../common/props';
 
 const GetRecordInputSchema = z.object({
   table: z.string().min(1),
@@ -14,6 +14,7 @@ const GetRecordInputSchema = z.object({
 });
 
 export const getRecordAction = createAction({
+  auth: servicenowAuth,
   name: 'get_record',
   displayName: 'Get Record',
   description: 'Retrieve a specific record by its ID',

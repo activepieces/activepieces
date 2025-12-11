@@ -38,6 +38,12 @@ const buttonVariants = cva(
         xs: 'h-6 px-2 text-xs py-2',
       },
     },
+    compoundVariants: [
+      {
+        variant: 'link',
+        class: 'px-0',
+      },
+    ],
     defaultVariants: {
       variant: 'default',
       size: 'default',

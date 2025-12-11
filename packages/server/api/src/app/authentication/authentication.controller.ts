@@ -3,6 +3,8 @@ import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
+    EndpointScope,
+    PlatformRole,
     PrincipalType,
     SignInRequest,
     SignOutRequest,
@@ -16,7 +18,6 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 // import { eventsHooks } from '../helper/application-events'
 import dayjs from 'dayjs'
 import { system } from '../helper/system/system'
-import { mcpService } from '../mcp/mcp-service'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
@@ -47,15 +48,16 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         // })
 
         // Onboarding
-        const { projectId } = signUpResponse
-        if (projectId) {
-            const mcpCount = await mcpService(request.log).count({ projectId })
-            if (mcpCount <= 0)
-                await mcpService(request.log).create({
-                    projectId,
-                    name: 'Default Server',
-                })
-        }
+        // todo(Rupal): Check this MCP flow again
+        // const { projectId } = signUpResponse
+        // if (projectId) {
+        //     const mcpCount = await mcpService(request.log).count({ projectId })
+        //     if (mcpCount <= 0)
+        //         await mcpService(request.log).create({
+        //             projectId,
+        //             name: 'Default Server',
+        //         })
+        // }
 
         return signUpResponse
     })
@@ -101,10 +103,13 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
     app.post('/switch-project', SwitchProjectRequestOptions, async (request) => {
         const user = await userService.getOneOrFail({ id: request.principal.id })
+        const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN
+
         return authenticationService(request.log).switchProject({
             identityId: user.identityId,
             projectId: request.body.projectId,
             currentPlatformId: request.principal.platform.id,
+            scope: isPrivilegedUser ? EndpointScope.PLATFORM : undefined,
         })
     })
 }

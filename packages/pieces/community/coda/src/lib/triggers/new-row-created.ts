@@ -1,5 +1,5 @@
 import {
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 	TriggerStrategy,
 	createTrigger,
 } from '@activepieces/pieces-framework';
@@ -14,7 +14,7 @@ type Props = {
 	docId: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof codaAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof codaAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const { tableId, docId } = propsValue;

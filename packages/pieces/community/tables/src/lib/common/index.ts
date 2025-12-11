@@ -1,5 +1,5 @@
 import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
-import { DynamicPropsValue, Property } from "@activepieces/pieces-framework";
+import { DynamicPropsValue, PieceAuth, Property } from "@activepieces/pieces-framework";
 import { assertNotNullOrUndefined, CreateTableWebhookRequest, Field, FieldType, MarkdownVariant, PopulatedRecord, SeekPage, StaticDropdownEmptyOption, Table, TableWebhookEventType, ListTablesRequest } from "@activepieces/shared";
 import { z } from 'zod';
 import qs from 'qs';
@@ -29,6 +29,7 @@ const getFieldTypeText = (fieldType: FieldType) => {
 }
 export const tablesCommon = {
   table_id: Property.Dropdown({
+    auth: PieceAuth.None(),
     displayName: 'Table Name',
     required: true,
     refreshers: [],

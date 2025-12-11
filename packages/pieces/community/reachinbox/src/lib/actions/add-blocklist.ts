@@ -47,7 +47,7 @@ export const addBlocklist = createAction({
         method: HttpMethod.POST,
         url: `${reachinboxCommon.baseUrl}blocklist/add`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

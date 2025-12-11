@@ -40,7 +40,7 @@ export const acuityScheduling = createPiece({
 			baseUrl: () => API_URL,
 			authMapping: async (auth) => {
 				return {
-					Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+					Authorization: `Bearer ${auth.access_token}`,
 				};
 			},
 		}),

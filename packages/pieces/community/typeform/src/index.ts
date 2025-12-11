@@ -26,7 +26,7 @@ export const typeform = createPiece({
       baseUrl: () => 'https://api.typeform.com',
       auth: typeformAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

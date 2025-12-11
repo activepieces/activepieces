@@ -25,13 +25,15 @@ export const repostPost = createAction({
     }),
     
     postSelection: Property.Dropdown({
+      auth: blueskyAuth,
       displayName: 'Select Post',
       description: 'Choose from your recent timeline posts (only when "From my timeline" is selected above)',
       required: false,
       refreshers: ['auth'],
       options: async ({ auth }) => {
         try {
-          const agent = await createBlueskyAgent(auth as BlueSkyAuthType);
+          if (!auth) return { options: [] };
+          const agent = await createBlueskyAgent(auth.props);
           const timeline = await agent.getTimeline({ limit: 50 });
           
           return {
@@ -70,7 +72,7 @@ export const repostPost = createAction({
       }
       
       try {
-        const agent = await createBlueskyAgent(auth);
+        const agent = await createBlueskyAgent(auth.props);
         postUri = await parseBlueskyUrl(postUrl.trim(), agent);
       } catch (error) {
         throw new Error(`Invalid post URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -80,7 +82,7 @@ export const repostPost = createAction({
     }
 
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
       const postsResponse = await agent.getPosts({ uris: [postUri] });
       

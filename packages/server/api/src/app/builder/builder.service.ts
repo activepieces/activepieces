@@ -1,4 +1,3 @@
-import { AIUsageFeature, createAIModel } from '@activepieces/common-ai'
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     apId,
@@ -175,15 +174,17 @@ const userOpenAiModel = async (platformId: string, projectId: string): Promise<L
         path: '/v1/ai-providers/proxy/openai',
         platformId,
     })
-    const model = createAIModel({
-        providerName: 'openai',
-        modelInstance: openai(BuilderOpenAiModel),
-        engineToken,
-        baseURL,
-        metadata: {
-            feature: AIUsageFeature.TEXT_AI,
-        },
-    })
+    // const model = createAIModel({
+    //     providerName: 'openai',
+    //     modelInstance: openai(BuilderOpenAiModel),
+    //     engineToken,
+    //     baseURL,
+    //     metadata: {
+    //         feature: AIUsageFeature.TEXT_AI,
+    //     },
+    // })
+    // todo(Rupal): Fix local AI provider
+    const model = await promptxOpenAiModel()
     return model
 }
 

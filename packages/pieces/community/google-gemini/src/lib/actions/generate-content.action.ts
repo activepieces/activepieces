@@ -21,11 +21,12 @@ export const generateContentAction = createAction({
       description: 'The model which will generate the completion',
       refreshers: [],
       defaultValue: defaultLLM,
+      auth: googleGeminiAuth,
       options: async ({ auth }) => getGeminiModelOptions({ auth }),
     }),
   },
   async run({ auth, propsValue }) {
-    const genAI = new GoogleGenerativeAI(auth);
+    const genAI = new GoogleGenerativeAI(auth.secret_text);
     const model = genAI.getGenerativeModel({ model: propsValue.model });
     const result = await model.generateContent(propsValue.prompt);
     return result.response.text();

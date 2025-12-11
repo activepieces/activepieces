@@ -151,11 +151,6 @@ export async function enrichProject(project: Project, log: FastifyBaseLogger): P
             name: 'Default Plan',
             piecesFilterType: PiecesFilterType.ALLOWED,
             pieces: [],
-            aiCredits: undefined,
-        },
-        usage: {
-            aiCredits: 0,
-            nextLimitResetDate: 0,
         },
         analytics: {
             activeFlows,

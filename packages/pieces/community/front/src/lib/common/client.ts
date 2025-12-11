@@ -1,9 +1,11 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { frontAuth } from './auth';
 
 export const BASE_URL = `https://api2.frontapp.com`;
 
 export async function makeRequest(
-    access_token: string,
+    {secret_text}: AppConnectionValueForAuthProperty<typeof frontAuth>,
     method: HttpMethod,
     path: string,
     body?: unknown
@@ -13,7 +15,7 @@ export async function makeRequest(
             method,
             url: `${BASE_URL}${path}`,
             headers: {
-                Authorization: `Bearer ${access_token}`,
+                Authorization: `Bearer ${secret_text}`,
                 'Content-Type': 'application/json',
             },
             body,

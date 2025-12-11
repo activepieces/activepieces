@@ -3,7 +3,30 @@ import { t } from 'i18next';
 import { JsonViewer } from '@/components/json-viewer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AgentTimeline } from '@/features/agents/agent-timeline';
-import { AgentResult } from '@activepieces/shared';
+import {
+  AgentResult,
+  AgentTaskStatus,
+  AI_PIECE_NAME,
+  FlowAction,
+  FlowActionType,
+  isNil,
+} from '@activepieces/shared';
+
+export const isRunAgent = (step?: FlowAction) => {
+  return (
+    !isNil(step) &&
+    step.type === FlowActionType.PIECE &&
+    step.settings.pieceName === AI_PIECE_NAME &&
+    step.settings.actionName === 'run_agent'
+  );
+};
+
+export const defaultAgentOutput = {
+  prompt: '',
+  status: AgentTaskStatus.IN_PROGRESS,
+  steps: [],
+  message: null,
+};
 
 type AgentTestStepProps = {
   agentResult?: AgentResult;

@@ -25,7 +25,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -90,6 +90,15 @@ export const BuilderHeader = ({ creditUsage }: { creditUsage?: number }) => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
   }, []);
 
+  const goToFolder = () => {
+    navigate({
+      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      search: createSearchParams({
+        folderId: folderData?.id ?? UncategorizedFolderId,
+      }).toString(),
+    });
+  };
+
   return (
     <div className="border-b select-none">
       <div className="relative items-center flex h-[55px] w-full p-4">
@@ -102,19 +111,7 @@ export const BuilderHeader = ({ creditUsage }: { creditUsage?: number }) => {
                 <>
                   <TooltipProvider>
                     <Tooltip>
-                      <TooltipTrigger
-                        onClick={() =>
-                          navigate({
-                            pathname:
-                              authenticationSession.appendProjectRoutePrefix(
-                                '/flows',
-                              ),
-                            search: createSearchParams({
-                              folderId: folderData?.id ?? UncategorizedFolderId,
-                            }).toString(),
-                          })
-                        }
-                      >
+                      <TooltipTrigger onClick={goToFolder}>
                         {folderName}
                       </TooltipTrigger>
                       <TooltipContent>
@@ -139,7 +136,7 @@ export const BuilderHeader = ({ creditUsage }: { creditUsage?: number }) => {
                       },
                     },
                     () => {
-                      flowsHooks.invalidateFlowsQuery(queryClient);
+                      flowHooks.invalidateFlowsQuery(queryClient);
                     },
                   );
                 }}
@@ -155,13 +152,7 @@ export const BuilderHeader = ({ creditUsage }: { creditUsage?: number }) => {
               flow={flow}
               flowVersion={flowVersion}
               readonly={!isLatestVersion}
-              onDelete={() => {
-                // todo(Rupal): Remove this when invalidateFlowsQuery is fixed
-                queryClient.invalidateQueries({
-                  queryKey: ['flow', flow.id],
-                });
-                flowsHooks.invalidateFlowsQuery(queryClient);
-              }}
+              onDelete={goToFolder}
               onRename={() => {
                 setIsEditingFlowName(true);
               }}

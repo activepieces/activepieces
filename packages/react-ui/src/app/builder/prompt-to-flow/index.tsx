@@ -6,7 +6,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { CardList } from '@/components/custom/card-list';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { toast } from '@/components/ui/use-toast';
 
 import { LeftSideBarType, useBuilderStateContext } from '../builder-hooks';
 import { SidebarHeader } from '../sidebar-header';
@@ -24,6 +23,7 @@ import {
   BuilderMessageRole,
 } from '@activepieces/shared';
 import { AssistantContent } from 'ai';
+import { toast } from 'sonner';
 
 const WELCOME_MESSAGE =
   "Hello! How can I help you today?\nYou can type the changes you'd like for this flow, and I'll help you create or modify it";
@@ -127,9 +127,9 @@ export const PromptToFlowSidebar = ({
       }
     },
     onError: (error: any) => {
-      toast({
-        title: t('Error generating code'),
+      toast.error(t('Error generating code'), {
         description: error.message,
+        duration: 3000,
       });
     },
   });

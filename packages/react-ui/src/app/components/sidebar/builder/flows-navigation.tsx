@@ -1,8 +1,7 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { EllipsisVertical, Folder, FolderOpen, Shapes } from 'lucide-react';
 import { useMemo, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { createSearchParams, useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +23,7 @@ import {
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
 import { CreateFlowDropdown } from '@/features/flows/lib/create-flow-dropdown';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
@@ -60,7 +59,7 @@ export function FlowsNavigation() {
     data: flows,
     isLoading: flowsLoading,
     refetch: refetchFlows,
-  } = flowsHooks.useFlows({
+  } = flowHooks.useFlows({
     cursor: undefined,
     limit: 99999,
   });
@@ -337,7 +336,19 @@ interface FlowItemProps {
 
 function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
   const { flowId } = useParams();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { data: folderData } = foldersHooks.useFolder(
+    flow.folderId ?? UncategorizedFolderId,
+  );
+
+  const goToFolder = () => {
+    navigate({
+      pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
+      search: createSearchParams({
+        folderId: folderData?.id ?? UncategorizedFolderId,
+      }).toString(),
+    });
+  };
 
   return (
     <SidebarMenuSubItem
@@ -358,14 +369,8 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           onMoveTo={refetch}
           onDelete={() => {
             if (flowId === flow.id) {
-              // todo(Rupal): Remove this when invalidateFlowsQuery is fixed
-              queryClient.invalidateQueries({
-                queryKey: ['flow', flow.id],
-              });
-
-              flowsHooks.invalidateFlowsQuery(queryClient);
+              goToFolder();
             }
-            refetch();
           }}
           onDuplicate={refetch}
         >

@@ -223,9 +223,9 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
             description: 'Creates and inserts multiple flow action(s) in the workflow',
             inputSchema: z.object({
                 actions: z.array(z.object({
-                    parentStepName: z.string({ description: 'Name of the parent step under which action is to be added' }),
-                    stepName: z.string({ description: 'Unique name of the step (step_1, step_2 etc.)' }),
-                    branchName: z.optional(z.string({ description: 'Branch in which the step needs to be added (when parentStepName is a router name)' })),
+                    parentStepName: z.string().meta({ description: 'Name of the parent step under which action is to be added' }),
+                    stepName: z.string().meta({ description: 'Unique name of the step (step_1, step_2 etc.)' }),
+                    branchName: z.optional(z.string().meta({ description: 'Branch in which the step needs to be added (when parentStepName is a router name)' })),
                     pieceName: z.string(),
                     pieceVersion: z.string(),
                     pieceActionName: z.string(),
@@ -335,10 +335,10 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
         [BuilderToolName.MOVE_ACTION]: tool({
             description: 'Move an action step under some other step or to a specific branch of a router step',
             inputSchema: z.object({
-                parentStepName: z.string({ description: 'name of the parent step under which this step will be placed' }),
-                stepName: z.string({ description: 'step name of the action to be moved (eg. step_1, step_2 etc.)' }),
-                routerName: z.optional(z.string({ description: 'Name of the router step (if step needs to be moved inside router)' })),
-                routerBranchName: z.optional(z.string({ description: 'Branch name of the router (if router is specified)' })),
+                parentStepName: z.string().meta({ description: 'name of the parent step under which this step will be placed' }),
+                stepName: z.string().meta({ description: 'step name of the action to be moved (eg. step_1, step_2 etc.)' }),
+                routerName: z.optional(z.string().meta({ description: 'Name of the router step (if step needs to be moved inside router)' })),
+                routerBranchName: z.optional(z.string().meta({ description: 'Branch name of the router (if router is specified)' })),
             }),
             execute: async (params) => {
                 log.info(params, 'move-action params')
@@ -436,7 +436,7 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
         [BuilderToolName.ADD_ROUTER]: tool({
             description: 'Add a router step in the flow. Router consists of branches which are triggered based on some condition',
             inputSchema: z.object({
-                parentStepName: z.string({ description: 'Name of the parent step' }),
+                parentStepName: z.string().meta({ description: 'Name of the parent step' }),
             }),
             execute: async ({ parentStepName }) => {
                 log.info({ parentStepName }, 'add-router params')
@@ -491,7 +491,7 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
         [BuilderToolName.ADD_BRANCH]: tool({
             description: 'Add a new branch to a router step',
             inputSchema: z.object({
-                parentStepName: z.string({ description: 'Name of the parent router step' }),
+                parentStepName: z.string().meta({ description: 'Name of the parent router step' }),
             }),
             execute: async ({ parentStepName }) => {
                 log.info({ parentStepName }, 'add-branch params')
@@ -553,8 +553,8 @@ export const buildBuilderTools = ({ userId, projectId, platformId, flowId, flowV
         [BuilderToolName.REMOVE_BRANCH]: tool({
             description: 'Remove a branch from a router step',
             inputSchema: z.object({
-                parentStepName: z.string({ description: 'Name of the parent router step' }),
-                branchName: z.string({ description: 'Branch name to remove' }),
+                parentStepName: z.string().meta({ description: 'Name of the parent router step' }),
+                branchName: z.string().meta({ description: 'Branch name to remove' }),
             }),
             execute: async ({ parentStepName, branchName }) => {
                 log.info({ parentStepName, branchName }, 'remove-branch params')

@@ -7,6 +7,7 @@ import {
   createTrigger,
   TriggerStrategy,
   OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import dayjs from 'dayjs';
 import { getPages } from '../common';
@@ -104,7 +105,10 @@ export const updatedPage = createTrigger({
   },
 });
 
-const polling: Polling<OAuth2PropertyValue, Record<string, never>> = {
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof notionAuth>,
+  Record<string, never>
+> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth, lastItemId }) => {
     const lastItem = lastItemId as string;

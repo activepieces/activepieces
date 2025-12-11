@@ -9,7 +9,6 @@ import {
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { BetaBadge } from '@/components/custom/beta-badge';
 import { useEmbedding } from '@/components/embed-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,12 +44,10 @@ export const ProjectDashboardPageHeader = ({
   title,
   children,
   description,
-  beta = false,
 }: {
   title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
-  beta?: boolean;
 }) => {
   const { project } = projectHooks.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
@@ -143,11 +140,6 @@ export const ProjectDashboardPageHeader = ({
                     You
                   </Badge>
                 )}
-              {beta && (
-                <div className="flex items-center">
-                  <BetaBadge />
-                </div>
-              )}
             </div>
             {description && (
               <span className="text-xs text-muted-foreground">
@@ -257,7 +249,6 @@ export const ProjectDashboardPageHeader = ({
         initialTab={settingsInitialTab}
         initialValues={{
           projectName: project?.displayName,
-          aiCredits: project?.plan?.aiCredits?.toString() ?? '',
         }}
       />
     </div>

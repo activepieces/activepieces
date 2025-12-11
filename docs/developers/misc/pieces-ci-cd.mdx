@@ -21,7 +21,7 @@ To use the CLI, follow these steps:
 
 
 ```bash
-AP_API_KEY=your_api_key_here npm run sync-pieces -- --apiUrl https://INSTANCE_URL/api
+AP_API_KEY=your_api_key_here bun run sync-pieces -- --apiUrl https://INSTANCE_URL/api
 ```
 
 ### Developer Workflow
@@ -53,30 +53,30 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Step 2: Cache Node.js dependencies
-      - name: Cache Node.js dependencies
+      # Step 2: Set up Bun
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      # Step 3: Cache Bun dependencies
+      - name: Cache Bun dependencies
         uses: actions/cache@v3
         with:
-          path: ~/.npm
-          key: npm-${{ hashFiles('package-lock.json') }}
+          path: ~/.bun/install/cache
+          key: bun-${{ hashFiles('bun.lockb') }}
           restore-keys: |
-            npm-
+            bun-
 
-      # Step 3: Set up Node.js
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20' # Use Node.js version 20
-          cache: 'npm'
-
-      # Step 4: Install dependencies using npm ci
+      # Step 4: Install dependencies using Bun
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: bun install --no-save
 
-      # Step 6: Sync Custom Pieces
+      # Step 5: Sync Custom Pieces
       - name: Sync Custom Pieces
         env:
           AP_API_KEY: ${{ secrets.AP_API_KEY }}
-        run: npm run sync-pieces -- --apiUrl ${{ secrets.INSTANCE_URL }}/api
+        run: bun run sync-pieces -- --apiUrl ${{ secrets.INSTANCE_URL }}/api
 
 ```
+

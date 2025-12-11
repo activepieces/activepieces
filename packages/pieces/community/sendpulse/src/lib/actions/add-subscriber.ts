@@ -59,7 +59,7 @@ export const addSubscriberAction = createAction({
     try {
       const result = await sendpulseApiCall<{ result: boolean }>({
         method: HttpMethod.POST,
-        auth: context.auth,
+        auth: context.auth.props,
         resourceUri: `/addressbooks/${mailingListId}/emails`,
         body: requestBody,
       });

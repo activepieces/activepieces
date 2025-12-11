@@ -18,13 +18,14 @@ export const updateOpportunityAction = createAction({
   description: 'Update an existing Opportunity in Capsule CRM.',
   props: {
     opportunityId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Opportunity',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const opportunities = await capsuleCrmClient.searchOpportunities(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: opportunities.map((opportunity) => ({
@@ -43,13 +44,14 @@ export const updateOpportunityAction = createAction({
       required: false,
     }),
     milestoneId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Milestone',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const milestones = await capsuleCrmClient.listMilestones(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: milestones.map((milestone) => ({
@@ -95,13 +97,14 @@ export const updateOpportunityAction = createAction({
       required: false,
     }),
     ownerId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Owner',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const users = await capsuleCrmClient.listUsers(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: users.map((user) => ({
@@ -112,13 +115,14 @@ export const updateOpportunityAction = createAction({
       },
     }),
     teamId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Team',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first" };
         const teams = await capsuleCrmClient.listTeams(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: teams.map((team) => ({
@@ -129,6 +133,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     tags: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Tags',
       required: false,
       refreshers: ['opportunityId'],
@@ -137,7 +142,7 @@ export const updateOpportunityAction = createAction({
         if (!auth || !opportunityId) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first or select an opportunity" };
 
         const opportunity = await capsuleCrmClient.getOpportunity(
-          auth as CapsuleCrmAuthType,
+          auth,
           opportunityId as unknown as number
         );
         const tagOptions =
@@ -173,6 +178,7 @@ export const updateOpportunityAction = createAction({
       },
     }),
     customFields: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Custom Fields',
       required: false,
       refreshers: ['opportunityId'],
@@ -180,12 +186,12 @@ export const updateOpportunityAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth || !opportunityId) return { options: [], disabled: true, placeholder: "Please connect your Capsule CRM account first or select an opportunity" };
 
-        const opportunity = await capsuleCrmClient.getOpportunity(
-          auth as CapsuleCrmAuthType,
+       await capsuleCrmClient.getOpportunity(
+          auth,
           opportunityId as unknown as number
         );
         const allCustomFields = await capsuleCrmClient.listCustomFields(
-          auth as CapsuleCrmAuthType
+          auth
         );
 
         const customFieldOptions =

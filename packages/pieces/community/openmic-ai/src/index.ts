@@ -30,7 +30,7 @@ export const openmicAi = createPiece({
       baseUrl: () => BASE_URL,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth as string}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

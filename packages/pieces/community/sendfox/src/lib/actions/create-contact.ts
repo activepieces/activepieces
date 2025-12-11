@@ -25,7 +25,7 @@ export const createContact = createAction({
   },
   async run(context) {
     const authentication = context.auth;
-    const accessToken = authentication;
+    const accessToken = authentication.secret_text;
     const email = context.propsValue.email;
     const firstname = context.propsValue.firstname;
     const lastname = context.propsValue.lastname;
@@ -40,7 +40,7 @@ export const createContact = createAction({
       await callsendfoxApi(
         HttpMethod.POST,
         'contacts',
-        accessToken,
+        accessToken,  
         request_body
       )
     ).body;

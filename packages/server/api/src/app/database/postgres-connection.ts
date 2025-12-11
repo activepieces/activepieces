@@ -1,7 +1,7 @@
 import { TlsOptions } from 'node:tls'
 import 'pg'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, isNil, spreadIfDefined } from '@activepieces/shared'
+import { isNil, spreadIfDefined } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
 import { commonProperties } from './database-connection'
@@ -106,6 +106,11 @@ import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migrat
 
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
+import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
+import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
+import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
+import { RemovePlatformSMTP1764945141702 } from './migration/postgres/1764945141702-RemovePlatformSMTP'
+import { AddPersonalProjectsForAllUsers1765107860778 } from './migration/postgres/1765107860778-AddPersonalProjectsForAllUsers'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -118,7 +123,12 @@ const getSslConfig = (): boolean | TlsOptions => {
 }
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
-    const commonMigration: (new () => MigrationInterface)[] = [
+    const migrations: (new () => MigrationInterface)[] = [
+        AddPersonalProjectsForAllUsers1765107860778,
+        RemovePlatformSMTP1764945141702,
+        DropProjectIdFromPieceMetadata1764866386989,
+        AddPieceVersionToAppConnection1764841091811,
+        AddMcpServer1764606838149,
         AddFlowOperationStatusField1764079041445,
         AddProjectType1763644863137,
         RemoveDurationAndAddArchivedAtIdxPostgres1763378445659,
@@ -219,19 +229,7 @@ const getMigrations = (): (new () => MigrationInterface)[] => {
         InitialPg1740031656104,
     ]
 
-    const edition = system.getEdition()
-    switch (edition) {
-        case ApEdition.CLOUD:
-        case ApEdition.ENTERPRISE:
-            commonMigration.push()
-            break
-        case ApEdition.COMMUNITY:
-            commonMigration.push()
-            break
-    }
-
-
-    return commonMigration
+    return migrations
 }
 
 

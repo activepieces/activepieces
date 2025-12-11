@@ -19,7 +19,7 @@ export const findRecentMeetingAction = createAction({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				query: `
@@ -58,7 +58,7 @@ export const findRecentMeetingAction = createAction({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			body: {
 				query: getTranscript,

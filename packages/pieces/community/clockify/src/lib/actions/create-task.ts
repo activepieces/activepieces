@@ -53,7 +53,7 @@ export const createTaskAction = createAction({
 		const assigneeIds = context.propsValue.assigneeIds ?? [];
 
 		const response = await clockifyApiCall({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/projects/${projectId}/tasks`,
 			body: {

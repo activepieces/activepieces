@@ -147,7 +147,7 @@ export const convertHtmlToPdf = createAction({
                 method: HttpMethod.POST,
                 url: `${BASE_URL}/pdf/convert/from/html`,
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,

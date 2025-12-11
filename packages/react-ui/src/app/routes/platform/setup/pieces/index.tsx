@@ -19,20 +19,12 @@ import { oauthAppsQueries } from '@/features/connections/lib/oauth-apps-hooks';
 import { InstallPieceDialog } from '@/features/pieces/components/install-piece-dialog';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
   PieceMetadataModelSummary,
   PropertyType,
 } from '@activepieces/pieces-framework';
-import {
-  ApEdition,
-  ApFlagId,
-  BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE,
-  isNil,
-  OAuth2GrantType,
-  PieceScope,
-} from '@activepieces/shared';
+import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 
 const PlatformPiecesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -48,10 +40,9 @@ const PlatformPiecesPage = () => {
     includeTags: true,
     includeHidden: true,
   });
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  const { refetch: refetchPiecesClientIdsMap } =
-    oauthAppsQueries.usePieceToClientIdMap(platform.cloudAuthEnabled, edition!);
+  const { refetch: refetchPiecesOAuth2AppsMap } =
+    oauthAppsQueries.usePiecesOAuth2AppsMap();
 
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
@@ -147,22 +138,14 @@ const PlatformPiecesPage = () => {
         {
           id: 'actions',
           cell: ({ row }) => {
-            const isOAuth2Enabled =
-              row.original.auth &&
-              row.original.auth.type === PropertyType.OAUTH2 &&
-              (row.original.auth.grantType ===
-                BOTH_CLIENT_CREDENTIALS_AND_AUTHORIZATION_CODE ||
-                row.original.auth.grantType ===
-                  OAuth2GrantType.AUTHORIZATION_CODE ||
-                isNil(row.original.auth.grantType));
             return (
               <div className="flex justify-end">
-                {isOAuth2Enabled && (
+                {shouldShowOauth2SettingForPiece(row.original) && (
                   <ConfigurePieceOAuth2Dialog
                     pieceName={row.original.name}
                     onConfigurationDone={() => {
                       refetchPieces();
-                      refetchPiecesClientIdsMap();
+                      refetchPiecesOAuth2AppsMap();
                     }}
                     isEnabled={isEnabled}
                   />
@@ -248,3 +231,19 @@ const PlatformPiecesPage = () => {
 
 PlatformPiecesPage.displayName = 'PlatformPiecesPage';
 export { PlatformPiecesPage };
+
+function shouldShowOauth2SettingForPiece(piece: PieceMetadataModelSummary) {
+  const pieceAuth = Array.isArray(piece.auth)
+    ? piece.auth.find((auth) => auth.type === PropertyType.OAUTH2)
+    : piece.auth;
+  if (isNil(pieceAuth)) {
+    return false;
+  }
+  if (pieceAuth.type !== PropertyType.OAUTH2) {
+    return false;
+  }
+  if (pieceAuth.grantType === OAuth2GrantType.CLIENT_CREDENTIALS) {
+    return false;
+  }
+  return true;
+}

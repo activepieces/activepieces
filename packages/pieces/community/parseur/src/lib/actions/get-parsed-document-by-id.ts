@@ -15,6 +15,6 @@ export const getParsedDocumentById = createAction({
     if (!documentId) {
       throw new Error('Document ID is required');
     }
-    return await parseurCommon.getDocument({ apiKey, documentId });
+    return await parseurCommon.getDocument({ apiKey: apiKey.secret_text, documentId });
   },
 });
