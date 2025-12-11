@@ -1,4 +1,4 @@
-import { apVersionUtil, environmentVariables, exceptionHandler, getContainerMemoryUsage, getCpuCores, getCpuUsage, getDiskInfo, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { apVersionUtil, environmentVariables, exceptionHandler, systemUsage, networkUtils, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineProcessManager } from '../compute/process/engine-process-manager'
@@ -14,11 +14,11 @@ export const workerMachine = {
         return workerToken
     },
     async getSystemInfo(): Promise<WorkerMachineHealthcheckRequest> {
-        const { totalRamInBytes, ramUsage } = await getContainerMemoryUsage()
-        const cpuUsage = getCpuUsage()
+        const { totalRamInBytes, ramUsage } = await systemUsage.getContainerMemoryUsage()
+        const cpuUsage = systemUsage.getCpuUsage()
         const ip = (await networkUtils.getPublicIp()).ip
-        const diskInfo = await getDiskInfo()
-        const cpuCores = await getCpuCores()
+        const diskInfo = await systemUsage.getDiskInfo()
+        const cpuCores = await systemUsage.getCpuCores()
 
         return {
             diskInfo,

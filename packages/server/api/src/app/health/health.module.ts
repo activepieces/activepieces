@@ -2,6 +2,7 @@ import { ALL_PRINCIPAL_TYPES, GetSystemHealthChecksResponse, PrincipalType } fro
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { healthStatusService } from './health.service'
+import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 
 export const healthModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(healthController, { prefix: '/v1/health' })
@@ -25,7 +26,7 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
         },
     ),
     app.get('/system', GetSystemHealthChecks, async (request, reply) => {
-         
+        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
         await reply.status(StatusCodes.OK).send(await healthStatusService(app.log).getSystemHealthChecks())
     })
 }

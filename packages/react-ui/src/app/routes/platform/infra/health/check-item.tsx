@@ -16,7 +16,7 @@ type CheckItemProps = {
   title: string;
   icon: React.ReactNode;
   isChecked: boolean;
-  message: string;
+  message: string | React.ReactNode;
   loading: boolean;
   link?: string;
 };
@@ -44,12 +44,8 @@ const CheckItem = ({
             </a>
           )}
         </ItemTitle>
-        <ItemDescription>
-          <div
-            dangerouslySetInnerHTML={{
-              __html: loading ? '...' : message,
-            }}
-          />
+        <ItemDescription className='text-xs text-muted-foreground'>
+          {loading ? '...' : message}
         </ItemDescription>
       </ItemContent>
       <ItemActions>

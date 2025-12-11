@@ -34,13 +34,39 @@ export default function SettingsHealthPage() {
       title: t('Version Check'),
       icon: <Package />,
       isChecked: isVersionUpToDate,
-      message: `<b>Current</b>: ${
-        currentVersion || 'Unknown'
-      }\n<b>Latest</b>: ${latestVersion || 'Unknown'}\n${
-        !isVersionUpToDate
-          ? 'Upgrade now to enjoy the latest features and bug fixes.\nCheck the changelog <a class="font-medium text-blue-600 dark:text-blue-500 hover:underline" href="https://github.com/activepieces/activepieces/releases" target="_blank">releases</a>.'
-          : ''
-      }`,
+      message: (
+        <div>
+          <div className="flex flex-row gap-4 items-center">
+            <span>
+              <b>{t('Current Version')}</b>: {currentVersion || t('Unknown')}
+            </span>
+            <span>
+              <b>{t('Latest Version')}</b>: {latestVersion || t('Unknown')}
+            </span>
+          </div>
+          <div className="mt-2 flex flex-col gap-1">
+            {!isVersionUpToDate ? (
+              <>
+                <span>
+                  {t('A new version is available. Upgrade now to enjoy the latest features, improvements, and bug fixes.')}
+                </span>
+                <span>
+                  {t('See the')}{' '}
+                  <a
+                    className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+                    href="https://github.com/activepieces/activepieces/releases"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {t('release changelog')}
+                  </a>
+                  .
+                </span>
+              </>
+            ) : null}
+          </div>
+        </div>
+      ),
       link: 'https://github.com/activepieces/activepieces/releases',
     },
     {
@@ -48,9 +74,14 @@ export default function SettingsHealthPage() {
       title: t('Disk Size'),
       icon: <HardDrive />,
       isChecked: systemHealth?.disk,
-      message: systemHealth?.disk
-        ? t('Minimum amount of disk space is available')
-        : t('Minimum 30GB of disk space is required'),
+      message: (
+        <span>
+          {systemHealth?.disk
+            ? t('The server has sufficient disk space. At least 30GB of disk space is required for optimal operation.')
+            : t('Insufficient disk space. A minimum of 30GB is required for Activepieces to function properly.')
+          }
+        </span>
+      ),
       loading: isPending,
       link: 'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications',
     },
@@ -59,9 +90,14 @@ export default function SettingsHealthPage() {
       title: t('RAM'),
       icon: <MemoryStick />,
       isChecked: systemHealth?.ram,
-      message: systemHealth?.ram
-        ? t('Minimum amount of RAM is available')
-        : t('Minimum 4GB of RAM is required'),
+      message: (
+        <span>
+          {systemHealth?.ram
+            ? t('The server meets the minimum RAM requirement. At least 4GB RAM is needed for stable performance.')
+            : t('Insufficient RAM. A minimum of 4GB RAM is required for optimal operation.')
+          }
+        </span>
+      ),
       link: 'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications',
       loading: isPending,
     },
@@ -70,9 +106,14 @@ export default function SettingsHealthPage() {
       title: t('CPU Cores'),
       icon: <Cpu />,
       isChecked: systemHealth?.cpu,
-      message: systemHealth?.cpu
-        ? t('Minimum amount of CPU cores is available')
-        : t('Minimum 1 CPU core is required'),
+      message: (
+        <span>
+          {systemHealth?.cpu
+            ? t('The server has enough CPU resources. At least 1 CPU core is required to run Activepieces.')
+            : t('Not enough CPU resources. At least 1 CPU core is necessary to operate Activepieces.')
+          }
+        </span>
+      ),
       link: 'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications',
       loading: isPending,
     },
