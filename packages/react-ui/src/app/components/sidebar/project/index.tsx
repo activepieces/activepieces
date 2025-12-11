@@ -1,6 +1,15 @@
 import { Settings, User } from 'lucide-react';
 import { useState } from 'react';
 
+import {
+  PlatformRole,
+  PROJECT_COLOR_PALETTE,
+  ProjectType,
+  ProjectWithLimits,
+} from '@activepieces/shared';
+
+import { ApProjectDisplay } from '../../ap-project-display';
+
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,14 +26,6 @@ import {
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
-import {
-  PlatformRole,
-  PROJECT_COLOR_PALETTE,
-  ProjectType,
-  ProjectWithLimits,
-} from '@activepieces/shared';
-
-import { ApProjectDisplay } from '../../ap-project-display';
 import { ProjectSettingsDialog } from '../../project-settings';
 
 type ProjectSideBarItemProps = {
@@ -54,8 +55,7 @@ const ProjectSideBarItem = ({
     | 'environment' => {
     const hasGeneralSettings =
       project.type === ProjectType.TEAM ||
-      (platform.plan.embeddingEnabled &&
-        user?.platformRole === PlatformRole.ADMIN);
+      (platform.plan.embeddingEnabled && user?.platformRole === PlatformRole.ADMIN);
 
     if (hasGeneralSettings) return 'general';
     return 'pieces';
@@ -91,7 +91,7 @@ const ProjectSideBarItem = ({
                   onClick={() => handleProjectSelect(project.id)}
                   className={cn(
                     isCurrentProject &&
-                      'bg-sidebar-active hover:!bg-sidebar-active',
+                    'bg-sidebar-active hover:!bg-sidebar-active',
                     'relative flex items-center justify-center',
                   )}
                 >
@@ -117,7 +117,11 @@ const ProjectSideBarItem = ({
                 className="flex-1 flex items-center gap-2 min-w-0"
               >
                 <ApProjectDisplay
-                  title={project.displayName}
+                  title={
+                    project.type === ProjectType.PERSONAL
+                      ? 'Personal Project'
+                      : project.displayName
+                  }
                   icon={project.icon}
                   maxLengthToNotShowTooltip={28}
                   projectType={project.type}
