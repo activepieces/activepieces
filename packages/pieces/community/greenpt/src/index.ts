@@ -7,7 +7,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 
 export const greenpt = createPiece({
-  displayName: 'Greenpt',
+  displayName: 'GreenPT',
   description:
     'GreenPT is a green AI and privacy friendly GPT-powered chat platform',
   auth: greenptAuth,
