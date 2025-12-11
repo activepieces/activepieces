@@ -4,20 +4,24 @@ export class AddStepsExecutedAndAICreditsToFlowRun1765461560795 implements Migra
     name = 'AddStepsExecutedAndAICreditsToFlowRun1765461560795'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        const columnExists = await queryRunner.hasColumn('flow_run', 'stepsCount')
+        if (columnExists) {
+            await queryRunner.query(`
+                UPDATE "flow_run" SET "stepsCount" = 0 WHERE "stepsCount" IS NULL
+            `)
+            await queryRunner.query(`
+                ALTER TABLE "flow_run" ALTER COLUMN "stepsCount" SET NOT NULL
+            `)
+            return
+        }
         await queryRunner.query(`
-            ALTER TABLE "flow_run"
-            ADD COLUMN IF NOT EXISTS "executedSteps" integer
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "flow_run"
-            ALTER COLUMN "executedSteps" SET DEFAULT 0,
-            ALTER COLUMN "executedSteps" SET NOT NULL
+            ALTER TABLE "flow_run" ADD "stepsCount" integer NOT NULL DEFAULT 0
         `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN "executedSteps"
+            ALTER TABLE "flow_run" DROP COLUMN "stepsCount"
         `)
     }
 

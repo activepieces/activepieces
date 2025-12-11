@@ -22,7 +22,7 @@ export const UpdateRunProgressRequest = Type.Object({
     finishTime: Type.Optional(Type.String()),
     stepResponse: Type.Optional(StepRunResponse),
     pauseMetadata: Type.Optional(PauseMetadata),
-    executedSteps: Type.Optional(Type.Number()),
+    stepsCount: Type.Optional(Type.Number()),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>

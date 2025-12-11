@@ -49,7 +49,7 @@ export const FlowRun = Type.Object({
     })),
     stepNameToTest: Type.Optional(Type.String()),
     archivedAt: Nullable(Type.String({ default: null })),
-    executedSteps: Type.Optional(Type.Number()),
+    stepsCount: Type.Optional(Type.Number()),
 })
 
 export const FailedStep = Type.Object({

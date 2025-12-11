@@ -25,7 +25,7 @@ export class FlowExecutorContext {
     verdict: FlowVerdict
     currentPath: StepExecutionPath
     stepNameToTest?: boolean
-    executedSteps: number
+    stepsCount: number
 
     /**
      * Execution time in milliseconds
@@ -40,7 +40,7 @@ export class FlowExecutorContext {
         this.verdict = copyFrom?.verdict ?? { status: FlowRunStatus.RUNNING }
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
-        this.executedSteps = copyFrom?.executedSteps ?? 0
+        this.stepsCount = copyFrom?.stepsCount ?? 0
     }
 
     static empty(): FlowExecutorContext {
@@ -166,7 +166,7 @@ export class FlowExecutorContext {
     public incrementStepsExecuted(): FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
-            executedSteps: this.executedSteps + 1,
+            stepsCount: this.stepsCount + 1,
         })
     }
 
