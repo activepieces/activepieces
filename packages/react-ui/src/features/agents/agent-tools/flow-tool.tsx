@@ -25,25 +25,16 @@ export const AgentFlowTool = ({
 }: AgentFlowToolProps) => {
   const [open, setOpen] = useState(false);
 
-  const openFlow = () => {
-    window.open(`/flows/${tool.flowId}`, '_blank');
-  };
-
   return (
     <Card key={`flow-${tool.toolName}`}>
       <CardContent className="flex items-center justify-between p-3 min-h-[48px]">
-        <div
-          className="flex items-center gap-3 min-w-0 group cursor-pointer"
-          onClick={openFlow}
-        >
+        <div className="flex items-center gap-3 min-w-0">
           <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
             <Workflow className="h-5 w-5 text-muted-foreground" />
           </div>
           <div className="min-w-0">
             <h3 className="text-sm font-medium truncate">
-              <span className="group-hover:underline">
-                {tool.flowId || t('Flow')}
-              </span>
+              {tool.toolName.split('_')[0] || t('Flow')}
             </h3>
           </div>
         </div>
@@ -62,9 +53,9 @@ export const AgentFlowTool = ({
               onCloseAutoFocus={(e) => e.preventDefault()}
             >
               <ConfirmationDeleteDialog
-                title={`${t('Delete')} ${tool.flowId}`}
+                title={`${t('Delete')} ${tool.toolName}`}
                 message={t('Are you sure you want to delete this tool?')}
-                mutationFn={async () => await removeTool([tool.toolName])}
+                mutationFn={async () => await removeTool([tool.externalFlowId])}
                 entityName={t('Tool')}
               >
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>

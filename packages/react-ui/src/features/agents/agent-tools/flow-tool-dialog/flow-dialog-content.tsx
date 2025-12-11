@@ -10,15 +10,21 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PopulatedFlow } from '@activepieces/shared';
+import {
+  AgentFlowTool,
+  AgentToolType,
+  PopulatedFlow,
+} from '@activepieces/shared';
 
 import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { flowDialogUtils } from './flow-dialog-utils';
 
 interface FlowDialogContentProps {
   flows: PopulatedFlow[];
-  selectedFlows: string[];
-  setSelectedFlows: (value: string[] | ((prev: string[]) => string[])) => void;
+  selectedFlows: AgentFlowTool[];
+  setSelectedFlows: (
+    value: AgentFlowTool[] | ((prev: AgentFlowTool[]) => AgentFlowTool[]),
+  ) => void;
   searchQuery: string;
 }
 
@@ -39,11 +45,19 @@ export const FlowDialogContent = ({
     );
   }, [flows, debouncedQuery]);
 
-  const handleSelectFlow = (flowId: string) => {
-    setSelectedFlows((prev: string[]) => {
-      const newSelected = prev.includes(flowId)
-        ? prev.filter((id: string) => id !== flowId)
-        : [...prev, flowId];
+  const handleSelectFlow = (flowTool: AgentFlowTool) => {
+    setSelectedFlows((prev: AgentFlowTool[]) => {
+      const alreadyExists = prev.find(
+        (prevTool) => flowTool.externalFlowId === prevTool.externalFlowId,
+      )
+        ? true
+        : false;
+      const newSelected = alreadyExists
+        ? prev.filter(
+            (tool: AgentFlowTool) =>
+              tool.externalFlowId !== flowTool.externalFlowId,
+          )
+        : [...prev, flowTool];
       return newSelected;
     });
   };
@@ -63,13 +77,37 @@ export const FlowDialogContent = ({
                 <div
                   className={`border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg relative ${
                     !isSelectable ? 'opacity-50' : ''
-                  } ${selectedFlows.includes(flow.id) ? 'bg-accent' : ''}`}
-                  onClick={() => isSelectable && handleSelectFlow(flow.id)}
+                  } ${
+                    selectedFlows.find(
+                      (tool) => tool.externalFlowId === flow.externalId,
+                    )
+                      ? 'bg-accent'
+                      : ''
+                  }`}
+                  onClick={() =>
+                    isSelectable &&
+                    handleSelectFlow({
+                      externalFlowId: flow.externalId,
+                      toolName: `${flow.version.displayName}_${flow.id}`,
+                      type: AgentToolType.FLOW,
+                    })
+                  }
                 >
                   <Checkbox
-                    checked={selectedFlows.includes(flow.id)}
+                    checked={
+                      selectedFlows.find(
+                        (tool) => tool.externalFlowId === flow.externalId,
+                      )
+                        ? true
+                        : false
+                    }
                     onCheckedChange={() =>
-                      isSelectable && handleSelectFlow(flow.id)
+                      isSelectable &&
+                      handleSelectFlow({
+                        externalFlowId: flow.externalId,
+                        toolName: `${flow.version.displayName}_${flow.id}`,
+                        type: AgentToolType.FLOW,
+                      })
                     }
                     className="absolute top-2 left-2"
                     onClick={(e) => e.stopPropagation()}

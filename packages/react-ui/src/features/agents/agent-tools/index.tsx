@@ -25,8 +25,11 @@ export const AgentTools = ({ disabled, agentToolsField }: AgentToolsProps) => {
   const { pieces } = piecesHooks.usePieces({});
 
   const removeTool = async (toolIds: string[]): Promise<void> => {
-    const newTools = tools.filter((tool) => !toolIds.includes(tool.toolName));
-
+    const newTools = tools.filter((tool) =>
+      tool.type === AgentToolType.PIECE
+        ? !toolIds.includes(tool.toolName)
+        : !toolIds.includes(tool.externalFlowId),
+    );
     onToolsUpdate(newTools);
   };
 
@@ -42,7 +45,7 @@ export const AgentTools = ({ disabled, agentToolsField }: AgentToolsProps) => {
     const key =
       tool.type === AgentToolType.PIECE
         ? tool.pieceMetadata?.pieceName
-        : tool.flowId;
+        : tool.externalFlowId;
 
     if (key) {
       acc[key] = acc[key] || [];

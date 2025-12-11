@@ -67,9 +67,9 @@ export const AddAgentToolDropdown = ({
         </AgentPieceDialog>
         <AgentFlowToolDialog
           open={showAddFlowDialog}
-          selectedFlows={tools
-            .filter((tool) => tool.type === AgentToolType.FLOW)
-            .map((tool) => tool.flowId!)}
+          selectedFlows={tools.filter(
+            (tool) => tool.type === AgentToolType.FLOW,
+          )}
           onToolsUpdate={(newTools) => {
             onToolsUpdate(newTools);
             setShowAddFlowDialog(false);
