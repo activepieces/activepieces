@@ -61,10 +61,7 @@ const ProjectSideBarItem = ({
     return 'pieces';
   };
 
-  const showSettings =
-    project.type === ProjectType.TEAM ||
-    (platform.plan.embeddingEnabled &&
-      user?.platformRole === PlatformRole.ADMIN);
+  const showSettings = !platform.plan.embeddingEnabled
 
   const projectAvatar =
     project.type === ProjectType.TEAM ? (
@@ -127,9 +124,6 @@ const ProjectSideBarItem = ({
                 />
               </div>
               <div className="flex items-center gap-1">
-                {project.type === ProjectType.PERSONAL && (
-                  <span className="text-xs text-muted-foreground">Private</span>
-                )}
                 {showSettings && (
                   <Button
                     variant="ghost"
