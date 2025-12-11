@@ -1,4 +1,4 @@
-import { getContainerMemoryUsage, getCpuCores, getDiskInfo } from '@activepieces/server-shared'
+import { systemUsage } from '@activepieces/server-shared'
 import { GetSystemHealthChecksResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../helper/system/system'
@@ -22,9 +22,9 @@ export const healthStatusService = (_log: FastifyBaseLogger) => ({
         const allWorkersHaveEnoughRam = workers.every(worker => worker.information.totalAvailableRamInBytes > gigaBytes(4))
         
         return {
-            cpu: await getCpuCores() >= 1 && allWorkersPassedHealthcheck,
-            disk: (await getDiskInfo()).total > gigaBytes(30),
-            ram: (await getContainerMemoryUsage()).totalRamInBytes > gigaBytes(4) && allWorkersHaveEnoughRam,
+            cpu: await systemUsage.getCpuCores() >= 1 && allWorkersPassedHealthcheck,
+            disk: (await systemUsage.getDiskInfo()).total > gigaBytes(30),
+            ram: (await systemUsage.getContainerMemoryUsage()).totalRamInBytes > gigaBytes(4) && allWorkersHaveEnoughRam,
         }
     },
 })
