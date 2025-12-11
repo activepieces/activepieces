@@ -51,14 +51,6 @@ describe('Platform API', () => {
                 favIconUrl: 'updated fav icon url',
                 filteredPieceNames: ['updated filtered piece names'],
                 filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
-                smtp: {
-                    host: 'updated smtp host',
-                    port: 123,
-                    user: 'updated smtp user',
-                    password: 'updated smtp password',
-                    senderName: 'updated smtp sender name',
-                    senderEmail: 'updated smtp sender email',
-                },
                 enforceAllowedAuthDomains: true,
                 allowedAuthDomains: ['yahoo.com'],
                 cloudAuthEnabled: false,
@@ -144,14 +136,6 @@ describe('Platform API', () => {
             // arrange
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
                 platform: {
-                    smtp: {
-                        host: faker.internet.password(),
-                        port: 123,
-                        user: faker.internet.password(),
-                        password: faker.internet.password(),
-                        senderEmail: faker.internet.password(),
-                        senderName: faker.internet.password(),
-                    },
                     federatedAuthProviders: {
                         google: {
                             clientId: faker.internet.password(),
@@ -188,11 +172,10 @@ describe('Platform API', () => {
             // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
 
-            expect(Object.keys(responseBody).length).toBe(20)
+            expect(Object.keys(responseBody).length).toBe(19)
             expect(responseBody.id).toBe(mockPlatform.id)
             expect(responseBody.ownerId).toBe(mockOwner.id)
             expect(responseBody.name).toBe(mockPlatform.name)
-            expect(responseBody.smtp).toStrictEqual({})
             expect(responseBody.federatedAuthProviders.google).toStrictEqual({
                 clientId: mockPlatform.federatedAuthProviders?.google?.clientId,
             })

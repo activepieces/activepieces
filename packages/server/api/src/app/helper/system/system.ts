@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -13,11 +13,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
 
-
-export enum DatabaseType {
-    POSTGRES = 'POSTGRES',
-    SQLITE3 = 'SQLITE3',
-}
 
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {

@@ -229,12 +229,48 @@
       "@activepieces/piece-vidlab7": [
         "packages/pieces/community/vidlab7/src/index.ts"
       ],
+      "@activepieces/piece-customgpt": [
+        "packages/pieces/community/customgpt/src/index.ts"
+      ],
+      "@activepieces/piece-synthesia": [
+        "packages/pieces/community/synthesia/src/index.ts"
+      ],
       "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
       "@activepieces/piece-meetgeek-ai": [
         "packages/pieces/community/meetgeek-ai/src/index.ts"
       ],
       "@activepieces/piece-fellow": [
         "packages/pieces/community/fellow/src/index.ts"
+      ],
+      "@activepieces/piece-echowin": [
+        "packages/pieces/community/echowin/src/index.ts"
+      ],
+      "@activepieces/piece-feathery": [
+        "packages/pieces/community/feathery/src/index.ts"
+      ],
+      "@activepieces/piece-chatling": [
+        "packages/pieces/community/chatling/src/index.ts"
+      ],
+      "@activepieces/piece-air-ops": [
+        "packages/pieces/community/air-ops/src/index.ts"
+      ],
+      "@activepieces/piece-mind-studio": [
+        "packages/pieces/community/mind-studio/src/index.ts"
+      ],
+      "@activepieces/piece-easy-peasy-ai": [
+        "packages/pieces/community/easy-peasy-ai/src/index.ts"
+      ],
+      "@activepieces/piece-leexi": [
+        "packages/pieces/community/leexi/src/index.ts"
+      ],
+      "@activepieces/piece-tiny-talk-ai": [
+        "packages/pieces/community/tiny-talk-ai/src/index.ts"
+      ],
+      "@activepieces/piece-hastewire": [
+        "packages/pieces/community/hastewire/src/index.ts"
+      ],
+      "@activepieces/piece-greenpt": [
+        "packages/pieces/community/greenpt/src/index.ts"
       ]
     },
     "resolveJsonModule": true
