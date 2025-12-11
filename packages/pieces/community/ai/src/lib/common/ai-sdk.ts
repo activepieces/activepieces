@@ -7,7 +7,7 @@ import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { ImageModel } from 'ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderConfig, AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig } from '@activepieces/shared'
+import { AIProviderConfig, AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, OpenAICompatibleProviderConfig } from '@activepieces/shared'
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     providerId: string;
@@ -74,6 +74,21 @@ export async function createAIModel({
                     'cf-aig-authorization': `Bearer ${apiKey}`
                 }
             })
+            return provider.chatModel(modelId)
+        }
+        case AIProviderName.OPENAI_COMPATIBLE: {
+            const { apiKey, apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
+
+            const provider = createOpenAICompatible({ 
+                name: 'openai-compatible',
+                baseURL: baseUrl,
+                headers: {
+                    [apiKeyHeader]: apiKey
+                }
+            })
+            if (isImage) {
+                return provider.imageModel(modelId)
+            }
             return provider.chatModel(modelId)
         }
         case AIProviderName.ACTIVEPIECES: 

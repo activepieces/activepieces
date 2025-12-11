@@ -1,5 +1,4 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, CloudflareGatewayProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, CloudflareGatewayProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
 export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProviderConfig> = {
@@ -11,8 +10,4 @@ export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProv
             type: m.modelType,
         }))
     },
-}
-
-type CloudflareGatewayModel = {
-    id: string
 }

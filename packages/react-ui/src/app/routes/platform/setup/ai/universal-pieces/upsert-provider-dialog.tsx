@@ -15,7 +15,14 @@ import {
   DialogTrigger,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Form, FormField, FormItem, FormMessage, FormLabel, FormControl } from '@/components/ui/form';
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormMessage,
+  FormLabel,
+  FormControl,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
@@ -29,6 +36,7 @@ import {
   CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
   GoogleProviderConfig,
+  OpenAICompatibleProviderConfig,
   OpenAIProviderConfig,
 } from '@activepieces/shared';
 
@@ -57,7 +65,9 @@ export const UpsertAIProviderDialog = ({
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
   const [modelDialogOpen, setModelDialogOpen] = useState(false);
-  const [editingModelIndex, setEditingModelIndex] = useState<number | undefined>(undefined);
+  const [editingModelIndex, setEditingModelIndex] = useState<
+    number | undefined
+  >(undefined);
 
   const { data: config, isLoading } = aiProviderHooks.useConfig(provider, open);
 
@@ -72,6 +82,12 @@ export const UpsertAIProviderDialog = ({
       return Type.Object({
         provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
         config: CloudflareGatewayProviderConfig,
+      });
+    }
+    if (provider === AIProviderName.OPENAI_COMPATIBLE) {
+      return Type.Object({
+        provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
+        config: OpenAICompatibleProviderConfig,
       });
     }
     return Type.Object({
@@ -118,7 +134,9 @@ export const UpsertAIProviderDialog = ({
     },
   });
 
-  const handleAddOrEditModel = (model: CloudflareGatewayProviderConfig['models'][0]) => {
+  const handleAddOrEditModel = (
+    model: CloudflareGatewayProviderConfig['models'][0]
+  ) => {
     if (editingModelIndex !== undefined) {
       // Update existing model
       update(editingModelIndex, model);
@@ -171,7 +189,10 @@ export const UpsertAIProviderDialog = ({
             </div>
           ) : (
             <Form {...form}>
-              <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <form
+                className="grid space-y-4"
+                onSubmit={(e) => e.preventDefault()}
+              >
                 <FormField
                   name="config.apiKey"
                   render={({ field }) => (
@@ -198,7 +219,9 @@ export const UpsertAIProviderDialog = ({
                     name="config.resourceName"
                     render={({ field }) => (
                       <FormItem className="grid space-y-3">
-                        <Label htmlFor="resourceName">{t('Resource Name')}</Label>
+                        <Label htmlFor="resourceName">
+                          {t('Resource Name')}
+                        </Label>
                         <div className="flex gap-2 items-center justify-center">
                           <Input
                             {...field}
@@ -255,14 +278,86 @@ export const UpsertAIProviderDialog = ({
                         </FormItem>
                       )}
                     />
-                    
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-base">{t('Models Configuration')}</Label>
+                  </>
+                )}
+
+                {provider === AIProviderName.OPENAI_COMPATIBLE && (
+                  <>
+                    <FormField
+                      name="config.baseUrl"
+                      render={({ field }) => (
+                        <FormItem className="grid space-y-3">
+                          <Label htmlFor="baseUrl">{t('Base URL')}</Label>
+                          <div className="flex gap-2 items-center justify-center">
+                            <Input
+                              {...field}
+                              required
+                              id="baseUrl"
+                              placeholder={t('your-base-url')}
+                              className="rounded-sm"
+                              disabled={isLoading}
+                            />
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      name="config.apiKeyHeader"
+                      render={({ field }) => (
+                        <FormItem className="grid space-y-3">
+                          <Label htmlFor="apiKeyHeader">{t('API Key Header')}</Label>
+                          <div className="flex gap-2 items-center justify-center">
+                            <Input
+                              {...field}
+                              required
+                              id="apiKeyHeader"
+                              placeholder={t('your-api-key-header')}
+                              className="rounded-sm"
+                              disabled={isLoading}
+                            />
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
+                {[
+                  AIProviderName.OPENAI_COMPATIBLE,
+                  AIProviderName.CLOUDFLARE_GATEWAY,
+                ].includes(provider) && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base">
+                        {t('Models Configuration')}
+                      </Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingModelIndex(undefined);
+                          setModelDialogOpen(true);
+                        }}
+                        disabled={isLoading}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        {t('Add Model')}
+                      </Button>
+                    </div>
+
+                    {fields.length === 0 ? (
+                      <div className="text-center py-8 border border-dashed rounded-lg">
+                        <p className="text-muted-foreground">
+                          {t('No models configured yet')}
+                        </p>
                         <Button
                           type="button"
-                          variant="outline"
-                          size="sm"
+                          variant="ghost"
+                          className="mt-2"
                           onClick={() => {
                             setEditingModelIndex(undefined);
                             setModelDialogOpen(true);
@@ -270,71 +365,56 @@ export const UpsertAIProviderDialog = ({
                           disabled={isLoading}
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          {t('Add Model')}
+                          {t('Add your first model')}
                         </Button>
                       </div>
-
-                      {fields.length === 0 ? (
-                        <div className="text-center py-8 border border-dashed rounded-lg">
-                          <p className="text-muted-foreground">{t('No models configured yet')}</p>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="mt-2"
-                            onClick={() => {
-                              setEditingModelIndex(undefined);
-                              setModelDialogOpen(true);
-                            }}
-                            disabled={isLoading}
+                    ) : (
+                      <div className="space-y-3">
+                        {fields.map((field, index) => (
+                          <div
+                            key={field.id}
+                            className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            {t('Add your first model')}
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {fields.map((field, index) => (
-                            <div
-                              key={field.id}
-                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3">
-                                  <Badge variant="ghost" className="font-mono">
-                                    {field.modelId}
-                                  </Badge>
-                                  <span className="font-medium">{field.modelName}</span>
-                                  <Badge variant="outline">{field.modelType}</Badge>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEditModel(index)}
-                                  disabled={isLoading}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                  <span className="sr-only">{t('Edit')}</span>
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleRemoveModel(index)}
-                                  disabled={isLoading}
-                                >
-                                  <Trash2 className="h-4 w-4 text-destructive" />
-                                  <span className="sr-only">{t('Delete')}</span>
-                                </Button>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3">
+                                <Badge variant="ghost" className="font-mono">
+                                  {field.modelId}
+                                </Badge>
+                                <span className="font-medium">
+                                  {field.modelName}
+                                </span>
+                                <Badge variant="outline">
+                                  {field.modelType}
+                                </Badge>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditModel(index)}
+                                disabled={isLoading}
+                              >
+                                <Pencil className="h-4 w-4" />
+                                <span className="sr-only">{t('Edit')}</span>
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveModel(index)}
+                                disabled={isLoading}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <span className="sr-only">{t('Delete')}</span>
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {form?.formState?.errors?.root?.serverError && (
@@ -380,15 +460,16 @@ export const UpsertAIProviderDialog = ({
         onSubmit={handleAddOrEditModel}
         editingIndex={editingModelIndex}
         initialData={
-          editingModelIndex !== undefined 
-            ? fields[editingModelIndex] as CloudflareGatewayProviderConfig['models'][0]
+          editingModelIndex !== undefined
+            ? (fields[
+                editingModelIndex
+              ] as CloudflareGatewayProviderConfig['models'][0])
             : undefined
         }
       />
     </>
   );
 };
-
 
 type ModelFormDialogProps = {
   open: boolean;
@@ -403,7 +484,7 @@ const ModelFormDialog = ({
   onOpenChange,
   onSubmit,
   editingIndex,
-  initialData
+  initialData,
 }: ModelFormDialogProps) => {
   const defaultModel: CloudflareGatewayProviderConfig['models'][0] = {
     modelId: '',
@@ -411,9 +492,9 @@ const ModelFormDialog = ({
     modelType: AIProviderModelType.TEXT,
   };
 
-  const [model, setModel] = useState<CloudflareGatewayProviderConfig['models'][0]>(
-    initialData || defaultModel
-  );
+  const [model, setModel] = useState<
+    CloudflareGatewayProviderConfig['models'][0]
+  >(initialData || defaultModel);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -458,7 +539,9 @@ const ModelFormDialog = ({
             <Input
               id="modelName"
               value={model.modelName}
-              onChange={(e) => setModel({ ...model, modelName: e.target.value })}
+              onChange={(e) =>
+                setModel({ ...model, modelName: e.target.value })
+              }
               placeholder="e.g., GPT-4"
               required
             />
@@ -469,7 +552,12 @@ const ModelFormDialog = ({
             <select
               id="modelType"
               value={model.modelType}
-              onChange={(e) => setModel({ ...model, modelType: e.target.value as AIProviderModelType })}
+              onChange={(e) =>
+                setModel({
+                  ...model,
+                  modelType: e.target.value as AIProviderModelType,
+                })
+              }
               className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               {Object.values(AIProviderModelType).map((type) => (

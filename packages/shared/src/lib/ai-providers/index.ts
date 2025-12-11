@@ -11,6 +11,21 @@ export const AnthropicProviderConfig = Type.Object({
 })
 export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
 
+export const OpenAICompatibleProviderConfig = Type.Object({
+    apiKey: Type.String(),
+    apiKeyHeader: Type.String(),
+    baseUrl: Type.String(),
+    models: Type.Array(
+        Type.Object({
+            modelId: Type.String(),
+            modelName: Type.String(),
+            modelType: Type.Enum(AIProviderModelType),
+        })
+    )
+})
+export type OpenAICompatibleProviderConfig = Static<typeof OpenAICompatibleProviderConfig>
+
+
 export const CloudflareGatewayProviderConfig = Type.Object({
     apiKey: Type.String(),
     accountId: Type.String(),
@@ -53,6 +68,7 @@ export const AIProviderConfig = Type.Union([
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
     CloudflareGatewayProviderConfig,
+    OpenAICompatibleProviderConfig,
 ])
 export type AIProviderConfig = Static<typeof AIProviderConfig>
 
@@ -64,6 +80,7 @@ export enum AIProviderName {
     GOOGLE = 'google',
     ACTIVEPIECES = 'activepieces',
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
+    OPENAI_COMPATIBLE = 'openai-compatible',
 }
 
 const ProviderConfigUnion = DiscriminatedUnion('provider', [
@@ -94,6 +111,10 @@ const ProviderConfigUnion = DiscriminatedUnion('provider', [
     Type.Object({
         provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
         config: CloudflareGatewayProviderConfig,
+    }),
+    Type.Object({
+        provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
+        config: OpenAICompatibleProviderConfig,
     }),
 ])
 

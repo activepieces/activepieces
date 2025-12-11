@@ -67,6 +67,15 @@ It is strongly recommended that you add your credit card information to your Ope
 2. Once on the website, follow the instructions to get your account id, gateway id and create an API Key.
 3. After creating the gateway, make sure to enable the Authenticated Gateway Option in your settings.
 4. For each provider you are using, include your keys in the Provider Keys tab.`,
+  },
+  {
+    provider: AIProviderName.OPENAI_COMPATIBLE,
+    displayName: 'OpenAI Compatible',
+    logoUrl: 'https://cdn.activepieces.com/pieces/openai-compatible.png',
+    markdown: `Follow these instructions to get your OpenAI Compatible API Key:
+1. Set the base url to your proxy url.
+2. In the api key header, set the value of your auth header name.
+3. In the api key, set your auth header value (full value including the Bearer if any).`,
   }
 ];
 export default function AIProvidersPage() {
