@@ -38,7 +38,7 @@ const ProjectSideBarItem = ({
   const projectAvatar =
     project.type === ProjectType.TEAM ? (
       <Avatar
-        className="size-6 flex items-center justify-center rounded-sm"
+        className="size-6 flex items-center justify-center rounded-sm cursor-pointer"
         style={{
           backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
           color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
@@ -47,7 +47,7 @@ const ProjectSideBarItem = ({
         {project.displayName.charAt(0).toUpperCase()}
       </Avatar>
     ) : (
-      <User className="size-5 flex items-center justify-center" />
+      <User className="size-5 flex items-center justify-center cursor-pointer" />
     );
 
   return (
