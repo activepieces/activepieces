@@ -63,7 +63,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                     width: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.width}px`,
                   }}
                   id={id}
-                  className={cn('rounded bg-accent relative', {
+                  className={cn('rounded-lg bg-background relative', {
                     'bg-primary/80':
                       isShowingDropIndicator || isPieceSelectorOpened,
                     'shadow-add-button':
@@ -84,10 +84,10 @@ const ApBigAddButtonCanvasNode = React.memo(
                       <span>
                         <Button
                           variant="transparent"
-                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded"
+                          className="w-full h-full flex items-center hover:bg-accent-foreground rounded-lg border-border border-solid border"
                         >
                           <Plus
-                            className={cn('w-6 h-6 text-accent-foreground ', {
+                            className={cn('w-6 h-6 text-foreground ', {
                               'opacity-0':
                                 isShowingDropIndicator || isPieceSelectorOpened,
                             })}
@@ -135,13 +135,9 @@ const ApBigAddButtonCanvasNode = React.memo(
                 >
                   <g>
                     <path
-                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -${
-                        flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE + 5
-                      } v ${
+                      d={`M ${flowUtilConsts.AP_NODE_SIZE.STEP.width / 2} -5 v ${
                         flowUtilConsts.AP_NODE_SIZE.STEP.height +
-                        2 *
-                          (flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE +
-                            5)
+                       10
                       }`}
                       fill="transparent"
                       strokeWidth="1.5"

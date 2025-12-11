@@ -7,20 +7,20 @@ import {
 
 interface TextWithTooltipProps {
   tooltipMessage: string;
-  renderTrigger: () => React.ReactNode;
+  children: React.ReactNode;
 }
 
 export const TextWithTooltip = ({
   tooltipMessage,
-  renderTrigger,
+  children,
 }: TextWithTooltipProps) => {
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>{renderTrigger()}</TooltipTrigger>
-        <TooltipContent className="max-w-md wrap-break-word whitespace-normal">
+        <TooltipTrigger asChild>{children}</TooltipTrigger>
+        {tooltipMessage && <TooltipContent className="max-w-md wrap-break-word whitespace-normal">
           <p>{tooltipMessage}</p>
-        </TooltipContent>
+        </TooltipContent>}
       </Tooltip>
     </TooltipProvider>
   );

@@ -34,7 +34,7 @@ const StepDragOverlay = ({
     builderLeftSidebarWidth -
     builderNavigationBarWidth
   }px`;
-  const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`;
+  const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT -20}px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
@@ -42,7 +42,7 @@ const StepDragOverlay = ({
   return (
     <div
       className={
-        'p-4 absolute left-0 top-0  opacity-75  flex items-center justify-center rounded-lg border border-solid border bg-white'
+        'p-4 absolute left-0 top-0  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-background'
       }
       style={{
         left,

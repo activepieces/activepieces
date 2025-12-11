@@ -17,9 +17,9 @@ export const ApStraightLineCanvasEdge = ({
 }: EdgeProps & ApStraightLineEdge) => {
   const lineStartX = sourceX;
   const lineStartY =
-    sourceY + flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+    sourceY 
   const lineLength =
-    targetY - sourceY - 2 * flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+    targetY - sourceY 
   const path = `M ${lineStartX} ${lineStartY} v${lineLength}
    ${data.drawArrowHead ? flowUtilConsts.ARROW_DOWN : ''}`;
   const showDebugForLineEndPoint = false;
@@ -36,7 +36,7 @@ export const ApStraightLineCanvasEdge = ({
           y={
             lineStartY +
             (targetY - sourceY) / 2 -
-            flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height
+            flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height/2
           }
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}

@@ -1,7 +1,5 @@
 @import 'tailwindcss';
-
-@plugin 'tailwindcss-animate';
-@plugin 'tailwind-scrollbar';
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -89,14 +87,14 @@
   --animate-highlight: highlight 1s ease-out;
   --animate-typing: typing 0.7s steps(7) alternate;
   --animate-typing-sm: typing 0.5s steps(5) alternate;
-  --animate-ask-ai-background: ask-ai-background 4s ease-in-out infinite;
   --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
   --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
     alternate;
 
   --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.4);
   --shadow-add-button: var(--add-button-shadow);
-
+  --color-builder-background: var(--builder-background);
+  --color-builder-background-pattern: var(--builder-background-pattern);
   @keyframes primary-color-pulse {
     from {
       color: hsl(var(--primary));
@@ -146,17 +144,7 @@
       width: 100%;
     }
   }
-  @keyframes ask-ai-background {
-    0% {
-      background-position: 0%;
-    }
-    50% {
-      background-position: 100%;
-    }
-    100% {
-      background-position: 0%;
-    }
-  }
+ 
   @keyframes slide-in-from-bottom {
     0% {
       transform: translateY(100%);
@@ -183,6 +171,8 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+
 }
 
 @utility scrollbar-hover {
@@ -292,7 +282,7 @@
 :root {
     --background: theme('colors.white');
     --foreground: theme('colors.neutral.950');
-    
+    --popover: theme('colors.white');
     --secondary: theme('colors.neutral.100');
     --secondary-foreground: theme('colors.neutral.900');
 
@@ -344,12 +334,14 @@
     --sidebar-border: theme('colors.neutral.200');
     --sidebar-ring: theme('colors.neutral.400');
     --sidebar-progress: 0 0% 50%;
+    --builder-background: hsla(0, 0%, 98%, 1);
+    --builder-background-pattern: hsla(0, 0%, 64%, 1);
   }
 
 .dark {
   --background: theme('colors.neutral.950');
   --foreground: theme('colors.neutral.50');
-
+  --popover: theme('colors.neutral.800');
   --muted: theme('colors.neutral.800');
   --muted-foreground: theme('colors.neutral.400');
 
@@ -399,6 +391,8 @@
   --sidebar-border: hsla(0, 0%, 100%, 0.1);
   --sidebar-ring: theme('colors.neutral.600');
   --sidebar-progress: 210 15% 40%;
+  --builder-background: hsla(0, 0%, 9%, 1);
+  --builder-background-pattern: hsla(0, 0%, 45%, 1);
 }
 
 
@@ -426,7 +420,7 @@
   }
 
   .react-flow {
-    --xy-edge-stroke-selected-default: #b1b1b7 !important;
+    --xy-edge-stroke: rgba(163, 163, 163, 0.5) !important;
     --node-boxshadow-selected-default: 0 0 0 0 #b1b1b7 !important;
     --selection-border-default: 0px solid #b1b1b7 !important;
     --node-border-default: 0px solid #b1b1b7 !important;
@@ -449,5 +443,14 @@
   /* This is a hack to fix the issue with the pointer events being set to none when the vaul drawer is open */
   body {
     pointer-events: auto !important;
+  }
+
+  [data-state="open"] {
+    --tw-enter-translate-y: initial !important;
+    --tw-enter-translate-x: initial !important;
+  }
+  [data-state="closed"] {
+    --tw-exit-translate-y: initial !important;  
+    --tw-exit-translate-x: initial !important;
   }
 }

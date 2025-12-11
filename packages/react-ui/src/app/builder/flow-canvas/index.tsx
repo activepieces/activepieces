@@ -246,8 +246,8 @@ export const FlowCanvas = React.memo(
                 gap={30}
                 size={2}
                 variant={BackgroundVariant.Dots}
-                bgColor={theme === 'dark' ? 'hsla(0, 0%, 9%, 1)' : 'hsla(0, 0%, 98%, 1)'}
-                color={theme === 'dark' ? 'hsla(0, 0%, 45%, 1)' : 'hsla(0, 0%, 64%, 1)'}
+                bgColor={`var(--builder-background)`}
+                color={`var(--builder-background-pattern)`}
               />
             </ReactFlow>
           </CanvasContextMenu>

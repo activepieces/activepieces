@@ -1,12 +1,8 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
-import { ChevronDown } from 'lucide-react';
 import React, { useMemo } from 'react';
-
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
-import { Button } from '@/components/ui/button';
-import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -15,19 +11,11 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
+import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../../utils/consts';
+import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
+import { ApStepNode } from '../../utils/types';
+import { SelectedNodeTopBorder, StepNodeChevron, StepNodeDisplayName, StepNodeLogo, StepNodeName } from './utils';
 
-import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../utils/consts';
-import { flowCanvasUtils } from '../utils/flow-canvas-utils';
-import { ApStepNode } from '../utils/types';
-
-import { ApStepNodeStatus } from './step-node-status';
-
-const getPieceSelectorOperationType = (step: Step) => {
-  if (flowStructureUtil.isTrigger(step.type)) {
-    return FlowOperationType.UPDATE_TRIGGER;
-  }
-  return FlowOperationType.UPDATE_ACTION;
-};
 
 const ApStepCanvasNode = React.memo(
   ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
@@ -90,9 +78,9 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all border-box rounded-sm border border-solid border-border relative hover:border-primary/70 group',
+          'transition-all border-box rounded-2xl border border-solid border-border relative hover:border-primary group',
           {
-            'border-primary/70': isSelected,
+            'border-primary': isSelected,
             'bg-background': !isDragging,
             'border-none': isDragging,
             'shadow-none': isDragging,
@@ -105,23 +93,10 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivAttributes}
         {...stepNodeDivListeners}
       >
-        <div
-          className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
-          style={{
-            top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
-          }}
-        >
-          {step.name}
-        </div>
-        <div
-          className={cn(
-            'absolute left-0 top-0 pointer-events-none  rounded-sm w-full h-full',
-            {
-              'border-t-2 border-primary/70 border-solid':
-                isSelected && !isDragging,
-            },
-          )}
-        ></div>
+         <SelectedNodeTopBorder isSelected={isSelected} isDragging={isDragging}/>
+          
+        <StepNodeName stepName={step.name} />
+       
         <div className="px-3 h-full w-full overflow-hidden">
           {!isDragging && (
             <PieceSelector
@@ -134,70 +109,16 @@ const ApStepCanvasNode = React.memo(
               stepToReplacePieceDisplayName={stepMetadata?.displayName}
             >
               <div
-                className="flex items-center justify-center h-full w-full gap-3"
+                className="flex items-center justify-center h-full w-full gap-[10px]"
                 onClick={(e) => {
                   if (!isPieceSelectorOpened) {
                     handleStepClick(e);
                   }
                 }}
               >
-                <div
-                  className={cn('flex items-center justify-center h-full ', {
-                    'opacity-80': isSkipped,
-                  })}
-                >
-                  <ImageWithFallback
-                    src={stepMetadata?.logoUrl}
-                    alt={stepMetadata?.displayName}
-                    className="w-12 h-12"
-                  />
-                </div>
-                <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
-                  <div className=" flex items-center justify-between min-w-0 w-full">
-                    <div
-                      className={cn('text-sm truncate grow shrink ', {
-                        'text-accent-foreground/70': isSkipped,
-                      })}
-                    >
-                      {stepIndex}. {step.displayName}
-                    </div>
-
-                    {(!readonly || !isTrigger) && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="p-1 size-7 "
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          if (e.target) {
-                            const rightClickEvent = new MouseEvent(
-                              'contextmenu',
-                              {
-                                bubbles: true,
-                                cancelable: true,
-                                view: window,
-                                button: 2,
-                                clientX: e.clientX,
-                                clientY: e.clientY,
-                              },
-                            );
-                            e.target.dispatchEvent(rightClickEvent);
-                          }
-                        }}
-                      >
-                        <ChevronDown className="w-4 h-4 stroke-muted-foreground" />
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="flex justify-between w-full items-center">
-                    <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
-                      {stepMetadata?.displayName}
-                    </div>
-                    <ApStepNodeStatus stepName={step.name} />
-                  </div>
-                </div>
+                <StepNodeLogo isSkipped={isSkipped} logoUrl={stepMetadata?.logoUrl ?? ''} displayName={stepMetadata?.displayName ?? ''} />
+                <StepNodeDisplayName stepDisplayName={step.displayName} stepIndex={stepIndex} isSkipped={isSkipped} pieceDisplayName={stepMetadata?.displayName ?? ''} />
+                {(!readonly) && <StepNodeChevron />}
               </div>
             </PieceSelector>
           )}
@@ -220,3 +141,12 @@ const ApStepCanvasNode = React.memo(
 
 ApStepCanvasNode.displayName = 'ApStepCanvasNode';
 export { ApStepCanvasNode };
+
+
+
+function getPieceSelectorOperationType(step: Step) {
+  if (flowStructureUtil.isTrigger(step.type)) {
+    return FlowOperationType.UPDATE_TRIGGER;
+  }
+  return FlowOperationType.UPDATE_ACTION;
+};
