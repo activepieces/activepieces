@@ -8,7 +8,7 @@ import { TextWithTooltip } from "@/components/custom/text-with-tooltip"
 const StepNodeName = ({stepName}: {stepName: string})=>{
     return (
       <div
-      className="absolute left-full pl-3 text-accent-foreground text-sm opacity-0 transition-all duration-300 group-hover:opacity-100 "
+      className="absolute left-full pl-3 text-accent-foreground text-xs opacity-0 transition-all duration-300 group-hover:opacity-100 "
       style={{
         top: `${flowUtilConsts.AP_NODE_SIZE.STEP.height / 2 - 12}px`,
       }}
@@ -84,7 +84,7 @@ const StepNodeName = ({stepName}: {stepName: string})=>{
       <div className=" flex items-center justify-between min-w-0 w-full">
        <TextWithTooltip tooltipMessage={stepDisplayName.length > 19 ? stepDisplayName : ''}>
        <div
-          className={cn('text-sm truncate font-semibold grow shrink ', {
+          className={cn('text-xs truncate font-semibold grow shrink ', {
             'text-accent-foreground/70': isSkipped,
           })}
         >

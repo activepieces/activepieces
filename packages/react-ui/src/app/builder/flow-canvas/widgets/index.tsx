@@ -13,7 +13,8 @@ const AboveFlowWidgets = React.memo(() => {
     (state) => [state.flowVersion, state.selectStepByName, state.readonly],
   );
   return (
-    <ViewportPortal>
+    <ViewportPortal >
+      <WidgetWrapper>
       <div
         style={{
           transform: `translate(0px,-${
@@ -33,6 +34,8 @@ const AboveFlowWidgets = React.memo(() => {
           )}
         </div>
       </div>
+      </WidgetWrapper>
+      
     </ViewportPortal>
   );
 });
@@ -40,6 +43,7 @@ AboveFlowWidgets.displayName = 'AboveFlowWidgets';
 const BelowFlowWidget = React.memo(() => {
   return (
     <ViewportPortal>
+      <WidgetWrapper>
       <div
         style={{
           pointerEvents: 'auto',
@@ -52,9 +56,20 @@ const BelowFlowWidget = React.memo(() => {
           <FlowEndWidget></FlowEndWidget>
         </div>
       </div>
+
+      </WidgetWrapper>
+     
     </ViewportPortal>
   );
 });
+
+const WidgetWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div style={{width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px'}} className='flex items-center justify-center'>
+      {children}
+    </div>
+  );
+};
 
 BelowFlowWidget.displayName = 'BelowFlowWidget';
 export { AboveFlowWidgets, BelowFlowWidget };
