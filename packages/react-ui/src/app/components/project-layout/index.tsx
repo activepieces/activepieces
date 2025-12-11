@@ -1,4 +1,4 @@
-import { Compass } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 import React, { ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -50,10 +50,10 @@ export function ProjectDashboardLayout({
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
-      to: '/explore',
-      label: t('Explore'),
+      to: '/templates',
+      label: t('Templates'),
       show: true,
-      icon: Compass,
+      icon: LayoutGrid,
       hasPermission: true,
     },
   ];

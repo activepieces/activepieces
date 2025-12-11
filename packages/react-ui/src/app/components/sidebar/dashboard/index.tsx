@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search, Loader2, Plus } from 'lucide-react';
+import { LayoutGrid, Search, Loader2, Plus } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -159,10 +159,10 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: '/explore',
-    label: t('Explore'),
+    to: '/templates',
+    label: t('Templates'),
     show: true,
-    icon: Compass,
+    icon: LayoutGrid,
     hasPermission: true,
     isSubItem: false,
   };
@@ -183,7 +183,6 @@ export function ProjectDashboardSidebar() {
       <Sidebar
         variant="inset"
         collapsible="icon"
-        onClick={() => setOpen(true)}
         className={cn(
           state === 'collapsed' ? 'cursor-nesw-resize' : '',
           'group',
@@ -205,7 +204,13 @@ export function ProjectDashboardSidebar() {
             'overflow-hidden',
           )}
         >
-          <SidebarGroup className="cursor-default flex-shrink-0">
+          <SidebarGroup
+            className="cursor-default flex-shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpen(true);
+            }}
+          >
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
@@ -318,7 +323,10 @@ export function ProjectDashboardSidebar() {
                   ? 'flex flex-col items-center scrollbar-none'
                   : 'scrollbar-hover',
               )}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpen(true);
+              }}
             >
               <SidebarMenu
                 className={cn(

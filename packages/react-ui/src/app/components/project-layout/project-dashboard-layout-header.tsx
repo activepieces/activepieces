@@ -105,7 +105,10 @@ export const ProjectDashboardLayoutHeader = () => {
   return (
     <div className="flex flex-col px-4 gap-1">
       {!isEmbedded && (
-        <ProjectDashboardPageHeader title={project?.displayName} />
+        <ProjectDashboardPageHeader
+          title={project?.displayName}
+          showPrivateProjectBadge={true}
+        />
       )}
       <Tabs>
         {!embedState.hideSideNav && (

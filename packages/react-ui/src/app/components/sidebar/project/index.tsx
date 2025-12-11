@@ -50,8 +50,17 @@ const ProjectSideBarItem = ({
       <User className="size-5 flex items-center justify-center" />
     );
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleItemClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    handleProjectSelect(project.id);
+  };
+
   return (
-    <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
+    <SidebarMenuItem onClick={handleClick}>
       {state === 'collapsed' ? (
         <TooltipProvider delayDuration={0}>
           <Tooltip>
@@ -59,7 +68,7 @@ const ProjectSideBarItem = ({
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => handleProjectSelect(project.id)}
+                onClick={handleItemClick}
                 className={cn(
                   isCurrentProject &&
                     'bg-sidebar-active hover:!bg-sidebar-active',
@@ -77,13 +86,14 @@ const ProjectSideBarItem = ({
       ) : (
         <SidebarMenuButton
           asChild
+          onClick={handleClick}
           className={cn(
             'px-2 py-5 cursor-pointer',
             isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
           )}
         >
           <div
-            onClick={() => handleProjectSelect(project.id)}
+            onClick={handleItemClick}
             className="w-full flex items-center justify-between gap-2"
           >
             <ApProjectDisplay
