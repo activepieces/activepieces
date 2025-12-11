@@ -76,6 +76,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
 
+        // if the user update a part of the config, and he kept the api key unchanged (it will be sent again in this format ****)
+        if (request.config.apiKey.includes('*')) {
+            const record = await aiProviderRepo().findOneBy({
+                platformId,
+                provider: request.provider,
+            })
+            if (record) {
+                const config = await encryptUtils.decryptObject<AIProviderConfig>(record.config)
+                request.config.apiKey = config.apiKey
+            }
+        }
+
         await aiProviderRepo().upsert({
             id: apId(),
             config: await encryptUtils.encryptObject(request.config),

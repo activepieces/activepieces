@@ -74,9 +74,6 @@ export async function createAIModel({
                     'cf-aig-authorization': `Bearer ${apiKey}`
                 }
             })
-            if (isImage) {
-                return provider.imageModel(modelId)
-            }
             return provider.chatModel(modelId)
         }
         case AIProviderName.ACTIVEPIECES: 

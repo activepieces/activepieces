@@ -422,6 +422,14 @@ const ModelFormDialog = ({
     onOpenChange(false);
   };
 
+  useEffect(() => {
+    if (initialData) {
+      setModel(initialData);
+    } else {
+      setModel(defaultModel);
+    }
+  }, [initialData]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
