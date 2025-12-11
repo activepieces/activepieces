@@ -48,19 +48,21 @@ const CheckItem = ({
           {loading ? '...' : message}
         </ItemDescription>
       </ItemContent>
-      <ItemActions>
-        {isChecked ? (
-          <div className="text-green-700 flex items-center gap-2">
-            <CheckCircle size={18} />
-            {t('Passed')}
-          </div>
-        ) : (
-          <div className="text-destructive-300 flex items-center gap-2">
-            <XCircle size={18} />
-            {t('Needs Attention')}
-          </div>
-        )}
-      </ItemActions>
+      {!loading && (
+        <ItemActions>
+          {isChecked ? (
+            <div className="text-green-700 flex items-center gap-2">
+              <CheckCircle size={18} />
+              {t('Passed')}
+            </div>
+          ) : (
+            <div className="text-destructive-300 flex items-center gap-2">
+              <XCircle size={18} />
+              {t('Needs Attention')}
+            </div>
+          )}
+        </ItemActions>
+      )}
     </Item>
   );
 };
