@@ -87,10 +87,8 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
       refetch: handleRefetch,
       refresh,
       setRefresh,
-      selectedRows,
-      setSelectedRows,
     });
-  }, [refresh, handleRefetch, selectedRows]);
+  }, [refresh, handleRefetch]);
 
   const filters: DataTableFilters<
     keyof PopulatedFlow | 'connectionExternalId' | 'name'
@@ -151,6 +149,8 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
           page={data}
           isLoading={isLoading || isLoadingConnections}
           filters={filters}
+          selectColumn={true}
+          onSelectedRowsChange={setSelectedRows}
           bulkActions={bulkActions}
           onRowClick={(row, newWindow) => {
             if (newWindow) {

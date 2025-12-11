@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { PERSONAL_PROJECT_NAME } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
 import {
   PROJECT_COLOR_PALETTE,
@@ -34,7 +35,6 @@ const ProjectSideBarItem = ({
   handleProjectSelect,
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
-
   const projectAvatar =
     project.type === ProjectType.TEAM ? (
       <Avatar
@@ -78,23 +78,26 @@ const ProjectSideBarItem = ({
         <SidebarMenuButton
           asChild
           className={cn(
-            'px-2 py-5 cursor-pointer',
+            'px-2 py-5 cursor-pointer group/project',
             isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
           )}
         >
-          <div
-            onClick={() => handleProjectSelect(project.id)}
-            className="w-full flex items-center justify-between gap-2"
-          >
-            <ApProjectDisplay
-              title={project.displayName}
-              icon={project.icon}
-              maxLengthToNotShowTooltip={28}
-              projectType={project.type}
-            />
-            {project.type === ProjectType.PERSONAL && (
-              <span className="text-xs text-muted-foreground">Private</span>
-            )}
+          <div className="w-full flex items-center justify-between gap-2">
+            <div
+              onClick={() => handleProjectSelect(project.id)}
+              className="flex-1 flex items-center gap-2 min-w-0"
+            >
+              <ApProjectDisplay
+                title={
+                  project.type === ProjectType.PERSONAL
+                    ? PERSONAL_PROJECT_NAME
+                    : project.displayName
+                }
+                icon={project.icon}
+                maxLengthToNotShowTooltip={28}
+                projectType={project.type}
+              />
+            </div>
           </div>
         </SidebarMenuButton>
       )}
