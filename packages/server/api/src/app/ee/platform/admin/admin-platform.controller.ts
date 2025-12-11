@@ -8,8 +8,8 @@ import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
-import { adminPlatformService } from './admin-platform.service'
 import { adminPlatformTemplatesCloudController } from './admin-platform-templates-cloud.controller'
+import { adminPlatformService } from './admin-platform.service'
 
 const API_KEY_HEADER = 'api-key'
 const API_KEY = system.get(AppSystemProp.API_KEY)

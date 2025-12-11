@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ApFlagId, CreateTemplateRequestBody, ErrorCode, isNil, TemplateType, UpdateFlagRequestBody, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ApFlagId, CreateTemplateRequestBody, ErrorCode, isNil, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
@@ -71,7 +71,7 @@ const UpdateTemplatesCategoriesFlagRequest = {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
     },
     schema: {
-        body: UpdateFlagRequestBody,
+        body: UpdateTemplatesCategoriesFlagRequestBody,
     },
 }
 
