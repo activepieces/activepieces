@@ -48,7 +48,9 @@ export default function SettingsHealthPage() {
             {!isVersionUpToDate ? (
               <>
                 <span>
-                  {t('A new version is available. Upgrade now to enjoy the latest features, improvements, and bug fixes.')}
+                  {t(
+                    'A new version is available. Upgrade now to enjoy the latest features, improvements, and bug fixes.',
+                  )}
                 </span>
                 <span>
                   {t('See the')}{' '}
@@ -77,9 +79,12 @@ export default function SettingsHealthPage() {
       message: (
         <span>
           {systemHealth?.disk
-            ? t('The server has sufficient disk space. At least 30GB of disk space is required for optimal operation.')
-            : t('Insufficient disk space. A minimum of 30GB is required for Activepieces to function properly.')
-          }
+            ? t(
+                'The server has sufficient disk space. At least 30GB of disk space is required for optimal operation.',
+              )
+            : t(
+                'Insufficient disk space. A minimum of 30GB is required for Activepieces to function properly.',
+              )}
         </span>
       ),
       loading: isPending,
@@ -93,9 +98,12 @@ export default function SettingsHealthPage() {
       message: (
         <span>
           {systemHealth?.ram
-            ? t('The server meets the minimum RAM requirement. At least 4GB RAM is needed for stable performance.')
-            : t('Insufficient RAM. A minimum of 4GB RAM is required for optimal operation.')
-          }
+            ? t(
+                'The server meets the minimum RAM requirement. At least 4GB RAM is needed for stable performance.',
+              )
+            : t(
+                'Insufficient RAM. A minimum of 4GB RAM is required for optimal operation.',
+              )}
         </span>
       ),
       link: 'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications',
@@ -109,9 +117,12 @@ export default function SettingsHealthPage() {
       message: (
         <span>
           {systemHealth?.cpu
-            ? t('The server has enough CPU resources. At least 1 CPU core is required to run Activepieces.')
-            : t('Not enough CPU resources. At least 1 CPU core is necessary to operate Activepieces.')
-          }
+            ? t(
+                'The server has enough CPU resources. At least 1 CPU core is required to run Activepieces.',
+              )
+            : t(
+                'Not enough CPU resources. At least 1 CPU core is necessary to operate Activepieces.',
+              )}
         </span>
       ),
       link: 'https://www.activepieces.com/docs/install/configuration/hardware#technical-specifications',

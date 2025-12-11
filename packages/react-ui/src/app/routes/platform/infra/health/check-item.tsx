@@ -44,7 +44,7 @@ const CheckItem = ({
             </a>
           )}
         </ItemTitle>
-        <ItemDescription className='text-xs text-muted-foreground'>
+        <ItemDescription className="text-xs text-muted-foreground">
           {loading ? '...' : message}
         </ItemDescription>
       </ItemContent>

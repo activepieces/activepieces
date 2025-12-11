@@ -1,8 +1,8 @@
 import { ALL_PRINCIPAL_TYPES, GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { healthStatusService } from './health.service'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { healthStatusService } from './health.service'
 
 export const healthModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(healthController, { prefix: '/v1/health' })
