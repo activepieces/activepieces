@@ -25,6 +25,7 @@ export class FlowExecutorContext {
     verdict: FlowVerdict
     currentPath: StepExecutionPath
     stepNameToTest?: boolean
+    executedStepsCount: number
 
     /**
      * Execution time in milliseconds
@@ -39,6 +40,7 @@ export class FlowExecutorContext {
         this.verdict = copyFrom?.verdict ?? { status: FlowRunStatus.RUNNING }
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
+        this.executedStepsCount = copyFrom?.executedStepsCount ?? 0
     }
 
     static empty(): FlowExecutorContext {
@@ -158,6 +160,13 @@ export class FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
             retryable,
+        })
+    }
+
+    public incrementStepsExecuted(): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            executedStepsCount: this.executedStepsCount + 1,
         })
     }
 
