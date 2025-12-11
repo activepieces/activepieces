@@ -16,7 +16,6 @@ import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
 import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
-import { FlowTemplateEntity } from '../ee/flow-template/flow-template.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
@@ -44,6 +43,7 @@ import { CellEntity } from '../tables/record/cell.entity'
 import { RecordEntity } from '../tables/record/record.entity'
 import { TableWebhookEntity } from '../tables/table/table-webhook.entity'
 import { TableEntity } from '../tables/table/table.entity'
+import { TemplateEntity } from '../template/template.entity'
 import { TodoActivityEntity } from '../todos/activity/todos-activity.entity'
 import { TodoEntity } from '../todos/todo.entity'
 import { AppEventRoutingEntity } from '../trigger/app-event-routing/app-event-routing.entity'
@@ -96,7 +96,7 @@ function getEntities(): EntitySchema<unknown>[] {
         OAuthAppEntity,
         OtpEntity,
         ApiKeyEntity,
-        FlowTemplateEntity,
+        TemplateEntity,
         GitRepoEntity,
         AuditEventEntity,
         ProjectReleaseEntity,

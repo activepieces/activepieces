@@ -15,15 +15,15 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
-  FlowTemplate,
   PopulatedFlow,
+  Template,
   UncategorizedFolderId,
   isNil,
 } from '@activepieces/shared';
 
 type TemplateCardProps = {
-  template: FlowTemplate;
-  onSelectTemplate: (template: FlowTemplate) => void;
+  template: Template;
+  onSelectTemplate: (template: Template) => void;
   folderId?: string;
 };
 
@@ -37,9 +37,9 @@ export const TemplateCard = ({
   const { mutate: createFlow, isPending } = useMutation<
     PopulatedFlow,
     Error,
-    FlowTemplate
+    Template
   >({
-    mutationFn: async (template: FlowTemplate) => {
+    mutationFn: async (template: Template) => {
       const folder =
         !isNil(folderId) && folderId !== UncategorizedFolderId
           ? await foldersApi.get(folderId)
@@ -53,8 +53,9 @@ export const TemplateCard = ({
         type: FlowOperationType.IMPORT_FLOW,
         request: {
           displayName: template.name,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
+          trigger: template.flows![0].trigger,
+          schemaVersion: template.flows![0].schemaVersion,
+          templateId: template.id,
         },
       });
     },
@@ -70,7 +71,7 @@ export const TemplateCard = ({
     >
       <div className="flex items-center gap-2 p-4">
         <PieceIconList
-          trigger={template.template.trigger}
+          trigger={template.flows![0].trigger}
           maxNumberOfIconsToShow={2}
         />
       </div>

@@ -46,9 +46,9 @@ describe('Platform API', () => {
             const requestBody: UpdatePlatformRequestBody = {
                 name: 'updated name',
                 primaryColor: 'updated primary color',
-                logoIconUrl: 'updated logo icon url',
-                fullLogoUrl: 'updated full logo url',
-                favIconUrl: 'updated fav icon url',
+                logoIcon: undefined,
+                fullLogo: undefined,
+                favIcon: undefined,
                 filteredPieceNames: ['updated filtered piece names'],
                 filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
                 enforceAllowedAuthDomains: true,
