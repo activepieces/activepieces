@@ -40,7 +40,7 @@ export const flowsTableColumns = ({
       return (
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="text-left truncate">{displayName}</div>
+            <div className="text-left truncate max-w-[250px]">{displayName}</div>
           </TooltipTrigger>
           <TooltipContent>
             <p>{displayName}</p>
