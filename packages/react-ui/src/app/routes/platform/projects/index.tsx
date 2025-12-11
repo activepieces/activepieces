@@ -283,7 +283,6 @@ export default function ProjectsPage() {
                   e.preventDefault();
                   setEditDialogInitialValues({
                     projectName: row.displayName,
-                    aiCredits: row.plan?.aiCredits?.toString() ?? '',
                   });
                   setEditDialogProjectId(row.id);
                   setEditDialogOpen(true);

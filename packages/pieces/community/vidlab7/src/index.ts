@@ -1,10 +1,10 @@
-import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
+import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createVideo } from './lib/actions/create-video';
 import { vidlab7Auth } from './lib/common/auth';
 
 export const vidlab7 = createPiece({
-  displayName: 'Vidlab7',
+  displayName: 'VidLab7',
   auth: vidlab7Auth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/vidlab7.png',

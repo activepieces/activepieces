@@ -361,6 +361,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
       >
         <span className="truncate">{flow.version.displayName}</span>
         <FlowActionMenu
+          onVersionsListClick={null}
           insideBuilder={false}
           flow={flow}
           readonly={false}
