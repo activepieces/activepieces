@@ -64,7 +64,7 @@ export function ProjectDashboardLayout({
 
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <SidebarProvider>
+      <SidebarProvider keyForStateInLocalStorage="project-sidebar">
         {!isEmbedded && <ProjectDashboardSidebar />}
         <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
           <div className="flex flex-col">

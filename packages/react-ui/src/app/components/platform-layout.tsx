@@ -17,7 +17,7 @@ export function PlatformLayout({ children }: { children: React.ReactNode }) {
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
       {showPlatformAdminDashboard ? (
-        <SidebarProvider>
+        <SidebarProvider keyForStateInLocalStorage="platform-sidebar">
           <PlatformSidebar />
           <SidebarInset className="px-4 overflow-auto pb-4 pt-4">
             {children}

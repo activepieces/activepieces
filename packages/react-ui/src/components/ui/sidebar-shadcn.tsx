@@ -204,7 +204,8 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+    const { isMobile, state, openMobile, setOpenMobile, setOpen } =
+      useSidebar();
 
     if (collapsible === 'none') {
       return (
@@ -275,8 +276,46 @@ const Sidebar = React.forwardRef<
             variant === 'floating' || variant === 'inset'
               ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]'
               : 'group-data-[collapsible=icon]:w-[--sidebar-width-icon]',
+            state === 'collapsed' && collapsible === 'icon' && 'cursor-pointer',
             className,
           )}
+          // Allow expanding collapsed sidebar by clicking anywhere on it
+          onClick={(e) => {
+            if (state === 'collapsed' && collapsible === 'icon') {
+              // Don't expand when clicking interactive elements
+              if (
+                (e.target as HTMLElement).closest('button, a, [role="button"]')
+              ) {
+                return;
+              }
+              setOpen(true);
+            }
+          }}
+          // Keyboard support for accessibility
+          onKeyDown={(e) => {
+            if (
+              state === 'collapsed' &&
+              collapsible === 'icon' &&
+              (e.key === 'Enter' || e.key === ' ')
+            ) {
+              e.preventDefault();
+              setOpen(true);
+            }
+          }}
+          // ARIA attributes for screen readers
+          role={
+            state === 'collapsed' && collapsible === 'icon'
+              ? 'button'
+              : undefined
+          }
+          aria-label={
+            state === 'collapsed' && collapsible === 'icon'
+              ? 'Expand sidebar'
+              : undefined
+          }
+          tabIndex={
+            state === 'collapsed' && collapsible === 'icon' ? 0 : undefined
+          }
           {...props}
         >
           <div
