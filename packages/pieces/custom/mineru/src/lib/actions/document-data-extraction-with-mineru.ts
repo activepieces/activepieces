@@ -6,6 +6,10 @@ export const getDocumentContent = createAction({
   displayName: 'Document content extraction with MinerU',
   description: 'Extract the content of the given document with MinuerU',
   props: {
+    apiServerUrl: Property.ShortText({
+        displayName: 'MinerU API server url',
+        required: true
+    }),
     file: Property.File({
         displayName: 'File for parsing',
         description: 'base64 file from readFile piece',
@@ -24,54 +28,60 @@ export const getDocumentContent = createAction({
     }),
     backend: Property.StaticDropdown({
         displayName: 'Backend for parsing',
+        description: 'pipeline: More general, vlm-transformers:  More general, but slower, vlm-mlx-engine: Faster than transformers (need apple silicon and macOS 13.5+), vlm-vllm-async-engine: Faster (vllm-engine, need vllm installed), vlm-lmdeploy-engine: Faster (lmdeploy-engine, need lmdeploy installed), vlm-http-client: Faster (client suitable for openai-compatible servers)'
         required: true,
         defaultValue: 'pipeline',
         options: {
             options: [
                 {
-                    label: 'pipeline: More general',
+                    label: 'pipeline',
                     value: 'pipeline',
                 },
                 {
-                    label: 'vlm-transformers:  More general, but slower',
+                    label: 'vlm-transformers',
                     value: 'vlm-transformers',
                 },
                 {
-                    label: 'vlm-mlx-engine: Faster than transformers (need apple silicon and macOS 13.5+)',
+                    label: 'vlm-mlx-engine',
                     value: 'vlm-mlx-engine',
                 },
                 {
-                    label: 'vlm-vllm-async-engine: Faster (vllm-engine, need vllm installed)',
+                    label: 'vlm-vllm-async-engine',
                     value: 'vlm-vllm-async-engine',
                 },
                 {
-                    label: 'vlm-lmdeploy-engine: Faster (lmdeploy-engine, need lmdeploy installed)',
+                    label: 'vlm-lmdeploy-engine',
                     value: 'vlm-lmdeploy-engine',
                 },
                 {
-                    label: 'vlm-http-client: Faster (client suitable for openai-compatible servers)',
+                    label: 'vlm-http-client',
                     value: 'vlm-http-client',
                 },
             ],
         },
     }),
+    backendServerUrl: Property.ShortText({
+        displayName: 'Backend OpenAI compatible server url',
+        description: 'Adapted only for "vlm-http-client" backend, e.g., http://127.0.0.1:30000',
+        required: false
+    }),
     parseMethod: Property.StaticDropdown({
         displayName: 'The method for parsing PDF',
-        description: 'Adapted only for pipeline backend',
+        description: 'Adapted only for pipeline backend. "auto": Automatically determine the method based on the file type, "txt": Use text extraction method, "ocr": ocr',
         required: true,
         defaultValue: 'auto',
         options: {
             options: [
                 {
-                    label: 'auto - Automatically determine the method based on the file type',
+                    label: 'auto',
                     value: 'auto',
                 },
                 {
-                    label: 'txt - Use text extraction method',
+                    label: 'txt',
                     value: 'txt',
                 },
                 {
-                    label: 'ocr - ocr',
+                    label: 'ocr',
                     value: 'ocr',
                 },
             ],
@@ -118,22 +128,20 @@ export const getDocumentContent = createAction({
         defaultValue: false,
     }),
     startPageId: Property.Number({
-        displayName: 'The starting page for PDF parsing, beginning from 0',
+        displayName: 'Start page',
+        description: 'The starting page for PDF parsing, beginning from 0'
         required: false,
         defaultValue: 0,
     }),
     endPageId: Property.Number({
-        displayName: 'The ending page for PDF parsing, beginning from 0',
+        displayName: 'End page',
+        description: 'The ending page for PDF parsing, beginning from 0',
         required: false,
         defaultValue: 99999,
     }),
-    serverUrl: Property.ShortText({
-        displayName: '(Adapted only for vlm-http-client backend)openai compatible server url, e.g., http://127.0.0.1:30000',
-        required: false
-    }),
   },
   async run(context) {
-    const { file, mimeType, langList, backend, parseMethod, formulaEnable, tableEnable, returnMD, returnMiddleJson, returnModelOutput, returnContentList, returnImages, responseFormatZip, startPageId, endPageId, serverUrl } = context.propsValue;
+    const { apiServerUrl, file, mimeType, langList, backend, backendServerUrl, parseMethod, formulaEnable, tableEnable, returnMD, returnMiddleJson, returnModelOutput, returnContentList, returnImages, responseFormatZip, startPageId, endPageId } = context.propsValue;
 
     // Conversion base64 en Uint8Array -> Blob
     const binaryString = atob(file.base64);
@@ -151,8 +159,8 @@ export const getDocumentContent = createAction({
     form.append('parse_method', String(parseMethod));
     form.append('formula_enable', formulaEnable ? 'true' : 'false');
     form.append('table_enable', tableEnable ? 'true' : 'false');
-    if (serverUrl && serverUrl != null && serverUrl != '')
-        form.append('server_url', String(serverUrl));
+    if (backendServerUrl && backendServerUrl != null && backendServerUrl != '')
+        form.append('server_url', String(backendServerUrl));
     form.append('return_md', returnMD ? 'true' : 'false');
     form.append('return_middle_json', returnMiddleJson ? 'true' : 'false');
     form.append('return_model_output', returnModelOutput ? 'true' : 'false');
@@ -163,7 +171,7 @@ export const getDocumentContent = createAction({
     form.append('end_page_id', String(endPageId));
 
     // Envoi vers MinerU
-    const response = await fetch(`${serverUrl}/file_parse`, {
+    const response = await fetch(`${apiServerUrl}/file_parse`, {
         method: 'POST',
         body: form,
     });
