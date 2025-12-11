@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ArrowDownZA, ArrowUpAz, Folder, Shapes, TableProperties } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { Folder, Shapes, TableProperties } from 'lucide-react';
+import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -85,10 +85,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
-  const [
-    sortedAlphabeticallyIncreasingly,
-    setSortedAlphabeticallyIncreasingly,
-  ] = useState(true);
 
   const updateSearchParams = (folderId: string | undefined) => {
     const newQueryParameters: URLSearchParams = new URLSearchParams(
@@ -115,16 +111,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     queryFn: flowsApi.count,
   });
 
-  const sortedFolders = useMemo(() => {
-    return folders?.sort((a, b) => {
-      if (sortedAlphabeticallyIncreasingly) {
-        return a.displayName.localeCompare(b.displayName);
-      } else {
-        return b.displayName.localeCompare(a.displayName);
-      }
-    });
-  }, [folders, sortedAlphabeticallyIncreasingly]);
-
   useEffect(() => {
     refetchFolders();
     refetchAllFlowsCount();
@@ -139,21 +125,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
         <span className="flex">{t('Folders')}</span>
         <div className="grow"></div>
         <div className="flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() =>
-              setSortedAlphabeticallyIncreasingly(
-                !sortedAlphabeticallyIncreasingly,
-              )
-            }
-          >
-            {sortedAlphabeticallyIncreasingly ? (
-              <ArrowUpAz className="w-4 h-4"></ArrowUpAz>
-            ) : (
-              <ArrowDownZA className="w-4 h-4"></ArrowDownZA>
-            )}
-          </Button>
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFolders}
           >
@@ -219,8 +190,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 ))}
               </div>
             )}
-            {sortedFolders &&
-              sortedFolders.map((folder) => {
+            {folders &&
+              folders.map((folder) => {
                 return (
                   <FolderItem
                     key={folder.id}

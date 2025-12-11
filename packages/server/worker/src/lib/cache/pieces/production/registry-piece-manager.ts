@@ -19,7 +19,7 @@ import { workerApiService } from '../../../api/server-api.service'
 import { workerMachine } from '../../../utils/machine'
 import { workerRedisConnections } from '../../../utils/worker-redis'
 import { packageManager } from '../../package-manager'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../../worker-cache'
+import { GLOBAL_CACHE_ALL_VERSIONS_PATH, GLOBAL_CACHE_COMMON_PATH, GLOBAL_CACHE_PATH_LATEST_VERSION } from '../../worker-cache'
 
 const usedPiecesMemoryCache: Record<string, boolean> = {}
 const relativePiecePath = (piece: PiecePackage) => join('./', 'pieces', `${piece.pieceName}-${piece.pieceVersion}`)
@@ -41,6 +41,25 @@ const redisUsedPiecesCacheKey = (piece: PiecePackage) => {
 }
 
 export const registryPieceManager = (log: FastifyBaseLogger) => ({
+    validate: async (): Promise<void> => {
+        log.info('[registryPieceManager] Validating piece installation is working')
+        const testPiece: PiecePackage = {
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+            pieceName: '@activepieces/piece-webhook',
+            pieceVersion: '0.1.25',
+        }
+        await tryCatch(async () => rollbackInstallation(GLOBAL_CACHE_COMMON_PATH, [testPiece]))
+        const { error } = await tryCatch(async () => registryPieceManager(log).install({
+            pieces: [testPiece],
+            includeFilters: false,
+            broadcast: false,
+        }))
+        if (error) {
+            log.error({ error }, `[registryPieceManager] Piece installation is not working, try delete ${GLOBAL_CACHE_ALL_VERSIONS_PATH} folder and restart the server`)
+            throw error
+        }
+    },
     install: async ({ pieces, includeFilters, broadcast }: InstallParams): Promise<void> => {
         const groupedPieces = groupPiecesByPackagePath(log, pieces)
         const installPromises = Object.entries(groupedPieces).map(async ([packagePath, piecesInGroup]) => {

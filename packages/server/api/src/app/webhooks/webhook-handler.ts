@@ -50,11 +50,11 @@ export const webhookHandler = {
                 const { flow, logger, webhookRequestId, payload, flowVersionIdToRun, webhookHeader, saveSampleData, execute, runEnvironment, parentRunId, failParentOnFailure, platformId } = params
 
                 span.setAttribute('webhook.platformId', platformId)
-                
+
                 // Inject trace context for propagation across queue boundary
                 const traceContext: Record<string, string> = {}
                 propagation.inject(context.active(), traceContext)
-                
+
                 await jobQueue(logger).add({
                     id: webhookRequestId,
                     type: JobType.ONE_TIME,
@@ -74,6 +74,7 @@ export const webhookHandler = {
                         failParentOnFailure,
                         traceContext,
                     },
+                    dependOnJobId: !isNil(parentRunId) && failParentOnFailure ? parentRunId : undefined,
                 })
                 logger.info('Async webhook request completed')
                 span.setAttribute('webhook.queuedSuccessfully', true)

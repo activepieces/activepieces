@@ -46,13 +46,6 @@ type IssueCreatedTemplateData = BaseEmailTemplateData<'issue-created', {
     createdAt: string
 }>
 
-type IssuesSummaryTemplateData = BaseEmailTemplateData<'issues-summary', {
-    issuesUrl: string
-    issues: string
-    issuesCount: string
-    projectName: string
-}>
-
 type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failure', {
     flowName: string
     projectName: string
@@ -63,7 +56,6 @@ export type EmailTemplateData =
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
-  | IssuesSummaryTemplateData
   | TriggerFailureThresholdTemplateData
 
 type SendArgs = {
