@@ -56,7 +56,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const latestRelease = await apVersionUtil.getCurrentRelease()
         const query = req.query
         const includeTags = query.includeTags ?? false
-        const release = query.release ?? latestRelease
+        const release = query.release ?? latestRelease.version
         const edition = query.edition ?? ApEdition.COMMUNITY
         const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
         const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER || req.principal.type === PrincipalType.SERVICE ? undefined : req.principal.projectId

@@ -73,3 +73,5 @@ scratch.md
 /blob-report/
 /playwright/.cache/
 /redis-binaries/
+
+current-release

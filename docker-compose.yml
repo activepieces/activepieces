@@ -1,6 +1,8 @@
+x-activepieces-image: &activepieces-image ghcr.io/activepieces/activepieces:0.73.0
+
 services:
   activepieces:
-    image: ghcr.io/activepieces/activepieces:0.73.0
+    image: *activepieces-image
     container_name: activepieces
     restart: unless-stopped
     ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOX_PROCESS or old activepieces, checking the breaking change documentation for more info.
@@ -11,6 +13,8 @@ services:
       - postgres
       - redis
     env_file: .env
+    environment:
+      AP_IMAGE: *activepieces-image
     volumes:
       - ./cache:/usr/src/app/cache
     networks:

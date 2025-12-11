@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# Generate current-image file with image name
+if [ -n "$AP_IMAGE" ]; then
+    echo "$AP_IMAGE" > ./current-release
+    echo "Generated current-release file with: $AP_IMAGE"
+fi
+
 # Set default values if not provided
 export AP_APP_TITLE="${AP_APP_TITLE:-Activepieces}"
 export AP_FAVICON_URL="${AP_FAVICON_URL:-https://cdn.activepieces.com/brand/favicon.ico}"

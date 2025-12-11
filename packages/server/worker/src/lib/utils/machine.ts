@@ -43,7 +43,7 @@ export const workerMachine = {
                 ...spreadIfDefined('DEV_PIECES', settings?.DEV_PIECES?.join(',')),
                 ...spreadIfDefined('S3_USE_SIGNED_URLS', settings?.S3_USE_SIGNED_URLS),
                 ...spreadIfDefined('PLATFORM_ID_FOR_DEDICATED_WORKER', settings?.PLATFORM_ID_FOR_DEDICATED_WORKER),
-                version: await apVersionUtil.getCurrentRelease(),
+                version: await apVersionUtil.getFullVersion(),
             },
             workerId,
             totalSandboxes: engineProcessManager.getTotalSandboxes(),

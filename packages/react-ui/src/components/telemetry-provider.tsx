@@ -7,6 +7,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
+  ApVersion,
   isNil,
   TelemetryEvent,
   UserWithMetaInformationAndProject,
@@ -27,7 +28,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const { data: telemetryEnabled } = flagsHooks.useFlag<boolean>(
     ApFlagId.TELEMETRY_ENABLED,
   );
-  const { data: flagCurrentVersion } = flagsHooks.useFlag<string>(
+  const { data: flagCurrentVersion } = flagsHooks.useFlag<ApVersion>(
     ApFlagId.CURRENT_VERSION,
   );
   const { data: flagEnvironment } = flagsHooks.useFlag<string>(

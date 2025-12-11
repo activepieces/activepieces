@@ -19,6 +19,11 @@ export enum ApEdition {
     CLOUD = 'cloud',
 }
 
+export type ApVersion = {
+    version: string
+    rcVersion?: string
+}
+
 export enum ApFlagId {
     SHOW_POWERED_BY_IN_FORM = 'SHOW_POWERED_BY_IN_FORM',
     CLOUD_AUTH_ENABLED = 'CLOUD_AUTH_ENABLED',

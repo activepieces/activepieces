@@ -78,7 +78,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
 async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
     const queryParams = new URLSearchParams()
     queryParams.append('edition', system.getEdition())
-    queryParams.append('release', await apVersionUtil.getCurrentRelease())
+    queryParams.append('release', (await apVersionUtil.getCurrentRelease()).version)
     const response = await fetch(`${CLOUD_API_URL}/registry?${queryParams.toString()}`)
     if (!response.ok) {
         throw new Error(`Failed to fetch cloud pieces: ${response.status}`)

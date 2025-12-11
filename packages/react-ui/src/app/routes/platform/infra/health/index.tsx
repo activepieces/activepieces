@@ -7,15 +7,15 @@ import semver from 'semver';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { healthApi } from '@/lib/health-api';
-import { ApFlagId } from '@activepieces/shared';
+import { ApFlagId, ApVersion, isNil } from '@activepieces/shared';
 
 import { CheckItem } from './check-item';
 
 export default function SettingsHealthPage() {
-  const { data: currentVersion } = flagsHooks.useFlag<string>(
+  const { data: currentVersion } = flagsHooks.useFlag<ApVersion>(
     ApFlagId.CURRENT_VERSION,
   );
-  const { data: latestVersion } = flagsHooks.useFlag<string>(
+  const { data: latestVersion } = flagsHooks.useFlag<ApVersion>(
     ApFlagId.LATEST_VERSION,
   );
   const { data: systemHealth, isPending } = useQuery({
@@ -25,8 +25,13 @@ export default function SettingsHealthPage() {
 
   const isVersionUpToDate = React.useMemo(() => {
     if (!currentVersion || !latestVersion) return false;
-    return semver.gte(currentVersion, latestVersion);
+    return semver.gte(currentVersion.version, latestVersion.version);
   }, [currentVersion, latestVersion]);
+
+  const rcVersion = React.useMemo(() => {
+    if (isNil(currentVersion?.rcVersion)) return null;
+    return `${currentVersion.version}-rc.${currentVersion.rcVersion}`;
+  }, [currentVersion]);
 
   const technicalChecks = [
     {
@@ -34,13 +39,14 @@ export default function SettingsHealthPage() {
       title: t('Version Check'),
       icon: <Package />,
       isChecked: isVersionUpToDate,
-      message: `<b>Current</b>: ${
-        currentVersion || 'Unknown'
-      }\n<b>Latest</b>: ${latestVersion || 'Unknown'}\n${
-        !isVersionUpToDate
-          ? 'Upgrade now to enjoy the latest features and bug fixes.\nCheck the changelog <a class="font-medium text-blue-600 dark:text-blue-500 hover:underline" href="https://github.com/activepieces/activepieces/releases" target="_blank">releases</a>.'
-          : ''
-      }`,
+      message: (
+        <VersionMessage
+          rcVersion={rcVersion}
+          currentVersion={currentVersion}
+          latestVersion={latestVersion}
+          isVersionUpToDate={isVersionUpToDate}
+        />
+      ),
       link: 'https://github.com/activepieces/activepieces/releases',
     },
     {
@@ -99,3 +105,49 @@ export default function SettingsHealthPage() {
     </div>
   );
 }
+
+const VersionMessage = ({
+  rcVersion,
+  currentVersion,
+  latestVersion,
+  isVersionUpToDate,
+}: {
+  rcVersion: string | null;
+  currentVersion: ApVersion | null;
+  latestVersion: ApVersion | null;
+  isVersionUpToDate: boolean;
+}) => {
+  return (
+    <>
+      <div>
+        <b>Current</b>:{' '}
+        {rcVersion ? (
+          <span className="text-warning-300">
+            {rcVersion} (Release Candidate)
+          </span>
+        ) : (
+          <span>{currentVersion?.version || 'Unknown'}</span>
+        )}
+      </div>
+      <div>
+        <b>Latest</b>: {latestVersion?.version || 'Unknown'}
+      </div>
+      {!isVersionUpToDate && (
+        <p>
+          Upgrade now to enjoy the latest features and bug fixes.
+          <br />
+          Check the changelog{' '}
+          <a
+            className="font-medium text-blue-600 dark:text-blue-500 hover:underline"
+            href="https://github.com/activepieces/activepieces/releases"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            releases
+          </a>
+          .
+        </p>
+      )}
+    </>
+  );
+};

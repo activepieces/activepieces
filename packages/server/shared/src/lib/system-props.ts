@@ -1,6 +1,7 @@
-import { assertNotNullOrUndefined } from '@activepieces/shared'
+import { ApVersion, assertNotNullOrUndefined, tryCatch } from '@activepieces/shared'
 import axios from 'axios'
 import { environmentMigrations } from './env-migrations'
+import { readFile } from 'fs/promises'
 
 export const systemConstants = {
     ENGINE_EXECUTABLE_PATH: 'dist/packages/engine/main.js',
@@ -8,7 +9,7 @@ export const systemConstants = {
 
 export type SystemProp = AppSystemProp | WorkerSystemProp
 
-let cachedVersion: string | undefined
+let cachedVersion: ApVersion | undefined
 
 export enum AppSystemProp {
     API_KEY = 'API_KEY',
@@ -153,32 +154,62 @@ export const environmentVariables = {
 }
 
 export const apVersionUtil = {
-    async getCurrentRelease(): Promise<string> {
-        // eslint-disable-next-line @nx/enforce-module-boundaries
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const packageJson = require('package.json')
-        return packageJson.version
+    async getFullVersion(): Promise<string> {
+        const imageName = await tryCatch(async () => await readFile('current-release', 'utf8'))
+        if (imageName.error) {
+            // eslint-disable-next-line @nx/enforce-module-boundaries
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const packageJson = require('package.json')
+            return packageJson.version
+        }
+        const fullVersion = imageName.data?.split(':')[1] || '0.0.0'
+        return fullVersion
     },
-    async getLatestRelease(): Promise<string> {
+  
+    async getCurrentRcVersion(): Promise<string | undefined> {
+        const currentRelease = await this.getFullVersion()
+        return currentRelease.includes('rc') ? currentRelease.split('-rc.')[1] : undefined
+    },
+  
+    async getCurrentRelease(): Promise<ApVersion> {
+        const version = await this.getFullVersion()
+        if (version.includes('rc.')) {
+            return {
+                version: version.split('-rc.')[0],
+                rcVersion: version.split('-rc.')[1],
+            }
+        }
+        return {
+            version,
+            rcVersion: undefined,
+        }
+    },
+   
+    async getLatestRelease(): Promise<ApVersion> {
         try {
             if (cachedVersion) {
                 return cachedVersion
             }
-            const response = await axios.get<PackageJson>(
+            const response = await axios.get<{
+                version: string
+                rcVersion: string
+            }>(
                 'https://raw.githubusercontent.com/activepieces/activepieces/main/package.json',
                 {
                     timeout: 5000,
                 },
             )
-            cachedVersion = response.data.version
-            return response.data.version
+            cachedVersion = {
+                version: response.data.version,
+                rcVersion: response.data.rcVersion.split('-rc.')[1],
+            }
+            return cachedVersion
         }
         catch (ex) {
-            return '0.0.0'
+            return {
+                version: '0.0.0',
+                rcVersion: undefined,
+            }
         }
     },
-}
-
-type PackageJson = {
-    version: string
 }
