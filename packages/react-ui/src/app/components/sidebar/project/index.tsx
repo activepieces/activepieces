@@ -1,5 +1,13 @@
 import { User } from 'lucide-react';
 
+import {
+  PROJECT_COLOR_PALETTE,
+  ProjectType,
+  ProjectWithLimits,
+} from '@activepieces/shared';
+
+import { ApProjectDisplay } from '../../ap-project-display';
+
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,13 +22,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import {
-  PROJECT_COLOR_PALETTE,
-  ProjectType,
-  ProjectWithLimits,
-} from '@activepieces/shared';
-
-import { ApProjectDisplay } from '../../ap-project-display';
 
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
@@ -87,14 +88,15 @@ const ProjectSideBarItem = ({
             className="w-full flex items-center justify-between gap-2"
           >
             <ApProjectDisplay
-              title={project.displayName}
+              title={
+                project.type === ProjectType.PERSONAL
+                  ? 'Personal Project'
+                  : project.displayName
+              }
               icon={project.icon}
               maxLengthToNotShowTooltip={28}
               projectType={project.type}
             />
-            {project.type === ProjectType.PERSONAL && (
-              <span className="text-xs text-muted-foreground">Private</span>
-            )}
           </div>
         </SidebarMenuButton>
       )}

@@ -5,9 +5,22 @@ import {
   Users,
   Settings,
   PencilIcon,
+  LockIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
+
+import {
+  ApFlagId,
+  isNil,
+  Permission,
+  PlatformRole,
+  ProjectType,
+} from '@activepieces/shared';
+
+import { ApProjectDisplay } from '../ap-project-display';
+import { ProjectAvatar } from '../project-avatar';
+import { ProjectSettingsDialog } from '../project-settings';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { Badge } from '@/components/ui/badge';
@@ -28,17 +41,6 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import {
-  ApFlagId,
-  isNil,
-  Permission,
-  PlatformRole,
-  ProjectType,
-} from '@activepieces/shared';
-
-import { ApProjectDisplay } from '../ap-project-display';
-import { ProjectAvatar } from '../project-avatar';
-import { ProjectSettingsDialog } from '../project-settings';
 
 export const ProjectDashboardPageHeader = ({
   title,
@@ -128,7 +130,11 @@ export const ProjectDashboardPageHeader = ({
           <div>
             <div className="flex items-center gap-2">
               <ApProjectDisplay
-                title={title}
+                title={
+                  project.type === ProjectType.PERSONAL
+                    ? 'Personal Project'
+                    : title
+                }
                 maxLengthToNotShowTooltip={30}
                 titleClassName="text-lg font-semibold"
                 projectType={project.type}
@@ -136,9 +142,11 @@ export const ProjectDashboardPageHeader = ({
               {project.type === ProjectType.PERSONAL &&
                 user?.platformRole === PlatformRole.ADMIN &&
                 currentUser?.id === project.ownerId && (
-                  <Badge variant={'outline'} className="text-xs font-medium">
-                    You
-                  </Badge>
+                  // <Badge variant={'outline'} className="text-xs font-medium">
+                  //   You
+                  // </Badge>
+
+                  <LockIcon className="w-4 h-4" />
                 )}
             </div>
             {description && (
@@ -183,7 +191,11 @@ export const ProjectDashboardPageHeader = ({
                 <DropdownMenuContent align="end" className="w-60">
                   <div className="mb-2">
                     <ProjectAvatar
-                      displayName={project.displayName}
+                      displayName={
+                        project.type === ProjectType.PERSONAL
+                          ? 'Personal Project'
+                          : project.displayName
+                      }
                       projectType={project.type}
                       iconColor={project.icon.color}
                       size="md"
