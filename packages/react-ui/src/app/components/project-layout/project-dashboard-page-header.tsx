@@ -1,10 +1,16 @@
-import { UserPlus, UsersRound, Settings, LockIcon } from 'lucide-react';
+import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -33,7 +39,6 @@ export const ProjectDashboardPageHeader = ({
   description?: React.ReactNode;
 }) => {
   const { project } = projectHooks.useCurrentProject();
-  const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -112,21 +117,20 @@ export const ProjectDashboardPageHeader = ({
                     : title
                 }
                 maxLengthToNotShowTooltip={30}
-                titleClassName="text-lg font-semibold"
+                titleClassName="text-base"
                 projectType={project.type}
               />
-              {showSettingsButton && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => {
-                    setSettingsInitialTab(getFirstAvailableTab());
-                    setSettingsOpen(true);
-                  }}
-                >
-                  <Settings className="w-4 h-4" />
-                </Button>
+              {project.type === ProjectType.PERSONAL && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Lock className="w-4 h-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>This is your private project. Only you can see and access it.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               )}
             </div>
             {description && (
@@ -155,6 +159,19 @@ export const ProjectDashboardPageHeader = ({
               >
                 <UserPlus className="w-4 h-4" />
                 <span className="text-sm font-medium">Invite</span>
+              </Button>
+            )}
+            {showSettingsButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  setSettingsInitialTab(getFirstAvailableTab());
+                  setSettingsOpen(true);
+                }}
+              >
+                <Settings className="w-4 h-4" />
               </Button>
             )}
           </div>

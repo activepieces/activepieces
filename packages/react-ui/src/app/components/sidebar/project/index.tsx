@@ -55,7 +55,7 @@ const ProjectSideBarItem = ({
     | 'environment' => {
     const hasGeneralSettings =
       project.type === ProjectType.TEAM ||
-      (platform.plan.embeddingEnabled &&  user?.platformRole === PlatformRole.ADMIN);
+      (platform.plan.embeddingEnabled && user?.platformRole === PlatformRole.ADMIN);
 
     if (hasGeneralSettings) return 'general';
     return 'pieces';
