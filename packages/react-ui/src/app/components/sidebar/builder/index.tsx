@@ -50,7 +50,7 @@ export function BuilderNavigationSidebar({
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
-      <SidebarProvider keyForStateInLocalStorage="builder-sidebar">
+      <SidebarProvider>
         {!embedState.isEmbedded && <BuilderSidebarContent />}
         <SidebarInset>
           {children}
