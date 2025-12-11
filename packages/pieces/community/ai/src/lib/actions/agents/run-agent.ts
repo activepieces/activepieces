@@ -1,12 +1,3 @@
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-import { createAction, Property, PieceAuth } from '@activepieces/pieces-framework';
-import { agentCommon, AI_MODELS } from '../common';
-import { AgentOutputField, AgentPieceProps, AgentTaskStatus, isNil, AgentTool, TASK_COMPLETION_TOOL_NAME } from '@activepieces/shared';
-import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
-import { inspect } from 'util';
-import { z } from 'zod';
-import { agentOutputBuilder } from '../common/agent-output-builder';
-========
 import {
   createAction,
   Property,
@@ -14,7 +5,6 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AgentOutputField,
-  AgentOutputFieldType,
   AgentPieceProps,
   AgentTaskStatus,
   isNil,
@@ -22,12 +12,12 @@ import {
   TASK_COMPLETION_TOOL_NAME,
 } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
-import { z, ZodObject } from 'zod';
+import { z } from 'zod';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
 import { inspect } from 'util';
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
+import { agentUtils } from './utils';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -58,19 +48,11 @@ export const runAgent = createAction({
           displayName: 'Piece Metadata',
           required: false,
         }),
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-        externalFlowId: Property.ShortText({
-          displayName: 'External Flow Id',
-          required: false
-        })
-      }
-========
-        flowId: Property.ShortText({
-          displayName: 'Flow Id',
+        flowExternalId: Property.ShortText({
+          displayName: 'Flow External Id',
           required: false,
         }),
       },
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
@@ -101,19 +83,6 @@ export const runAgent = createAction({
   async run(context) {
     const { prompt, maxSteps, model: modelId, provider: providerId } = context.propsValue;
 
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-    const outputBuilder = agentOutputBuilder(prompt)
-    const hasStructuredOutput = !isNil(context.propsValue.structuredOutput) && context.propsValue.structuredOutput.length > 0
-    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[]
-
-    const flowsTools = await agentCommon.constructFlowsTools({
-      agentToolsMetadata,
-      fetchFlows: context.flows.list,
-      publicUrl: context.server.publicUrl,
-      token: context.server.token
-    })
-
-========
     const model = await createAIModel({
       modelId,
       providerId,
@@ -126,11 +95,19 @@ export const runAgent = createAction({
       !isNil(context.propsValue.structuredOutput) &&
       context.propsValue.structuredOutput.length > 0;
     const agentToolsMetadata = context.propsValue.agentTools as AgentTool[];
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
     const agentTools = await context.agent.tools({
       tools: agentToolsMetadata,
       model: model,
     });
+
+    const flowsTools = await agentUtils.constructFlowsTools({
+      agentToolsMetadata,
+      fetchFlows: context.flows.list,
+      publicUrl: context.server.publicUrl,
+      token: context.server.token
+    })
+
+
     const stream = streamText({
       model: model,
       prompt: `
@@ -155,18 +132,6 @@ Help the user finish their goal quickly and accurately.
           description:
             "This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user's task, or if you are unable to continue. Once you call this tool, you should not take any further actions.",
           inputSchema: z.object({
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-            success: z.boolean().describe('Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'),
-            ...(hasStructuredOutput ? {
-              output: z.object(
-                agentCommon.structuredOutputSchema(context.propsValue.structuredOutput as AgentOutputField[])?.shape ?? {}
-              )
-                .nullable()
-                .describe('The structured output of your task. This is optional and can be omitted if you have not achieved the goal.')
-            } : {
-              output: z.string().nullable().describe('The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.')
-            }),
-========
             success: z
               .boolean()
               .describe(
@@ -176,7 +141,7 @@ Help the user finish their goal quickly and accurately.
               ? {
                   output: z
                     .object(
-                      structuredOutputSchema(
+                      agentUtils.structuredOutputSchema(
                         context.propsValue
                           .structuredOutput as AgentOutputField[]
                       )?.shape ?? {}
@@ -194,7 +159,6 @@ Help the user finish their goal quickly and accurately.
                       'The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.'
                     ),
                 }),
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
           }),
           execute: async (params) => {
             const { success, output } = params as {
@@ -223,13 +187,8 @@ Help the user finish their goal quickly and accurately.
           break;
         }
         case 'tool-call': {
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-          if (agentCommon.isTaskCompletionToolCall(chuck.toolName)) {
-            continue
-========
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
             continue;
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
           }
           outputBuilder.startToolCall({
             toolName: chuck.toolName,
@@ -240,13 +199,8 @@ Help the user finish their goal quickly and accurately.
           break;
         }
         case 'tool-result': {
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-          if (agentCommon.isTaskCompletionToolCall(chuck.toolName)) {
-            continue
-========
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
             continue;
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
           }
           outputBuilder.finishToolCall({
             toolCallId: chuck.toolCallId,
@@ -263,49 +217,11 @@ Help the user finish their goal quickly and accurately.
       }
       await context.output.update({ data: outputBuilder.build() });
     }
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-
-    const { status } = outputBuilder.build()
-========
     const { status } = outputBuilder.build();
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
     if (status == AgentTaskStatus.IN_PROGRESS) {
       outputBuilder.fail({});
     }
 
-<<<<<<<< HEAD:packages/pieces/community/agent/src/lib/actions/run-agent.ts
-    return outputBuilder.build()
-  }
-});
-========
     return outputBuilder.build();
   },
 });
-
-const isTaskCompletionToolCall = (toolName: string) =>
-  toolName === TASK_COMPLETION_TOOL_NAME;
-
-function structuredOutputSchema(
-  outputFields: AgentOutputField[]
-): ZodObject | undefined {
-  const shape: Record<string, z.ZodType> = {};
-
-  for (const field of outputFields) {
-    switch (field.type) {
-      case AgentOutputFieldType.TEXT:
-        shape[field.displayName] = z.string();
-        break;
-      case AgentOutputFieldType.NUMBER:
-        shape[field.displayName] = z.number();
-        break;
-      case AgentOutputFieldType.BOOLEAN:
-        shape[field.displayName] = z.boolean();
-        break;
-      default:
-        shape[field.displayName] = z.any();
-    }
-  }
-
-  return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
-}
->>>>>>>> main:packages/pieces/community/ai/src/lib/actions/agents/run-agent.ts
