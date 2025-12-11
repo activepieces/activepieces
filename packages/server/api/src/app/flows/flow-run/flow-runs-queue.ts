@@ -70,6 +70,7 @@ export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
                                     ...spreadIfDefined('failParentOnFailure', runMetadata.failParentOnFailure),
                                     ...spreadIfDefined('logsFileId', runMetadata.logsFileId),
                                     ...spreadIfDefined('updated', runMetadata.updated),
+                                    ...spreadIfDefined('executedStepsCount', runMetadata.executedStepsCount),
                                 })
                                 savedFlowRun = await flowRunRepo().findOneByOrFail({ id: job.data.runId })
                             }

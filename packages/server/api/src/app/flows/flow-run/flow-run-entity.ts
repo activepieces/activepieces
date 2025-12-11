@@ -75,6 +75,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
             nullable: true,
         },
+        executedStepsCount: {
+            type: Number,
+            nullable: false,
+            default: 0,
+        },
+        aiCredits: {
+            type: Number,
+            nullable: false,
+            default: 0,
+        },
     },
     indices: [
         {

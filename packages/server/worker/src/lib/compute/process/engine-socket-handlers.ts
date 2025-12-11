@@ -26,7 +26,7 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
         })
     },
     updateRunProgress: async (request: UpdateRunProgressRequest): Promise<void> => {
-        const { runId, projectId, workerHandlerId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse, pauseMetadata } = request
+        const { runId, projectId, workerHandlerId, status, tags, httpRequestId, stepNameToTest, logsFileId, failedStep, startTime, finishTime, stepResponse, pauseMetadata, executedStepsCount } = request
 
         const nonSupportedStatuses = [FlowRunStatus.RUNNING, FlowRunStatus.SUCCEEDED, FlowRunStatus.PAUSED]
         if (!nonSupportedStatuses.includes(status) && !isNil(workerHandlerId) && !isNil(httpRequestId)) {
@@ -47,6 +47,7 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
             projectId,
             tags,
             pauseMetadata,
+            executedStepsCount,
         })
 
         if (!isNil(stepNameToTest) && !isNil(stepResponse)) {
