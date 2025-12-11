@@ -5,7 +5,7 @@ import {
   Shapes,
   TableProperties,
 } from 'lucide-react';
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -115,10 +115,6 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     queryFn: flowsApi.count,
   });
 
-  const sortedFolders = useMemo(() => {
-    return folders;
-  }, [folders]);
-
   useEffect(() => {
     refetchFolders();
     refetchAllFlowsCount();
@@ -198,8 +194,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
                 ))}
               </div>
             )}
-            {sortedFolders &&
-              sortedFolders.map((folder) => {
+            {folders &&
+              folders.map((folder) => {
                 return (
                   <FolderItem
                     key={folder.id}
