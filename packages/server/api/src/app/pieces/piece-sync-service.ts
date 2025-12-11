@@ -1,4 +1,4 @@
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import pLimit from 'p-limit'
@@ -6,6 +6,7 @@ import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { localPieceCache } from './metadata/local-piece-cache'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
@@ -16,7 +17,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
         systemJobHandlers.registerJobHandler(SystemJobName.PIECES_SYNC, async function syncPiecesJobHandler(): Promise<void> {
             await pieceSyncService(log).sync()
         })
-        await pieceSyncService(log).sync()
+        rejectedPromiseHandler(pieceSyncService(log).sync(), log)
         await systemJobsSchedule(log).upsertJob({
             job: {
                 name: SystemJobName.PIECES_SYNC,
@@ -65,6 +66,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 piecesDeleted: officalPiecesThatIsNotOnCloud.length,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
+            await localPieceCache(log).refresh()
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')

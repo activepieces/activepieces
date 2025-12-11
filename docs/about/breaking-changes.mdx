@@ -8,9 +8,16 @@ icon: "hammer"
 
 ### What has changed?
 - Major change to MCP: [Read the announcement.](https://community.activepieces.com/t/mcp-update-easier-faster-and-more-secure/11177)
+- The default embedded database for development and lightweight deployments has changed from **SQLite3** to [**PGLite**](https://pglite.dev/) (embedded PostgreSQL).
+- The environment variable `AP_DB_TYPE=SQLITE3` is removed and replaced with `AP_DB_TYPE=PGLITE`.
+- Existing SQLite databases will be automatically migrated to PGLite on first startup.
 
 ### Do you need to take action?
 - If you are currently using MCP, review the linked announcement for important migration details and upgrade guidance.
+- **If you are using `AP_DB_TYPE=SQLITE3`:** Update your configuration to use `AP_DB_TYPE=PGLITE` instead.
+- If you re going to upgrade to a later version while using SQLite, you should migrate to PGLite first by upgrading to this release first.
+
+- If you have SMTP configured in the platform admin, it's no longer supported you need to use AP_SMTP_ [environment variables.](https://www.activepieces.com/docs/install/configuration/environment-variables#environment-variables)
 
 
 ## 0.71.0

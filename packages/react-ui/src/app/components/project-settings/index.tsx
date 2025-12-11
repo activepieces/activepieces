@@ -47,7 +47,6 @@ interface ProjectSettingsDialogProps {
   initialTab?: TabId;
   initialValues?: {
     projectName?: string;
-    aiCredits?: string;
     externalId?: string;
   };
 }
@@ -74,7 +73,6 @@ export function ProjectSettingsDialog({
     defaultValues: {
       projectName: initialValues?.projectName,
       icon: project.icon,
-      aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -87,9 +85,6 @@ export function ProjectSettingsDialog({
       displayName: values.projectName,
       icon: values.icon,
       externalId: values.externalId,
-      plan: {
-        aiCredits: values.aiCredits ? parseInt(values.aiCredits) : undefined,
-      },
     });
   };
 

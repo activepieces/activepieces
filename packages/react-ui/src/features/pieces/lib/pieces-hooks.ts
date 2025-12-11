@@ -3,8 +3,10 @@ import { t } from 'i18next';
 import { useTranslation } from 'react-i18next';
 
 import { useTelemetry } from '@/components/telemetry-provider';
+import { appConnectionsApi } from '@/features/connections/lib/api/app-connections';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   StepMetadataWithSuggestions,
   CategorizedStepMetadataWithSuggestions,
@@ -315,6 +317,36 @@ export const piecesHooks = {
       onError,
       retry: 1,
       retryDelay: 1000,
+    });
+  },
+  usePieceForEmbeddingConnection: ({
+    pieceName,
+    connectionExternalId,
+  }: {
+    pieceName: string;
+    connectionExternalId: string;
+  }) => {
+    return useQuery<PieceMetadataModel, Error>({
+      queryKey: ['piece', pieceName, connectionExternalId],
+      queryFn: async () => {
+        const appConnection = (
+          await appConnectionsApi.list({
+            pieceName,
+            limit: 1,
+            projectId: authenticationSession.getProjectId()!,
+          })
+        ).data.find(
+          (connection) => connection.externalId === connectionExternalId,
+        );
+        if (!appConnection) {
+          return piecesApi.get({ name: pieceName });
+        }
+        return piecesApi.get({
+          name: appConnection.pieceName,
+          version: appConnection.pieceVersion,
+        });
+      },
+      staleTime: Infinity,
     });
   },
 };

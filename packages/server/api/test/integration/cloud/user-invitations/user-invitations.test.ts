@@ -38,47 +38,8 @@ afterAll(async () => {
 describe('User Invitation API', () => {
     describe('Invite User', () => {
 
-        it('should not return invitation link when smtp is configured', async () => {
-            const { mockApiKey, mockProject } = await createBasicEnvironment({
-                platform: {
-                    smtp: {
-                        host: faker.internet.domainName(),
-                        port: faker.internet.port(),
-                        user: faker.internet.email(),
-                        password: faker.internet.password(),
-                        senderEmail: faker.internet.email(),
-                        senderName: faker.internet.userName(),
-                    },
-                },
-            })
-
-            const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
-                email: faker.internet.email(),
-                type: InvitationType.PLATFORM,
-                platformRole: PlatformRole.ADMIN,
-            }
-            const response = await app?.inject({
-                method: 'POST',
-                url: '/v1/user-invitations',
-                headers: {
-                    authorization: `Bearer ${mockApiKey.value}`,
-                },
-                query: {
-                    projectId: mockProject.id,
-                },
-                body: mockInviteProjectMemberRequest,
-            })
-            expect(response?.statusCode).toBe(StatusCodes.CREATED)
-            const responseBody = response?.json()
-            expect(responseBody?.link).toBeUndefined()
-        })
-
         it('should return invitation link when smtp is not configured', async () => {
-            const { mockApiKey, mockProject } = await createBasicEnvironment({
-                platform: {
-                    smtp: undefined,
-                },
-            })
+            const { mockApiKey, mockProject } = await createBasicEnvironment({})
 
             const mockInviteProjectMemberRequest: SendUserInvitationRequest = {
                 email: faker.internet.email(),
