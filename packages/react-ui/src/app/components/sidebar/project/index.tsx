@@ -27,6 +27,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import { ProjectSettingsDialog } from '../../project-settings';
+import { PERSONAL_PROJECT_NAME } from '@/hooks/project-hooks';
 
 type ProjectSideBarItemProps = {
   project: ProjectWithLimits;
@@ -119,7 +120,7 @@ const ProjectSideBarItem = ({
                 <ApProjectDisplay
                   title={
                     project.type === ProjectType.PERSONAL
-                      ? 'Personal Project'
+                      ? PERSONAL_PROJECT_NAME
                       : project.displayName
                   }
                   icon={project.icon}

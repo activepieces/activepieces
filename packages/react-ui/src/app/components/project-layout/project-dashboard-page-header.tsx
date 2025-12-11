@@ -16,7 +16,7 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { PERSONAL_PROJECT_NAME, projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
@@ -113,7 +113,7 @@ export const ProjectDashboardPageHeader = ({
               <ApProjectDisplay
                 title={
                   project.type === ProjectType.PERSONAL
-                    ? 'Personal Project'
+                    ? PERSONAL_PROJECT_NAME
                     : title
                 }
                 maxLengthToNotShowTooltip={30}
