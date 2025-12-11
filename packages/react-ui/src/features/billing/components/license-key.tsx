@@ -14,10 +14,8 @@ import { FeatureStatus } from './features-status';
 
 export const LicenseKey = ({
   platform,
-  isEnterprise,
 }: {
   platform: PlatformWithoutSensitiveData;
-  isEnterprise: boolean;
 }) => {
   const [isActivateLicenseKeyDialogOpen, setIsActivateLicenseKeyDialogOpen] =
     useState(false);
@@ -69,17 +67,15 @@ export const LicenseKey = ({
               </p>
             </div>
           </div>
-          {isEnterprise && (
-            <Button
-              variant="default"
-              onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
-            >
-              <Zap className="w-4 h-4" />
-              {platform.plan.licenseKey
-                ? t('Update License')
-                : t('Activate License')}
-            </Button>
-          )}
+          <Button
+            variant="default"
+            onClick={() => setIsActivateLicenseKeyDialogOpen(true)}
+          >
+            <Zap className="w-4 h-4" />
+            {platform.plan.licenseKey
+              ? t('Update License')
+              : t('Activate License')}
+          </Button>
         </div>
       </CardHeader>
 

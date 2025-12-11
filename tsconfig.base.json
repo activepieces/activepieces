@@ -268,6 +268,9 @@
       ],
       "@activepieces/piece-hastewire": [
         "packages/pieces/community/hastewire/src/index.ts"
+      ],
+      "@activepieces/piece-greenpt": [
+        "packages/pieces/community/greenpt/src/index.ts"
       ]
     },
     "resolveJsonModule": true

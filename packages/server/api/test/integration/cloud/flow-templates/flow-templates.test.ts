@@ -116,6 +116,7 @@ describe('Templates', () => {
             const createTemplateRequest: CreateTemplateRequestBody = {
                 name: mockTemplate.name,
                 description: mockTemplate.description,
+                summary: mockTemplate.summary,
                 flows: mockTemplate.flows,
                 blogUrl: mockTemplate.blogUrl ?? undefined,
                 type: TemplateType.CUSTOM,
