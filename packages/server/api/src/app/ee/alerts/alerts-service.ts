@@ -11,8 +11,6 @@ import { flowVersionService } from '../../flows/flow-version/flow-version.servic
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { system } from '../../helper/system/system'
-import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { projectService } from '../../project/project-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { emailService } from '../helper/email/email-service'
@@ -61,10 +59,6 @@ export const alertsService = (log: FastifyBaseLogger) => ({
                 .tz('America/Los_Angeles')
                 .format('DD MMM YYYY, HH:mm [PT]'),
         }
-
-        const globalAlertsKey = `alerts:flowFailures:${project.platformId}:${issueToAlert.projectId}`
-        await redisConnection.rpush(globalAlertsKey, JSON.stringify(alertsInfo))
-        await redisConnection.expire(globalAlertsKey, DAY_IN_SECONDS)
 
         await sendAlertOnFlowFailure(log, alertsInfo)
     },
@@ -119,7 +113,7 @@ export const alertsService = (log: FastifyBaseLogger) => ({
         await repo().delete({
             id: alertId,
         })
-    }
+    },
 })
 
 async function sendAlertOnFlowFailure(log: FastifyBaseLogger, params: IssueParams): Promise<void> {
