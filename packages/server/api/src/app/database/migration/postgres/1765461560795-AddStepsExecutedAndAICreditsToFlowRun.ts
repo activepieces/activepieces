@@ -6,7 +6,12 @@ export class AddStepsExecutedAndAICreditsToFlowRun1765461560795 implements Migra
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow_run"
-            ADD COLUMN IF NOT EXISTS "executedStepsCount" integer NOT NULL DEFAULT '0'
+            ADD COLUMN IF NOT EXISTS "executedStepsCount" integer
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "flow_run"
+            ALTER COLUMN "executedStepsCount" SET DEFAULT 0,
+            ALTER COLUMN "executedStepsCount" SET NOT NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "flow_run"
