@@ -13,16 +13,9 @@ export class AddStepsExecutedAndAICreditsToFlowRun1765461560795 implements Migra
             ALTER COLUMN "executedStepsCount" SET DEFAULT 0,
             ALTER COLUMN "executedStepsCount" SET NOT NULL
         `)
-        await queryRunner.query(`
-            ALTER TABLE "flow_run"
-            ADD "aiCredits" integer NOT NULL DEFAULT '0'
-        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN "aiCredits"
-        `)
         await queryRunner.query(`
             ALTER TABLE "flow_run" DROP COLUMN "executedStepsCount"
         `)
