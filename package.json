@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.72.4",
-  "rcVersion": "0.72.2-rc.0",
+  "version": "0.73.0",
+  "rcVersion": "0.73.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "prebuild": "node tools/scripts/install-bun.js",
@@ -49,6 +49,7 @@
     "@dnd-kit/core": "6.1.0",
     "@dnd-kit/modifiers": "7.0.0",
     "@dnd-kit/sortable": "8.0.0",
+    "@electric-sql/pglite": "0.3.14",
     "@fastify/basic-auth": "6.2.0",
     "@fastify/cors": "11.0.1",
     "@fastify/formbody": "8.0.2",
@@ -268,6 +269,7 @@
     "tsconfig-paths": "4.2.0",
     "tslib": "2.6.2",
     "typeorm": "0.3.26",
+    "typeorm-pglite": "0.3.2",
     "url": "0.11.3",
     "use-debounce": "10.0.1",
     "use-deep-compare-effect": "1.8.1",

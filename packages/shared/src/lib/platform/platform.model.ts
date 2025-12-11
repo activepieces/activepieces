@@ -10,16 +10,6 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 
-export const SMTPInformation = Type.Object({
-    user: Type.String(),
-    senderEmail: Type.String(),
-    senderName: Type.String(),
-    password: Type.String(),
-    host: Type.String(),
-    port: Type.Number(),
-})
-export type SMTPInformation = Static<typeof SMTPInformation>
-
 export enum PlatformUsageMetric {
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
@@ -123,7 +113,6 @@ export const Platform = Type.Object({
     * @deprecated Use projects filter instead.
     */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
@@ -135,7 +124,6 @@ export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
-    smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
     usage: Type.Optional(PlatformUsage),
 }), Type.Pick(Platform, [

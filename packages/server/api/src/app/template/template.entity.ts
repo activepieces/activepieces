@@ -1,10 +1,8 @@
 import { Platform, Template } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    isPostgres,
-    JSONB_COLUMN_TYPE } from '../database/database-common'
+} from '../database/database-common'
 
 type TemplateSchema = Template & {
     platform: Platform
@@ -14,28 +12,29 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
     name: 'template',
     columns: {
         ...BaseColumnSchemaPart,
-        platformId: {
-            type: String,
-            nullable: true,
-        },
-        type: {
-            type: String,
-            nullable: false,
-        },
         name: {
+            type: String,
+        },
+        summary: {
             type: String,
             nullable: false,
         },
         description: {
             type: String,
-            nullable: false,
+        },
+        type: {
+            type: String,
+        },
+        platformId: {
+            type: String,
+            nullable: true,
         },
         flows: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
         tags: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
         blogUrl: {
@@ -43,7 +42,7 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
             nullable: true,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
         usageCount: {
@@ -55,8 +54,8 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
             nullable: false,
         },
         categories: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
             nullable: false,
         },
         pieces: {
