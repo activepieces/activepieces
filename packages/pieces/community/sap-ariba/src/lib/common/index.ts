@@ -1,30 +1,23 @@
 import { HttpMethod, httpClient, HttpRequest, QueryParams } from "@activepieces/pieces-common";
 import { sapAribaAuth } from "../auth";
 import { AppConnectionValueForAuthProperty } from "@activepieces/pieces-framework";
-import { AppConnectionType } from "@activepieces/shared";
 
 export type SapAribaAuth = AppConnectionValueForAuthProperty<typeof sapAribaAuth>;
 
 export const sapAribaCommon = {
     async getAccessToken(auth: SapAribaAuth): Promise<string | null> {
-        if (auth.type === AppConnectionType.CUSTOM_AUTH && !('clientId' in auth.props)) {
+        if (!auth.props.clientId || !auth.props.clientSecret || !auth.props.oauthServerUrl) {
             return null;
         }
 
-        const oauthAuth = auth.props as {
-            clientId: string;
-            clientSecret: string;
-            oauthServerUrl: string;
-        };
-
-        const credentials = Buffer.from(`${oauthAuth.clientId}:${oauthAuth.clientSecret}`).toString('base64');
+        const credentials = Buffer.from(`${auth.props.clientId}:${auth.props.clientSecret}`).toString('base64');
         
         const params = new URLSearchParams();
         params.append('grant_type', 'openapi_2lo');
 
         const request: HttpRequest = {
             method: HttpMethod.POST,
-            url: `${oauthAuth.oauthServerUrl}/v2/oauth/token`,
+            url: `${auth.props.oauthServerUrl}/v2/oauth/token`,
             headers: {
                 Authorization: `Basic ${credentials}`,
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -50,11 +43,9 @@ export const sapAribaCommon = {
         additionalHeaders?: Record<string, string>
     ): Promise<T> {
         const accessToken = await this.getAccessToken(auth);
-        const apiKey = auth.props.apiKey;
-        const baseUrl = auth.props.baseUrl;
 
         const headers: Record<string, string> = {
-            apiKey: apiKey,
+            apiKey: auth.props.apiKey,
             Accept: 'application/json',
             'Content-Type': 'application/json',
             ...additionalHeaders,
@@ -66,7 +57,7 @@ export const sapAribaCommon = {
 
         const request: HttpRequest = {
             method,
-            url: `${baseUrl}${endpoint}`,
+            url: `${auth.props.baseUrl}${endpoint}`,
             headers,
             queryParams,
             body,
