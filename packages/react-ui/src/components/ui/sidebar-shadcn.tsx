@@ -27,23 +27,15 @@ const SIDEBAR_WIDTH = '18rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
 const SIDEBAR_WIDTH_ICON = '3rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
+const SIDEBAR_STATE_STORAGE_KEY = 'sidebar-state';
 
-function getSidebarStateFromLocalStorage(keyForStateInLocalStorage?: string) {
-  if (!keyForStateInLocalStorage) {
-    return true;
-  }
-  const stored = localStorage.getItem(keyForStateInLocalStorage);
+function getSidebarStateFromLocalStorage() {
+  const stored = localStorage.getItem(SIDEBAR_STATE_STORAGE_KEY);
   return stored ? stored === 'true' : true;
 }
 
-function setSidebarStateToLocalStorage(
-  isOpen: boolean,
-  keyForStateInLocalStorage?: string,
-) {
-  if (!keyForStateInLocalStorage) {
-    return;
-  }
-  localStorage.setItem(keyForStateInLocalStorage, isOpen.toString());
+function setSidebarStateToLocalStorage(isOpen: boolean) {
+  localStorage.setItem(SIDEBAR_STATE_STORAGE_KEY, isOpen.toString());
 }
 
 type SidebarContextProps = {
@@ -73,7 +65,6 @@ const SidebarProvider = React.forwardRef<
     defaultOpen?: boolean;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
-    keyForStateInLocalStorage?: string;
   }
 >(
   (
@@ -81,7 +72,6 @@ const SidebarProvider = React.forwardRef<
       defaultOpen,
       open: openProp,
       onOpenChange: setOpenProp,
-      keyForStateInLocalStorage,
       className,
       style,
       children,
@@ -93,7 +83,7 @@ const SidebarProvider = React.forwardRef<
     const [openMobile, setOpenMobile] = React.useState(false);
 
     const [_open, _setOpen] = React.useState(
-      defaultOpen ?? getSidebarStateFromLocalStorage(keyForStateInLocalStorage),
+      defaultOpen ?? getSidebarStateFromLocalStorage(),
     );
     const open = openProp ?? _open;
     const setOpen = React.useCallback(
@@ -105,9 +95,9 @@ const SidebarProvider = React.forwardRef<
           _setOpen(openState);
         }
 
-        setSidebarStateToLocalStorage(openState, keyForStateInLocalStorage);
+        setSidebarStateToLocalStorage(openState);
       },
-      [setOpenProp, open, keyForStateInLocalStorage],
+      [setOpenProp, open],
     );
 
     // Helper to toggle the sidebar.
@@ -204,7 +194,8 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+    const { isMobile, state, openMobile, setOpenMobile, setOpen } =
+      useSidebar();
 
     if (collapsible === 'none') {
       return (
@@ -275,14 +266,28 @@ const Sidebar = React.forwardRef<
             variant === 'floating' || variant === 'inset'
               ? 'p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]'
               : 'group-data-[collapsible=icon]:w-[--sidebar-width-icon]',
+            state === 'collapsed' &&
+              collapsible === 'icon' &&
+              '[&_*]:!cursor-nesw-resize [&_button]:!cursor-pointer [&_button]:relative [&_button]:z-20 [&_button_*]:!cursor-pointer [&_a]:!cursor-pointer [&_a]:relative [&_a]:z-20 [&_a_*]:!cursor-pointer [&_[role=button]]:!cursor-pointer [&_[role=button]]:relative [&_[role=button]]:z-20 [&_[role=button]_*]:!cursor-pointer [&_[data-sidebar=menu-button]]:!cursor-pointer [&_[data-sidebar=menu-button]]:relative [&_[data-sidebar=menu-button]]:z-20 [&_[data-sidebar=menu-button]_*]:!cursor-pointer cursor-nesw-resize',
             className,
           )}
           {...props}
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className={cn(
+              'flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow',
+              state === 'collapsed' && collapsible === 'icon' && 'relative',
+            )}
           >
+            {/* Clickable overlay to expand collapsed sidebar */}
+            {state === 'collapsed' && collapsible === 'icon' && (
+              <div
+                className="absolute inset-0 !cursor-nesw-resize z-10"
+                onClick={() => setOpen(true)}
+                aria-hidden="true"
+              />
+            )}
             {children}
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { greenptAuth } from '../common/auth';
 
 export const transcribeAudio = createAction({
@@ -11,9 +10,9 @@ export const transcribeAudio = createAction({
   description:
     'Transcribe pre-recorded audio files with speaker diarization and advanced features',
   props: {
-    audioUrl: Property.ShortText({
-      displayName: 'Audio URL',
-      description: 'URL to the audio file or base64 encoded audio file',
+    audioUrl: Property.File({
+      displayName: 'Audio File',
+      description: 'Audio file to transcribe (WAV, MP3, FLAC, etc.)',
       required: true,
     }),
     model: Property.StaticDropdown({
@@ -122,16 +121,20 @@ export const transcribeAudio = createAction({
     if (topics) queryParams.append('topics', 'true');
     if (intents) queryParams.append('intents', 'true');
 
-    console.log("sfdsfsfsfsfs",queryParams.toString());
-    const response = await makeRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      `/listen?${queryParams.toString()}`,
-      {
-        url: audioUrl,
-      }
-    );
+    const url = `https://api.greenpt.ai/v1/listen?${queryParams.toString()}`;
 
-    return response;
+    const fileData = audioUrl.data;
+
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: url,
+      headers: {
+        Authorization: `Token ${context.auth.secret_text}`,
+        'Content-Type': 'audio/wav',
+      },
+      body: fileData,
+    });
+
+    return response.body.results.channels[0].alternatives[0].transcript;
   },
 });

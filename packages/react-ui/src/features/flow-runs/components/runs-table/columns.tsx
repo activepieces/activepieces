@@ -49,10 +49,9 @@ export const runsTableColumns = ({
   {
     id: 'select',
     header: ({ table }) => (
-      <div className="flex items-center w-8">
+      <div className="flex items-center h-full w-8">
         <Checkbox
           checked={selectedAll || table.getIsAllPageRowsSelected()}
-          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -83,7 +82,7 @@ export const runsTableColumns = ({
         {selectedRows.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="xs">
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -136,40 +135,41 @@ export const runsTableColumns = ({
           );
 
       return (
-        <Checkbox
-          variant="secondary"
-          checked={isSelected}
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
+        <div className="flex items-center h-full">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
 
-            if (selectedAll) {
-              if (isChecked) {
-                const newExcluded = new Set(excludedRows);
-                newExcluded.delete(row.original.id);
-                setExcludedRows(newExcluded);
+              if (selectedAll) {
+                if (isChecked) {
+                  const newExcluded = new Set(excludedRows);
+                  newExcluded.delete(row.original.id);
+                  setExcludedRows(newExcluded);
+                } else {
+                  setExcludedRows(new Set([...excludedRows, row.original.id]));
+                }
               } else {
-                setExcludedRows(new Set([...excludedRows, row.original.id]));
+                if (isChecked) {
+                  setSelectedRows((prev) => [
+                    ...prev,
+                    {
+                      id: row.original.id,
+                      status: row.original.status,
+                    },
+                  ]);
+                } else {
+                  setSelectedRows((prev) =>
+                    prev.filter(
+                      (selectedRow) => selectedRow.id !== row.original.id,
+                    ),
+                  );
+                }
               }
-            } else {
-              if (isChecked) {
-                setSelectedRows((prev) => [
-                  ...prev,
-                  {
-                    id: row.original.id,
-                    status: row.original.status,
-                  },
-                ]);
-              } else {
-                setSelectedRows((prev) =>
-                  prev.filter(
-                    (selectedRow) => selectedRow.id !== row.original.id,
-                  ),
-                );
-              }
-            }
-            row.toggleSelected(isChecked);
-          }}
-        />
+              row.toggleSelected(isChecked);
+            }}
+          />
+        </div>
       );
     },
   },
