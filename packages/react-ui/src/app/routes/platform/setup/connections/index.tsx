@@ -20,6 +20,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import {
@@ -51,7 +52,7 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
     accessorKey: STATUS_QUERY_PARAM,
     options: Object.values(AppConnectionStatus).map((status) => {
       return {
-        label: formatUtils.convertEnumToHumanReadable(status),
+        label: formatUtils.convertEnumToReadable(status),
         value: status,
       };
     }),
@@ -114,7 +115,7 @@ const GlobalConnectionsTable = () => {
           <div className="text-left">
             <StatusIconWithText
               icon={Icon}
-              text={formatUtils.convertEnumToHumanReadable(status)}
+              text={formatUtils.convertEnumToReadable(status)}
               variant={variant}
             />
           </div>
@@ -128,9 +129,10 @@ const GlobalConnectionsTable = () => {
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.updated))}
-          </div>
+          <FormattedDate
+            date={new Date(row.original.updated)}
+            className="text-left"
+          />
         );
       },
     },
