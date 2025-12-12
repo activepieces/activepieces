@@ -147,12 +147,20 @@ export const ProjectDashboardPageHeader = ({
         {isProjectPage && (
           <div className="flex items-center gap-3">
             {showProjectMembersIcons && (
-              <div className="flex items-center gap-2 px-3 py-1.5 ">
+              <Button
+                variant="ghost"
+                className="gap-2 hover:bg-accent px-3 py-1.5 h-auto"
+                aria-label={`View ${projectMembers?.length} team member${projectMembers?.length !== 1 ? 's' : ''}`}
+                onClick={() => {
+                  setSettingsInitialTab('members');
+                  setSettingsOpen(true);
+                }}
+              >
                 <UsersRound className="w-4 h-4" />
                 <span className="text-sm font-medium">
                   {projectMembers?.length}
                 </span>
-              </div>
+              </Button>
             )}
             {showInviteUserButton && (
               <Button
