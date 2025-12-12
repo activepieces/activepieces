@@ -55,16 +55,7 @@ export const formatUtils = {
     const isSameYear = inputDate.isSame(now, 'year');
 
     if (isToday) {
-      const diffInMinutes = now.diff(inputDate, 'minute');
-      const diffInHours = now.diff(inputDate, 'hour');
-      
-      if (diffInMinutes < 1) {
-        return t('Just now');
-      } else if (diffInMinutes < 60) {
-        return t('{{count}}m ago', { count: diffInMinutes });
-      } else {
-        return t('{{count}}h ago', { count: diffInHours });
-      }
+       return t('Today')
     }
     
     if (isYesterday) {
