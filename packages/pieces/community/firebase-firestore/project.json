@@ -1,7 +1,7 @@
 {
-  "name": "pieces-firbase-firestore",
+  "name": "pieces-firebase-firestore",
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/pieces/community/firbase-firestore/src",
+  "sourceRoot": "packages/pieces/community/firebase-firestore/src",
   "projectType": "library",
   "release": {
     "version": {
@@ -20,14 +20,14 @@
         "{options.outputPath}"
       ],
       "options": {
-        "outputPath": "dist/packages/pieces/community/firbase-firestore",
-        "tsConfig": "packages/pieces/community/firbase-firestore/tsconfig.lib.json",
-        "packageJson": "packages/pieces/community/firbase-firestore/package.json",
-        "main": "packages/pieces/community/firbase-firestore/src/index.ts",
+        "outputPath": "dist/packages/pieces/community/firebase-firestore",
+        "tsConfig": "packages/pieces/community/firebase-firestore/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/firebase-firestore/package.json",
+        "main": "packages/pieces/community/firebase-firestore/src/index.ts",
         "assets": [
-          "packages/pieces/community/firbase-firestore/*.md",
+          "packages/pieces/community/firebase-firestore/*.md",
           {
-            "input": "packages/pieces/community/firbase-firestore/src/i18n",
+            "input": "packages/pieces/community/firebase-firestore/src/i18n",
             "output": "./src/i18n",
             "glob": "**/!(i18n.json)"
           }
@@ -51,7 +51,7 @@
       ],
       "executor": "nx:run-commands",
       "options": {
-        "cwd": "packages/pieces/community/firbase-firestore",
+        "cwd": "packages/pieces/community/firebase-firestore",
         "command": "bun install --no-save --silent"
       }
     },
