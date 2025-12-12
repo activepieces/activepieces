@@ -50,6 +50,44 @@ export const formatUtils = {
       year: 'numeric',
     }).format(date);
   },
+  formatDateWithTime(date: Date, includeYear: boolean) {
+    const now = dayjs();
+    const inputDate = dayjs(date);
+    const isToday = inputDate.isSame(now, 'day');
+    const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
+    const isSameYear = inputDate.isSame(now, 'year');
+
+    const timeFormat = new Intl.DateTimeFormat(i18next.language, {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    });
+
+    if (isToday) {
+      return `${t('Today')}, ${timeFormat.format(date)}`;
+    } else if (isYesterday) {
+      return `${t('Yesterday')}, ${timeFormat.format(date)}`;
+    }
+
+    if (isSameYear) {
+      return Intl.DateTimeFormat(i18next.language, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      }).format(date);
+    }
+
+    return Intl.DateTimeFormat(i18next.language, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+    }).format(date);
+  },
   formatDate(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);

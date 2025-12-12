@@ -8,21 +8,29 @@ import { formatUtils } from '@/lib/utils';
 
 type FormattedDateProps = {
   date: Date;
+  includeTime?: boolean | undefined;
   className?: string;
 };
 
-export const FormattedDate = ({ date, className }: FormattedDateProps) => {
+export const FormattedDate = ({
+  date,
+  includeTime,
+  className,
+}: FormattedDateProps) => {
   const formattedDate = formatUtils.formatDate(date);
-  const fullDateTime = formatUtils.formatDateWithTime(date);
+  const formattedDateWithTime = formatUtils.formatDateWithTime(date, false);
+  const fullDateTimeTooltip = formatUtils.formatDateWithTime(date, true);
 
   return (
     <TooltipProvider delayDuration={300}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className={className}>{formattedDate}</span>
+          <span className={className}>
+            {includeTime ? formattedDateWithTime : formattedDate}
+          </span>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{fullDateTime}</p>
+          <p>{fullDateTimeTooltip}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
