@@ -10,12 +10,14 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { ApFlagId, supportUrl } from '@activepieces/shared';
+import { ApFlagId, supportUrl as defaultSupportUrl } from '@activepieces/shared';
 
 export const HelpAndFeedback = () => {
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
+  const { data: supportUrl } = flagsHooks.useFlag<string>(ApFlagId.SUPPORT_URL);
+  const { data: docsUrl } = flagsHooks.useFlag<string>(ApFlagId.DOCS_URL);
 
   return (
     <DropdownMenuSub>
@@ -26,7 +28,7 @@ export const HelpAndFeedback = () => {
       <DropdownMenuSubContent className="w-[220px]">
         <DropdownMenuItem asChild>
           <Link
-            to="https://activepieces.com/docs"
+            to={docsUrl ?? 'https://activepieces.com/docs'}
             target="_blank"
             rel="noopener noreferrer"
             className="flex justify-between w-full"
@@ -59,7 +61,7 @@ export const HelpAndFeedback = () => {
             </div>
             <DropdownMenuItem asChild>
               <Link
-                to={supportUrl}
+                to={supportUrl ?? defaultSupportUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex justify-between w-full"

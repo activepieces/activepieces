@@ -1,5 +1,5 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil, supportUrl } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
@@ -159,7 +159,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,
-                value: system.getEdition() !== ApEdition.ENTERPRISE,
+                value: system.getEdition() !== ApEdition.ENTERPRISE || !isNil(system.get(AppSystemProp.SUPPORT_URL)),
                 created,
                 updated,
             },
@@ -252,6 +252,18 @@ export const flagService = {
             {
                 id: ApFlagId.MAX_FILE_SIZE_MB,
                 value: system.getNumber(AppSystemProp.MAX_FILE_SIZE_MB),
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.SUPPORT_URL,
+                value: system.get(AppSystemProp.SUPPORT_URL) ?? supportUrl,
+                created,
+                updated,
+            },
+            {
+                id: ApFlagId.DOCS_URL,
+                value: system.get(AppSystemProp.DOCS_URL) ?? 'https://activepieces.com/docs',
                 created,
                 updated,
             },
