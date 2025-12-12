@@ -30,10 +30,22 @@ export const useGeneralSettingsMutation = (
       displayName: string;
       icon: ProjectIcon;
       externalId?: string;
-    }
+    },
+    { previousProject: ProjectWithLimits | undefined }
   >({
-    mutationFn: (request) => {
+    onMutate: async (request) => {
+      await queryClient.cancelQueries({ queryKey: ['current-project'] });
+      
+      const previousProject = queryClient.getQueryData<ProjectWithLimits>([
+        'current-project',
+        projectId,
+      ]);
+      
       updateCurrentProject(queryClient, request);
+      
+      return { previousProject };
+    },
+    mutationFn: (request) => {
       return projectApi.update(projectId!, {
         ...request,
         externalId:
@@ -51,7 +63,14 @@ export const useGeneralSettingsMutation = (
         queryKey: ['projects'],
       });
     },
-    onError: (error) => {
+    onError: (error, _variables, context) => {
+      if (context?.previousProject) {
+        queryClient.setQueryData(
+          ['current-project', projectId],
+          context.previousProject,
+        );
+      }
+      
       if (api.isError(error)) {
         const apError = error.response?.data as ApErrorParams;
         switch (apError.code) {
