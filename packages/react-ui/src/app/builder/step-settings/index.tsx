@@ -95,7 +95,7 @@ const StepSettingsContainer = () => {
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
           request: {
-            ...formUtils.cleanErrorHandlingOptions(cleanedNewValues),
+            ...cleanedNewValues,
             valid,
           },
         });
@@ -103,7 +103,7 @@ const StepSettingsContainer = () => {
         applyOperation({
           type: FlowOperationType.UPDATE_ACTION,
           request: {
-            ...formUtils.cleanErrorHandlingOptions(cleanedNewValues),
+            ...cleanedNewValues,
             valid,
           },
         });
