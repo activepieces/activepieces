@@ -1,4 +1,4 @@
-import { PageHeader } from './page-header';
+import { PageHeader } from '@/components/custom/page-header';
 
 export const DashboardPageHeader = ({
   title,

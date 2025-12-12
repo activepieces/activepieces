@@ -14,7 +14,8 @@ import {
   RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { PageHeader } from '@/app/components/page-header';
+import { PageHeader } from '@/components/custom/page-header';
+import { useEmbedding } from '@/components/embed-provider';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,7 +24,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
@@ -45,6 +45,7 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
+
 import { BuilderFlowStatusSection } from './flow-status';
 
 export const BuilderHeader = () => {
@@ -155,7 +156,10 @@ export const BuilderHeader = () => {
                   onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
                   onDuplicate={() => {}}
                 >
-                  <Button variant="ghost" className="size-6 flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    className="size-6 flex items-center justify-center"
+                  >
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </FlowActionMenu>
