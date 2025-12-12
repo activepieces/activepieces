@@ -1,7 +1,7 @@
 {
-  "ZeroBounce is an email validation service that helps you reduce bounces, improve email deliverability and increase email marketing ROI.": "Zeroble 是一个电子邮件验证服务，帮助您减少退货，提高邮件发送能力，并增加电子邮件营销ROI。",
+  "ZeroBounce is an email validation service that helps you reduce bounces, improve email deliverability and increase email marketing ROI.": "ZeroBounce is an email validation service that helps you reduce bounces, improve email deliverability and increase email marketing ROI.",
   "Validate Email": "Validate Email",
   "Email": "电子邮件地址",
-  "Cache Response": "缓存响应",
-  "Store the response in the project store for future use.": "将响应存储在项目商店以供未来使用。"
+  "Cache Response": "Cache Response",
+  "Store the response in the project store for future use.": "Store the response in the project store for future use."
 }
