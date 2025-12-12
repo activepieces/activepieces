@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import {
-  ArrowLeft,
   ChevronDown,
   RefreshCw,
   Trash2,
@@ -10,8 +9,17 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
+import { PageHeader } from '@/app/components/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -22,9 +30,9 @@ import {
 import EditableText from '@/components/ui/editable-text';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { getProjectName, projectHooks } from '@/hooks/project-hooks';
 import { Permission } from '@activepieces/shared';
 
-import { PageHeader } from '@/app/components/page-header';
 import { useTableState } from './ap-table-state-provider';
 import { ImportCsvDialog } from './import-csv-dialog';
 
@@ -52,6 +60,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   ]);
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
+  const { project } = projectHooks.useCurrentProject();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -66,64 +75,69 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
     tablesUtils.exportTables([exportedTable]);
   };
 
-  const customSidebarContent = (
-    <Button
-      variant="basic"
-      size={'icon'}
-      className="text-foreground"
-      onClick={onBack}
-    >
-      <ArrowLeft className="h-5 w-5" />
-    </Button>
-  );
-
   const titleContent = (
-    <div className="flex items-center gap-1">
-      <EditableText
-        className="text-base font-normal hover:cursor-text"
-        value={table?.name || t('Table Editor')}
-        readonly={!userHasTableWritePermission}
-        onValueChange={(newName) => {
-          renameTable(newName);
-        }}
-        isEditing={isEditingTableName}
-        setIsEditing={setIsEditingTableName}
-        tooltipContent={
-          userHasTableWritePermission ? t('Edit Table Name') : ''
-        }
-      />
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-48">
-          <DropdownMenuItem onClick={() => setIsImportCsvDialogOpen(true)}>
-            <Import className="mr-2 h-4 w-4" />
-            {t('Import')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={exportTable}>
-            <Download className="mr-2 h-4 w-4" />
-            {t('Export')}
-          </DropdownMenuItem>
-          <PermissionNeededTooltip
-            hasPermission={userHasPermissionToPushToGit}
-          >
-            <PushToGitDialog type="table" tables={[table]}>
-              <DropdownMenuItem
-                disabled={!userHasPermissionToPushToGit}
-                onSelect={(e) => e.preventDefault()}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <UploadCloud className="mr-2 h-4 w-4" />
-                {t('Push to Git')}
-              </DropdownMenuItem>
-            </PushToGitDialog>
-          </PermissionNeededTooltip>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink onClick={onBack} className="cursor-pointer">
+            {getProjectName(project)}
+          </BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>
+            <div className="flex items-center gap-1">
+              <EditableText
+                className="hover:cursor-text"
+                value={table?.name || t('Table Editor')}
+                readonly={!userHasTableWritePermission}
+                onValueChange={(newName) => {
+                  renameTable(newName);
+                }}
+                isEditing={isEditingTableName}
+                setIsEditing={setIsEditingTableName}
+                tooltipContent={
+                  userHasTableWritePermission ? t('Edit Table Name') : ''
+                }
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="size-6 flex items-center justify-center">
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="w-48">
+                  <DropdownMenuItem
+                    onClick={() => setIsImportCsvDialogOpen(true)}
+                  >
+                    <Import className="mr-2 h-4 w-4" />
+                    {t('Import')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={exportTable}>
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('Export')}
+                  </DropdownMenuItem>
+                  <PermissionNeededTooltip
+                    hasPermission={userHasPermissionToPushToGit}
+                  >
+                    <PushToGitDialog type="table" tables={[table]}>
+                      <DropdownMenuItem
+                        disabled={!userHasPermissionToPushToGit}
+                        onSelect={(e) => e.preventDefault()}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <UploadCloud className="mr-2 h-4 w-4" />
+                        {t('Push to Git')}
+                      </DropdownMenuItem>
+                    </PushToGitDialog>
+                  </PermissionNeededTooltip>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 
   const rightContent = (
@@ -172,7 +186,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
       <PageHeader
         title={titleContent}
         rightContent={rightContent}
-        customSidebarContent={customSidebarContent}
         className="gap-1 justify-between"
       />
       <div>

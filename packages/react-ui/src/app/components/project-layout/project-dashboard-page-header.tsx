@@ -14,7 +14,7 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { PERSONAL_PROJECT_NAME, projectHooks } from '@/hooks/project-hooks';
+import { getProjectName, projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
@@ -95,9 +95,7 @@ export const ProjectDashboardPageHeader = ({
   const titleContent = (
     <div className="flex items-center gap-2">
       <ApProjectDisplay
-        title={
-          project.type === ProjectType.PERSONAL ? PERSONAL_PROJECT_NAME : title
-        }
+        title={getProjectName(project)}
         maxLengthToNotShowTooltip={30}
         titleClassName="text-base font-normal"
         projectType={project.type}

@@ -14,22 +14,24 @@ import {
   RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
+import { PageHeader } from '@/app/components/page-header';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { getProjectName, projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
@@ -43,7 +45,7 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
-import { BuilderFlowStatusSection } from '../builder-flow-status-section';
+import { BuilderFlowStatusSection } from './flow-status';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();
@@ -74,6 +76,7 @@ export const BuilderHeader = () => {
   ]);
 
   const { embedState } = useEmbedding();
+  const { project } = projectHooks.useCurrentProject();
 
   const { data: folderData } = foldersHooks.useFolder(
     flow.folderId ?? UncategorizedFolderId,
@@ -82,13 +85,12 @@ export const BuilderHeader = () => {
   const isLatestVersion =
     flowVersion.state === FlowVersionState.DRAFT ||
     flowVersion.id === flow.publishedVersionId;
-  const folderName = folderData?.displayName ?? t('Uncategorized');
   const [isEditingFlowName, setIsEditingFlowName] = useState(false);
   useEffect(() => {
     setIsEditingFlowName(queryParams.get(NEW_FLOW_QUERY_PARAM) === 'true');
   }, []);
 
-  const goToFolder = () => {
+  const goToFlowsPage = () => {
     navigate({
       pathname: authenticationSession.appendProjectRoutePrefix('/flows'),
       search: createSearchParams({
@@ -97,72 +99,72 @@ export const BuilderHeader = () => {
     });
   };
 
-  const customSidebarContent = embedState.isEmbedded ? <HomeButton /> : null;
-
   const titleContent = (
-    <>
-      <div className="flex gap-2 items-center text-base">
-        {!embedState.hideFolders && !embedState.disableNavigationInBuilder && (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {!embedState.disableNavigationInBuilder && (
           <>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger onClick={goToFolder}>
-                  {folderName}
-                </TooltipTrigger>
-                <TooltipContent>
-                  <span>{t('Go to...')}</span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            {' / '}
+            <BreadcrumbItem>
+              <BreadcrumbLink
+                onClick={goToFlowsPage}
+                className="cursor-pointer"
+              >
+                {getProjectName(project)}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
           </>
         )}
         {!embedState.hideFlowNameInBuilder && (
-          <EditableText
-            className="font-normal hover:cursor-text"
-            value={flowVersion.displayName}
-            readonly={!isLatestVersion}
-            onValueChange={(value) => {
-              applyOperation(
-                {
-                  type: FlowOperationType.CHANGE_NAME,
-                  request: {
-                    displayName: value,
-                  },
-                },
-                () => {
-                  flowHooks.invalidateFlowsQuery(queryClient);
-                },
-              );
-            }}
-            isEditing={isEditingFlowName}
-            setIsEditing={setIsEditingFlowName}
-            tooltipContent={isLatestVersion ? t('Edit') : ''}
-          />
+          <BreadcrumbItem>
+            <BreadcrumbPage>
+              <div className="flex items-center gap-1">
+                <EditableText
+                  className="hover:cursor-text"
+                  value={flowVersion.displayName}
+                  readonly={!isLatestVersion}
+                  onValueChange={(value) => {
+                    applyOperation(
+                      {
+                        type: FlowOperationType.CHANGE_NAME,
+                        request: {
+                          displayName: value,
+                        },
+                      },
+                      () => {
+                        flowHooks.invalidateFlowsQuery(queryClient);
+                      },
+                    );
+                  }}
+                  isEditing={isEditingFlowName}
+                  setIsEditing={setIsEditingFlowName}
+                  tooltipContent=""
+                />
+                <FlowActionMenu
+                  onVersionsListClick={() => {
+                    setRightSidebar(RightSideBarType.VERSIONS);
+                  }}
+                  insideBuilder={true}
+                  flow={flow}
+                  flowVersion={flowVersion}
+                  readonly={!isLatestVersion}
+                  onDelete={goToFlowsPage}
+                  onRename={() => {
+                    setIsEditingFlowName(true);
+                  }}
+                  onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+                  onDuplicate={() => {}}
+                >
+                  <Button variant="ghost" className="size-6 flex items-center justify-center">
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </FlowActionMenu>
+              </div>
+            </BreadcrumbPage>
+          </BreadcrumbItem>
         )}
-      </div>
-      {!embedState.hideFlowNameInBuilder && (
-        <FlowActionMenu
-          onVersionsListClick={() => {
-            setRightSidebar(RightSideBarType.VERSIONS);
-          }}
-          insideBuilder={true}
-          flow={flow}
-          flowVersion={flowVersion}
-          readonly={!isLatestVersion}
-          onDelete={goToFolder}
-          onRename={() => {
-            setIsEditingFlowName(true);
-          }}
-          onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-          onDuplicate={() => {}}
-        >
-          <Button variant="ghost" size="icon">
-            <ChevronDown className="h-4 w-4" />
-          </Button>
-        </FlowActionMenu>
-      )}
-    </>
+      </BreadcrumbList>
+    </Breadcrumb>
   );
 
   const rightContent = (
@@ -192,25 +194,16 @@ export const BuilderHeader = () => {
     </div>
   );
 
-  if (embedState.hidePageHeader) {
-    return null;
-  }
+  const leftContent = embedState.isEmbedded ? <HomeButton /> : null;
 
   return (
-    <div className="border-b select-none">
-      <div className="relative items-center flex w-full px-4 py-3">
-        <div className="flex items-center gap-2">
-          {!embedState.isEmbedded && <SidebarTrigger />}
-          {!embedState.isEmbedded && (
-            <Separator orientation="vertical" className="h-5 mr-2" />
-          )}
-          {customSidebarContent}
-          {titleContent}
-        </div>
-
-        <div className="grow"></div>
-        {rightContent}
-      </div>
-    </div>
+    <PageHeader
+      title={titleContent}
+      rightContent={rightContent}
+      leftContent={leftContent}
+      showBorder={true}
+      className="select-none"
+      hideSidebarTrigger={embedState.isEmbedded}
+    />
   );
 };

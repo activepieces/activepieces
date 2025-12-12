@@ -16,7 +16,7 @@ import {
   Permission,
 } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 const PublishButton = () => {
   const { checkAccess } = useAuthorization();

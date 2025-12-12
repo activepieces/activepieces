@@ -12,7 +12,6 @@ interface PageHeaderProps {
   showBorder?: boolean;
   className?: string;
   hideSidebarTrigger?: boolean;
-  customSidebarContent?: ReactNode;
 }
 
 export const PageHeader = ({
@@ -23,7 +22,6 @@ export const PageHeader = ({
   showBorder = false,
   className = '',
   hideSidebarTrigger = false,
-  customSidebarContent,
 }: PageHeaderProps) => {
   const { embedState } = useEmbedding();
 
@@ -32,7 +30,6 @@ export const PageHeader = ({
   }
 
   const showSidebarTrigger = !hideSidebarTrigger && !embedState.isEmbedded;
-  const hasCustomSidebarContent = !!customSidebarContent;
 
   return (
     <div
@@ -43,8 +40,7 @@ export const PageHeader = ({
       <div className="flex items-center justify-between w-full">
         <div className="flex items-center gap-2">
           {showSidebarTrigger && <SidebarTrigger />}
-          {hasCustomSidebarContent && customSidebarContent}
-          {(showSidebarTrigger || hasCustomSidebarContent) && (
+          {showSidebarTrigger && (
             <Separator orientation="vertical" className="h-5 mr-2" />
           )}
 
