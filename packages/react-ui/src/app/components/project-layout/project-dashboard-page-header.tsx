@@ -92,40 +92,94 @@ export const ProjectDashboardPageHeader = ({
     return 'pieces';
   };
 
-  const titleContent = (
-    <div className="flex items-center gap-2">
-      <ApProjectDisplay
-        title={getProjectName(project)}
-        maxLengthToNotShowTooltip={30}
-        titleClassName="text-base font-normal"
-        projectType={project.type}
-      />
-      {project.type === ProjectType.PERSONAL && (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Lock className="w-4 h-4" />
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                This is your private project. Only you can see and access it.
-              </p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      )}
-    </div>
-  );
-
-  const rightContent = isProjectPage ? (
-    <>
-      <div className="flex items-center gap-3">
-        {showProjectMembersIcons && (
-          <div className="flex items-center gap-2 px-3 py-1.5 ">
-            <UsersRound className="w-4 h-4" />
-            <span className="text-sm font-medium">
-              {projectMembers?.length}
-            </span>
+  if (embedState.hidePageHeader) {
+    return null;
+  }
+  return (
+    <div className="flex items-center justify-between min-w-full py-3">
+      <div className="flex items-center justify-between w-full">
+        <div className="flex items-center gap-2">
+          <SidebarTrigger />
+          <Separator orientation="vertical" className="h-5 mr-2" />
+          <div>
+            <div className="flex items-center gap-2">
+              <ApProjectDisplay
+                title={
+                  project.type === ProjectType.PERSONAL
+                    ? PERSONAL_PROJECT_NAME
+                    : title
+                }
+                maxLengthToNotShowTooltip={30}
+                titleClassName="text-base"
+                projectType={project.type}
+              />
+              {project.type === ProjectType.PERSONAL && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Lock className="w-4 h-4" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        This is your private project. Only you can see and
+                        access it.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </div>
+            {description && (
+              <span className="text-xs text-muted-foreground">
+                {description}
+              </span>
+            )}
+          </div>
+        </div>
+        {isProjectPage && (
+          <div className="flex items-center gap-3">
+            {showProjectMembersIcons && (
+              <Button
+                variant="ghost"
+                className="gap-2 "
+                aria-label={`View ${projectMembers?.length} team member${
+                  projectMembers?.length !== 1 ? 's' : ''
+                }`}
+                onClick={() => {
+                  setSettingsInitialTab('members');
+                  setSettingsOpen(true);
+                }}
+              >
+                <UsersRound className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {projectMembers?.length}
+                </span>
+              </Button>
+            )}
+            {showInviteUserButton && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 shadow-sm"
+                onClick={() => setInviteOpen(true)}
+              >
+                <UserPlus className="w-4 h-4" />
+                <span className="text-sm font-medium">Invite</span>
+              </Button>
+            )}
+            {showSettingsButton && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => {
+                  setSettingsInitialTab(getFirstAvailableTab());
+                  setSettingsOpen(true);
+                }}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            )}
           </div>
         )}
         {showInviteUserButton && (

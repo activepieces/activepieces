@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   Tooltip,
@@ -204,7 +205,7 @@ export const runsTableColumns = ({
         <div className="text-left">
           <StatusIconWithText
             icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
+            text={formatUtils.convertEnumToReadable(status)}
             variant={variant}
           />
         </div>
@@ -219,7 +220,11 @@ export const runsTableColumns = ({
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created ?? new Date()))}
+          <FormattedDate
+            date={new Date(row.original.created ?? new Date())}
+            className="text-left"
+            includeTime={true}
+          />
         </div>
       );
     },
