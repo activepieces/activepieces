@@ -46,9 +46,10 @@ export const findFirestoreDocument = createAction({
       required: false,
     }),
 
-    filterValue: Property.LongText({
+    filterValue: Property.Json({
       displayName: 'Filter Value',
-      description: 'Value to filter by (use JSON for arrays/objects)',
+      description:
+        'Value to filter by. Accepts JSON (objects/arrays) or primitive values.',
       required: false,
     }),
 
@@ -91,22 +92,8 @@ export const findFirestoreDocument = createAction({
       };
     }
 
-    if (filterField && filterValue) {
-      let value: unknown = filterValue;
-      if (filterValue.startsWith('{') || filterValue.startsWith('[')) {
-        try {
-          value = JSON.parse(filterValue);
-        } catch {
-          // Keep as string if JSON parsing fails
-        }
-      } else if (filterValue === 'true') {
-        value = true;
-      } else if (filterValue === 'false') {
-        value = false;
-      } else if (!isNaN(Number(filterValue))) {
-        value = Number(filterValue);
-      }
-
+    if (filterField && filterValue !== undefined && filterValue !== null) {
+      const value: unknown = filterValue;
       if (!structuredQuery) {
         queryObject.structuredQuery.where = {
           fieldFilter: {
@@ -138,29 +125,6 @@ export const findFirestoreDocument = createAction({
       body: JSON.stringify(queryObject),
     });
 
-    let documents: any[] = [];
-    if (response.body) {
-      const results = Array.isArray(response.body)
-        ? response.body
-        : response.body.split('\n').filter((line: string) => line);
-
-      documents = results
-        .map((result: any) => {
-          const parsed =
-            typeof result === 'string' ? JSON.parse(result) : result;
-          return parsed.document
-            ? {
-                name: parsed.document.name,
-                fields: parsed.document.fields,
-              }
-            : null;
-        })
-        .filter((doc: any) => doc !== null);
-    }
-
-    return {
-      documents: documents,
-      count: documents.length,
-    };
+    return response.body;
   },
 });

@@ -47,7 +47,7 @@ export const createFirestoreDocument = createAction({
         'Optional document ID. If not specified, an ID will be auto-generated',
       required: false,
     }),
-    documentData: Property.Json({
+    documentData: Property.Object({
       displayName: 'Document Data',
       description:
         'Data to store in the document (e.g., {"name": "John", "age": 30})',
