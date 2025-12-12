@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   Tooltip,
@@ -20,7 +21,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { FormattedDate } from '@/components/ui/formatted-date';
 import { formatUtils } from '@/lib/utils';
 import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 
@@ -218,7 +218,12 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Started At')} />
     ),
     cell: ({ row }) => {
-      return <FormattedDate date={new Date(row.original.created ?? new Date())} className="text-left" />;
+      return (
+        <FormattedDate
+          date={new Date(row.original.created ?? new Date())}
+          className="text-left"
+        />
+      );
     },
   },
   {

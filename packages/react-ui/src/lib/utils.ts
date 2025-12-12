@@ -28,7 +28,10 @@ export const formatUtils = {
       .join(' ');
   },
   convertEnumToReadable(value: string): string {
-    return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase().replace(/_/g, ' ');
+    return (
+      value.charAt(0).toUpperCase() +
+      value.slice(1).toLowerCase().replace(/_/g, ' ')
+    );
   },
   formatNumber(number: number) {
     return new Intl.NumberFormat(i18next.language).format(number);
@@ -55,20 +58,20 @@ export const formatUtils = {
     const isSameYear = inputDate.isSame(now, 'year');
 
     if (isToday) {
-       return t('Today')
+      return t('Today');
     }
-    
+
     if (isYesterday) {
       return t('Yesterday');
     }
-    
+
     if (isSameYear) {
       return Intl.DateTimeFormat(i18next.language, {
         month: 'short',
         day: 'numeric',
       }).format(date);
     }
-    
+
     return Intl.DateTimeFormat(i18next.language, {
       month: 'short',
       day: 'numeric',

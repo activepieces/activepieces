@@ -20,6 +20,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { EditGlobalConnectionDialog } from '@/features/connections/components/edit-global-connection-dialog';
 import {
@@ -30,7 +31,6 @@ import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { FormattedDate } from '@/components/ui/formatted-date';
 import { formatUtils } from '@/lib/utils';
 import {
   AppConnectionStatus,
@@ -128,7 +128,12 @@ const GlobalConnectionsTable = () => {
         <DataTableColumnHeader column={column} title={t('Connected At')} />
       ),
       cell: ({ row }) => {
-        return <FormattedDate date={new Date(row.original.updated)} className="text-left" />;
+        return (
+          <FormattedDate
+            date={new Date(row.original.updated)}
+            className="text-left"
+          />
+        );
       },
     },
     {

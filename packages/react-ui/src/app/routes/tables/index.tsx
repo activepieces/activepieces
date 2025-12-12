@@ -22,6 +22,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
@@ -31,7 +32,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { FormattedDate } from '@/components/ui/formatted-date';
 import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
@@ -63,7 +63,10 @@ const ApTablesPage = () => {
         <DataTableColumnHeader column={column} title={t('Created')} />
       ),
       cell: ({ row }) => (
-        <FormattedDate date={new Date(row.original.created)} className="text-left" />
+        <FormattedDate
+          date={new Date(row.original.created)}
+          className="text-left"
+        />
       ),
     },
     {
