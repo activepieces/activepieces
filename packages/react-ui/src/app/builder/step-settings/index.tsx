@@ -94,12 +94,18 @@ const StepSettingsContainer = () => {
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
-          request: { ...cleanedNewValues, valid },
+          request: {
+            ...formUtils.cleanErrorHandlingOptions(cleanedNewValues),
+            valid,
+          },
         });
       } else {
         applyOperation({
           type: FlowOperationType.UPDATE_ACTION,
-          request: { ...cleanedNewValues, valid },
+          request: {
+            ...formUtils.cleanErrorHandlingOptions(cleanedNewValues),
+            valid,
+          },
         });
       }
       return result;

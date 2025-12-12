@@ -368,4 +368,42 @@ export const formUtils = {
   getDefaultValueForProperties,
   buildConnectionSchema,
   getDefaultPropertyValue,
+  //RHF automatically sets the value to "errorHandlingOptions":{"continueOnFailure":{},"retryOnFailure":{}}} when errorHandlingOptions is not present, we need to remove it
+  cleanErrorHandlingOptions: <T extends FlowAction | FlowTrigger>(
+    step: T,
+  ): T => {
+    if (
+      step.type === FlowTriggerType.PIECE ||
+      step.type === FlowTriggerType.EMPTY
+    ) {
+      return step;
+    }
+    const copiedStep = JSON.parse(JSON.stringify(step)) as FlowAction;
+    if (
+      copiedStep.type !== FlowActionType.PIECE &&
+      copiedStep.type !== FlowActionType.CODE
+    ) {
+      return step;
+    }
+    if (
+      copiedStep.settings.errorHandlingOptions &&
+      copiedStep.settings.errorHandlingOptions?.continueOnFailure?.value ===
+        undefined
+    ) {
+      copiedStep.settings.errorHandlingOptions.continueOnFailure = undefined;
+    }
+    if (
+      copiedStep.settings.errorHandlingOptions &&
+      copiedStep.settings.errorHandlingOptions?.retryOnFailure?.value ===
+        undefined
+    ) {
+      copiedStep.settings.errorHandlingOptions.retryOnFailure = undefined;
+    }
+    if (
+      Object.keys(copiedStep.settings.errorHandlingOptions ?? {}).length === 0
+    ) {
+      copiedStep.settings.errorHandlingOptions = undefined;
+    }
+    return copiedStep as T;
+  },
 };
