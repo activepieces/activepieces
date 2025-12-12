@@ -2,10 +2,7 @@ import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
   TooltipContent,
@@ -17,7 +14,7 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { PERSONAL_PROJECT_NAME, projectHooks } from '@/hooks/project-hooks';
+import { getProjectName, projectHooks } from '@/hooks/project-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
@@ -29,6 +26,7 @@ import {
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
+import { PageHeader } from '../page-header';
 
 export const ProjectDashboardPageHeader = ({
   title,
@@ -46,7 +44,6 @@ export const ProjectDashboardPageHeader = ({
   const [settingsInitialTab, setSettingsInitialTab] = useState<
     'general' | 'members' | 'alerts' | 'pieces' | 'environment'
   >('general');
-  const { embedState } = useEmbedding();
   const location = useLocation();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
   const { checkAccess } = useAuthorization();
@@ -59,24 +56,19 @@ export const ProjectDashboardPageHeader = ({
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
 
-  const isEmbedded = embedState.isEmbedded;
-
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
 
   const showProjectMembersIcons =
-    !isEmbedded &&
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
     !isNil(projectMembers) &&
     project.type === ProjectType.TEAM;
 
   const showInviteUserButton =
-    !isEmbedded &&
-    userHasPermissionToInviteUser &&
-    project.type === ProjectType.TEAM;
-  const showSettingsButton = !isEmbedded;
+    userHasPermissionToInviteUser && project.type === ProjectType.TEAM;
+
   const isProjectPage = location.pathname.includes('/projects/');
 
   const hasGeneralSettings =
@@ -190,8 +182,43 @@ export const ProjectDashboardPageHeader = ({
             )}
           </div>
         )}
+        {showInviteUserButton && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 shadow-sm"
+            onClick={() => setInviteOpen(true)}
+          >
+            <UserPlus className="w-4 h-4" />
+            <span className="text-sm font-medium">Invite</span>
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => {
+            setSettingsInitialTab(getFirstAvailableTab());
+            setSettingsOpen(true);
+          }}
+        >
+          <Settings className="w-4 h-4" />
+        </Button>
       </div>
       {children}
+    </>
+  ) : (
+    children
+  );
+
+  return (
+    <>
+      <PageHeader
+        title={titleContent}
+        description={description}
+        rightContent={rightContent}
+        className="min-w-full"
+      />
       <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
         open={settingsOpen}
@@ -201,6 +228,7 @@ export const ProjectDashboardPageHeader = ({
           projectName: project?.displayName,
         }}
       />
-    </div>
+    </>
   );
 };
+

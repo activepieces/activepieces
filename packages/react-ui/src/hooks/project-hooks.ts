@@ -19,6 +19,7 @@ import {
   ApEdition,
   ApFlagId,
   isNil,
+  ProjectType,
   ProjectWithLimits,
   ProjectWithLimitsWithPlatform,
   SeekPage,
@@ -29,7 +30,13 @@ import { projectApi } from '../lib/project-api';
 
 import { flagsHooks } from './flags-hooks';
 
-export const PERSONAL_PROJECT_NAME = 'Personal Project';
+const PERSONAL_PROJECT_NAME = 'Personal Project';
+
+export const getProjectName = (project: ProjectWithLimits): string => {
+  return project.type === ProjectType.PERSONAL
+    ? PERSONAL_PROJECT_NAME
+    : project.displayName;
+};
 
 export const projectHooks = {
   useCurrentProject: () => {
