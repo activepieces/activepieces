@@ -50,7 +50,7 @@ export const formatUtils = {
       year: 'numeric',
     }).format(date);
   },
-  formatDateWithTime(date: Date, includeYear: boolean) {
+  formatDateWithTime(date: Date, hideCurrentYear: boolean) {
     const now = dayjs();
     const inputDate = dayjs(date);
     const isToday = inputDate.isSame(now, 'day');
@@ -69,7 +69,7 @@ export const formatUtils = {
       return `${t('Yesterday')}, ${timeFormat.format(date)}`;
     }
 
-    if (isSameYear) {
+    if (isSameYear && !hideCurrentYear) {
       return Intl.DateTimeFormat(i18next.language, {
         month: 'short',
         day: 'numeric',
@@ -158,12 +158,10 @@ export const formatUtils = {
     if (minutes > 0) {
       const remainingSeconds = seconds % 60;
       return short
-        ? `${minutes} min ${
-            remainingSeconds > 0 ? `${remainingSeconds} s` : ''
-          }`
-        : `${minutes} minutes${
-            remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''
-          }`;
+        ? `${minutes} min ${remainingSeconds > 0 ? `${remainingSeconds} s` : ''
+        }`
+        : `${minutes} minutes${remainingSeconds > 0 ? ` ${remainingSeconds} seconds` : ''
+        }`;
     }
     return short ? `${seconds} s` : `${seconds} seconds`;
   },
@@ -336,15 +334,15 @@ const getBlobType = (extension: 'json' | 'txt' | 'csv') => {
 
 type downloadFileProps =
   | {
-      obj: string;
-      fileName: string;
-      extension: 'json' | 'txt' | 'csv';
-    }
+    obj: string;
+    fileName: string;
+    extension: 'json' | 'txt' | 'csv';
+  }
   | {
-      obj: JSZip;
-      fileName: string;
-      extension: 'zip';
-    };
+    obj: JSZip;
+    fileName: string;
+    extension: 'zip';
+  };
 export const downloadFile = async ({
   obj,
   fileName,
@@ -354,9 +352,9 @@ export const downloadFile = async ({
     extension === 'zip'
       ? await obj.generateAsync({ type: 'blob' })
       : //utf-8 with bom
-        new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), obj], {
-          type: getBlobType(extension),
-        });
+      new Blob([new Uint8Array([0xef, 0xbb, 0xbf]), obj], {
+        type: getBlobType(extension),
+      });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
