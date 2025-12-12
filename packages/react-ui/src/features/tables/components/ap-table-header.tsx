@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { PageHeader } from '@/app/components/page-header';
+import { PageHeader } from '@/components/custom/page-header';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import {
@@ -102,7 +102,10 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="size-6 flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    className="size-6 flex items-center justify-center"
+                  >
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -155,9 +158,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
             message={t(
               'Are you sure you want to delete the selected records? This action cannot be undone.',
             )}
-            entityName={
-              selectedRecords.size === 1 ? t('record') : t('records')
-            }
+            entityName={selectedRecords.size === 1 ? t('record') : t('records')}
             mutationFn={async () => {
               const indices = Array.from(selectedRecords).map((row) =>
                 records.findIndex((r) => r.uuid === row),

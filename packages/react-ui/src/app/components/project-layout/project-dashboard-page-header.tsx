@@ -2,6 +2,7 @@ import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -26,7 +27,6 @@ import {
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
-import { PageHeader } from '../page-header';
 
 export const ProjectDashboardPageHeader = ({
   title,
@@ -231,4 +231,3 @@ export const ProjectDashboardPageHeader = ({
     </>
   );
 };
-
