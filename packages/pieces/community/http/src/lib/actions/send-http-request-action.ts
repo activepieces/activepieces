@@ -332,7 +332,7 @@ export const httpSendRequestAction = createAction({
           if (fieldType === 'text' && !isEmpty(textFieldValue)) {
             formData.append(fieldName, textFieldValue);
           } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
-            formData.append(fieldName, fileFieldValue!.data);
+            formData.append(fieldName, fileFieldValue!.data,{filename:fileFieldValue?.filename});
           }
         }
 
