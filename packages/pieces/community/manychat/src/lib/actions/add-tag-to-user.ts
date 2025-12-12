@@ -20,7 +20,7 @@ export const addTagToUserAction = createAction({
 			method: HttpMethod.POST,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			body: {
 				subscriber_id: subscriberId,
@@ -37,7 +37,7 @@ export const addTagToUserAction = createAction({
 			url: `${BASE_URL}/subscriber/getInfo`,
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 			queryParams: {
 				subscriber_id: `${subscriberId}`,

@@ -1,13 +1,13 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { contextualAiAuth } from '../../index';
 import { ContextualAI } from 'contextual-client';
 import type { Agent } from 'contextual-client/resources/agents';
 
-const polling: Polling<PiecePropValueSchema<typeof contextualAiAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof contextualAiAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
-    const { apiKey, baseUrl } = auth;
+    const { apiKey, baseUrl } = auth.props;
     const client = new ContextualAI({
       apiKey: apiKey,
       baseURL: baseUrl || 'https://api.contextual.ai/v1',

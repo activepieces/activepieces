@@ -23,7 +23,7 @@ export const knack = createPiece({
       auth: knackAuth,
       baseUrl: () => 'https://api.knack.com/v1',
       authMapping: async (auth) => {
-        const { apiKey, applicationId } = auth as { apiKey: string, applicationId: string };
+        const { apiKey, applicationId } = auth.props;
         return {
           'X-Knack-Application-ID': applicationId,
           'X-Knack-REST-API-Key': apiKey,

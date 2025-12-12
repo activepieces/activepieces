@@ -1,11 +1,11 @@
-import { PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
 import { flowluAuth } from '../..';
 import { FlowluClient } from './client';
 
 export function makeClient(
-  auth: PiecePropValueSchema<typeof flowluAuth>
+  auth: AppConnectionValueForAuthProperty<typeof flowluAuth>
 ): FlowluClient {
-  const client = new FlowluClient(auth.domain, auth.apiKey);
+  const client = new FlowluClient(auth.props.domain, auth.props.apiKey);
   return client;
 }
 function mapItemsToOptions(items: { id: string | number; name: string }[]) {
@@ -17,6 +17,7 @@ export const flowluCommon = {
       displayName: 'Task ID',
       required,
       refreshers: [],
+      auth: flowluAuth,
       options: async ({ auth }) => {
         if (!auth) {
           return {
@@ -26,7 +27,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllTasks();
         return {
@@ -42,6 +43,7 @@ export const flowluCommon = {
     }),
   user_id: (required = true, displayName = 'User ID') =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName,
       required,
       refreshers: [],
@@ -54,7 +56,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllUsers();
         return {
@@ -70,6 +72,7 @@ export const flowluCommon = {
     }),
   workflow_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Task Workflow ID',
       required,
       refreshers: [],
@@ -82,7 +85,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllTaskWorkflow();
         return {
@@ -98,6 +101,7 @@ export const flowluCommon = {
     }),
   workflow_stage_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Task Workflow Status ID',
       required,
       refreshers: [],
@@ -110,7 +114,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllTaskStages();
         return {
@@ -126,6 +130,7 @@ export const flowluCommon = {
     }),
   honorific_title_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Title',
       required,
       refreshers: [],
@@ -138,7 +143,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const res = await client.listAllHonorificTitles();
         const { response } = res;
@@ -155,6 +160,7 @@ export const flowluCommon = {
     }),
   account_category_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Account Category',
       required,
       refreshers: [],
@@ -167,7 +173,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllAccountCategories();
         return {
@@ -183,6 +189,7 @@ export const flowluCommon = {
     }),
   industry_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Account Industry',
       required,
       refreshers: [],
@@ -195,7 +202,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllAccountIndustries();
         return {
@@ -211,6 +218,7 @@ export const flowluCommon = {
     }),
   source_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Opportunity Source',
       required,
       refreshers: [],
@@ -223,7 +231,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllOpportunitySources();
         return {
@@ -239,6 +247,7 @@ export const flowluCommon = {
     }),
   opportunity_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Opportunity ID',
       required,
       refreshers: [],
@@ -251,7 +260,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllOpportunities();
         return {
@@ -271,6 +280,7 @@ export const flowluCommon = {
     description = ''
   ) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName,
       description,
       required,
@@ -284,7 +294,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllAccounts();
         return {
@@ -304,6 +314,7 @@ export const flowluCommon = {
     description = ''
   ) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName,
       description,
       required,
@@ -317,7 +328,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listAllContacts();
         return {
@@ -333,6 +344,7 @@ export const flowluCommon = {
     }),
   pipeline_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Sales Pipeline ID',
       required,
       refreshers: [],
@@ -345,7 +357,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listSalesPipelines();
         return {
@@ -361,6 +373,7 @@ export const flowluCommon = {
     }),
   pipeline_stage_id: (required = false) =>
     Property.Dropdown({
+      auth: flowluAuth,
       displayName: 'Sales Pipeline Stage ID',
       required,
       refreshers: ['pipeline_id'],
@@ -374,7 +387,7 @@ export const flowluCommon = {
           };
         }
         const client = makeClient(
-          auth as PiecePropValueSchema<typeof flowluAuth>
+          auth
         );
         const { response } = await client.listSalesPipelineStages(
           pipeline_id as number

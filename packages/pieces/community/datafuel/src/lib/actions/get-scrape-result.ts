@@ -32,7 +32,7 @@ export const getScrapeAction = createAction({
 
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: context.auth,
+				token: context.auth.secret_text,
 			},
 			queryParams: {
 				job_id: jobId,

@@ -5,13 +5,13 @@ import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import breaks from 'remark-breaks';
 import gfm from 'remark-gfm';
+import { toast } from 'sonner';
 
 import { cn } from '@/lib/utils';
 import { MarkdownVariant } from '@activepieces/shared';
 
 import { Alert, AlertDescription } from '../ui/alert';
 import { Button } from '../ui/button';
-import { useToast } from '../ui/use-toast';
 
 function applyVariables(markdown: string, variables: Record<string, string>) {
   if (typeof markdown !== 'string') {
@@ -73,7 +73,6 @@ const Container = ({
 const ApMarkdown = React.memo(
   ({ markdown, variables, variant, className, loading }: MarkdownProps) => {
     const [copiedText, setCopiedText] = useState<string | null>(null);
-    const { toast } = useToast();
 
     const { mutate: copyToClipboard } = useMutation({
       mutationFn: async (text: string) => {
@@ -83,8 +82,7 @@ const ApMarkdown = React.memo(
         setCopiedText(null);
       },
       onError: () => {
-        toast({
-          title: t('Failed to copy to clipboard'),
+        toast.error(t('Failed to copy to clipboard'), {
           duration: 3000,
         });
       },

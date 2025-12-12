@@ -332,8 +332,6 @@ export const routesThatRequireProjectId = {
   todos: '/todos',
   singleTodo: '/todos/:todoId',
   settings: '/settings',
-  mcps: '/mcps',
-  singleMcp: '/mcps/:mcpId',
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
 };

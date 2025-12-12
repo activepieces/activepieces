@@ -26,6 +26,8 @@ export const createDeal = createAction({
             }
         }),
         customer_id: Property.Dropdown({
+          auth:teamleaderAuth,
+  
             displayName: 'Customer',
             description: 'Select the customer (company or contact)',
             required: true,
@@ -46,7 +48,7 @@ export const createDeal = createAction({
                 try {
                     if (customer_type === 'company') {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/companies.list',
                             body: {}
@@ -61,7 +63,7 @@ export const createDeal = createAction({
                         };
                     } else {
                         const response = await teamleaderCommon.apiCall({
-                            auth: auth as any,
+                            auth,
                             method: HttpMethod.POST,
                             resourceUri: '/contacts.list',
                             body: {}
@@ -85,6 +87,7 @@ export const createDeal = createAction({
             }
         }),
         contact_person_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Contact Person',
             description: 'Contact person for this deal (for company customers)',
             required: false,
@@ -104,7 +107,7 @@ export const createDeal = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/companies.info',
                         body: {
@@ -136,6 +139,7 @@ export const createDeal = createAction({
             required: false,
         }),
         source_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Source',
             description: 'How the lead was acquired',
             required: false,
@@ -149,7 +153,7 @@ export const createDeal = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/dealSources.list',
                         body: {}
@@ -172,6 +176,7 @@ export const createDeal = createAction({
             }
         }),
         department_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Department',
             description: 'Department responsible for this deal',
             required: false,
@@ -185,7 +190,7 @@ export const createDeal = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/departments.list',
                         body: {
@@ -212,6 +217,7 @@ export const createDeal = createAction({
             }
         }),
         responsible_user_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Responsible User',
             description: 'User responsible for this deal',
             required: false,
@@ -225,7 +231,7 @@ export const createDeal = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/users.list',
                         body: {
@@ -252,6 +258,7 @@ export const createDeal = createAction({
             }
         }),
         phase_id: Property.Dropdown({
+          auth:teamleaderAuth,
             displayName: 'Phase',
             description: 'Deal phase or stage',
             required: false,
@@ -265,7 +272,7 @@ export const createDeal = createAction({
 
                 try {
                     const response = await teamleaderCommon.apiCall({
-                        auth: auth as any,
+                        auth,
                         method: HttpMethod.POST,
                         resourceUri: '/dealPhases.list',
                         body: {}

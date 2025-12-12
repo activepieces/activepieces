@@ -52,7 +52,7 @@ export const convertLengthAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/length/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

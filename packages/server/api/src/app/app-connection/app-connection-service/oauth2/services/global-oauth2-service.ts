@@ -1,7 +1,9 @@
-import { PropertyType } from '@activepieces/pieces-framework'
+// Custom
 import {
+    ActivepiecesError,
     AppConnectionType,
     CloudOAuth2ConnectionValue,
+    ErrorCode,
     isNil,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -24,13 +26,13 @@ export const globalOAuth2Service = (log: FastifyBaseLogger) => ({
             projectId,
             platformId,
         })
-        if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {
-            throw new Error(
-                'Cannot claim auth for non oauth2 property ' +
-                auth?.type +
-                ' ' +
-                pieceName,
-            )
+        if (isNil(auth)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Auth is required to claim a cloud oauth2 connection piece ${pieceName}, platformId: ${platformId}, projectId: ${projectId}`,
+                },
+            })
         }
         const oauth2App = await globalOAuthAppService.getWithSecret({ pieceName, clientId: request.clientId })
         const claimedValue = await credentialsOauth2Service(log).claim({

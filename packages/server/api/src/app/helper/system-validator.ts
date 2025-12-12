@@ -1,3 +1,4 @@
+import { inspect } from 'util'
 import { AppSystemProp, ContainerType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -140,6 +141,7 @@ const systemPropValidators: {
     [AppSystemProp.PM2_ENABLED]: booleanValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
+    [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
 
     // AppSystemProp
     [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
@@ -208,6 +210,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
         }
         catch (error: unknown) {
             throw new Error(JSON.stringify({
+                error: inspect(error),
                 message: 'S3 validation failed. Check your configuration and credentials.',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview#configure-s3-optional',
             }))

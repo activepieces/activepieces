@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { EmailSender, EmailTemplateData, isNil, Platform, SMTPInformation } from '@activepieces/shared'
+import { EmailSender, EmailTemplateData, isNil, Platform } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import Mustache from 'mustache'
 import nodemailer, { Transporter } from 'nodemailer'
@@ -23,15 +23,15 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
 
             const platform = await getPlatform(platformId)
             const emailSubject = getEmailSubject(templateData.name, templateData.vars)
-            const senderName = platform?.smtp?.senderName ?? system.get(AppSystemProp.SMTP_SENDER_NAME)
-            const senderEmail = platform?.smtp?.senderEmail ?? system.get(AppSystemProp.SMTP_SENDER_EMAIL)
+            const senderName = system.get(AppSystemProp.SMTP_SENDER_NAME)
+            const senderEmail = system.get(AppSystemProp.SMTP_SENDER_EMAIL)
 
             const emailBody = await renderEmailBody({
                 platform,
                 templateData,
             })
 
-            const smtpClient = initSmtpClient(platform?.smtp)
+            const smtpClient = initSmtpClient()
 
             await smtpClient.sendMail({
                 from: `${senderName} <${senderEmail}>`,
@@ -66,15 +66,15 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
     )
 }
 
-const initSmtpClient = (smtp: SMTPInformation | undefined | null): Transporter => {
-    const smtpPort = smtp?.port ?? Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
+const initSmtpClient = (): Transporter => {
+    const smtpPort = Number.parseInt(system.getOrThrow(AppSystemProp.SMTP_PORT))
     return nodemailer.createTransport({
-        host: smtp?.host ?? system.getOrThrow(AppSystemProp.SMTP_HOST),
+        host: system.getOrThrow(AppSystemProp.SMTP_HOST),
         port: smtpPort,
         secure: smtpPort === 465,
         auth: {
-            user: smtp?.user ?? system.getOrThrow(AppSystemProp.SMTP_USERNAME),
-            pass: smtp?.password ?? system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
+            user: system.getOrThrow(AppSystemProp.SMTP_USERNAME),
+            pass: system.getOrThrow(AppSystemProp.SMTP_PASSWORD),
         },
     })
 }

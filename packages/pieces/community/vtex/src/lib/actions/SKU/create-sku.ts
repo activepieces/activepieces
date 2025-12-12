@@ -50,7 +50,7 @@ export const createSku = createAction({
     }),
   },
   async run(context) {
-    const { hostUrl, appKey, appToken } = context.auth;
+    const { hostUrl, appKey, appToken } = context.auth.props;
     const sku = new Sku(hostUrl, appKey, appToken);
 
     return await sku.createSku({

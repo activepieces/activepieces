@@ -3,6 +3,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getDifficultyAdjustment = createAction({
+ auth:PieceAuth.None(),
     name: 'get_difficulty_adjustment',
     displayName: 'Get Difficulty Adjustment',
     description: 'Returns details about Bitcoin difficulty adjustment',

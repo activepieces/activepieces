@@ -1,4 +1,3 @@
-import { AIUsage } from '@activepieces/common-ai'
 import {
     AppConnection,
     Cell,
@@ -35,7 +34,6 @@ type ProjectSchema = Project & {
     records: Record[]
     cells: Cell[]
     tableWebhooks: TableWebhook[]
-    aiUsage: AIUsage[]
 }
 
 export const ProjectEntity = new EntitySchema<ProjectSchema>({
@@ -161,11 +159,6 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
         tableWebhooks: {
             type: 'one-to-many',
             target: 'table_webhook',
-            inverseSide: 'project',
-        },
-        aiUsage: {
-            type: 'one-to-many',
-            target: 'ai_usage',
             inverseSide: 'project',
         },
     },

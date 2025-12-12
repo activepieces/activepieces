@@ -94,6 +94,10 @@ import { AddIconToProjectSqlite1763378269381 } from './migration/sqlite/17633782
 import { RemoveFlowRunDurationSqlite1763417279729 } from './migration/sqlite/1763417279729-RemoveFlowRunDurationSqlite'
 import { AddProjectTypeSqlite1763896147042 } from './migration/sqlite/1763896147042-AddProjectTypeSqlite'
 import { AddFlowOperationStatusFieldSqlite1764239872251 } from './migration/sqlite/1764239872251-AddFlowOperationStatusFieldSqlite'
+import { AddMcpServerSqlite1764524983756 } from './migration/sqlite/1764524983756-AddMcpServerSqlite'
+import { AddPieceVersionToAppConnection1764856239445 } from './migration/sqlite/1764856239445-addPieceVersionToAppConnection'
+import { FixFlowRunIndexes1764871079154 } from './migration/sqlite/1764871079154-FixFlowRunIndexesSqlite'
+import { RemovePlatformSMTP1765264096034 } from './migration/sqlite/1765264096034-RemovePlatformSMTP'
 
 const getSqliteDatabaseFilePath = (): string => {
     const apConfigDirectoryPath = system.getOrThrow(AppSystemProp.CONFIG_PATH)
@@ -116,6 +120,10 @@ const getSqliteDatabase = (): string => {
 
 const getMigrations = (): (new () => MigrationInterface)[] => {
     const communityMigrations: (new () => MigrationInterface)[] = [
+        RemovePlatformSMTP1765264096034,
+        FixFlowRunIndexes1764871079154,
+        AddPieceVersionToAppConnection1764856239445,
+        AddMcpServerSqlite1764524983756,
         AddFlowOperationStatusFieldSqlite1764239872251,
         AddProjectTypeSqlite1763896147042,
         RemoveFlowRunDurationSqlite1763417279729,

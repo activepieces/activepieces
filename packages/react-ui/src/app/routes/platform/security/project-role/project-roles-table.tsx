@@ -3,6 +3,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Eye, Pencil, Trash, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { formatUtils } from '@/lib/utils';
@@ -33,7 +33,6 @@ export const ProjectRolesTable = ({
   refetch,
 }: ProjectRolesTableProps) => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { platform } = platformHooks.useCurrentPlatform();
 
   const { mutate: deleteProjectRole, isPending: isDeleting } = useMutation({
@@ -41,9 +40,7 @@ export const ProjectRolesTable = ({
     mutationFn: (name: string) => projectRoleApi.delete(name),
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Project Role entry deleted successfully'),
+      toast.success(t('Project Role entry deleted successfully'), {
         duration: 3000,
       });
     },

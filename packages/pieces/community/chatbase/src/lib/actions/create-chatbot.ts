@@ -21,7 +21,7 @@ export const createChatbotAction = createAction({
 	},
 	async run(context) {
 		const { chatbotName, sourceText } = context.propsValue;
-		const apiKey = context.auth as string;
+		const apiKey = context.auth.secret_text;
 
 		const body: Record<string, unknown> = {
 			chatbotName,

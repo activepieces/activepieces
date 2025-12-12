@@ -1,9 +1,11 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { writesonicBulkAuth } from './auth';
 
 export const BASE_URL = `https://api.writesonic.com/v2/business`;
 
 export async function makeRequest(
-  api_key: string,
+  api_key: AppConnectionValueForAuthProperty<typeof writesonicBulkAuth>,
   method: HttpMethod,
   path: string,
   body?: unknown
@@ -13,7 +15,7 @@ export async function makeRequest(
       method,
       url: `${BASE_URL}${path}`,
       headers: {
-        'X-API-KEY': `${api_key}`,
+        'X-API-KEY': `${api_key.secret_text}`,
         'Content-Type': 'application/json',
       },
       body,

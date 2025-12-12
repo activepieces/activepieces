@@ -1,9 +1,5 @@
 import { api } from '@/lib/api';
 import {
-  ListAICreditsUsageRequest,
-  ListAICreditsUsageResponse,
-} from '@activepieces/common-ai';
-import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
   UpdateActiveFlowsAddonParams,
@@ -13,7 +9,9 @@ import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
-    return api.get<PlatformBillingInformation>('/v1/platform-billing/info');
+    // todo(Rupal): throw error upfront as we don't rely on platform billing
+    throw new Error('Invalid call to platform billing');
+    // return api.get<PlatformBillingInformation>('/v1/platform-billing/info');
   },
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
@@ -41,10 +39,5 @@ export const platformBillingApi = {
       '/v1/platform-billing/update-ai-overage-state',
       params,
     );
-  },
-  listAiCreditsUsage(
-    params: ListAICreditsUsageRequest,
-  ): Promise<ListAICreditsUsageResponse> {
-    return api.get('/v1/platform-billing/ai-credits-usage', params);
   },
 };

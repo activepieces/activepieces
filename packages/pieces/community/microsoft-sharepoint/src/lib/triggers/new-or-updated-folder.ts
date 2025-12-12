@@ -4,7 +4,7 @@ import {
 	TriggerStrategy,
 	Property,
 	DropdownOption,
-	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
@@ -18,7 +18,7 @@ type Props = {
 	parentFolderId: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftSharePointAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePointAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const { siteId, driveId, parentFolderId } = propsValue;
@@ -93,6 +93,7 @@ export const newOrUpdatedFolderTrigger = createTrigger({
 		siteId: microsoftSharePointCommon.siteId,
 		driveId: microsoftSharePointCommon.driveId,
 		parentFolderId: Property.Dropdown({
+			auth: microsoftSharePointAuth,
 			displayName: 'Parent Folder to Monitor',
 			description:
 				'The folder to watch for new or updated subfolders. Select "Root Folder" to monitor the top-level of the drive.',
@@ -106,7 +107,7 @@ export const newOrUpdatedFolderTrigger = createTrigger({
 						options: [],
 					};
 				}
-				const authValue = auth as PiecePropValueSchema<typeof microsoftSharePointAuth>;
+				const authValue = auth
 				const client = Client.initWithMiddleware({
 					authProvider: {
 						getAccessToken: () => Promise.resolve(authValue.access_token),

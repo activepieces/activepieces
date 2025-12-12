@@ -1,5 +1,5 @@
 
-import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, Property, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, HttpMethod, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { smooveAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
@@ -11,7 +11,7 @@ interface LandingPageData {
     [key: string]: any;
 }
 
-const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, { formType?: string }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof smooveAuth>, { formType?: string }> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth, propsValue }) => {
         try {
@@ -22,7 +22,7 @@ const polling: Polling<PiecePropValueSchema<typeof smooveAuth>, { formType?: str
                 endpoint += `?type=${encodeURIComponent(formType)}`;
             }
 
-            const response = await makeRequest(auth, HttpMethod.GET, endpoint);
+            const response = await makeRequest(auth.secret_text, HttpMethod.GET, endpoint);
             
             if (!response) {
                 return [];

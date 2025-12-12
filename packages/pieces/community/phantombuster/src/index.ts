@@ -22,7 +22,7 @@ export const phantombuster = createPiece({
       authMapping: async (auth) => {
         const apiKey = auth;
         return {
-          'X-Phantombuster-Key': `${apiKey as string}`,
+          'X-Phantombuster-Key': `${apiKey.secret_text}`,
           'Content-Type': 'application/json',
         };
       },

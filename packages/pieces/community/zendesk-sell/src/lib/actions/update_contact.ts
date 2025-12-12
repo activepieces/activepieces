@@ -85,7 +85,7 @@ export const updateContact = createAction({
         const response = await callZendeskApi(
             HttpMethod.PUT,
             `v2/contacts/${contact_id}`,
-            auth as ZendeskSellAuth,
+            auth,
             { data: cleanedBody } 
         );
 

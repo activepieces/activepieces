@@ -16,6 +16,7 @@ export const createOpportunity = createAction({
     }),
     pipelineId: pipelinesDropdown({ refreshers: ['auth'] }),
     pipelineStageId: Property.Dropdown({
+      auth: CopperAuth,
       displayName: 'Pipeline Stage',
       description: 'Select a stage',
       refreshers: ['auth', 'pipelineId'],

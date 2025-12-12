@@ -37,7 +37,7 @@ export const askChatbotAction = createAction({
       url: BASE_URL + `/${botId}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       body: {
         message,

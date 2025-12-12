@@ -10,6 +10,7 @@ export const createProductAction = createAction({
   description: 'Create a new product or service',
   props: {
     user_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'User',
       description: 'User associated with this product',
       required: true,
@@ -24,7 +25,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const users = await client.get<Array<{
             id: number;
             firstname?: string | null;
@@ -81,7 +82,8 @@ export const createProductAction = createAction({
       description: 'Internal product description',
       required: false,
     }),
-    contact_id: Property.Dropdown({
+    contact_id: Property.Dropdown({ 
+      auth: bexioAuth,
       displayName: 'Contact',
       description: 'Contact associated with this product',
       required: false,
@@ -96,7 +98,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const contacts = await client.get<Array<{
             id: number;
             contact_type_id: number;
@@ -166,7 +168,8 @@ export const createProductAction = createAction({
       displayName: 'Currency',
       required: false,
     }),
-    tax_income_id: Property.Dropdown({
+    tax_income_id: Property.Dropdown({  
+      auth: bexioAuth,
       displayName: 'Income Tax',
       description: 'Tax for income/sales',
       required: false,
@@ -181,7 +184,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const taxes = await client.get<Array<{
             id: number;
             name: string;
@@ -209,6 +212,7 @@ export const createProductAction = createAction({
       },
     }),
     tax_expense_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Expense Tax',
       description: 'Tax for expenses/purchases',
       required: false,
@@ -223,7 +227,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const taxes = await client.get<Array<{
             id: number;
             name: string;
@@ -251,6 +255,7 @@ export const createProductAction = createAction({
       },
     }),
     unit_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Unit',
       description: 'Unit of measurement',
       required: false,
@@ -265,7 +270,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           const units = await client.get<Array<{ id: number; name: string }>>('/2.0/unit');
 
           return {
@@ -291,6 +296,7 @@ export const createProductAction = createAction({
       defaultValue: false,
     }),
     stock_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Stock Location',
       description: 'Stock location',
       required: false,
@@ -305,7 +311,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           // TODO: Need to confirm endpoint - assuming /2.0/stock or /2.0/stock_location
           const stocks = await client.get<Array<{ id: number; name: string }>>('/2.0/stock').catch(() => []);
 
@@ -326,6 +332,7 @@ export const createProductAction = createAction({
       },
     }),
     stock_place_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Stock Area',
       description: 'Stock area/place',
       required: false,
@@ -340,7 +347,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           // TODO: Need to confirm endpoint - assuming /2.0/stock_place or /2.0/stock_area
           const stockPlaces = await client.get<Array<{ id: number; name: string }>>('/2.0/stock_place').catch(() => []);
 
@@ -403,6 +410,7 @@ export const createProductAction = createAction({
       required: false,
     }),
     article_group_id: Property.Dropdown({
+      auth: bexioAuth,
       displayName: 'Article Group',
       description: 'Product group/category',
       required: false,
@@ -417,7 +425,7 @@ export const createProductAction = createAction({
         }
 
         try {
-          const client = new BexioClient(auth as OAuth2PropertyValue);
+          const client = new BexioClient(auth);
           // TODO: Need to confirm endpoint - assuming /2.0/article_group
           const groups = await client.get<Array<{ id: number; name: string }>>('/2.0/article_group').catch(() => []);
 

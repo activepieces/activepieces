@@ -25,7 +25,7 @@ export const listApiTokensAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/user/api-tokens',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

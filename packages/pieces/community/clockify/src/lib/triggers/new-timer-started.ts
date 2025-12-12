@@ -23,10 +23,10 @@ export const newTimerStartedTrigger = createTrigger({
 		const { workspaceId } = context.propsValue;
 
 		const response = await clockifyApiCall<{ id: string }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/workspaces/${workspaceId}/webhooks`,
-			body: {
+			body: {	
 				url: context.webhookUrl,
 				webhookEvent: 'NEW_TIMER_STARTED',
 				triggerSourceType: 'WORKSPACE_ID',
@@ -43,7 +43,7 @@ export const newTimerStartedTrigger = createTrigger({
 
 		if (!isNil(webhookId)) {
 			await clockifyApiCall<{ id: string }>({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text	,
 				method: HttpMethod.DELETE,
 				resourceUri: `/workspaces/${workspaceId}/webhooks/${webhookId}`,
 			});

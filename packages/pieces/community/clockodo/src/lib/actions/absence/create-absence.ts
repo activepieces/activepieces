@@ -42,12 +42,12 @@ export default createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.createAbsence({
       date_since: reformatDate(propsValue.date_since) as string,
       date_until: reformatDate(propsValue.date_until) as string,
       type: propsValue.type as AbsenceType,
-      users_id: propsValue.user_id,
+      users_id: propsValue.user_id as number,
       count_days: propsValue.half_days ? 0.5 : 1,
       status: propsValue.approved
         ? AbsenceStatus.APPROVED

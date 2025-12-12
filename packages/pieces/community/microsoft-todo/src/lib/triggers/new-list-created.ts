@@ -1,10 +1,10 @@
-import { TriggerStrategy, createTrigger, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { TriggerStrategy, createTrigger, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { microsoftToDoAuth } from '../../index';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { TodoTaskList } from '@microsoft/microsoft-graph-types';
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftToDoAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftToDoAuth>, Record<string, never>> = {
     strategy: DedupeStrategy.LAST_ITEM,
     items: async ({ auth }) => {
         const client = Client.initWithMiddleware({

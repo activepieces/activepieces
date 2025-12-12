@@ -1,8 +1,8 @@
-import { PiecePropValueSchema } from "@activepieces/pieces-framework";
+import { AppConnectionValueForAuthProperty,  } from "@activepieces/pieces-framework";
 import { postgresAuth } from "..";
 import { Client } from "pg";
 
-export const pgClient = async (auth: PiecePropValueSchema<typeof postgresAuth>, query_timeout = 30000, application_name: string | undefined = undefined , connectionTimeoutMillis = 30000) => {
+export const pgClient = async (auth: AppConnectionValueForAuthProperty<typeof postgresAuth>, query_timeout = 30000, application_name: string | undefined = undefined , connectionTimeoutMillis = 30000) => {
     const {
         host,
         user,
@@ -12,7 +12,7 @@ export const pgClient = async (auth: PiecePropValueSchema<typeof postgresAuth>, 
         enable_ssl,
         reject_unauthorized: rejectUnauthorized,
         certificate,
-    } = auth;
+    } = auth.props;
 
     const sslConf = {
         rejectUnauthorized: rejectUnauthorized,

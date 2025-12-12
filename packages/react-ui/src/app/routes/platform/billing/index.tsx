@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActiveFlowAddon } from '@/features/billing/components/active-flows-addon';
 import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
-import { AiCreditsUsageTable } from '@/features/billing/components/ai-credits-usage-table';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/lisence-key';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';
@@ -61,7 +60,6 @@ export default function Billing() {
       <DashboardPageHeader
         title={t('Billing')}
         description={t('Manage billing, usage and limits')}
-        beta={true}
       >
         <div className="flex items-center gap-2">
           {!isEnterprise && isSubscriptionActive && (
@@ -81,13 +79,6 @@ export default function Billing() {
 
         {!isEnterprise && (
           <AICreditUsage platformSubscription={platformPlanInfo} />
-        )}
-
-        {isEnterprise && (
-          <>
-            <h3 className="text-lg font-semibold">{t('AI Credits')}</h3>
-            <AiCreditsUsageTable />
-          </>
         )}
 
         {isEnterprise ? (

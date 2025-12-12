@@ -36,7 +36,7 @@ export const updateRecord = createAction({
 		});
 
 		try {
-			const response = await makeRequest(auth as string, HttpMethod.PUT, path, {
+			const response = await makeRequest(auth.secret_text, HttpMethod.PUT, path, {
 				fields: recordData,
 			});
 

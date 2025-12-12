@@ -41,8 +41,8 @@ export const captainData = createPiece({
       auth: captainDataAuth,
       baseUrl: () => CAPTAIN_DATA_BASE_URL,
       authMapping: async (auth) => ({
-        Authorization: `x-api-key ${(auth as CaptainDataAuthType).apiKey}`,
-        'x-project-id': (auth as CaptainDataAuthType).projectId,
+        Authorization: `x-api-key ${auth.props.apiKey}`,
+        'x-project-id': auth.props.projectId,
       }),
     }),
   ],

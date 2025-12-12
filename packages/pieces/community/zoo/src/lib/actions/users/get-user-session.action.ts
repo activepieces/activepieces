@@ -20,7 +20,7 @@ export const getUserSessionAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/user/session/${propsValue.token}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
     });
     return response.body;

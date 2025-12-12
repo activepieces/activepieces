@@ -42,7 +42,7 @@ export const uploadDocumentAction = createAction({
 			url: BASE_URL + `/inboxes/${inboxId}/upload`,
 			headers: {
 				...formData.getHeaders(),
-				'X-API-Key': context.auth,
+				'X-API-Key': context.auth.secret_text,
 			},
 			body: formData,
 		});

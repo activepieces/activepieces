@@ -3,6 +3,7 @@ import {
   TriggerStrategy,
   Property,
   PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -13,7 +14,7 @@ import dayjs from 'dayjs';
 import { servicenowAuth, tableDropdown, createServiceNowClient } from '../common/props';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof servicenowAuth>,
+  AppConnectionValueForAuthProperty<typeof servicenowAuth>,
   { table: string; filter?: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

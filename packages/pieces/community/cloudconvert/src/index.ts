@@ -32,7 +32,7 @@ export const cloudconvert = createPiece({
             baseUrl: () => 'https://api.cloudconvert.com/v2',
             auth: cloudconvertAuth,
             authMapping: async (auth) => ({
-                Authorization: `Bearer ${auth}`,
+                Authorization: `Bearer ${auth.access_token}`,
             }),
         }),
     ],

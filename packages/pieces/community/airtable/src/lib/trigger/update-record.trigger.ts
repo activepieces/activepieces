@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   Property,
   StaticPropsValue,
   TriggerStrategy,
@@ -19,6 +20,7 @@ const props = {
   base: airtableCommon.base,
   tableId: airtableCommon.tableId,
   sortFields: Property.Dropdown({
+    auth: airtableAuth,
     displayName: 'Trigger field',
     description: `**Last Modified Time** field will be used to watch new or updated records.Please create **Last Modified Time** field in your schema,if you don't have any timestamp field.`,
     required: true,
@@ -64,11 +66,11 @@ const props = {
   }),
   viewId: airtableCommon.views,
 };
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof airtableAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     Airtable.configure({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const airtable = new Airtable();
 
@@ -112,13 +114,11 @@ export const airtableUpdatedRecordTrigger = createTrigger({
     return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {

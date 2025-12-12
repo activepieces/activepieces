@@ -23,10 +23,12 @@
       "@activepieces/pieces-common": [
         "../../packages/pieces/community/common/src"
       ],
-      "@activepieces/common-ai": [
-        "../../packages/pieces/community/common-ai/src"
+      "@activepieces/piece-ai": [
+        "../../packages/pieces/community/ai/src"
       ],
-      "@avalant/automationx-widgets": ["../../packages/widgets/src/index.ts"]
+      "@avalant/automationx-widgets": [
+        "../../packages/widgets/src"
+      ]
     }
   },
   "exclude": [

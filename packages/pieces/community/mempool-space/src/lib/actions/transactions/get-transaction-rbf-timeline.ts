@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getTransactionRbfTimeline = createAction({
+ auth:PieceAuth.None(),
   name: 'get_transaction_rbf_timeline',
   displayName: 'Get Transaction RBF Timeline',
   description: 'Get the Replace-By-Fee (RBF) timeline for a transaction',

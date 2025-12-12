@@ -1,9 +1,8 @@
 import fs from 'fs/promises'
 import { inspect } from 'node:util'
 import path from 'path'
-import { ConnectionsManager, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
-import { Result, tryCatch } from '@activepieces/shared'
-import { ExecutionError, ExecutionErrorType } from './helper/execution-errors'
+import { ConnectionsManager, ContextVersion, PauseHookParams, RespondHookParams, StopHookParams } from '@activepieces/pieces-framework'
+import { ExecutionError, ExecutionErrorType, Result, tryCatch } from '@activepieces/shared'
 import { createConnectionService } from './services/connections.service'
 
 export type FileEntry = {
@@ -43,6 +42,17 @@ export const utils = {
         await walkRecursive(dirPath)
         return entries
     },
+    formatExecutionError(value: ExecutionError): string {
+        try {
+            return JSON.stringify({
+                ...value,
+                ...JSON.parse(value.message),
+            }, null, 2)
+        }
+        catch (e) {
+            return inspect(value)
+        }
+    },
     formatError(value: Error): string {
         try {
             return JSON.stringify(JSON.parse(value.message), null, 2)
@@ -63,7 +73,7 @@ export const utils = {
     createConnectionManager(params: CreateConnectionManagerParams): ConnectionsManager {
         return {
             get: async (key: string) => {
-                const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl }).obtain(key)
+                const connection = await createConnectionService({ projectId: params.projectId, engineToken: params.engineToken, apiUrl: params.apiUrl, contextVersion: params.contextVersion }).obtain(key)
                 if (params.target === 'actions') {
                     params.hookResponse.tags.push(`connection:${key}`)
                 }
@@ -93,4 +103,4 @@ export type HookResponse = {
     type: 'none'
     tags: string[]
 }
-type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties' } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse }
+type CreateConnectionManagerParams = { projectId: string, engineToken: string, apiUrl: string, target: 'triggers' | 'properties', contextVersion: ContextVersion | undefined } | { projectId: string, engineToken: string, apiUrl: string, target: 'actions', hookResponse: HookResponse, contextVersion: ContextVersion | undefined }

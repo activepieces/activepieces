@@ -56,7 +56,7 @@ export const searchProduct = createAction({
       params.append('weight', String(context.propsValue.weight));
 
     return await bigCommerceApiService.fetchProducts({
-      auth: context.auth,
+      auth: context.auth.props,
       queryString: params.toString(),
     });
   },

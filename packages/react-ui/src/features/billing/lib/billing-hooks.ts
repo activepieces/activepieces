@@ -1,10 +1,10 @@
 import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
-import { ListAICreditsUsageRequest } from '@activepieces/common-ai';
 import {
   ToggleAiCreditsOverageEnabledParams,
   SetAiCreditsOverageLimitParams,
@@ -18,8 +18,6 @@ import { platformBillingApi } from './api';
 export const billingKeys = {
   platformSubscription: (platformId: string) =>
     ['platform-billing-subscription', platformId] as const,
-  aiCreditsUsage: (params: ListAICreditsUsageRequest) =>
-    ['platform-billing-ai-credits-usage', params] as const,
 };
 
 export const billingMutations = {
@@ -39,9 +37,8 @@ export const billingMutations = {
       onSuccess: (url) => {
         setIsOpen?.(false);
         navigate(url);
-        toast({
-          title: t('Success'),
-          description: t('Plan updated successfully'),
+        toast.success(t('Plan updated successfully'), {
+          duration: 3000,
         });
       },
       onError: () => {
@@ -61,11 +58,9 @@ export const billingMutations = {
         setIsOpen?.(false);
       },
       onError: (error) => {
-        toast({
-          title: t('Starting Subscription failed'),
+        toast.error(t('Starting Subscription failed'), {
           description: t(error.message),
-          variant: 'default',
-          duration: 5000,
+          duration: 3000,
         });
       },
     });
@@ -78,30 +73,22 @@ export const billingMutations = {
         queryClient.invalidateQueries({
           queryKey: billingKeys.platformSubscription(data.platformId),
         });
-        toast({
-          title: t('Success'),
-          description: t('AI credit usage limit set successfully'),
+        toast.success(t('AI credit usage limit updated successfully'), {
+          duration: 3000,
         });
       },
       onError: (error) => {
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;
           if (apError.code === ErrorCode.VALIDATION) {
-            toast({
-              title: t('Setting AI credit usage limit failed'),
+            toast.error(t('Setting AI credit usage limit failed'), {
               description: t(apError.params.message),
-              variant: 'default',
-              duration: 5000,
+              duration: 3000,
             });
             return;
           }
         }
-        toast({
-          title: t('Setting AI credit usage limit failed'),
-          description: t(error.message),
-          variant: 'default',
-          duration: 5000,
-        });
+        internalErrorToast();
       },
     });
   },
@@ -113,30 +100,20 @@ export const billingMutations = {
         queryClient.invalidateQueries({
           queryKey: billingKeys.platformSubscription(data.platformId),
         });
-        toast({
-          title: t('Success'),
-          description: t(`AI credits overage updated successfully`),
-        });
+        toast.success(t('AI credits overage updated successfully'), {});
       },
       onError: (error) => {
         if (api.isError(error)) {
           const apError = error.response?.data as ApErrorParams;
           if (apError.code === ErrorCode.VALIDATION) {
-            toast({
-              title: t('Setting AI credit usage limit failed'),
+            toast.error(t('Setting AI credit usage limit failed'), {
               description: t(apError.params.message),
-              variant: 'default',
-              duration: 5000,
+              duration: 3000,
             });
             return;
           }
         }
-        toast({
-          title: t('Setting AI credit usage limit failed'),
-          description: t(error.message),
-          variant: 'default',
-          duration: 5000,
-        });
+        internalErrorToast();
       },
     });
   },
@@ -147,12 +124,6 @@ export const billingQueries = {
     return useQuery({
       queryKey: billingKeys.platformSubscription(platformId),
       queryFn: platformBillingApi.getSubscriptionInfo,
-    });
-  },
-  useAiCreditsUsage: (params: ListAICreditsUsageRequest) => {
-    return useQuery({
-      queryKey: billingKeys.aiCreditsUsage(params),
-      queryFn: () => platformBillingApi.listAiCreditsUsage(params),
     });
   },
 };

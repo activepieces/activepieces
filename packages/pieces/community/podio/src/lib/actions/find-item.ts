@@ -10,6 +10,7 @@ export const findItemAction = createAction({
   description: 'Retrieve a single item by ID or field value.',
   props: {
     searchType: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Search Method',
       description: 'How to find the item',
       required: true,

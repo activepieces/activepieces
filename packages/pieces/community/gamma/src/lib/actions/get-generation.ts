@@ -18,7 +18,7 @@ export const getGeneration = createAction({
   },
   async run(context) {
     const { generationId } = context.propsValue;
-    const apiKey = context.auth.apiKey; 
+    const apiKey = context.auth.props.apiKey; 
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,

@@ -1,13 +1,15 @@
 import { createTrigger, Property, TriggerStrategy, OAuth2PropertyValue } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { netlifyAuth } from "../common/auth";
 
 export const newDeployStarted = createTrigger({
   name: "new_deploy_started",
   displayName: "New Deploy Started",
   description: "Fires immediately when a deploy job starts on your Netlify site.",
+  auth: netlifyAuth, 
   props: {
     siteId: Property.Dropdown({
-      displayName: "Site",
+      auth: netlifyAuth,      displayName: "Site",
       description: "Select the site to monitor for deploy events",
       required: true,
       refreshers: ['auth'],

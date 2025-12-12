@@ -15,7 +15,7 @@ export const findMessage = createAction({
   },
   async run({ auth: apiKey, propsValue: { message_uid } }) {
     const response = await timelinesAiCommon.getMessage({
-      apiKey: apiKey as string,
+      apiKey: apiKey,
       message_uid,
     });
     if (response.status !== 'ok') {

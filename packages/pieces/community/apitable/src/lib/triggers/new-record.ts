@@ -1,6 +1,6 @@
 import { APITableAuth } from '../../index';
 import {
-  PiecePropValueSchema,
+  AppConnectionValueForAuthProperty,
   TriggerStrategy,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -13,13 +13,13 @@ import { APITableCommon, makeClient } from '../common';
 import dayjs from 'dayjs';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof APITableAuth>,
+   AppConnectionValueForAuthProperty<typeof APITableAuth>,
   { datasheet_id: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue: { datasheet_id }, lastFetchEpochMS }) => {
     const client = makeClient(
-      auth as PiecePropValueSchema<typeof APITableAuth>
+      auth.props
     );
     const records = await client.listRecords(datasheet_id as string, {
       filterByFormula: `CREATED_TIME() > ${

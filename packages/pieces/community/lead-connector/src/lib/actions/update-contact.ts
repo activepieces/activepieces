@@ -51,6 +51,7 @@ export const updateContactAction = createAction({
       required: false,
     }),
     tags: Property.MultiSelectDropdown({
+  auth: leadConnectorAuth,
       displayName: 'Tags',
       required: false,
       refreshers: [],
@@ -77,6 +78,7 @@ export const updateContactAction = createAction({
       required: false,
     }),
     country: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Country',
       description:
         'When using a dynamic value, make sure to use the ISO-2 country code, and not the country name.',
@@ -111,6 +113,7 @@ export const updateContactAction = createAction({
       required: false,
     }),
     timezone: Property.Dropdown({
+  auth: leadConnectorAuth,
       displayName: 'Time Zone',
       required: false,
       refreshers: [],

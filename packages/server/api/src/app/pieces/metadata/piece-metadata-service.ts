@@ -38,7 +38,6 @@ import { pieceListUtils } from './utils'
 export const pieceRepos = repoFactory(PieceMetadataEntity)
 
 export const pieceMetadataService = (log: FastifyBaseLogger) => {
-
     return {
         async setup(): Promise<void> {
             await localPieceCache(log).setup()
@@ -288,8 +287,8 @@ const loadDevPiecesIfEnabled = async (log: FastifyBaseLogger): Promise<PieceMeta
     if (isNil(devPiecesConfig) || isEmpty(devPiecesConfig)) {
         return []
     }
-    const packages = devPiecesConfig.split(',')
-    const pieces = await filePiecesUtils(packages, log).findAllPieces()
+    const piecesNames = devPiecesConfig.split(',')
+    const pieces = await filePiecesUtils(log).loadDistPiecesMetadata(piecesNames)
 
     return pieces.map((p): PieceMetadataSchema => ({
         id: apId(),
@@ -386,10 +385,11 @@ async function findAllPiecesVersionsSortedByNameAscVersionDesc({
     log: FastifyBaseLogger
 }): Promise<PieceMetadataSchema[]> {
     const piecesFromDatabase = await localPieceCache(log).getSortedbyNameAscThenVersionDesc()
-    const piecesFromDevelopment = await loadDevPiecesIfEnabled(log)
-    const allPieces = [...piecesFromDevelopment, ...piecesFromDatabase]
+    const piecesFromDatabaseFiltered = piecesFromDatabase.filter((piece) => (isOfficialPiece(piece) || isCustomPiece(platformId, piece)) && isSupportedRelease(release, piece))
 
-    return allPieces.filter((piece) => (isOfficialPiece(piece) || isCustomPiece(platformId, piece)) && isSupportedRelease(release, piece))
+    const piecesFromDevelopment = await loadDevPiecesIfEnabled(log)
+
+    return [...piecesFromDatabaseFiltered, ...piecesFromDevelopment]
 }
 
 function isSupportedRelease(release: string | undefined, piece: PieceMetadataSchema): boolean {

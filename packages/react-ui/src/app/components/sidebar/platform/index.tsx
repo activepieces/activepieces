@@ -1,14 +1,24 @@
 import { t } from 'i18next';
 import {
   ArrowLeft,
+  Palette,
   LayoutGrid,
   LineChart,
   Server,
-  Shield,
   Users,
-  Wrench,
+  Bot,
+  Unplug,
+  Puzzle,
+  Receipt,
+  SquareDashedBottomCode,
+  LogIn,
+  KeyRound,
+  FileJson2,
+  Settings2,
+  FileHeart,
+  MousePointerClick,
 } from 'lucide-react';
-import { useState } from 'react';
+import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -20,6 +30,7 @@ import {
   SidebarHeader,
   SidebarGroup,
   SidebarMenuButton,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -27,176 +38,149 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
 import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
-import { ApSidebareGroup, SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
-  const [setupOpen, setSetupOpen] = useState(false);
-  const [securityOpen, setSecurityOpen] = useState(false);
-  const [infrastructureOpen, setInfrastructureOpen] = useState(false);
   const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
-
   const isCloudPlatform = platformHooks.useIsCloudPlatform();
 
-  const items: SidebarGeneralItemType[] = [
-    // {
-    //   type: 'link',
-    //   to: '/platform/analytics',
-    //   label: t('Overview'),
-    //   icon: LineChart,
-    //   locked: !platform.plan.analyticsEnabled,
-    //   isSubItem: false,
-    //   show: true,
-    // },
+  const groups: {
+    label: string;
+    items: {
+      to: string;
+      label: string;
+      icon?: ComponentType<SVGProps<SVGSVGElement>>;
+      locked?: boolean;
+      show?: boolean;
+    }[];
+  }[] = [
     {
-      type: 'link',
-      to: '/platform/projects',
-      label: t('Projects'),
-      icon: LayoutGrid,
-      locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
-      isSubItem: false,
-      show: true,
-    },
-    {
-      type: 'link',
-      to: '/platform/users',
-      label: t('Users'),
-      icon: Users,
-      isSubItem: false,
-      show: true,
-    },
-    {
-      type: 'group',
-      label: t('Setup'),
-      icon: Wrench,
-      open: setupOpen,
-      setOpen: setSetupOpen,
-      isActive: (pathname: string) => pathname.includes('/setup'),
+      label: t('General'),
       items: [
         {
-          type: 'link',
-          to: '/platform/setup/ai',
-          label: t('AI'),
-          isSubItem: true,
-          // todo(Rupal): enable this for all later when agents are enabled
-          show: isCloudPlatform,
+          to: '/platform/analytics',
+          label: t('Overview'),
+          icon: LineChart,
+          locked: !platform.plan.analyticsEnabled,
         },
-        // {
-        //   type: 'link',
-        //   to: '/platform/setup/branding',
-        //   label: t('Branding'),
-        //   isSubItem: true,
-        //   show: true,
-        // },
-        // {
-        //   type: 'link',
-        //   to: '/platform/setup/connections',
-        //   label: t('Global Connections'),
-        //   isSubItem: true,
-        //   show: true,
-        // },
-        // {
-        //   type: 'link',
-        //   to: '/platform/setup/pieces',
-        //   label: t('Pieces'),
-        //   isSubItem: true,
-        //   show: true,
-        // },
         {
-          type: 'link',
-          to: '/platform/setup/templates',
-          label: t('Templates'),
-          isSubItem: true,
+          to: '/platform/projects',
+          label: t('Projects'),
+          icon: LayoutGrid,
+          locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
           show: true,
         },
         {
-          type: 'link',
+          to: '/platform/users',
+          label: t('Users'),
+          icon: Users,
+          show: true,
+        },
+      ],
+    },
+    {
+      label: t('Setup'),
+      items: [
+        {
+          to: '/platform/setup/ai',
+          label: t('AI'),
+          icon: Bot,
+          show: isCloudPlatform,
+        },
+        {
+          to: '/platform/setup/branding',
+          label: t('Branding'),
+          icon: Palette,
+          locked: !platform.plan.customAppearanceEnabled,
+        },
+        {
+          to: '/platform/setup/connections',
+          label: t('Global Connections'),
+          icon: Unplug,
+          locked: !platform.plan.globalConnectionsEnabled,
+        },
+        {
+          to: '/platform/setup/pieces',
+          label: t('Pieces'),
+          icon: Puzzle,
+          locked: !platform.plan.managePiecesEnabled,
+        },
+        {
+          to: '/platform/setup/templates',
+          label: t('Templates'),
+          icon: LayoutGrid,
+          locked: !platform.plan.manageTemplatesEnabled,
+          show: true,
+        },
+        {
           to: '/platform/setup/billing',
           label: t('Billing'),
-          isSubItem: true,
-          show: edition !== ApEdition.COMMUNITY,
+          icon: Receipt,
+          locked: edition === ApEdition.COMMUNITY,
         },
       ],
     },
     // {
-    //   type: 'group',
     //   label: t('Security'),
-    //   open: securityOpen,
-    //   setOpen: setSecurityOpen,
-    //   isActive: (pathname: string) => pathname.includes('/security'),
-    //   icon: Shield,
     //   items: [
     //     {
-    //       type: 'link',
     //       to: '/platform/security/audit-logs',
     //       label: t('Audit Logs'),
-    //       isSubItem: true,
-    //       show: true,
+    //       icon: SquareDashedBottomCode,
+    //       locked: !platform.plan.auditLogEnabled,
     //     },
     //     {
-    //       type: 'link',
     //       to: '/platform/security/sso',
     //       label: t('Single Sign On'),
-    //       isSubItem: true,
-    //       show: true,
+    //       icon: LogIn,
+    //       locked: !platform.plan.ssoEnabled,
     //     },
     //     {
-    //       type: 'link',
     //       to: '/platform/security/signing-keys',
     //       label: t('Signing Keys'),
-    //       isSubItem: true,
-    //       show: true,
+    //       icon: KeyRound,
+    //       locked: !platform.plan.embeddingEnabled,
     //     },
     //     {
-    //       type: 'link',
     //       to: '/platform/security/project-roles',
     //       label: t('Project Roles'),
-    //       isSubItem: true,
-    //       show: true,
+    //       icon: Settings2,
+    //       locked: !platform.plan.projectRolesEnabled,
     //     },
     //     {
-    //       type: 'link',
     //       to: '/platform/security/api-keys',
     //       label: t('API Keys'),
-    //       isSubItem: true,
-    //       show: true,
+    //       icon: FileJson2,
+    //       locked: !platform.plan.apiKeysEnabled,
     //     },
     //   ],
     // },
     {
-      type: 'group',
       label: t('Infrastructure'),
-      icon: Server,
-      open: infrastructureOpen,
-      setOpen: setInfrastructureOpen,
-      isActive: (pathname: string) => pathname.includes('/infrastructure'),
       items: [
         {
-          type: 'link',
           to: '/platform/infrastructure/workers',
           label: t('Workers'),
-          isSubItem: true,
-          show: true,
+          icon: Server,
+          show: isCloudPlatform,
         },
         {
-          type: 'link',
           to: '/platform/infrastructure/health',
           label: t('Health'),
-          isSubItem: true,
-          show: true,
+          icon: FileHeart,
+          show: isCloudPlatform,
         },
         {
-          type: 'link',
           to: '/platform/infrastructure/triggers',
           label: t('Triggers'),
-          isSubItem: true,
-          show: true,
+          icon: MousePointerClick,
+          show: isCloudPlatform,
         },
       ],
     },
@@ -204,11 +188,11 @@ export function PlatformSidebar() {
 
   // Only show Infrastructure group for cloud platform
   if (!isCloudPlatform) {
-    items.pop();
+    groups.pop();
   }
 
   return (
-    <Sidebar variant="inset">
+    <Sidebar className="px-4" variant="inset">
       <SidebarHeader>
         <div className="w-full pb-2 flex items-center gap-2">
           <Link
@@ -223,22 +207,7 @@ export function PlatformSidebar() {
           </Link>
           <h1 className="truncate font-semibold">{branding.websiteName}</h1>
         </div>
-      </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarMenu>
-            {items.map((item) =>
-              item.type === 'group' ? (
-                <ApSidebareGroup key={item.label} {...item} />
-              ) : (
-                <ApSidebarItem key={item.label} {...item} />
-              ),
-            )}
-          </SidebarMenu>
-        </SidebarGroup>
-      </SidebarContent>
-      <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuButton
             onClick={() => navigate('/')}
@@ -248,6 +217,28 @@ export function PlatformSidebar() {
             {t('Exit platform admin')}
           </SidebarMenuButton>
         </SidebarMenu>
+      </SidebarHeader>
+      <SidebarContent>
+        {groups.map((group) => (
+          <SidebarGroup
+            key={group.label}
+            className="px-0 border-t border-gray-300 pt-4 list-none"
+          >
+            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            {group.items.filter(item => !!item.show).map((item) => (
+              <ApSidebarItem
+                type="link"
+                key={item.label}
+                to={item.to}
+                label={item.label}
+                icon={item.icon}
+                locked={item.locked}
+              />
+            ))}
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+      <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>

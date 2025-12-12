@@ -27,7 +27,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                 const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
                 await workerMachine.init(response, token, log)
                 await registryPieceManager(log).warmup()
-                await jobQueueWorker(log).start(token)
+                await jobQueueWorker(log).start()
                 await initRunsMetadataQueue(log)
                 await markAsHealthy()
                 await registryPieceManager(log).distributedWarmup()

@@ -45,7 +45,7 @@ const telemetryApiCustomQueryAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { customQuery, vehicleTokenId, variables = {} } = context.propsValue;
 
@@ -86,7 +86,7 @@ const availableSignalsAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -129,7 +129,7 @@ const signalsAction = createAction({
         ...telemetryApiDateInputProps,
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -176,7 +176,7 @@ const getDailyAvgSpeedOfVehicleAction = createAction({
         ...telemetryApiDateInputPropsWithoutInterval,
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId, startDate, endDate } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -222,7 +222,7 @@ const getEvents = createAction({
 	...telemetryApiDateInputPropsWithoutInterval,
     },
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId, startDate, endDate } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -268,7 +268,7 @@ const getMaxSpeedOfVehicleAction = createAction({
         ...telemetryApiDateInputProps,
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 		const { vehicleTokenId, startDate, endDate, interval } = context.propsValue;
 
 		const dimo = new DimoClient({
@@ -314,7 +314,7 @@ const getVinVcLatestAction = createAction({
 		}),
 	},
 	async run(context) {
-		const { clientId, apiKey, redirectUri } = context.auth;
+		const { clientId, apiKey, redirectUri } = context.auth.props;
 
 		const { vehicleTokenId } = context.propsValue;
 

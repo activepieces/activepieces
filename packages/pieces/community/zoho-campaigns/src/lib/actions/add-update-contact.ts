@@ -10,7 +10,7 @@ export const addUpdateContact = createAction({
     'Add a new contact or update an existing one. Confirmation email sent based on mailing list settings.',
   props: zohoCampaignsCommon.addUpdateContactProperties(),
   async run({ auth, propsValue }) {
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
     const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,

@@ -3,12 +3,14 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { manusAuth } from '../common/auth';
 
 export const taskStopped = createTrigger({
   name: 'task_stopped',
   displayName: 'Task Stopped',
   description: 'Triggers when a task reaches a stopping point - either completion or requiring user input',
   props: {},
+  auth: manusAuth,
   sampleData: {
     event_id: "task_stopped_task_abc123",
     event_type: "task_stopped",
@@ -36,7 +38,7 @@ export const taskStopped = createTrigger({
         headers: {
           'accept': 'application/json',
           'content-type': 'application/json',
-          'API_KEY': auth as string,
+          'API_KEY': auth.secret_text,
         },
         body: {
           webhook: {
@@ -61,7 +63,7 @@ export const taskStopped = createTrigger({
           url: `https://api.manus.ai/v1/webhooks/${webhookId}`,
           headers: {
             'accept': 'application/json',
-            'API_KEY': auth as string,
+            'API_KEY': auth.secret_text,
           },
         });
       }
