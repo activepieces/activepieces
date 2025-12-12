@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/tooltip';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { formatUtils } from '@/lib/utils';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { PopulatedFlow } from '@activepieces/shared';
 
 type FlowsTableColumnsProps = {
@@ -72,11 +72,7 @@ export const flowsTableColumns = ({
     ),
     cell: ({ row }) => {
       const updated = row.original.updated;
-      return (
-        <div className="text-left font-medium min-w-[150px]">
-          {formatUtils.formatDate(new Date(updated))}
-        </div>
-      );
+      return <FormattedDate date={new Date(updated)} className="text-left font-medium min-w-[150px]" />;
     },
   },
   {

@@ -20,6 +20,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { formatUtils } from '@/lib/utils';
 import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 
@@ -204,7 +205,7 @@ export const runsTableColumns = ({
         <div className="text-left">
           <StatusIconWithText
             icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
+            text={formatUtils.convertEnumToReadable(status)}
             variant={variant}
           />
         </div>
@@ -217,11 +218,7 @@ export const runsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Started At')} />
     ),
     cell: ({ row }) => {
-      return (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created ?? new Date()))}
-        </div>
-      );
+      return <FormattedDate date={new Date(row.original.created ?? new Date())} className="text-left" />;
     },
   },
   {

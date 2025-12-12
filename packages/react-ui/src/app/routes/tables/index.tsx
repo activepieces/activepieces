@@ -31,7 +31,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
@@ -63,9 +63,7 @@ const ApTablesPage = () => {
         <DataTableColumnHeader column={column} title={t('Created')} />
       ),
       cell: ({ row }) => (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
+        <FormattedDate date={new Date(row.original.created)} className="text-left" />
       ),
     },
     {

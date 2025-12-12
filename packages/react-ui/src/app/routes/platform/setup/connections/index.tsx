@@ -30,6 +30,7 @@ import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { formatUtils } from '@/lib/utils';
 import {
   AppConnectionStatus,
@@ -51,7 +52,7 @@ const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] = [
     accessorKey: STATUS_QUERY_PARAM,
     options: Object.values(AppConnectionStatus).map((status) => {
       return {
-        label: formatUtils.convertEnumToHumanReadable(status),
+        label: formatUtils.convertEnumToReadable(status),
         value: status,
       };
     }),
@@ -114,7 +115,7 @@ const GlobalConnectionsTable = () => {
           <div className="text-left">
             <StatusIconWithText
               icon={Icon}
-              text={formatUtils.convertEnumToHumanReadable(status)}
+              text={formatUtils.convertEnumToReadable(status)}
               variant={variant}
             />
           </div>
@@ -127,11 +128,7 @@ const GlobalConnectionsTable = () => {
         <DataTableColumnHeader column={column} title={t('Connected At')} />
       ),
       cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.updated))}
-          </div>
-        );
+        return <FormattedDate date={new Date(row.original.updated)} className="text-left" />;
       },
     },
     {
