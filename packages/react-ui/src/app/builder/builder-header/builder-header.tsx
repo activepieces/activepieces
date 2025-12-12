@@ -14,11 +14,12 @@ import {
   RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import EditableText from '@/components/ui/editable-text';
 import { HomeButton } from '@/components/ui/home-button';
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import {
   Tooltip,
   TooltipContent,
@@ -100,9 +101,12 @@ export const BuilderHeader = () => {
     <div className="border-b select-none">
       <div className="relative items-center flex  w-full px-4 py-3">
         <div className="flex items-center gap-2">
-          {!embedState.isEmbedded && <ApSidebarToggle />}
+          {!embedState.isEmbedded && <SidebarTrigger />}
+          {!embedState.isEmbedded && (
+            <Separator orientation="vertical" className="h-5 mr-2" />
+          )}
           {embedState.isEmbedded && <HomeButton />}
-          <div className="flex gap-2 items-center text-lg">
+          <div className="flex gap-2 items-center text-base">
             {!embedState.hideFolders &&
               !embedState.disableNavigationInBuilder && (
                 <>
@@ -121,7 +125,7 @@ export const BuilderHeader = () => {
               )}
             {!embedState.hideFlowNameInBuilder && (
               <EditableText
-                className="font-semibold hover:cursor-text"
+                className="font-normal hover:cursor-text"
                 value={flowVersion.displayName}
                 readonly={!isLatestVersion}
                 onValueChange={(value) => {

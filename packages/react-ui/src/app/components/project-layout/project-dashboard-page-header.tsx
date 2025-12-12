@@ -118,7 +118,7 @@ export const ProjectDashboardPageHeader = ({
                     : title
                 }
                 maxLengthToNotShowTooltip={30}
-                titleClassName="text-base"
+                titleClassName="text-base font-normal"
                 projectType={project.type}
               />
               {project.type === ProjectType.PERSONAL && (

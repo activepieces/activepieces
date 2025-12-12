@@ -10,7 +10,6 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-import { ApSidebarToggle } from '@/components/custom/ap-sidebar-toggle';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { useEmbedding } from '@/components/embed-provider';
@@ -22,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
+import { Separator } from '@/components/ui/separator';
+import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
@@ -70,9 +71,12 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
 
   return (
     <>
-      <div className="flex items-center gap-1 justify-between p-4 w-full">
+      <div className="flex items-center gap-1 justify-between py-3 w-full px-4">
         <div className="flex items-center gap-2">
-          {!embedState.isEmbedded && <ApSidebarToggle />}
+          {!embedState.isEmbedded && <SidebarTrigger />}
+          {!embedState.isEmbedded && (
+            <Separator orientation="vertical" className="h-5 mr-2" />
+          )}
           {embedState.isEmbedded && (
             <Button
               variant="basic"
@@ -86,7 +90,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
 
           <div className="flex items-center gap-1">
             <EditableText
-              className="text-lg font-semibold hover:cursor-text"
+              className="text-base font-normal hover:cursor-text"
               value={table?.name || t('Table Editor')}
               readonly={!userHasTableWritePermission}
               onValueChange={(newName) => {
