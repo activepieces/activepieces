@@ -43,7 +43,7 @@ export const useGeneralSettingsMutation = (
       });
       
       queryClient.invalidateQueries({
-        queryKey: ['current-project'],
+        queryKey: ['current-project', projectId],
       });
       queryClient.invalidateQueries({
         queryKey: ['projects'],
