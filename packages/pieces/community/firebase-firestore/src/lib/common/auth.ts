@@ -8,5 +8,6 @@ export const firestoreAuth = PieceAuth.OAuth2({
   scope: [
     'https://www.googleapis.com/auth/datastore',
     'https://www.googleapis.com/auth/cloud-platform',
+    'https://www.googleapis.com/auth/firebase.database'
   ],
 });

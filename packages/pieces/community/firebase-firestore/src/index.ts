@@ -1,9 +1,10 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { firestoreAuth } from './lib/common/auth';
 import { createFirestoreDocument } from './lib/actions/create-firestore-document';
-// import { createOrReplaceRealtimeDatabaseRecord } from './lib/actions/update-firestore-document';
+import { createOrReplaceRealtimeDatabaseRecord } from './lib/actions/createOrReplaceRealtimeDatabaseRecord';
 import { findFirestoreDocument } from './lib/actions/find-firestore-document';
 import { newDocumentWithinACollection } from './lib/triggers/new-document-within-a-collection';
+// import { newchildobjectinrealtimedatabase } from './lib/triggers/newchildobjectinrealtimedatabase';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const firebaseFirestore = createPiece({
@@ -14,7 +15,7 @@ export const firebaseFirestore = createPiece({
   authors: ['sanket-a11y'],
   actions: [
     createFirestoreDocument,
-    // createOrReplaceRealtimeDatabaseRecord,
+    createOrReplaceRealtimeDatabaseRecord,
     findFirestoreDocument,
     createCustomApiCallAction({
       auth: firestoreAuth,
@@ -26,5 +27,5 @@ export const firebaseFirestore = createPiece({
       },
     }),
   ],
-  triggers: [newDocumentWithinACollection],
+  triggers: [newDocumentWithinACollection, ],
 });
