@@ -11,6 +11,7 @@
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
+        "external": ["@electric-sql/pglite"],
         "main": "packages/server/api/src/main.ts",
         "outputPath": "dist/packages/server/api",
         "outputFileName": "main.js",
@@ -101,7 +102,7 @@
       "executor": "nx:run-commands",
       "options": {
         "commands": [
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ee nx test-ee-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=ee nx test-ee-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -111,7 +112,7 @@
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=ce nx test-ce-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=ce nx test-ce-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -121,7 +122,7 @@
       "options": {
         "commands": [
           "nx build server-api",
-          "export $(cat packages/server/api/.env.tests | xargs) && AP_EDITION=cloud nx test-cloud-command server-api --output-style stream-without-prefixes"
+          "export $(cat packages/server/api/.env.tests | xargs) && NODE_OPTIONS='--experimental-vm-modules' AP_EDITION=cloud nx test-cloud-command server-api --output-style stream-without-prefixes"
         ],
         "parallel": false
       }
@@ -149,7 +150,20 @@
     "db-migration": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "nx db server-api -- migration:generate -p -d packages/server/api/src/app/database/database-connection.ts packages/server/api/src/app/database/migration/{args.name}"
+        "command": "nx db server-api -- migration:generate -p -d packages/server/api/src/app/database/migration-data-source.ts packages/server/api/src/app/database/migration/postgres/{args.name} {args.flags}"
+      }
+    },
+    "check-migrations": {
+      "executor": "nx:run-commands",
+      "options": {
+        "commands": [
+          "echo '🔍 Checking for schema changes without migrations...'",
+          "export $(cat packages/server/api/.env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && nx db server-api -- migration:run -d packages/server/api/src/app/database/migration-data-source.ts > /dev/null 2>&1",
+          "echo 'Checking for schema drift...'",
+          "export $(cat packages/server/api/.env.tests | xargs) && export AP_DEV_PIECES='' && export AP_ENVIRONMENT=dev && AP_EDITION=ce && nx db-migration server-api --flags='--dryrun --check' || (echo '' && echo '❌ ERROR: Schema changes detected without corresponding migration!' && echo '' && echo 'The PR contains database schema changes without corresponding migration.' && echo 'Please generate a migration using:' && echo '  nx db-migration server-api --name=<DESCRIPTIVE_NAME>' && echo '' && echo 'For more information, see: docs/handbook/engineering/playbooks/database-migration.mdx' && echo '' && exit 1)",
+          "echo '✅ No missing migrations detected'"
+        ],
+        "parallel": false
       }
     }
   }

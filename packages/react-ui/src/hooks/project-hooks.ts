@@ -29,6 +29,8 @@ import { projectApi } from '../lib/project-api';
 
 import { flagsHooks } from './flags-hooks';
 
+export const PERSONAL_PROJECT_NAME = 'Personal Project';
+
 export const projectHooks = {
   useCurrentProject: () => {
     const currentProjectId = authenticationSession.getProjectId();

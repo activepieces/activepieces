@@ -1,8 +1,9 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsAuth } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'googleapis-common';
 import { includeTeamDrivesProp, spreadsheetIdProp } from '../common/props';
+import { createGoogleClient } from '../common/common';
 
 export const findWorksheetAction = createAction({
   auth: googleSheetsAuth,
@@ -28,8 +29,7 @@ export const findWorksheetAction = createAction({
     const title = context.propsValue.title;
     const exactMatch = context.propsValue.exact_match ?? false;
 
-    const authClient = new OAuth2Client();
-    authClient.setCredentials(context.auth);
+    const authClient = await createGoogleClient(context.auth);
 
     const sheets = google.sheets({ version: 'v4', auth: authClient });
 

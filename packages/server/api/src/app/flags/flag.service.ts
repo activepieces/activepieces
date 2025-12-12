@@ -1,7 +1,6 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
-import { aiProviderService } from '../ai/ai-provider-service'
 import { repoFactory } from '../core/db/repo-factory'
 import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
@@ -10,7 +9,6 @@ import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 
 const flagRepo = repoFactory(FlagEntity)
-
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
@@ -69,7 +67,8 @@ export const flagService = {
             },
             {
                 id: ApFlagId.AGENTS_CONFIGURED,
-                value: await aiProviderService.isAgentConfigured(),
+                // TODO (@abuaboud): add new check
+                value: true,
                 created,
                 updated,
             },

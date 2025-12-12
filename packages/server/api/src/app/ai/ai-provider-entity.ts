@@ -1,8 +1,7 @@
-import { AIProvider } from '@activepieces/common-ai'
-import { Platform } from '@activepieces/shared'
+import { AIProvider, AIProviderName, Platform } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSON_COLUMN_TYPE } from '../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
 const AIProviderEncrypted = Type.Composite([Type.Omit(AIProvider, ['config']), Type.Object({
@@ -13,6 +12,7 @@ type AIProviderEncrypted = Static<typeof AIProviderEncrypted>
 
 export type AIProviderSchema = AIProviderEncrypted & {
     platform: Platform
+    provider: AIProviderName
 }
 
 export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
@@ -20,7 +20,7 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         config: {
-            type: JSON_COLUMN_TYPE,
+            type: 'json',
             nullable: false,
         },
         provider: {

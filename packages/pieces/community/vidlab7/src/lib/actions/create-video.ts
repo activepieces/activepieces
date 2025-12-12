@@ -79,7 +79,7 @@ export const createVideo = createAction({
       url: 'https://api-prd.vidlab7.com/api/studio-avatar/generate-video',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': context.auth,
+        'x-api-key': context.auth.secret_text,
       },
       body: {
         avatarId,
@@ -114,7 +114,7 @@ export const createVideo = createAction({
         url: `https://api-prd.vidlab7.com/api/studio-avatar/generated-video/${videoId}`,
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': context.auth,
+          'x-api-key': context.auth.secret_text,
         },
       });
 

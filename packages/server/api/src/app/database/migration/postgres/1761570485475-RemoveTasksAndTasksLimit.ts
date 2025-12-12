@@ -1,19 +1,14 @@
-import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface {
     name = 'RemoveTasksAndTasksLimit1761570485475'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
         await queryRunner.query(`
             ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow_run" DROP COLUMN "tasks"
+            ALTER TABLE "flow_run" RENAME COLUMN "tasks" TO "stepsCount"
         `)
         const hasProjectPlan = await queryRunner.hasTable('project_plan')
         if (hasProjectPlan) {
@@ -48,9 +43,6 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
-            return
-        }
         await queryRunner.query(`
             ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_project_id"
         `)
@@ -84,8 +76,7 @@ export class RemoveTasksAndTasksLimit1761570485475 implements MigrationInterface
             `)
         }
         await queryRunner.query(`
-            ALTER TABLE "flow_run"
-            ADD "tasks" integer
+            ALTER TABLE "flow_run" RENAME COLUMN "stepsCount" TO "tasks"
         `)
         await queryRunner.query(`
             ALTER TABLE "flow"
