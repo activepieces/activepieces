@@ -1,6 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, LogOut, Shield, UserCogIcon } from 'lucide-react';
+import {
+  ChevronsUpDown,
+  LogOut,
+  Shield,
+  UserCogIcon,
+  UserPlus,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -30,22 +36,29 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { useIsPlatformAdmin } from '@/hooks/authorization-hooks';
+import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
+import {
+  useIsPlatformAdmin,
+  useAuthorization,
+} from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { PlatformRole } from '@activepieces/shared';
+import { Permission, PlatformRole } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
+  const [inviteUserOpen, setInviteUserOpen] = useState(false);
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
   const location = useLocation();
   const { data: user } = userHooks.useCurrentUser();
   const queryClient = useQueryClient();
   const { reset } = useTelemetry();
+  const { checkAccess } = useAuthorization();
+  const canInviteUsers = checkAccess(Permission.WRITE_INVITATION);
   const isInPlatformAdmin = location.pathname.startsWith('/platform');
   const isCollapsed = state === 'collapsed';
 
@@ -135,6 +148,12 @@ export function SidebarUser() {
                 <UserCogIcon className="w-4 h-4 mr-2" />
                 {t('Account Settings')}
               </DropdownMenuItem>
+              {canInviteUsers && (
+                <DropdownMenuItem onClick={() => setInviteUserOpen(true)}>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {t('Invite User')}
+                </DropdownMenuItem>
+              )}
               <HelpAndFeedback />
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -150,6 +169,7 @@ export function SidebarUser() {
         open={accountSettingsOpen}
         onClose={() => setAccountSettingsOpen(false)}
       />
+      <InviteUserDialog open={inviteUserOpen} setOpen={setInviteUserOpen} />
     </SidebarMenu>
   );
 }
