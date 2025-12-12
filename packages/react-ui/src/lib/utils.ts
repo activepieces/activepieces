@@ -27,6 +27,12 @@ export const formatUtils = {
       )
       .join(' ');
   },
+  convertEnumToReadable(value: string): string {
+    return (
+      value.charAt(0).toUpperCase() +
+      value.slice(1).toLowerCase().replace(/_/g, ' ')
+    );
+  },
   formatNumber(number: number) {
     return new Intl.NumberFormat(i18next.language).format(number);
   },
@@ -49,18 +55,30 @@ export const formatUtils = {
     const inputDate = dayjs(date);
     const isToday = inputDate.isSame(now, 'day');
     const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
-
-    const timeFormat = new Intl.DateTimeFormat(i18next.language, {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    });
+    const isSameYear = inputDate.isSame(now, 'year');
 
     if (isToday) {
-      return `${t('Today')}, ${timeFormat.format(date)}`;
-    } else if (isYesterday) {
-      return `${t('Yesterday')}, ${timeFormat.format(date)}`;
+      return t('Today');
     }
+
+    if (isYesterday) {
+      return t('Yesterday');
+    }
+
+    if (isSameYear) {
+      return Intl.DateTimeFormat(i18next.language, {
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+    }
+
+    return Intl.DateTimeFormat(i18next.language, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).format(date);
+  },
+  formatDateWithTime(date: Date) {
     return Intl.DateTimeFormat(i18next.language, {
       month: 'short',
       day: 'numeric',
