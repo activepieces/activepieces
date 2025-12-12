@@ -97,104 +97,119 @@ export const BuilderHeader = () => {
     });
   };
 
+  const customSidebarContent = embedState.isEmbedded ? <HomeButton /> : null;
+
+  const titleContent = (
+    <>
+      <div className="flex gap-2 items-center text-base">
+        {!embedState.hideFolders && !embedState.disableNavigationInBuilder && (
+          <>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger onClick={goToFolder}>
+                  {folderName}
+                </TooltipTrigger>
+                <TooltipContent>
+                  <span>{t('Go to...')}</span>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            {' / '}
+          </>
+        )}
+        {!embedState.hideFlowNameInBuilder && (
+          <EditableText
+            className="font-normal hover:cursor-text"
+            value={flowVersion.displayName}
+            readonly={!isLatestVersion}
+            onValueChange={(value) => {
+              applyOperation(
+                {
+                  type: FlowOperationType.CHANGE_NAME,
+                  request: {
+                    displayName: value,
+                  },
+                },
+                () => {
+                  flowHooks.invalidateFlowsQuery(queryClient);
+                },
+              );
+            }}
+            isEditing={isEditingFlowName}
+            setIsEditing={setIsEditingFlowName}
+            tooltipContent={isLatestVersion ? t('Edit') : ''}
+          />
+        )}
+      </div>
+      {!embedState.hideFlowNameInBuilder && (
+        <FlowActionMenu
+          onVersionsListClick={() => {
+            setRightSidebar(RightSideBarType.VERSIONS);
+          }}
+          insideBuilder={true}
+          flow={flow}
+          flowVersion={flowVersion}
+          readonly={!isLatestVersion}
+          onDelete={goToFolder}
+          onRename={() => {
+            setIsEditingFlowName(true);
+          }}
+          onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
+          onDuplicate={() => {}}
+        >
+          <Button variant="ghost" size="icon">
+            <ChevronDown className="h-4 w-4" />
+          </Button>
+        </FlowActionMenu>
+      )}
+    </>
+  );
+
+  const rightContent = (
+    <div className="flex items-center justify-center gap-4">
+      {showSupport && (
+        <Button
+          variant="ghost"
+          className="gap-2 px-2"
+          onClick={() => openNewWindow(supportUrl)}
+        >
+          <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
+          {t('Support')}
+        </Button>
+      )}
+      {hasPermissionToReadRuns && (
+        <Button
+          variant="ghost"
+          onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+          className="gap-2 px-2"
+        >
+          <Logs className="w-4 h-4" />
+          {t('Runs')}
+        </Button>
+      )}
+
+      <BuilderFlowStatusSection></BuilderFlowStatusSection>
+    </div>
+  );
+
+  if (embedState.hidePageHeader) {
+    return null;
+  }
+
   return (
     <div className="border-b select-none">
-      <div className="relative items-center flex  w-full px-4 py-3">
+      <div className="relative items-center flex w-full px-4 py-3">
         <div className="flex items-center gap-2">
           {!embedState.isEmbedded && <SidebarTrigger />}
           {!embedState.isEmbedded && (
             <Separator orientation="vertical" className="h-5 mr-2" />
           )}
-          {embedState.isEmbedded && <HomeButton />}
-          <div className="flex gap-2 items-center text-base">
-            {!embedState.hideFolders &&
-              !embedState.disableNavigationInBuilder && (
-                <>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger onClick={goToFolder}>
-                        {folderName}
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <span>{t('Go to...')}</span>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                  {' / '}
-                </>
-              )}
-            {!embedState.hideFlowNameInBuilder && (
-              <EditableText
-                className="font-normal hover:cursor-text"
-                value={flowVersion.displayName}
-                readonly={!isLatestVersion}
-                onValueChange={(value) => {
-                  applyOperation(
-                    {
-                      type: FlowOperationType.CHANGE_NAME,
-                      request: {
-                        displayName: value,
-                      },
-                    },
-                    () => {
-                      flowHooks.invalidateFlowsQuery(queryClient);
-                    },
-                  );
-                }}
-                isEditing={isEditingFlowName}
-                setIsEditing={setIsEditingFlowName}
-                tooltipContent={isLatestVersion ? t('Edit') : ''}
-              />
-            )}
-          </div>
-          {!embedState.hideFlowNameInBuilder && (
-            <FlowActionMenu
-              onVersionsListClick={() => {
-                setRightSidebar(RightSideBarType.VERSIONS);
-              }}
-              insideBuilder={true}
-              flow={flow}
-              flowVersion={flowVersion}
-              readonly={!isLatestVersion}
-              onDelete={goToFolder}
-              onRename={() => {
-                setIsEditingFlowName(true);
-              }}
-              onMoveTo={(folderId) => moveToFolderClientSide(folderId)}
-              onDuplicate={() => {}}
-            >
-              <Button variant="ghost" size="icon">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </FlowActionMenu>
-          )}
+          {customSidebarContent}
+          {titleContent}
         </div>
 
         <div className="grow"></div>
-        <div className="flex items-center justify-center gap-4">
-          {showSupport && (
-            <Button
-              variant="ghost"
-              className="gap-2 px-2"
-              onClick={() => openNewWindow(supportUrl)}
-            >
-              <QuestionMarkCircledIcon className="w-4 h-4"></QuestionMarkCircledIcon>
-              {t('Support')}
-            </Button>
-          )}
-          {hasPermissionToReadRuns && (
-            <Button
-              variant="ghost"
-              onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
-              className="gap-2 px-2"
-            >
-              <Logs className="w-4 h-4" />
-              {t('Runs')}
-            </Button>
-          )}
-
-          <BuilderFlowStatusSection></BuilderFlowStatusSection>
-        </div>
+        {rightContent}
       </div>
     </div>
   );
