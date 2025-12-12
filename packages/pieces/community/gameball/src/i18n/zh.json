@@ -1,7 +1,7 @@
 {
-  "Please use your gameball api key. visit [help center](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) for more information": "Please use your gameball api key. visit [help center](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) for more information",
-  "Send event": "Send event",
-  "Send an event to gameball": "Send an event to gameball",
-  "Your Player Unique Id": "Your Player Unique Id",
-  "Event Name": "Event Name"
+  "Please use your gameball api key. visit [help center](https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) for more information": "请使用您的游戏小球钥匙。访问 [帮助中心] (https://help.gameball.co/en/articles/3467114-get-your-account-integration-details-api-key-and-transaction-key) 获取更多信息",
+  "Send event": "发送事件",
+  "Send an event to gameball": "发送一个事件到游戏球",
+  "Your Player Unique Id": "您的玩家唯一ID",
+  "Event Name": "事件名称"
 }
