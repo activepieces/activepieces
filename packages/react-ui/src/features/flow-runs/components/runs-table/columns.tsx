@@ -219,10 +219,13 @@ export const runsTableColumns = ({
     ),
     cell: ({ row }) => {
       return (
-        <FormattedDate
-          date={new Date(row.original.created ?? new Date())}
-          className="text-left"
-        />
+        <div className="text-left">
+          <FormattedDate
+            date={new Date(row.original.created ?? new Date())}
+            className="text-left"
+            includeTime={true}
+          />
+        </div>
       );
     },
   },

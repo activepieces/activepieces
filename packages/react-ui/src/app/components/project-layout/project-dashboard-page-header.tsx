@@ -150,7 +150,9 @@ export const ProjectDashboardPageHeader = ({
               <Button
                 variant="ghost"
                 className="gap-2 "
-                aria-label={`View ${projectMembers?.length} team member${projectMembers?.length !== 1 ? 's' : ''}`}
+                aria-label={`View ${projectMembers?.length} team member${
+                  projectMembers?.length !== 1 ? 's' : ''
+                }`}
                 onClick={() => {
                   setSettingsInitialTab('members');
                   setSettingsOpen(true);

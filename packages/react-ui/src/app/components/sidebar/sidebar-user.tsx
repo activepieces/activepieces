@@ -1,6 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronsUpDown, LogOut, Shield, UserCogIcon, UserPlus } from 'lucide-react';
+import {
+  ChevronsUpDown,
+  LogOut,
+  Shield,
+  UserCogIcon,
+  UserPlus,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -31,7 +37,10 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
-import { useIsPlatformAdmin, useAuthorization } from '@/hooks/authorization-hooks';
+import {
+  useIsPlatformAdmin,
+  useAuthorization,
+} from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Permission, PlatformRole } from '@activepieces/shared';
