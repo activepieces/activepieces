@@ -149,7 +149,7 @@ export const ProjectDashboardPageHeader = ({
             {showProjectMembersIcons && (
               <Button
                 variant="ghost"
-                className="gap-2 hover:bg-accent px-3 py-1.5 h-auto"
+                className="gap-2 "
                 aria-label={`View ${projectMembers?.length} team member${projectMembers?.length !== 1 ? 's' : ''}`}
                 onClick={() => {
                   setSettingsInitialTab('members');
