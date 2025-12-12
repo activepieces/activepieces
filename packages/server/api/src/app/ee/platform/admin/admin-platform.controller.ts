@@ -8,6 +8,7 @@ import { StatusCodes } from 'http-status-codes'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
+import { adminPlatformTemplatesCloudController } from './admin-platform-templates-cloud.controller'
 import { adminPlatformService } from './admin-platform.service'
 
 const API_KEY_HEADER = 'api-key'
@@ -28,6 +29,7 @@ async function checkCertainKeyPreHandler(
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', checkCertainKeyPreHandler)
     await app.register(adminPlatformController, { prefix: '/v1/admin/' })
+    await app.register(adminPlatformTemplatesCloudController, { prefix: '/v1/admin/templates' })
 }
 
 const adminPlatformController: FastifyPluginAsyncTypebox = async (
