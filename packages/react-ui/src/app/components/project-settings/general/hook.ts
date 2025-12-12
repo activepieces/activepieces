@@ -4,7 +4,6 @@ import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
-import { projectHooks } from '@/hooks/project-hooks';
 import { api } from '@/lib/api';
 import { projectApi } from '@/lib/project-api';
 import {
@@ -21,7 +20,6 @@ export const useGeneralSettingsMutation = (
   form: UseFormReturn<FormValues>,
 ) => {
   const queryClient = useQueryClient();
-  const { updateCurrentProject } = projectHooks.useCurrentProject();
 
   return useMutation<
     ProjectWithLimits,
@@ -30,21 +28,8 @@ export const useGeneralSettingsMutation = (
       displayName: string;
       icon: ProjectIcon;
       externalId?: string;
-    },
-    { previousProject: ProjectWithLimits | undefined }
+    }
   >({
-    onMutate: async (request) => {
-      await queryClient.cancelQueries({ queryKey: ['current-project'] });
-      
-      const previousProject = queryClient.getQueryData<ProjectWithLimits>([
-        'current-project',
-        projectId,
-      ]);
-      
-      updateCurrentProject(queryClient, request);
-      
-      return { previousProject };
-    },
     mutationFn: (request) => {
       return projectApi.update(projectId!, {
         ...request,
@@ -56,6 +41,7 @@ export const useGeneralSettingsMutation = (
       toast.success(t('Your changes have been saved.'), {
         duration: 3000,
       });
+      
       queryClient.invalidateQueries({
         queryKey: ['current-project'],
       });
@@ -63,14 +49,7 @@ export const useGeneralSettingsMutation = (
         queryKey: ['projects'],
       });
     },
-    onError: (error, _variables, context) => {
-      if (context?.previousProject) {
-        queryClient.setQueryData(
-          ['current-project', projectId],
-          context.previousProject,
-        );
-      }
-      
+    onError: (error) => {
       if (api.isError(error)) {
         const apError = error.response?.data as ApErrorParams;
         switch (apError.code) {
