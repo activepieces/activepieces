@@ -2,7 +2,7 @@
   "name": "@activepieces/piece-imap",
   "version": "0.3.3",
   "dependencies": {
-    "imapflow": "1.0.200",
-    "mailparser": "3.7.5"
+    "imapflow": "1.2.0",
+    "mailparser": "3.9.1"
   }
 }
