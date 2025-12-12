@@ -10,7 +10,7 @@ import {
     FlowVersion,
     FlowVersionState,
 } from '@activepieces/shared'
-import { createOpenAI, openai } from '@ai-sdk/openai'
+import { createOpenAI } from '@ai-sdk/openai'
 import { LanguageModelV2 } from '@ai-sdk/provider'
 import {
     AssistantModelMessage,
@@ -25,11 +25,9 @@ import {
 } from 'ai'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { repoFactory } from '../core/db/repo-factory'
 import { flowService } from '../flows/flow/flow.service'
 import { flowVersionService } from '../flows/flow-version/flow-version.service'
-import { domainHelper } from '../helper/domain-helper'
 import { system } from '../helper/system/system'
 import { platformPlanService } from '../platform-plan/platform-plan.service'
 import { buildBuilderTools } from './builder.tools'
@@ -165,40 +163,10 @@ const postProcessResult = (result: GenerateTextResult<ReturnType<typeof buildBui
     return messages
 }
 
-const userOpenAiModel = async (platformId: string, projectId: string): Promise<LanguageModelV2> => {
-    const engineToken = await accessTokenManager.generateEngineToken({
-        projectId,
-        platformId,
-    })
-    const baseURL = await domainHelper.getPublicApiUrl({
-        path: '/v1/ai-providers/proxy/openai',
-        platformId,
-    })
-    // const model = createAIModel({
-    //     providerName: 'openai',
-    //     modelInstance: openai(BuilderOpenAiModel),
-    //     engineToken,
-    //     baseURL,
-    //     metadata: {
-    //         feature: AIUsageFeature.TEXT_AI,
-    //     },
-    // })
-    // todo(Rupal): Fix local AI provider
-    const model = await promptxOpenAiModel()
-    return model
-}
-
 const promptxOpenAiModel = async (): Promise<LanguageModelV2> => {
     const openAiKey = system.getOrThrow(AppSystemProp.PROMPTX_OPENAI_KEY)
     const provider = createOpenAI({ apiKey: openAiKey })
     return provider(BuilderOpenAiModel)
-}
-
-const selectOpenAiModel = async (platformId: string, projectId: string): Promise<LanguageModelV2> => {
-    if (system.isStandaloneVersion()) {
-        return userOpenAiModel(platformId, projectId)
-    }
-    return promptxOpenAiModel()
 }
 
 const builderMessagesRepo = repoFactory(BuilderMessageEntity)
@@ -268,7 +236,7 @@ export const builderService = (log: FastifyBaseLogger) => ({
             return { role: 'tool', content: o.content as unknown as ToolContent }
         })
 
-        const model = await selectOpenAiModel(platformId, projectId)
+        const model = await promptxOpenAiModel()
         const result = await generateText({
             model,
             stopWhen: stepCountIs(STEP_COUNT_LIMIT),
