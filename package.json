@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
   "version": "0.72.4",
-  "rcVersion": "v0.72.4-custom-migration",
+  "rcVersion": "v0.72.4-custom-migration-1",
   "scripts": {
     "prepare": "husky install",
     "prebuild": "node tools/scripts/install-bun.js",
