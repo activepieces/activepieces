@@ -116,16 +116,6 @@ export const formatUtils = {
       year: 'numeric',
     }).format(date);
   },
-  formatDateWithTime(date: Date) {
-    return Intl.DateTimeFormat(i18next.language, {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true,
-    }).format(date);
-  },
   formatDateToAgo(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);
