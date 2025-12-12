@@ -21,13 +21,13 @@ import {
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { todosHooks } from '@/features/todos/lib/todo-hook';
 import { todoUtils } from '@/features/todos/lib/todo-utils';
 import { userHooks } from '@/hooks/user-hooks';
-import { formatUtils } from '@/lib/utils';
 import {
   Todo,
   PopulatedTodo,
@@ -238,7 +238,7 @@ function TodosPage() {
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },

@@ -11,11 +11,11 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { NewSigningKeyDialog } from '@/features/platform-admin/components/new-signing-key-dialog';
 import { signingKeyApi } from '@/features/platform-admin/lib/signing-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
 import { SigningKey } from '@activepieces/ee-shared';
 
 const SigningKeysPage = () => {
@@ -51,7 +51,7 @@ const SigningKeysPage = () => {
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },
