@@ -25,7 +25,7 @@ jobs:
           ignore-unfixed: true
 
       - name: Upload Trivy report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: trivy-report
           path: trivy-report.json
