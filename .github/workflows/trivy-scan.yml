@@ -8,26 +8,24 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   trivy-scan:
-    name: Trivy Vulnerability Scan
+    name: Trivy Vulnerability Scan (Docker image only)
     runs-on: ubuntu-latest
     steps:
-      - name: Run Trivy vulnerability scanner on Docker image
+      - name: Run Trivy Docker image scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ghcr.io/activepieces/activepieces:latest'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
+          scan-type: image
+          image-ref: ghcr.io/activepieces/activepieces:latest
+          format: 'table'
+          output: 'trivy-report.json'
           severity: 'CRITICAL,HIGH'
-          scanners: 'vuln'
-          vuln-type: 'os'
+          ignore-unfixed: true
 
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        if: always()
+      - name: Upload Trivy report
+        uses: actions/upload-artifact@v3
         with:
-          sarif_file: 'trivy-results.sarif'
-
+          name: trivy-report
+          path: trivy-report.json
