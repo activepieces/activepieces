@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   trivy-scan:
@@ -19,15 +20,21 @@ jobs:
         with:
           scan-type: image
           image-ref: ghcr.io/activepieces/activepieces:latest
-          format: 'table'
-          output: 'trivy-report.json'
+          format: 'sarif'
+          output: 'trivy-report.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           vuln-type: 'os'
           skip-dirs: '/usr/src/app/packages/pieces/community'
 
-      - name: Upload Trivy report
+      - name: Upload Trivy report artifact
         uses: actions/upload-artifact@v4
         with:
           name: trivy-report
-          path: trivy-report.json
+          path: trivy-report.sarif
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-report.sarif
+          category: trivy
