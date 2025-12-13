@@ -71,7 +71,7 @@ export const notificationHooks = {
       }
 
       if (
-        !(providers && providers.data.length > 0) &&
+        !(providers && providers.length > 0) &&
         !isLoading &&
         edition !== ApEdition.CLOUD
       ) {

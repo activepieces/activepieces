@@ -5,7 +5,7 @@ import { Lock, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { formatUtils } from '@/lib/utils';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   isNil,
   PlatformWithoutSensitiveData,
@@ -54,22 +54,6 @@ export const projectsTableColumns = ({
       enableHiding: true,
     },
     {
-      accessorKey: 'ai-tokens',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Used AI Credits')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatNumber(row.original.usage.aiCredits)} /{' '}
-            {!isNil(row.original.plan.aiCredits)
-              ? formatUtils.formatNumber(row.original.plan.aiCredits)
-              : '-'}
-          </div>
-        );
-      },
-    },
-    {
       accessorKey: 'users',
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Active Users')} />
@@ -105,7 +89,7 @@ export const projectsTableColumns = ({
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },

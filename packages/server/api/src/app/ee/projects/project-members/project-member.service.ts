@@ -165,22 +165,33 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
             name: params.role,
             platformId: params.platformId,
         })
-        const updateResult = await repo().update({
+
+        const projectMember = await repo().findOneBy({
             id: params.id,
-            projectId: params.projectId,
-        }, {
-            projectRoleId: projectRole.id,
         })
-        if (updateResult.affected === 0) {
+
+        if (
+            isNil(projectMember)
+            || projectMember.projectId !== params.projectId
+            || projectMember.platformId !== params.platformId
+        ) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'project_member', entityId: params.id, message: 'Project member not found' },
             })
         }
-        return repo().findOneByOrFail({
+
+        await repo().update({
             id: params.id,
             projectId: params.projectId,
+        }, {
+            projectRoleId: projectRole.id,
         })
+        return {
+            ...projectMember,
+            projectRoleId: projectRole.id,
+            updated: dayjs().toISOString(),
+        }
     },
     async getIdsOfProjects({
         userId,

@@ -1,3 +1,10 @@
+import { t } from 'i18next';
+import {
+  LayoutGridIcon,
+  PuzzleIcon,
+  SparklesIcon,
+  WrenchIcon,
+} from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
@@ -24,8 +31,39 @@ import {
   usePieceSearchContext,
 } from '../../../features/pieces/lib/piece-search-context';
 
+import { AITabContent } from './ai-tab-content';
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
+
+const getTabsList = (operationType: FlowOperationType) => {
+  const baseTabs = [
+    {
+      value: PieceSelectorTabType.EXPLORE,
+      name: t('Explore'),
+      icon: <LayoutGridIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.APPS,
+      name: t('Apps'),
+      icon: <PuzzleIcon className="size-5" />,
+    },
+    {
+      value: PieceSelectorTabType.UTILITY,
+      name: t('Utility'),
+      icon: <WrenchIcon className="size-5" />,
+    },
+  ];
+
+  if (operationType === FlowOperationType.ADD_ACTION) {
+    baseTabs.splice(1, 0, {
+      value: PieceSelectorTabType.AI_AND_AGENTS,
+      name: t('AI & Agents'),
+      icon: <SparklesIcon className="size-5" />,
+    });
+  }
+
+  return baseTabs;
+};
 
 type PieceSelectorProps = {
   children: React.ReactNode;
@@ -143,7 +181,9 @@ const PieceSelectorContent = ({
                   }
                 }}
               />
-              {!isMobile && <PieceSelectorTabs />}
+              {!isMobile && (
+                <PieceSelectorTabs tabs={getTabsList(operation.type)} />
+              )}
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
@@ -153,6 +193,8 @@ const PieceSelectorContent = ({
               }}
             >
               <ExploreTabContent operation={operation} />
+              <AITabContent operation={operation} />
+
               <PiecesCardList
                 //this is done to avoid debounced results when user clears search
                 searchQuery={searchQuery === '' ? '' : debouncedQuery}

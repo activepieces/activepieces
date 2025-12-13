@@ -102,6 +102,7 @@ export const RunsMetadataUpsertData = Type.Composite([
         'failParentOnFailure',
         'logsFileId',
         'updated',
+        'stepsCount',
     ])),
     Type.Object({
         requestId: Type.Optional(Type.String()),

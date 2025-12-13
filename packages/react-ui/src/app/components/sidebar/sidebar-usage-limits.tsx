@@ -18,8 +18,7 @@ import { FlagGuard } from '../flag-guard';
 
 const getTimeUntilNextReset = (nextResetDate: number) => {
   const now = dayjs();
-  const nextReset = dayjs.unix(nextResetDate);
-
+  const nextReset = dayjs(new Date(nextResetDate));
   if (nextReset.isBefore(now)) {
     return t('Today');
   }
@@ -99,15 +98,18 @@ const SidebarUsageLimits = React.memo(() => {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold">{t('Executions')}</span>
+            <span className="text-xs font-bold">{t('Runs')}</span>
             <Badge variant="ghost" className="bg-muted font-bold">
               {t('Unlimited')}
             </Badge>
           </div>
           <UsageProgress
             name={t('AI Credits')}
-            value={project.usage.aiCredits}
-            max={project.plan.aiCredits}
+            value={Math.floor(platform.usage?.aiCredits ?? 0)}
+            max={
+              platform.plan.includedAiCredits +
+              (platform.plan.aiCreditsOverageLimit ?? 0)
+            }
           />
           <UsageProgress
             name={t('Active Flows')}
@@ -118,7 +120,9 @@ const SidebarUsageLimits = React.memo(() => {
         <div className="text-xs text-muted-foreground flex justify-between w-full">
           <span>
             {t('Usage resets in')}{' '}
-            {getTimeUntilNextReset(project.usage.nextLimitResetDate)}{' '}
+            {getTimeUntilNextReset(
+              dayjs().add(1, 'month').startOf('month').valueOf(),
+            )}{' '}
           </span>
           {isPlatformAdmin && (
             <FlagGuard flag={ApFlagId.SHOW_BILLING}>

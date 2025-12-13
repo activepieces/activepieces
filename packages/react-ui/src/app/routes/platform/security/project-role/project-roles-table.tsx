@@ -9,6 +9,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipTrigger,
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/tooltip';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
 import { ProjectRole, RoleType, SeekPage } from '@activepieces/shared';
 
 import { ProjectRoleDialog } from './project-role-dialog';
@@ -63,7 +63,7 @@ export const ProjectRolesTable = ({
       ),
       cell: ({ row }) => (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.updated))}
+          <FormattedDate date={new Date(row.original.updated)} />
         </div>
       ),
     },

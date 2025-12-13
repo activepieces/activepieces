@@ -2,7 +2,7 @@ import { exceptionHandler } from '@activepieces/server-shared'
 import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, AppConnectionWithoutSensitiveData, assertNotNullOrUndefined, Flow, FlowOperationType, flowStructureUtil, FlowVersion, FlowVersionState, isNil, PlatformId, PopulatedFlow, ProjectId, UserId } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { APArrayContains } from '../../database/database-connection'
+import { ArrayContains } from 'typeorm'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -83,7 +83,7 @@ export const appConnectionHandler = (log: FastifyBaseLogger) => ({
 
                 try {
                     const encryptedAppConnection = await appConnectionsRepo().findOneBy({
-                        ...APArrayContains('projectIds', [projectId]),
+                        projectIds: ArrayContains([projectId]),
                         externalId,
                     })
                     if (isNil(encryptedAppConnection)) {

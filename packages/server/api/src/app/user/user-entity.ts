@@ -30,6 +30,10 @@ export const UserEntity = new EntitySchema<UserSchema>({
             type: String,
             nullable: true,
         },
+        lastActiveDate: {
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
     },
     indices: [
         {

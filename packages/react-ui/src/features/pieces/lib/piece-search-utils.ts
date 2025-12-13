@@ -10,7 +10,7 @@ import {
   PieceCategory,
   FlowTriggerType,
   FlowActionType,
-  AGENT_PIECE_NAME,
+  AI_PIECE_NAME,
 } from '@activepieces/shared';
 
 const isFlowController = (stepMetadata: StepMetadata) => {
@@ -166,7 +166,7 @@ const HIGHLIGHTED_PIECES_NAMES_FOR_TRIGGERS = [
 ];
 
 const HIGHLIGHTED_PIECES_NAMES_FOR_ACTIONS = [
-  AGENT_PIECE_NAME,
+  AI_PIECE_NAME,
   '@activepieces/piece-http',
   '@activepieces/piece-tables',
   '@activepieces/piece-todos',

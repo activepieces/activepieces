@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   Tooltip,
@@ -49,10 +50,9 @@ export const runsTableColumns = ({
   {
     id: 'select',
     header: ({ table }) => (
-      <div className="flex items-center w-8">
+      <div className="flex items-center h-full w-8">
         <Checkbox
           checked={selectedAll || table.getIsAllPageRowsSelected()}
-          variant="secondary"
           onCheckedChange={(value) => {
             const isChecked = !!value;
             table.toggleAllPageRowsSelected(isChecked);
@@ -83,7 +83,7 @@ export const runsTableColumns = ({
         {selectedRows.length > 0 && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="xs">
                 <ChevronDown className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -136,40 +136,41 @@ export const runsTableColumns = ({
           );
 
       return (
-        <Checkbox
-          variant="secondary"
-          checked={isSelected}
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
+        <div className="flex items-center h-full">
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={(value) => {
+              const isChecked = !!value;
 
-            if (selectedAll) {
-              if (isChecked) {
-                const newExcluded = new Set(excludedRows);
-                newExcluded.delete(row.original.id);
-                setExcludedRows(newExcluded);
+              if (selectedAll) {
+                if (isChecked) {
+                  const newExcluded = new Set(excludedRows);
+                  newExcluded.delete(row.original.id);
+                  setExcludedRows(newExcluded);
+                } else {
+                  setExcludedRows(new Set([...excludedRows, row.original.id]));
+                }
               } else {
-                setExcludedRows(new Set([...excludedRows, row.original.id]));
+                if (isChecked) {
+                  setSelectedRows((prev) => [
+                    ...prev,
+                    {
+                      id: row.original.id,
+                      status: row.original.status,
+                    },
+                  ]);
+                } else {
+                  setSelectedRows((prev) =>
+                    prev.filter(
+                      (selectedRow) => selectedRow.id !== row.original.id,
+                    ),
+                  );
+                }
               }
-            } else {
-              if (isChecked) {
-                setSelectedRows((prev) => [
-                  ...prev,
-                  {
-                    id: row.original.id,
-                    status: row.original.status,
-                  },
-                ]);
-              } else {
-                setSelectedRows((prev) =>
-                  prev.filter(
-                    (selectedRow) => selectedRow.id !== row.original.id,
-                  ),
-                );
-              }
-            }
-            row.toggleSelected(isChecked);
-          }}
-        />
+              row.toggleSelected(isChecked);
+            }}
+          />
+        </div>
       );
     },
   },
@@ -204,7 +205,7 @@ export const runsTableColumns = ({
         <div className="text-left">
           <StatusIconWithText
             icon={Icon}
-            text={formatUtils.convertEnumToHumanReadable(status)}
+            text={formatUtils.convertEnumToReadable(status)}
             variant={variant}
           />
         </div>
@@ -219,7 +220,11 @@ export const runsTableColumns = ({
     cell: ({ row }) => {
       return (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created ?? new Date()))}
+          <FormattedDate
+            date={new Date(row.original.created ?? new Date())}
+            className="text-left"
+            includeTime={true}
+          />
         </div>
       );
     },
