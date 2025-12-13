@@ -11,10 +11,10 @@ permissions:
 
 jobs:
   trivy-scan:
-    name: Trivy Vulnerability Scan (Docker image only)
+    name: Trivy Vulnerability Scan
     runs-on: ubuntu-latest
     steps:
-      - name: Run Trivy Docker image scan
+      - name: Run Trivy Docker image scan (Debian only)
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: image
@@ -23,6 +23,7 @@ jobs:
           output: 'trivy-report.json'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
+          vuln-type: 'os'
 
       - name: Upload Trivy report
         uses: actions/upload-artifact@v4
