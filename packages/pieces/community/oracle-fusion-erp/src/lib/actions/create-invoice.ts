@@ -25,9 +25,9 @@ export const createInvoiceAction = createAction({
       description: 'Total invoice amount',
       required: true,
     }),
-    invoiceDate: Property.ShortText({
+    invoiceDate: Property.DateTime({
       displayName: 'Invoice Date',
-      description: 'Invoice date in YYYY-MM-DD format',
+      description: 'Invoice date',
       required: true,
     }),
     invoiceCurrency: Property.ShortText({
