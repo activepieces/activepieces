@@ -3,27 +3,43 @@
   "theme": "mint",
   "name": "Activepieces",
   "colors": {
-    "primary": "#6e41e2",
-    "light": "#c5b3f3",
-    "dark": "#6838e0"
+    "primary": "#9675FF",
+    "light": "#9675FF",
+    "dark": "#9675FF"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/activepieces/activepieces"
+      },
+      {
+        "label": "Pieces",
+        "href": "https://www.activepieces.com/pieces"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get Started",
+      "href": "https://www.activepieces.com/plans"
+    }
+  },
+  "background": {
+    "color": {
+      "light": "#ffffff",
+      "dark": "#090d0d"
+    }
   },
   "favicon": "/favicon.svg",
   "navigation": {
     "tabs": [
       {
-        "tab": "Documentation",
+        "tab": "Overview",
         "groups": [
           {
-            "group": "Getting Started",
+            "group": "Overview",
             "pages": [
-              "getting-started/introduction",
-              "getting-started/principles"
-            ]
-          },
-          {
-            "group": "AI",
-            "pages": [
-              "ai/mcp"
+              "overview/welcome"
             ]
           },
           {
@@ -38,137 +54,117 @@
             ]
           },
           {
-            "group": "Platform Admin",
-            "pages": [
-              "admin-console/overview",
-              "admin-console/appearance",
-              "admin-console/manage-projects",
-              "admin-console/custom-domain",
-              "admin-console/manage-templates",
-              "admin-console/manage-pieces",
-              "admin-console/manage-oauth2",
-              "admin-console/customize-emails",
-              "admin-console/manage-ai-providers"
-            ]
-          },
-          {
-            "group": "Operations",
-            "pages": [
-              "operations/git-sync",
-              {
-                "group": "Audit Logs",
-                "icon": "book",
-                "pages": [
-                  "operations/audit-logs/overview",
-                  "operations/audit-logs/flow-created",
-                  "operations/audit-logs/flow-updated",
-                  "operations/audit-logs/flow-deleted",
-                  "operations/audit-logs/connection-upserted",
-                  "operations/audit-logs/connection-deleted",
-                  "operations/audit-logs/flow-run-started",
-                  "operations/audit-logs/flow-run-finished",
-                  "operations/audit-logs/folder-created",
-                  "operations/audit-logs/folder-updated",
-                  "operations/audit-logs/folder-deleted",
-                  "operations/audit-logs/user-signed-in",
-                  "operations/audit-logs/user-signed-up",
-                  "operations/audit-logs/user-email-verified",
-                  "operations/audit-logs/user-password-reset",
-                  "operations/audit-logs/signing-key-created"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Security",
-            "pages": [
-              "security/practices",
-              "security/permissions",
-              "security/sso"
-            ]
-          },
-          {
             "group": "About",
             "pages": [
               "about/i18n",
-              "about/editions",
-              "about/breaking-changes",
               "about/changelog",
-              "about/telemetry",
               "about/license"
             ]
           }
         ]
       },
       {
-        "tab": "Develop Pieces",
+        "tab": "Admin Guide",
         "groups": [
           {
-            "group": "Build a Piece",
+            "group":"Guides",
             "pages": [
-              "developers/building-pieces/overview",
-              "developers/building-pieces/start-building",
-              "developers/building-pieces/setup-fork",
+              "admin-guide/guides/structure-projects",
+              "admin-guide/guides/manage-pieces",
+              "admin-guide/guides/sso",
+              "admin-guide/guides/manage-oauth2",
+              "admin-guide/guides/setup-ai-providers",
+              "admin-guide/guides/permissions"
+            ]
+          },
+          {
+            "group": "Security",
+            "pages": [
+              "admin-guide/security/practices",
               {
-                "group": "Development Environment",
-                "icon": "circle-2",
+                "group": "Audit Logs",
+                "icon": "book",
                 "pages": [
-                  "developers/development-setup/getting-started",
-                  "developers/development-setup/local",
-                  "developers/development-setup/dev-container",
-                  "developers/development-setup/codespaces"
+                  "admin-guide/security/audit-logs/overview",
+                  "admin-guide/security/audit-logs/flow-created",
+                  "admin-guide/security/audit-logs/flow-updated",
+                  "admin-guide/security/audit-logs/flow-deleted",
+                  "admin-guide/security/audit-logs/connection-upserted",
+                  "admin-guide/security/audit-logs/connection-deleted",
+                  "admin-guide/security/audit-logs/flow-run-started",
+                  "admin-guide/security/audit-logs/flow-run-finished",
+                  "admin-guide/security/audit-logs/folder-created",
+                  "admin-guide/security/audit-logs/folder-updated",
+                  "admin-guide/security/audit-logs/folder-deleted",
+                  "admin-guide/security/audit-logs/user-signed-in",
+                  "admin-guide/security/audit-logs/user-signed-up",
+                  "admin-guide/security/audit-logs/user-email-verified",
+                  "admin-guide/security/audit-logs/user-password-reset",
+                  "admin-guide/security/audit-logs/signing-key-created"
                 ]
-              },
-              "developers/building-pieces/piece-definition",
-              "developers/building-pieces/piece-authentication",
-              "developers/building-pieces/create-action",
-              "developers/building-pieces/create-trigger",
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deploy",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "install/overview",
+              "install/options/docker",
+              "install/options/docker-compose",
               {
-                "group": "Sharing Pieces",
-                "icon": "circle-7",
+                "group": "Others Options",
                 "pages": [
-                  "developers/sharing-pieces/overview",
-                  "developers/sharing-pieces/contribute",
-                  "developers/sharing-pieces/community",
-                  "developers/sharing-pieces/private"
+                  "install/options/helm",
+                  "install/options/easypanel",
+                  "install/options/aws",
+                  "install/options/gcp",
+                  "install/options/railway",
+                  "install/options/elestio"
                 ]
               }
             ]
           },
           {
-            "group": "Piece Reference",
+            "group": "Configuration",
             "pages": [
-              "developers/piece-reference/authentication",
-              {
-                "group": "Triggers",
-                "icon": "bolt",
-                "pages": [
-                  "developers/piece-reference/triggers/overview",
-                  "developers/piece-reference/triggers/polling-trigger",
-                  "developers/piece-reference/triggers/webhook-trigger"
-                ]
-              },
-              "developers/piece-reference/properties",
-              "developers/piece-reference/properties-validation",
-              "developers/piece-reference/flow-control",
-              "developers/piece-reference/persistent-storage",
-              "developers/piece-reference/files",
-              "developers/piece-reference/external-libraries",
-              "developers/piece-reference/piece-versioning",
-              "developers/piece-reference/examples",
-              "developers/piece-reference/custom-api-calls",
-              "developers/piece-reference/i18n",
-              "developers/piece-reference/ai-providers"
+              "install/configuration/overview",
+              "install/configuration/environment-variables",
+              "install/configuration/hardware",
+              "install/configuration/breaking-changes",
+              "install/configuration/telemetry"
             ]
           },
           {
-            "group": "Misc",
+            "group": "Guides",
             "pages": [
-              "developers/misc/build-piece",
-              "developers/misc/publish-piece",
-              "developers/misc/pieces-ci-cd",
-              "developers/misc/create-new-ai-provider",
-              "developers/misc/private-fork"
+              "install/guides/setup-ssl",
+              "install/guides/setup-opentelemetry",
+              "install/guides/setup-s3",
+              "install/guides/separate-workers",
+              "install/guides/setup-app-webhooks"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "install/troubleshooting/bullboard",
+              "install/troubleshooting/reset-password",
+              "install/troubleshooting/truncated-logs",
+              "install/troubleshooting/websocket-issues"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "install/architecture/overview",
+              "install/architecture/workers",
+              "install/architecture/engine",
+              "install/architecture/performance"
             ]
           }
         ]
@@ -193,6 +189,71 @@
               "embedding/predefined-connection",
               "embedding/sdk-changelog",
               "embedding/sdk-server-requests"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Build Pieces",
+        "description": "Learn how to build, test, and publish your own custom pieces in Activepieces.",
+        "groups": [
+          {
+            "group": "Build a Piece",
+            "pages": [
+              "build-pieces/building-pieces/overview",
+              "build-pieces/building-pieces/start-building",
+              "build-pieces/building-pieces/setup-fork",
+              "build-pieces/building-pieces/development-setup",
+              "build-pieces/building-pieces/piece-definition",
+              "build-pieces/building-pieces/piece-authentication",
+              "build-pieces/building-pieces/create-action",
+              "build-pieces/building-pieces/create-trigger",
+              {
+                "group": "Sharing Pieces",
+                "icon": "circle-7",
+                "pages": [
+                  "build-pieces/sharing-pieces/overview",
+                  "build-pieces/sharing-pieces/contribute",
+                  "build-pieces/sharing-pieces/community",
+                  "build-pieces/sharing-pieces/private"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Piece Reference",
+            "pages": [
+              "build-pieces/piece-reference/authentication",
+              {
+                "group": "Triggers",
+                "icon": "bolt",
+                "pages": [
+                  "build-pieces/piece-reference/triggers/overview",
+                  "build-pieces/piece-reference/triggers/polling-trigger",
+                  "build-pieces/piece-reference/triggers/webhook-trigger"
+                ]
+              },
+              "build-pieces/piece-reference/properties",
+              "build-pieces/piece-reference/properties-validation",
+              "build-pieces/piece-reference/flow-control",
+              "build-pieces/piece-reference/persistent-storage",
+              "build-pieces/piece-reference/files",
+              "build-pieces/piece-reference/external-libraries",
+              "build-pieces/piece-reference/piece-versioning",
+              "build-pieces/piece-reference/examples",
+              "build-pieces/piece-reference/custom-api-calls",
+              "build-pieces/piece-reference/i18n"
+            ]
+          },
+          {
+            "group": "Misc",
+            "pages": [
+              "build-pieces/misc/build-piece",
+              "build-pieces/misc/publish-piece",
+              "build-pieces/misc/pieces-ci-cd",
+              "build-pieces/misc/private-fork",
+              "build-pieces/misc/dev-container",
+              "build-pieces/misc/codespaces"
             ]
           }
         ]
@@ -356,70 +417,13 @@
         ]
       },
       {
-        "tab": "Deploy",
-        "groups": [
-          {
-            "group": "Get Started",
-            "pages": [
-              "install/overview",
-              "install/options/docker",
-              "install/options/docker-compose",
-              {
-                "group": "Others Options",
-                "pages": [
-                  "install/options/helm",
-                  "install/options/easypanel",
-                  "install/options/aws",
-                  "install/options/gcp",
-                  "install/options/railway",
-                  "install/options/elestio"
-                ]
-              }
-            ]
-          },
-          {
-            "group": "Configuration",
-            "pages": [
-              "install/configuration/overview",
-              "install/configuration/environment-variables",
-              "install/configuration/separate-workers",
-              "install/configuration/setup-app-webhooks",
-              "install/configuration/hardware",
-              "install/configuration/setup-ssl",
-              "install/configuration/troubleshooting"
-            ]
-          },
-          {
-            "group": "Architecture",
-            "pages": [
-              "install/architecture/overview",
-              "install/architecture/workers",
-              "install/architecture/engine",
-              "install/architecture/stack",
-              "install/architecture/performance"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "Handbook",
         "groups": [
           {
             "group": "Handbook",
             "pages": [
-              "handbook/overview"
-            ]
-          },
-          {
-            "group": "Teams",
-            "icon": "users",
-            "pages": [
-              "handbook/teams/overview",
-              "handbook/teams/product",
-              "handbook/teams/platform",
-              "handbook/teams/pieces",
-              "handbook/teams/content",
-              "handbook/teams/sales"
+              "handbook/overview",
+              "handbook/team"
             ]
           },
           {
@@ -439,8 +443,7 @@
               "handbook/customer-support/overview",
               "handbook/customer-support/tone",
               "handbook/customer-support/pylon",
-              "handbook/customer-support/handle-requests",
-              "handbook/customer-support/trial"
+              "handbook/customer-support/handle-requests"
             ]
           },
           {
@@ -451,7 +454,8 @@
               "handbook/engineering/onboarding/onboarding-check-list",
               "handbook/engineering/onboarding/how-we-work",
               "handbook/engineering/onboarding/on-call",
-              "handbook/engineering/onboarding/downtime-incident"
+              "handbook/engineering/onboarding/downtime-incident",
+              "handbook/engineering/onboarding/stack"
             ]
           },
           {
@@ -462,7 +466,6 @@
               "handbook/engineering/playbooks/setup-incident-io",
               "handbook/engineering/playbooks/releases",
               "handbook/engineering/playbooks/infrastructure",
-              "handbook/engineering/playbooks/bullboard",
               "handbook/engineering/playbooks/database-migration",
               "handbook/engineering/playbooks/product-announcement",
               "handbook/engineering/playbooks/frontend-best-practices",
@@ -478,7 +481,8 @@
           }
         ]
       }
-    ]
+    ],
+    "global": {}
   },
   "logo": {
     "light": "./resources/logo/light.svg",
@@ -490,74 +494,11 @@
       "openapi.json"
     ]
   },
-  "background": {
-    "color": {
-      "dark": "#121212"
-    }
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "GitHub",
-        "href": "https://github.com/activepieces/activepieces"
-      },
-      {
-        "label": "Pieces",
-        "href": "https://www.activepieces.com/pieces"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Get Started",
-      "href": "https://www.activepieces.com/plans"
-    }
-  },
-  "seo": {
-    "metatags": {
-      "description": "Open source no-code business automation· Zapier open source alternative"
-    },
-    "indexing": "navigable"
-  },
   "footer": {
     "socials": {
-      "website": "https://www.activepieces.com",
+      "x": "https://x.com/activepieces",
       "github": "https://github.com/activepieces/activepieces",
-      "discord": "https://discord.gg/2jUXBKDdP8"
+      "linkedin": "https://linkedin.com/company/activepieces"
     }
-  },
-  "integrations": {
-    "posthog": {
-      "apiKey": "phc_7F92HoXJPeGnTKmYv0eOw62FurPMRW9Aqr0TPrDzvHh"
-    }
-  },
-  "redirects": [
-    {
-      "source": "/embedding/connection-cards/overview",
-      "destination": "/embedding/connections/create-connection"
-    },
-    {
-      "source": "/embedding/connection-cards/user-authentication",
-      "destination": "/embedding/configuration/generate-jwt"
-    },
-    {
-      "source": "/embedding/connection-cards/frontend-sdk",
-      "destination": "/embedding/configuration/initialize-embed"
-    },
-    {
-      "source": "/embedding/connection-cards/user-flows",
-      "destination": "/embedding/configuration/generate-jwt"
-    },
-    {
-      "source": "/embedding/embed-builder/generate-jwt",
-      "destination": "/embedding/configuration/generate-jwt"
-    },
-    {
-      "source": "/embedding/embed-builder/embed-iframe",
-      "destination": "/embedding/configuration/initialize-embed"
-    },
-    {
-      "source": "/embedding/predefined-connection/overview",
-      "destination": "/embedding/predefined-connection"
-    }
-  ]
+  }
 }
