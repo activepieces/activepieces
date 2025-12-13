@@ -37,16 +37,14 @@ export const useGeneralSettingsMutation = (
           request.externalId?.trim() !== '' ? request.externalId : undefined,
       });
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
+      queryClient.setQueryData(['current-project', projectId], data);
+      await queryClient.invalidateQueries({
+        queryKey: ['projects'],
+      });
+
       toast.success(t('Your changes have been saved.'), {
         duration: 3000,
-      });
-      
-      queryClient.invalidateQueries({
-        queryKey: ['current-project', projectId],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['projects'],
       });
     },
     onError: (error) => {
