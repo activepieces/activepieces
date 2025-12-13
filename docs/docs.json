@@ -43,6 +43,17 @@
             ]
           },
           {
+            "group": "Flows",
+            "pages": [
+              "flows/building-flows",
+              "flows/passing-data",
+              "flows/publishing-flows",
+              "flows/debugging-runs",
+              "flows/versioning",
+              "flows/known-limits"
+            ]
+          },
+          {
             "group": "About",
             "pages": [
               "about/i18n",
@@ -53,29 +64,29 @@
         ]
       },
       {
-        "tab": "Users Guide",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": [
-              "users-guide/overview"
-            ]
-          }
-        ]
-      },
-      {
         "tab": "Admin Guide",
         "groups": [
-    
+          {
+            "group":"Guides",
+            "pages": [
+              "admin-guide/guides/structure-projects",
+              "admin-guide/guides/manage-pieces",
+              "admin-guide/guides/sso",
+              "admin-guide/guides/manage-oauth2",
+              "admin-guide/guides/setup-ai-providers",
+              "admin-guide/guides/permissions"
+            ]
+          },
           {
             "group": "Security",
             "pages": [
-                            {
+              "admin-guide/security/practices",
+              {
                 "group": "Audit Logs",
                 "icon": "book",
                 "pages": [
                   "admin-guide/security/audit-logs/overview",
-                  "admin-guide/security /audit-logs/flow-created",
+                  "admin-guide/security/audit-logs/flow-created",
                   "admin-guide/security/audit-logs/flow-updated",
                   "admin-guide/security/audit-logs/flow-deleted",
                   "admin-guide/security/audit-logs/connection-upserted",
@@ -123,13 +134,28 @@
             "pages": [
               "install/configuration/overview",
               "install/configuration/environment-variables",
-              "install/configuration/separate-workers",
-              "install/configuration/setup-app-webhooks",
               "install/configuration/hardware",
-              "install/configuration/setup-ssl",
-              "install/configuration/troubleshooting",
               "install/configuration/breaking-changes",
               "install/configuration/telemetry"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "install/guides/setup-ssl",
+              "install/guides/setup-opentelemetry",
+              "install/guides/setup-s3",
+              "install/guides/separate-workers",
+              "install/guides/setup-app-webhooks"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "install/troubleshooting/bullboard",
+              "install/troubleshooting/reset-password",
+              "install/troubleshooting/truncated-logs",
+              "install/troubleshooting/websocket-issues"
             ]
           },
           {
@@ -138,7 +164,6 @@
               "install/architecture/overview",
               "install/architecture/workers",
               "install/architecture/engine",
-              "install/architecture/stack",
               "install/architecture/performance"
             ]
           }
@@ -429,7 +454,8 @@
               "handbook/engineering/onboarding/onboarding-check-list",
               "handbook/engineering/onboarding/how-we-work",
               "handbook/engineering/onboarding/on-call",
-              "handbook/engineering/onboarding/downtime-incident"
+              "handbook/engineering/onboarding/downtime-incident",
+              "handbook/engineering/onboarding/stack"
             ]
           },
           {
@@ -440,7 +466,6 @@
               "handbook/engineering/playbooks/setup-incident-io",
               "handbook/engineering/playbooks/releases",
               "handbook/engineering/playbooks/infrastructure",
-              "handbook/engineering/playbooks/bullboard",
               "handbook/engineering/playbooks/database-migration",
               "handbook/engineering/playbooks/product-announcement",
               "handbook/engineering/playbooks/frontend-best-practices",
