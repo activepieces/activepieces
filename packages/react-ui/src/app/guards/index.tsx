@@ -346,7 +346,7 @@ const routes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Analytics">
-          <div className="flex flex-col gap-4 w-full">
+          <div className="flex flex-col w-full">
             <PlatformMessages />
             <AnalyticsPage />
           </div>
