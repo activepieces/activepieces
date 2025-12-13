@@ -1,7 +1,6 @@
 import { PieceAuth, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { isNil } from '@activepieces/shared';
-import { AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from './types';
+import { isNil, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/shared';
 
 export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProviders }: AIPropsParams<T>) => ({
     provider: Property.Dropdown<string, true>({

@@ -23,7 +23,5 @@ export const ai = createPiece({
   triggers: [],
 });
 
-
-export * from './lib/common/types';
 export * from './lib/common/props';
 export * from './lib/common/ai-sdk';

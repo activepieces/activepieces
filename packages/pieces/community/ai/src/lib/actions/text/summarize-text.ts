@@ -1,4 +1,4 @@
-import { AIProviderName } from '../../common/types';
+import { AIProviderName } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';

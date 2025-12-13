@@ -50,7 +50,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const config = await this.getConfig(platformId, providerId)
         
         const cacheKey = `${providerId}-${config.apiKey}`
-        if (modelsCache.has(cacheKey)) {
+        if (modelsCache.has(cacheKey) && !('models' in config)) {
             return modelsCache.get(cacheKey)!
         }
 
@@ -74,6 +74,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                     message: 'Azure OpenAI is only available for enterprise customers',
                 },
             })
+        }
+
+        // if the user update a part of the config, and he kept the api key unchanged (it will be sent again in this format ****)
+        if (request.config.apiKey.includes('*')) {
+            const record = await aiProviderRepo().findOneBy({
+                platformId,
+                provider: request.provider,
+            })
+            if (record) {
+                const config = await encryptUtils.decryptObject<AIProviderConfig>(record.config)
+                request.config.apiKey = config.apiKey
+            }
         }
 
         await aiProviderRepo().upsert({

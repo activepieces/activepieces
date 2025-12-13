@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import {
+  AIProviderConfig,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
 } from '@activepieces/shared';
@@ -14,4 +15,7 @@ export const aiProviderApi = {
   delete(provider: string) {
     return api.delete(`/v1/ai-providers/${provider}`);
   },
+  getConfig(provider: string): Promise<AIProviderConfig> {
+    return api.get(`/v1/ai-providers/${provider}/config`);
+  }
 };
