@@ -16,6 +16,10 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
 
         const { data } = res.body
 
+        if (!Array.isArray(data)) {
+            throw new Error(`Cannot fetch google models, response received: ${JSON.stringify(res.body)}`)
+        }
+
         return data.map((model: GoogleModel) => ({
             id: model.name,
             name: model.displayName,
