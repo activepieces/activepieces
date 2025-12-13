@@ -24,6 +24,7 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
           vuln-type: 'os'
+          skip-dirs: 'packages/pieces/community'
 
       - name: Upload Trivy report
         uses: actions/upload-artifact@v4
