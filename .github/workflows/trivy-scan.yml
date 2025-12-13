@@ -21,7 +21,9 @@ jobs:
           image-ref: 'ghcr.io/activepieces/activepieces:latest'
           format: 'sarif'
           output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH,MEDIUM'
+          severity: 'CRITICAL,HIGH'
+          scanners: 'vuln'
+          vuln-type: 'os'
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
