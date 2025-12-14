@@ -25,13 +25,13 @@ export const rbacService = (log: FastifyBaseLogger) => ({
             
             case PrincipalType.UNKNOWN:
             case PrincipalType.WORKER:
-              throw new ActivepiecesError({
-                code: ErrorCode.AUTHORIZATION,
-                params: {
-                    message: 'Principal is not allowed to access this project',
-                    projectId,
-                },
-              })
+                throw new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: {
+                        message: 'Principal is not allowed to access this project',
+                        projectId,
+                    },
+                })
 
             case PrincipalType.USER: {
                 const principalRole = await getPrincipalRoleOrThrow({ principal, projectId, log })
