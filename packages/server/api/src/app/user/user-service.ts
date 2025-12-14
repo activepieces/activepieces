@@ -55,7 +55,7 @@ export const userService = {
                 platformId,
                 platformRole: PlatformRole.MEMBER,
             })
-    
+
             await projectService.create({
                 displayName: identity.firstName + '\'s Project',
                 ownerId: newUser.id,
@@ -84,13 +84,24 @@ export const userService = {
         }
 
         const platform = await platformService.getOneOrThrow(user.platformId)
-        if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Admin cannot be deactivated',
-                },
-            })
+        if (platform.ownerId === user.id) {
+            if(status === UserStatus.INACTIVE) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Admin cannot be deactivated',
+                    },
+                })
+            }
+
+            if(platformRole !== PlatformRole.ADMIN) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Admin can only be updated to ADMIN',
+                    },
+                })
+            }
         }
 
         await userRepo().update({
