@@ -1,7 +1,7 @@
-import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalType } from "@activepieces/shared"
-import { nanoid } from "nanoid"
-import { accessTokenManager } from "../../../../authentication/lib/access-token-manager"
-import { apiKeyService } from "../../../../ee/api-keys/api-key-service"
+import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalType } from '@activepieces/shared'
+import { nanoid } from 'nanoid'
+import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
+import { apiKeyService } from '../../../../ee/api-keys/api-key-service'
 
 export const authenticateOrThrow = async (rawToken: string | null): Promise<Principal> => {
     if (!isNil(rawToken) && rawToken.startsWith('Bearer sk-')) {
@@ -25,7 +25,7 @@ async function createPrincipalForApiKey(apiKeyValue: string): Promise<Principal>
         throw new ActivepiecesError({
             code: ErrorCode.AUTHENTICATION,
             params: {
-                message: `invalid api key`,
+                message: 'invalid api key',
             },
         })
     }
@@ -35,7 +35,7 @@ async function createPrincipalForApiKey(apiKeyValue: string): Promise<Principal>
         platform: {
             id: apiKey.platformId,
         },
-        projectId: "PLACEHOLDER",
+        projectId: 'PLACEHOLDER',
     }
 }
 

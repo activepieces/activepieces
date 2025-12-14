@@ -1,6 +1,6 @@
+import { RouteKind } from '@activepieces/server-shared'
 import { FastifyRequest } from 'fastify'
 import { authenticateOrThrow } from './authenticate'
-import { RouteKind } from '@activepieces/server-shared'
 
 export const authenticationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const security = request.routeOptions.config?.security

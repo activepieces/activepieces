@@ -1,5 +1,5 @@
-import { AuthorizationType, EngineAuthorization, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, ProjectResource, PublicRoute, RouteKind, WorkerAuthorization } from "./common";
-import { Permission, PrincipalType } from "@activepieces/shared";
+import { Permission, PrincipalType } from '@activepieces/shared'
+import { AuthorizationType, EngineAuthorization, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, ProjectResource, PublicRoute, RouteKind, WorkerAuthorization } from './common'
 
 type FastifySecurityAuthorization =
     | WorkerAuthorization
