@@ -4,6 +4,7 @@ import { Clock } from 'lucide-react';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 import { MetricCard, MetricCardSkeleton } from './metric-card';
+import { formatUtils } from '@/lib/utils';
 
 type TimeSavedMetricProps = {
   report?: PlatformAnalyticsReport;
@@ -26,7 +27,7 @@ export const TimeSavedMetric = ({
     <MetricCard
       icon={Clock}
       title={t('Time Saved')}
-      value={`${minutesSaved.toLocaleString()} mins`}
+      value={formatUtils.formatToHoursAndMinutes(minutesSaved)}
       description={t(
         'Estimated hours saved through automation. Each automated task saves valuable employee time that can be redirected to high-impact work.',
       )}

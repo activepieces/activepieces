@@ -29,13 +29,33 @@ export class AddMinutesSavedToFlowForAnalytics1765732721451 implements Migration
             ALTER TABLE "flow"
             ADD "timeSavedPerRun" integer
         `)
+        // Add "totalFlowRuns" as nullable, set default, then make not null
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
-            ADD "totalFlowRuns" integer NOT NULL
+            ADD "totalFlowRuns" integer
+        `)
+        await queryRunner.query(`
+            UPDATE "platform_analytics_report"
+            SET "totalFlowRuns" = 0
+            WHERE "totalFlowRuns" IS NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
-            ADD "flowsDetails" jsonb NOT NULL
+            ALTER COLUMN "totalFlowRuns" SET NOT NULL
+        `)
+        // Add "flowsDetails" as nullable, set default, then make not null
+        await queryRunner.query(`
+            ALTER TABLE "platform_analytics_report"
+            ADD "flowsDetails" jsonb
+        `)
+        await queryRunner.query(`
+            UPDATE "platform_analytics_report"
+            SET "flowsDetails" = '[]'
+            WHERE "flowsDetails" IS NULL
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_analytics_report"
+            ALTER COLUMN "flowsDetails" SET NOT NULL
         `)
     }
 

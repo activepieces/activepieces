@@ -13,6 +13,7 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatUtils } from '@/lib/utils';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type TimeSavedChartProps = {
@@ -36,7 +37,7 @@ export function TimeSavedChart({
 
   const chartConfig = {
     minutesSaved: {
-      label: t('Minutes Saved'),
+      label: t('Time Saved'),
       color: 'hsl(var(--chart-2))',
     },
   } satisfies ChartConfig;
@@ -111,6 +112,9 @@ export function TimeSavedChart({
                         year: 'numeric',
                       });
                     }}
+                    formatter={(value) =>
+                      formatUtils.formatToHoursAndMinutes(value as number)
+                    }
                   />
                 }
               />
