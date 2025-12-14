@@ -1,8 +1,8 @@
-import { ProjectResourceType, ProjectTableResource, ProjectBodyResource, ProjectQueryResource, RouteKind, AuthorizationType, AuthorizationRouteSecurity } from "@activepieces/server-shared"
-import { FastifyRequest } from "fastify"
-import { assertNotNullOrUndefined, isObject, PrincipalType } from "@activepieces/shared"
-import { authorizeOrThrow } from "./authorize"
-import { databaseConnection } from "../../../../database/database-connection"
+import { AuthorizationRouteSecurity, AuthorizationType, ProjectBodyResource, ProjectQueryResource, ProjectResourceType, ProjectTableResource, RouteKind } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, isObject, PrincipalType } from '@activepieces/shared'
+import { FastifyRequest } from 'fastify'
+import { databaseConnection } from '../../../../database/database-connection'
+import { authorizeOrThrow } from './authorize'
 
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
@@ -79,7 +79,7 @@ async function getProjectIdFromRequest(request: FastifyRequest): Promise<string 
     const projectResource = security.authorization.projectResource
     switch (projectResource.type) {
         case ProjectResourceType.TABLE:
-            return await extractProjectIdFromTable(request, projectResource)
+            return extractProjectIdFromTable(request, projectResource)
         case ProjectResourceType.QUERY:
             return extractProjectIdFromQuery(request, projectResource)
         case ProjectResourceType.BODY:
@@ -111,7 +111,7 @@ async function extractProjectIdFromTable(
     return entity?.projectId ?? undefined
 }
 
-function extractProjectIdFromBody(request: FastifyRequest, projectBodyResource: ProjectBodyResource): string | undefined {
+function extractProjectIdFromBody(request: FastifyRequest, _projectBodyResource: ProjectBodyResource): string | undefined {
 
     if (isObject(request.body) && 'projectId' in request.body) {
         return request.body.projectId as string
@@ -120,7 +120,7 @@ function extractProjectIdFromBody(request: FastifyRequest, projectBodyResource: 
     return undefined
 }
 
-function extractProjectIdFromQuery(request: FastifyRequest, projectQueryResource: ProjectQueryResource): string | undefined {
+function extractProjectIdFromQuery(request: FastifyRequest, _projectQueryResource: ProjectQueryResource): string | undefined {
     if (isObject(request.query) && 'projectId' in request.query) {
         return request.query.projectId as string
     }

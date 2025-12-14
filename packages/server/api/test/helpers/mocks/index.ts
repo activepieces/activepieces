@@ -73,6 +73,7 @@ import { AiOverageState,
 import { faker } from '@faker-js/faker'
 import bcrypt from 'bcrypt'
 import dayjs from 'dayjs'
+import { FastifyBaseLogger } from 'fastify'
 import { AIProviderSchema } from '../../../src/app/ai/ai-provider-entity'
 import { databaseConnection } from '../../../src/app/database/database-connection'
 import { generateApiKey } from '../../../src/app/ee/api-keys/api-key-service'
@@ -82,7 +83,6 @@ import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
-import { FastifyBaseLogger } from 'fastify'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
