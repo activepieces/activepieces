@@ -11,10 +11,9 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowOperationType } from '@activepieces/shared';
-
-import { RefreshAnalyticsContext } from '../refresh-analytics-provider';
 import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
+import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { FlowOperationType } from '@activepieces/shared';
 
 type EditTimeSavedPopoverProps = {
   flowId: string;
@@ -89,7 +88,9 @@ export function EditTimeSavedPopover({
         <div className="flex flex-col gap-3">
           <div className="text-sm font-medium">{t('Time Saved Per Run')}</div>
           <div className="text-xs text-muted-foreground">
-            {t('Enter minutes saved per run, or leave empty to use automatic estimation')}
+            {t(
+              'Enter minutes saved per run, or leave empty to use automatic estimation',
+            )}
           </div>
           <Input
             type="number"

@@ -1,19 +1,22 @@
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 
-import { MetricCard, MetricCardSkeleton } from './metric-card';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
+
+import { MetricCard, MetricCardSkeleton } from './metric-card';
 
 type TimeSavedMetricProps = {
   report?: PlatformAnalyticsReport;
   isLoading: boolean;
 };
 
-export const TimeSavedMetric = ({ report, isLoading }: TimeSavedMetricProps) => {
-
-  const minutesSaved = report?.flowsDetails.reduce((acc, flow) => acc + flow.minutesSaved, 0) ?? 0;
+export const TimeSavedMetric = ({
+  report,
+  isLoading,
+}: TimeSavedMetricProps) => {
+  const minutesSaved =
+    report?.flowsDetails.reduce((acc, flow) => acc + flow.minutesSaved, 0) ?? 0;
   const equivalentWorkdays = Math.round(minutesSaved / 8 / 60);
-
 
   if (isLoading) {
     return <MetricCardSkeleton />;

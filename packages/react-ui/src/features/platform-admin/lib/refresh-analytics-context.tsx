@@ -12,13 +12,14 @@ type RefreshAnalyticsContextType = {
   clearTimeSavedPerRunOverrides: () => void;
 };
 
-export const RefreshAnalyticsContext = createContext<RefreshAnalyticsContextType>({
-  isRefreshing: false,
-  setIsRefreshing: () => {},
-  timeSavedPerRunOverrides: {},
-  setTimeSavedPerRunOverride: () => {},
-  clearTimeSavedPerRunOverrides: () => {},
-});
+export const RefreshAnalyticsContext =
+  createContext<RefreshAnalyticsContextType>({
+    isRefreshing: false,
+    setIsRefreshing: () => {},
+    timeSavedPerRunOverrides: {},
+    setTimeSavedPerRunOverride: () => {},
+    clearTimeSavedPerRunOverrides: () => {},
+  });
 
 export const RefreshAnalyticsProvider = ({
   children,
@@ -58,4 +59,3 @@ export const RefreshAnalyticsProvider = ({
     </RefreshAnalyticsContext.Provider>
   );
 };
-

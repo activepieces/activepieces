@@ -9,30 +9,18 @@ type FlowDetailsHeaderProps = {
   flowsDetails?: AnalyticsFlowReportItem[];
 };
 
-const formatMinutes = (minutes: number) => {
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (remainingMinutes === 0) {
-    return `${hours}h`;
-  }
-  return `${hours}h ${remainingMinutes}m`;
-};
-
-export function FlowDetailsHeader({
-  flowsDetails,
-}: FlowDetailsHeaderProps) {
+export function FlowDetailsHeader({ flowsDetails }: FlowDetailsHeaderProps) {
   const handleDownload = () => {
     if (!flowsDetails || flowsDetails.length === 0) return;
 
-    const csvHeader = 'Flow Name,Project Name,Runs,Time Saved Per Run (min),Total Time Saved (min)\n';
+    const csvHeader =
+      'Flow Name,Project Name,Runs,Time Saved Per Run (min),Total Time Saved (min)\n';
     const csvContent = flowsDetails
       .map((flow) => {
         const timeSavedPerRun =
           flow.runs > 0
-            ? flow.timeSavedPerRun.value ?? Math.round(flow.minutesSaved / flow.runs)
+            ? flow.timeSavedPerRun.value ??
+              Math.round(flow.minutesSaved / flow.runs)
             : flow.timeSavedPerRun.value ?? 0;
         return `"${flow.flowName}","${flow.projectName}",${flow.runs},${timeSavedPerRun},${flow.minutesSaved}`;
       })

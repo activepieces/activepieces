@@ -10,7 +10,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
-import { DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, isNil } from '@activepieces/shared';
+import {
+  DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
+  isNil,
+} from '@activepieces/shared';
 
 type EditEstimatedTimeSavedPerStepPopoverProps = {
   currentValue?: number | null;
@@ -48,14 +51,16 @@ export function EditEstimatedTimeSavedPerStepPopover({
       return;
     }
 
-    mutate({ estimatedTimeSavedPerStep: parsed, outdated: true }, {
-      onSuccess: () => {
-        setIsOpen(false);
+    mutate(
+      { estimatedTimeSavedPerStep: parsed, outdated: true },
+      {
+        onSuccess: () => {
+          setIsOpen(false);
+        },
+        onError: () => {
+          toast.error(t('Failed to update estimation'));
+        },
       },
-      onError: () => {
-        toast.error(t('Failed to update estimation'));
-      },
-    },
     );
   };
 

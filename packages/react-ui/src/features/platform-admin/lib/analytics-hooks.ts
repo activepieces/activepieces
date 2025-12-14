@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
+
 import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
-import { RefreshAnalyticsContext } from '@/app/routes/platform/analytics/refresh-analytics-provider';
 import { UpdatePlatformReportRequest } from '@activepieces/shared';
+
+import { RefreshAnalyticsContext } from './refresh-analytics-context';
 
 const queryKey = ['analytics'];
 export const platformAnalyticsHooks = {
@@ -29,8 +31,11 @@ export const platformAnalyticsHooks = {
       retryDelay: 1000,
     });
   },
-  useUpdatePlatformReport: ({ refreshOnSuccess = true }: { refreshOnSuccess?: boolean } = {}) => {
-    const { mutate: refreshAnalytics } = platformAnalyticsHooks.useRefreshAnalytics();
+  useUpdatePlatformReport: ({
+    refreshOnSuccess = true,
+  }: { refreshOnSuccess?: boolean } = {}) => {
+    const { mutate: refreshAnalytics } =
+      platformAnalyticsHooks.useRefreshAnalytics();
     return useMutation({
       mutationFn: async (request: UpdatePlatformReportRequest) => {
         await analyticsApi.update(request);

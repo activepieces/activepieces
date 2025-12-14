@@ -1,10 +1,8 @@
 'use client';
 
-import dayjs from 'dayjs';
 import { t } from 'i18next';
-import * as React from 'react';
 import { DateRange } from 'react-day-picker';
-import { AreaChart, CartesianGrid, XAxis, Area } from 'recharts';
+import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,22 +11,18 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type TimeSavedChartProps = {
   report?: PlatformAnalyticsReport;
+  selectedDateRange?: DateRange;
 };
 
-export function TimeSavedChart({ report }: TimeSavedChartProps) {
-  const [selectedDateRange, setSelectedDateRange] = React.useState<
-    DateRange | undefined
-  >({
-    from: dayjs().subtract(3, 'months').toDate(),
-    to: dayjs().toDate(),
-  });
-
+export function TimeSavedChart({
+  report,
+  selectedDateRange,
+}: TimeSavedChartProps) {
   const chartData =
     report?.runsUsage
       .map((data) => ({
@@ -56,7 +50,7 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
 
   return (
     <Card className="col-span-full">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+      <CardHeader className="space-y-0 pb-2">
         <div className="space-y-1">
           <CardTitle className="text-base">
             {t('Time Saved Over Time')}
@@ -65,13 +59,6 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
             {t('Track how much time your automations are saving')}
           </p>
         </div>
-        <DateTimePickerWithRange
-          onChange={setSelectedDateRange}
-          from={selectedDateRange?.from?.toISOString()}
-          to={selectedDateRange?.to?.toISOString()}
-          maxDate={new Date()}
-          presetType="past"
-        />
       </CardHeader>
       <CardContent className="pt-4">
         {report ? (
@@ -79,7 +66,7 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
           >
-            <AreaChart
+            <BarChart
               accessibilityLayer
               data={filteredData}
               margin={{
@@ -117,15 +104,12 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
                   />
                 }
               />
-              <Area
+              <Bar
                 dataKey="minutesSaved"
-                type="monotone"
-                stroke="var(--color-minutesSaved)"
                 fill="var(--color-minutesSaved)"
-                fillOpacity={0.2}
-                strokeWidth={2}
+                radius={4}
               />
-            </AreaChart>
+            </BarChart>
           </ChartContainer>
         ) : (
           <Skeleton className="h-[300px] w-full" />

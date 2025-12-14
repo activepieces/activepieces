@@ -7,17 +7,18 @@ import { useEffectOnce } from 'react-use';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
+import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
+import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
   isNil,
 } from '@activepieces/shared';
-import { RefreshAnalyticsContext } from './refresh-analytics-provider';
-import { Summary } from './summary';
-import { Trends } from './trends';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
+
 import { FlowsDetails } from './details';
 import { EditEstimatedTimeSavedPerStepPopover } from './edit-estimated-time-saved-per-step-popover';
+import { Summary } from './summary';
+import { Trends } from './trends';
 
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
@@ -40,7 +41,9 @@ export default function AnalyticsPage() {
     }
   });
 
-  const resolvedEstimatedTimeSavedPerStep = isNil(data?.estimatedTimeSavedPerStep)
+  const resolvedEstimatedTimeSavedPerStep = isNil(
+    data?.estimatedTimeSavedPerStep,
+  )
     ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
     : data?.estimatedTimeSavedPerStep;
 

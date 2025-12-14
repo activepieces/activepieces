@@ -11,13 +11,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import {
   AnalyticsFlowReportItem,
   DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
   isNil,
 } from '@activepieces/shared';
-
-import { RefreshAnalyticsContext } from '../refresh-analytics-provider';
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
@@ -45,138 +44,137 @@ const formatMinutes = (minutes: number) => {
 const createColumns = (
   estimatedTimeSavedPerStep: number,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
-    {
-      accessorKey: 'flowName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flow')} />
-      ),
-      cell: ({ row }) => (
-        <div
-          className="flex items-center gap-1 text-secondary hover:underline cursor-pointer"
-          onClick={() => window.open(`/flows/${row.original.flowId}`, '_blank')}
-        >
-          <Workflow className="h-3.5 w-3.5" />
-          {row.original.flowName}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'projectName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Project')} />
-      ),
-      cell: ({ row }) => (
-        <div
-          className="flex items-center gap-1 text-secondary hover:underline cursor-pointer"
-          onClick={() =>
-            window.open(`/projects/${row.original.projectId}`, '_blank')
-          }
-        >
-          <Folder className="h-3.5 w-3.5" />
-          {row.original.projectName}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'timeSavedPerRun',
-      header: ({ column }) => (
-        <div className="flex items-center gap-1.5">
-          <DataTableColumnHeader
-            column={column}
-            title={t('Time Saved Per Run')}
-          />
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              {t(
-                'Each completed step saves {minutes} minutes of manual work. You can customize the estimated time saved per step or set a custom value for individual flows.',
-                { minutes: estimatedTimeSavedPerStep },
-              )}
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      ),
-      cell: ({ row }) => {
-        const timeSavedPerRun = row.original.timeSavedPerRun;
-        const displayValue = timeSavedPerRun?.value;
-        const isEstimated = timeSavedPerRun?.isEstimated;
+  {
+    accessorKey: 'flowName',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Flow')} />
+    ),
+    cell: ({ row }) => (
+      <div
+        className="flex items-center gap-1 text-secondary hover:underline cursor-pointer"
+        onClick={() => window.open(`/flows/${row.original.flowId}`, '_blank')}
+      >
+        <Workflow className="h-3.5 w-3.5" />
+        {row.original.flowName}
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'projectName',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Project')} />
+    ),
+    cell: ({ row }) => (
+      <div
+        className="flex items-center gap-1 text-secondary hover:underline cursor-pointer"
+        onClick={() =>
+          window.open(`/projects/${row.original.projectId}`, '_blank')
+        }
+      >
+        <Folder className="h-3.5 w-3.5" />
+        {row.original.projectName}
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'timeSavedPerRun',
+    header: ({ column }) => (
+      <div className="flex items-center gap-1.5">
+        <DataTableColumnHeader
+          column={column}
+          title={t('Time Saved Per Run')}
+        />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            {t(
+              'Each completed step saves {minutes} minutes of manual work. You can customize the estimated time saved per step or set a custom value for individual flows.',
+              { minutes: estimatedTimeSavedPerStep },
+            )}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    ),
+    cell: ({ row }) => {
+      const timeSavedPerRun = row.original.timeSavedPerRun;
+      const displayValue = timeSavedPerRun?.value;
+      const isEstimated = timeSavedPerRun?.isEstimated;
 
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <EditTimeSavedPopover
-                  flowId={row.original.flowId}
-                  currentValue={timeSavedPerRun?.value}
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div>
+              <EditTimeSavedPopover
+                flowId={row.original.flowId}
+                currentValue={timeSavedPerRun?.value}
+              >
+                <Button
+                  variant="ghost"
+                  className="h-auto p-1 gap-1.5 text-foreground hover:bg-accent"
                 >
-                  <Button
-                    variant="ghost"
-                    className="h-auto p-1 gap-1.5 text-foreground hover:bg-accent"
-                  >
-                    {displayValue == null ? (
-                      <span>{t('N/A')}</span>
-                    ) : (
-                      <span>
-                        {formatMinutes(displayValue)}
-                        {isEstimated && '~'}
-                      </span>
-                    )}
+                  {displayValue == null ? (
+                    <span>{t('N/A')}</span>
+                  ) : (
+                    <span>
+                      {formatMinutes(displayValue)}
+                      {isEstimated && '~'}
+                    </span>
+                  )}
 
-                    <Pencil className="h-3 w-3 text-muted-foreground" />
-                  </Button>
-                </EditTimeSavedPopover>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top">
-              {t(
-                'Click to override the estimation',
-                { minutes: estimatedTimeSavedPerStep },
-              )}
-            </TooltipContent>
-          </Tooltip>
-        );
-      },
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
+                </Button>
+              </EditTimeSavedPopover>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top">
+            {t('Click to override the estimation', {
+              minutes: estimatedTimeSavedPerStep,
+            })}
+          </TooltipContent>
+        </Tooltip>
+      );
     },
-    {
-      accessorKey: 'minutesSaved',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Total Time Saved')} />
-      ),
-      cell: ({ row }) => {
-        const timeSavedPerRun = row.original.timeSavedPerRun;
-        const runs = row.original.runs;
-        const minutesSaved = row.original.minutesSaved;
-        const isEstimated = timeSavedPerRun.isEstimated;
-        const perRunValue = isEstimated
-          ? runs > 0
-            ? Math.round(minutesSaved / runs)
-            : 0
-          : timeSavedPerRun.value ?? 0;
-        const tooltipText = t(
-          'This flow ran {runs} time(s), saving {perRun} minutes per run',
-          {
-            runs: runs.toLocaleString(),
-            perRun: `${isEstimated ? '~' : ''}${perRunValue}`,
-          }
-        );
-        return (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{formatMinutes(minutesSaved)}</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              {tooltipText}
-            </TooltipContent>
-          </Tooltip>
-        );
-      },
+  },
+  {
+    accessorKey: 'minutesSaved',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Total Time Saved')} />
+    ),
+    cell: ({ row }) => {
+      const timeSavedPerRun = row.original.timeSavedPerRun;
+      const runs = row.original.runs;
+      const minutesSaved = row.original.minutesSaved;
+      const isEstimated = timeSavedPerRun.isEstimated;
+      const perRunValue = isEstimated
+        ? runs > 0
+          ? Math.round(minutesSaved / runs)
+          : 0
+        : timeSavedPerRun.value ?? 0;
+      const tooltipText = t(
+        'This flow ran {runs} time(s), saving {perRun} minutes per run',
+        {
+          runs: runs.toLocaleString(),
+          perRun: `${isEstimated ? '~' : ''}${perRunValue}`,
+        },
+      );
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{formatMinutes(minutesSaved)}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            {tooltipText}
+          </TooltipContent>
+        </Tooltip>
+      );
     },
-  ];
+  },
+];
 
 export function FlowsDetails({
   flowsDetails,
@@ -239,7 +237,9 @@ export function FlowsDetails({
         emptyStateTextDescription={t(
           'Start running your flows to see time saved',
         )}
-        emptyStateIcon={<Workflow className="h-10 w-10 text-muted-foreground" />}
+        emptyStateIcon={
+          <Workflow className="h-10 w-10 text-muted-foreground" />
+        }
       />
     </div>
   );
