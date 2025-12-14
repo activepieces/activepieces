@@ -19,8 +19,7 @@ export const ApLoopReturnLineCanvasEdge = ({
     Math.abs(sourceX - targetX) - 2 * flowUtilConsts.ARC_LENGTH;
 
   const verticalLineLength =
-    data.verticalSpaceBetweenReturnNodeStartAndEnd -
-    flowUtilConsts.ARC_LENGTH / 2;
+    data.verticalSpaceBetweenReturnNodeStartAndEnd 
   const ARROW_RIGHT = ` m-5 -6 l6 6  m-6 0 m6 0 l-6 6 m3 -6`;
   const endLineLength =
     flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS -
