@@ -102,7 +102,7 @@ const StepNodeName = ({stepName}: {stepName: string})=>{
 
   const StepInvalidOrSkippedIcon = ({isValid, isSkipped}: {isValid: boolean, isSkipped: boolean})=>{
     return (
-      <div className="absolute flex items-center -left-[20px] bg-builder-background " style={{height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`}}>
+      <div className="absolute flex items-center -left-[22px] bg-builder-background " style={{height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`}}>
       <Tooltip>
                     <TooltipTrigger asChild>
                       <div>
