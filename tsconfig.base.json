@@ -271,6 +271,9 @@
       ],
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
+      ],
+      "@activepieces/piece-motiontools": [
+        "packages/pieces/community/motiontools/src/index.ts"
       ]
     },
     "resolveJsonModule": true
