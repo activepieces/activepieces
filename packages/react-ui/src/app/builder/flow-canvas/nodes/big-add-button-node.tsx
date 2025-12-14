@@ -47,9 +47,11 @@ const ApBigAddButtonCanvasNode = React.memo(
               height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
               width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
             }}
-            className="flex justify-center items-center"
+            className="flex justify-center items-center "
           >
             {!readonly && (
+              //we use transparent colors when opening the piece selector, so to not show the pattern of the background inside the button, we wrap the big add button in a div with the background color
+              <div className='bg-builder-background'>
               <div
                 style={{
                   height: `${flowUtilConsts.AP_NODE_SIZE.BIG_ADD_BUTTON.height}px`,
@@ -98,6 +100,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                   )}
                 </div>
                 {isShowingDropIndicator && (
+                  //this is an invisible div that is used to show the drop indicator when the step is being dragged over the big add button, it is a rectangle so there is more leanancy to drop the step on the big add button
                   <div
                     style={{
                       height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
@@ -113,6 +116,7 @@ const ApBigAddButtonCanvasNode = React.memo(
                     {' '}
                   </div>
                 )}
+              </div>
               </div>
             )}
             {readonly && (

@@ -94,9 +94,7 @@ const BranchSingleCondition = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <InvalidStepIcon
-                size={16}
-                viewBox="0 0 16 16"
-                className="stroke-0 animate-fade shrink-0"
+                className="h-4 w-4 shrink-0"
               ></InvalidStepIcon>
             </TooltipTrigger>
             <TooltipContent side="bottom">

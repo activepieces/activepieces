@@ -107,10 +107,8 @@ const StepNodeName = ({stepName}: {stepName: string})=>{
                     <TooltipTrigger asChild>
                       <div>
                       {
-                      !isValid && !isSkipped && <InvalidStepIcon 
-                        size={16}
-                        viewBox="0 0 16 16"
-                        className="stroke-0 animate-fade shrink-0"
+                      !isValid && !isSkipped && <InvalidStepIcon
+                      className="h-4 w-4"
                       ></InvalidStepIcon>
                     }
                     {
