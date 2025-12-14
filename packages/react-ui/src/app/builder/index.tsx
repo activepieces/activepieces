@@ -80,13 +80,12 @@ const BuilderPage = () => {
 
   useShowBuilderIsSavingWarningBeforeLeaving();
 
-  const { memorizedSelectedStep, containerKey } = useBuilderStateContext(
+  const { memorizedSelectedStep } = useBuilderStateContext(
     (state) => {
       const flowVersion = state.flowVersion;
       if (isNil(state.selectedStep) || isNil(flowVersion)) {
         return {
           memorizedSelectedStep: undefined,
-          containerKey: undefined,
         };
       }
       const step = flowStructureUtil.getStep(
@@ -96,10 +95,6 @@ const BuilderPage = () => {
 
       return {
         memorizedSelectedStep: step,
-        containerKey: constructContainerKey({
-          flowId: state.flow.id,
-          step,
-        }),
       };
     },
   );
@@ -240,7 +235,11 @@ const BuilderPage = () => {
                 <StepSettingsProvider
                   pieceModel={pieceModel}
                   selectedStep={memorizedSelectedStep}
-                  key={containerKey}
+                  key={constructContainerKey({
+                    flowVersionId: flowVersion.id,
+                    step:memorizedSelectedStep,
+                    hasPieceModelLoaded:!!pieceModel,
+                  })}
                 >
                   <StepSettingsContainer />
                 </StepSettingsProvider>
@@ -258,11 +257,13 @@ BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };
 
 function constructContainerKey({
-  flowId,
+  flowVersionId,
   step,
+  hasPieceModelLoaded,
 }: {
-  flowId: string;
+  flowVersionId: string;
   step?: FlowAction | FlowTrigger;
+  hasPieceModelLoaded: boolean;
 }) {
   const stepName = step?.name;
   const triggerOrActionName =
@@ -278,5 +279,5 @@ function constructContainerKey({
     step?.type != FlowTriggerType.EMPTY &&
     step?.type != FlowTriggerType.PIECE &&
     step?.skip;
-  return `${flowId}-${stepName}-${triggerOrActionName}-${pieceName}-${isSkipped}`;
+  return `${flowVersionId}-${stepName??''}-${triggerOrActionName??''}-${pieceName??''}-${'skipped-'+!!isSkipped}-${hasPieceModelLoaded?'loaded':'not-loaded'}`;
 }
