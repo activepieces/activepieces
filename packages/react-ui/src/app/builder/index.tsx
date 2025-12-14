@@ -1,7 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
-
 import {
   LeftSideBarType,
   RightSideBarType,
@@ -25,10 +24,11 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import {
+  FlowAction,
   FlowActionType,
+  FlowTrigger,
   FlowTriggerType,
   FlowVersionState,
-  PieceTrigger,
   WebsocketClientEvent,
   flowStructureUtil,
   isNil,
@@ -65,24 +65,7 @@ const useAnimateSidebar = (
   return handleRef;
 };
 
-const constructContainerKey = ({
-  flowId,
-  stepName,
-  lastRerenderPieceSettingsTimeStamp,
-  triggerOrActionName,
-}: {
-  flowId: string;
-  stepName: string;
-  lastRerenderPieceSettingsTimeStamp: number | null;
-  triggerOrActionName?: string;
-}) => {
-  return (
-    flowId +
-    stepName +
-    (triggerOrActionName ?? '') +
-    (lastRerenderPieceSettingsTimeStamp ?? '')
-  );
-};
+
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep] =
@@ -110,18 +93,12 @@ const BuilderPage = () => {
         state.selectedStep,
         flowVersion.trigger,
       );
-      const triggerOrActionName =
-        step?.type === FlowTriggerType.PIECE
-          ? (step as PieceTrigger).settings.triggerName
-          : step?.settings.actionName;
+
       return {
         memorizedSelectedStep: step,
         containerKey: constructContainerKey({
           flowId: state.flow.id,
-          stepName: state.selectedStep,
-          triggerOrActionName,
-          lastRerenderPieceSettingsTimeStamp:
-            state.lastRerenderPieceSettingsTimeStamp,
+          step,
         }),
       };
     },
@@ -132,7 +109,6 @@ const BuilderPage = () => {
   const rightHandleRef = useAnimateSidebar(rightSidebar);
   const leftHandleRef = useAnimateSidebar(leftSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
-
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
       name: memorizedSelectedStep?.settings.pieceName,
@@ -142,9 +118,7 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === FlowTriggerType.PIECE,
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
-
   const socket = useSocket();
-
   const { mutate: fetchAndUpdateRun } = useMutation({
     mutationFn: flowRunsApi.getPopulated,
   });
@@ -268,9 +242,7 @@ const BuilderPage = () => {
                   pieceModel={pieceModel}
                   selectedStep={memorizedSelectedStep}
                   key={
-                    containerKey +
-                    (pieceModel?.name ?? '') +
-                    memorizedSelectedStep.type
+                    containerKey
                   }
                 >
                   <StepSettingsContainer />
@@ -287,3 +259,21 @@ const BuilderPage = () => {
 
 BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };
+
+
+function constructContainerKey({
+  flowId,
+  step,
+}: {
+  flowId: string;
+  step?: FlowAction | FlowTrigger;
+}) {
+  const stepName = step?.name;
+  const triggerOrActionName = step?.type === FlowTriggerType.PIECE ? step?.settings.triggerName : step?.settings.actionName;
+  const pieceName = step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE ? step?.settings.pieceName : undefined;
+  //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
+  const isSkipped = step?.type != FlowTriggerType.EMPTY && step?.type != FlowTriggerType.PIECE && step?.skip;
+  return (
+     `${flowId}-${stepName}-${triggerOrActionName}-${pieceName}-${isSkipped}`
+  );
+};
