@@ -307,6 +307,7 @@ import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgre
 import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308234291-MigrateSqliteToPglite'
 import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
 import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
+import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -630,6 +631,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateSqliteToPglite1765308234291,
         AddLastActiveToUser1765325909187,
         AddStepsExecutedAndAICreditsToFlowRun1765461560795,
+        ChangeTeamsToPersonalInCommunity1765709274266,
     ]
     return migrations
 }
