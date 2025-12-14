@@ -22,10 +22,10 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
   return (
     <MetricCard
       icon={Zap}
-      title={t('Total Runs')}
+      title={t('Automation Runs')}
       value={totalRuns.toLocaleString()}
       description={t(
-        'Total flow runs completed automatically, showing how many tasks your team automated this month.'
+        'Total flow runs completed automatically, showing how many tasks your team automated this month.',
       )}
       subtitle={t('')}
       iconColor="text-amber-600"
