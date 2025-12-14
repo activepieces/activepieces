@@ -5,7 +5,7 @@ import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceAction
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
 import { SaveSampleDataRequest } from '../sample-data'
-import { EmptyTrigger, FlowTrigger, PieceTrigger } from '../triggers/trigger'
+import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
 import { flowStructureUtil } from '../util/flow-structure-util'
 import { _addAction } from './add-action'
@@ -438,7 +438,10 @@ export const flowOperations = {
             default:
                 break
         }
-        clonedVersion.valid = flowStructureUtil.getAllSteps(clonedVersion.trigger).every((step) => step.valid)
+        clonedVersion.valid = flowStructureUtil.getAllSteps(clonedVersion.trigger).every((step) => {
+            const isSkipped = step.type != FlowTriggerType.EMPTY && step.type != FlowTriggerType.PIECE && step.skip;
+            return step.valid || isSkipped;
+        })
         return clonedVersion
     },
 }
