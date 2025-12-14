@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Building, User, Workflow, Puzzle, Bot, Info } from 'lucide-react';
+import { User, Workflow, Bot, Info } from 'lucide-react';
 import React from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,14 +85,6 @@ export function Metrics({ report }: MetricsProps) {
       iconColor: 'text-cyan-700',
     },
     {
-      icon: Building,
-      title: t('Active Projects'),
-      value: report?.activeProjects,
-      description: t('The number of projects with at least one enabled flow'),
-      footer: report ? `Out of ${report.totalProjects} total projects` : null,
-      iconColor: 'text-pink-700',
-    },
-    {
       icon: User,
       title: t('Active Users'),
       value: report?.activeUsers,
@@ -103,13 +95,6 @@ export function Metrics({ report }: MetricsProps) {
           })
         : null,
       iconColor: 'text-indigo-700',
-    },
-    {
-      icon: Puzzle,
-      title: t('Pieces Used'),
-      value: report?.uniquePiecesUsed,
-      description: t('The number of unique pieces used across all flows'),
-      iconColor: 'text-green-700',
     },
     {
       icon: Bot,

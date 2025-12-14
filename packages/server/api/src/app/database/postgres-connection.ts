@@ -308,6 +308,7 @@ import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308
 import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
 import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
 import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
+import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -632,6 +633,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddLastActiveToUser1765325909187,
         AddStepsExecutedAndAICreditsToFlowRun1765461560795,
         ChangeTeamsToPersonalInCommunity1765709274266,
+        AddMinutesSavedToFlowForAnalytics1765732721451,
     ]
     return migrations
 }

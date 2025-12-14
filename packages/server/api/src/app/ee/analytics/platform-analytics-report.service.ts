@@ -1,6 +1,6 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, assertNotNullOrUndefined, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment } from '@activepieces/shared'
+import { AnalyticsFlowReportItem, AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, assertNotNullOrUndefined, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -57,23 +57,26 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
     const { totalUsers, activeUsers } = await analyzeUsers(platformId)
     
     const pieceMetadataMap = await pieceMetadataService(log).getAllUnfiltered(platformId)    
-    const { uniquePiecesUsed, topPieces } = analyzePieces(flows, pieceMetadataMap)
+    const topPieces = analyzePieces(flows, pieceMetadataMap)
     const activeFlowsWithAI = numberOfFlowsWithAI(flows, pieceMetadataMap)
 
-    const { topProjects, activeProjects } = await analyzeProjects(flows)
-    const runsUsage = await analyzeRuns(platformId)
+    const topProjects = await analyzeProjects(flows)
+    const { runsUsage, totalFlowRuns, totalMinutesSaved } = await analyzeRuns(platformId)
+    const flowsDetails = await analyzeFlowsDetails(platformId)
+    
     return {
         totalUsers,
         activeUsers,
         activeFlows,
         totalFlows,
         totalProjects,
-        uniquePiecesUsed,
         activeFlowsWithAI,
+        totalFlowRuns,
+        totalMinutesSaved,
         topProjects,
-        activeProjects,
         topPieces,
         runsUsage,
+        flowsDetails,
         platformId,
         created: dayjs().toISOString(),
         updated: dayjs().toISOString(),
@@ -81,7 +84,7 @@ const generateReport = async ({ platformId, log, id }: { platformId: PlatformId,
     }
 }
 
-async function analyzeProjects(flows: PopulatedFlow[]) {
+async function analyzeProjects(flows: PopulatedFlow[]): Promise<AnalyticsProjectReportItem[]> {
     const projectIds = [...new Set(flows.map(flow => flow.projectId))]
     const projects = await projectRepo().findBy(projectIds.map(id => ({ id })))
     const projectMap = new Map(projects.map(project => [project.id, project]))
@@ -99,15 +102,12 @@ async function analyzeProjects(flows: PopulatedFlow[]) {
             projectUsage[projectId].activeFlows += 1
         }
     }
-    return {
-        topProjects: Object.values(projectUsage).map(({ id, activeFlows, totalFlows, displayName }) => ({
-            id,
-            activeFlows,
-            displayName,
-            totalFlows,
-        })),
-        activeProjects: Object.values(projectUsage).filter(project => project.activeFlows > 0).length,
-    }
+    return Object.values(projectUsage).map(({ id, activeFlows, totalFlows, displayName }) => ({
+        id,
+        activeFlows,
+        displayName,
+        totalFlows,
+    }))
 }
 
 
@@ -127,7 +127,7 @@ function numberOfFlowsWithAI(flows: PopulatedFlow[], pieceMetadataMap: Map<strin
     return count
 }
 
-function analyzePieces(flows: PopulatedFlow[], pieceMetadataMap: Map<string, PieceMetadataModel>) {
+function analyzePieces(flows: PopulatedFlow[], pieceMetadataMap: Map<string, PieceMetadataModel>): AnalyticsPieceReportItem[] {
     const pieces: Record<string, AnalyticsPieceReportItem> = {}
     for (const flow of flows) {
         const usedPieces = flowPieceUtil.getUsedPieces(flow.version.trigger)
@@ -148,10 +148,7 @@ function analyzePieces(flows: PopulatedFlow[], pieceMetadataMap: Map<string, Pie
             }
         }
     }
-    return {
-        uniquePiecesUsed: Object.keys(pieces).length,
-        topPieces: Object.entries(pieces).sort((a, b) => b[1].usageCount - a[1].usageCount).map(([_, value]) => value),
-    }
+    return Object.entries(pieces).sort((a, b) => b[1].usageCount - a[1].usageCount).map(([_, value]) => value)
 }
 
 
@@ -209,12 +206,14 @@ function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
     return flows.length
 }
 
-async function analyzeRuns(platformId: PlatformId): Promise<AnalyticsRunsUsageItem[]> {
+async function analyzeRuns(platformId: PlatformId): Promise<{ runsUsage: AnalyticsRunsUsageItem[], totalFlowRuns: number, totalMinutesSaved: number }> {
     const runsData = await flowRunRepo()
         .createQueryBuilder('flow_run')
         .select('DATE(flow_run.created)', 'day')
-        .addSelect('COUNT(*)', 'totalRuns')
+        .addSelect('COUNT(*)::int', 'totalRuns')
+        .addSelect('COALESCE(SUM(COALESCE(flow."minutesSaved", flow_run."stepsCount" * 2)), 0)::int', 'minutesSaved')
         .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
+        .innerJoin('flow', 'flow', 'flow_run."flowId" = flow.id')
         .where('project."platformId" = :platformId', { platformId })
         .andWhere('flow_run.created >= now() - interval \'3 months\'')
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
@@ -222,8 +221,52 @@ async function analyzeRuns(platformId: PlatformId): Promise<AnalyticsRunsUsageIt
         .orderBy('DATE(flow_run.created)', 'ASC')
         .getRawMany()
 
-    return runsData.map((row) => ({
-        day: row.day,
-        totalRuns: row.totalRuns,
+    let totalFlowRuns = 0
+    let totalMinutesSaved = 0
+
+    const runsUsage = runsData.map((row) => {
+        const runs = parseInt(row.totalRuns)
+        const minutesSaved = parseInt(row.minutesSaved)
+        totalFlowRuns += runs
+        totalMinutesSaved += minutesSaved
+        return {
+            day: row.day,
+            totalRuns: runs,
+            minutesSaved,
+        }
+    })
+
+    return { runsUsage, totalFlowRuns, totalMinutesSaved }
+}
+
+async function analyzeFlowsDetails(platformId: PlatformId): Promise<AnalyticsFlowReportItem[]> {
+    const flowData = await flowRunRepo()
+        .createQueryBuilder('flow_run')
+        .select('flow.id', 'flowId')
+        .addSelect('latest_version."displayName"', 'flowName')
+        .addSelect('project.id', 'projectId')
+        .addSelect('project."displayName"', 'projectName')
+        .addSelect('COUNT(*)::int', 'runs')
+        .addSelect('COALESCE(SUM(COALESCE(flow."minutesSaved", flow_run."stepsCount" * 2)), 0)::int', 'minutesSaved')
+        .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
+        .innerJoin('flow', 'flow', 'flow_run."flowId" = flow.id')
+        .innerJoin('flow_version', 'latest_version', 'latest_version."flowId" = flow.id AND latest_version.id = (SELECT fv.id FROM flow_version fv WHERE fv."flowId" = flow.id ORDER BY fv.created DESC LIMIT 1)')
+        .where('project."platformId" = :platformId', { platformId })
+        .andWhere('flow_run.created >= now() - interval \'3 months\'')
+        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .groupBy('flow.id')
+        .addGroupBy('latest_version."displayName"')
+        .addGroupBy('project.id')
+        .addGroupBy('project."displayName"')
+        .orderBy('COUNT(*)', 'DESC')
+        .getRawMany()
+
+    return flowData.map((row) => ({
+        flowId: row.flowId,
+        flowName: row.flowName,
+        projectId: row.projectId,
+        projectName: row.projectName,
+        runs: parseInt(row.runs),
+        minutesSaved: parseInt(row.minutesSaved),
     }))
 }

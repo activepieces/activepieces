@@ -29,13 +29,13 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
         totalProjects: {
             type: Number,
         },
-        activeProjects: {
-            type: Number,
-        },
-        uniquePiecesUsed: {
-            type: Number,
-        },
         activeFlowsWithAI: {
+            type: Number,
+        },
+        totalFlowRuns: {
+            type: Number,
+        },
+        totalMinutesSaved: {
             type: Number,
         },
         topPieces: {
@@ -47,6 +47,10 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             nullable: false,
         },
         runsUsage: {
+            type: 'jsonb',
+            nullable: false,
+        },
+        flowsDetails: {
             type: 'jsonb',
             nullable: false,
         },
