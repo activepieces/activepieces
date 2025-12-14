@@ -1,6 +1,6 @@
 import { Slot } from '@radix-ui/react-slot';
 import { VariantProps, cva } from 'class-variance-authority';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeft, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import * as React from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { t } from 'i18next';
 
 const SIDEBAR_WIDTH = '18rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
@@ -304,7 +305,9 @@ const SidebarTrigger = React.forwardRef<
   const { toggleSidebar, state } = useSidebar();
 
   return (
-    <Button
+    <Tooltip>
+      <TooltipTrigger asChild>
+      <Button
       ref={ref}
       data-sidebar="trigger"
       variant="ghost"
@@ -316,9 +319,13 @@ const SidebarTrigger = React.forwardRef<
       }}
       {...props}
     >
-      {state === 'expanded' ? <PanelLeftClose /> : <PanelLeftOpen />}
-      <span className="sr-only">Toggle Sidebar</span>
+      <PanelLeft></PanelLeft>
+      <span className="sr-only">{t('Toggle Sidebar')}</span>
     </Button>
+      </TooltipTrigger>
+      <TooltipContent>{ state === 'expanded' ? t('Close Sidebar') : t('Open Sidebar') }</TooltipContent>
+    </Tooltip>
+   
   );
 });
 SidebarTrigger.displayName = 'SidebarTrigger';
