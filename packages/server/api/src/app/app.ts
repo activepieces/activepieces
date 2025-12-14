@@ -13,7 +13,7 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { rateLimitModule } from './core/security/rate-limit'
-import { securityHandlerChain } from './core/security/security-handler-chain'
+import { securityHandlerChain } from './core/security/v1/security-handler-chain'
 import { websocketService } from './core/websockets.service'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'

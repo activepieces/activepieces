@@ -1,7 +1,7 @@
 import { ActivepiecesError, ErrorCode, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
-import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
-import { userService } from '../../../user/user-service'
+import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
+import { userService } from '../../../../user/user-service'
 import { BaseSecurityHandler } from '../security-handler'
 
 export class AccessTokenAuthnHandler extends BaseSecurityHandler {

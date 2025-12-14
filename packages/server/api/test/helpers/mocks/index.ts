@@ -82,6 +82,7 @@ import { encryptUtils } from '../../../src/app/helper/encryption'
 import { PieceMetadataSchema } from '../../../src/app/pieces/metadata/piece-metadata-entity'
 import { PieceTagSchema } from '../../../src/app/pieces/tags/pieces/piece-tag.entity'
 import { TagEntitySchema } from '../../../src/app/pieces/tags/tag-entity'
+import { FastifyBaseLogger } from 'fastify'
 
 export const CLOUD_PLATFORM_ID = 'cloud-id'
 
@@ -782,6 +783,20 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     const mockAIProvider = await createMockAIProvider(params)
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
+}
+
+export const mockLogger = (): FastifyBaseLogger => {
+    return {
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+        trace: jest.fn(),
+        fatal: jest.fn(),
+        child: jest.fn().mockReturnThis(),
+        silent: jest.fn(),
+        level: 'info',
+    } as unknown as FastifyBaseLogger
 }
 
 

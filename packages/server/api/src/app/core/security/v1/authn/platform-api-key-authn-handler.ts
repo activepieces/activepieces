@@ -13,16 +13,16 @@ import {
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { nanoid } from 'nanoid'
-import { AppConnectionEntity } from '../../../app-connection/app-connection.entity'
-import { extractResourceName } from '../../../authentication/authorization'
-import { databaseConnection } from '../../../database/database-connection'
-import { apiKeyService } from '../../../ee/api-keys/api-key-service'
-import { ProjectMemberEntity } from '../../../ee/projects/project-members/project-member.entity'
-import { FlowEntity } from '../../../flows/flow/flow.entity'
-import { FlowRunEntity } from '../../../flows/flow-run/flow-run-entity'
-import { FolderEntity } from '../../../flows/folder/folder.entity'
-import { projectService } from '../../../project/project-service'
-import { requestUtils } from '../../request/request-utils'
+import { AppConnectionEntity } from '../../../../app-connection/app-connection.entity'
+import { extractResourceName } from '../../../../authentication/authorization'
+import { databaseConnection } from '../../../../database/database-connection'
+import { apiKeyService } from '../../../../ee/api-keys/api-key-service'
+import { ProjectMemberEntity } from '../../../../ee/projects/project-members/project-member.entity'
+import { FlowEntity } from '../../../../flows/flow/flow.entity'
+import { FlowRunEntity } from '../../../../flows/flow-run/flow-run-entity'
+import { FolderEntity } from '../../../../flows/folder/folder.entity'
+import { projectService } from '../../../../project/project-service'
+import { requestUtils } from '../../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
 
 export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
@@ -30,20 +30,17 @@ export class PlatformApiKeyAuthnHandler extends BaseSecurityHandler {
     private static readonly HEADER_PREFIX = 'Bearer '
     private static readonly API_KEY_PREFIX = 'sk-'
 
-    protected canHandle(request: FastifyRequest): Promise<boolean> {
+    public canHandle(request: FastifyRequest): Promise<boolean> {
         const prefix = `${PlatformApiKeyAuthnHandler.HEADER_PREFIX}${PlatformApiKeyAuthnHandler.API_KEY_PREFIX}`
         const routeMatches = request.headers[PlatformApiKeyAuthnHandler.HEADER_NAME]?.startsWith(prefix) ?? false
         const skipAuth = request.routeOptions.config?.skipAuth ?? false
         return Promise.resolve(routeMatches && !skipAuth)
     }
 
-    protected async doHandle(request: FastifyRequest): Promise<void> {
+    public async doHandle(request: FastifyRequest): Promise<void> {
         const apiKeyValue = this.extractApiKeyValue(request)
-        let apiKey: ApiKey | null = null
-        try {
-            apiKey = await apiKeyService.getByValueOrThrow(apiKeyValue)
-        }
-        catch (e) {
+        const apiKey = await apiKeyService.getByValue(apiKeyValue)
+        if (!apiKey) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHENTICATION,
                 params: {

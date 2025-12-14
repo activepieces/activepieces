@@ -5,7 +5,7 @@ import {
     PrincipalType,
 } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
-import { requestUtils } from '../../request/request-utils'
+import { requestUtils } from '../../../request/request-utils'
 import { BaseSecurityHandler } from '../security-handler'
 
 export class ProjectAuthzHandler extends BaseSecurityHandler {

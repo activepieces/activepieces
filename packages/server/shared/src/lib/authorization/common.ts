@@ -1,0 +1,66 @@
+import { PrincipalType, Permission } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
+
+export enum AuthorizationType {
+    PLATFORM = 'PLATFORM',
+    PROJECT = 'PROJECT',
+    WORKER = 'WORKER',
+    ENGINE = 'ENGINE',
+    NONE = 'NONE',
+}
+
+export enum ProjectResourceType {
+    TABLE = 'TABLE',
+    QUERY = 'QUERY',
+    BODY = 'BODY',
+}
+
+export enum RouteKind {
+    AUTHENTICATED = 'AUTHENTICATED',
+    PUBLIC = 'PUBLIC',
+}
+
+export type ProjectTableResource = {
+    type: ProjectResourceType.TABLE
+    tableName: EntitySchema<unknown>
+}
+
+export type ProjectQueryResource = {
+    type: ProjectResourceType.QUERY
+}
+
+export type ProjectBodyResource = {
+    type: ProjectResourceType.BODY
+}
+
+export type ProjectResource = ProjectTableResource | ProjectQueryResource | ProjectBodyResource
+
+export type WorkerAuthorization = {
+    type: AuthorizationType.WORKER
+}
+
+export type PlatformAuthorization = {
+    type: AuthorizationType.PLATFORM
+    adminOnly: boolean
+    allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
+}
+
+export type ProjectAuthorization = {
+    type: AuthorizationType.PROJECT
+    allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]
+    projectResource: ProjectResource
+    permission?: Permission
+}
+
+export type NoneAuthorization = {
+    type: AuthorizationType.NONE
+    reason: string
+}
+
+export type EngineAuthorization = {
+    type: AuthorizationType.ENGINE
+}
+
+export type PublicRoute = {
+    kind: RouteKind.PUBLIC
+}
