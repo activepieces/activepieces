@@ -1,14 +1,13 @@
 import { CreateCheckoutSessionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
+import { platformAdminOnly } from '@activepieces/server-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
     fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -34,7 +33,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.post('/portal', {
         config: {
-            allowedPrincipals: [PrincipalType.USER] as const,
+            security: platformAdminOnly([PrincipalType.USER]),
         },
     }, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
@@ -181,7 +180,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
 const InfoRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
@@ -193,7 +192,7 @@ const SetAiCreditsOverageLimitRequest = {
         body: SetAiCreditsOverageLimitParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -202,7 +201,7 @@ const EnableAiCreditsOverageRequest = {
         body: ToggleAiCreditsOverageEnabledParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -211,7 +210,7 @@ const UpdateActiveFlowsAddonRequest = {
         body: UpdateActiveFlowsAddonParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -220,6 +219,6 @@ const CreateCheckoutSessionRequest = {
         body: CreateCheckoutSessionParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }

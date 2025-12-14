@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { AuthorizationForType, AuthorizationType, FastifyRouteSecurity, ProjectAuthorization, RequestProject, RouteAccessRequest, RouteKind } from '@activepieces/server-shared'
 import { EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalType } from '@activepieces/shared'
-import { AuthorizationType, ProjectAuthorization, FastifyRouteSecurity, RouteKind, RouteAccessRequest, AuthorizationForType, RequestProject } from '@activepieces/server-shared'
 import fastify, {
     RouteShorthandOptions as BaseRouteShorthandOptions,
     FastifyBaseLogger,
+    FastifyRequest,
     RouteOptions as FastifyRouteOptions,
     FastifySchema,
     FastifyTypeProvider,
@@ -13,7 +14,6 @@ import fastify, {
     RawServerBase,
     RawServerDefault,
     RouteGenericInterface,
-    FastifyRequest,
 } from 'fastify'
 import { Server } from 'socket.io'
 
@@ -30,15 +30,15 @@ declare module 'fastify' {
         RequestType = unknown,
     > {
         principal:
-            ContextConfig extends { allowedPrincipals: infer P extends readonly PrincipalType[] }
-                ? PrincipalForTypes<P>
-                : ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
-                    ? PrincipalForType<PrincipalType.ENGINE>
-                    : ContextConfig['security'] extends { authorization: { type: AuthorizationType.WORKER } }
-                        ? PrincipalForType<PrincipalType.WORKER>
-                        : ContextConfig['security'] extends { authorization: { allowedPrincipals: readonly (infer Q extends PrincipalType)[] } }
-                            ? PrincipalForType<Q>
-                            : Principal
+        ContextConfig extends { allowedPrincipals: infer P extends readonly PrincipalType[] }
+            ? PrincipalForTypes<P>
+            : ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
+                ? PrincipalForType<PrincipalType.ENGINE>
+                : ContextConfig['security'] extends { authorization: { type: AuthorizationType.WORKER } }
+                    ? PrincipalForType<PrincipalType.WORKER>
+                    : ContextConfig['security'] extends { authorization: { allowedPrincipals: readonly (infer Q extends PrincipalType)[] } }
+                        ? PrincipalForType<Q>
+                        : Principal
         
         // TODO(@Chaker): to be used in V2 
         // principal: ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
@@ -50,8 +50,8 @@ declare module 'fastify' {
         // : Principal
 
         project: ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } }
-        ? { id: string }
-        : undefined
+            ? { id: string }
+            : undefined
         rawBody?: string | Buffer
         isMultipart(): boolean
     }
@@ -61,8 +61,8 @@ declare module 'fastify' {
         io: Server
     }
     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-     // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-     export interface FastifyContextConfig {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+    export interface FastifyContextConfig {
         rawBody?: boolean
         security?: FastifyRouteSecurity
         otel?: boolean
@@ -71,7 +71,7 @@ declare module 'fastify' {
         skipAuth?: boolean
         scope?: EndpointScope
         permission?: Permission
-        allowedPrincipals: readonly PrincipalType[]
+        allowedPrincipals?: readonly PrincipalType[]
     }
     
 

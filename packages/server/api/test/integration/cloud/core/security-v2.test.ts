@@ -1,16 +1,19 @@
+import { AuthorizationRouteSecurity, AuthorizationType, RouteKind } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
+    DefaultProjectRole,
     ErrorCode,
     Permission,
+    PlatformRole,
     Principal,
     PrincipalType,
-    PlatformRole,
-    DefaultProjectRole,
     RoleType,
 } from '@activepieces/shared'
-import { AuthorizationType, RouteKind } from '@activepieces/server-shared'
-import { FastifyInstance, FastifyBaseLogger } from 'fastify'
+import { FastifyBaseLogger, FastifyInstance } from 'fastify'
+import { nanoid } from 'nanoid'
+import { authenticateOrThrow } from '../../../../src/app/core/security/v2/authn/authenticate'
+import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'
@@ -23,10 +26,6 @@ import {
     mockBasicUser,
     mockLogger,
 } from '../../../helpers/mocks'
-import { authenticateOrThrow } from '../../../../src/app/core/security/v2/authn/authenticate'
-import { authorizeOrThrow } from '../../../../src/app/core/security/v2/authz/authorize'
-import { AuthorizationRouteSecurity } from '@activepieces/server-shared'
-import { nanoid } from 'nanoid'
 
 let app: FastifyInstance | null = null
 const mockLog: FastifyBaseLogger = mockLogger()
@@ -488,7 +487,7 @@ describe('Security V2', () => {
                     platform: {
                         id: mockPlatform.id,
                     },
-                  }
+                }
                 const security: AuthorizationRouteSecurity = {
                     kind: RouteKind.AUTHENTICATED,
                     authorization: {
@@ -680,7 +679,7 @@ describe('Security V2', () => {
                         id: mockPlatform.id,
                     },
                     projectId: 'PLACEHOLDER',
-                  }
+                }
                 const security: AuthorizationRouteSecurity = {
                     kind: RouteKind.AUTHENTICATED,
                     authorization: {

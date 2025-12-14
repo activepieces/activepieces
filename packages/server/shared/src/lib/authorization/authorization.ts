@@ -1,5 +1,5 @@
-import { ProjectId } from "@activepieces/shared"
-import { EngineAuthorization, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, PublicRoute, RouteKind, WorkerAuthorization } from "./common"
+import { ProjectId } from '@activepieces/shared'
+import { EngineAuthorization, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, PublicRoute, RouteKind, WorkerAuthorization } from './common'
 
 export type ProjectAuthorizationConfig = Omit<ProjectAuthorization, 'projectResource'> & {
     projectId: ProjectId | undefined
@@ -19,4 +19,3 @@ type AuthorizationRouteAccess = {
 }
 
 export type AuthorizationRouteSecurity = AuthorizationRouteAccess | PublicRoute
-
