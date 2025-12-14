@@ -1,6 +1,7 @@
 'use client';
 
 import { t } from 'i18next';
+import { BarChart3 } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
 
@@ -58,7 +59,16 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        {report ? (
+        {!report ? (
+          <Skeleton className="h-[300px] w-full" />
+        ) : filteredData.length === 0 ? (
+          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
+            <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {t('No runs recorded yet. Data will appear here once your flows start running.')}
+            </p>
+          </div>
+        ) : (
           <ChartContainer
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
@@ -104,8 +114,6 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
               <Bar dataKey="runs" fill="var(--color-runs)" radius={4} />
             </BarChart>
           </ChartContainer>
-        ) : (
-          <Skeleton className="h-[300px] w-full" />
         )}
       </CardContent>
     </Card>

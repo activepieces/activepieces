@@ -1,6 +1,7 @@
 'use client';
 
 import { t } from 'i18next';
+import { Clock } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
 
@@ -61,7 +62,16 @@ export function TimeSavedChart({
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        {report ? (
+        {!report ? (
+          <Skeleton className="h-[300px] w-full" />
+        ) : filteredData.length === 0 ? (
+          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
+            <Clock className="h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {t('No time saved yet. Data will appear here once your flows start running.')}
+            </p>
+          </div>
+        ) : (
           <ChartContainer
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
@@ -111,8 +121,6 @@ export function TimeSavedChart({
               />
             </BarChart>
           </ChartContainer>
-        ) : (
-          <Skeleton className="h-[300px] w-full" />
         )}
       </CardContent>
     </Card>
