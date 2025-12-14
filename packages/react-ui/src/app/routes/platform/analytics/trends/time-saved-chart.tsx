@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
-import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
+import { AreaChart, CartesianGrid, XAxis, Area } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -79,7 +79,7 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
           >
-            <LineChart
+            <AreaChart
               accessibilityLayer
               data={filteredData}
               margin={{
@@ -117,15 +117,15 @@ export function TimeSavedChart({ report }: TimeSavedChartProps) {
                   />
                 }
               />
-              <Line
+              <Area
                 dataKey="minutesSaved"
                 type="monotone"
                 stroke="var(--color-minutesSaved)"
+                fill="var(--color-minutesSaved)"
+                fillOpacity={0.2}
                 strokeWidth={2}
-                dot={false}
-                activeDot={{ r: 4, strokeWidth: 0 }}
               />
-            </LineChart>
+            </AreaChart>
           </ChartContainer>
         ) : (
           <Skeleton className="h-[300px] w-full" />

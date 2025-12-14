@@ -17,12 +17,12 @@ export const ActiveFlowsMetric = ({ report }: ActiveFlowsMetricProps) => {
   return (
     <MetricCard
       icon={Workflow}
-      title={t('Active Automations')}
+      title={t('Active Flows')}
       value={report.activeFlows.toLocaleString()}
       description={t(
-        'Workflows running 24/7, eliminating repetitive manual tasks and reducing human error across your organization.',
+        'Flows running 24/7, eliminating repetitive manual tasks and reducing human error across your organization.',
       )}
-      subtitle={t('{total} total workflows created', {
+      subtitle={t('{total} total flows created', {
         total: report.totalFlows.toLocaleString(),
       })}
       iconColor="text-cyan-600"
