@@ -4,26 +4,24 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { motiontoolsAuth } from '../common/auth';
-
-export const bookingCreated = createTrigger({
+export const bookingStopStatusUpdate = createTrigger({
   auth: motiontoolsAuth,
-  name: 'bookingCreated',
-  displayName: 'Booking Created',
-  description: 'Triggers when a new booking is created.  Only available if you have a MotionToolsadmin account',
+  name: 'bookingStopStatusUpdate',
+  displayName: 'Booking Stop Status Update',
+  description: '',
   props: {
     instructions: Property.MarkDown({
       value: `# Motiontools Webhook Setup
 
 1. Open Motiontools → Settings → Advanced → Webhooks
 2. Click **Create webhook**
-3. Name: e.g., Activepieces Booking Created
+3. Name: e.g., Activepieces Booking Stop Status Update
 4. Endpoint URL: paste the Activepieces webhook URL below:
 
 \`\`\`text
-			{{webhookUrl}}
-			\`\`\`
-
-5. Enable event: **booking.created**
+            {{webhookUrl}}
+            \`\`\`  
+5. Enable event: **booking.route_changed**
 6. Toggle **Active** and click **Save**
 `,
     }),
@@ -32,21 +30,12 @@ export const bookingCreated = createTrigger({
     id: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
     timestamp: '2020-11-09T10:19:07Z',
     resource_type: 'booking',
-    event: 'created',
+    event: 'route_changed',
     data: {
       booking_id: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
-      service_id: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
       customer_id: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
-      service_area_id: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
-      place_ids: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
-      scheduled_at: '2020-11-09T10:19:07Z',
-      status: 'cancelled',
-      requested_capabilities: {
-        property1: 'string',
-        property2: 'string',
-      },
-      managing_organization_ids: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
       external_id: 'string',
+      service_area_id: 'db76ba31-96f8-4c95-b71d-85ade5c7a640',
     },
   },
   type: TriggerStrategy.WEBHOOK,
@@ -60,13 +49,12 @@ export const bookingCreated = createTrigger({
     const body = context.payload.body as any;
 
     if (
-      body.event === 'created' &&
+      body.event === 'route_changed' &&
       body.resource_type === 'booking' &&
       body.data
     ) {
-      return body;
+      return [body];
     }
-
     return [];
   },
 });
