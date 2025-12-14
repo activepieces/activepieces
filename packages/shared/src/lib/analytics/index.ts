@@ -1,6 +1,14 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common/base-model'
+import { BaseModelSchema, Nullable } from '../common/base-model'
 
+
+export const DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP = 2
+
+export const UpdatePlatformReportRequest = Type.Object({
+    estimatedTimeSavedPerStep: Nullable(Type.Number()),
+    outdated: Type.Boolean(),
+})
+export type UpdatePlatformReportRequest = Static<typeof UpdatePlatformReportRequest>
 
 export const AnalyticsPieceReportItem = Type.Object({
     name: Type.String(),        
@@ -40,6 +48,10 @@ export const AnalyticsFlowReportItem = Type.Object({
     projectId: Type.String(),
     projectName: Type.String(),
     runs: Type.Number(),
+    timeSavedPerRun: Type.Object({
+        value: Nullable(Type.Number()),
+        isEstimated: Type.Boolean(),    
+    }),
     minutesSaved: Type.Number(),
 })
 export type AnalyticsFlowReportItem = Static<typeof AnalyticsFlowReportItem>
@@ -49,14 +61,15 @@ export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
 
 export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
+    estimatedTimeSavedPerStep: Nullable(Type.Number()),
     totalFlows: Type.Number(),
     activeFlows: Type.Number(),
+    outdated: Type.Boolean(),
     totalUsers: Type.Number(),
     activeUsers: Type.Number(),
     totalProjects: Type.Number(),
     activeFlowsWithAI: Type.Number(),
     totalFlowRuns: Type.Number(),
-    totalMinutesSaved: Type.Number(),
     topPieces: AnalyticsPieceReport,
     topProjects: AnalyticsProjectReport,
     runsUsage: AnalyticsRunsUsage,

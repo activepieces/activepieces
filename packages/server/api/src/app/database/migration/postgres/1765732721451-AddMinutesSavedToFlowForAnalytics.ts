@@ -11,16 +11,27 @@ export class AddMinutesSavedToFlowForAnalytics1765732721451 implements Migration
             ALTER TABLE "platform_analytics_report" DROP COLUMN "uniquePiecesUsed"
         `)
         await queryRunner.query(`
+            ALTER TABLE "platform_analytics_report" ADD COLUMN "estimatedTimeSavedPerStep" integer
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_analytics_report" ADD COLUMN "outdated" boolean
+        `)
+        await queryRunner.query(`
+            UPDATE "platform_analytics_report" SET "outdated" = false WHERE "outdated" IS NULL
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_analytics_report" ALTER COLUMN "outdated" SET NOT NULL
+        `)
+        await queryRunner.query(`
+            UPDATE platform_plan SET "analyticsEnabled" = true
+        `)
+        await queryRunner.query(`
             ALTER TABLE "flow"
-            ADD "minutesSaved" integer
+            ADD "timeSavedPerRun" integer
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "totalFlowRuns" integer NOT NULL
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_analytics_report"
-            ADD "totalMinutesSaved" integer NOT NULL
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
@@ -29,17 +40,22 @@ export class AddMinutesSavedToFlowForAnalytics1765732721451 implements Migration
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+
+        await queryRunner.query(`
+            ALTER TABLE "platform_analytics_report" DROP COLUMN "outdated"
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "flowsDetails"
         `)
         await queryRunner.query(`
-            ALTER TABLE "platform_analytics_report" DROP COLUMN "totalMinutesSaved"
+            ALTER TABLE "platform_analytics_report" DROP COLUMN "estimatedTimeSavedPerStep"
         `)
+
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "totalFlowRuns"
         `)
         await queryRunner.query(`
-            ALTER TABLE "flow" DROP COLUMN "minutesSaved"
+            ALTER TABLE "flow" DROP COLUMN "timeSavedPerRun"
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"

@@ -43,7 +43,6 @@ import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
-import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
 import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
@@ -346,10 +345,7 @@ const routes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Analytics">
-          <div className="flex flex-col w-full">
-            <PlatformMessages />
-            <AnalyticsPage />
-          </div>
+          <AnalyticsPage />
         </PageTitle>
       </PlatformLayout>
     ),

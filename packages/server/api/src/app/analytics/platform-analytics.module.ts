@@ -1,6 +1,6 @@
-import { PrincipalType } from '@activepieces/shared'
+import { PrincipalType, UpdatePlatformReportRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
@@ -17,12 +17,26 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
         const { platform } = request.principal
         return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
     })
-    app.post('/', PlatformAnalyticsRequest, async (request) => {
+
+    app.post('/', UpdatePlatformReportRequestSchema, async (request) => {
+        const { platform } = request.principal
+        return platformAnalyticsReportService(request.log).update(platform.id, request.body)
+    })
+
+    app.post('/refresh', PlatformAnalyticsRequest, async (request) => {
         const { platform } = request.principal
         return platformAnalyticsReportService(request.log).refreshReport(platform.id)
     })
 }
 
+const UpdatePlatformReportRequestSchema = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+    schema: {
+        body: UpdatePlatformReportRequest,
+    },
+}
 const PlatformAnalyticsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER] as const,

@@ -16,7 +16,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { internalErrorToast, Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
-import { RefreshAnalyticsProvider } from '@/features/platform-admin/components/refresh-analytics-provider';
+import { RefreshAnalyticsProvider } from '@/app/routes/platform/analytics/refresh-analytics-provider';
 import { api } from '@/lib/api';
 import { ErrorCode, isNil } from '@activepieces/shared';
 

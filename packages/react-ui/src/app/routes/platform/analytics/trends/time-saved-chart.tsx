@@ -4,8 +4,9 @@ import dayjs from 'dayjs';
 import { t } from 'i18next';
 import * as React from 'react';
 import { DateRange } from 'react-day-picker';
-import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
+import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartConfig,
   ChartContainer,
@@ -16,11 +17,11 @@ import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range'
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type RunsAnalyticsProps = {
+type TimeSavedChartProps = {
   report?: PlatformAnalyticsReport;
 };
 
-export function RunsAnalytics({ report }: RunsAnalyticsProps) {
+export function TimeSavedChart({ report }: TimeSavedChartProps) {
   const [selectedDateRange, setSelectedDateRange] = React.useState<
     DateRange | undefined
   >({
@@ -32,17 +33,15 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
     report?.runsUsage
       .map((data) => ({
         date: data.day,
-        runs: data.totalRuns,
+        minutesSaved: data.minutesSaved,
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
       ) || [];
 
   const chartConfig = {
-    views: {
-      label: 'Runs',
-    },
-    runs: {
+    minutesSaved: {
+      label: t('Minutes Saved'),
       color: 'hsl(var(--chart-2))',
     },
   } satisfies ChartConfig;
@@ -56,11 +55,15 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
   });
 
   return (
-    <>
-      <div className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <div className="text-xl font-semibold ">{t('Runs')}</div>
-          <p>{t('Showing total runs for specified time range')}</p>
+    <Card className="col-span-full">
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="space-y-1">
+          <CardTitle className="text-base">
+            {t('Time Saved Over Time')}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {t('Track how much time your automations are saving')}
+          </p>
         </div>
         <DateTimePickerWithRange
           onChange={setSelectedDateRange}
@@ -69,14 +72,14 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
           maxDate={new Date()}
           presetType="past"
         />
-      </div>
-      <div className="px-2 pt-4 sm:px-6 sm:pt-6">
+      </CardHeader>
+      <CardContent className="pt-4">
         {report ? (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[250px] w-full"
+            className="aspect-auto h-[300px] w-full"
           >
-            <BarChart
+            <LineChart
               accessibilityLayer
               data={filteredData}
               margin={{
@@ -84,7 +87,7 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
                 right: 12,
               }}
             >
-              <CartesianGrid vertical={false} />
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
                 tickLine={false}
@@ -103,7 +106,7 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
                 content={
                   <ChartTooltipContent
                     className="w-[150px]"
-                    nameKey="views"
+                    nameKey="minutesSaved"
                     labelFormatter={(value) => {
                       return new Date(value).toLocaleDateString('en-US', {
                         month: 'short',
@@ -114,13 +117,20 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
                   />
                 }
               />
-              <Bar dataKey={'runs'} fill={`var(--color-runs)`} />
-            </BarChart>
+              <Line
+                dataKey="minutesSaved"
+                type="monotone"
+                stroke="var(--color-minutesSaved)"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, strokeWidth: 0 }}
+              />
+            </LineChart>
           </ChartContainer>
         ) : (
-          <Skeleton className="h-[250px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
         )}
-      </div>
-    </>
+      </CardContent>
+    </Card>
   );
 }

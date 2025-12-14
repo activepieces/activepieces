@@ -177,7 +177,7 @@ export const UpdateMetadataRequest = Type.Object({
 export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
 
 export const UpdateMinutesSavedRequest = Type.Object({
-    minutesSaved: Nullable(Type.Number()),
+    timeSavedPerRun: Nullable(Type.Number()),
 })
 export type UpdateMinutesSavedRequest = Static<typeof UpdateMinutesSavedRequest>
 

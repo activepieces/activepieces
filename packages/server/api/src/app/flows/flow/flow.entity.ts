@@ -61,7 +61,7 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             nullable: false,
             default: FlowOperationStatus.NONE,
         },
-        minutesSaved: {
+        timeSavedPerRun: {
             type: Number,
             nullable: true,
         },
