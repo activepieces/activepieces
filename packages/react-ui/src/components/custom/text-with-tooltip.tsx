@@ -18,9 +18,11 @@ export const TextWithTooltip = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>{children}</TooltipTrigger>
-        {tooltipMessage && <TooltipContent className="max-w-md wrap-break-word whitespace-normal">
-          <p>{tooltipMessage}</p>
-        </TooltipContent>}
+        {tooltipMessage && (
+          <TooltipContent className="max-w-md wrap-break-word whitespace-normal">
+            <p>{tooltipMessage}</p>
+          </TooltipContent>
+        )}
       </Tooltip>
     </TooltipProvider>
   );

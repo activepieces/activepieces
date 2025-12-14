@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import {
   Check,
   CircleCheck,
@@ -23,7 +24,6 @@ import {
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
-import { t } from 'i18next';
 
 export const flowRunUtils = {
   findLastStepWithStatus,
@@ -58,7 +58,7 @@ export const flowRunUtils = {
       | typeof CircleCheck
       | typeof PauseCircleIcon
       | typeof CircleX;
-      text: string;
+    text: string;
   } {
     switch (stepOutput) {
       case StepOutputStatus.RUNNING:

@@ -82,10 +82,7 @@ export const ApRouterEndCanvasEdge = ({
             flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 -
             flowUtilConsts.LINE_WIDTH / 2
           }
-          y={
-            targetY -
-            verticalLineLength
-          }
+          y={targetY - verticalLineLength}
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible"

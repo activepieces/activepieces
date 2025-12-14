@@ -11,7 +11,6 @@ import {
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { useTheme } from '@/components/theme-provider';
 import {
   FlowActionType,
   flowStructureUtil,
@@ -88,7 +87,6 @@ export const FlowCanvas = React.memo(
   }: {
     setHasCanvasBeenInitialised: (value: boolean) => void;
   }) => {
-    const { theme } = useTheme();
     const [
       flowVersion,
       setSelectedNodes,

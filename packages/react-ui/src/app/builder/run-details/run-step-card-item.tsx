@@ -149,12 +149,9 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
               )}
               {isLoopStep && !isStepSelected && (
                 <div
-                  className={cn(
-                    'flex gap-1 justify-end  items-center grow',
-                    {
-                      hidden: !isChildSelected || loopHasNoIterations,
-                    },
-                  )}
+                  className={cn('flex gap-1 justify-end  items-center grow', {
+                    hidden: !isChildSelected || loopHasNoIterations,
+                  })}
                 >
                   <LoopIterationInput stepName={stepName} />
                 </div>

@@ -355,11 +355,7 @@ const MultiSelectValue = React.forwardRef<
               return (
                 <Tooltip key={value}>
                   <TooltipTrigger className="inline-flex">{el}</TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    align="start"
-                    className="z-51"
-                  >
+                  <TooltipContent side="bottom" align="start" className="z-51">
                     {content}
                   </TooltipContent>
                 </Tooltip>

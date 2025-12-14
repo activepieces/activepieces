@@ -1,6 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
+
 import {
   LeftSideBarType,
   RightSideBarType,
@@ -64,7 +65,6 @@ const useAnimateSidebar = (
   }, [handleRef, sidebarValue, sidebarClosed]);
   return handleRef;
 };
-
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
@@ -174,7 +174,6 @@ const BuilderPage = () => {
           disabled={leftSidebar === LeftSideBarType.NONE}
           withHandle={leftSidebar !== LeftSideBarType.NONE}
           onDragging={setIsDraggingHandle}
-      
         />
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
@@ -241,9 +240,7 @@ const BuilderPage = () => {
                 <StepSettingsProvider
                   pieceModel={pieceModel}
                   selectedStep={memorizedSelectedStep}
-                  key={
-                    containerKey
-                  }
+                  key={containerKey}
                 >
                   <StepSettingsContainer />
                 </StepSettingsProvider>
@@ -260,7 +257,6 @@ const BuilderPage = () => {
 BuilderPage.displayName = 'BuilderPage';
 export { BuilderPage };
 
-
 function constructContainerKey({
   flowId,
   step,
@@ -269,11 +265,18 @@ function constructContainerKey({
   step?: FlowAction | FlowTrigger;
 }) {
   const stepName = step?.name;
-  const triggerOrActionName = step?.type === FlowTriggerType.PIECE ? step?.settings.triggerName : step?.settings.actionName;
-  const pieceName = step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE ? step?.settings.pieceName : undefined;
+  const triggerOrActionName =
+    step?.type === FlowTriggerType.PIECE
+      ? step?.settings.triggerName
+      : step?.settings.actionName;
+  const pieceName =
+    step?.type === FlowTriggerType.PIECE || step?.type === FlowActionType.PIECE
+      ? step?.settings.pieceName
+      : undefined;
   //we need to re-render the step settings form when the step is skipped, so when the user edits the settings after setting it to skipped the changes are reflected in the update request
-  const isSkipped = step?.type != FlowTriggerType.EMPTY && step?.type != FlowTriggerType.PIECE && step?.skip;
-  return (
-     `${flowId}-${stepName}-${triggerOrActionName}-${pieceName}-${isSkipped}`
-  );
-};
+  const isSkipped =
+    step?.type != FlowTriggerType.EMPTY &&
+    step?.type != FlowTriggerType.PIECE &&
+    step?.skip;
+  return `${flowId}-${stepName}-${triggerOrActionName}-${pieceName}-${isSkipped}`;
+}

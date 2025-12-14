@@ -63,6 +63,6 @@ const IncompleteSettingsButton: React.FC<IncompleteSettingsButtonProps> = ({
 IncompleteSettingsButton.displayName = 'IncompleteSettingsButton';
 export default IncompleteSettingsButton;
 function filterValidOrSkippedSteps(step: Step) {
- if((step as FlowAction).skip) return false;
- return !step.valid;
+  if ((step as FlowAction).skip) return false;
+  return !step.valid;
 }

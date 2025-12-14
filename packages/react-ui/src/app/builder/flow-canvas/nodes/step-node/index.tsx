@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
+
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
@@ -11,12 +12,23 @@ import {
   FlowTriggerType,
   flowStructureUtil,
 } from '@activepieces/shared';
-import { flowUtilConsts, STEP_CONTEXT_MENU_ATTRIBUTE } from '../../utils/consts';
+
+import {
+  flowUtilConsts,
+  STEP_CONTEXT_MENU_ATTRIBUTE,
+} from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
-import { StepInvalidOrSkippedIcon, StepNodeChevron, StepNodeDisplayName, StepNodeLogo, StepNodeName, Triggerwidget } from './utils';
 import { ApStepNodeStatus } from '../step-node-status';
 
+import {
+  StepInvalidOrSkippedIcon,
+  StepNodeChevron,
+  StepNodeDisplayName,
+  StepNodeLogo,
+  StepNodeName,
+  Triggerwidget,
+} from './utils';
 
 const ApStepCanvasNode = React.memo(
   ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
@@ -98,7 +110,10 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivListeners}
       >
         {isTrigger && <Triggerwidget />}
-        <StepInvalidOrSkippedIcon isValid={!!isStepValid}  isSkipped={isSkipped} />
+        <StepInvalidOrSkippedIcon
+          isValid={!!isStepValid}
+          isSkipped={isSkipped}
+        />
         <ApStepNodeStatus stepName={step.name} />
         <StepNodeName stepName={step.name} />
         <div className="px-3 h-full w-full overflow-hidden">
@@ -120,9 +135,18 @@ const ApStepCanvasNode = React.memo(
                   }
                 }}
               >
-                <StepNodeLogo isSkipped={isSkipped} logoUrl={stepMetadata?.logoUrl ?? ''} displayName={stepMetadata?.displayName ?? ''} />
-                <StepNodeDisplayName stepDisplayName={step.displayName} stepIndex={stepIndex} isSkipped={isSkipped}  pieceDisplayName={stepMetadata?.displayName ?? ''} />                   
-                {(!readonly) && <StepNodeChevron />}
+                <StepNodeLogo
+                  isSkipped={isSkipped}
+                  logoUrl={stepMetadata?.logoUrl ?? ''}
+                  displayName={stepMetadata?.displayName ?? ''}
+                />
+                <StepNodeDisplayName
+                  stepDisplayName={step.displayName}
+                  stepIndex={stepIndex}
+                  isSkipped={isSkipped}
+                  pieceDisplayName={stepMetadata?.displayName ?? ''}
+                />
+                {!readonly && <StepNodeChevron />}
               </div>
             </PieceSelector>
           )}
@@ -146,11 +170,9 @@ const ApStepCanvasNode = React.memo(
 ApStepCanvasNode.displayName = 'ApStepCanvasNode';
 export { ApStepCanvasNode };
 
-
-
 function getPieceSelectorOperationType(step: Step) {
   if (flowStructureUtil.isTrigger(step.type)) {
     return FlowOperationType.UPDATE_TRIGGER;
   }
   return FlowOperationType.UPDATE_ACTION;
-};
+}

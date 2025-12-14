@@ -34,7 +34,9 @@ const StepDragOverlay = ({
     builderLeftSidebarWidth -
     builderNavigationBarWidth
   }px`;
-  const top = `${cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT -20}px`;
+  const top = `${
+    cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
+  }px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });

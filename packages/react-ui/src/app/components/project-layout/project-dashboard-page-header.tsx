@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -27,7 +28,6 @@ import {
 
 import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
-import { t } from 'i18next';
 
 export const ProjectDashboardPageHeader = ({
   title,
@@ -115,7 +115,9 @@ export const ProjectDashboardPageHeader = ({
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                {t('This is your private project. Only you can see and access it.')}
+                {t(
+                  'This is your private project. Only you can see and access it.',
+                )}
               </p>
             </TooltipContent>
           </Tooltip>

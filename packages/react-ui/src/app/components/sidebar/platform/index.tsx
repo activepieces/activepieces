@@ -22,6 +22,7 @@ import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { buttonVariants } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
   SidebarContent,
@@ -40,7 +41,6 @@ import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function PlatformSidebar() {
   const navigate = useNavigate();
@@ -206,30 +206,30 @@ export function PlatformSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <ScrollArea className="h-full">
-      <SidebarContent>
-        {groups.map((group, idx) => (
-          <SidebarGroup
-            key={group.label}
-            className={cn("px-0 pt-4 list-none gap-2", {
-              "border-t border-gray-300 ": idx>0
-            })}
-          >
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-            {group.items.map((item) => (
-              <ApSidebarItem
-                type="link"
-                key={item.label}
-                to={item.to}
-                label={item.label}
-                icon={item.icon}
-                locked={item.locked}
-              />
-            ))}
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
+        <SidebarContent>
+          {groups.map((group, idx) => (
+            <SidebarGroup
+              key={group.label}
+              className={cn('px-0 pt-4 list-none gap-2', {
+                'border-t border-gray-300 ': idx > 0,
+              })}
+            >
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              {group.items.map((item) => (
+                <ApSidebarItem
+                  type="link"
+                  key={item.label}
+                  to={item.to}
+                  label={item.label}
+                  icon={item.icon}
+                  locked={item.locked}
+                />
+              ))}
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
       </ScrollArea>
-   
+
       <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>

@@ -29,9 +29,7 @@ const StepStatusIcon = React.memo(
   ({ status, size, hideTooltip = false }: StepStatusIconProps) => {
     const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
 
-    if (
-      status === StepOutputStatus.RUNNING
-    ) {
+    if (status === StepOutputStatus.RUNNING) {
       return <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>;
     }
     return (
@@ -51,7 +49,9 @@ const StepStatusIcon = React.memo(
             })}
           ></Icon>
         </TooltipTrigger>
-        {!hideTooltip && <TooltipContent side="bottom">{statusText[status]}</TooltipContent>}
+        {!hideTooltip && (
+          <TooltipContent side="bottom">{statusText[status]}</TooltipContent>
+        )}
       </Tooltip>
     );
   },

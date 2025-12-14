@@ -93,9 +93,7 @@ const BranchSingleCondition = ({
         {isInvalid && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <InvalidStepIcon
-                className="h-4 w-4 shrink-0"
-              ></InvalidStepIcon>
+              <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               {t('Incomplete condition')}

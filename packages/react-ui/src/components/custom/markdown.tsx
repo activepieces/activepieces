@@ -63,9 +63,7 @@ const Container = ({
           )}
         </>
       )}
-      <AlertDescription className="grow w-full">
-        {children}
-      </AlertDescription>
+      <AlertDescription className="grow w-full">{children}</AlertDescription>
     </Alert>
   );
 };
@@ -156,10 +154,7 @@ const ApMarkdown = React.memo(
               />
             ),
             p: ({ node, ...props }) => (
-              <p
-                className="leading-7 not-first:mt-2 w-full"
-                {...props}
-              />
+              <p className="leading-7 not-first:mt-2 w-full" {...props} />
             ),
             ul: ({ node, ...props }) => (
               <ul className="mt-4 ml-6 list-disc [&>li]:mt-2" {...props} />
