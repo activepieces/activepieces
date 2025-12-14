@@ -11,7 +11,6 @@ import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LockedAlert } from '@/components/ui/locked-alert';
@@ -47,30 +46,6 @@ const PlatformPiecesPage = () => {
   const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] =
     useMemo(
       () => [
-        {
-          id: 'select',
-          header: ({ table }) => (
-            <Checkbox
-              checked={
-                table.getIsAllPageRowsSelected() ||
-                (table.getIsSomePageRowsSelected() && 'indeterminate')
-              }
-              
-              onCheckedChange={(value) =>
-                table.toggleAllPageRowsSelected(!!value)
-              }
-            />
-          ),
-          cell: ({ row }) => (
-            <Checkbox
-              
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => {
-                row.toggleSelected(!!value);
-              }}
-            />
-          ),
-        },
         {
           accessorKey: 'name',
           header: ({ column }) => (
@@ -222,6 +197,7 @@ const PlatformPiecesPage = () => {
             previous: null,
           }}
           isLoading={isLoading}
+          selectColumn={true}
           onSelectedRowsChange={setSelectedPieces}
         />
       </div>

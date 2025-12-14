@@ -37,6 +37,7 @@ export type ApErrorParams =
     | FlowNotFoundErrorParams
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
+    | FlowOperationInProgressErrorParams
     | FlowRunNotFoundErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -285,6 +286,11 @@ ErrorCode.FLOW_OPERATION_INVALID,
 }
 >
 
+export type FlowOperationInProgressErrorParams = BaseErrorParams<
+ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
+    message: string
+}>
+
 export type FlowFormNotFoundError = BaseErrorParams<
 ErrorCode.FLOW_FORM_NOT_FOUND,
 {
@@ -521,6 +527,7 @@ export enum ErrorCode {
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
+    FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',

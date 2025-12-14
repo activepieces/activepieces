@@ -27,6 +27,12 @@ export const formatUtils = {
       )
       .join(' ');
   },
+  convertEnumToReadable(value: string): string {
+    return (
+      value.charAt(0).toUpperCase() +
+      value.slice(1).toLowerCase().replace(/_/g, ' ')
+    );
+  },
   formatNumber(number: number) {
     return new Intl.NumberFormat(i18next.language).format(number);
   },
@@ -44,11 +50,12 @@ export const formatUtils = {
       year: 'numeric',
     }).format(date);
   },
-  formatDate(date: Date) {
+  formatDateWithTime(date: Date, hideCurrentYear: boolean) {
     const now = dayjs();
     const inputDate = dayjs(date);
     const isToday = inputDate.isSame(now, 'day');
     const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
+    const isSameYear = inputDate.isSame(now, 'year');
 
     const timeFormat = new Intl.DateTimeFormat(i18next.language, {
       hour: 'numeric',
@@ -61,6 +68,17 @@ export const formatUtils = {
     } else if (isYesterday) {
       return `${t('Yesterday')}, ${timeFormat.format(date)}`;
     }
+
+    if (isSameYear && !hideCurrentYear) {
+      return Intl.DateTimeFormat(i18next.language, {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: true,
+      }).format(date);
+    }
+
     return Intl.DateTimeFormat(i18next.language, {
       month: 'short',
       day: 'numeric',
@@ -68,6 +86,34 @@ export const formatUtils = {
       hour: 'numeric',
       minute: 'numeric',
       hour12: true,
+    }).format(date);
+  },
+  formatDate(date: Date) {
+    const now = dayjs();
+    const inputDate = dayjs(date);
+    const isToday = inputDate.isSame(now, 'day');
+    const isYesterday = inputDate.isSame(now.subtract(1, 'day'), 'day');
+    const isSameYear = inputDate.isSame(now, 'year');
+
+    if (isToday) {
+      return t('Today');
+    }
+
+    if (isYesterday) {
+      return t('Yesterday');
+    }
+
+    if (isSameYear) {
+      return Intl.DateTimeFormat(i18next.language, {
+        month: 'short',
+        day: 'numeric',
+      }).format(date);
+    }
+
+    return Intl.DateTimeFormat(i18next.language, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
     }).format(date);
   },
   formatDateToAgo(date: Date) {
@@ -120,6 +166,21 @@ export const formatUtils = {
           }`;
     }
     return short ? `${seconds} s` : `${seconds} seconds`;
+  },
+  urlIsNotLocalhostOrIp(url: string): boolean {
+    const parsed = new URL(url);
+    if (
+      parsed.hostname === 'localhost' ||
+      parsed.hostname === '127.0.0.1' ||
+      parsed.hostname === '::1'
+    ) {
+      return false;
+    }
+    const ipv4Regex = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+    if (ipv4Regex.test(parsed.hostname)) {
+      return false;
+    }
+    return parsed.protocol === 'https:';
   },
 };
 
