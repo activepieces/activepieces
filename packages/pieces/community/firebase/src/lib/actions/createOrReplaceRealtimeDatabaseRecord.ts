@@ -16,7 +16,7 @@ export const createOrReplaceRealtimeDatabaseRecord = createAction({
     path: Property.ShortText({
       displayName: 'Path',
       description: 'Path to the record (e.g., users/user1 or posts/post1)',
-      required: true,
+      required: false,
     }),
     data: Property.Object({
       displayName: 'Data',
@@ -28,15 +28,16 @@ export const createOrReplaceRealtimeDatabaseRecord = createAction({
     const { projectId, path, data } = context.propsValue;
     const { access_token } = context.auth;
     const baseUrl = `https://${projectId}.firebaseio.com`;
-    const cleanPath = path.replace(/^\//, '');
-    const url = `${baseUrl}/${cleanPath}.json?access_token=${access_token}`;
+    const cleanPath = path?.replace(/^\//, '') || '';
+    const url = `${baseUrl}/${cleanPath}.json`;
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.PUT,
-      url: url,
+      url,
       body: data,
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${access_token}`,
       },
     });
 
