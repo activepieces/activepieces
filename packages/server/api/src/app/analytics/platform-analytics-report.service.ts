@@ -26,7 +26,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
         return platformAnalyticsReportRepo().findOneBy({ platformId })
     },
     update: async (platformId: PlatformId, request: UpdatePlatformReportRequest) => {
-        await platformAnalyticsReportRepo().update({ platformId }, { 
+        await platformAnalyticsReportRepo().update({ platformId }, {
             ...spreadIfDefined('estimatedTimeSavedPerStep', request.estimatedTimeSavedPerStep),
             outdated: request.outdated,
         })
@@ -44,6 +44,10 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
 
 const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Promise<PlatformAnalyticsReport> => {
     const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
+    const updatedInLastMinute = dayjs().subtract(1, 'minute').toISOString()
+    if (!isNil(report) && dayjs(report.updated).isAfter(updatedInLastMinute)) {
+        return report
+    }
     const estimatedTimeSavedPerStep = report?.estimatedTimeSavedPerStep ?? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
     const flows = await listAllFlows(log, platformId)
     const activeFlows = countFlows(flows, FlowStatus.ENABLED)
