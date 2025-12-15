@@ -1,33 +1,26 @@
 'use client';
 
-import dayjs from 'dayjs';
 import { t } from 'i18next';
-import * as React from 'react';
+import { BarChart3 } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
 import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { DateTimePickerWithRange } from '@/components/ui/date-time-picker-range';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type RunsAnalyticsProps = {
+type RunsChartProps = {
   report?: PlatformAnalyticsReport;
+  selectedDateRange?: DateRange;
 };
 
-export function RunsAnalytics({ report }: RunsAnalyticsProps) {
-  const [selectedDateRange, setSelectedDateRange] = React.useState<
-    DateRange | undefined
-  >({
-    from: dayjs().subtract(3, 'months').toDate(),
-    to: dayjs().toDate(),
-  });
-
+export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
   const chartData =
     report?.runsUsage
       .map((data) => ({
@@ -39,11 +32,9 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
       ) || [];
 
   const chartConfig = {
-    views: {
-      label: 'Runs',
-    },
     runs: {
-      color: 'hsl(var(--chart-2))',
+      label: t('Runs'),
+      color: 'hsl(var(--chart-1))',
     },
   } satisfies ChartConfig;
 
@@ -56,25 +47,31 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
   });
 
   return (
-    <>
-      <div className="flex items-center gap-2 space-y-0 border-b py-5 sm:flex-row">
-        <div className="grid flex-1 gap-1 text-center sm:text-left">
-          <div className="text-xl font-semibold ">{t('Runs')}</div>
-          <p>{t('Showing total runs for specified time range')}</p>
+    <Card className="col-span-full">
+      <CardHeader className="space-y-0 pb-2">
+        <div className="space-y-1">
+          <CardTitle className="text-base">
+            {t('Flow Runs Over Time')}
+          </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            {t('Track your automation execution trends')}
+          </p>
         </div>
-        <DateTimePickerWithRange
-          onChange={setSelectedDateRange}
-          from={selectedDateRange?.from?.toISOString()}
-          to={selectedDateRange?.to?.toISOString()}
-          maxDate={new Date()}
-          presetType="past"
-        />
-      </div>
-      <div className="px-2 pt-4 sm:px-6 sm:pt-6">
-        {report ? (
+      </CardHeader>
+      <CardContent className="pt-4">
+        {!report ? (
+          <Skeleton className="h-[300px] w-full" />
+        ) : filteredData.length === 0 ? (
+          <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
+            <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
+            <p className="text-sm text-muted-foreground">
+              {t('No runs recorded yet. Data will appear here once your flows start running.')}
+            </p>
+          </div>
+        ) : (
           <ChartContainer
             config={chartConfig}
-            className="aspect-auto h-[250px] w-full"
+            className="aspect-auto h-[300px] w-full"
           >
             <BarChart
               accessibilityLayer
@@ -84,7 +81,7 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
                 right: 12,
               }}
             >
-              <CartesianGrid vertical={false} />
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis
                 dataKey="date"
                 tickLine={false}
@@ -103,7 +100,7 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
                 content={
                   <ChartTooltipContent
                     className="w-[150px]"
-                    nameKey="views"
+                    nameKey="runs"
                     labelFormatter={(value) => {
                       return new Date(value).toLocaleDateString('en-US', {
                         month: 'short',
@@ -114,13 +111,11 @@ export function RunsAnalytics({ report }: RunsAnalyticsProps) {
                   />
                 }
               />
-              <Bar dataKey={'runs'} fill={`var(--color-runs)`} />
+              <Bar dataKey="runs" fill="var(--color-runs)" radius={4} />
             </BarChart>
           </ChartContainer>
-        ) : (
-          <Skeleton className="h-[250px] w-full" />
         )}
-      </div>
-    </>
+      </CardContent>
+    </Card>
   );
 }

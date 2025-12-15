@@ -2,7 +2,7 @@ import { Platform, PlatformAnalyticsReport } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     BaseColumnSchemaPart,
-} from '../../database/database-common'
+} from '../database/database-common'
 
 type PlatformAnalyticsReportEntity = PlatformAnalyticsReport & {
     platform: Platform
@@ -11,8 +11,15 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
     name: 'platform_analytics_report',
     columns: {
         ...BaseColumnSchemaPart,
+        estimatedTimeSavedPerStep: {
+            type: Number,
+            nullable: true,
+        },
         platformId: {
             type: String,
+        },
+        outdated: {
+            type: Boolean,
         },
         totalFlows: {
             type: Number,
@@ -29,13 +36,10 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
         totalProjects: {
             type: Number,
         },
-        activeProjects: {
-            type: Number,
-        },
-        uniquePiecesUsed: {
-            type: Number,
-        },
         activeFlowsWithAI: {
+            type: Number,
+        },
+        totalFlowRuns: {
             type: Number,
         },
         topPieces: {
@@ -47,6 +51,10 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             nullable: false,
         },
         runsUsage: {
+            type: 'jsonb',
+            nullable: false,
+        },
+        flowsDetails: {
             type: 'jsonb',
             nullable: false,
         },
