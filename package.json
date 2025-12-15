@@ -35,6 +35,7 @@
     "@ai-sdk/azure": "2.0.12",
     "@ai-sdk/google": "2.0.6",
     "@ai-sdk/openai": "2.0.12",
+    "@ai-sdk/openai-compatible": "1.0.29",
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
     "@authenio/samlify-node-xmllint": "2.0.0",

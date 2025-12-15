@@ -9,7 +9,11 @@ export class AddDisplayNameToAiProviders1765757655723 implements MigrationInterf
         `);
         await queryRunner.query(`
             ALTER TABLE "ai_provider" ADD "displayName" character varying;
+        `);
+        await queryRunner.query(`
             UPDATE "ai_provider" SET "displayName" = "provider";
+        `);
+        await queryRunner.query(`
             ALTER TABLE "ai_provider" ALTER COLUMN "displayName" SET NOT NULL;
         `);
     }
