@@ -208,10 +208,12 @@ export function FlowsDetails({
   }
 
   const dataWithIds: FlowDetailsWithId[] =
-    flowsDetailsWithOverrides?.map((flow) => ({
-      ...flow,
-      id: flow.flowId,
-    })) ?? [];
+    flowsDetailsWithOverrides
+      ?.map((flow) => ({
+        ...flow,
+        id: flow.flowId,
+      }))
+      .sort((a, b) => b.minutesSaved - a.minutesSaved) ?? [];
 
   const resolvedEstimatedTimeSavedPerStep = isNil(estimatedTimeSavedPerStep)
     ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
