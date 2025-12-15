@@ -27,10 +27,13 @@ import { TemplateDetailsView } from '@/features/templates/components/template-de
 import { useTemplates } from '@/features/templates/hooks/templates-hook';
 import { userHooks } from '@/hooks/user-hooks';
 import { PlatformRole, Template, TemplateType } from '@activepieces/shared';
+import { flagsHooks } from '@/hooks/flags-hooks';
+import { ApEdition, ApFlagId } from '@activepieces/shared';
 
 export const ExplorePage = () => {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { filteredTemplates, isLoading, search, setSearch } = useTemplates({
-    type: TemplateType.OFFICIAL,
+    type: edition === ApEdition.ENTERPRISE ? TemplateType.CUSTOM : TemplateType.OFFICIAL,
   });
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null,
