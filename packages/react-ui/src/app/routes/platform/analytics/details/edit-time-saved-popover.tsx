@@ -10,10 +10,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { flowsApi } from '@/features/flows/lib/flows-api';
 import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
-import { FlowOperationType } from '@activepieces/shared';
 
 type EditTimeSavedPopoverProps = {
   flowId: string;
@@ -46,9 +44,9 @@ export function EditTimeSavedPopover({
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (timeSavedPerRun: number | null) => {
-      await flowsApi.update(flowId, {
-        type: FlowOperationType.UPDATE_MINUTES_SAVED,
-        request: { timeSavedPerRun },
+      await analyticsApi.updateTimeSavedPerRun({
+        flowId,
+        timeSavedPerRun,
       });
       await analyticsApi.update({
         outdated: true,

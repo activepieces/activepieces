@@ -4,6 +4,12 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 
 export const DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP = 2
 
+export const UpdateTimeSavedPerRunRequest = Type.Object({
+    flowId: Type.String(),
+    timeSavedPerRun: Nullable(Type.Number()),
+})
+export type UpdateTimeSavedPerRunRequest = Static<typeof UpdateTimeSavedPerRunRequest>
+
 export const UpdatePlatformReportRequest = Type.Object({
     estimatedTimeSavedPerStep: Nullable(Type.Number()),
     outdated: Type.Boolean(),
