@@ -121,10 +121,10 @@ const StepSettingsContainer = () => {
       modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
 
-    useEffect(() => {
-      //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
-      form.trigger()
-    }, [])
+  useEffect(() => {
+    //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
+    form.trigger();
+  }, []);
 
   return (
     <Form {...form}>

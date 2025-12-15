@@ -204,7 +204,7 @@ export const FlowCanvas = React.memo(
         <FlowDragLayer cursorPosition={cursorPosition}>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
-              className='bg-builder-background'
+              className="bg-builder-background"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
                 storeApi.getState().unselectNodesAndEdges();

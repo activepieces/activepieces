@@ -19,7 +19,7 @@ type TestButtonProps = {
 const TestButton = ({
   onClick,
   text,
-  triggerHasNoSampleData: triggerHasNoSampleData = false,
+  triggerHasNoSampleData = false,
   loading = false,
   showKeyboardShortcut = true,
 }: TestButtonProps) => {
