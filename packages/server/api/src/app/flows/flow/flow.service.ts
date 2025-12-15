@@ -33,7 +33,7 @@ import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import Paginator from '../../helper/pagination/paginator'
+import Paginator, { Order } from '../../helper/pagination/paginator'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -104,8 +104,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
             alias: 'ff',
             query: {
                 limit,
-                order: 'DESC',
-                orderBy: 'updated',
+                orderBy: [
+                    { field: 'status', order: Order.DESC },
+                    { field: 'updated', order: Order.DESC },
+                ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -380,6 +382,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     id,
                     projectId,
                     metadata: operation.request.metadata,
+                })
+                break
+            }
+
+            case FlowOperationType.UPDATE_MINUTES_SAVED: {
+                await flowRepo().update(id, {
+                    timeSavedPerRun: operation.request.timeSavedPerRun,
                 })
                 break
             }

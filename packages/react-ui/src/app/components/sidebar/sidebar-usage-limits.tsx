@@ -98,7 +98,7 @@ const SidebarUsageLimits = React.memo(() => {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold">{t('Executions')}</span>
+            <span className="text-xs font-bold">{t('Runs')}</span>
             <Badge variant="ghost" className="bg-muted font-bold">
               {t('Unlimited')}
             </Badge>

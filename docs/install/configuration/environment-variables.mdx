@@ -57,7 +57,7 @@ it will produce these values. </Tip>
 | `AP_TRIGGER_TIMEOUT_SECONDS`       | Maximum allowed runtime for a trigger to perform polling in seconds                                                                                                                                                                     | `60`                                                                         |                                                                        |
 | `AP_FLOW_TIMEOUT_SECONDS`          | Maximum allowed runtime for a flow to run in seconds                                                                                                                                                                        | `600`                                                                         |                                                                        |
 | `AP_AGENT_TIMEOUT_SECONDS`         | Maximum allowed runtime for an agent to run in seconds                                                                                                                                                                        | `600`                                                                         |                                                                        |
-| `AP_SANDBOX_MEMORY_LIMIT`          | The maximum amount of memory (in kilobytes) that a single sandboxed worker process can use. This helps prevent runaway memory usage in custom code or pieces. If not set, the default is 524288 KB (512 MB).                    | `524288`                                                                         | `1048576`                                                                 |
+| `AP_SANDBOX_MEMORY_LIMIT`          | The maximum amount of memory (in kilobytes) that a single sandboxed worker process can use. This helps prevent runaway memory usage in custom code or pieces. If not set, the default is 1048576 KB (1024 MB).                    | `1048576`                                                                         | `1048576`                                                                 |
 | `AP_SANDBOX_PROPAGATED_ENV_VARS`   | Environment variables that will be propagated to the sandboxed code. If you are using it for pieces, we strongly suggests keeping everything in the authentication object to make sure it works across AP instances. | None                                                                         |                                                                        |
 | `AP_TELEMETRY_ENABLED`             | Collect telemetry information.                                                                                                                                                                                       | `true`                                                                         |                                                                        |
 | `AP_TEMPLATES_SOURCE_URL`          | This is the endpoint we query for templates, remove it and templates will be removed from UI                                                                                                                         | `https://cloud.activepieces.com/api/v1/flow-templates`                         |                                                                        |
@@ -90,21 +90,6 @@ it will produce these values. </Tip>
 | `AP_APP_TITLE` | Initial title shown in the browser tab while loading the app | `Activepieces`  | `Activepieces`
 | `AP_FAVICON_URL` | Initial favicon shown in the browser tab while loading the app | `https://cdn.activepieces.com/brand/favicon.ico` | `https://cdn.activepieces.com/brand/favicon.ico`
 
-### OpenTelemetry Configuration
-
-Activepieces supports both standard OpenTelemetry environment variables and vendor-specific configuration for observability and tracing.
-
-#### OpenTelemetry Environment Variables
-
-| Variable | Description | Default Value | Example |
-|----------|-------------|---------------|---------|
-| `AP_OTEL_ENABLED` | Enable OpenTelemetry tracing | `false` | `true` |
-| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP exporter endpoint URL | None | `https://your-collector:4317/v1/traces` |
-| `OTEL_EXPORTER_OTLP_HEADERS` | Headers for OTLP exporter (comma-separated key=value pairs) | None | `Authorization=Bearer token` |
-
-**Note**: Both `AP_OTEL_ENABLED` and `OTEL_EXPORTER_OTLP_ENDPOINT` must be set for OpenTelemetry to be enabled.
-
-
 <Warning>
   The frontend URL is essential for webhooks and app triggers to work. It must
   be accessible to third parties to send data.
@@ -116,16 +101,6 @@ Activepieces supports both standard OpenTelemetry environment variables and vend
 The default URL is set to the machine's IP address. To ensure proper operation, ensure that this address is accessible or specify an `AP_FRONTEND_URL` environment variable.
 
 One possible solution for this is using a service like ngrok ([https://ngrok.com/](https://ngrok.com/)), which can be used to expose the frontend port (4200) to the internet.
-
-### Setting Piece Source
-
-These are the different options for the `AP_PIECES_SOURCE` environment variable:
-
-1. `FILE`: **Only for Local Development**, this option loads pieces directly from local files. For Production, please consider using other options, as this one only supports a single version per piece.
-
-2. `DB`: This option will only load pieces that are manually installed in the database from "My Pieces" or the Admin Console in the EE Edition. Pieces are loaded from npm, which provides multiple versions per piece, making it suitable for production.
-
-You can also set AP_PIECES_SYNC_MODE to `OFFICIAL_AUTO`, where it will update the metadata of pieces periodically.
 
 ### Redis Configuration
 
