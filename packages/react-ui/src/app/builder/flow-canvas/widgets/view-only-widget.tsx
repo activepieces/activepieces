@@ -3,7 +3,7 @@ import { t } from 'i18next';
 const ViewOnlyWidget = () => {
   return (
     <div
-      className="px-2.5 py-1.5 bg-border text-foreground/70 rounded-lg animate-fade"
+      className="p-2 bg-border text-foreground/70 rounded-lg animate-fade"
       key={'view-only-widget'}
     >
       {t('View Only')}

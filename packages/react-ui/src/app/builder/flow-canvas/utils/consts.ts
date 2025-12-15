@@ -44,11 +44,11 @@ const AP_NODE_SIZE: Record<
     width: 20,
   },
   [ApNodeType.STEP]: {
-    height: 54,
+    height: 60,
     width: 232,
   },
   [ApNodeType.LOOP_RETURN_NODE]: {
-    height: 54,
+    height: 60,
     width: 232,
   },
   [ApNodeType.GRAPH_END_WIDGET]: {

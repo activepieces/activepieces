@@ -11,7 +11,7 @@ import {
 type TestButtonProps = {
   onClick: () => void;
   text: string;
-  disabled?: boolean;
+  triggerHasNoSampleData?: boolean;
   loading?: boolean;
   showKeyboardShortcut?: boolean;
 };
@@ -19,7 +19,7 @@ type TestButtonProps = {
 const TestButton = ({
   onClick,
   text,
-  disabled = false,
+  triggerHasNoSampleData: triggerHasNoSampleData = false,
   loading = false,
   showKeyboardShortcut = true,
 }: TestButtonProps) => {
@@ -34,7 +34,7 @@ const TestButton = ({
         event.preventDefault();
         event.stopPropagation();
 
-        if (!loading && !disabled) {
+        if (!loading && !triggerHasNoSampleData) {
           onClick();
         }
       }
@@ -55,7 +55,7 @@ const TestButton = ({
             variant="ghost"
             className="h-8 bg-primary-100/50! dark:text-primary-foreground  text-primary hover:text-primary disabled:pointer-events-auto hover:border-primary!  border-primary/50 border border-solid rounded-lg animate-fade"
             loading={loading}
-            disabled={disabled}
+            disabled={triggerHasNoSampleData}
             onClick={onClick}
           >
             <div className="flex justify-center items-center gap-2">
@@ -69,7 +69,7 @@ const TestButton = ({
           </Button>
         </div>
       </TooltipTrigger>
-      {disabled && (
+      {triggerHasNoSampleData && (
         <TooltipContent side="bottom">
           {t('Please test the trigger first')}
         </TooltipContent>

@@ -41,7 +41,6 @@ import {
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -63,7 +62,6 @@ const getChildrenKey = (step: Step) => {
       return '';
   }
 };
-
 const createGraphKey = (flowVersion: FlowVersion) => {
   return flowStructureUtil
     .getAllSteps(flowVersion.trigger)
@@ -201,11 +199,12 @@ export const FlowCanvas = React.memo(
     return (
       <div
         ref={containerRef}
-        className="size-full relative overflow-hidden z-30"
+        className="size-full relative overflow-hidden z-30 bg-builder-background"
       >
         <FlowDragLayer cursorPosition={cursorPosition}>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
+              className='bg-builder-background'
               onContextMenu={onContextMenu}
               onPaneClick={() => {
                 storeApi.getState().unselectNodesAndEdges();

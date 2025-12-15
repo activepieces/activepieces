@@ -76,7 +76,7 @@ const StepNodeLogo = ({
         src={logoUrl}
         alt={displayName}
         key={logoUrl + displayName}
-        className="w-[22px] h-[22px]"
+        className="w-[25px] h-[25px]"
       />
     </div>
   );
@@ -100,7 +100,7 @@ const StepNodeDisplayName = ({
           tooltipMessage={stepDisplayName.length > 19 ? stepDisplayName : ''}
         >
           <div
-            className={cn('text-xs truncate font-semibold grow shrink ', {
+            className={cn('text-sm truncate font-semibold grow shrink ', {
               'text-accent-foreground/70': isSkipped,
             })}
           >
