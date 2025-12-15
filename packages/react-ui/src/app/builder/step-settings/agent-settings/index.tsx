@@ -89,7 +89,7 @@ const selectAgnetFormComponentForProperty = (
 
   switch (propertyName) {
     case AgentPieceProps.AGENT_TOOLS: {
-      return <AgentTools disabled={disabled} agentToolsField={field} />;
+      return <AgentTools disabled={disabled} toolsField={field} />;
     }
     case AgentPieceProps.STRUCTURED_OUTPUT: {
       return (

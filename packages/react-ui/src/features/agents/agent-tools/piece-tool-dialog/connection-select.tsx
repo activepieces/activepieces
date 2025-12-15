@@ -4,21 +4,16 @@ import React, { useState } from 'react';
 // eslint-disable-next-line import/no-restricted-paths
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Label } from '@/components/ui/label';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 
 type ConnectionDropdownProps = {
   piece: PieceMetadataModelSummary;
   value: string | null;
   onChange: (connectionExternalId: string | null) => void;
   disabled?: boolean;
-  label?: string;
   placeholder?: string;
-  showLabel?: boolean;
-  required?: boolean;
   showError?: boolean;
 };
 
@@ -28,11 +23,8 @@ export const ConnectionDropdown = React.memo(
     value,
     onChange,
     disabled = false,
-    label = t('Connection'),
-    placeholder = t('Select a connection'),
-    showLabel = true,
-    required = false,
     showError = false,
+    placeholder = t('Select a connection'),
   }: ConnectionDropdownProps) => {
     const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
 
@@ -51,12 +43,7 @@ export const ConnectionDropdown = React.memo(
       staleTime: 0,
     });
 
-    const pieceHasAuth = !isNil(piece?.auth);
-
-    const shouldShowError =
-      showError && required && pieceHasAuth && value === null;
-
-    if (!piece || !pieceHasAuth) {
+    if (!piece) {
       return null;
     }
 
@@ -96,7 +83,6 @@ export const ConnectionDropdown = React.memo(
         />
 
         <div className="space-y-2">
-          {showLabel && <Label>{label}</Label>}
           <SearchableSelect
             value={value ?? undefined}
             onChange={handleChange}
@@ -104,12 +90,10 @@ export const ConnectionDropdown = React.memo(
             placeholder={placeholder}
             loading={connectionsLoading || isRefetchingConnections}
             disabled={disabled}
-            showDeselect={!required && !disabled && value !== null}
-            triggerClassName={
-              shouldShowError ? 'border-destructive' : undefined
-            }
+            showDeselect={!disabled && value !== null}
+            triggerClassName={showError ? 'border-destructive' : undefined}
           />
-          {shouldShowError && (
+          {showError && (
             <p className="text-sm font-medium text-destructive break-words">
               {t('Connection is required')}
             </p>

@@ -11,11 +11,14 @@ import { AgentFlowTool } from './flow-tool';
 import { AgentPieceTool } from './piece-tool';
 
 interface AgentToolsProps {
-  agentToolsField: ControllerRenderProps;
+  toolsField: ControllerRenderProps;
   disabled?: boolean;
 }
 
-export const AgentTools = ({ disabled, agentToolsField }: AgentToolsProps) => {
+export const AgentTools = ({
+  disabled,
+  toolsField: agentToolsField,
+}: AgentToolsProps) => {
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
     : [];
