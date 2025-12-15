@@ -334,8 +334,8 @@
     --sidebar-border: theme('colors.neutral.200');
     --sidebar-ring: theme('colors.neutral.400');
     --sidebar-progress: 0 0% 50%;
-    --builder-background: hsla(0, 0%, 98%, 1);
-    --builder-background-pattern: hsla(0, 0%, 64%, 1);
+    --builder-background: hsla(0, 0%, 99%, 0.7);
+    --builder-background-pattern: hsla(240, 4%, 59%, 0.8);
   }
 
 .dark {
@@ -453,4 +453,14 @@
     --tw-exit-translate-y: initial !important;  
     --tw-exit-translate-x: initial !important;
   }
+}
+
+@layer base {
+
+  body {
+    @apply font-sans;
+    }
+  html {
+    @apply font-sans;
+    }
 }

@@ -19,7 +19,7 @@ const StepNodeDisplayName = ({
           tooltipMessage={stepDisplayName.length > 19 ? stepDisplayName : ''}
         >
           <div
-            className={cn('text-sm truncate font-semibold grow shrink ', {
+            className={cn('text-sm truncate grow shrink ', {
               'text-accent-foreground/70': isSkipped,
             })}
           >

@@ -1,4 +1,4 @@
-import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { ImageWithColorBackground } from '@/components/ui/image-with-color-background';
 import { cn } from '@/lib/utils';
 
 const StepNodeLogo = ({
@@ -13,17 +13,17 @@ const StepNodeLogo = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-center p-1.5 border-border border border-solid rounded-xl',
+        'flex items-center justify-center rounded-xl',
         {
           'opacity-80': isSkipped,
         },
       )}
     >
-      <ImageWithFallback
+      <ImageWithColorBackground
         src={logoUrl}
         alt={displayName}
         key={logoUrl + displayName}
-        className="w-[25px] h-[25px]"
+        className="w-9 h-9 p-2"
       />
     </div>
   );

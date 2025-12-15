@@ -240,8 +240,8 @@ export const FlowCanvas = React.memo(
             >
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background
-                gap={30}
-                size={2}
+                gap={10}
+                size={1}
                 variant={BackgroundVariant.Dots}
                 bgColor={`var(--builder-background)`}
                 color={`var(--builder-background-pattern)`}

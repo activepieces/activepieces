@@ -91,7 +91,7 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all border-box rounded-2xl border border-solid border-border relative hover:border-primary group',
+          'transition-all border-box rounded-md border border-solid border-border relative hover:border-primary group',
           {
             'border-primary': isSelected,
             'bg-background': !isDragging,
