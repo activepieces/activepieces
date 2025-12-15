@@ -277,6 +277,9 @@
       ],
       "@activepieces/piece-swarmnode": [
         "packages/pieces/community/swarmnode/src/index.ts"
+      ],
+      "@activepieces/piece-alt-text-ai": [
+        "packages/pieces/community/alt-text-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
