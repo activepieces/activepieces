@@ -272,8 +272,8 @@
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
       ],
-      "@activepieces/piece-firebase-firestore": [
-        "packages/pieces/community/firebase-firestore/src/index.ts"
+      "@activepieces/piece-firebase": [
+        "packages/pieces/community/firebase/src/index.ts"
       ]
     },
     "resolveJsonModule": true

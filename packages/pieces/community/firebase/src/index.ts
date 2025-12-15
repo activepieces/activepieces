@@ -8,10 +8,10 @@ import { newDocumentWithinACollection } from './lib/triggers/new-document-within
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const firebaseFirestore = createPiece({
-  displayName: 'firebase-firestore',
+  displayName: 'Firebase',
   auth: firestoreAuth,
   minimumSupportedRelease: '0.36.1',
-  logoUrl: 'https://cdn.activepieces.com/pieces/firebase-firestore.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/firebase.png',
   authors: ['sanket-a11y'],
   actions: [
     createFirestoreDocument,

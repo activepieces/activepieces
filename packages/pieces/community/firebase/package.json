@@ -1,5 +1,5 @@
 {
-  "name": "@activepieces/piece-firebase-firestore",
+  "name": "@activepieces/piece-firebase",
   "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",
