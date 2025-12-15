@@ -25,23 +25,12 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { TemplateCard } from '@/features/templates/components/template-card';
 import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
 import { useTemplates } from '@/features/templates/hooks/templates-hook';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import {
-  PlatformRole,
-  Template,
-  TemplateType,
-  ApEdition,
-  ApFlagId,
-} from '@activepieces/shared';
+import { PlatformRole, Template, TemplateType } from '@activepieces/shared';
 
 export const ExplorePage = () => {
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { filteredTemplates, isLoading, search, setSearch } = useTemplates({
-    type:
-      edition === ApEdition.ENTERPRISE
-        ? TemplateType.CUSTOM
-        : TemplateType.OFFICIAL,
+    type: TemplateType.OFFICIAL,
   });
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null,

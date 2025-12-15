@@ -97,31 +97,33 @@ const ImportFlowDialog = (
   >({
     mutationFn: async (templates: Template[]) => {
       const importPromises = templates.flatMap(async (template) => {
-        const flowImportPromises = (template.flows || []).map(async (templateFlow) => {
-          let flow: PopulatedFlow | null = null;
-          if (props.insideBuilder) {
-            flow = await flowsApi.get(props.flowId);
-          } else {
-            const folder =
-              !isNil(selectedFolderId) &&
-              selectedFolderId !== UncategorizedFolderId
-                ? await foldersApi.get(selectedFolderId)
-                : undefined;
-            flow = await flowsApi.create({
-              displayName: templateFlow.displayName,
-              projectId: authenticationSession.getProjectId()!,
-              folderName: folder?.displayName,
+        const flowImportPromises = (template.flows || []).map(
+          async (templateFlow) => {
+            let flow: PopulatedFlow | null = null;
+            if (props.insideBuilder) {
+              flow = await flowsApi.get(props.flowId);
+            } else {
+              const folder =
+                !isNil(selectedFolderId) &&
+                selectedFolderId !== UncategorizedFolderId
+                  ? await foldersApi.get(selectedFolderId)
+                  : undefined;
+              flow = await flowsApi.create({
+                displayName: templateFlow.displayName,
+                projectId: authenticationSession.getProjectId()!,
+                folderName: folder?.displayName,
+              });
+            }
+            return await flowsApi.update(flow.id, {
+              type: FlowOperationType.IMPORT_FLOW,
+              request: {
+                displayName: templateFlow.displayName,
+                trigger: templateFlow.trigger,
+                schemaVersion: templateFlow.schemaVersion,
+              },
             });
-          }
-          return await flowsApi.update(flow.id, {
-            type: FlowOperationType.IMPORT_FLOW,
-            request: {
-              displayName: templateFlow.displayName,
-              trigger: templateFlow.trigger,
-              schemaVersion: templateFlow.schemaVersion,
-            },
-          });
-        });
+          },
+        );
 
         return Promise.all(flowImportPromises);
       });

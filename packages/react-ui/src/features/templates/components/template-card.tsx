@@ -46,22 +46,24 @@ export const TemplateCard = ({
         !isNil(folderId) && folderId !== UncategorizedFolderId
           ? await foldersApi.get(folderId)
           : undefined;
-      
-      const flowImportPromises = (template.flows || []).map(async (templateFlow) => {
-        const newFlow = await flowsApi.create({
-          displayName: templateFlow.displayName,
-          projectId: authenticationSession.getProjectId()!,
-          folderName: folder?.displayName,
-        });
-        return await flowsApi.update(newFlow.id, {
-          type: FlowOperationType.IMPORT_FLOW,
-          request: {
+
+      const flowImportPromises = (template.flows || []).map(
+        async (templateFlow) => {
+          const newFlow = await flowsApi.create({
             displayName: templateFlow.displayName,
-            trigger: templateFlow.trigger,
-            schemaVersion: templateFlow.schemaVersion,
-          },
-        });
-      });
+            projectId: authenticationSession.getProjectId()!,
+            folderName: folder?.displayName,
+          });
+          return await flowsApi.update(newFlow.id, {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: {
+              displayName: templateFlow.displayName,
+              trigger: templateFlow.trigger,
+              schemaVersion: templateFlow.schemaVersion,
+            },
+          });
+        },
+      );
 
       return Promise.all(flowImportPromises);
     },
