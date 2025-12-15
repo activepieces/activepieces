@@ -1,33 +1,14 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ApFlagId, CreateTemplateRequestBody, ErrorCode, isNil, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
-import { FastifyReply, FastifyRequest } from 'fastify'
-import { StatusCodes } from 'http-status-codes'
-import { flagService } from '../../../flags/flag.service'
-import { system } from '../../../helper/system/system'
-import { templateService } from '../../../template/template.service'
-
-const TEMPLATES_API_KEY_HEADER = 'templates-api-key'
-const TEMPLATES_API_KEY = system.get(AppSystemProp.TEMPLATES_API_KEY)
-
-async function checkTemplatesApiKeyPreHandler(
-    req: FastifyRequest,
-    res: FastifyReply,
-): Promise<void> {
-
-    const templatesApiKey = req.headers[TEMPLATES_API_KEY_HEADER] as string | undefined
-    if (templatesApiKey !== TEMPLATES_API_KEY || isNil(TEMPLATES_API_KEY)) {
-        const errorMessage = 'Invalid templates API key'
-        await res.status(StatusCodes.FORBIDDEN).send({ message: errorMessage })
-        throw new Error(errorMessage)
-    }
-}
+import { flagService } from '../../../../flags/flag.service'
+import { system } from '../../../../helper/system/system'
+import { templateService } from '../../../../template/template.service'
 
 export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
-    app.addHook('preHandler', checkTemplatesApiKeyPreHandler)
 
     app.post('/categories', UpdateTemplatesCategoriesFlagRequest, async (request) => {
         return flagService.save({
