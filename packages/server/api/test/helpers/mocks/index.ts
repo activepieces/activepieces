@@ -785,21 +785,6 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     return mockAIProvider
 }
 
-export const mockLogger = (): FastifyBaseLogger => {
-    return {
-        info: jest.fn(),
-        error: jest.fn(),
-        warn: jest.fn(),
-        debug: jest.fn(),
-        trace: jest.fn(),
-        fatal: jest.fn(),
-        child: jest.fn().mockReturnThis(),
-        silent: jest.fn(),
-        level: 'info',
-    } as unknown as FastifyBaseLogger
-}
-
-
 type CreateMockPlatformWithOwnerParams = {
     platform?: Partial<Omit<Platform, 'ownerId'>>
     owner?: Partial<Omit<User, 'platformId'>>

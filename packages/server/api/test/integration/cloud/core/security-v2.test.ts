@@ -24,15 +24,15 @@ import {
     mockAndSaveBasicSetup,
     mockAndSaveBasicSetupWithApiKey,
     mockBasicUser,
-    mockLogger,
 } from '../../../helpers/mocks'
 
 let app: FastifyInstance | null = null
-const mockLog: FastifyBaseLogger = mockLogger()
+let mockLog: FastifyBaseLogger
 
 beforeAll(async () => {
     await initializeDatabase({ runMigrations: false })
     app = await setupServer()
+    mockLog = app!.log!
 })
 
 afterAll(async () => {
