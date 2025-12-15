@@ -28,7 +28,6 @@ import {
   PROJECT_COLOR_PALETTE,
   ProjectIcon,
   ProjectType,
-  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 export type FormValues = {
