@@ -19,26 +19,12 @@ export const create1stopBooking = createAction({
       description: 'Payment method (e.g. cash, card)',
       required: true,
     }),
-    additional_information: Property.LongText({
-      displayName: 'Additional Information',
-      description: 'Any extra notes for the booking (optional)',
-      required: false,
-    }),
-    metadata: Property.Json({
-      displayName: 'Metadata',
-      description: 'Additional metadata for the booking (optional)',
-      required: false,
-    }),
     stop_type: Property.ShortText({
       displayName: 'Stop Type',
       description: 'Type of stop (e.g. pickup, dropoff)',
       required: false,
     }),
-    stop_metadata: Property.Json({
-      displayName: 'Stop Metadata',
-      description: 'Additional metadata for the stop (optional)',
-      required: false,
-    }),
+
     stop_lat: Property.Number({
       displayName: 'Latitude',
       description: 'Latitude for the stop (optional)',
@@ -109,10 +95,7 @@ export const create1stopBooking = createAction({
     const {
       scheduled_at,
       payment_method,
-      additional_information,
-      metadata,
       stop_type,
-      stop_metadata,
       stop_lat,
       stop_lng,
       stop_street,
@@ -132,15 +115,12 @@ export const create1stopBooking = createAction({
 
     if (scheduled_at) booking.scheduled_at = scheduled_at;
     booking.payment_method = payment_method;
-    if (additional_information) booking.additional_information = additional_information;
-    if (metadata) booking.metadata = metadata;
 
     const stop: any = {
       type: stop_type || 'pickup',
       flow: 'full',
     };
 
-    if (stop_metadata) stop.metadata = stop_metadata;
     if (typeof stop_lat === 'number') stop.lat = stop_lat;
     if (typeof stop_lng === 'number') stop.lng = stop_lng;
     if (stop_street) stop.street = stop_street;
@@ -167,7 +147,11 @@ export const create1stopBooking = createAction({
 
       return response;
     } catch (error) {
-      throw new Error(`Failed to create booking: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to create booking: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   },
 });

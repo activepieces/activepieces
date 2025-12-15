@@ -217,7 +217,6 @@ export const create2stopBooking = createAction({
     if (stop1_phone_number) stop1.phone_number = stop1_phone_number;
     if (stop1_email) stop1.email = stop1_email;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stop2: any = {
       type: stop2_type || 'dropoff',
       flow: 'full',
