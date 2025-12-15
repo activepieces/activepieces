@@ -85,34 +85,42 @@ export enum AIProviderName {
 
 const ProviderConfigUnion = DiscriminatedUnion('provider', [
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.OPENAI),
         config: OpenAIProviderConfig,
     }),
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.OPENROUTER),
         config: OpenRouterProviderConfig,
     }),
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.ANTHROPIC),
         config: AnthropicProviderConfig,
     }),
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.AZURE),
         config: AzureProviderConfig,
     }),
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.GOOGLE),
         config: GoogleProviderConfig,
     }),
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.ACTIVEPIECES),
         config: OpenRouterProviderConfig,
     }),
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
         config: CloudflareGatewayProviderConfig,
     }),
     Type.Object({
+        displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
         config: OpenAICompatibleProviderConfig,
     }),
@@ -132,6 +140,9 @@ export type AIProvider = Static<typeof AIProvider>
 export const AIProviderWithoutSensitiveData = Type.Object({
     id: Type.String(),
     name: Type.String(),
+    provider: Type.Enum(AIProviderName),
+
+    // DEPRECTED: KEPT FOR BACKWARD COMPATIBILITY
     configured: Type.Boolean(),
 })
 export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSensitiveData>
@@ -144,8 +155,16 @@ export const AIProviderModel = Type.Object({
 export type AIProviderModel = Static<typeof AIProviderModel>
 
 export const CreateAIProviderRequest = ProviderConfigUnion
-
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
+
+
+export const GetProviderConfigResponse = Type.Intersect([
+    AIProviderConfig,
+    Type.Object({
+        provider: Type.Enum(AIProviderName),
+    }),
+])
+export type GetProviderConfigResponse = Static<typeof GetProviderConfigResponse>
 
 
 export const AIErrorResponse = Type.Object({

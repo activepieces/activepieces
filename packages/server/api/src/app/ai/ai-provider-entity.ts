@@ -31,14 +31,12 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             ...ApIdSchema,
             nullable: false,
         },
-    },
-    indices: [
-        {
-            name: 'idx_ai_provider_platform_id_provider',
-            columns: ['platformId', 'provider'],
-            unique: true,
+        displayName: {
+            type: String,
+            nullable: false,
         },
-    ],
+    },
+    indices: [],
     relations: {
         platform: {
             type: 'many-to-one',

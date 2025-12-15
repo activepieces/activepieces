@@ -3,6 +3,7 @@ import { ActivepiecesError, AIProviderConfig, AIProviderModel, AIProviderName, A
     apId,
     CreateAIProviderRequest,
     ErrorCode,
+    GetProviderConfigResponse,
     PlatformId,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
@@ -27,34 +28,37 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
-        const enableOpenRouterProvider = platformAiCreditsService(log).isEnabled()
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
-        const formattedProviders: AIProviderWithoutSensitiveData[] = Object.values(AIProviderName).filter(id => id !== AIProviderName.ACTIVEPIECES).map(id => {
-            return {
-                id,
-                name: aiProviders[id].name,
-                configured: !!configuredProviders.find(c => c.provider === id),
-            }
-        })
+
+        const formattedProviders: AIProviderWithoutSensitiveData[] = configuredProviders.map(p => ({ 
+            id: p.id,
+            name: p.displayName,
+            provider: p.provider,
+            configured: true,
+        }))
+
+        const enableOpenRouterProvider = platformAiCreditsService(log).isEnabled()
         if (enableOpenRouterProvider) {
             formattedProviders.push({
                 id: AIProviderName.ACTIVEPIECES,
                 name: aiProviders[AIProviderName.ACTIVEPIECES].name,
+                provider: AIProviderName.ACTIVEPIECES,
                 configured: true,
             })
         }
+
         return formattedProviders
     },
 
-    async listModels(platformId: PlatformId, providerId: AIProviderName): Promise<AIProviderModel[]> {
+    async listModels(platformId: PlatformId, providerId: string): Promise<AIProviderModel[]> {
         const config = await this.getConfig(platformId, providerId)
-        
-        const cacheKey = `${providerId}-${config.apiKey}`
+
+        const cacheKey = `${config.provider}-${config.apiKey}`
         if (modelsCache.has(cacheKey) && !('models' in config)) {
             return modelsCache.get(cacheKey)!
         }
 
-        const provider = aiProviders[providerId]
+        const provider = aiProviders[config.provider]
         const data = await provider.listModels(config)
 
         modelsCache.set(cacheKey, data.map(model => ({
@@ -66,7 +70,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return modelsCache.get(cacheKey)!
     },
 
-    async upsert(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+    async upsert(platformId: PlatformId, request: CreateAIProviderRequest, providerId?: string): Promise<void> {
         if (request.provider === AIProviderName.AZURE && system.getEdition() !== ApEdition.ENTERPRISE) {
             throw new ActivepiecesError({
                 code: ErrorCode.FEATURE_DISABLED,
@@ -89,33 +93,61 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         }
 
         await aiProviderRepo().upsert({
-            id: apId(),
+            id: providerId ?? apId(),
             config: await encryptUtils.encryptObject(request.config),
             provider: request.provider,
+            displayName: request.displayName,
             platformId,
-        }, ['provider', 'platformId'])
+        }, ['id'])
     },
 
-    async delete(platformId: PlatformId, provider: AIProviderName): Promise<void> {
+    async delete(platformId: PlatformId, providerId: string): Promise<void> {
         await aiProviderRepo().delete({
             platformId,
-            provider,
+            id: providerId,
         })
     },
 
-    async getConfig(platformId: PlatformId, providerId: AIProviderName): Promise<GetProviderConfigResponse> {
+    async getConfig(platformId: PlatformId, providerId: string): Promise<GetProviderConfigResponse> {
         if (providerId === AIProviderName.ACTIVEPIECES) {
             const provisionedKey = await platformAiCreditsService(log).provisionKeyIfNeeded(platformId)
             return {
+                provider: AIProviderName.ACTIVEPIECES,
                 apiKey: provisionedKey.key,
             }
         }
-        const aiProvider = await aiProviderRepo().findOneByOrFail({
-            platformId,
-            provider: providerId,
-        })
-        return encryptUtils.decryptObject<AIProviderConfig>(aiProvider.config)
+
+        let aiProvider: AIProviderSchema;
+
+        // this first check is for backward compatibilty, because at first we were returning the provider name as the id
+        if (Object.values(AIProviderName).includes(providerId as AIProviderName)) {
+            const aiProvidersFound = await aiProviderRepo().find({
+                where: {
+                    platformId,
+                    provider: providerId as AIProviderName,
+                },
+                order: { created: 'ASC' },
+                take: 1,
+            })
+
+            if (aiProvidersFound.length === 0) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.ENTITY_NOT_FOUND,
+                    params: {
+                        message: `AI Provider with providerId ${providerId} not found for platform ${platformId}`,
+                    },
+                })
+            }
+            aiProvider = aiProvidersFound[0]
+        } else {
+            aiProvider = await aiProviderRepo().findOneByOrFail({
+                platformId,
+                id: providerId,
+            })
+        }
+
+        const decrypted = await encryptUtils.decryptObject<AIProviderConfig>(aiProvider.config)
+
+        return { provider: aiProvider.provider, ...decrypted }
     },
 })
-
-export type GetProviderConfigResponse = AIProviderConfig

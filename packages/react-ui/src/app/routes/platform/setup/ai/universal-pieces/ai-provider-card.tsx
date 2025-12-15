@@ -1,18 +1,15 @@
 import { t } from 'i18next';
 import { Pencil, Trash } from 'lucide-react';
+import { useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { AIProviderName } from '@activepieces/shared';
-
+import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
+import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers';
 
 type AIProviderCardProps = {
-  logoUrl: string;
-  provider: AIProviderName;
-  displayName: string;
-  markdown: string;
-  configured: boolean;
+  provider: AIProviderWithoutSensitiveData;
   onDelete: () => void;
   onSave: () => void;
   isDeleting: boolean;
@@ -20,28 +17,31 @@ type AIProviderCardProps = {
 };
 
 const AIProviderCard = ({
-  logoUrl,
-  displayName,
-  markdown,
   provider,
-  configured,
   onDelete,
   isDeleting,
   onSave,
   allowWrite = true,
 }: AIProviderCardProps) => {
+
+  const providerDef = useMemo(() => {
+    return SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider.provider);
+  }, [provider.provider]);
+
+  const logoUrl = providerDef?.logoUrl ?? '';
+
   return (
     <Card className="w-full px-4 py-4">
       <div className="flex w-full gap-2 justify-center items-center">
         <div className="flex flex-col gap-2 text-center mr-2">
-          <img src={logoUrl} alt="icon" width={32} height={32} />
+            {logoUrl && <img src={logoUrl} alt="icon" width={32} height={32} />}
         </div>
         <div className="flex flex-grow flex-col">
-          <div className="text-lg flex items-center">{displayName}</div>
+          <div className="text-lg flex items-center">{provider.name}</div>
           {allowWrite && (
             <div className="text-sm text-muted-foreground">
               {t('Configure credentials for {providerName} AI provider.', {
-                providerName: displayName,
+                providerName: provider.name,
               })}
             </div>
           )}
@@ -49,30 +49,26 @@ const AIProviderCard = ({
         {allowWrite && (
           <div className="flex flex-row justify-center items-center gap-1">
             <UpsertAIProviderDialog
-              provider={provider}
-              configured={configured}
-              logoUrl={logoUrl}
-              displayName={displayName}
-              markdown={markdown}
+              providerId={provider.id}
+              configured={true}
+              defaultDisplayName={provider.name}
               onSave={onSave}
             >
-              <Button variant={configured ? 'ghost' : 'basic'} size={'sm'}>
-                {configured ? <Pencil className="size-4" /> : t('Enable')}
+              <Button variant={'ghost'} size={'sm'}>
+                <Pencil className="size-4" />
               </Button>
             </UpsertAIProviderDialog>
-            {configured && (
-              <div className="gap-2 flex">
-                <Button
-                  variant={'ghost'}
-                  size={'sm'}
-                  onClick={onDelete}
-                  loading={isDeleting}
-                  disabled={isDeleting}
-                >
-                  <Trash className="size-4 text-destructive" />
-                </Button>
-              </div>
-            )}
+            <div className="gap-2 flex">
+            <Button
+                variant={'ghost'}
+                size={'sm'}
+                onClick={onDelete}
+                loading={isDeleting}
+                disabled={isDeleting}
+            >
+                <Trash className="size-4 text-destructive" />
+            </Button>
+            </div>
           </div>
         )}
       </div>

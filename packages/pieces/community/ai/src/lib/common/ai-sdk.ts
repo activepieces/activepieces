@@ -7,7 +7,7 @@ import { createAzure } from '@ai-sdk/azure'
 import { createOpenRouter } from '@openrouter/ai-sdk-provider'
 import { ImageModel } from 'ai'
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderConfig, AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, OpenAICompatibleProviderConfig } from '@activepieces/shared'
+import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig } from '@activepieces/shared'
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
     providerId: string;
@@ -28,7 +28,7 @@ export async function createAIModel({
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModelV2> {
-    const { body: config } = await httpClient.sendRequest<AIProviderConfig>({
+    const { body: config } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${apiUrl}v1/ai-providers/${providerId}/config`,
         headers: {
@@ -36,7 +36,7 @@ export async function createAIModel({
         },
     });
 
-    switch (providerId) {
+    switch (config.provider) {
         case AIProviderName.OPENAI: {
             const provider = createOpenAI({ apiKey: config.apiKey })
             if (isImage) {
@@ -47,7 +47,7 @@ export async function createAIModel({
         case AIProviderName.ANTHROPIC: {
             const provider = createAnthropic({ apiKey: config.apiKey })
             if (isImage) {
-                throw new Error(`Provider ${providerId} does not support image models`)
+                throw new Error(`Provider ${config.provider} does not support image models`)
             }
             return provider(modelId)
         }
@@ -97,7 +97,7 @@ export async function createAIModel({
             return provider.chat(modelId)
         }
         default:
-            throw new Error(`Provider ${providerId} is not supported`)
+            throw new Error(`Provider ${config.provider} is not supported`)
     }
 }
 

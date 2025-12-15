@@ -17,19 +17,10 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProvider
                 },
             });
 
-            const configured = supportedProviders.filter(supportedProvider => supportedProvider.configured);
-            if (configured.length === 0) {
-                return {
-                    disabled: true,
-                    options: [],
-                    placeholder: 'No AI providers configured by the admin.',
-                };
-            }
-
             return {
                 placeholder: 'Select AI Provider',
                 disabled: false,
-                options: configured.map(supportedProvider => ({
+                options: supportedProviders.map(supportedProvider => ({
                     label: supportedProvider.name,
                     value: supportedProvider.id,
                 })).filter(provider => allowedProviders ? allowedProviders.includes(provider.value as AIProviderName) : true),

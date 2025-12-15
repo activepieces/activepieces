@@ -5,79 +5,14 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { AIProviderName, PlatformRole, ApFlagId } from '@activepieces/shared';
+import { PlatformRole, ApFlagId } from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
-const SUPPORTED_AI_PROVIDERS = [
-  {
-    provider: AIProviderName.OPENAI,
-    displayName: 'OpenAI',
-    markdown: `Follow these instructions to get your OpenAI API Key:
+import { CreateNewProviderButton } from './universal-pieces/create-new-provider-button';
 
-1. Visit the following website: https://platform.openai.com/account/api-keys.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
-
-It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
-`,
-    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
-  },
-  {
-    provider: AIProviderName.ANTHROPIC,
-    displayName: 'Anthropic',
-    markdown: `Follow these instructions to get your Claude API Key:
-
-1. Visit the following website: https://console.anthropic.com/settings/keys.
-2. Once on the website, locate and click on the option to obtain your Claude API Key.
-`,
-    logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
-  },
-  {
-    provider: AIProviderName.GOOGLE,
-    displayName: 'Google Gemini',
-    markdown: `Follow these instructions to get your Google API Key:
-1. Visit the following website: https://console.cloud.google.com/apis/credentials.
-2. Once on the website, locate and click on the option to obtain your Google API Key.
-`,
-    logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
-  },
-  {
-    provider: AIProviderName.AZURE,
-    displayName: 'Azure',
-    logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
-    markdown:
-      'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
-  },
-  {
-    provider: AIProviderName.OPENROUTER,
-    displayName: 'OpenRouter',
-    logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',
-    markdown: `Follow these instructions to get your OpenRouter API Key:
-1. Visit the following website: https://openrouter.ai/settings/keys.
-2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`,
-  },
-  {
-    provider: AIProviderName.CLOUDFLARE_GATEWAY,
-    displayName: 'Cloudflare AI Gateway',
-    logoUrl: 'https://cdn.activepieces.com/pieces/cloudflare-gateway.png',
-    markdown: `Follow these instructions to get your Cloudflare AI Gateway API Key:
-1. Visit the following website: https://developers.cloudflare.com/ai-gateway/get-started/.
-2. Once on the website, follow the instructions to get your account id, gateway id and create an API Key.
-3. After creating the gateway, make sure to enable the Authenticated Gateway Option in your settings.
-4. For each provider you are using, include your keys in the Provider Keys tab.`,
-  },
-  {
-    provider: AIProviderName.OPENAI_COMPATIBLE,
-    displayName: 'OpenAI Compatible',
-    logoUrl: 'https://cdn.activepieces.com/pieces/openai-compatible.png',
-    markdown: `Follow these instructions to get your OpenAI Compatible API Key:
-1. Set the base url to your proxy url.
-2. In the api key header, set the value of your auth header name.
-3. In the api key, set your auth header value (full value including the Bearer if any).`,
-  }
-];
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({
     queryKey: ['ai-providers'],
@@ -100,7 +35,7 @@ export default function AIProvidersPage() {
       locked={currentUser?.platformRole !== PlatformRole.ADMIN}
       lockTitle={t('Unlock AI')}
       lockDescription={t(
-        'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
+        'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces'
       )}
     >
       <div className="flex flex-col w-full gap-4">
@@ -109,30 +44,37 @@ export default function AIProvidersPage() {
           description={
             allowWrite
               ? t(
-                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
+                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.'
                 )
               : t(
-                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
+                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.'
                 )
           }
-        ></DashboardPageHeader>
+        >
+          {allowWrite && <CreateNewProviderButton onSave={() => refetch()} />}
+        </DashboardPageHeader>
         <div className="flex flex-col gap-4">
-          {SUPPORTED_AI_PROVIDERS.map((provider) => (
-            <AIProviderCard
-              key={provider.provider}
-              provider={provider.provider}
-              displayName={provider.displayName}
-              logoUrl={provider.logoUrl}
-              markdown={provider.markdown}
-              configured={
-                providers?.find((p) => p.id === provider.provider)
-                  ?.configured ?? false
-              }
-              isDeleting={isDeleting}
-              onDelete={() => deleteProvider(provider.provider)}
-              onSave={() => refetch()}
-            />
-          ))}
+          {providers && providers.length > 0 ? (
+            providers.map((provider) => (
+              <AIProviderCard
+                key={provider.id}
+                provider={provider}
+                isDeleting={isDeleting}
+                onDelete={() => deleteProvider(provider.id)}
+                onSave={() => refetch()}
+                allowWrite={allowWrite}
+              />
+            ))
+          ) : (
+            <div className="text-center py-10">
+              <div className="text-muted-foreground mb-4">
+                {t('No AI providers configured yet.')}
+              </div>
+              {allowWrite && (
+                <CreateNewProviderButton onSave={() => refetch()} />
+              )}
+            </div>
+          )}
         </div>
       </div>
     </LockedFeatureGuard>
