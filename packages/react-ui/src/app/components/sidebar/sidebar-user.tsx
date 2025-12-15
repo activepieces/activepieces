@@ -10,10 +10,8 @@ import {
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { notificationHooks } from '@/app/routes/platform/notifications/hooks/notifications-hooks';
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
-import { Dot } from '@/components/ui/dot';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,7 +41,7 @@ import {
 } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission, PlatformRole } from '@activepieces/shared';
+import { Permission } from '@activepieces/shared';
 
 import AccountSettingsDialog from '../account-settings';
 import { HelpAndFeedback } from '../help-and-feedback';
@@ -178,8 +176,6 @@ function SidebarPlatformAdminButton() {
   const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
-  const messages = notificationHooks.useNotifications();
-  const platformRole = userHooks.getCurrentUserPlatformRole();
 
   if (embedState.isEmbedded || !showPlatformAdminDashboard) {
     return null;
@@ -195,12 +191,6 @@ function SidebarPlatformAdminButton() {
           <Shield className="size-4" />
           <span className={`text-sm`}>{t('Platform Admin')}</span>
         </div>
-        {messages.length > 0 && platformRole === PlatformRole.ADMIN && (
-          <Dot
-            variant="primary"
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"
-          />
-        )}
       </DropdownMenuItem>
     </DropdownMenuGroup>
   );
