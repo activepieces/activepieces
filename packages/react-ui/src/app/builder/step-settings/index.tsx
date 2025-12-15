@@ -95,12 +95,18 @@ const StepSettingsContainer = () => {
       if (cleanedNewValues.type === FlowTriggerType.PIECE) {
         applyOperation({
           type: FlowOperationType.UPDATE_TRIGGER,
-          request: { ...cleanedNewValues, valid },
+          request: {
+            ...cleanedNewValues,
+            valid,
+          },
         });
       } else {
         applyOperation({
           type: FlowOperationType.UPDATE_ACTION,
-          request: { ...cleanedNewValues, valid },
+          request: {
+            ...cleanedNewValues,
+            valid,
+          },
         });
       }
       return result;
