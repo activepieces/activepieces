@@ -271,6 +271,9 @@
       ],
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
+      ],
+      "@activepieces/piece-formsite": [
+        "packages/pieces/community/formsite/src/index.ts"
       ]
     },
     "resolveJsonModule": true
