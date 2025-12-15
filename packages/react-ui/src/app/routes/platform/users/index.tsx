@@ -9,6 +9,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
@@ -16,7 +17,6 @@ import {
 } from '@/components/ui/tooltip';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
-import { formatUtils } from '@/lib/utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 
 import { UpdateUserDialog } from './update-user-dialog';
@@ -142,7 +142,7 @@ export default function UsersPage() {
               cell: ({ row }) => {
                 return (
                   <div className="text-left">
-                    {formatUtils.formatDate(new Date(row.original.created))}
+                    <FormattedDate date={new Date(row.original.created)} />
                   </div>
                 );
               },
@@ -158,9 +158,9 @@ export default function UsersPage() {
               cell: ({ row }) => {
                 return row.original.lastActiveDate ? (
                   <div className="text-left">
-                    {formatUtils.formatDate(
-                      new Date(row.original.lastActiveDate),
-                    )}
+                    <FormattedDate
+                      date={new Date(row.original.lastActiveDate)}
+                    />
                   </div>
                 ) : (
                   '-'

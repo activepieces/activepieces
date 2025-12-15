@@ -7,13 +7,18 @@ import { useEffectOnce } from 'react-use';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Metrics } from '@/features/platform-admin/components/metrics';
-import { RefreshAnalyticsContext } from '@/features/platform-admin/components/refresh-analytics-provider';
-import { Reports } from '@/features/platform-admin/components/reports';
-import { RunsAnalytics } from '@/features/platform-admin/components/runs-analytics';
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
+import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { platformHooks } from '@/hooks/platform-hooks';
+import {
+  DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
+  isNil,
+} from '@activepieces/shared';
+
+import { FlowsDetails } from './details';
+import { EditEstimatedTimeSavedPerStepPopover } from './edit-estimated-time-saved-per-step-popover';
+import { Summary } from './summary';
+import { Trends } from './trends';
 
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
@@ -36,6 +41,12 @@ export default function AnalyticsPage() {
     }
   });
 
+  const resolvedEstimatedTimeSavedPerStep = isNil(
+    data?.estimatedTimeSavedPerStep,
+  )
+    ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
+    : data?.estimatedTimeSavedPerStep;
+
   return (
     <LockedFeatureGuard
       featureKey="ANALYTICS"
@@ -56,26 +67,38 @@ export default function AnalyticsPage() {
             </span>
           }
         >
-          {showRefreshButton && (
-            <Button
-              onClick={() => {
-                refreshAnalytics();
-              }}
-              loading={isRefreshing}
-              disabled={isRefreshing}
-            >
-              <RefreshCcwIcon className="w-4 h-4" />
-              {t('Refresh')}
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            {isEnabled && !isLoading && (
+              <EditEstimatedTimeSavedPerStepPopover
+                currentValue={data?.estimatedTimeSavedPerStep}
+              >
+                <Button variant="outline">
+                  {t('Estimation')}: {resolvedEstimatedTimeSavedPerStep}{' '}
+                  {t('min/step')}
+                </Button>
+              </EditEstimatedTimeSavedPerStepPopover>
+            )}
+            {showRefreshButton && (
+              <Button
+                onClick={() => {
+                  refreshAnalytics();
+                }}
+                loading={isRefreshing}
+                disabled={isRefreshing}
+              >
+                <RefreshCcwIcon className="w-4 h-4" />
+                {t('Refresh')}
+              </Button>
+            )}
+          </div>
         </DashboardPageHeader>
-        <Separator />
-        <Metrics report={isLoading ? undefined : data} />
-        <Separator />
-        <RunsAnalytics report={isLoading ? undefined : data} />
-        <Separator />
-        <Separator />
-        <Reports report={isLoading ? undefined : data} />
+        <Summary report={isLoading ? undefined : data} />
+        <Trends report={isLoading ? undefined : data} />
+        <FlowsDetails
+          flowsDetails={isLoading ? undefined : data?.flowsDetails}
+          estimatedTimeSavedPerStep={data?.estimatedTimeSavedPerStep}
+          isLoading={isLoading}
+        />
       </div>
     </LockedFeatureGuard>
   );
