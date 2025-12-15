@@ -385,6 +385,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 })
                 break
             }
+
+            case FlowOperationType.UPDATE_MINUTES_SAVED: {
+                await flowRepo().update(id, {
+                    timeSavedPerRun: operation.request.timeSavedPerRun,
+                })
+                break
+            }
             default: {
                 let lastVersion = await flowVersionService(
                     log,

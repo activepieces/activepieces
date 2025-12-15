@@ -10,6 +10,9 @@ export class AddStepsExecutedAndAICreditsToFlowRun1765461560795 implements Migra
                 UPDATE "flow_run" SET "stepsCount" = 0 WHERE "stepsCount" IS NULL
             `)
             await queryRunner.query(`
+                ALTER TABLE "flow_run" ALTER COLUMN "stepsCount" SET DEFAULT 0
+            `)
+            await queryRunner.query(`
                 ALTER TABLE "flow_run" ALTER COLUMN "stepsCount" SET NOT NULL
             `)
             return
