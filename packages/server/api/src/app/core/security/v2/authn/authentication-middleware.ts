@@ -1,10 +1,15 @@
 import { RouteKind } from '@activepieces/server-shared'
 import { FastifyRequest } from 'fastify'
 import { authenticateOrThrow } from './authenticate'
+import { isNil } from '@activepieces/shared'
 
 export const authenticationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const security = request.routeOptions.config?.security
-    if (!security || security.kind === RouteKind.PUBLIC) {
+    // Todo(@chaker): remove this once we remove v1 authn
+    if (isNil(security)) {
+        return
+    }
+    if (security.kind === RouteKind.PUBLIC) {
         return
     }
 

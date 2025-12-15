@@ -19,4 +19,3 @@ type AuthorizationRouteAccess = {
 }
 
 export type AuthorizationRouteSecurity = AuthorizationRouteAccess | PublicRoute
-

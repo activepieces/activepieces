@@ -1,4 +1,4 @@
-import { Principal } from '@activepieces/shared'
+import { isNil, Principal } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { AccessTokenAuthnHandler } from './authn/access-token-authn-handler'
 import { AnonymousAuthnHandler } from './authn/anonymous-authn-handler'
@@ -20,6 +20,10 @@ const AUTHZ_HANDLERS = [
 export const securityHandlerChain = async (
     request: FastifyRequest,
 ): Promise<void> => {
+    const authVersion2Used = !isNil(request.routeOptions.config?.security)
+    if (authVersion2Used) {
+        return
+    }
     await executeAuthnHandlers(request)
     await executeAuthzHandlers(request)
 }

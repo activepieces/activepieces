@@ -1,18 +1,23 @@
 import { AuthorizationRouteSecurity, AuthorizationType, ProjectBodyResource, ProjectQueryResource, ProjectResourceType, ProjectTableResource, RouteKind } from '@activepieces/server-shared'
-import { assertNotNullOrUndefined, isObject, PrincipalType } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, isObject, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../database/database-connection'
 import { authorizeOrThrow } from './authorize'
 
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
+    const security = request.routeOptions.config?.security!
+    // Todo(@chaker): remove this once we remove v1 authn
+    if (isNil(security)) {
+        return
+    }
     const securityAccessRequest = await convertToSecurityAccessRequest(request)
     await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
 }
 
 async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<AuthorizationRouteSecurity> {
-    const security = request.routeOptions.config?.security
-    if (!security || security.kind === RouteKind.PUBLIC) {
+    const security = request.routeOptions.config?.security!
+    if (security.kind === RouteKind.PUBLIC) {
         return {
             kind: RouteKind.PUBLIC,
         }

@@ -1,13 +1,13 @@
+import { platformAdminOnly } from '@activepieces/server-shared'
 import { FlowOperationType, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { flowService } from '../flows/flow/flow.service'
 import { projectService } from '../project/project-service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
 export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
     await piecesAnalyticsService(app.log).init()
     await app.register(platformAnalyticsController, { prefix: '/v1/analytics' })
@@ -56,6 +56,8 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
 const UpdateTimeSavedPerRunRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
+
     },
     schema: {
         body: UpdateTimeSavedPerRunRequest,
@@ -64,6 +66,7 @@ const UpdateTimeSavedPerRunRequestSchema = {
 const UpdatePlatformReportRequestSchema = {
     config: {
         allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: UpdatePlatformReportRequest,
@@ -72,5 +75,6 @@ const UpdatePlatformReportRequestSchema = {
 const PlatformAnalyticsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER] as const,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
 }
