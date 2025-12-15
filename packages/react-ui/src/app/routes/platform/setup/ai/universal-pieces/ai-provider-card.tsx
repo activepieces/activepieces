@@ -55,8 +55,8 @@ const AIProviderCard = ({
                   <Pencil className="size-4" />
                 </Button>
               ) : (
-                <Button variant={'ghost'} size={'sm'}>
-                  <Settings className="size-4" />
+                <Button variant={'link'} size={'sm'}>
+                  {t('Enable')}
                 </Button>
               )}
             </UpsertAIProviderDialog>
