@@ -27,7 +27,7 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
         await aiProviderService(app.log).upsert(platformId, request.body)
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
-    app.patch('/:id', UpdateAIProvider, async (request, reply) => {
+    app.post('/:id', UpdateAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
         await aiProviderService(app.log).upsert(platformId, request.body, request.params.id)
         return reply.status(StatusCodes.NO_CONTENT).send()
