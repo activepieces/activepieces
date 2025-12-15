@@ -52,8 +52,8 @@ import { toast } from 'sonner';
 import { AxiosError } from 'axios';
 
 type UpsertAIProviderDialogProps = {
+  provider: AIProviderName;
   providerId?: string;
-  configured?: boolean;
   children: React.ReactNode;
   onSave: () => void;
   defaultDisplayName?: string;
@@ -62,23 +62,23 @@ type UpsertAIProviderDialogProps = {
 export const UpsertAIProviderDialog = ({
   children,
   onSave,
+  provider,
   providerId,
-  configured = false,
   defaultDisplayName = '',
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<AIProviderName>(
-    AIProviderName.OPENAI
+    provider
   );
 
   const { data: config, isLoading: isLoadingConfig } =
     aiProviderHooks.useConfig(
       providerId ?? '',
-      open && configured && !!providerId
+      open && !!providerId
     );
 
   const currentProviderDef = useMemo(
-    () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === selectedProvider),
+    () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === selectedProvider)!,
     [selectedProvider]
   );
 
@@ -123,28 +123,28 @@ export const UpsertAIProviderDialog = ({
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      if (configured && config) {
+      if (config) {
         form.reset({
-          provider: config.provider,
+          provider,
           displayName: defaultDisplayName,
           config: config as any,
         });
-        setSelectedProvider(config.provider);
-      } else if (!configured) {
+        setSelectedProvider(provider);
+      } else if (!providerId) {
         form.reset({
-          provider: undefined,
-          displayName: '',
-          config: {},
+          provider,
+          displayName: currentProviderDef.name,
+          config: {} as any,
         });
-        setSelectedProvider(AIProviderName.OPENAI);
+        setSelectedProvider(provider);
       }
     }
-  }, [open, configured, config, defaultDisplayName, form]);
+  }, [open, config, defaultDisplayName, form]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: CreateAIProviderRequest): Promise<void> => {
-      if (configured) {
-        return aiProviderApi.update(providerId!, data);
+      if (providerId) {
+        return aiProviderApi.update(providerId, data);
       } else {
         return aiProviderApi.upsert(data);
       }
@@ -169,11 +169,11 @@ export const UpsertAIProviderDialog = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {configured ? t('Update AI Provider') : t('Add AI Provider')}
+            {providerId ? t('Update AI Provider') : t('Add AI Provider')}
           </DialogTitle>
         </DialogHeader>
 
-        {isLoadingConfig && configured ? (
+        {isLoadingConfig && providerId ? (
           <div className="flex justify-center items-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
@@ -183,7 +183,7 @@ export const UpsertAIProviderDialog = ({
               className="grid space-y-4"
               onSubmit={(e) => e.preventDefault()}
             >
-              {!configured && (
+              {/* {!providerId && (
                 <FormItem className="space-y-3">
                   <FormLabel>{t('Provider')}</FormLabel>
                   <Select
@@ -217,13 +217,13 @@ export const UpsertAIProviderDialog = ({
                   </Select>
                   <FormMessage />
                 </FormItem>
-              )}
+              )} */}
 
               <FormField
                 control={form.control}
                 name="displayName"
                 render={({ field }) => (
-                  <FormItem className="space-y-3">
+                  <FormItem className="space-y-3" hidden={currentProviderDef.provider !== AIProviderName.OPENAI_COMPATIBLE}>
                     <FormLabel>{t('Display Name')}</FormLabel>
                     <FormControl>
                       <Input
@@ -237,23 +237,21 @@ export const UpsertAIProviderDialog = ({
                 )}
               />
 
-              {currentProviderDef?.markdown && (
+              {currentProviderDef.markdown && (
                 <div className="mb-4 text-sm text-muted-foreground">
                   <ApMarkdown
                     markdown={currentProviderDef.markdown}
                   ></ApMarkdown>
                 </div>
               )}
+            
+              <UpsertProviderConfigForm
+                form={form}
+                provider={selectedProvider}
+                isLoading={isPending}
+              />
 
-              {selectedProvider && (
-                <UpsertProviderConfigForm
-                  form={form}
-                  provider={selectedProvider}
-                  isLoading={isPending}
-                />
-              )}
-
-              {selectedProvider && form.formState.errors.root?.serverError && (
+              {form.formState.errors.root?.serverError && (
                 <FormMessage>
                   {form.formState.errors.root.serverError.message}
                 </FormMessage>

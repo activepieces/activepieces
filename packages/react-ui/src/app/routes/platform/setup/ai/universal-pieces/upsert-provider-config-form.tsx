@@ -20,7 +20,8 @@ import {
   CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
 } from '@activepieces/shared';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type UpsertProviderConfigFormProps = {
   form: UseFormReturn<CreateAIProviderRequest>;
@@ -37,25 +38,6 @@ export const UpsertProviderConfigForm = ({
     control: form.control,
     name: 'config.models',
   });
-
-  const [modelDialogOpen, setModelDialogOpen] = useState(false);
-  const [editingModelIndex, setEditingModelIndex] = useState<number | undefined>(undefined);
-
-  const handleAddOrEditModel = (
-    model: CloudflareGatewayProviderConfig['models'][0]
-  ) => {
-    if (editingModelIndex !== undefined) {
-      update(editingModelIndex, model);
-      setEditingModelIndex(undefined);
-    } else {
-      append(model);
-    }
-  };
-
-  const handleEditModel = (index: number) => {
-    setEditingModelIndex(index);
-    setModelDialogOpen(true);
-  };
 
   const handleRemoveModel = (index: number) => {
     remove(index);
@@ -206,19 +188,19 @@ export const UpsertProviderConfigForm = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-base">{t('Models Configuration')}</Label>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setEditingModelIndex(undefined);
-                setModelDialogOpen(true);
-              }}
-              disabled={isLoading}
+            <ModelFormPopover
+              onSubmit={(model) => append(model)}
             >
-              <Plus className="h-4 w-4 mr-2" />
-              {t('Add Model')}
-            </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isLoading}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                {t('Add Model')}
+              </Button>
+            </ModelFormPopover>
           </div>
 
           {fields.length === 0 ? (
@@ -226,19 +208,19 @@ export const UpsertProviderConfigForm = ({
               <p className="text-muted-foreground">
                 {t('No models configured yet')}
               </p>
-              <Button
-                type="button"
-                variant="ghost"
-                className="mt-2"
-                onClick={() => {
-                  setEditingModelIndex(undefined);
-                  setModelDialogOpen(true);
-                }}
-                disabled={isLoading}
+              <ModelFormPopover
+                onSubmit={(model) => append(model)}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                {t('Add your first model')}
-              </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="mt-2"
+                  disabled={isLoading}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {t('Add your first model')}
+                </Button>
+              </ModelFormPopover>
             </div>
           ) : (
             <div className="space-y-3">
@@ -257,16 +239,20 @@ export const UpsertProviderConfigForm = ({
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditModel(index)}
-                      disabled={isLoading}
+                    <ModelFormPopover
+                      initialData={field as CloudflareGatewayProviderConfig['models'][0]}
+                      onSubmit={(model) => update(index, model)}
                     >
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">{t('Edit')}</span>
-                    </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        disabled={isLoading}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">{t('Edit')}</span>
+                      </Button>
+                    </ModelFormPopover>
                     <Button
                       type="button"
                       variant="ghost"
@@ -284,37 +270,23 @@ export const UpsertProviderConfigForm = ({
           )}
         </div>
       )}
+      </div>
+  )
+}
 
-      <ModelFormDialog
-        open={modelDialogOpen}
-        onOpenChange={setModelDialogOpen}
-        onSubmit={handleAddOrEditModel}
-        editingIndex={editingModelIndex}
-        initialData={
-          editingModelIndex !== undefined
-            ? (fields[editingModelIndex] as CloudflareGatewayProviderConfig['models'][0])
-            : undefined
-        }
-      />
-    </div>
-  );
-};
 
-type ModelFormDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit: (model: CloudflareGatewayProviderConfig['models'][0]) => void;
-  editingIndex?: number;
+type ModelFormPopoverProps = {
   initialData?: CloudflareGatewayProviderConfig['models'][0];
+  onSubmit: (model: CloudflareGatewayProviderConfig['models'][0]) => void;
+  children: React.ReactNode;
 };
 
-const ModelFormDialog = ({
-  open,
-  onOpenChange,
-  onSubmit,
-  editingIndex,
+const ModelFormPopover = ({
   initialData,
-}: ModelFormDialogProps) => {
+  onSubmit,
+  children,
+}: ModelFormPopoverProps) => {
+  const [open, setOpen] = useState(false);
   const defaultModel: CloudflareGatewayProviderConfig['models'][number] = {
     modelId: '',
     modelName: '',
@@ -328,81 +300,91 @@ const ModelFormDialog = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit(model);
-    setModel(defaultModel);
-    onOpenChange(false);
+    if (!initialData) {
+      setModel(defaultModel);
+    }
+    setOpen(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {editingIndex !== undefined ? 'Edit Model' : 'Add Model'}
-          </DialogTitle>
-          <DialogDescription>
-            {t('Configure the model settings')}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent className="w-80">
+        <div className="grid gap-4">
           <div className="space-y-2">
-            <Label htmlFor="modelId">{t('Model ID')}</Label>
-            <Input
-              id="modelId"
-              value={model.modelId}
-              onChange={(e) => setModel({ ...model, modelId: e.target.value })}
-              placeholder="e.g., gpt-4"
-              required
-            />
+            <h4 className="font-medium leading-none">
+              {initialData ? t('Edit Model') : t('Add Model')}
+            </h4>
+            <p className="text-sm text-muted-foreground">
+              {t('Configure the model settings')}
+            </p>
           </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="modelId">{t('Model ID')}</Label>
+              <Input
+                id="modelId"
+                value={model.modelId}
+                onChange={(e) =>
+                  setModel({ ...model, modelId: e.target.value })
+                }
+                placeholder="e.g., gpt-4"
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="modelName">{t('Model Name')}</Label>
-            <Input
-              id="modelName"
-              value={model.modelName}
-              onChange={(e) =>
-                setModel({ ...model, modelName: e.target.value })
-              }
-              placeholder="e.g., GPT-4"
-              required
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="modelName">{t('Model Name')}</Label>
+              <Input
+                id="modelName"
+                value={model.modelName}
+                onChange={(e) =>
+                  setModel({ ...model, modelName: e.target.value })
+                }
+                placeholder="e.g., GPT-4"
+                required
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="modelType">{t('Model Type')}</Label>
-            <select
-              id="modelType"
-              value={model.modelType}
-              onChange={(e) =>
-                setModel({
-                  ...model,
-                  modelType: e.target.value as AIProviderModelType,
-                })
-              }
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            >
-              {Object.values(AIProviderModelType).map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="modelType">{t('Model Type')}</Label>
+              <Select
+                value={model.modelType}
+                onValueChange={(value) =>
+                  setModel({
+                    ...model,
+                    modelType: value as AIProviderModelType,
+                  })
+                }
+              >
+                <SelectTrigger id="modelType">
+                  <SelectValue placeholder={t('Select model type')} />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(AIProviderModelType).map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button type="submit">
-              {editingIndex !== undefined ? t('Update') : t('Add')}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button type="submit">
+                {initialData ? t('Update') : t('Add')}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };

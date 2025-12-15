@@ -10,8 +10,7 @@ import { PlatformRole, ApFlagId } from '@activepieces/shared';
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
-
-import { CreateNewProviderButton } from './universal-pieces/create-new-provider-button';
+import { SUPPORTED_AI_PROVIDERS } from './universal-pieces/supported-ai-providers';
 
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({
@@ -51,30 +50,24 @@ export default function AIProvidersPage() {
                 )
           }
         >
-          {allowWrite && <CreateNewProviderButton onSave={() => refetch()} />}
         </DashboardPageHeader>
         <div className="flex flex-col gap-4">
-          {providers && providers.length > 0 ? (
-            providers.map((provider) => (
+          {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
+            const config = providers?.find(
+              (p) => p.provider === providerDef.provider
+            );
+            return (
               <AIProviderCard
-                key={provider.id}
-                provider={provider}
+                key={providerDef.provider}
+                providerDef={providerDef}
+                providerConfig={config}
                 isDeleting={isDeleting}
-                onDelete={() => deleteProvider(provider.id)}
+                onDelete={(id) => deleteProvider(id)}
                 onSave={() => refetch()}
                 allowWrite={allowWrite}
               />
-            ))
-          ) : (
-            <div className="text-center py-10">
-              <div className="text-muted-foreground mb-4">
-                {t('No AI providers configured yet.')}
-              </div>
-              {allowWrite && (
-                <CreateNewProviderButton onSave={() => refetch()} />
-              )}
-            </div>
-          )}
+            );
+          })}
         </div>
       </div>
     </LockedFeatureGuard>

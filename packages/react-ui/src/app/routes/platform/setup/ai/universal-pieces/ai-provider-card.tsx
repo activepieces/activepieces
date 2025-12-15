@@ -1,6 +1,5 @@
 import { t } from 'i18next';
-import { Pencil, Trash } from 'lucide-react';
-import { useMemo } from 'react';
+import { Pencil, Trash, Settings } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,25 +8,22 @@ import { UpsertAIProviderDialog } from './upsert-provider-dialog';
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers';
 
 type AIProviderCardProps = {
-  provider: AIProviderWithoutSensitiveData;
-  onDelete: () => void;
+  providerDef: (typeof SUPPORTED_AI_PROVIDERS)[0];
+  providerConfig?: AIProviderWithoutSensitiveData;
+  onDelete: (id: string) => void;
   onSave: () => void;
   isDeleting: boolean;
   allowWrite?: boolean;
 };
 
 const AIProviderCard = ({
-  provider,
+  providerDef,
+  providerConfig,
   onDelete,
   isDeleting,
   onSave,
   allowWrite = true,
 }: AIProviderCardProps) => {
-
-  const providerDef = useMemo(() => {
-    return SUPPORTED_AI_PROVIDERS.find(p => p.provider === provider.provider);
-  }, [provider.provider]);
-
   const logoUrl = providerDef?.logoUrl ?? '';
 
   return (
@@ -37,11 +33,11 @@ const AIProviderCard = ({
             {logoUrl && <img src={logoUrl} alt="icon" width={32} height={32} />}
         </div>
         <div className="flex flex-grow flex-col">
-          <div className="text-lg flex items-center">{provider.name}</div>
+          <div className="text-lg flex items-center">{providerDef.name}</div>
           {allowWrite && (
             <div className="text-sm text-muted-foreground">
               {t('Configure credentials for {providerName} AI provider.', {
-                providerName: provider.name,
+                providerName: providerDef.name,
               })}
             </div>
           )}
@@ -49,26 +45,34 @@ const AIProviderCard = ({
         {allowWrite && (
           <div className="flex flex-row justify-center items-center gap-1">
             <UpsertAIProviderDialog
-              providerId={provider.id}
-              configured={true}
-              defaultDisplayName={provider.name}
+              providerId={providerConfig?.id}
+              provider={providerDef.provider}
+              defaultDisplayName={providerConfig?.name ?? providerDef.name}
               onSave={onSave}
             >
-              <Button variant={'ghost'} size={'sm'}>
-                <Pencil className="size-4" />
-              </Button>
+              {providerConfig ? (
+                <Button variant={'ghost'} size={'sm'}>
+                  <Pencil className="size-4" />
+                </Button>
+              ) : (
+                <Button variant={'ghost'} size={'sm'}>
+                  <Settings className="size-4" />
+                </Button>
+              )}
             </UpsertAIProviderDialog>
-            <div className="gap-2 flex">
-            <Button
-                variant={'ghost'}
-                size={'sm'}
-                onClick={onDelete}
-                loading={isDeleting}
-                disabled={isDeleting}
-            >
-                <Trash className="size-4 text-destructive" />
-            </Button>
-            </div>
+            {providerConfig && (
+              <div className="gap-2 flex">
+                <Button
+                  variant={'ghost'}
+                  size={'sm'}
+                  onClick={() => onDelete(providerConfig.id)}
+                  loading={isDeleting}
+                  disabled={isDeleting}
+                >
+                  <Trash className="size-4 text-destructive" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
