@@ -17,7 +17,7 @@ export const findTeam = createAction({
   },
   async run({ auth, propsValue }) {
     const fathom = new Fathom({
-      security: { apiKeyAuth: auth },
+      security: { apiKeyAuth: auth.secret_text },
     });
 
     const params: Partial<ListTeamsRequest> = {};

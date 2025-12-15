@@ -1,7 +1,8 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { ExecutionType, MarkdownVariant, PauseType } from '@activepieces/shared';
 
 export const waitForApprovalLink = createAction({
+  auth: PieceAuth.None(),
   name: 'wait_for_approval',
   displayName: 'Wait for Approval',
   description: 'Pauses the flow and wait for the approval from the user',

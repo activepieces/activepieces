@@ -41,9 +41,9 @@ export const listFolderContentsAction = createAction({
     }),
   },
   async run(context) {
-    const client = await getClient(context.auth);
+    const client = await getClient(context.auth.props);
     const directoryPath = context.propsValue.directoryPath;
-    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.protocol);
+    const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(context.auth.props.protocol);
     try {
       let contents;
       switch (protocolBackwardCompatibility) {
@@ -68,7 +68,7 @@ export const listFolderContentsAction = createAction({
         error: err,
       };
     } finally {
-      await endClient(client, context.auth.protocol);
+      await endClient(client, context.auth.props.protocol);
     }
   },
 });

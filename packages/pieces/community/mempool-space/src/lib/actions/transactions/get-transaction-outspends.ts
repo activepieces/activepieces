@@ -1,8 +1,9 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
+import { createAction, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { MEMPOOL_API_BASE_URL } from '../../common';
 
 export const getTransactionOutspends = createAction({
+ auth:PieceAuth.None(),
   name: 'get_transaction_outspends',
   displayName: 'Get All Transaction Output Spend Statuses',
   description: 'Get the spending status of all outputs in a transaction',

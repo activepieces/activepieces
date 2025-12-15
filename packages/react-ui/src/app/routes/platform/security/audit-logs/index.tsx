@@ -22,6 +22,7 @@ import {
   LIMIT_QUERY_PARAM,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
@@ -229,7 +230,7 @@ export default function AuditLogsPage() {
               cell: ({ row }) => {
                 return (
                   <div className="text-left">
-                    {formatUtils.formatDate(new Date(row.original.created))}
+                    <FormattedDate date={new Date(row.original.created)} />
                   </div>
                 );
               },

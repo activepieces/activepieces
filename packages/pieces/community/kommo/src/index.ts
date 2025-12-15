@@ -36,11 +36,14 @@ export const kommo = createPiece({
     createCustomApiCallAction({
       auth: kommoAuth,
       baseUrl: (auth) => {
-        const authValue = auth as PiecePropValueSchema<typeof kommoAuth>;
+        if (!auth) {
+          return '';
+        }
+        const authValue = auth.props;
         return `https://${authValue.subdomain}.kommo.com/api/v4`
       },
       authMapping: async (auth) => {
-        const authValue = auth as PiecePropValueSchema<typeof kommoAuth>;
+        const authValue = auth.props;
         return {
           Authorization: `Bearer ${authValue.apiToken}`
         }

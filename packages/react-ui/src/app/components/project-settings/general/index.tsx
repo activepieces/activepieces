@@ -28,13 +28,11 @@ import {
   PROJECT_COLOR_PALETTE,
   ProjectIcon,
   ProjectType,
-  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 export type FormValues = {
   projectName: string;
   icon: ProjectIcon;
-  aiCredits: string;
   externalId?: string;
 };
 
@@ -49,9 +47,6 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const { project } = projectHooks.useCurrentProject();
   const showGeneralSettings = project.type === ProjectType.TEAM;
-  const showAiCreditsSettings =
-    platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE &&
-    project.type === ProjectType.TEAM;
   const showExternalIdSettings =
     platform.plan.embeddingEnabled && platformRole === PlatformRole.ADMIN;
   const colorOptions = Object.values(ColorName);
@@ -142,48 +137,6 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
             </div>
           </div>
         )}
-        {showAiCreditsSettings && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              name="aiCredits"
-              render={({ field }) => (
-                <FormItem>
-                  <Label htmlFor="aiCredits" className="text-sm font-medium">
-                    {t('AI Credits')}
-                  </Label>
-                  <div className="relative">
-                    <Input
-                      {...field}
-                      type="number"
-                      id="aiCredits"
-                      placeholder={t('AI Credits')}
-                      className="h-10 pr-16"
-                      disabled={isSaving}
-                    />
-                    {!field.disabled && (
-                      <Button
-                        variant="ghost"
-                        type="button"
-                        tabIndex={-1}
-                        size="sm"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 px-2 text-xs"
-                        onClick={() => form.setValue('aiCredits', '')}
-                        disabled={isSaving}
-                      >
-                        {t('Clear')}
-                      </Button>
-                    )}
-                  </div>
-                  <FormDescription className="text-xs text-muted-foreground">
-                    {t('Every 1,000 AI credits are worth $1 USD.')}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
-
         {showExternalIdSettings && (
           <FormField
             name="externalId"

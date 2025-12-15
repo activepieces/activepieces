@@ -23,12 +23,20 @@ export const sendEmail = createAction({
     'Send a customizable email via Amazon SES with verified sender addresses',
   props: {
     fromEmailAddress: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'From Email',
       description: 'Verified sender email address',
       required: true,
       refreshers: [],
       options: async ({ auth }) => {
-        const verifiedIdentities = await getVerifiedIdentities(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const verifiedIdentities = await getVerifiedIdentities(auth.props);
         return createIdentityDropdownOptions(verifiedIdentities);
       },
     }),
@@ -85,12 +93,20 @@ export const sendEmail = createAction({
       required: false,
     }),
     configurationSetName: Property.Dropdown({
+      auth: amazonSesAuth,
       displayName: 'Configuration Set',
       description: 'SES configuration set for tracking',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
-        const configSets = await getConfigurationSets(auth as any);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please authenticate first',
+          };
+        }
+        const configSets = await getConfigurationSets(auth.props);
         return createConfigSetDropdownOptions(configSets);
       },
     }),
@@ -128,7 +144,7 @@ export const sendEmail = createAction({
       returnPathArn,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     if (bodyFormat === 'html' && !htmlBody) {
       throw new Error('HTML content is required when using HTML format');

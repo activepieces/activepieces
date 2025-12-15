@@ -31,6 +31,7 @@ export const askLocalAI = createAction({
   description: 'Ask LocalAI anything you want!',
   props: {
     model: Property.Dropdown({
+      auth: localaiAuth,
       displayName: 'Model',
       required: true,
       description:
@@ -119,8 +120,8 @@ export const askLocalAI = createAction({
   },
   async run({ auth, propsValue }) {
     const openai = new OpenAI({
-      baseURL: auth.base_url,
-      apiKey: auth.access_token,
+      baseURL: auth.props.base_url,
+      apiKey: auth.props.access_token,
     });
     let billingIssue = false;
     let unaurthorized = false;

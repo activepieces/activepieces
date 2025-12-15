@@ -1,7 +1,6 @@
-import { assertEqual, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, EngineGenericError, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
-import { EngineGenericError } from '../../helper/execution-errors'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
 
@@ -26,6 +25,7 @@ export class FlowExecutorContext {
     verdict: FlowVerdict
     currentPath: StepExecutionPath
     stepNameToTest?: boolean
+    stepsCount: number
 
     /**
      * Execution time in milliseconds
@@ -40,6 +40,7 @@ export class FlowExecutorContext {
         this.verdict = copyFrom?.verdict ?? { status: FlowRunStatus.RUNNING }
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
+        this.stepsCount = copyFrom?.stepsCount ?? 0
     }
 
     static empty(): FlowExecutorContext {
@@ -159,6 +160,13 @@ export class FlowExecutorContext {
         return new FlowExecutorContext({
             ...this,
             retryable,
+        })
+    }
+
+    public incrementStepsExecuted(): FlowExecutorContext {
+        return new FlowExecutorContext({
+            ...this,
+            stepsCount: this.stepsCount + 1,
         })
     }
 

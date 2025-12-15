@@ -46,7 +46,7 @@ export const textToSpeechAction = createAction({
       url: BASE_URL + '/speak',
       body: { text },
       headers: {
-        Authorization: `Token ${context.auth}`,
+        Authorization: `Token ${context.auth.secret_text}`,
         'Content-Type': 'application/json',
       },
       queryParams: {

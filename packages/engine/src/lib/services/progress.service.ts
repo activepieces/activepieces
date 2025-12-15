@@ -1,11 +1,10 @@
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
-import { EngineGenericError } from '../helper/execution-errors'
 import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 
@@ -49,10 +48,17 @@ export const progressService = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-                await sendUpdateRunRequest({
-                    engineConstants,
-                    flowExecutorContext: flowExecutorContext.upsertStep(stepName, stepOutput.setOutput(params.data)),
-                    updateImmediate: true,
+                const trimmedSteps = await flowExecutorContext
+                    .upsertStep(stepName, stepOutput.setOutput(params.data))
+                    .trimmedSteps()
+                const stepResponse = extractStepResponse({
+                    steps: trimmedSteps,
+                    runId: engineConstants.flowRunId,
+                    stepName,
+                })
+                await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_STEP_PROGRESS, {
+                    projectId: engineConstants.projectId,
+                    stepResponse,
                 })
             },
         }
@@ -101,7 +107,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         const stepResponse = extractStepResponse({
             steps: trimmedSteps,
             runId: engineConstants.flowRunId,
-            stepNameToTest: engineConstants.stepNameToTest,
+            stepName: engineConstants.stepNameToTest,
         })
 
         const request: UpdateRunProgressRequest = {
@@ -121,6 +127,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
                 ignoreInternalError: false,
             }) ? dayjs().toISOString() : undefined,
             tags: Array.from(flowExecutorContext.tags),
+            stepsCount: flowExecutorContext.stepsCount,
         }
 
    
@@ -159,11 +166,11 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, f
 
 
 const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | undefined => {
-    if (isNil(params.stepNameToTest)) {
+    if (isNil(params.stepName)) {
         return undefined
     }
 
-    const stepOutput = params.steps?.[params.stepNameToTest]
+    const stepOutput = params.steps?.[params.stepName]
     const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
     return {
         runId: params.runId,
@@ -185,5 +192,5 @@ type UpdateStepProgressParams = {
 type ExtractStepResponse = {
     steps: Record<string, StepOutput>
     runId: string
-    stepNameToTest?: string
+    stepName?: string
 }

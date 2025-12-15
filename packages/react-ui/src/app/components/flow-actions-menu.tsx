@@ -4,6 +4,7 @@ import {
   Copy,
   CornerUpLeft,
   Download,
+  History,
   Import,
   Pencil,
   Share2,
@@ -11,6 +12,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -24,10 +26,11 @@ import {
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
-import { PublishedNeededTooltip } from '@/features/git-sync/components/published-tooltip';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
-import { gitSyncHooks } from '@/features/git-sync/lib/git-sync-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { flowsApi } from '@/features/flows/lib/flows-api';
+import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
@@ -43,9 +46,8 @@ import {
 
 import { MoveFlowDialog } from '../../features/flows/components/move-flow-dialog';
 import { ShareTemplateDialog } from '../../features/flows/components/share-template-dialog';
-import { flowsApi } from '../../features/flows/lib/flows-api';
 
-interface FlowActionMenuProps {
+type FlowActionMenuProps = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   children?: React.ReactNode;
@@ -54,8 +56,10 @@ interface FlowActionMenuProps {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  insideBuilder: boolean;
-}
+} & (
+  | { insideBuilder: true; onVersionsListClick: () => void }
+  | { insideBuilder: false; onVersionsListClick: null }
+);
 
 const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   flow,
@@ -66,8 +70,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onMoveTo,
   onDuplicate,
   onDelete,
+  onVersionsListClick,
   insideBuilder,
 }) => {
+  const isRunsPage = useLocation().pathname.includes('/runs');
   const { platform } = platformHooks.useCurrentPlatform();
   const openNewWindow = useNewWindow();
   const { gitSync } = gitSyncHooks.useGitSync(
@@ -117,7 +123,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   });
 
   const { mutate: exportFlow, isPending: isExportPending } =
-    flowsHooks.useExportFlows();
+    flowHooks.useExportFlows();
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
@@ -168,6 +174,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             )}
           </>
         )}
+
         <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
           <PublishedNeededTooltip allowPush={allowPush}>
             <PushToGitDialog type="flow" flows={[flow]}>
@@ -230,6 +237,14 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           </PermissionNeededTooltip>
         )}
 
+        {insideBuilder && !isRunsPage && (
+          <DropdownMenuItem onClick={onVersionsListClick}>
+            <div className="flex cursor-pointer  flex-row gap-2 items-center">
+              <History className="h-4 w-4" />
+              <span>{t('Versions')}</span>
+            </div>
+          </DropdownMenuItem>
+        )}
         {!readonly && insideBuilder && !embedState.hideExportAndImportFlow && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}

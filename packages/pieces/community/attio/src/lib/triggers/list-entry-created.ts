@@ -23,7 +23,7 @@ export const listEntryCreatedTrigger = createTrigger({
 	sampleData: {},
 	async onEnable(context) {
 		const response = await attioApiCall<{ data: WebhookResponse }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: '/webhooks',
 			body: {
@@ -58,7 +58,7 @@ export const listEntryCreatedTrigger = createTrigger({
 		);
 		if (!isNil(webhookData) && webhookData.webhookId) {
 			await attioApiCall({
-				accessToken: context.auth,
+				accessToken: context.auth.secret_text,
 				method: HttpMethod.DELETE,
 				resourceUri: `/webhooks/${webhookData.webhookId}`,
 			});
@@ -66,7 +66,7 @@ export const listEntryCreatedTrigger = createTrigger({
 	},
 	async test(context) {
 		const response = await attioApiCall<{ data: Array<Record<string, any>> }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.POST,
 			resourceUri: `/lists/${context.propsValue.listId}/entries/query`,
 			body: {
@@ -94,7 +94,7 @@ export const listEntryCreatedTrigger = createTrigger({
 		const entryId = payload.events[0].id.entry_id;
 
 		const response = await attioApiCall<{ data: Record<string, any> }>({
-			accessToken: context.auth,
+			accessToken: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/lists/${context.propsValue.listId}/entries/${entryId}`,
 		});

@@ -7,10 +7,12 @@ import {
   CircleCheckBig,
   CheckCheck,
   SquareTerminal,
+  Braces,
 } from 'lucide-react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { DataList } from '@/components/data-list';
+import { JsonViewer } from '@/components/json-viewer';
 import { SimpleJsonViewer } from '@/components/simple-json-viewer';
 import {
   Accordion,
@@ -19,27 +21,23 @@ import {
   AccordionContent,
 } from '@/components/ui/accordion';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { mcpHooks } from '@/features/mcp/lib/mcp-hooks';
 import {
+  ExecuteToolResponse,
   isNil,
   MarkdownContentBlock,
   MarkdownVariant,
+  TASK_COMPLETION_TOOL_NAME,
   ToolCallStatus,
+  ExecutionToolStatus,
   type ToolCallContentBlock,
 } from '@activepieces/shared';
+
+import { agentToolHooks } from '../agent-tool-hooks';
 
 interface AgentToolBlockProps {
   block: ToolCallContentBlock;
   index: number;
 }
-
-type ToolCallOutput = {
-  success: boolean;
-  content: { type: string; text: string }[];
-  resolvedFields: Record<string, unknown>;
-};
-
-const INTERNAL_TOOLS = ['markAsComplete'];
 
 const parseJsonOrReturnOriginal = (json: unknown) => {
   try {
@@ -72,24 +70,25 @@ const TimelineItem = ({
 };
 
 export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
-  if (INTERNAL_TOOLS.includes(block.toolName ?? '')) return null;
+  if ([TASK_COMPLETION_TOOL_NAME].includes(block.toolName ?? '')) return null;
 
-  const { data: metadata, isLoading } = mcpHooks.useMcpToolMetadata(block);
-  const output = block.output as ToolCallOutput | null;
+  const { data: metadata, isLoading } = agentToolHooks.useToolMetadata(block);
 
+  const output = block.output as ExecuteToolResponse | null;
+  const errorMessage = output?.errorMessage as string | null;
   const isDone = block.status === ToolCallStatus.COMPLETED;
-  const isSuccess = output?.success ?? true;
-  const hasInstructions = !isNil(block.input?.instructions);
-  const resolvedFields = output?.resolvedFields ?? null;
-  const result = output?.content
-    ? parseJsonOrReturnOriginal(output.content[0].text)
+  const isSuccess = output?.status ?? ExecutionToolStatus.FAILED;
+  const hasInstructions = !isNil(block.input?.instruction);
+  const resolvedFields = output?.resolvedInput ?? null;
+  const result = output?.output
+    ? parseJsonOrReturnOriginal(output.output)
     : null;
 
   const defaultTab = resolvedFields ? 'resolvedFields' : 'result';
 
   const renderStatusIcon = () => {
     if (!isDone) return <Loader2 className="h-4 w-4 animate-spin shrink-0" />;
-    return isSuccess ? (
+    return isSuccess === ExecutionToolStatus.SUCCESS ? (
       <CheckCheck className="h-4 w-4 text-success shrink-0" />
     ) : (
       <CircleX className="h-4 w-4 text-destructive shrink-0" />
@@ -142,7 +141,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
               {hasInstructions && (
                 <ApMarkdown
                   variant={MarkdownVariant.BORDERLESS}
-                  markdown={block.input?.instructions as string}
+                  markdown={block.input?.instruction as string}
                 />
               )}
 
@@ -161,7 +160,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                       variant="outline"
                       className="text-xs"
                     >
-                      {t('Output')}
+                      {isNil(errorMessage) ? t('Output') : t('Error')}
                     </TabsTrigger>
                   </TabsList>
 
@@ -184,6 +183,11 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
                         data={result}
                         hideCopyButton
                         maxHeight={300}
+                      />
+                    ) : !isNil(errorMessage) ? (
+                      <ApMarkdown
+                        variant={MarkdownVariant.BORDERLESS}
+                        markdown={errorMessage}
                       />
                     ) : (
                       <div className="text-muted-foreground text-sm">
@@ -219,6 +223,14 @@ export const MarkdownBlock = ({
           variant={MarkdownVariant.BORDERLESS}
         />
       </div>
+    </TimelineItem>
+  );
+};
+
+export const StructuredOutputBlock = ({ output }: { output: any }) => {
+  return (
+    <TimelineItem icon={<Braces className="h-4 w-4 text-muted-foreground" />}>
+      <JsonViewer json={output} title={t('output')} />
     </TimelineItem>
   );
 };

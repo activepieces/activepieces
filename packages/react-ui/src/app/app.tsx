@@ -13,17 +13,16 @@ import { useTranslation } from 'react-i18next';
 import { EmbeddingProvider } from '@/components/embed-provider';
 import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
-import { Toaster } from '@/components/ui/toaster';
+import { internalErrorToast, Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
-import { RefreshAnalyticsProvider } from '@/features/platform-admin/components/refresh-analytics-provider';
+import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { api } from '@/lib/api';
 import { ErrorCode, isNil } from '@activepieces/shared';
 
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
-import { ApRouter } from './router';
+import { ApRouter } from './guards';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -32,7 +31,7 @@ const queryClient = new QueryClient({
         const { openDialog } = useManagePlanDialogStore.getState();
         openDialog();
       } else if (isNil(mutation.options.onError)) {
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       }
     },
   }),
@@ -60,7 +59,7 @@ export function App() {
                   <React.Fragment key={i18n.language}>
                     <ThemeProvider storageKey="vite-ui-theme">
                       <ApRouter />
-                      <Toaster />
+                      <Toaster position="bottom-right" />
                     </ThemeProvider>
                   </React.Fragment>
                 </TooltipProvider>

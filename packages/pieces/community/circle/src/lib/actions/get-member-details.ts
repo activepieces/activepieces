@@ -22,7 +22,7 @@ export const getMemberDetails = createAction({
 			method: HttpMethod.GET,
 			url: `${BASE_URL}/community_members/${member_id}`,
 			headers: {
-				Authorization: `Bearer ${context.auth}`,
+				Authorization: `Bearer ${context.auth.secret_text}`,
 				'Content-Type': 'application/json',
 			},
 		});

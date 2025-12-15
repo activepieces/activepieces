@@ -1,8 +1,10 @@
 import { Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { phantombusterAuth } from './auth';
 
 export const agentIdDropdown = Property.Dropdown({
+  auth: phantombusterAuth,
   displayName: 'Agent',
   description: 'Select the Phantombuster agent to use',
   required: true,
@@ -16,7 +18,7 @@ export const agentIdDropdown = Property.Dropdown({
       };
     }
     const response = await makeRequest(
-      auth as string,
+      auth,
       HttpMethod.GET,
       '/agents/fetch-all'
     );

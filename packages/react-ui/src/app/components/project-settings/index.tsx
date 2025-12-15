@@ -3,6 +3,7 @@ import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { McpSvg } from '@/assets/img/custom/mcp';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -28,10 +29,17 @@ import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
 import { useGeneralSettingsMutation } from './general/hook';
+import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
 
-type TabId = 'general' | 'members' | 'alerts' | 'pieces' | 'environment';
+type TabId =
+  | 'general'
+  | 'members'
+  | 'alerts'
+  | 'pieces'
+  | 'environment'
+  | 'mcp';
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -39,7 +47,6 @@ interface ProjectSettingsDialogProps {
   initialTab?: TabId;
   initialValues?: {
     projectName?: string;
-    aiCredits?: string;
     externalId?: string;
   };
 }
@@ -66,7 +73,6 @@ export function ProjectSettingsDialog({
     defaultValues: {
       projectName: initialValues?.projectName,
       icon: project.icon,
-      aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -79,9 +85,6 @@ export function ProjectSettingsDialog({
       displayName: values.projectName,
       icon: values.icon,
       externalId: values.externalId,
-      plan: {
-        aiCredits: values.aiCredits ? parseInt(values.aiCredits) : undefined,
-      },
     });
   };
 
@@ -138,6 +141,12 @@ export function ProjectSettingsDialog({
       icon: <GitBranch className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
+    {
+      id: 'mcp' as TabId,
+      label: t('MCP Server'),
+      icon: <McpSvg className="w-4 h-4" />,
+      disabled: false,
+    },
   ].filter((tab) => !tab.disabled);
 
   const renderTabContent = () => {
@@ -154,6 +163,8 @@ export function ProjectSettingsDialog({
         return <PiecesSettings />;
       case 'environment':
         return <EnvironmentSettings />;
+      case 'mcp':
+        return <McpServerSettings />;
       default:
         return null;
     }

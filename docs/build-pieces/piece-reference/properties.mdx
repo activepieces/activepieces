@@ -1,0 +1,449 @@
+---
+title: 'Props'
+description: 'Learn about different types of properties used in triggers / actions'
+icon: 'input-pipe'
+---
+
+Properties are used in actions and triggers to collect information from the user. They are also displayed to the user for input. Here are some commonly used properties:
+
+## Basic Properties
+
+These properties collect basic information from the user.
+
+### Short Text
+
+This property collects a short text input from the user.
+
+**Example:**
+
+```typescript
+Property.ShortText({
+  displayName: 'Name',
+  description: 'Enter your name',
+  required: true,
+  defaultValue: 'John Doe',
+});
+```
+
+### Long Text
+
+This property collects a long text input from the user.
+
+**Example:**
+
+```typescript
+Property.LongText({
+  displayName: 'Description',
+  description: 'Enter a description',
+  required: false,
+});
+```
+
+### Checkbox
+
+This property presents a checkbox for the user to select or deselect.
+
+**Example:**
+
+```typescript
+Property.Checkbox({
+  displayName: 'Agree to Terms',
+  description: 'Check this box to agree to the terms',
+  required: true,
+  defaultValue: false,
+});
+```
+
+### Markdown
+
+This property displays a markdown snippet to the user, useful for documentation or instructions. It includes a `variant` option to style the markdown, using the `MarkdownVariant` enum:
+
+- **BORDERLESS**: For a minimalistic, no-border layout.
+- **INFO**: Displays informational messages.
+- **WARNING**: Alerts the user to cautionary information.
+- **TIP**: Highlights helpful tips or suggestions.
+
+The default value for `variant` is **INFO**.
+
+**Example:**
+
+```typescript
+Property.MarkDown({
+    value: '## This is a markdown snippet',
+    variant: MarkdownVariant.WARNING,
+}),
+```
+
+<Tip>
+  If you want to show a webhook url to the user, use `{{ webhookUrl }}` in the
+  markdown snippet.
+</Tip>
+
+### DateTime
+
+This property collects a date and time from the user.
+
+**Example:**
+
+```typescript
+Property.DateTime({
+  displayName: 'Date and Time',
+  description: 'Select a date and time',
+  required: true,
+  defaultValue: '2023-06-09T12:00:00Z',
+});
+```
+
+### Number
+
+This property collects a numeric input from the user.
+
+**Example:**
+
+```typescript
+Property.Number({
+  displayName: 'Quantity',
+  description: 'Enter a number',
+  required: true,
+});
+```
+
+### Static Dropdown
+
+This property presents a dropdown menu with predefined options.
+
+**Example:**
+
+```typescript
+Property.StaticDropdown({
+  displayName: 'Country',
+  description: 'Select your country',
+  required: true,
+  options: {
+    options: [
+      {
+        label: 'Option One',
+
+        value: '1',
+      },
+      {
+        label: 'Option Two',
+        value: '2',
+      },
+    ],
+  },
+});
+```
+
+### Static Multiple Dropdown
+
+This property presents a dropdown menu with multiple selection options.
+
+**Example:**
+
+```typescript
+Property.StaticMultiSelectDropdown({
+  displayName: 'Colors',
+  description: 'Select one or more colors',
+  required: true,
+  options: {
+    options: [
+      {
+        label: 'Red',
+        value: 'red',
+      },
+      {
+        label: 'Green',
+        value: 'green',
+      },
+      {
+        label: 'Blue',
+        value: 'blue',
+      },
+    ],
+  },
+});
+```
+
+### JSON
+
+This property collects JSON data from the user.
+
+**Example:**
+
+```typescript
+Property.Json({
+  displayName: 'Data',
+  description: 'Enter JSON data',
+  required: true,
+  defaultValue: { key: 'value' },
+});
+```
+
+### Dictionary
+
+This property collects key-value pairs from the user.
+
+**Example:**
+
+```typescript
+Property.Object({
+  displayName: 'Options',
+  description: 'Enter key-value pairs',
+  required: true,
+  defaultValue: {
+    key1: 'value1',
+    key2: 'value2',
+  },
+});
+```
+
+### File
+
+This property collects a file from the user, either by providing a URL or uploading a file.
+
+**Example:**
+
+```typescript
+Property.File({
+  displayName: 'File',
+  description: 'Upload a file',
+  required: true,
+});
+```
+
+### Array of Strings
+
+This property collects an array of strings from the user.
+
+**Example:**
+
+```typescript
+Property.Array({
+  displayName: 'Tags',
+  description: 'Enter tags',
+  required: false,
+  defaultValue: ['tag1', 'tag2'],
+});
+```
+
+### Array of Fields
+
+This property collects an array of objects from the user.
+
+**Example:**
+
+```typescript
+Property.Array({
+  displayName: 'Fields',
+  description: 'Enter fields',
+  properties: {
+    fieldName: Property.ShortText({
+      displayName: 'Field Name',
+      required: true,
+    }),
+    fieldType: Property.StaticDropdown({
+      displayName: 'Field Type',
+      required: true,
+      options: {
+        options: [
+          { label: 'TEXT', value: 'TEXT' },
+          { label: 'NUMBER', value: 'NUMBER' },
+        ],
+      },
+    }),
+  },
+  required: false,
+  defaultValue: [],
+});
+```
+
+## Dynamic Data Properties
+
+These properties provide more advanced options for collecting user input.
+
+### Dropdown
+
+This property allows for dynamically loaded options based on the user's input.
+
+**Example:**
+
+```typescript
+Property.Dropdown({
+  displayName: 'Options',
+  description: 'Select an option',
+  required: true,
+  auth: yourPieceAuth,
+  refreshers: ['auth'],
+  refreshOnSearch: false,
+  options: async ({ auth }, { searchValue }) => {
+    // Search value only works when refreshOnSearch is true
+    if (!auth) {
+      return {
+        disabled: true,
+      };
+    }
+    return {
+      options: [
+        {
+          label: 'Option One',
+          value: '1',
+        },
+        {
+          label: 'Option Two',
+          value: '2',
+        },
+      ],
+    };
+  },
+});
+```
+
+<Tip>
+  When accessing the Piece auth, be sure to use exactly `auth` as it is
+  hardcoded. However, for other properties, use their respective names.
+</Tip>
+
+### Multi-Select Dropdown
+
+This property allows for multiple selections from dynamically loaded options.
+
+**Example:**
+
+```typescript
+Property.MultiSelectDropdown({
+  displayName: 'Options',
+  description: 'Select one or more options',
+  required: true,
+  refreshers: ['auth'],
+  auth: yourPieceAuth,
+  options: async ({ auth }) => {
+    if (!auth) {
+      return {
+        disabled: true,
+      };
+    }
+    return {
+      options: [
+        {
+          label: 'Option One',
+          value: '1',
+        },
+        {
+          label: 'Option Two',
+          value: '2',
+        },
+      ],
+    };
+  },
+});
+```
+
+<Tip>
+  When accessing the Piece auth, be sure to use exactly `auth` as it is
+  hardcoded. However, for other properties, use their respective names.
+</Tip>
+
+### Dynamic Properties
+
+This property is used to construct forms dynamically based on API responses or user input.
+
+**Example:**
+
+```typescript
+
+import {
+	httpClient,
+	HttpMethod,
+} from '@activepieces/pieces-common';
+
+
+Property.DynamicProperties({
+  description: 'Dynamic Form',
+  displayName: 'Dynamic Form',
+  required: true,
+  refreshers: ['auth'],
+  auth: yourPieceAuth,
+  props: async ({auth}) => {
+    const apiEndpoint = 'https://someapi.com';
+    const response = await httpClient.sendRequest<{ values: [string[]][] }>({
+        method: HttpMethod.GET,
+        url: apiEndpoint ,
+        //you can add the auth value to the headers
+	  });
+
+    const properties = {
+      prop1: Property.ShortText({
+        displayName: 'Property 1',
+        description: 'Enter property 1',
+        required: true,
+      }),
+      prop2: Property.Number({
+        displayName: 'Property 2',
+        description: 'Enter property 2',
+        required: false,
+      }),
+    };
+
+    return properties;
+  },
+});
+```
+
+
+
+### Custom Property (BETA)
+
+<Warning>
+ This feature is still in BETA and not fully released yet, please let us know if you use it and face any issues and consider it a possibility could have breaking changes in the future
+</Warning>
+This is a property that lets you inject JS code into the frontend and manipulate the DOM of this content however you like, it is extremely useful in case you are [embedding](/embedding/overview) Activepieces and want to have a way to communicate with the SaaS embedding it.
+It has a `code` property which is a function that takes in an object parameter which will have the following schema:
+
+
+| Parameter Name |  Type | Description |
+| ---  | --- | --- |
+| onChange | `(value:unknown)=>void` | A callback you call to set the value of your input (only call this inside event handlers)|
+| value | `unknown` | Whatever the type of the value you pass to onChange|
+| containerId | `string` | The ID of an HTML element in which you can modify the DOM however you like |
+| isEmbedded | `boolean` | The flag that tells you if the code is running inside an [embedded instance](/embedding/overview) of Activepieces |
+| projectId | `string` | The project ID of the flow the step that contains this property is in |
+| disabled | `boolean` | The flag that tells you whether or not the property is disabled |
+| property | `{ displayName:string, description?: string, required: boolean}` | The current property information|
+
+- You can return a clean up function at the end of the `code` property function to remove any listeners or HTML elements you inserted (this is important for development mode, the component gets [mounted twice](https://react.dev/reference/react/useEffect#my-effect-runs-twice-when-the-component-mounts)).
+- This function must be pure without any imports from external packages or variables outside the function scope. 
+- **Must** mark your piece `minimumSupportedRelease` property to be at least `0.58.0` after introducing this property to it.
+
+Here is how to define such a property:
+```typescript
+ Property.Custom({
+      code:(({value,onChange,containerId})=>{
+        const container = document.getElementById(containerId);
+        const input = document.createElement('input');
+        input.classList.add(...['border','border-solid', 'border-border', 'rounded-md']) 
+        input.type = 'text';
+        input.value = `${value}`;
+        input.oninput = (e: Event) => {
+          const value = (e.target as HTMLInputElement).value;
+          onChange(value);
+        }
+       container!.appendChild(input);
+       const windowCallback = (e:MessageEvent<{type:string,value:string,propertyName:string}>) => {
+        if(e.data.type === 'updateInput' && e.data.propertyName === 'YOUR_PROPERTY_NAME'){
+          input.value= e.data.value;
+          onChange(e.data.value);
+        }
+       }
+       window.addEventListener('message', windowCallback);
+        return ()=>{
+          window.removeEventListener('message', windowCallback);
+          container!.removeChild(input);
+        }
+      }),
+      displayName: 'Custom Property',
+      required: true
+    })
+  ```
+
+- If you would like to know more about how to setup communication between Activepieces and the SaaS that's embedding it, check the [window postMessage API](https://developer.mozilla.org/en-US/docs/Web/API/Window/postMessage).

@@ -41,6 +41,7 @@ export async function assertUserHasPermissionToFlow(
             await assertRoleHasPermission(principal, Permission.UPDATE_FLOW_STATUS, log)
             break
         }
+        case FlowOperationType.UPDATE_MINUTES_SAVED: 
         case FlowOperationType.SAVE_SAMPLE_DATA: 
         case FlowOperationType.ADD_ACTION:
         case FlowOperationType.UPDATE_ACTION:

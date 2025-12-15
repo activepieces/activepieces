@@ -36,6 +36,7 @@ export const customOdooApiCall = createAction({
       required: true,
     }),
     method_params: Property.DynamicProperties({
+      auth: odooAuth,
       displayName: '',
       required: true,
       refreshers: ['method'],
@@ -170,7 +171,7 @@ export const customOdooApiCall = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    const { base_url, database, username, api_key } = auth;
+    const { props: { base_url, database, username, api_key } } = auth;
     const { model, method, method_params } = propsValue;
 
     const odoo = new Odoo({

@@ -21,15 +21,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
-import { formatUtils } from '@/lib/utils';
 import {
   ProjectRelease,
   ProjectReleaseType,
@@ -96,7 +96,7 @@ const ProjectReleasesPage = () => {
       ),
       cell: ({ row }) => (
         <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
+          <FormattedDate date={new Date(row.original.created)} />
         </div>
       ),
     },

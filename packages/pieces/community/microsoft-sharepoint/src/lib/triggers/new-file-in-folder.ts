@@ -21,6 +21,7 @@ export const newFileInFolderTrigger = createTrigger({
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,
     folderId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'Folder to Monitor',
       description: 'The folder to watch for new files. Select "Root Folder" for the top-level folder of the drive.',
       required: true,

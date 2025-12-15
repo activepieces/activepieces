@@ -55,7 +55,7 @@ export const opnform = createPiece({
       },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${(auth as { apiKey: string }).apiKey}`,
+          Authorization: `Bearer ${auth.props.apiKey}`,
         };
       },
     }),

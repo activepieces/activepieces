@@ -3,6 +3,7 @@ import {
 	createTrigger,
 	TriggerStrategy,
 	PiecePropValueSchema,
+	AppConnectionValueForAuthProperty,
 } from '@activepieces/pieces-framework';
 import { microsoftSharePointCommon } from '../common';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
@@ -15,7 +16,7 @@ type Props = {
 	listId: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof microsoftSharePointAuth>, Props> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof microsoftSharePointAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	items: async ({ auth, propsValue, lastFetchEpochMS }) => {
 		const { siteId, listId } = propsValue;

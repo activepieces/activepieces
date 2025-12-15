@@ -1,5 +1,5 @@
 import { HttpMethod, httpClient, HttpMessageBody, QueryParams } from '@activepieces/pieces-common';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { greipAuth } from './auth';
 
 const BASE_URL = 'https://greipapi.com';
@@ -9,7 +9,7 @@ export type GreipApiCallParams = {
   path: string;
   queryParams?: Record<string, string | number | string[] | undefined>;
   body?: any;
-  auth: PiecePropValueSchema<typeof greipAuth>;
+  auth: AppConnectionValueForAuthProperty<typeof greipAuth>;
 };
 
 export async function greipApiCall<T extends HttpMessageBody>({
@@ -22,7 +22,7 @@ export async function greipApiCall<T extends HttpMessageBody>({
   const url = `${BASE_URL}${path}`;
   
   const headers: Record<string, string> = {
-    Authorization: `Bearer ${auth}`,
+    Authorization: `Bearer ${auth.secret_text}`,
     'Content-Type': 'application/json',
   };
 

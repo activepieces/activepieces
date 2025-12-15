@@ -153,11 +153,6 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             )
         }
 
-        await flowVersionSideEffects(log).postApplyOperation({
-            flowVersion: mutatedFlowVersion,
-            operation: userOperation,
-        })
-
         mutatedFlowVersion.updated = dayjs().toISOString()
         if (userId) {
             mutatedFlowVersion.updatedBy = userId
@@ -364,10 +359,6 @@ async function applySingleOperation(
     })
     const preparedOperation = await flowVersionValidationUtil(log).prepareRequest(projectId, platformId, operation)
     const updatedFlowVersion = flowOperations.apply(flowVersion, preparedOperation)
-    await flowVersionSideEffects(log).postApplyOperation({
-        flowVersion: updatedFlowVersion,
-        operation: preparedOperation,
-    })
     return updatedFlowVersion
 }
 

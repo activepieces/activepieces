@@ -63,7 +63,7 @@ export const updateContactAction = createAction({
     const tagsToAdd = context.propsValue.tags_to_add ?? [];
     const tagsToDelete = context.propsValue.tags_to_delete ?? [];
 
-    const { subdomain, apiToken } = context.auth;
+    const { subdomain, apiToken } = context.auth.props;
 
     const customFields: KommoCustomFieldValue[] = [];
 

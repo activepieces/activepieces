@@ -1,5 +1,5 @@
-import { Flow, PlatformId, ProjectId } from '@activepieces/shared'
-import { Job } from 'bullmq'
+import { Flow, FlowId, FlowStatus, ProjectId } from '@activepieces/shared'
+import { Job, JobsOptions } from 'bullmq'
 import { Dayjs } from 'dayjs'
 
 export enum SystemJobName {
@@ -7,22 +7,9 @@ export enum SystemJobName {
     PIECES_SYNC = 'pieces-sync',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
     TRIAL_TRACKER = 'trial-tracker',
-    ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
-    AI_USAGE_REPORT = 'ai-usage-report',
     DELETE_FLOW = 'delete-flow',
-}
-
-type IssuesSummarySystemJobData = {
-    projectId: ProjectId
-    projectName: string
-    platformId: string
-}
-
-type AiUsageReportSystemJobData = {
-    platformId: PlatformId
-    overage: string
-    idempotencyKey: string
+    UPDATE_FLOW_STATUS = 'update-flow-status',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -31,15 +18,21 @@ type DeleteFlowDurableSystemJobData =  {
     dbDeleteDone: boolean
 }
 
+type UpdateFlowStatusDurableSystemJobData =  {
+    id: FlowId
+    projectId: ProjectId
+    newStatus: FlowStatus
+    preUpdateDone: boolean
+}
+
 type SystemJobDataMap = {
-    [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
-    [SystemJobName.AI_USAGE_REPORT]: AiUsageReportSystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
     [SystemJobName.RUN_TELEMETRY]: Record<string, never>
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
+    [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
@@ -67,6 +60,7 @@ export type JobSchedule = OneTimeJobSchedule | RepeatedJobSchedule
 type UpsertJobParams<T extends SystemJobName> = {
     job: SystemJobDefinition<T>
     schedule: JobSchedule
+    customConfig?: JobsOptions
 }
 
 export type SystemJobSchedule = {

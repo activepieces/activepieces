@@ -17,13 +17,21 @@ export const updateLead = createAction({
   description: 'Updates a Lead.',
   props: {
     campaignId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Campaign',
       description:
         'Choose a campaign from the list or enter the campaign ID manually.',
       required: true,
       refreshers: ['auth'],
       options: async ({ auth }) => {
-        const campaigns = await fetchCampaigns(auth as string);
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
+        const campaigns = await fetchCampaigns(auth.secret_text);
         return {
           options: campaigns.map((campaign) => ({
             label: campaign.name,
@@ -34,20 +42,25 @@ export const updateLead = createAction({
       },
     }),
     leadId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Lead',
       description: 'Choose a lead from the selected campaign.',
       required: true,
       refreshers: ['campaignId'],
       options: async ({ auth, campaignId }) => {
-        if (!campaignId) {
-          return { options: [], disabled: true };
+        if (!campaignId || !auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first and select a campaign',
+          };
         }
 
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
           url: `${reachinboxCommon.baseUrl}leads?campaignId=${campaignId}&lastLead=false`,
           headers: {
-            Authorization: `Bearer ${auth as string}`,
+            Authorization: `Bearer ${auth.secret_text}`,
           },
         });
 
@@ -128,7 +141,7 @@ export const updateLead = createAction({
         method: HttpMethod.PUT,
         url: url,
         headers: {
-          Authorization: `Bearer ${context.auth as string}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body: {

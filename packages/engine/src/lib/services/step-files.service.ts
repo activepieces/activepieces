@@ -1,7 +1,6 @@
 import { FilesService } from '@activepieces/pieces-framework'
-import { FileLocation, isNil, StepFileUpsertResponse } from '@activepieces/shared'
+import { FileLocation, FileSizeError, FileStoreError, isNil, StepFileUpsertResponse } from '@activepieces/shared'
 import fetchRetry from 'fetch-retry'
-import { FileSizeError, FileStoreError } from '../helper/execution-errors'
 
 const MAX_FILE_SIZE_MB = Number(process.env.AP_MAX_FILE_SIZE_MB)
 const FILE_STORAGE_LOCATION = process.env.AP_FILE_STORAGE_LOCATION as FileLocation

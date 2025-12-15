@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
-import { flowsHooks } from '@/features/flows/lib/flows-hooks';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
@@ -121,7 +121,7 @@ const FlowVersionDetailsCard = React.memo(
         state.setReadOnly,
       ]);
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
-    const { mutate: viewVersion, isPending } = flowsHooks.useFetchFlowVersion({
+    const { mutate: viewVersion, isPending } = flowHooks.useFetchFlowVersion({
       onSuccess: (populatedFlowVersion) => {
         setBuilderVersion(populatedFlowVersion);
         setReadonly(
@@ -132,7 +132,7 @@ const FlowVersionDetailsCard = React.memo(
     });
 
     const { mutate: overWriteDraftWithVersion, isPending: isDraftPending } =
-      flowsHooks.useOverWriteDraftWithVersion({
+      flowHooks.useOverWriteDraftWithVersion({
         onSuccess: (populatedFlowVersion) => {
           setBuilderVersion(populatedFlowVersion.version);
           setLeftSidebar(LeftSideBarType.NONE);

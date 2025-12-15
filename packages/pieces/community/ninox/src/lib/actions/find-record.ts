@@ -31,8 +31,8 @@ export const findRecord = createAction({
 		const path = `/teams/${teamid}/databases/${dbid}/tables/${tid}/record`;
 
 		try {
-			const response = await makeRequest(auth as string, HttpMethod.POST, path, {
-				filters: { [searchField]: searchValue },
+			const response = await makeRequest(auth.secret_text, HttpMethod.POST, path, {
+				filters: { [searchField as string]: searchValue },
 			});
 
 			const found = Array.isArray(response) && response.length === 0 ? false : true;

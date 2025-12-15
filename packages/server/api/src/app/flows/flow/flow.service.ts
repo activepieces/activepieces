@@ -1,7 +1,7 @@
+import { apDayjs, apDayjsDuration } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
-    assertNotNullOrUndefined,
     CreateFlowRequest,
     Cursor,
     ErrorCode,
@@ -29,22 +29,20 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, In, IsNull } from 'typeorm'
+import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
-import { AddAPArrayOverlapsToQueryBuilder } from '../../database/database-connection'
-import { distributedLock } from '../../database/redis-connections'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import Paginator from '../../helper/pagination/paginator'
+import Paginator, { Order } from '../../helper/pagination/paginator'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
 import { flowExecutionCache } from './flow-execution-cache'
-import { flowSideEffects } from './flow-service-side-effects'
 import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 
@@ -106,22 +104,24 @@ export const flowService = (log: FastifyBaseLogger) => ({
             alias: 'ff',
             query: {
                 limit,
-                order: 'DESC',
-                orderBy: 'updated',
+                orderBy: [
+                    { field: 'status', order: Order.DESC },
+                    { field: 'updated', order: Order.DESC },
+                ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
         })
 
-        const queryBuilder = flowRepo().createQueryBuilder('ff')
+        const queryBuilder = flowRepo().createQueryBuilder('ff').where({ operationStatus: Not(FlowOperationStatus.DELETING) })
 
         if (projectIds) {
-            queryBuilder.where({ projectId: In(projectIds) })
+            queryBuilder.andWhere({ projectId: In(projectIds) })
         }
         else {
             queryBuilder
                 .innerJoin('project', 'project', 'project.id = ff."projectId"')
-                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project."platformId" = :platformId', { platformId })
         }
 
         if (folderId !== undefined) {
@@ -179,16 +179,16 @@ export const flowService = (log: FastifyBaseLogger) => ({
         }
 
         if (connectionExternalIds !== undefined) {
-            AddAPArrayOverlapsToQueryBuilder(queryBuilder, 'latest_version."connectionIds"', connectionExternalIds, 'connectionExternalIds')
+            queryBuilder.andWhere('latest_version."connectionIds" && :connectionExternalIds', { connectionExternalIds })
         }
 
         if (agentExternalIds !== undefined) {
-            AddAPArrayOverlapsToQueryBuilder(queryBuilder, 'latest_version."agentIds"', agentExternalIds, 'agentExternalIds')
+            queryBuilder.andWhere('latest_version."agentIds" && :agentExternalIds', { agentExternalIds })
         }
 
         const paginationResult = await paginator.paginate<Flow & { version: FlowVersion | null, triggerSource?: TriggerSource }>(queryBuilder)
 
-        const populatedFlows = paginationResult.data.map((flow) => {
+        const populatedFlows = await Promise.all(paginationResult.data.map(async (flow) => {
             if (isNil(flow.version)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
@@ -198,16 +198,17 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     },
                 })
             }
+            const migratedVersion = await flowVersionMigrationService.migrate(flow.version)
             return {
                 ...flow,
-                version: flow.version,
+                version: migratedVersion,
                 triggerSource: includeTriggerSource && flow.triggerSource
                     ? {
                         schedule: flow.triggerSource.schedule,
                     }
                     : undefined,
             }
-        })
+        }))
         return paginationHelper.createPage(populatedFlows, paginationResult.cursor)
     },
     async exists(id: FlowId): Promise<boolean> {
@@ -322,139 +323,122 @@ export const flowService = (log: FastifyBaseLogger) => ({
         platformId,
         operation,
     }: UpdateParams): Promise<PopulatedFlow> {
-        await distributedLock(log).runExclusive({
-            key: id,
-            timeoutInSeconds: 240,
-            fn: async () => {
-                switch (operation.type) {
-                    case FlowOperationType.LOCK_AND_PUBLISH: {
-                        await this.updatedPublishedVersionId({
-                            id,
-                            userId,
-                            projectId,
-                            platformId,
-                        })
-                        await this.updateStatus({
-                            id,
-                            projectId,
-                            newStatus: operation.request.status ?? FlowStatus.ENABLED,
-                        })
-                        break
-                    }
 
-                    case FlowOperationType.CHANGE_STATUS: {
-                        await this.updateStatus({
-                            id,
-                            projectId,
-                            newStatus: operation.request.status,
-                        })
-                        break
-                    }
+        if (operation.type === FlowOperationType.LOCK_AND_PUBLISH || operation.type === FlowOperationType.CHANGE_STATUS) {
+            const flow = await this.getOneOrThrow({
+                id,
+                projectId,
+            })
+            if (flow.operationStatus !== FlowOperationStatus.NONE) {
+                throw new ActivepiecesError({
+                    code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
+                    params: {
+                        message: `Flow is busy with ${flow.operationStatus.toLocaleLowerCase()} operation. Please try again in a moment.`,
+                    },
+                })
+            }
+        }
 
-                    case FlowOperationType.CHANGE_FOLDER: {
-                        await flowRepo().update(id, {
-                            folderId: operation.request.folderId,
-                        })
-                        break
-                    }
+        switch (operation.type) {
+            case FlowOperationType.LOCK_AND_PUBLISH: {
+                await this.updatedPublishedVersionId({
+                    id,
+                    userId,
+                    projectId,
+                    platformId,
+                })
+                await flowRepo().update(id, {
+                    operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
+                })
+                await this.addUpdateStatusJob({
+                    id,
+                    projectId,
+                    newStatus: operation.request.status ?? FlowStatus.ENABLED,
+                })
+                break
+            }
 
-                    case FlowOperationType.UPDATE_METADATA: {
-                        await this.updateMetadata({
-                            id,
-                            projectId,
-                            metadata: operation.request.metadata,
-                        })
-                        break
-                    }
-                    default: {
-                        let lastVersion = await flowVersionService(
-                            log,
-                        ).getFlowVersionOrThrow({
-                            flowId: id,
-                            versionId: undefined,
-                        })
+            case FlowOperationType.CHANGE_STATUS: {
+                await flowRepo().update(id, {
+                    operationStatus: operation.request.status === FlowStatus.ENABLED ? FlowOperationStatus.ENABLING : FlowOperationStatus.DISABLING,
+                })
+                await this.addUpdateStatusJob({
+                    id,
+                    projectId,
+                    newStatus: operation.request.status,
+                })
+                break
+            }
 
-                        if (lastVersion.state === FlowVersionState.LOCKED) {
-                            const lastVersionWithArtifacts = await flowVersionService(
-                                log,
-                            ).getFlowVersionOrThrow({
-                                flowId: id,
-                                versionId: undefined,
-                            })
+            case FlowOperationType.CHANGE_FOLDER: {
+                await flowRepo().update(id, {
+                    folderId: operation.request.folderId,
+                })
+                break
+            }
 
-                            lastVersion = await flowVersionService(
-                                log,
-                            ).createEmptyVersion(id, {
-                                displayName: lastVersionWithArtifacts.displayName,
-                            })
+            case FlowOperationType.UPDATE_METADATA: {
+                await this.updateMetadata({
+                    id,
+                    projectId,
+                    metadata: operation.request.metadata,
+                })
+                break
+            }
 
-                            // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
-                            lastVersion = await flowVersionService(log).applyOperation({
-                                userId,
-                                projectId,
-                                platformId,
-                                flowVersion: lastVersion,
-                                userOperation: {
-                                    type: FlowOperationType.IMPORT_FLOW,
-                                    request: lastVersionWithArtifacts,
-                                },
-                            })
-                        }
-                        await flowVersionService(log).applyOperation({
-                            userId,
-                            projectId,
-                            platformId,
-                            flowVersion: lastVersion,
-                            userOperation: operation,
-                        })
-                    }
+            case FlowOperationType.UPDATE_MINUTES_SAVED: {
+                await flowRepo().update(id, {
+                    timeSavedPerRun: operation.request.timeSavedPerRun,
+                })
+                break
+            }
+            default: {
+                let lastVersion = await flowVersionService(
+                    log,
+                ).getFlowVersionOrThrow({
+                    flowId: id,
+                    versionId: undefined,
+                })
+
+                if (lastVersion.state === FlowVersionState.LOCKED) {
+                    const lastVersionWithArtifacts = await flowVersionService(
+                        log,
+                    ).getFlowVersionOrThrow({
+                        flowId: id,
+                        versionId: undefined,
+                    })
+
+                    lastVersion = await flowVersionService(
+                        log,
+                    ).createEmptyVersion(id, {
+                        displayName: lastVersionWithArtifacts.displayName,
+                    })
+
+                    // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
+                    lastVersion = await flowVersionService(log).applyOperation({
+                        userId,
+                        projectId,
+                        platformId,
+                        flowVersion: lastVersion,
+                        userOperation: {
+                            type: FlowOperationType.IMPORT_FLOW,
+                            request: lastVersionWithArtifacts,
+                        },
+                    })
                 }
-            },
-        })
-        return this.getOnePopulatedOrThrow({
-            id,
-            projectId,
-        })
-    },
-
-    async updateStatus({
-        id,
-        projectId,
-        newStatus,
-        entityManager,
-    }: UpdateStatusParams): Promise<PopulatedFlow> {
-        const flowToUpdate = await this.getOneOrThrow({
-            id,
-            projectId,
-            entityManager,
-        })
-
-        const publishedFlowVersionId = flowToUpdate.publishedVersionId
-        if (flowToUpdate.status !== newStatus) {
-            assertNotNullOrUndefined(publishedFlowVersionId, 'publishedFlowVersionId is required')
-            const publishedFlowVersion = await flowVersionService(log).getFlowVersionOrThrow({
-                flowId: flowToUpdate.id,
-                versionId: publishedFlowVersionId,
-                entityManager,
-            })
-
-            await flowRepo(entityManager).save(flowToUpdate)
-
-            await flowSideEffects(log).preUpdateStatus({
-                flowToUpdate,
-                publishedFlowVersion,
-                newStatus,
-            })
-
-            flowToUpdate.status = newStatus
-            await flowRepo(entityManager).save(flowToUpdate)
-            await flowExecutionCache(log).delete(id)
+                await flowVersionService(log).applyOperation({
+                    userId,
+                    projectId,
+                    platformId,
+                    flowVersion: lastVersion,
+                    userOperation: operation,
+                })
+            }
         }
 
         return this.getOnePopulatedOrThrow({
             id,
             projectId,
-            entityManager,
         })
     },
     async updatedPublishedVersionId({
@@ -492,7 +476,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flowToUpdate.publishedVersionId = lockedFlowVersion.id
             flowToUpdate.status = FlowStatus.DISABLED
             const updatedFlow = await flowRepo(entityManager).save(flowToUpdate)
-            await flowExecutionCache(log).delete(updatedFlow.id)
+            await flowExecutionCache(log).invalidate(updatedFlow.id)
             return {
                 ...updatedFlow,
                 version: lockedFlowVersion,
@@ -507,54 +491,27 @@ export const flowService = (log: FastifyBaseLogger) => ({
         })
         if (flow.operationStatus !== FlowOperationStatus.NONE) {
             throw new ActivepiecesError({
-                code: ErrorCode.FLOW_OPERATION_INVALID,
+                code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
                 params: {
                     message: `Flow ${id} is already being ${flow.operationStatus}`,
                 },
             })
         }
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.DELETE_FLOW,
-                data: {
-                    flow,
-                    preDeleteDone: false,
-                    dbDeleteDone: false,
-                },
-                jobId: `delete-flow-${flow.id}`,
-            },
-            schedule: {
-                type: 'one-time',
-                date: dayjs().add(1, 'second'),
-            },
-        })
+        await this.addDeleteJob(flow)
         await flowRepo().update(id, {
             operationStatus: FlowOperationStatus.DELETING,
         })
     },
 
-    async backgroundDeleteHandler(data: SystemJobData<SystemJobName.DELETE_FLOW>): Promise<void> {
-        const { flow, preDeleteDone, dbDeleteDone } = data
-        const job = await systemJobsSchedule(log).getJob(`delete-flow-${flow.id}`)
-        assertNotNullOrUndefined(job, 'job is required')
-        if (!preDeleteDone) {
-            await flowSideEffects(log).preDelete({
-                flowToDelete: flow,
-            })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-            })
-        }
-        if (!dbDeleteDone) {
-            await flowRepo().delete({ id: flow.id })
-            await job.updateData({
-                ...data,
-                preDeleteDone: true,
-                dbDeleteDone: true,
-            })
-        }
-        await flowExecutionCache(log).delete(flow.id)
+    async getAllEnabled(): Promise<PopulatedFlow[]> {
+        const flows = await flowRepo().findBy({
+            status: FlowStatus.ENABLED,
+        })
+        return Promise.all(flows.map(async (flow) => this.getOnePopulatedOrThrow({
+            id: flow.id,
+            projectId: flow.projectId,
+            versionId: flow.publishedVersionId ?? undefined,
+        })))
     },
     async deleteAllByPlatformId(platformId: PlatformId): Promise<void> {
         const projectIds = await projectService.getProjectIdsByPlatform(platformId)
@@ -638,6 +595,54 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
         flow.updated = dayjs().toISOString()
         await flowRepo().save(flow)
+    },
+
+    addDeleteJob: async (flow: Flow): Promise<void> => {
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.DELETE_FLOW,
+                data: {
+                    flow,
+                    preDeleteDone: false,
+                    dbDeleteDone: false,
+                },
+                jobId: `delete-flow-${flow.id}`,
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs(),
+            },
+            customConfig: {
+                backoff: {
+                    type: 'exponential',
+                    delay: apDayjsDuration(5, 'second').asMilliseconds(),
+                },
+            },
+        })
+    },
+    
+    addUpdateStatusJob: async (data: Omit<SystemJobData<SystemJobName.UPDATE_FLOW_STATUS>, 'preUpdateDone'>): Promise<void> => {
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.UPDATE_FLOW_STATUS,
+                data: {
+                    ...data,
+                    preUpdateDone: false,
+                },
+                jobId: `update-flow-status-${data.id}`,
+                
+            },
+            schedule: {
+                type: 'one-time',
+                date: apDayjs(),
+            },
+            customConfig: {
+                backoff: {
+                    type: 'exponential',
+                    delay: apDayjsDuration(5, 'second').asMilliseconds(),
+                },
+            },
+        })
     },
 })
 
@@ -751,13 +756,6 @@ type UpdateParams = {
     projectId: ProjectId
     operation: FlowOperationRequest
     platformId: PlatformId
-}
-
-type UpdateStatusParams = {
-    id: FlowId
-    projectId: ProjectId
-    newStatus: FlowStatus
-    entityManager?: EntityManager
 }
 
 type UpdatePublishedVersionIdParams = {

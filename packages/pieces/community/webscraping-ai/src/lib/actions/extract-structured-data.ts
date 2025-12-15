@@ -16,7 +16,7 @@ export const extractStructuredData = createAction({
     ];
 
     const params: any = {
-      apiKey,
+      apiKey:apiKey.secret_text,
       ...rest,
       proxy: (rest.proxy === 'datacenter' || rest.proxy === 'residential') ? rest.proxy : undefined,
       country: (rest.country && allowedCountries.includes(rest.country))

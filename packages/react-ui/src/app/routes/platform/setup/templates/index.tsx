@@ -4,6 +4,7 @@ import { t } from 'i18next';
 import { FileText, Pencil, Plus, Trash } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -16,24 +17,21 @@ import {
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { useToast } from '@/components/ui/use-toast';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
 import { FlowTemplate } from '@activepieces/shared';
 
 import { UpsertTemplateDialog } from './upsert-template-dialog';
 
 export default function TemplatesPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-
-  const { toast } = useToast();
 
   const [searchParams] = useSearchParams();
   const { data, isLoading, refetch } = useQuery({
@@ -52,9 +50,7 @@ export default function TemplatesPage() {
     },
     onSuccess: () => {
       refetch();
-      toast({
-        title: t('Success'),
-        description: t('Templates deleted successfully'),
+      toast.success(t('Templates deleted successfully'), {
         duration: 3000,
       });
     },
@@ -123,7 +119,7 @@ export default function TemplatesPage() {
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },

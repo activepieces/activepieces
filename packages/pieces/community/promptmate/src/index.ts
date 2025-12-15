@@ -63,7 +63,7 @@
           baseUrl: () => 'https://api.promptmate.io/v1',
           auth: promptmateAuth,
           authMapping: async (auth) => ({
-            'x-api-key': auth as string,
+            'x-api-key': auth.secret_text,
           }),
         }),
       ],

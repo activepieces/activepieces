@@ -1,10 +1,9 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import * as crypto from 'crypto';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export interface CashgramAuthCredentials {
   clientId: string;
   clientSecret: string;
-  publicKey: string;
 }
 
 export interface CashgramTokenResponse {
@@ -12,67 +11,6 @@ export interface CashgramTokenResponse {
   token?: string;
   error?: any;
   message?: string;
-}
-
-/**
- * Generate x-cf-signature using client ID and public key
- * Based on Cashfree's Java implementation: RSA/ECB/OAEPWithSHA-1AndMGF1Padding
- */
-export function generateCfSignature(clientId: string, publicKey: string): { signature: string, timestamp: number } {
-  try {
-    const timestamp = Math.floor(Date.now() / 1000); // Current UNIX timestamp
-    const data = `${clientId}.${timestamp}`;
-
-    // Parse the public key exactly like the Java code
-    let publicKeyContent = (publicKey).trim();
-
-    // Remove all whitespace and header/footer like Java code
-    publicKeyContent = publicKeyContent
-      .replace(/[\t\n\r]/g, '') // Remove tabs, newlines, carriage returns
-      .replace('-----BEGIN PUBLIC KEY-----', '')
-      .replace('-----END PUBLIC KEY-----', '');
-
-    console.log(`Cleaned public key content length: ${publicKeyContent.length}`);
-
-    // Convert to DER format (what the Java X509EncodedKeySpec expects)
-    const keyBuffer = Buffer.from(publicKeyContent, 'base64');
-
-    // Create the key object for Node.js crypto
-    // Node.js crypto.publicEncrypt with OAEP padding matches Java's RSA/ECB/OAEPWithSHA-1AndMGF1Padding
-    const keyObject = {
-      key: Buffer.concat([
-        Buffer.from('-----BEGIN PUBLIC KEY-----\n'),
-        Buffer.from(publicKeyContent.match(/.{1,64}/g)?.join('\n') || publicKeyContent),
-        Buffer.from('\n-----END PUBLIC KEY-----')
-      ]).toString(),
-      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING, // This matches OAEP padding in Java
-      oaepHash: 'sha1' // This matches SHA-1 in Java
-    };
-
-    // Encrypt the data (this matches cipher.doFinal() in Java)
-    const dataBuffer = Buffer.from(data, 'utf8');
-    const encrypted = crypto.publicEncrypt(keyObject, dataBuffer);
-
-    // Base64 encode the result (matches Base64.getEncoder().encodeToString() in Java)
-    const signature = encrypted.toString('base64');
-
-    console.log(`Generated signature for data: ${data}`);
-    console.log(`Signature: ${signature}`);
-    console.log(`Signature length: ${signature.length}`);
-
-    return { signature, timestamp };
-
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error(`Error generating signature: ${error.message}`);
-      console.error(`Public key format check - starts with BEGIN: ${publicKey.includes('BEGIN')}`);
-      console.error(`Public key length: ${publicKey.length}`);
-      throw new Error(`Failed to generate signature: ${error.message}. Please verify your public key is in proper PEM format.`);
-    } else {
-      console.error("Error generating signature: Unknown error");
-      throw new Error("Failed to generate signature: Unknown error. Please verify your public key is in proper PEM format.");
-    }
-  }
 }
 
 /**
@@ -89,29 +27,9 @@ export async function generateCashgramToken(
       ? 'https://payout-api.cashfree.com/payout/v1/authorize'
       : 'https://payout-gamma.cashfree.com/payout/v1/authorize';
 
-    // Generate x-cf-signature using crypto
-    // let signature: string;
-    // let timestamp: number;
-
-    // try {
-    //   const sigResult = generateCfSignature(credentials.clientId, credentials.publicKey);
-    //   signature = sigResult.signature;
-    //   timestamp = sigResult.timestamp;
-    // } catch (signatureError: any) {
-    //   console.error('Signature generation error:', signatureError);
-    //   return {
-    //     success: false,
-    //     error: signatureError,
-    //     message: `Failed to generate x-cf-signature: ${signatureError?.message || 'Unknown error'}. Please check your public key format.`,
-    //   };
-    // }
-
-    // Build headers with the generated signature and timestamp
     const headers = {
       'x-client-id': credentials.clientId,
       'x-client-secret': credentials.clientSecret,
-      // 'x-cf-signature': signature,
-      // 'x-cf-timestamp': timestamp.toString(),
       'Content-Type': 'application/json',
     };
 
@@ -151,7 +69,6 @@ export async function generateCashgramToken(
 export function validateAuthCredentials(authType: string, credentials: {
   clientId?: string;
   clientSecret?: string;
-  publicKey?: string;
 }): {
   isValid: boolean;
   error?: string;
@@ -185,20 +102,8 @@ export function validateAuthCredentials(authType: string, credentials: {
       };
     }
 
-    if (!credentials.publicKey || (credentials.publicKey).trim().length === 0) {
-      return {
-        isValid: false,
-        error: 'Public Key is required for Client Credentials + Public Key authentication',
-      };
-    }
 
-    // // Basic validation for PEM format
-    // if (!credentials.publicKey.includes('-----BEGIN') || !credentials.publicKey.includes('-----END')) {
-    //   return {
-    //     isValid: false,
-    //     error: 'Public Key must be in PEM format (including BEGIN/END markers)',
-    //   };
-    // }
+
   }
 
   return {
@@ -216,3 +121,41 @@ export function validateCashgramCredentials(credentials: CashgramAuthCredentials
 } {
   return validateAuthCredentials('client_credentials_with_public_key', credentials);
 }
+
+export const cashfreePaymentsAuth = PieceAuth.CustomAuth({
+  description: `Connect your Cashfree account
+
+This connector requires Cashfree API credentials (Client ID and Client Secret). Important: each Cashfree product is a separate product and requires its own credentials. For example, the Payments API and the Payouts API each need their own Client ID / Client Secret pairs.
+
+Create two connections (recommended)
+- For clarity and security we recommend creating two separate Activepieces connections:
+  1. **Payments connection** — use the Payments API Client ID / Client Secret. Use this connection for payments-related actions (create order, payment links, refunds, etc.).
+  2. **Payouts connection** — use the Payouts API Client ID / Client Secret. Use this connection for Cashgram and other payouts-related actions.
+
+Which keys to use
+- Payments API: use the credentials generated for the Payments product.
+- Payouts API (required by Cashgram actions): use credentials generated from the Payouts dashboard.
+
+How to generate API keys:
+1. Sign in to your Cashfree account and open the *Payouts* dashboard.
+2. In the navigation panel select **Developers**.
+3. Click **API Keys**.
+4. Click **Generate API Keys** on the API Keys screen.
+5. The **New API Keys** popup displays the Client ID and Client Secret.
+6. Click **Download API Keys** to save the keys locally. Keep these secret — do not share them.
+
+`,
+  props: {
+    clientId: Property.ShortText({
+      displayName: 'Cashfree Client ID',
+      description: 'Your Cashfree Client ID',
+      required: false,
+    }),
+    clientSecret: Property.ShortText({
+      displayName: 'Cashfree Client Secret',
+      description: 'Your Cashfree Client Secret',
+      required: false,
+    })
+  },  
+  required: true,
+});

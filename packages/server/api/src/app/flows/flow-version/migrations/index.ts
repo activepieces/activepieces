@@ -7,6 +7,8 @@ import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
 import { migrateHttpToWebhookV5 } from './migrate-v5-http-to-webhook'
 import { migratePropertySettingsV6 } from './migrate-v6-property-settings'
 import { moveAgentsToFlowVerion } from './migrate-v7-agents-to-flow-version'
+import { cleanUpAgentTools } from './migrate-v8-agent-tools'
+import { migrateV9AiPieces } from './migrate-v9-ai-pieces'
 
 export type Migration = {
     targetSchemaVersion: string | undefined
@@ -22,6 +24,8 @@ const migrations: Migration[] = [
     migrateHttpToWebhookV5,
     migratePropertySettingsV6,
     moveAgentsToFlowVerion,
+    cleanUpAgentTools,
+    migrateV9AiPieces,
 ] as const
 
 export const flowMigrations = {

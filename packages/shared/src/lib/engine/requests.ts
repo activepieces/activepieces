@@ -22,10 +22,17 @@ export const UpdateRunProgressRequest = Type.Object({
     finishTime: Type.Optional(Type.String()),
     stepResponse: Type.Optional(StepRunResponse),
     pauseMetadata: Type.Optional(PauseMetadata),
+    stepsCount: Type.Optional(Type.Number()),
 })
 
 export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 
+
+export const UpdateStepProgressRequest = Type.Object({
+    projectId: Type.String(),
+    stepResponse: StepRunResponse,
+})
+export type UpdateStepProgressRequest = Static<typeof UpdateStepProgressRequest>
 
 export const UploadLogsQueryParams = Type.Object({
     token: Type.String(),

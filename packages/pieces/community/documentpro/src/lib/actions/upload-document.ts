@@ -28,7 +28,7 @@ export const uploaddocument = createAction({
       method: HttpMethod.POST,
       url: 'https://api.documentpro.ai/v1/documents',
       headers: {
-        'x-api-key': context.auth,
+        'x-api-key': context.auth.secret_text,
         'Content-Type': 'multipart/form-data',
       }, 
       body: formData,

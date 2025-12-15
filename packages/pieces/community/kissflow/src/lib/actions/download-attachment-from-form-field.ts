@@ -61,14 +61,14 @@ export const downloadAttachmentFromFormField = createAction({
     const { processId, instanceId, activityInstanceId, fieldId, attachmentId } =
       context.propsValue;
 
-    const requestUrl = `https://${auth.accountName}.${auth.domainName}/process/2/${auth.accountId}/${processId}/${instanceId}/${activityInstanceId}/${fieldId}/attachment/${attachmentId}`;
+    const requestUrl = `https://${auth.props.accountName}.${auth.props.domainName}/process/2/${auth.props.accountId}/${processId}/${instanceId}/${activityInstanceId}/${fieldId}/attachment/${attachmentId}`;
     const resp = await httpClient.sendRequest({
       method: HttpMethod.GET,
       url: requestUrl,
       headers: {
         Accept: 'application/octet-stream',
-        'X-Access-Key-Id': auth.accessKeyId,
-        'X-Access-Key-Secret': auth.accessKeySecret,
+        'X-Access-Key-Id': auth.props.accessKeyId,
+        'X-Access-Key-Secret': auth.props.accessKeySecret,
       },
       responseType: 'arraybuffer',
     });

@@ -20,7 +20,7 @@ export const createUpdateAction = createAction({
   async run(context) {
     const { item_id, body } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     return await client.createUpdate({
       itemId: item_id as string,
       body: body as string,

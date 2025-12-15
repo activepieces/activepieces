@@ -10,10 +10,10 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { FormattedDate } from '@/components/ui/formatted-date';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { apiKeyApi } from '@/features/platform-admin/lib/api-key-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
 import { ApiKeyResponseWithoutValue } from '@activepieces/ee-shared';
 
 const ApiKeysPage = () => {
@@ -53,7 +53,7 @@ const ApiKeysPage = () => {
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },
@@ -66,9 +66,11 @@ const ApiKeysPage = () => {
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {row.original.lastUsedAt
-              ? formatUtils.formatDate(new Date(row.original.lastUsedAt))
-              : t('Never')}
+            {row.original.lastUsedAt ? (
+              <FormattedDate date={new Date(row.original.lastUsedAt)} />
+            ) : (
+              t('Never')
+            )}
           </div>
         );
       },
@@ -127,7 +129,7 @@ const ApiKeysPage = () => {
                       refetch();
                     }}
                     onError={() => {
-                      toast(INTERNAL_ERROR_TOAST);
+                      internalErrorToast();
                     }}
                   >
                     <Button variant="ghost" className="size-8 p-0">

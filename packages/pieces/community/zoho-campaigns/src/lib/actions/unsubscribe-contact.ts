@@ -9,7 +9,7 @@ export const unsubscribeContact = createAction({
   description: 'Remove a contact from a mailing list.',
   props: zohoCampaignsCommon.unsubscribeContactProperties(),
   async run({ auth, propsValue }) {
-    const location = auth.props?.['location'] || 'zoho.com';
+    const location = auth.props?.['location'] as string || 'zoho.com';
     const accessToken = auth.access_token;
     await propsValidation.validateZod(
       propsValue,

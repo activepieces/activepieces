@@ -3,8 +3,10 @@ import { foreplayCoApiCall } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { findAds as findAdsProperties } from '../properties';
 import { findAdsSchema } from '../schemas';
+import { foreplayCoAuth } from '../..';
 
 export const findAds = createAction({
+  auth: foreplayCoAuth,
   name: 'findAds',
   displayName: 'Find Ads',
   description:
@@ -83,7 +85,7 @@ export const findAds = createAction({
       : '/api/discovery/ads';
 
     const response = await foreplayCoApiCall({
-      apiKey: auth as string,
+      apiKey: auth,
       method: HttpMethod.GET,
       resourceUri: fullUrl,
     });

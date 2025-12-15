@@ -1,11 +1,11 @@
-import { AppConnection, AppConnectionStatus, AppConnectionType, BasicAuthConnectionValue, CloudOAuth2ConnectionValue, OAuth2ConnectionValueWithApp } from '@activepieces/shared'
+import { ContextVersion } from '@activepieces/pieces-framework'
+import { AppConnection, AppConnectionStatus, AppConnectionType, AppConnectionValue, ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '@activepieces/shared'
 import { StatusCodes } from 'http-status-codes'
-import { ConnectionExpiredError, ConnectionLoadingError, ConnectionNotFoundError, ExecutionError, FetchError } from '../helper/execution-errors'
 import { utils } from '../utils'
     
-export const createConnectionService = ({ projectId, engineToken, apiUrl }: CreateConnectionServiceParams): ConnectionService => {
+export const createConnectionService = ({ projectId, engineToken, apiUrl, contextVersion }: CreateConnectionServiceParams): ConnectionService => {
     return {
-        async obtain(externalId: string): Promise<ConnectionValue> {
+        async obtain(externalId: string): Promise<AppConnectionValue> {
             const url = `${apiUrl}v1/worker/app-connections/${encodeURIComponent(externalId)}?projectId=${projectId}`
 
             const { data: connectionValue, error: connectionValueError } = await utils.tryCatchAndThrowOnEngineError((async () => {
@@ -26,7 +26,7 @@ export const createConnectionService = ({ projectId, engineToken, apiUrl }: Crea
                 if (connection.status === AppConnectionStatus.ERROR) {
                     throw new ConnectionExpiredError(externalId)
                 }
-                return getConnectionValue(connection)
+                return getConnectionValue(connection, contextVersion)
             }))
             
             if (connectionValueError) {
@@ -55,34 +55,37 @@ const handleFetchError = ({ url, cause }: HandleFetchErrorParams): never => {
     throw new FetchError(url, cause)
 }
 
-const getConnectionValue = (connection: AppConnection): ConnectionValue => {
-    switch (connection.value.type) {
-        case AppConnectionType.SECRET_TEXT:
-            return connection.value.secret_text
-
-        case AppConnectionType.CUSTOM_AUTH:
-            return connection.value.props
-
+const getConnectionValue = (connection: AppConnection, contextVersion: ContextVersion | undefined): AppConnectionValue => {
+    switch (contextVersion) {
+        case undefined:
+            return makeConnectionValueCompatibleWithContextV0(connection)
+        case ContextVersion.V1:
+            return connection.value
         default:
             return connection.value
     }
 }
 
-export type ConnectionValue =
-    | OAuth2ConnectionValueWithApp
-    | CloudOAuth2ConnectionValue
-    | BasicAuthConnectionValue
-    | Record<string, unknown>
-    | string
+function makeConnectionValueCompatibleWithContextV0(connection: AppConnection): AppConnectionValue {
+    switch (connection.value.type) {
+        case AppConnectionType.SECRET_TEXT:
+            return connection.value.secret_text as unknown as AppConnectionValue
 
+        case AppConnectionType.CUSTOM_AUTH:
+            return connection.value.props as unknown as AppConnectionValue
+        default:
+            return connection.value as unknown as AppConnectionValue
+    }
+}
 type ConnectionService = {
-    obtain(externalId: string): Promise<ConnectionValue>
+    obtain(externalId: string): Promise<AppConnectionValue>
 }
 
 type CreateConnectionServiceParams = {
     projectId: string
     apiUrl: string
     engineToken: string
+    contextVersion: ContextVersion | undefined
 }
 
 type HandleResponseErrorParams = {

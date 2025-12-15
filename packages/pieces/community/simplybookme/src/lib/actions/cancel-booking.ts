@@ -10,7 +10,7 @@ export const cancelBooking = createAction({
     bookingId: bookingDropdown
   },
   async run(context) {
-    const auth = context.auth as SimplybookAuth;
+    const auth = context.auth.props;
     const { bookingId } = context.propsValue;
 
     const params = [bookingId];

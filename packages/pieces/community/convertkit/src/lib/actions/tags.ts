@@ -32,7 +32,7 @@ export const listTags = createAction({
   description: 'Returns a list of all tags',
   props: {},
   run(context) {
-    return fetchTags(context.auth);
+    return fetchTags(context.auth.secret_text);
   },
 });
 

@@ -142,7 +142,7 @@ export const runExtract = createAction({
         context.propsValue.document_id
       }/run_parser?${params.toString()}`,
       headers: {
-        'x-api-key': context.auth,
+        'x-api-key': context.auth.secret_text,
         Accept: 'application/json',
       },
     });

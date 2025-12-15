@@ -1,6 +1,5 @@
 import {
 	DropdownOption,
-	PiecePropValueSchema,
 	Property,
 	createAction,
 } from '@activepieces/pieces-framework';
@@ -18,6 +17,7 @@ export const findRecords = createAction({
 		solutionId: smartsuiteCommon.solutionId,
 		tableId: smartsuiteCommon.tableId,
 		searchField: Property.Dropdown({
+			auth: smartsuiteAuth,
 			displayName: 'Search Field',
 			required: true,
 			refreshers: ['tableId'],
@@ -30,7 +30,7 @@ export const findRecords = createAction({
 					};
 				}
 
-				const { apiKey, accountId } = auth as PiecePropValueSchema<typeof smartsuiteAuth>;
+				const { apiKey, accountId } = auth.props;
 
 				const response = await smartSuiteApiCall<{
 					structure: TableStucture[];
@@ -68,8 +68,8 @@ export const findRecords = createAction({
 			const tableResponse = await smartSuiteApiCall<{
 				structure: TableStucture[];
 			}>({
-				apiKey: auth.apiKey,
-				accountId: auth.accountId,
+				apiKey: auth.props.apiKey,
+				accountId: auth.props.accountId,
 				method: HttpMethod.GET,
 				resourceUri: `/applications/${tableId}`,
 			});
@@ -82,8 +82,8 @@ export const findRecords = createAction({
 
 			do {
 				const response = await smartSuiteApiCall<{ items: Record<string, any>[] }>({
-					accountId: auth.accountId,
-					apiKey: auth.apiKey,
+					accountId: auth.props.accountId,
+					apiKey: auth.props.apiKey,
 					method: HttpMethod.POST,
 					resourceUri: `/applications/${tableId}/records/list/`,
 					query: qs,

@@ -1,10 +1,12 @@
-import { AppSystemProp, ContainerType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { inspect } from 'util'
+import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { packageManager, registryPieceManager } from 'server-worker'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
-import { DatabaseType, system } from './system/system'
+import { system } from './system/system'
 
 
 function enumValidator<T extends string>(enumValues: T[]) {
@@ -140,6 +142,7 @@ const systemPropValidators: {
     [AppSystemProp.PM2_ENABLED]: booleanValidator,
     [AppSystemProp.EDITION]: enumValidator(Object.values(ApEdition)),
     [AppSystemProp.FEATUREBASE_API_KEY]: stringValidator,
+    [AppSystemProp.OPENROUTER_PROVISION_KEY]: stringValidator,
 
     // AppSystemProp
     [WorkerSystemProp.WORKER_CONCURRENCY]: numberValidator,
@@ -196,12 +199,14 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION
+    
     if (environment !== ApEnvironment.TESTING && fileStorageLocation === FileLocation.S3) {
         try {
             await s3Helper(log).validateS3Configuration()
         }
         catch (error: unknown) {
             throw new Error(JSON.stringify({
+                error: inspect(error),
                 message: 'S3 validation failed. Check your configuration and credentials.',
                 docUrl: 'https://www.activepieces.com/docs/install/configuration/overview#configure-s3-optional',
             }))
@@ -259,4 +264,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
             }))
         }
     }
+
+    await packageManager(log).validate()
+    await registryPieceManager(log).validate()
 }

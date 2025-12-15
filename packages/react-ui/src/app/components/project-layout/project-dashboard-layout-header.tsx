@@ -11,7 +11,6 @@ import {
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { McpSvg } from '@/assets/img/custom/mcp';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -74,13 +73,6 @@ export const ProjectDashboardLayoutHeader = () => {
       show: true,
     },
     {
-      to: authenticationSession.appendProjectRoutePrefix('/mcps'),
-      label: t('MCP'),
-      show: platform.plan.mcpsEnabled,
-      hasPermission: checkAccess(Permission.READ_MCP),
-      icon: McpSvg,
-    },
-    {
       to: authenticationSession.appendProjectRoutePrefix('/todos'),
       label: t('Todos'),
       show: platform.plan.todosEnabled,
@@ -111,11 +103,11 @@ export const ProjectDashboardLayoutHeader = () => {
     });
 
   return (
-    <div className="flex flex-col px-4 gap-1">
+    <div className="flex flex-col gap-1">
       {!isEmbedded && (
         <ProjectDashboardPageHeader title={project?.displayName} />
       )}
-      <Tabs>
+      <Tabs className="px-4">
         {!embedState.hideSideNav && (
           <TabsList variant="outline">
             {flowsLink.show && flowsLink.hasPermission && (

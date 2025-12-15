@@ -16,6 +16,7 @@ export const attachFileAction = createAction({
     fileId: dynamicFileProperty,
     
     refType: Property.Dropdown({
+      auth: podioAuth,
       displayName: 'Attach To',
       description: 'What type of object to attach the file to',
       required: true,

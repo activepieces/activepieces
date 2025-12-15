@@ -16,13 +16,13 @@ export const newTableFieldProcessed = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const response = await parseurCommon.createWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       event: 'table.processed',
       target: context.webhookUrl,
       category: 'CUSTOM',
     });
     await parseurCommon.enableWebhook({
-      apiKey: context.auth as string,
+      apiKey: context.auth.secret_text,
       webhookId: response.id,
       mailboxId: context.propsValue.mailboxId as number,
     });
@@ -38,7 +38,7 @@ export const newTableFieldProcessed = createTrigger({
       return;
     }
     await parseurCommon.deleteWebhook({
-      apiKey: context.auth,
+      apiKey: context.auth.secret_text,
       webhookId: webhookInfo.webhookId,
     });
     await context.store.delete('_newTableFieldProcessed');

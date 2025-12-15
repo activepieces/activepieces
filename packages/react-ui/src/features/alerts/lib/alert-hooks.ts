@@ -2,8 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
+import { toast } from 'sonner';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { Alert, AlertChannel } from '@activepieces/ee-shared';
@@ -36,9 +37,7 @@ export const alertMutations = {
         }),
       onSuccess: (data) => {
         queryClient.invalidateQueries({ queryKey: alertsKeys.all });
-        toast({
-          title: t('Success'),
-          description: t('Your changes have been saved.'),
+        toast.success(t('Your changes have been saved.'), {
           duration: 3000,
         });
         setOpen(false);
@@ -52,7 +51,7 @@ export const alertMutations = {
               });
               break;
             default: {
-              toast(INTERNAL_ERROR_TOAST);
+              internalErrorToast();
               break;
             }
           }
@@ -66,9 +65,7 @@ export const alertMutations = {
       mutationFn: (alert) => alertsApi.delete(alert.id),
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: alertsKeys.all });
-        toast({
-          title: t('Success'),
-          description: t('Your changes have been saved.'),
+        toast.success(t('Your changes have been saved.'), {
           duration: 3000,
         });
       },

@@ -111,7 +111,7 @@ export const stripeCreatePaymentIntent = createAction({
       url: `${stripeCommon.baseUrl}/payment_intents`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',

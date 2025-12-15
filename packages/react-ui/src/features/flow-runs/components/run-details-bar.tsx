@@ -113,9 +113,11 @@ const RunDetailsBar = React.memo(
                     )}
                   </span>
                 </div>
-                <span className="text-xs text-muted-foreground flex-shrink-0">
-                  {formatUtils.formatDate(new Date(run.created))}
-                </span>
+                {run.created && (
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {formatUtils.formatDate(new Date(run.created))}
+                  </span>
+                )}
               </div>
               <div className="text-xs text-muted-foreground">{run.id}</div>
             </div>

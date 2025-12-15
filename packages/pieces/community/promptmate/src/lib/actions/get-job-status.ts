@@ -14,8 +14,15 @@ export const getJobStatus = createAction({
       description: 'Select the app for which to get job status',
       required: true,
       refreshers: [],
+      auth: promptmateAuth,
       options: async ({ auth }) => {
-        return await getAppDropdownOptions(auth as string);
+        if (!auth) {
+          return {
+            options: [],
+            disabled: true,
+          };
+        }
+        return await getAppDropdownOptions(auth.secret_text);
       },
     }),
     jobId: Property.ShortText({
@@ -46,7 +53,7 @@ export const getJobStatus = createAction({
       method: HttpMethod.GET,
       url: 'https://api.promptmate.io/v1/app-jobs',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
       },
       queryParams,
     });
