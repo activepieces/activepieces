@@ -6,17 +6,14 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
     name: 'Google',
     async listModels(config: GoogleProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ models: GoogleModel[] }>({
-            url: 'https://generativelanguage.googleapis.com/v1beta/models',
+            url: 'https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000',
             method: HttpMethod.GET,
             headers: {
                 'x-goog-api-key': config.apiKey,
                 'Content-Type': 'application/json',
             },
         })
-
-        const { models } = res.body
-
-        return models.map((model: GoogleModel) => ({
+        return res.body.models.map((model: GoogleModel) => ({
             id: model.name,
             name: model.displayName,
             type: AIProviderModelType.TEXT,

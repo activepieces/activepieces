@@ -307,6 +307,9 @@ import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgre
 import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308234291-MigrateSqliteToPglite'
 import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
 import { AddDisplayNameToAiProviders1765757655723 } from './migration/postgres/1765757655723-add-display-name-to-ai-providers'
+import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
+import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
+import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -629,6 +632,9 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPersonalProjectsForAllUsers1765107860778,
         MigrateSqliteToPglite1765308234291,
         AddLastActiveToUser1765325909187,
+        AddStepsExecutedAndAICreditsToFlowRun1765461560795,
+        ChangeTeamsToPersonalInCommunity1765709274266,
+        AddMinutesSavedToFlowForAnalytics1765732721451,
         AddDisplayNameToAiProviders1765757655723,
     ]
     return migrations
