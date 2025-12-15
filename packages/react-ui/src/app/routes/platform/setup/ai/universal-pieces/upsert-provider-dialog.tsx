@@ -183,42 +183,6 @@ export const UpsertAIProviderDialog = ({
               className="grid space-y-4"
               onSubmit={(e) => e.preventDefault()}
             >
-              {/* {!providerId && (
-                <FormItem className="space-y-3">
-                  <FormLabel>{t('Provider')}</FormLabel>
-                  <Select
-                    onValueChange={(val) => {
-                      setSelectedProvider(val as AIProviderName);
-                      form.setValue('provider', val as AIProviderName);
-                      // Reset config when provider changes
-                      form.setValue('config', { apiKey: '' });
-                    }}
-                    value={selectedProvider}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Select a provider')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {SUPPORTED_AI_PROVIDERS.map((p) => (
-                        <SelectItem key={p.provider} value={p.provider}>
-                          <div className="flex items-center gap-2">
-                            <img
-                              src={p.logoUrl}
-                              alt={p.name}
-                              className="w-5 h-5 object-contain"
-                            />
-                            {p.name}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )} */}
-
               <FormField
                 control={form.control}
                 name="displayName"
@@ -228,7 +192,7 @@ export const UpsertAIProviderDialog = ({
                     <FormControl>
                       <Input
                         {...field}
-                        placeholder={t('My Provider')}
+                        placeholder={'My Provider'}
                         disabled={isPending}
                       />
                     </FormControl>

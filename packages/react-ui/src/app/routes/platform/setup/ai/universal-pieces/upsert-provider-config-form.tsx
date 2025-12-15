@@ -56,7 +56,7 @@ export const UpsertProviderConfigForm = ({
                   {...field}
                   required
                   id="apiKey"
-                  placeholder={t('sk_************************')}
+                  placeholder={'sk_************************'}
                   className="rounded-sm"
                   disabled={isLoading}
                 />
@@ -78,7 +78,7 @@ export const UpsertProviderConfigForm = ({
                     {...field}
                     required
                     id="resourceName"
-                    placeholder={t('your-resource-name')}
+                    placeholder={'your-resource-name'}
                     className="rounded-sm"
                     disabled={isLoading}
                   />
@@ -102,7 +102,7 @@ export const UpsertProviderConfigForm = ({
                       {...field}
                       required
                       id="accountId"
-                      placeholder={t('your-account-id')}
+                      placeholder={'your-account-id'}
                       className="rounded-sm"
                       disabled={isLoading}
                     />
@@ -123,7 +123,7 @@ export const UpsertProviderConfigForm = ({
                       {...field}
                       required
                       id="gatewayId"
-                      placeholder={t('your-gateway-id')}
+                      placeholder={'your-gateway-id'}
                       className="rounded-sm"
                       disabled={isLoading}
                     />
@@ -148,7 +148,7 @@ export const UpsertProviderConfigForm = ({
                       {...field}
                       required
                       id="baseUrl"
-                      placeholder={t('your-base-url')}
+                      placeholder={'your-base-url'}
                       className="rounded-sm"
                       disabled={isLoading}
                     />
@@ -169,7 +169,7 @@ export const UpsertProviderConfigForm = ({
                       {...field}
                       required
                       id="apiKeyHeader"
-                      placeholder={t('your-api-key-header')}
+                      placeholder={'your-api-key-header'}
                       className="rounded-sm"
                       disabled={isLoading}
                     />
@@ -358,7 +358,7 @@ const ModelFormPopover = ({
                 }
               >
                 <SelectTrigger id="modelType">
-                  <SelectValue placeholder={t('Select model type')} />
+                  <SelectValue placeholder={'Select model type'} />
                 </SelectTrigger>
                 <SelectContent>
                   {Object.values(AIProviderModelType).map((type) => (

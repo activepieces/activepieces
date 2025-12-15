@@ -55,7 +55,7 @@ const AIProviderCard = ({
                   <Pencil className="size-4" />
                 </Button>
               ) : (
-                <Button variant={'link'} size={'sm'}>
+                <Button variant={'basic'} size={'sm'}>
                   {t('Enable')}
                 </Button>
               )}
