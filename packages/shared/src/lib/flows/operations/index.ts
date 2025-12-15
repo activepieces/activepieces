@@ -97,7 +97,6 @@ export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
     trigger: FlowTrigger,
     schemaVersion: Nullable(Type.String()),
-    templateId: Nullable(Type.String()),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>

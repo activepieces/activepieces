@@ -21,6 +21,8 @@ import {
   isNil,
 } from '@activepieces/shared';
 
+import { templatesApi } from '../lib/templates-api';
+
 type TemplateCardProps = {
   template: Template;
   onSelectTemplate: (template: Template) => void;
@@ -55,11 +57,11 @@ export const TemplateCard = ({
           displayName: template.name,
           trigger: template.flows![0].trigger,
           schemaVersion: template.flows![0].schemaVersion,
-          templateId: template.id,
         },
       });
     },
     onSuccess: (flow) => {
+      templatesApi.incrementUsageCount(template.id);
       navigate(`/flows/${flow.id}`);
     },
   });

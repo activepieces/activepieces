@@ -40,12 +40,12 @@ const TemplateViewer = ({ template }: { template: Template }) => {
           displayName: flowTemplate.displayName,
           trigger: flowTemplate.trigger,
           schemaVersion: flowTemplate.schemaVersion,
-          templateId: template.id,
         },
       });
       return updatedFlow;
     },
     onSuccess: (data) => {
+      templatesApi.incrementUsageCount(template.id);
       navigate(`/flows/${data.id}`);
     },
     onError: (error) => {

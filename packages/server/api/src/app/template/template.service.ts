@@ -85,7 +85,7 @@ export const templateService = () => ({
         }
     },
 
-    async useTemplate({ id }: UseTemplateParams): Promise<void> {
+    async incrementUsageCount({ id }: IncrementUsageCountParams): Promise<void> {
         await templateRepo().increment({ id }, 'usageCount', 1)
     },  
 
@@ -141,6 +141,6 @@ type UpdateParams = {
     params: UpdateTemplateRequestBody
 }
 
-type UseTemplateParams = {
+type IncrementUsageCountParams = {
     id: string
 }
