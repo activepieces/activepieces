@@ -118,7 +118,7 @@ const createColumns = (
                     <span>{t('N/A')}</span>
                   ) : (
                     <span>
-                      {formatMinutes(displayValue)}
+                      {formatMinutes(Math.round(displayValue ?? 0))}
                       {isEstimated && '~'}
                     </span>
                   )}
@@ -129,9 +129,7 @@ const createColumns = (
             </div>
           </TooltipTrigger>
           <TooltipContent side="top">
-            {t('Click to override the estimation', {
-              minutes: estimatedTimeSavedPerStep,
-            })}
+            {t('Click to override the estimation')}
           </TooltipContent>
         </Tooltip>
       );
