@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -120,6 +120,11 @@ const StepSettingsContainer = () => {
     [FlowActionType.CODE, FlowActionType.PIECE].includes(
       modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
+
+    useEffect(() => {
+      //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
+      form.trigger()
+    }, [])
 
   return (
     <Form {...form}>
