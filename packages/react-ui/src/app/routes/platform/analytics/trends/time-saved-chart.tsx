@@ -69,7 +69,9 @@ export function TimeSavedChart({
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
             <Clock className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
-              {t('No time saved yet. Data will appear here once your flows start running.')}
+              {t(
+                'No time saved yet. Data will appear here once your flows start running.',
+              )}
             </p>
           </div>
         ) : (

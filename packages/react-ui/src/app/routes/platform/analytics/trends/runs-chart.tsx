@@ -65,7 +65,9 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
             <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
-              {t('No runs recorded yet. Data will appear here once your flows start running.')}
+              {t(
+                'No runs recorded yet. Data will appear here once your flows start running.',
+              )}
             </p>
           </div>
         ) : (

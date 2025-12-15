@@ -14,8 +14,6 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
     return <MetricCardSkeleton />;
   }
 
-
-
   return (
     <MetricCard
       icon={Zap}
