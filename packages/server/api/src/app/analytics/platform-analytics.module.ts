@@ -4,6 +4,7 @@ import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 import { flowService } from '../flows/flow/flow.service'
+import { projectService } from '../project/project-service'
 
 export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
@@ -35,9 +36,9 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
         if (!flow) {
             throw new Error('Flow not found')
         }
-        const platformId = flow.projectId
+        const platformId = await projectService.getPlatformId(flow.projectId)
         if (platformId !== request.principal.platform.id) {
-            throw new Error('Flow not found')
+            throw new Error('Unauthorized')
         }
         return flowService(request.log).update({
             id: flow.id,
