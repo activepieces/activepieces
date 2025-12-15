@@ -4,8 +4,8 @@ import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { cn } from '@/lib/utils';
 
-import { useBuilderStateContext } from '../../builder-hooks';
-import { flowCanvasUtils } from '../utils/flow-canvas-utils';
+import { useBuilderStateContext } from '../../../builder-hooks';
+import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
   const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [

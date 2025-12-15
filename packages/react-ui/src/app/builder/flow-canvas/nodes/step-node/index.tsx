@@ -19,16 +19,14 @@ import {
 } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
-import { ApStepNodeStatus } from '../step-node-status';
+import { ApStepNodeStatus } from './step-node-status';
 
-import {
-  StepInvalidOrSkippedIcon,
-  StepNodeChevron,
-  StepNodeDisplayName,
-  StepNodeLogo,
-  StepNodeName,
-  Triggerwidget,
-} from './utils';
+import { StepInvalidOrSkippedIcon } from './step-invalid-or-skipped-icon';
+import { StepNodeChevron } from './step-node-chevron';
+import { StepNodeDisplayName } from './step-node-display-name';
+import { StepNodeLogo } from './step-node-logo';
+import { StepNodeName } from './step-node-name';
+import { TriggerWidget } from './trigger-widget';
 
 const ApStepCanvasNode = React.memo(
   ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
@@ -109,7 +107,7 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivAttributes}
         {...stepNodeDivListeners}
       >
-        {isTrigger && <Triggerwidget />}
+        {isTrigger && <TriggerWidget />}
         <StepInvalidOrSkippedIcon
           isValid={!!isStepValid}
           isSkipped={isSkipped}
