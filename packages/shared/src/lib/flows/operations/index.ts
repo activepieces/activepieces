@@ -454,8 +454,8 @@ export const flowOperations = {
                 break
         }
         clonedVersion.valid = flowStructureUtil.getAllSteps(clonedVersion.trigger).every((step) => {
-            const isSkipped = step.type != FlowTriggerType.EMPTY && step.type != FlowTriggerType.PIECE && step.skip;
-            return step.valid || isSkipped;
+            const isSkipped = step.type != FlowTriggerType.EMPTY && step.type != FlowTriggerType.PIECE && step.skip
+            return step.valid || isSkipped
         })
         return clonedVersion
     },

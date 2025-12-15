@@ -80,24 +80,22 @@ const BuilderPage = () => {
 
   useShowBuilderIsSavingWarningBeforeLeaving();
 
-  const { memorizedSelectedStep } = useBuilderStateContext(
-    (state) => {
-      const flowVersion = state.flowVersion;
-      if (isNil(state.selectedStep) || isNil(flowVersion)) {
-        return {
-          memorizedSelectedStep: undefined,
-        };
-      }
-      const step = flowStructureUtil.getStep(
-        state.selectedStep,
-        flowVersion.trigger,
-      );
-
+  const { memorizedSelectedStep } = useBuilderStateContext((state) => {
+    const flowVersion = state.flowVersion;
+    if (isNil(state.selectedStep) || isNil(flowVersion)) {
       return {
-        memorizedSelectedStep: step,
+        memorizedSelectedStep: undefined,
       };
-    },
-  );
+    }
+    const step = flowStructureUtil.getStep(
+      state.selectedStep,
+      flowVersion.trigger,
+    );
+
+    return {
+      memorizedSelectedStep: step,
+    };
+  });
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
@@ -237,8 +235,8 @@ const BuilderPage = () => {
                   selectedStep={memorizedSelectedStep}
                   key={constructContainerKey({
                     flowVersionId: flowVersion.id,
-                    step:memorizedSelectedStep,
-                    hasPieceModelLoaded:!!pieceModel,
+                    step: memorizedSelectedStep,
+                    hasPieceModelLoaded: !!pieceModel,
                   })}
                 >
                   <StepSettingsContainer />
@@ -279,5 +277,9 @@ function constructContainerKey({
     step?.type != FlowTriggerType.EMPTY &&
     step?.type != FlowTriggerType.PIECE &&
     step?.skip;
-  return `${flowVersionId}-${stepName??''}-${triggerOrActionName??''}-${pieceName??''}-${'skipped-'+!!isSkipped}-${hasPieceModelLoaded?'loaded':'not-loaded'}`;
+  return `${flowVersionId}-${stepName ?? ''}-${triggerOrActionName ?? ''}-${
+    pieceName ?? ''
+  }-${'skipped-' + !!isSkipped}-${
+    hasPieceModelLoaded ? 'loaded' : 'not-loaded'
+  }`;
 }

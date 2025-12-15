@@ -34,8 +34,7 @@ export function StatusProgressBar({ days, className }: StatusProgressBarProps) {
                       day.status === 'success',
                     'bg-destructive hover:bg-destructive/80':
                       day.status === 'fault',
-                    'bg-amber-400 hover:bg-amber-500':
-                      day.status === 'warning',
+                    'bg-amber-400 hover:bg-amber-500': day.status === 'warning',
                   },
                 )}
               />
