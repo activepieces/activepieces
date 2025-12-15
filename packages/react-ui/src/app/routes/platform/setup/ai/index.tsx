@@ -56,10 +56,11 @@ export default function AIProvidersPage() {
             const config = providers?.find(
               (p) => p.provider === providerDef.provider
             );
+          
             return (
               <AIProviderCard
                 key={providerDef.provider}
-                providerDef={providerDef}
+                providerInfo={providerDef}
                 providerConfig={config}
                 isDeleting={isDeleting}
                 onDelete={(id) => deleteProvider(id)}

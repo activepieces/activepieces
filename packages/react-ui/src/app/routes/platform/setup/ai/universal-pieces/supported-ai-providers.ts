@@ -1,6 +1,6 @@
 import { AIProviderName } from '@activepieces/shared';
 
-export const SUPPORTED_AI_PROVIDERS = [
+export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
   {
     provider: AIProviderName.OPENAI,
     name: 'OpenAI',
@@ -67,3 +67,10 @@ It is strongly recommended that you add your credit card information to your Ope
 3. In the api key, set your auth header value (full value including the Bearer if any).`,
   }
 ];
+
+export type AiProviderInfo = {
+  provider: AIProviderName;
+  name: string;
+  markdown: string;
+  logoUrl: string;
+};
