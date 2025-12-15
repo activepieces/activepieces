@@ -13,7 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { PERSONAL_PROJECT_NAME } from '@/hooks/project-hooks';
+import { getProjectName } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
 import {
   PROJECT_COLOR_PALETTE,
@@ -88,11 +88,7 @@ const ProjectSideBarItem = ({
               className="flex-1 flex items-center gap-2 min-w-0"
             >
               <ApProjectDisplay
-                title={
-                  project.type === ProjectType.PERSONAL
-                    ? PERSONAL_PROJECT_NAME
-                    : project.displayName
-                }
+                title={getProjectName(project)}
                 icon={project.icon}
                 maxLengthToNotShowTooltip={28}
                 projectType={project.type}
