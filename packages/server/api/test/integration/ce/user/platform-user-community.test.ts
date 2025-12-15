@@ -49,9 +49,7 @@ describe('User API', () => {
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/users',
-                query: {
-                    platformId: mockPlatformOne.id,
-                },
+                query: {},
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
