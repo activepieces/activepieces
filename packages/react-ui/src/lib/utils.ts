@@ -116,6 +116,13 @@ export const formatUtils = {
       year: 'numeric',
     }).format(date);
   },
+  formatToHoursAndMinutes(minutes: number) {
+    if (minutes < 60) {
+      return `${minutes} mins`;
+    }
+    const hours = Math.floor(minutes / 60);
+    return `${hours} hours`;
+  },
   formatDateToAgo(date: Date) {
     const now = dayjs();
     const inputDate = dayjs(date);
