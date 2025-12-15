@@ -153,8 +153,10 @@ export const UpsertAIProviderDialog = ({
       setOpen(false);
       onSave();
     },
-    onError: (error: AxiosError<{ message: string }>) => {
-      toast(error.response?.data?.message ?? JSON.stringify(error));
+    onError: (error: AxiosError<{ message?: string; params?: { message: string } }>) => {
+      const data = error.response?.data
+
+      toast(data?.message ?? data?.params?.message ?? JSON.stringify(error));
     },
   });
 
@@ -212,6 +214,7 @@ export const UpsertAIProviderDialog = ({
               <UpsertProviderConfigForm
                 form={form}
                 provider={selectedProvider}
+                apiKeyRequired={!config}
                 isLoading={isPending}
               />
 

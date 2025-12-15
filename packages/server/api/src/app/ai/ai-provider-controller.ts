@@ -13,7 +13,7 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
 
         const config = await aiProviderService(app.log).getConfig(platformId, request.params.id)
         if (request.principal.type === PrincipalType.USER && config.apiKey) {
-            config.apiKey = '*'.repeat(config.apiKey.length)
+            config.apiKey = ''
         }
 
         return config;

@@ -80,8 +80,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        // if the user update a part of the config, and he kept the api key unchanged (it will be sent again in this format ****)
-        if (request.config.apiKey.includes('*')) {
+        // if the user update a part of the config, he can keep the api key empty
+        if (request.config.apiKey.length === 0) {
             const record = await aiProviderRepo().findOneBy({
                 platformId,
                 provider: request.provider,
@@ -89,6 +89,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             if (record) {
                 const config = await encryptUtils.decryptObject<AIProviderConfig>(record.config)
                 request.config.apiKey = config.apiKey
+            } else {
+                throw new ActivepiecesError({
+                    code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                    params: {
+                        message: `Should not send an empty api key`
+                    },
+                })
             }
         }
 

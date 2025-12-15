@@ -26,12 +26,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 type UpsertProviderConfigFormProps = {
   form: UseFormReturn<CreateAIProviderRequest>;
   provider: AIProviderName;
+  apiKeyRequired?: boolean;
   isLoading?: boolean;
 };
 
 export const UpsertProviderConfigForm = ({
   form,
   provider,
+  apiKeyRequired = true,
   isLoading,
 }: UpsertProviderConfigFormProps) => {
   const { fields, append, remove, update } = useFieldArray({
@@ -54,7 +56,7 @@ export const UpsertProviderConfigForm = ({
             <FormControl>
                 <Input
                   {...field}
-                  required
+                  required={apiKeyRequired}
                   id="apiKey"
                   placeholder={'sk_************************'}
                   className="rounded-sm"
