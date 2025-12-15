@@ -37,7 +37,7 @@ export const TemplateCard = ({
   const navigate = useNavigate();
 
   const { mutate: createFlow, isPending } = useMutation<
-    PopulatedFlow,
+    PopulatedFlow[],
     Error,
     Template
   >({
@@ -46,23 +46,28 @@ export const TemplateCard = ({
         !isNil(folderId) && folderId !== UncategorizedFolderId
           ? await foldersApi.get(folderId)
           : undefined;
-      const newFlow = await flowsApi.create({
-        displayName: template.name,
-        projectId: authenticationSession.getProjectId()!,
-        folderName: folder?.displayName,
+      
+      const flowImportPromises = (template.flows || []).map(async (templateFlow) => {
+        const newFlow = await flowsApi.create({
+          displayName: templateFlow.displayName,
+          projectId: authenticationSession.getProjectId()!,
+          folderName: folder?.displayName,
+        });
+        return await flowsApi.update(newFlow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: templateFlow.displayName,
+            trigger: templateFlow.trigger,
+            schemaVersion: templateFlow.schemaVersion,
+          },
+        });
       });
-      return await flowsApi.update(newFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: template.name,
-          trigger: template.flows![0].trigger,
-          schemaVersion: template.flows![0].schemaVersion,
-        },
-      });
+
+      return Promise.all(flowImportPromises);
     },
-    onSuccess: (flow) => {
+    onSuccess: (flows) => {
       templatesApi.incrementUsageCount(template.id);
-      navigate(`/flows/${flow.id}`);
+      navigate(`/flows/${flows[0].id}`);
     },
   });
 

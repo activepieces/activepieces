@@ -96,33 +96,38 @@ const ImportFlowDialog = (
     Template[]
   >({
     mutationFn: async (templates: Template[]) => {
-      const importPromises = templates.map(async (template) => {
-        let flow: PopulatedFlow | null = null;
-        if (props.insideBuilder) {
-          flow = await flowsApi.get(props.flowId);
-        } else {
-          const folder =
-            !isNil(selectedFolderId) &&
-            selectedFolderId !== UncategorizedFolderId
-              ? await foldersApi.get(selectedFolderId)
-              : undefined;
-          flow = await flowsApi.create({
-            displayName: template.name,
-            projectId: authenticationSession.getProjectId()!,
-            folderName: folder?.displayName,
+      const importPromises = templates.flatMap(async (template) => {
+        const flowImportPromises = (template.flows || []).map(async (templateFlow) => {
+          let flow: PopulatedFlow | null = null;
+          if (props.insideBuilder) {
+            flow = await flowsApi.get(props.flowId);
+          } else {
+            const folder =
+              !isNil(selectedFolderId) &&
+              selectedFolderId !== UncategorizedFolderId
+                ? await foldersApi.get(selectedFolderId)
+                : undefined;
+            flow = await flowsApi.create({
+              displayName: templateFlow.displayName,
+              projectId: authenticationSession.getProjectId()!,
+              folderName: folder?.displayName,
+            });
+          }
+          return await flowsApi.update(flow.id, {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: {
+              displayName: templateFlow.displayName,
+              trigger: templateFlow.trigger,
+              schemaVersion: templateFlow.schemaVersion,
+            },
           });
-        }
-        return await flowsApi.update(flow.id, {
-          type: FlowOperationType.IMPORT_FLOW,
-          request: {
-            displayName: template.name,
-            trigger: template.flows![0].trigger,
-            schemaVersion: template.flows![0].schemaVersion,
-          },
         });
+
+        return Promise.all(flowImportPromises);
       });
 
-      return Promise.all(importPromises);
+      const results = await Promise.all(importPromises);
+      return results.flat();
     },
 
     onSuccess: (flows: PopulatedFlow[]) => {
@@ -143,17 +148,17 @@ const ImportFlowDialog = (
         }),
       );
 
-      if (flows.length === 1) {
-        navigate(`/flows/${flows[0].id}`);
-        return;
-      }
-      setIsDialogOpen(false);
-      if (flows.length === 1 || props.insideBuilder) {
-        navigate(`/flow-import-redirect/${flows[0].id}`);
-      }
-      if (!props.insideBuilder) {
-        props.onRefresh();
-      }
+      // if (flows.length === 1) {
+      //   navigate(`/flows/${flows[0].id}`);
+      //   return;
+      // }
+      // setIsDialogOpen(false);
+      // if (flows.length === 1 || props.insideBuilder) {
+      //   navigate(`/flow-import-redirect/${flows[0].id}`);
+      // }
+      // if (!props.insideBuilder) {
+      //   props.onRefresh();
+      // }
     },
     onError: (err) => {
       if (
