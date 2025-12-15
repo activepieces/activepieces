@@ -240,6 +240,50 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         if (failsafe) {
           return (error as HttpError).errorMessage();
         }
+        
+        if (error instanceof HttpError) {
+          const errorMessage = error.errorMessage();
+          const status = errorMessage.response.status;
+          const body = errorMessage.response.body;
+          const message = (errorMessage.response as any).message;
+          
+          let userFriendlyMessage = `Request failed with status ${status}`;
+          
+          if (message) {
+            userFriendlyMessage = message;
+          } else if (typeof body === 'string') {
+            userFriendlyMessage = body;
+          } else if (typeof body === 'object' && body !== null) {
+            const errorObj = body as Record<string, unknown>;
+            const errorField = errorObj['error'];
+            const extractedMessage =
+              errorObj['message'] ||
+              errorObj['error'] ||
+              (errorField && typeof errorField === 'object' ? (errorField as Record<string, unknown>)['message'] : undefined) ||
+              errorObj['description'] ||
+              errorObj['detail'] ||
+              errorObj['msg'];
+            
+            if (extractedMessage) {
+              userFriendlyMessage = String(extractedMessage);
+            } else {
+              if (status === 401) {
+                userFriendlyMessage = 'Authentication failed. Please check your credentials.';
+              } else if (status === 403) {
+                userFriendlyMessage = 'Access forbidden. Please check your permissions.';
+              } else if (status === 404) {
+                userFriendlyMessage = 'Resource not found. Please check the endpoint URL.';
+              } else if (status === 429) {
+                userFriendlyMessage = 'Rate limit exceeded. Please try again later.';
+              } else if (status >= 500) {
+                userFriendlyMessage = 'Server error. Please try again later.';
+              }
+            }
+          }
+          
+          throw new Error(userFriendlyMessage);
+        }
+        
         throw error;
       }
     },
