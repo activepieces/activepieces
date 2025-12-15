@@ -1,12 +1,13 @@
 import { createPiece, PieceAuth } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod, createCustomApiCallAction } from '@activepieces/pieces-common';
-import { BASE_URL } from './lib/common/props';
+import { BASE_URL, extractApiKey } from './lib/common/props';
 import { getLeads } from "./lib/actions/get-leads";
 import { createLead } from "./lib/actions/create-lead";
 import { getLead } from "./lib/actions/get-lead";
 import { deleteLead } from "./lib/actions/delete-lead";
 import { getLeadStats } from "./lib/actions/get-lead-stats";
 import { updateLead } from "./lib/actions/update-lead";
+import { PieceCategory } from "@activepieces/shared";
 
 
 // --- Authentication ---
@@ -26,7 +27,7 @@ export const bookedinAuth = PieceAuth.SecretText({
     `,
   validate: async ({ auth }) => {
     try {
-      const apiKey = typeof auth === 'string' ? auth : (auth as any)?.auth || auth;
+      const apiKey = extractApiKey(auth);
 
       if (!apiKey) {
         return { valid: false, error: 'API Key is empty' };
@@ -59,11 +60,11 @@ export const bookedinAuth = PieceAuth.SecretText({
 export const bookedin = createPiece({
   displayName: 'Bookedin',
   description: 'AI agents for lead conversion and appointment booking.',
-  logoUrl: 'https://media.licdn.com/dms/image/v2/D4E0BAQEtMd5EDZBqcA/company-logo_200_200/B4EZhOEctmHEAM-/0/1753656446116/ai_answers_logo?e=2147483647&v=beta&t=JpGeGRaKJ6_wNV5PeogiKFedo8M3P7v0gyMd3ncIPfU',
-  categories: [],
+  logoUrl: 'https://cdn.activepieces.com/pieces/bookedin.png',
+  categories: [PieceCategory.SALES_AND_CRM],
   auth: bookedinAuth,
   minimumSupportedRelease: '0.36.1',
-  authors: [],
+  authors: ["drona2938", "onyedikachi-david"],
   actions: [
     getLeads,
     createLead,
@@ -71,18 +72,13 @@ export const bookedin = createPiece({
     deleteLead,
     getLeadStats,
     updateLead,
-    // Add Custom API Call Action
     createCustomApiCallAction({
-      baseUrl: () => BASE_URL, // Uses the BASE_URL from props.ts
+      baseUrl: () => BASE_URL,
       auth: bookedinAuth,
       authMapping: async (auth) => {
-        
-        const apiKey = typeof auth === 'string' 
-          ? auth 
-          : (auth as any)?.secret_text || (auth as any)?.auth;
-          
+        const apiKey = extractApiKey(auth);
         return {
-          'X-API-Key': apiKey as string,
+          'X-API-Key': apiKey,
         };
       },
     }),

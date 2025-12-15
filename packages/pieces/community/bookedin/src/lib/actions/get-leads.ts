@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-import { bookedinAuth } from '../../index'; // Import auth from index
-import { BASE_URL, getBookedinHeaders } from '../common/props';
+import { bookedinAuth } from '../../index';
+import { BASE_URL, getBookedinHeaders, extractApiKey } from '../common/props';
 
 export const getLeads = createAction({
   name: 'getLeads',
@@ -31,7 +31,7 @@ export const getLeads = createAction({
     }),
     limit: Property.Number({
       displayName: 'Limit',
-      description: 'Number of leads to return (default 100)',
+      description: 'Number of leads to return',
       required: false,
       defaultValue: 100,
     }),
@@ -43,10 +43,7 @@ export const getLeads = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    // Robust extraction
-    const apiKey = typeof auth === 'string' 
-      ? auth 
-      : (auth as any)?.secret_text || (auth as any)?.auth;
+    const apiKey = extractApiKey(auth);
 
     const queryParams: Record<string, string> = {
       limit: (propsValue.limit ?? 100).toString(),
@@ -60,9 +57,9 @@ export const getLeads = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.GET,
-      url: `${BASE_URL}/leads/`, 
-      headers: getBookedinHeaders(apiKey as string),
-      queryParams: queryParams,
+      url: `${BASE_URL}/leads/`,
+      headers: getBookedinHeaders(apiKey),
+      queryParams,
     });
 
     return response.body;

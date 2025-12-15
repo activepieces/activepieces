@@ -1,7 +1,7 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { bookedinAuth } from '../../index';
-import { BASE_URL, getBookedinHeaders } from '../common/props';
+import { BASE_URL, getBookedinHeaders, extractApiKey } from '../common/props';
 
 export const createLead = createAction({
   name: 'createLead',
@@ -9,7 +9,6 @@ export const createLead = createAction({
   description: 'Creates a new lead in Bookedin AI',
   auth: bookedinAuth,
   props: {
-    // --- Contact Information ---
     firstName: Property.ShortText({
       displayName: 'First Name',
       required: true,
@@ -28,10 +27,7 @@ export const createLead = createAction({
     }),
   },
   async run({ auth, propsValue }) {
-    
-    const apiKey = typeof auth === 'string' 
-      ? auth 
-      : (auth as any)?.secret_text || (auth as any)?.auth;
+    const apiKey = extractApiKey(auth);
 
     const payload = {
       contact: {
@@ -46,9 +42,9 @@ export const createLead = createAction({
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${BASE_URL}/leads/`, 
+      url: `${BASE_URL}/leads/`,
       headers: {
-        ...getBookedinHeaders(apiKey as string),
+        ...getBookedinHeaders(apiKey),
         'Content-Type': 'application/json',
       },
       body: payload,
