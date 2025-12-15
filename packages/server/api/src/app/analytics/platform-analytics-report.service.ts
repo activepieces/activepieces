@@ -208,7 +208,6 @@ async function analyzeRuns(platformId: PlatformId, estimatedTimeSavedPerStep: nu
         .where('project."platformId" = :platformId', { platformId })
         .andWhere('flow_run.created >= now() - interval \'3 months\'')
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
-        .andWhere('(flow_run."stepsCount" IS NOT NULL OR flow."timeSavedPerRun" IS NOT NULL)')
         .groupBy('DATE(flow_run.created)')
         .orderBy('DATE(flow_run.created)', 'ASC')
         .setParameters({ estimatedTimeSavedPerStep })

@@ -91,7 +91,7 @@ const createColumns = (
           <TooltipContent side="top" className="max-w-xs">
             {t(
               'Each completed step saves {minutes} minutes of manual work. You can customize the estimated time saved per step or set a custom value for individual flows.',
-              { minutes: estimatedTimeSavedPerStep },
+              { minutes: Math.round(estimatedTimeSavedPerStep) },
             )}
           </TooltipContent>
         </Tooltip>
