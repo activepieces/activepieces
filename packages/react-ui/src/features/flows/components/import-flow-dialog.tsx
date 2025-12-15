@@ -150,17 +150,17 @@ const ImportFlowDialog = (
         }),
       );
 
-      // if (flows.length === 1) {
-      //   navigate(`/flows/${flows[0].id}`);
-      //   return;
-      // }
-      // setIsDialogOpen(false);
-      // if (flows.length === 1 || props.insideBuilder) {
-      //   navigate(`/flow-import-redirect/${flows[0].id}`);
-      // }
-      // if (!props.insideBuilder) {
-      //   props.onRefresh();
-      // }
+      if (flows.length === 1) {
+        navigate(`/flows/${flows[0].id}`);
+        return;
+      }
+      setIsDialogOpen(false);
+      if (flows.length === 1 || props.insideBuilder) {
+        navigate(`/flow-import-redirect/${flows[0].id}`);
+      }
+      if (!props.insideBuilder) {
+        props.onRefresh();
+      }
     },
     onError: (err) => {
       if (
