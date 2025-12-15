@@ -30,7 +30,6 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('estimatedTimeSavedPerStep', request.estimatedTimeSavedPerStep),
             outdated: request.outdated,
         })
-        return refreshReport(platformId, log)
     },
     getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
         const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
