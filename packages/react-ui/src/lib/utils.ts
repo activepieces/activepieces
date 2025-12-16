@@ -118,10 +118,10 @@ export const formatUtils = {
   },
   formatToHoursAndMinutes(minutes: number) {
     if (minutes < 60) {
-      return `${minutes} mins`;
+      return `${formatUtils.formatNumber(minutes)} mins`;
     }
     const hours = Math.floor(minutes / 60);
-    return `${hours} hours`;
+    return `${formatUtils.formatNumber(hours)} hours`;
   },
   formatDateToAgo(date: Date) {
     const now = dayjs();
