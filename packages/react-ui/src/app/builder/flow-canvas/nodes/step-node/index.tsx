@@ -91,7 +91,7 @@ const ApStepCanvasNode = React.memo(
           maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         className={cn(
-          'transition-all border-box rounded-md border border-solid border-border relative hover:border-primary group',
+          'transition-all border-box rounded-md border border-solid border-border relative overflow-show  group',
           {
             'border-primary': isSelected,
             'bg-background': !isDragging,
@@ -99,6 +99,7 @@ const ApStepCanvasNode = React.memo(
             'shadow-none': isDragging,
             'bg-accent': isSkipped,
             'rounded-tl-none': isTrigger,
+            "hover:border-ring": !isSelected,
           },
         )}
         onClick={(e) => handleStepClick(e)}
