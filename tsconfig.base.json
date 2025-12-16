@@ -275,6 +275,9 @@
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
       ],
+      "@activepieces/piece-oncehub": [
+        "packages/pieces/community/oncehub/src/index.ts"
+      ],
       "@activepieces/piece-swarmnode": [
         "packages/pieces/community/swarmnode/src/index.ts"
       ],
@@ -298,6 +301,9 @@
       ],
       "@activepieces/piece-base44": [
         "packages/pieces/community/base44/src/index.ts"
+      ],
+      "@activepieces/piece-luxury-presence": [
+        "packages/pieces/community/luxury-presence/src/index.ts"
       ]
     },
     "resolveJsonModule": true
