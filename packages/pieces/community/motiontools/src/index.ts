@@ -9,7 +9,7 @@ import { packageCreated } from './lib/triggers/package-created';
 import { packageStatusUpdate } from './lib/triggers/package-status-update';
 
 export const motiontools = createPiece({
-  displayName: 'Motiontools',
+  displayName: 'MotionTools',
   auth: motiontoolsAuth,
   description:
     'Digitize processes, boost efficiency and excite users with MotionTools, the operating system for fleet-based service providers.',
