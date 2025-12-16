@@ -53,7 +53,7 @@ const ShareTemplateDialog: React.FC<{
 
       const author = currentUser
         ? `${currentUser.firstName} ${currentUser.lastName}`
-        : 'Someone in platform';
+        : 'Unknown User';
 
       const flowTemplate = await templatesApi.create({
         name: template.name,

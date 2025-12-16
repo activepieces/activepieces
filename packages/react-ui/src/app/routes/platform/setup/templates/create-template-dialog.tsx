@@ -72,15 +72,13 @@ export const CreateTemplateDialog = ({
       const formValue = form.getValues();
       const author = currentUser
         ? `${currentUser.firstName} ${currentUser.lastName}`
-        : 'Someone in platform';
+        : 'Unknown User';
 
       const flowTemplate: FlowVersionTemplate = {
         ...formValue.template,
         displayName: formValue.displayName,
         valid: formValue.template.valid ?? true,
       };
-
-      console.log('flowTemplate', flowTemplate);
 
       return templatesApi.create({
         flows: [flowTemplate],
