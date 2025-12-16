@@ -299,6 +299,9 @@
       "@activepieces/piece-formsite": [
         "packages/pieces/community/formsite/src/index.ts"
       ],
+      "@activepieces/piece-lofty": [
+        "packages/pieces/community/lofty/src/index.ts"
+      ],
       "@activepieces/piece-youcanbookme": [
         "packages/pieces/community/youcanbookme/src/index.ts"
       ],
