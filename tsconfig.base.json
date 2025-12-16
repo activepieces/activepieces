@@ -295,6 +295,9 @@
       ],
       "@activepieces/piece-formsite": [
         "packages/pieces/community/formsite/src/index.ts"
+      ],
+      "@activepieces/piece-base44": [
+        "packages/pieces/community/base44/src/index.ts"
       ]
     },
     "resolveJsonModule": true
