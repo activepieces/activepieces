@@ -307,6 +307,9 @@
       ],
       "@activepieces/piece-signrequest": [
         "packages/pieces/community/signrequest/src/index.ts"
+      ],
+      "@activepieces/piece-chatfly": [
+        "packages/pieces/community/chatfly/src/index.ts"
       ]
     },
     "resolveJsonModule": true
