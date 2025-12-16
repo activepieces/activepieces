@@ -17,7 +17,7 @@ export const bookingCompleted = createTrigger({
 
     const response = await makeRequest(api_key, HttpMethod.POST, '/webhooks', {
       url: webhookUrl,
-      name: `Contact Captured Webhook - ${new Date().getTime()}`,
+      name: `Booking Completed Webhook - ${new Date().getTime()}`,
       events: ['booking.completed'],
     });
 

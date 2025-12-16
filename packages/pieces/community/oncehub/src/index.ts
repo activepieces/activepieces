@@ -4,7 +4,15 @@ import { PieceCategory } from '@activepieces/shared';
 import { findContact } from './lib/actions/find-contact';
 import { createContact } from './lib/actions/create-contact';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
-import { contactCaptured } from './lib/triggers/contact-captured';
+import { bookingCanceled } from './lib/triggers/booking-canceled';
+import { bookingCanceledThenRescheduled } from './lib/triggers/booking-canceled-then-rescheduled';
+import { bookingCompleted } from './lib/triggers/booking-completed';
+import { bookingNoshow } from './lib/triggers/booking-no-show';
+import { bookingRescheduled } from './lib/triggers/booking-rescheduled';
+import { bookingScheduled } from './lib/triggers/booking-scheduled';
+import { conversationAbandoned } from './lib/triggers/conversation-abandoned';
+import { conversationClosed } from './lib/triggers/conversation-closed';
+import { conversationStarted } from './lib/triggers/conversation-started';
 
 export const oncehub = createPiece({
   displayName: 'Oncehub',
@@ -24,5 +32,15 @@ export const oncehub = createPiece({
       }),
     }),
   ],
-  triggers: [contactCaptured],
+  triggers: [
+    bookingCanceledThenRescheduled,
+    bookingCanceled,
+    bookingCompleted,
+    bookingNoshow,
+    bookingRescheduled,
+    bookingScheduled,
+    conversationAbandoned,
+    conversationClosed,
+    conversationStarted,
+  ],
 });

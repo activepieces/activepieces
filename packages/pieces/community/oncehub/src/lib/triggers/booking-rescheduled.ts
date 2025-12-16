@@ -86,7 +86,7 @@ export const bookingRescheduled = createTrigger({
 
     const response = await makeRequest(api_key, HttpMethod.POST, '/webhooks', {
       url: webhookUrl,
-      name: `Contact Captured Webhook - ${new Date().getTime()}`,
+      name: `Booking Rescheduled Webhook - ${new Date().getTime()}`,
       events: ['booking.rescheduled'],
     });
 

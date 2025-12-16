@@ -2,18 +2,18 @@ import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { oncehubAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-export const conversationAbandoned = createTrigger({
+export const conversationClosed = createTrigger({
   auth: oncehubAuth,
-  name: 'conversationAbandoned',
-  displayName: 'Conversation Abandoned',
+  name: 'conversationClosed',
+  displayName: 'Conversation Closed',
   description:
-    'Triggered when website visitor stops interacting with a bot for more than 10 minutes.',
+    'Triggered when: Website visitor reaches the end of the conversation flow and when Website visitor starts a new conversation with a different chatbot',
   props: {},
   sampleData: {
     id: 'EVNT-KN56U3YL7C',
     object: 'event',
     creation_time: '2020-03-22T09:49:12Z',
-    type: 'conversation.abandoned',
+    type: 'conversation.closed',
     api_version: 'v2',
     data: {
       id: 'CVR-022EAEA41C',
@@ -66,27 +66,27 @@ export const conversationAbandoned = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const api_key = context.auth.secret_text;
-    const { webhookUrl } = context;
+        const { webhookUrl } = context;
+    
+        const response = await makeRequest(api_key, HttpMethod.POST, '/webhooks', {
+          url: webhookUrl,
+          name: `conversation closed Webhook - ${new Date().getTime()}`,
+          events: ['conversation.closed'],
+        });
 
-    const response = await makeRequest(api_key, HttpMethod.POST, '/webhooks', {
-      url: webhookUrl,
-      name: `conversation abandoned Webhook - ${new Date().getTime()}`,
-      events: ['conversation.abandoned'],
-    });
-
-    await context.store.put('webhookId_conversationAbandoned', response.id);
+        await context.store.put('webhookId_conversationClosed', response.id);
   },
   async onDisable(context) {
     const api_key = context.auth.secret_text;
     const webhookId = await context.store.get<string>(
-      'webhookId_conversationAbandoned'
+      'webhookId_conversationClosed'
     );
 
     if (webhookId) {
       await makeRequest(api_key, HttpMethod.DELETE, `/webhooks/${webhookId}`);
     }
 
-    await context.store.delete('webhookId_conversationAbandoned');
+    await context.store.delete('webhookId_conversationClosed');
   },
   async run(context) {
     return [context.payload.body];

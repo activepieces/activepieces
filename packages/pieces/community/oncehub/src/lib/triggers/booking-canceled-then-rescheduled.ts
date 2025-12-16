@@ -86,7 +86,7 @@ export const bookingCanceledThenRescheduled = createTrigger({
 
     const response = await makeRequest(api_key, HttpMethod.POST, '/webhooks', {
       url: webhookUrl,
-      name: `Contact Captured Webhook - ${new Date().getTime()}`,
+      name: `Booking Canceled Then Rescheduled Webhook - ${new Date().getTime()}`,
       events: ['booking.canceled_then_rescheduled'],
     });
 
