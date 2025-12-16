@@ -232,9 +232,7 @@
       "@activepieces/piece-bookedin": [
         "packages/pieces/community/bookedin/src/index.ts"
       ],
-      "@activepieces/piece-ai": [
-        "packages/pieces/community/ai/src/index.ts"
-      ],
+      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
       "@activepieces/piece-customgpt": [
         "packages/pieces/community/customgpt/src/index.ts"
       ],
@@ -276,6 +274,21 @@
       ],
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
+      ],
+      "@activepieces/piece-swarmnode": [
+        "packages/pieces/community/swarmnode/src/index.ts"
+      ],
+      "@activepieces/piece-alt-text-ai": [
+        "packages/pieces/community/alt-text-ai/src/index.ts"
+      ],
+      "@activepieces/piece-dashworks": [
+        "packages/pieces/community/dashworks/src/index.ts"
+      ],
+      "@activepieces/piece-raia-ai": [
+        "packages/pieces/community/raia-ai/src/index.ts"
+      ],
+      "@activepieces/piece-alttextify": [
+        "packages/pieces/community/alttextify/src/index.ts"
       ]
     },
     "resolveJsonModule": true
