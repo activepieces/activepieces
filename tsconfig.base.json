@@ -295,6 +295,9 @@
       ],
       "@activepieces/piece-formsite": [
         "packages/pieces/community/formsite/src/index.ts"
+      ],
+      "@activepieces/piece-esignatures": [
+        "packages/pieces/community/esignatures/src/index.ts"
       ]
     },
     "resolveJsonModule": true
