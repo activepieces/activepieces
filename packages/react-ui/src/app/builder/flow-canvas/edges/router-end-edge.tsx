@@ -28,7 +28,7 @@ export const ApRouterEndCanvasEdge = ({
   const generatePath = () => {
     // Start point
     let path = `M ${sourceX - 0.5} ${
-      sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
+      sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE 
     }`;
 
     // Vertical line from start
