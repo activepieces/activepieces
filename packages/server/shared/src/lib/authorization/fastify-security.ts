@@ -27,7 +27,7 @@ export function platformAdminOnly(allowedPrincipals: readonly (PrincipalType.USE
     } as const
 }
 
-export function publicPlatformAccess(allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) {
+export function publicPlatformAccess<const T extends readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]>(allowedPrincipals: T) {
     return {
         kind: RouteKind.AUTHENTICATED,
         authorization: {

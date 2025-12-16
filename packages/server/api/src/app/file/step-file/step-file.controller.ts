@@ -1,7 +1,6 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, publicAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     ErrorCode,
     File,
     FileLocation,
@@ -88,7 +87,7 @@ async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Om
 
 const SignedFileRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         querystring: Type.Object({

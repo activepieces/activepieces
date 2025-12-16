@@ -1,5 +1,5 @@
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, publicAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -90,7 +90,7 @@ const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
 }
 
 async function resolveTemplatesPlatformId(principal: Principal): Promise<string | null> {
-    if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
+    if (!principal || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
         return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
     }
     const platform = await platformService.getOneWithPlanOrThrow(principal.platform.id)
@@ -105,8 +105,7 @@ async function resolveTemplatesPlatformId(principal: Principal): Promise<string 
 
 const GetParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        scope: EndpointScope.PLATFORM,
+        security: publicAccess(),
     },
     schema: {
         tags: ['flow-templates'],
@@ -132,7 +131,7 @@ const ListFlowParams = {
 const DeleteParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        // security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Delete a flow template',
@@ -145,7 +144,7 @@ const DeleteParams = {
 const CreateParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        // security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]) ,
     },
     schema: {
         description: 'Create a flow template',
