@@ -44,6 +44,7 @@ export enum FlowOperationType {
     UPDATE_METADATA = 'UPDATE_METADATA',
     MOVE_BRANCH = 'MOVE_BRANCH',
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
+    UPDATE_MINUTES_SAVED = 'UPDATE_MINUTES_SAVED',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -97,7 +98,6 @@ export const ImportFlowRequest = Type.Object({
     displayName: Type.String({}),
     trigger: FlowTrigger,
     schemaVersion: Nullable(Type.String()),
-    templateId: Nullable(Type.String()),
 })
 
 export type ImportFlowRequest = Static<typeof ImportFlowRequest>
@@ -175,6 +175,11 @@ export const UpdateMetadataRequest = Type.Object({
     metadata: Nullable(Metadata),
 })
 export type UpdateMetadataRequest = Static<typeof UpdateMetadataRequest>
+
+export const UpdateMinutesSavedRequest = Type.Object({
+    timeSavedPerRun: Nullable(Type.Number()),
+})
+export type UpdateMinutesSavedRequest = Static<typeof UpdateMinutesSavedRequest>
 
 export const FlowOperationRequest = Type.Union([
     Type.Object(
@@ -349,6 +354,15 @@ export const FlowOperationRequest = Type.Union([
         {
             type: Type.Literal(FlowOperationType.SAVE_SAMPLE_DATA),
             request: SaveSampleDataRequest,
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_MINUTES_SAVED),
+            request: UpdateMinutesSavedRequest,
+        },
+        {
+            title: 'Update Minutes Saved',
         },
     ),
 ])

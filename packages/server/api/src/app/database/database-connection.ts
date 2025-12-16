@@ -5,10 +5,10 @@ import {
     EntitySchema,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
+import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
-import { PlatformAnalyticsReportEntity } from '../ee/analytics/platform-analytics-report.entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
@@ -51,7 +51,6 @@ import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.enti
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
-import { WorkerMachineEntity } from '../workers/machine/machine-entity'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
 
@@ -77,7 +76,6 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceTagEntity,
         AlertEntity,
         UserInvitationEntity,
-        WorkerMachineEntity,
         AIProviderEntity,
         ProjectRoleEntity,
         TableEntity,

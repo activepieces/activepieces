@@ -19,7 +19,7 @@ export const solutionService = (log: FastifyBaseLogger) => ({
             newState,
             currentState,
         })
-        const filteredDiffs = await projectDiffService.filterDeleteOperation(diffs) 
+        const filteredDiffs = await projectDiffService.filterDeleteOperation(diffs)
         await projectStateService(log).apply({
             projectId: params.projectId,
             diffs: filteredDiffs,

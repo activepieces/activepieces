@@ -31,6 +31,7 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -95,34 +96,40 @@ const ImportFlowDialog = (
     Template[]
   >({
     mutationFn: async (templates: Template[]) => {
-      const importPromises = templates.map(async (template) => {
-        let flow: PopulatedFlow | null = null;
-        if (props.insideBuilder) {
-          flow = await flowsApi.get(props.flowId);
-        } else {
-          const folder =
-            !isNil(selectedFolderId) &&
-            selectedFolderId !== UncategorizedFolderId
-              ? await foldersApi.get(selectedFolderId)
-              : undefined;
-          flow = await flowsApi.create({
-            displayName: template.name,
-            projectId: authenticationSession.getProjectId()!,
-            folderName: folder?.displayName,
-          });
-        }
-        return await flowsApi.update(flow.id, {
-          type: FlowOperationType.IMPORT_FLOW,
-          request: {
-            displayName: template.name,
-            trigger: template.flows![0].trigger,
-            schemaVersion: template.flows![0].schemaVersion,
-            templateId: template.id,
+      const importPromises = templates.flatMap(async (template) => {
+        const flowImportPromises = (template.flows || []).map(
+          async (templateFlow) => {
+            let flow: PopulatedFlow | null = null;
+            if (props.insideBuilder) {
+              flow = await flowsApi.get(props.flowId);
+            } else {
+              const folder =
+                !isNil(selectedFolderId) &&
+                selectedFolderId !== UncategorizedFolderId
+                  ? await foldersApi.get(selectedFolderId)
+                  : undefined;
+              flow = await flowsApi.create({
+                displayName: templateFlow.displayName,
+                projectId: authenticationSession.getProjectId()!,
+                folderName: folder?.displayName,
+              });
+            }
+            return await flowsApi.update(flow.id, {
+              type: FlowOperationType.IMPORT_FLOW,
+              request: {
+                displayName: templateFlow.displayName,
+                trigger: templateFlow.trigger,
+                schemaVersion: templateFlow.schemaVersion,
+              },
+            });
           },
-        });
+        );
+
+        return Promise.all(flowImportPromises);
       });
 
-      return Promise.all(importPromises);
+      const results = await Promise.all(importPromises);
+      return results.flat();
     },
 
     onSuccess: (flows: PopulatedFlow[]) => {
@@ -135,6 +142,7 @@ const ImportFlowDialog = (
           multiple: flows.length > 1,
         },
       });
+      templatesApi.incrementUsageCount(templates[0].id);
 
       toast.success(
         t(`flowsImported`, {

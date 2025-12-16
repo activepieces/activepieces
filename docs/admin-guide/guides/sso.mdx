@@ -1,0 +1,223 @@
+---
+title: "How to Setup SSO"
+description: "Configure Single Sign-On (SSO) to enable secure, centralized authentication for your Activepieces platform"
+icon: 'key'
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+## Overview
+
+Single Sign-On (SSO) allows your team to authenticate using your organization's existing identity provider, eliminating the need for separate Activepieces credentials. This improves security, simplifies user management, and provides a seamless login experience.
+
+## Prerequisites
+
+Before configuring SSO, ensure you have:
+
+- **Admin access** to your Activepieces platform
+- **Admin access** to your identity provider (Google, GitHub, Okta, or JumpCloud)
+- The **redirect URL** from your Activepieces SSO configuration screen
+
+## Accessing SSO Configuration
+
+Navigate to **Platform Settings** → **SSO** in your Activepieces admin dashboard to access the SSO configuration screen.
+
+![SSO Configuration](/resources/screenshots/sso.png)
+
+## Enforcing SSO
+
+You can enforce SSO by specifying your organization's email domain. When SSO enforcement is enabled:
+
+- Users with matching email domains must authenticate through the SSO provider
+- Email/password login can be disabled for enhanced security
+- All authentication is routed through your designated identity provider
+
+<Tip>
+We recommend testing SSO with a small group of users before enforcing it organization-wide.
+</Tip>
+
+## Supported SSO Providers
+
+Activepieces supports multiple SSO providers to integrate with your existing identity management system.
+
+### Google
+
+<Steps>
+    <Step title="Access Google Cloud Console">
+        Go to the [Google Cloud Console](https://console.cloud.google.com/) and select your project (or create a new one).
+    </Step>
+    <Step title="Create OAuth2 Credentials">
+        Navigate to **APIs & Services** → **Credentials** → **Create Credentials** → **OAuth client ID**.
+        
+        Select **Web application** as the application type.
+    </Step>
+    <Step title="Configure Redirect URI">
+        Copy the **Redirect URL** from the Activepieces SSO configuration screen and add it to the **Authorized redirect URIs** in Google Cloud Console.
+    </Step>
+    <Step title="Copy Credentials to Activepieces">
+        Copy the **Client ID** and **Client Secret** from Google and paste them into the corresponding fields in Activepieces.
+    </Step>
+    <Step title="Save Configuration">
+        Click **Finish** to complete the setup.
+    </Step>
+</Steps>
+
+### GitHub
+
+<Steps>
+    <Step title="Access GitHub Developer Settings">
+        Go to [GitHub Developer Settings](https://github.com/settings/developers) → **OAuth Apps** → **New OAuth App**.
+    </Step>
+    <Step title="Register New Application">
+        Fill in the application details:
+        - **Application name**: Choose a recognizable name (e.g., "Activepieces SSO")
+        - **Homepage URL**: Enter your Activepieces instance URL
+    </Step>
+    <Step title="Configure Authorization Callback">
+        Copy the **Redirect URL** from the Activepieces SSO configuration screen and paste it into the **Authorization callback URL** field.
+    </Step>
+    <Step title="Complete Registration">
+        Click **Register application** to create the OAuth App.
+    </Step>
+    <Step title="Generate Client Secret">
+        After registration, click **Generate a new client secret** and copy it immediately (it won't be shown again).
+    </Step>
+    <Step title="Copy Credentials to Activepieces">
+        Copy the **Client ID** and **Client Secret** and paste them into the corresponding fields in Activepieces.
+    </Step>
+    <Step title="Save Configuration">
+        Click **Finish** to complete the setup.
+    </Step>
+</Steps>
+
+### SAML with Okta
+
+<Steps>
+    <Step title="Create New Application in Okta">
+        Go to the [Okta Admin Portal](https://login.okta.com/) → **Applications** → **Create App Integration**.
+    </Step>
+    <Step title="Select SAML 2.0">
+        Choose **SAML 2.0** as the sign-on method and click **Next**.
+    </Step>
+    <Step title="Configure General Settings">
+        Enter an **App name** (e.g., "Activepieces") and optionally upload a logo. Click **Next**.
+    </Step>
+    <Step title="Configure SAML Settings">
+        - **Single sign-on URL**: Copy the SSO URL from the Activepieces configuration screen
+        - **Audience URI (SP Entity ID)**: Enter `Activepieces`
+        - **Name ID format**: Select `EmailAddress`
+    </Step>
+    <Step title="Add Attribute Statements">
+        Add the following attribute mappings:
+        
+        | Name | Value |
+        |------|-------|
+        | `firstName` | `user.firstName` |
+        | `lastName` | `user.lastName` |
+        | `email` | `user.email` |
+    </Step>
+    <Step title="Complete Setup in Okta">
+        Click **Next**, select the appropriate feedback option, and click **Finish**.
+    </Step>
+    <Step title="Export IdP Metadata">
+        Go to the **Sign On** tab → **View SAML setup instructions** or **View IdP metadata**. Copy the Identity Provider metadata XML.
+    </Step>
+    <Step title="Configure Activepieces">
+        - Paste the **IdP Metadata** XML into the corresponding field
+        - Copy the **X.509 Certificate** from Okta and paste it into the **Signing Key** field
+    </Step>
+    <Step title="Save Configuration">
+        Click **Save** to complete the setup.
+    </Step>
+</Steps>
+
+### SAML with JumpCloud
+
+<Steps>
+    <Step title="Create New Application in JumpCloud">
+        Go to the [JumpCloud Admin Portal](https://console.jumpcloud.com/) → **SSO Applications** → **Add New Application** → **Custom SAML App**.
+    </Step>
+    <Step title="Configure ACS URL">
+        Copy the **ACS URL** from the Activepieces configuration screen and paste it into the **ACS URLs** field in JumpCloud.
+        
+        ![JumpCloud ACS URL](/resources/screenshots/jumpcloud/acl-url.png)
+    </Step>
+    <Step title="Configure SP Entity ID">
+        Set the **SP Entity ID** (Audience URI) to `Activepieces`.
+    </Step>
+    <Step title="Add User Attributes">
+        Configure the following attribute mappings:
+        
+        | Service Provider Attribute | JumpCloud Attribute |
+        |---------------------------|---------------------|
+        | `firstName` | `firstname` |
+        | `lastName` | `lastname` |
+        | `email` | `email` |
+        
+        ![JumpCloud User Attributes](/resources/screenshots/jumpcloud/user-attribute.png)
+    </Step>
+    <Step title="Enable HTTP-Redirect Binding">
+        JumpCloud does not include the `HTTP-Redirect` binding by default. You **must** enable this option.
+        
+        ![JumpCloud Redirect Binding](/resources/screenshots/jumpcloud/declare-login.png)
+        
+        <Warning>
+        Without HTTP-Redirect binding, the SSO integration will not work correctly.
+        </Warning>
+    </Step>
+    <Step title="Export Metadata">
+        Click **Save**, then refresh the page and click **Export Metadata**.
+        
+        ![JumpCloud Export Metadata](/resources/screenshots/jumpcloud/export-metadata.png)
+        
+        <Tip>
+        Verify that the exported XML contains `Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"` to ensure the binding was properly enabled.
+        </Tip>
+    </Step>
+    <Step title="Configure IdP Metadata in Activepieces">
+        Paste the exported metadata XML into the **IdP Metadata** field in Activepieces.
+    </Step>
+    <Step title="Configure Signing Certificate">
+        Locate the `<ds:X509Certificate>` element in the IdP metadata and extract its value. Format it as a PEM certificate:
+        
+        ```
+        -----BEGIN CERTIFICATE-----
+        [PASTE THE CERTIFICATE VALUE HERE]
+        -----END CERTIFICATE-----
+        ```
+        
+        Paste this into the **Signing Key** field.
+    </Step>
+    <Step title="Assign Users to Application">
+        In JumpCloud, assign the application to the appropriate users or user groups.
+        
+        ![JumpCloud Assign App](/resources/screenshots/jumpcloud/user-groups.png)
+    </Step>
+    <Step title="Save Configuration">
+        Click **Finish** to complete the setup.
+    </Step>
+</Steps>
+
+## Troubleshooting
+
+<AccordionGroup>
+    <Accordion title="Users cannot log in after SSO configuration">
+        - Verify the redirect URL is correctly configured in your identity provider
+        - Ensure users are assigned to the application in your identity provider
+        - Check that email domains match the SSO enforcement settings
+    </Accordion>
+    <Accordion title="SAML authentication fails">
+        - Confirm the IdP metadata is complete and correctly formatted
+        - Verify the signing certificate is properly formatted with BEGIN/END markers
+        - Ensure all required attributes (firstName, lastName, email) are mapped
+    </Accordion>
+    <Accordion title="HTTP-Redirect binding error (JumpCloud)">
+        - Enable the HTTP-Redirect binding option in JumpCloud
+        - Re-export the metadata after enabling the binding
+        - Verify the binding appears in the exported XML
+    </Accordion>
+</AccordionGroup>
+
+## Need Help?
+
+If you encounter issues during SSO setup, please contact our enterprise support or [sales team](https://www.activepieces.com/sales).

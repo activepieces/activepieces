@@ -94,3 +94,4 @@ export * from './lib/license-keys'
 export * from './lib/flow-run/execution/flow-execution'
 TypeSystemPolicy.ExactOptionalPropertyTypes = false
 export * from './lib/workers/queue-metrics'
+export * from './lib/health'

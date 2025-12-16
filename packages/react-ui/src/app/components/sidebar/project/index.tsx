@@ -13,6 +13,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { getProjectName } from '@/hooks/project-hooks';
 import { cn } from '@/lib/utils';
 import {
   PROJECT_COLOR_PALETTE,
@@ -34,11 +35,10 @@ const ProjectSideBarItem = ({
   handleProjectSelect,
 }: ProjectSideBarItemProps) => {
   const { state } = useSidebar();
-
   const projectAvatar =
     project.type === ProjectType.TEAM ? (
       <Avatar
-        className="size-6 flex items-center justify-center rounded-sm"
+        className="size-6 flex items-center justify-center rounded-sm cursor-pointer"
         style={{
           backgroundColor: PROJECT_COLOR_PALETTE[project.icon.color].color,
           color: PROJECT_COLOR_PALETTE[project.icon.color].textColor,
@@ -47,7 +47,7 @@ const ProjectSideBarItem = ({
         {project.displayName.charAt(0).toUpperCase()}
       </Avatar>
     ) : (
-      <User className="size-5 flex items-center justify-center" />
+      <User className="size-5 flex items-center justify-center cursor-pointer" />
     );
 
   const handleClick = (e: React.MouseEvent) => {
@@ -88,23 +88,22 @@ const ProjectSideBarItem = ({
           asChild
           onClick={handleClick}
           className={cn(
-            'px-2 py-5 cursor-pointer',
+            'px-2 py-5 cursor-pointer group/project',
             isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
           )}
         >
-          <div
-            onClick={handleItemClick}
-            className="w-full flex items-center justify-between gap-2"
-          >
-            <ApProjectDisplay
-              title={project.displayName}
-              icon={project.icon}
-              maxLengthToNotShowTooltip={28}
-              projectType={project.type}
-            />
-            {project.type === ProjectType.PERSONAL && (
-              <span className="text-xs text-muted-foreground">Private</span>
-            )}
+          <div className="w-full flex items-center justify-between gap-2">
+            <div
+              onClick={() => handleProjectSelect(project.id)}
+              className="flex-1 flex items-center gap-2 min-w-0"
+            >
+              <ApProjectDisplay
+                title={getProjectName(project)}
+                icon={project.icon}
+                maxLengthToNotShowTooltip={28}
+                projectType={project.type}
+              />
+            </div>
           </div>
         </SidebarMenuButton>
       )}

@@ -1,0 +1,88 @@
+---
+title: "How to Manage Pieces"
+description: "Control which integrations are available to your users"
+icon: "puzzle-piece"
+---
+
+<Snippet file="enterprise-feature.mdx" />
+
+## Overview
+
+**Pieces** are the building blocks of Activepieces — they are integrations and connectors (like Google Sheets, Slack, OpenAI, etc.) that users can use in their automation flows.
+
+As a platform administrator, you have full control over which pieces are available to your users. This allows you to:
+
+- **Enforce security policies** by restricting access to certain integrations
+- **Simplify the user experience** by showing only relevant pieces for your use case
+- **Deploy custom/private pieces** that are specific to your organization
+
+There are **two levels** of piece management:
+
+| Level | Who Can Manage | Scope |
+|-------|----------------|-------|
+| **Platform Level** | Platform Admin | Install and remove across the entire platform |
+| **Project Level** | Project Admin | Show/hide specific pieces for specfic project |
+
+---
+
+## Platform-Level Management
+
+Platform administrators can manage pieces for the entire Activepieces instance from **Platform Admin → Setup → Pieces**.
+
+## Project-Level Management
+
+Project administrators can further restrict which pieces are available within their specific project. This is useful when different teams or projects need access to different integrations.
+
+### Show/Hide Pieces in a Project
+
+<Steps>
+  <Step title="Open Project Settings">
+    Navigate to your project and go to **Settings → Pieces**.
+  </Step>
+  <Step title="Configure Visibility">
+    You'll see a list of all pieces installed on the platform. Toggle the visibility for each piece:
+    - **Enabled**: Users in this project can use the piece
+    - **Disabled**: The piece is hidden from users in this project
+  </Step>
+  <Step title="Save Changes">
+    Changes take effect immediately — users will only see the enabled pieces when building their flows.
+  </Step>
+</Steps>
+
+![Manage Pieces](/resources/screenshots/manage-pieces.png)
+![Manage Pieces](/resources/screenshots/manage-pieces-2.png)
+
+<Note>
+Project-level settings can only **hide** pieces that are installed at the platform level. You cannot add pieces at the project level that aren't already installed on the platform.
+</Note>
+
+
+### Install Private Pieces
+
+<Tip>
+For detailed instructions on building custom pieces, check the [Building Pieces](/build-pieces/building-pieces/overview) documentation.
+</Tip>
+
+
+If you've built a custom piece for your organization, you can upload it directly as a tarball (`.tgz`) file.
+
+<Steps>
+  <Step title="Build Your Piece">
+    Build your piece using the Activepieces CLI:
+    ```bash
+    npm run pieces -- build --name=your-piece-name
+    ```
+    This generates a tarball in `dist/packages/pieces/your-piece-name`.
+  </Step>
+  <Step title="Navigate to Pieces Settings">
+    Go to **Platform Admin → Setup → Pieces** and click **Install Piece**.
+  </Step>
+  <Step title="Select File Upload">
+    Choose **Upload File** as the installation source.
+  </Step>
+  <Step title="Upload the Tarball">
+    Select the `.tgz` file from your build output and upload it.
+  </Step>
+</Steps>
+
+![Install Piece](/resources/screenshots/install-piece.png)

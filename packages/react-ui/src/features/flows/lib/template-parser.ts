@@ -1,12 +1,6 @@
 import { FlowVersionTemplate, Template } from '@activepieces/shared';
 
-/**
- * Utility functions for parsing template JSON in both old and new formats
- * Old format: { template: {...}, name: "..." }
- * New format: { flows: [{...}], name: "..." }
- */
 export const templateUtils = {
-  /** Parses complete template with validation (for importing) */
   parseTemplate: (jsonString: string): Template | null => {
     try {
       const parsed = JSON.parse(jsonString);
@@ -39,7 +33,6 @@ export const templateUtils = {
     }
   },
 
-  /** Extracts flow structure only (for creating/updating) */
   extractFlow: (jsonString: string): FlowVersionTemplate | null => {
     try {
       const parsed = JSON.parse(jsonString);
