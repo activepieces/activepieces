@@ -1,7 +1,7 @@
 import { VariantProps, cva } from 'class-variance-authority';
 import React from 'react';
 
-import ImageWithFallback from '@/components/ui/image-with-fallback';
+import { ImageWithColorBackground } from '@/components/ui/image-with-color-background';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -51,11 +51,12 @@ const PieceIcon = React.memo(
         <TooltipTrigger asChild>
           <div className={cn(pieceIconVariants({ border, size, circle }))}>
             {logoUrl ? (
-              <ImageWithFallback
+              <ImageWithColorBackground
                 src={logoUrl}
                 alt={displayName}
-                className="object-contain w-full h-full "
+                className="object-contain w-full h-full p-1"
                 key={logoUrl}
+                
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
               />
             ) : (
