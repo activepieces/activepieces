@@ -55,6 +55,7 @@ export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
 export type StepMetadataWithActionOrTriggerOrAgentDisplayName = StepMetadata & {
   actionOrTriggerOrAgentDisplayName: string;
+  actionOrTriggerOrAgentDescription: string;
 };
 
 export type PieceSelectorOperation =

@@ -30,4 +30,3 @@ const StepNodeChevron = () => {
 };
 
 export { StepNodeChevron };
-

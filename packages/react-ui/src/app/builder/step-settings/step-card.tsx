@@ -1,7 +1,13 @@
+import { ChevronRight, Info } from 'lucide-react';
 import React from 'react';
 
-import ImageWithFallback from '@/components/ui/image-with-fallback';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata } from '@/lib/types';
 import {
@@ -29,50 +35,55 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
     : undefined;
   const actionOrTriggerDisplayName =
     stepMetadata?.actionOrTriggerOrAgentDisplayName;
-  const modifiedTitle = stepMetadata
-    ? `${stepMetadata?.displayName} ${
-        actionOrTriggerDisplayName ? `(${actionOrTriggerDisplayName})` : ''
-      }`
-    : null;
+
+  if (!isPiece) {
+    return <></>;
+  }
 
   return (
-    <div className="flex items-center justify-center gap-4 min-h-[48px]">
-      <div className="flex h-full min-w-[48px] items-center justify-center">
-        {stepMetadata?.logoUrl && (
-          <ImageWithFallback
-            src={stepMetadata.logoUrl}
-            alt={modifiedTitle ?? ''}
-            className="w-12 h-12"
-          />
-        )}
-      </div>
-      <div className="flex h-full grow justify-center gap-2 text-start">
-        <div className="text-base flex flex-col grow gap-1">
-          <div className="grow">
-            {!isNil(modifiedTitle) ? (
-              modifiedTitle
-            ) : (
-              <Skeleton className="h-3 w-32 rounded" />
-            )}
-          </div>
-          <div className="overflow-hidden text-ellipsis text-xs text-muted-foreground">
-            {!isNil(stepMetadata?.description) ? (
-              stepMetadata.description
-            ) : (
-              <div className="flex flex-col gap-1">
-                <Skeleton className="h-2 w-48 rounded" />
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex  items-center gap-2">
-          {pieceVersion && (
-            <div className="text-xs text-muted-foreground flex justify-center items-center">
-              v{pieceVersion}
-            </div>
+    <div className="flex items-center justify-between gap-3 min-h-[36px]">
+      <div className="flex items-center gap-2 min-w-0">
+        <PieceIcon
+          logoUrl={stepMetadata?.logoUrl}
+          displayName={stepMetadata?.displayName}
+          showTooltip={false}
+          size="sm"
+        />
+        <div className="flex items-center gap-1 min-w-0 text-sm">
+          {!isNil(stepMetadata?.displayName) ? (
+            <>
+              <span className="truncate text-muted-foreground">
+                {stepMetadata.displayName}
+              </span>
+              {actionOrTriggerDisplayName && (
+                <>
+                  <ChevronRight className="size-4 text-muted-foreground shrink-0" />
+                  <span className="truncate font-medium text-foreground">
+                    {actionOrTriggerDisplayName}
+                  </span>
+                </>
+              )}
+            </>
+          ) : (
+            <Skeleton className="h-4 w-32 rounded" />
           )}
         </div>
+        {!isNil(stepMetadata?.actionOrTriggerOrAgentDescription) && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Info className="size-4 text-muted-foreground shrink-0 cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="max-w-xs">
+              {stepMetadata.actionOrTriggerOrAgentDescription}
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
+      {pieceVersion && (
+        <div className="text-xs text-muted-foreground shrink-0">
+          v{pieceVersion}
+        </div>
+      )}
     </div>
   );
 };

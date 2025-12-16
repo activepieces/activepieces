@@ -173,7 +173,7 @@ const StepSettingsContainer = () => {
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={55} className="min-h-[80px]">
               <ScrollArea className="h-full">
-                <div className="flex flex-col gap-4 px-4 pb-6">
+                <div className="flex flex-col gap-2 px-4 pb-6">
                   <StepCard step={modifiedStep}></StepCard>
 
                   {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (

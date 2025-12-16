@@ -19,13 +19,13 @@ import {
 } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
-import { ApStepNodeStatus } from './step-node-status';
 
 import { StepInvalidOrSkippedIcon } from './step-invalid-or-skipped-icon';
 import { StepNodeChevron } from './step-node-chevron';
 import { StepNodeDisplayName } from './step-node-display-name';
 import { StepNodeLogo } from './step-node-logo';
 import { StepNodeName } from './step-node-name';
+import { ApStepNodeStatus } from './step-node-status';
 import { TriggerWidget } from './trigger-widget';
 
 const ApStepCanvasNode = React.memo(
@@ -99,7 +99,7 @@ const ApStepCanvasNode = React.memo(
             'shadow-none': isDragging,
             'bg-accent': isSkipped,
             'rounded-tl-none': isTrigger,
-            "hover:border-ring": !isSelected,
+            'hover:border-ring': !isSelected,
           },
         )}
         onClick={(e) => handleStepClick(e)}
