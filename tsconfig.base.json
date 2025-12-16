@@ -310,6 +310,9 @@
       ],
       "@activepieces/piece-signrequest": [
         "packages/pieces/community/signrequest/src/index.ts"
+      ],
+      "@activepieces/piece-hystruct": [
+        "packages/pieces/community/hystruct/src/index.ts"
       ]
     },
     "resolveJsonModule": true
