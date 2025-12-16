@@ -243,7 +243,7 @@ function DynamicValueToggle({
             />
           </Toggle>
         </TooltipTrigger>
-        <TooltipContent side="top" className="bg-background">
+        <TooltipContent side="top" >
           {t('Dynamic value')}
         </TooltipContent>
       </Tooltip>
