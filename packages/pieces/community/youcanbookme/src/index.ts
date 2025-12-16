@@ -7,7 +7,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { youcanbookmeAuth } from './lib/common/auth';
 
 export const youcanbookme = createPiece({
-  displayName: 'Youcanbookme',
+  displayName: 'YouCanBookMe',
   auth: youcanbookmeAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/youcanbookme.png',
