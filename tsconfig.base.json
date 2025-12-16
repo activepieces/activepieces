@@ -286,6 +286,9 @@
       ],
       "@activepieces/piece-raia-ai": [
         "packages/pieces/community/raia-ai/src/index.ts"
+      ],
+      "@activepieces/piece-alttextify": [
+        "packages/pieces/community/alttextify/src/index.ts"
       ]
     },
     "resolveJsonModule": true
