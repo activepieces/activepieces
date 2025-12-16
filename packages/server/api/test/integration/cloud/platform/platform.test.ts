@@ -46,9 +46,6 @@ describe('Platform API', () => {
             const requestBody: UpdatePlatformRequestBody = {
                 name: 'updated name',
                 primaryColor: 'updated primary color',
-                logoIcon: undefined,
-                fullLogo: undefined,
-                favIcon: undefined,
                 filteredPieceNames: ['updated filtered piece names'],
                 filteredPieceBehavior: FilteredPieceBehavior.ALLOWED,
                 enforceAllowedAuthDomains: true,
@@ -83,9 +80,6 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(requestBody.emailAuthEnabled)
             expect(responseBody.name).toBe('updated name')
             expect(responseBody.primaryColor).toBe('updated primary color')
-            expect(responseBody.logoIconUrl).toBe('updated logo icon url')
-            expect(responseBody.fullLogoUrl).toBe('updated full logo url')
-            expect(responseBody.favIconUrl).toBe('updated fav icon url')
             expect(responseBody.filteredPieceNames).toStrictEqual([
                 'updated filtered piece names',
             ])
@@ -93,7 +87,51 @@ describe('Platform API', () => {
             expect(responseBody.emailAuthEnabled).toBe(false)
             expect(responseBody.federatedAuthProviders).toStrictEqual({})
             expect(responseBody.cloudAuthEnabled).toBe(false)
-        })
+        }),
+
+        it('updates the platform logo icons', async () => {
+            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+                plan: {
+                    embeddingEnabled: false,
+                },
+                platform: {
+                },
+            })
+            const testToken = await generateMockToken({
+                type: PrincipalType.USER,
+                id: mockOwner.id,
+                projectId: mockProject.id,
+                platform: { id: mockPlatform.id },
+            })
+            const formData = new FormData()
+            formData.append('logoIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('fullLogo', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('favIcon', new Blob([faker.image.urlPlaceholder()], { type: 'image/png' }))
+            formData.append('name', 'updated name')
+            // act
+            const response = await app?.inject({
+                method: 'POST',
+                url: `/v1/platforms/${mockPlatform.id}`,
+                headers: {
+                    authorization: `Bearer ${testToken}`,
+                },
+                body: formData,
+            })
+
+            // assert
+            const responseBody = response?.json()
+
+            expect(response?.statusCode).toBe(StatusCodes.OK)
+            expect(responseBody.id).toBe(mockPlatform.id)
+            expect(responseBody.created).toBeDefined()
+            expect(responseBody.updated).toBeDefined()
+            expect(responseBody.name).toBe('updated name')
+
+            const baseUrl = 'http://localhost:4200/api/v1/platforms/assets'
+            expect(responseBody.logoIconUrl.startsWith(baseUrl)).toBeTruthy()
+            expect(responseBody.fullLogoUrl.startsWith(baseUrl)).toBeTruthy()
+            expect(responseBody.favIconUrl.startsWith(baseUrl)).toBeTruthy()
+        }),
 
         it('fails if user is not owner', async () => {
             // arrange

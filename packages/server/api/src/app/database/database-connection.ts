@@ -5,10 +5,10 @@ import {
     EntitySchema,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
+import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
-import { PlatformAnalyticsReportEntity } from '../ee/analytics/platform-analytics-report.entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'

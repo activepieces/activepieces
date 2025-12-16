@@ -17,6 +17,7 @@ import {
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
@@ -25,7 +26,6 @@ import {
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
 import { Template, TemplateType } from '@activepieces/shared';
 
 import { CreateTemplateDialog } from './create-template-dialog';
@@ -122,7 +122,7 @@ export default function TemplatesPage() {
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },

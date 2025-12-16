@@ -1,4 +1,4 @@
-import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, Folder, ProjectRelease, ProjectWithLimits, spreadIfDefined, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
@@ -9,6 +9,7 @@ import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
+import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
@@ -17,7 +18,6 @@ import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
-import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 import { apiKeyModule } from './ee/api-keys/api-key-module'
 import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
@@ -113,6 +113,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                 },
                 schemas: {
                     [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
+                    [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
                     [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
                     [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
                     [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
@@ -210,6 +211,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoActivityModule)
     await app.register(solutionsModule)
     await app.register(templateModule)
+    await app.register(platformAnalyticsModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
 
@@ -282,7 +284,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
@@ -308,7 +309,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
-            await app.register(platformAnalyticsModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
