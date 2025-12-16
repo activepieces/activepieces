@@ -304,6 +304,9 @@
       ],
       "@activepieces/piece-luxury-presence": [
         "packages/pieces/community/luxury-presence/src/index.ts"
+      ],
+      "@activepieces/piece-signrequest": [
+        "packages/pieces/community/signrequest/src/index.ts"
       ]
     },
     "resolveJsonModule": true
