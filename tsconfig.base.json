@@ -277,6 +277,27 @@
       ],
       "@activepieces/piece-oncehub": [
         "packages/pieces/community/oncehub/src/index.ts"
+      ],
+      "@activepieces/piece-swarmnode": [
+        "packages/pieces/community/swarmnode/src/index.ts"
+      ],
+      "@activepieces/piece-alt-text-ai": [
+        "packages/pieces/community/alt-text-ai/src/index.ts"
+      ],
+      "@activepieces/piece-dashworks": [
+        "packages/pieces/community/dashworks/src/index.ts"
+      ],
+      "@activepieces/piece-raia-ai": [
+        "packages/pieces/community/raia-ai/src/index.ts"
+      ],
+      "@activepieces/piece-alttextify": [
+        "packages/pieces/community/alttextify/src/index.ts"
+      ],
+      "@activepieces/piece-motiontools": [
+        "packages/pieces/community/motiontools/src/index.ts"
+      ],
+      "@activepieces/piece-formsite": [
+        "packages/pieces/community/formsite/src/index.ts"
       ]
     },
     "resolveJsonModule": true
