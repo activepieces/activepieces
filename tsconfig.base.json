@@ -283,6 +283,9 @@
       ],
       "@activepieces/piece-dashworks": [
         "packages/pieces/community/dashworks/src/index.ts"
+      ],
+      "@activepieces/piece-raia-ai": [
+        "packages/pieces/community/raia-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
