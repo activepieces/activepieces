@@ -3,7 +3,6 @@ import { HttpMethod } from '@activepieces/pieces-common';
 import { hystructAuth } from '../../index';
 import { hystructApiCall } from '../common';
 
-// TODO: Replace with dynamic dropdown once list workflows endpoint is available
 export const createJob = createAction({
   auth: hystructAuth,
   name: 'create_job',
