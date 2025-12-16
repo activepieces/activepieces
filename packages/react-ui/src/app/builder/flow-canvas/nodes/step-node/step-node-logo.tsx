@@ -13,7 +13,7 @@ const StepNodeLogo = ({
   return (
     <div
       className={cn(
-        'flex items-center justify-center rounded-xl',
+        'flex items-center justify-center p-1.5 border-border border border-solid rounded-md',
         {
           'opacity-80': isSkipped,
         },

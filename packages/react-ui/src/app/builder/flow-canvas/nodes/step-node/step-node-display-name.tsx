@@ -27,7 +27,7 @@ const StepNodeDisplayName = ({
           </div>
         </TextWithTooltip>
       </div>
-      <div className="flex justify-between w-full items-center">
+      <div className="flex justify-between mt-0.5 w-full items-center">
         <div className="text-xs truncate text-muted-foreground text-ellipsis overflow-hidden whitespace-nowrap w-full">
           {pieceDisplayName}
         </div>
