@@ -1,4 +1,5 @@
-import { EndpointScope, PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
+import { publicPlatformAccess } from '@activepieces/server-shared'
+import { PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -34,8 +35,7 @@ export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['projects'],

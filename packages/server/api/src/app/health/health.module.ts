@@ -25,7 +25,7 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
             await reply.status(StatusCodes.OK).send({ status: 'Healthy' })
         },
     ),
-    app.get('/system', GetSystemHealthChecks, async (request, reply) => {
+    app.get('/system', GetSystemHealthChecks, async (_request, reply) => {
         await reply.status(StatusCodes.OK).send(await healthStatusService(app.log).getSystemHealthChecks())
     })
 }
