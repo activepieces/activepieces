@@ -232,9 +232,7 @@
       "@activepieces/piece-bookedin": [
         "packages/pieces/community/bookedin/src/index.ts"
       ],
-      "@activepieces/piece-ai": [
-        "packages/pieces/community/ai/src/index.ts"
-      ],
+      "@activepieces/piece-ai": ["packages/pieces/community/ai/src/index.ts"],
       "@activepieces/piece-customgpt": [
         "packages/pieces/community/customgpt/src/index.ts"
       ],
@@ -276,6 +274,54 @@
       ],
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
+      ],
+      "@activepieces/piece-oncehub": [
+        "packages/pieces/community/oncehub/src/index.ts"
+      ],
+      "@activepieces/piece-swarmnode": [
+        "packages/pieces/community/swarmnode/src/index.ts"
+      ],
+      "@activepieces/piece-alt-text-ai": [
+        "packages/pieces/community/alt-text-ai/src/index.ts"
+      ],
+      "@activepieces/piece-dashworks": [
+        "packages/pieces/community/dashworks/src/index.ts"
+      ],
+      "@activepieces/piece-raia-ai": [
+        "packages/pieces/community/raia-ai/src/index.ts"
+      ],
+      "@activepieces/piece-alttextify": [
+        "packages/pieces/community/alttextify/src/index.ts"
+      ],
+      "@activepieces/piece-motiontools": [
+        "packages/pieces/community/motiontools/src/index.ts"
+      ],
+      "@activepieces/piece-formsite": [
+        "packages/pieces/community/formsite/src/index.ts"
+      ],
+      "@activepieces/piece-lofty": [
+        "packages/pieces/community/lofty/src/index.ts"
+      ],
+      "@activepieces/piece-youcanbookme": [
+        "packages/pieces/community/youcanbookme/src/index.ts"
+      ],
+      "@activepieces/piece-esignatures": [
+        "packages/pieces/community/esignatures/src/index.ts"
+      ],
+      "@activepieces/piece-base44": [
+        "packages/pieces/community/base44/src/index.ts"
+      ],
+      "@activepieces/piece-luxury-presence": [
+        "packages/pieces/community/luxury-presence/src/index.ts"
+      ],
+      "@activepieces/piece-signrequest": [
+        "packages/pieces/community/signrequest/src/index.ts"
+      ],
+      "@activepieces/piece-hystruct": [
+        "packages/pieces/community/hystruct/src/index.ts"
+      ],
+      "@activepieces/piece-chatfly": [
+        "packages/pieces/community/chatfly/src/index.ts"
       ]
     },
     "resolveJsonModule": true

@@ -156,7 +156,7 @@
       background-color: hsl(var(--primary-100));
     }
     100% {
-      background-color: hsl(var(--secondary));
+      background-color: var(--color-secondary);
     }
   }
   @keyframes typing {

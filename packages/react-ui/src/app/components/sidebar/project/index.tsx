@@ -49,7 +49,6 @@ const ProjectSideBarItem = ({
     ) : (
       <User className="size-5 flex items-center justify-center cursor-pointer" />
     );
-
   return (
     <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
       {state === 'collapsed' ? (
@@ -60,11 +59,9 @@ const ProjectSideBarItem = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => handleProjectSelect(project.id)}
-                className={cn(
-                  isCurrentProject &&
-                    'bg-sidebar-accent hover:!bg-sidebar-accent',
-                  'relative flex items-center justify-center',
-                )}
+                className={cn('relative flex items-center justify-center', {
+                  '!bg-sidebar-accent': isCurrentProject,
+                })}
               >
                 {projectAvatar}
               </Button>
@@ -77,10 +74,9 @@ const ProjectSideBarItem = ({
       ) : (
         <SidebarMenuButton
           asChild
-          className={cn(
-            'px-2 py-5 cursor-pointer group/project',
-            isCurrentProject && 'bg-sidebar-active hover:!bg-sidebar-active',
-          )}
+          className={cn('px-2 py-5 cursor-pointer group/project', {
+            '!bg-sidebar-accent ': isCurrentProject,
+          })}
         >
           <div className="w-full flex items-center justify-between gap-2">
             <div
