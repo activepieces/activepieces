@@ -275,6 +275,9 @@
       "@activepieces/piece-greenpt": [
         "packages/pieces/community/greenpt/src/index.ts"
       ],
+      "@activepieces/piece-oncehub": [
+        "packages/pieces/community/oncehub/src/index.ts"
+      ],
       "@activepieces/piece-swarmnode": [
         "packages/pieces/community/swarmnode/src/index.ts"
       ],
