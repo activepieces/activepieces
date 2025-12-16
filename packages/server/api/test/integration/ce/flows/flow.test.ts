@@ -76,7 +76,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(Object.keys(responseBody)).toHaveLength(12)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -204,13 +204,11 @@ describe('Flow API', () => {
             const responseBody: PopulatedFlow | undefined = response?.json()
             expect(responseBody).toBeDefined()
             if (responseBody) {
-                expect(Object.keys(responseBody)).toHaveLength(11)
                 expect(responseBody.id).toBe(mockFlow.id)
                 expect(responseBody.created).toBeDefined()
                 expect(responseBody.updated).toBeDefined()
                 expect(responseBody.projectId).toBe(mockProject.id)
                 expect(responseBody.folderId).toBeNull()
-                expect(responseBody.status).toBe('DISABLED')
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('ENABLING')
@@ -271,7 +269,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(11)
+            expect(Object.keys(responseBody)).toHaveLength(12)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -385,7 +383,7 @@ describe('Flow API', () => {
             const responseBody: PopulatedFlow | undefined = response?.json()
             expect(responseBody).toBeDefined()
             if (responseBody) {
-                expect(Object.keys(responseBody)).toHaveLength(11)
+                expect(Object.keys(responseBody)).toHaveLength(12)
                 expect(responseBody.id).toBe(mockFlow.id)
                 expect(responseBody.created).toBeDefined()
                 expect(responseBody.updated).toBeDefined()

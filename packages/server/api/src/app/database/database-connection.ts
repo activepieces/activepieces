@@ -1,20 +1,14 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { ApEdition, isNil } from '@activepieces/shared'
+import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
+import { isNil } from '@activepieces/shared'
 import {
-    ArrayContains,
     DataSource,
     EntitySchema,
-    FindOperator,
-    ObjectLiteral,
-    Raw,
-    SelectQueryBuilder,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
-import { AIUsageEntity } from '../ai/ai-usage-entity'
+import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'
-import { PlatformAnalyticsReportEntity } from '../ee/analytics/platform-analytics-report.entity'
 import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
 import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
 import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
@@ -37,7 +31,7 @@ import { FlowEntity } from '../flows/flow/flow.entity'
 import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
 import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
-import { DatabaseType, system } from '../helper/system/system'
+import { system } from '../helper/system/system'
 import { McpServerEntity } from '../mcp/mcp-entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
@@ -57,16 +51,13 @@ import { TriggerEventEntity } from '../trigger/trigger-events/trigger-event.enti
 import { TriggerSourceEntity } from '../trigger/trigger-source/trigger-source-entity'
 import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
-import { WorkerMachineEntity } from '../workers/machine/machine-entity'
+import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
-import { createSqlLiteDataSource } from './sqlite-connection'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
 function getEntities(): EntitySchema<unknown>[] {
-    const edition = system.getEdition()
-
-    const entities: EntitySchema[] = [
+    return [
         TriggerEventEntity,
         AppEventRoutingEntity,
         FileEntity,
@@ -85,7 +76,6 @@ function getEntities(): EntitySchema<unknown>[] {
         PieceTagEntity,
         AlertEntity,
         UserInvitationEntity,
-        WorkerMachineEntity,
         AIProviderEntity,
         ProjectRoleEntity,
         TableEntity,
@@ -97,39 +87,26 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoEntity,
         McpServerEntity,
         TodoActivityEntity,
-        AIUsageEntity,
         TriggerSourceEntity,
+        // Enterprise
+        ProjectMemberEntity,
+        ProjectPlanEntity,
+        CustomDomainEntity,
+        SigningKeyEntity,
+        OAuthAppEntity,
+        OtpEntity,
+        ApiKeyEntity,
+        FlowTemplateEntity,
+        GitRepoEntity,
+        AuditEventEntity,
+        ProjectReleaseEntity,
+        PlatformAnalyticsReportEntity,
+        // CLOUD
+        AppSumoEntity,
+        ConnectionKeyEntity,
+        AppCredentialEntity,
+        PlatformPlanEntity,
     ]
-
-    switch (edition) {
-        case ApEdition.CLOUD:
-        case ApEdition.ENTERPRISE:
-        case ApEdition.COMMUNITY:
-            entities.push(
-                ProjectMemberEntity,
-                ProjectPlanEntity,
-                CustomDomainEntity,
-                SigningKeyEntity,
-                OAuthAppEntity,
-                OtpEntity,
-                ApiKeyEntity,
-                FlowTemplateEntity,
-                GitRepoEntity,
-                AuditEventEntity,
-                ProjectReleaseEntity,
-                PlatformAnalyticsReportEntity,
-                // CLOUD
-                AppSumoEntity,
-                ConnectionKeyEntity,
-                AppCredentialEntity,
-                PlatformPlanEntity,
-            )
-            break
-        default:
-            throw new Error(`Unsupported edition: ${edition}`)
-    }
-
-    return entities
 }
 
 export const commonProperties = {
@@ -139,86 +116,19 @@ export const commonProperties = {
 
 let _databaseConnection: DataSource | null = null
 
-export const databaseConnection = () => {
+const createDataSource = (): DataSource => {
+    switch (databaseType) {
+        case DatabaseType.PGLITE:
+            return createPGliteDataSource()
+        case DatabaseType.POSTGRES:
+        default:
+            return createPostgresDataSource()
+    }
+}
+
+export const databaseConnection = (): DataSource => {
     if (isNil(_databaseConnection)) {
-        _databaseConnection = databaseType === DatabaseType.SQLITE3
-            ? createSqlLiteDataSource()
-            : createPostgresDataSource()
+        _databaseConnection = createDataSource()
     }
     return _databaseConnection
 }
-
-export function getDatabaseType(): DatabaseType {
-    return system.getOrThrow<DatabaseType>(AppSystemProp.DB_TYPE)
-}
-
-
-export function AddAPArrayContainsToQueryBuilder<T extends ObjectLiteral>(
-    queryBuilder: SelectQueryBuilder<T>,
-    columnName: string,
-    values: string[],
-): void {
-    switch (getDatabaseType()) {
-        case DatabaseType.POSTGRES:
-            queryBuilder.andWhere(`${columnName} @> :values`, { values })
-            break
-        case DatabaseType.SQLITE3:{
-            for (const value of values) {
-                queryBuilder.andWhere(`${columnName} LIKE :value${values.indexOf(value)}`, { [`value${values.indexOf(value)}`]: `%${value}%` })
-            }
-            break
-        }
-    }
-}
-
-export function AddAPArrayOverlapsToQueryBuilder<T extends ObjectLiteral>(
-    queryBuilder: SelectQueryBuilder<T>,
-    columnName: string,
-    values: string[],
-    paramName: string,
-): void {
-    switch (getDatabaseType()) {
-        case DatabaseType.POSTGRES:
-            queryBuilder.andWhere(`${columnName} && :${paramName}`, { [paramName]: values })
-            break
-        case DatabaseType.SQLITE3: {
-            const orConditions = values.map((_, index) => `${columnName} LIKE :${paramName}${index}`).join(' OR ')
-            const params = values.reduce((acc, value, index) => {
-                acc[`${paramName}${index}`] = `%${value}%`
-                return acc
-            }, {} as Record<string, string>)
-            queryBuilder.andWhere(`(${orConditions})`, params)
-            break
-        }
-    }
-}
-
-export function APArrayContains<T>(
-    columnName: string,
-    values: string[],
-): Record<string, FindOperator<T>> {
-    const databaseType = getDatabaseType()
-    switch (databaseType) {
-        case DatabaseType.POSTGRES:
-            return {
-                [columnName]: ArrayContains(values),
-            }
-        case DatabaseType.SQLITE3: {
-            const likeConditions = values
-                .map((_, index) => `${columnName} LIKE :value${index}`)
-                .join(' AND ')
-            const likeParams = values.reduce((params, value, index) => {
-                params[`value${index}`] = `%${value}%`
-                return params
-            }, {} as Record<string, string>)
-            return {
-                [columnName]: Raw(_ => `(${likeConditions})`, likeParams),
-            }
-        }
-        default:
-            throw new Error(`Unsupported database type: ${databaseType}`)
-    }
-}
-
-// Uncomment the below line when running `nx db-migration server-api --name=<MIGRATION_NAME>` and recomment it after the migration is generated
-// export const exportedConnection = databaseConnection()
