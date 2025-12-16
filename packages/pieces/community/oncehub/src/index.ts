@@ -20,6 +20,8 @@ export const oncehub = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/oncehub.png',
   categories: [PieceCategory.SALES_AND_CRM],
+  description:
+    'Build meaningful on-brand scheduling experiences with OnceHubs online appointment booking software',
   authors: ['sanket-a11y'],
   actions: [
     findContact,
