@@ -299,6 +299,12 @@
       "@activepieces/piece-formsite": [
         "packages/pieces/community/formsite/src/index.ts"
       ],
+      "@activepieces/piece-lofty": [
+        "packages/pieces/community/lofty/src/index.ts"
+      ],
+      "@activepieces/piece-youcanbookme": [
+        "packages/pieces/community/youcanbookme/src/index.ts"
+      ],
       "@activepieces/piece-esignatures": [
         "packages/pieces/community/esignatures/src/index.ts"
       ],
@@ -313,6 +319,9 @@
       ],
       "@activepieces/piece-hystruct": [
         "packages/pieces/community/hystruct/src/index.ts"
+      ],
+      "@activepieces/piece-chatfly": [
+        "packages/pieces/community/chatfly/src/index.ts"
       ]
     },
     "resolveJsonModule": true
