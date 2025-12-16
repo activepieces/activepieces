@@ -2,6 +2,7 @@ import { inspect } from 'util'
 import { AppSystemProp, ContainerType, DatabaseType, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment, ExecutionMode, FileLocation, isNil, PieceSyncMode } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { packageManager, registryPieceManager } from 'server-worker'
 import { s3Helper } from '../file/s3-helper'
 import { encryptUtils } from './encryption'
 import { jwtUtils } from './jwt-utils'
@@ -72,6 +73,7 @@ const systemPropValidators: {
     [WorkerSystemProp.PRE_WARM_CACHE]: booleanValidator,
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
+    [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
@@ -198,6 +200,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
 
     const environment = system.get(AppSystemProp.ENVIRONMENT)
     const fileStorageLocation = process.env.AP_FILE_STORAGE_LOCATION
+    
     if (environment !== ApEnvironment.TESTING && fileStorageLocation === FileLocation.S3) {
         try {
             await s3Helper(log).validateS3Configuration()
@@ -262,4 +265,7 @@ export const validateEnvPropsOnStartup = async (log: FastifyBaseLogger): Promise
             }))
         }
     }
+
+    await packageManager(log).validate()
+    await registryPieceManager(log).validate()
 }

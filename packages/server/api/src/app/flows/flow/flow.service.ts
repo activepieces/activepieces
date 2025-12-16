@@ -12,7 +12,6 @@ import {
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
-    FlowTemplateWithoutProjectInformation,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -22,7 +21,9 @@ import {
     PopulatedFlow,
     ProjectId,
     SeekPage,
+    SharedTemplate,
     TelemetryEventName,
+    TemplateType,
     TriggerSource,
     UncategorizedFolderId,
     UserId,
@@ -33,7 +34,7 @@ import { EntityManager, In, IsNull, Not } from 'typeorm'
 import { transaction } from '../../core/db/transaction'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import Paginator from '../../helper/pagination/paginator'
+import Paginator, { Order } from '../../helper/pagination/paginator'
 import { SystemJobData, SystemJobName } from '../../helper/system-jobs/common'
 import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
@@ -104,8 +105,10 @@ export const flowService = (log: FastifyBaseLogger) => ({
             alias: 'ff',
             query: {
                 limit,
-                order: 'DESC',
-                orderBy: 'updated',
+                orderBy: [
+                    { field: 'status', order: Order.DESC },
+                    { field: 'updated', order: Order.DESC },
+                ],
                 afterCursor: decodedCursor.nextCursor,
                 beforeCursor: decodedCursor.previousCursor,
             },
@@ -383,6 +386,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 })
                 break
             }
+
+            case FlowOperationType.UPDATE_MINUTES_SAVED: {
+                await flowRepo().update(id, {
+                    timeSavedPerRun: operation.request.timeSavedPerRun,
+                })
+                break
+            }
             default: {
                 let lastVersion = await flowVersionService(
                     log,
@@ -516,7 +526,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         flowId,
         versionId,
         projectId,
-    }: GetTemplateParams): Promise<FlowTemplateWithoutProjectInformation> {
+    }: GetTemplateParams): Promise<SharedTemplate> {
         const flow = await this.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
@@ -525,16 +535,20 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeSampleData: true,
         })
 
-        return {
+        const template: SharedTemplate = {
             name: flow.version.displayName,
+            summary: '',
             description: '',
             pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
-            template: flow.version,
+            flows: [flow.version],
             tags: [],
-            created: Date.now().toString(),
-            updated: Date.now().toString(),
             blogUrl: '',
+            metadata: null,
+            author: '',
+            categories: [],
+            type: TemplateType.SHARED,
         }
+        return template
     },
 
     async count({ projectId, folderId, status }: CountParams): Promise<number> {
