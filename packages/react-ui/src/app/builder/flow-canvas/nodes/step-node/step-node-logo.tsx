@@ -1,5 +1,7 @@
 import { ImageWithColorBackground } from '@/components/ui/image-with-color-background';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
 
 const StepNodeLogo = ({
   isSkipped,
@@ -10,10 +12,11 @@ const StepNodeLogo = ({
   logoUrl: string;
   displayName: string;
 }) => {
+
   return (
     <div
       className={cn(
-        'flex items-center justify-center p-1.5 border-border border border-solid rounded-md',
+        'flex items-center justify-center rounded-xl',
         {
           'opacity-80': isSkipped,
         },
