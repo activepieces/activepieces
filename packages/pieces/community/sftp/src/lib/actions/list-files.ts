@@ -1,8 +1,10 @@
 import { endClient, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
-import { Client as FTPClient } from 'basic-ftp';
+import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { getClient, getProtocolBackwardCompatibility } from '../..';
+import { getSftpError } from './common';
+import { unknown } from 'zod';
 
 async function listSFTP(client: Client, directoryPath: string) {
   const contents = await client.list(directoryPath);
@@ -61,12 +63,22 @@ export const listFolderContentsAction = createAction({
         status: 'success',
         contents: contents,
       };
-    } catch (err) {
-      return {
-        status: 'error',
-        contents: null,
-        error: err,
-      };
+    } 
+    catch (err) {
+      if (err instanceof FTPError) {
+        console.error(getSftpError(err.code));
+        return {
+          status: 'error',
+          content: null,
+          error: getSftpError(err.code),
+        };
+      } else {
+        return {
+          status: 'error',
+          content: null,
+          error: err
+        }
+      }
     } finally {
       await endClient(client, context.auth.props.protocol);
     }
