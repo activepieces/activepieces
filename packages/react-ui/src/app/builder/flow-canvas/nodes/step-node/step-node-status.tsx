@@ -26,7 +26,7 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
   }
   const { variant, text } = flowRunUtils.getStatusIconForStep(stepStatusInRun);
   return (
-    <div className="absolute right-[1px] text-sm h-[20px] -top-[25px]">
+    <div className="absolute right-[1px] text-sm h-[20px] -top-[28px]">
       <div
         className={cn(
           'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center justify-center px-2  rounded-md ',

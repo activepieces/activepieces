@@ -30,7 +30,7 @@ const StepStatusIcon = React.memo(
     const { variant, Icon } = flowRunUtils.getStatusIconForStep(status);
 
     if (status === StepOutputStatus.RUNNING) {
-      return <LoadingSpinner className="w-4 h-4 "></LoadingSpinner>;
+      return <LoadingSpinner className="w-3 h-3 "></LoadingSpinner>;
     }
     return (
       <Tooltip>
