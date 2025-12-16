@@ -41,6 +41,7 @@ type AgentToolsDialogProps = {
 };
 
 type SelectedDialogPage = 'pieces-list' | 'piece-selected' | 'action-selected';
+const excludedPieces = ['@activepieces/piece-ai'];
 
 export function AgentPieceDialog({
   tools,
@@ -60,10 +61,12 @@ export function AgentPieceDialog({
 
   const pieceMetadata = useMemo(() => {
     return (
-      metadata?.filter(
-        (m): m is PieceStepMetadataWithSuggestions =>
-          'suggestedActions' in m && 'suggestedTriggers' in m,
-      ) ?? []
+      metadata
+        ?.filter(
+          (m): m is PieceStepMetadataWithSuggestions =>
+            'suggestedActions' in m && 'suggestedTriggers' in m,
+        )
+        .filter((piece) => !excludedPieces.includes(piece.pieceName)) ?? []
     );
   }, [metadata]);
 
@@ -89,7 +92,9 @@ export function AgentPieceDialog({
   const authIsSet =
     !!selectedPiece &&
     !!selectedAction &&
-    (!selectedAction.requireAuth || !isNil(predefinedInputs?.auth));
+    (!selectedAction.requireAuth ||
+      isNil(selectedPiece.auth) ||
+      !isNil(predefinedInputs?.auth));
 
   const handleNewActionToolSave = () => {
     if (isNil(selectedAction) || isNil(selectedPiece) || !authIsSet) return;

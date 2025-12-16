@@ -1,8 +1,7 @@
 import { t } from 'i18next';
-import { ChevronDown, Puzzle, Workflow } from 'lucide-react';
+import { Hammer, Workflow } from 'lucide-react';
 import { useState } from 'react';
 
-import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,12 +17,16 @@ type AddAgentToolDropdownProps = {
   tools: AgentTool[];
   disabled?: boolean;
   onToolsUpdate: (tools: AgentTool[]) => void;
+  children: React.ReactNode;
+  align?: 'start' | 'end' | 'center';
 };
 
-export const AddAgentToolDropdown = ({
+export const AddToolDropdown = ({
   tools,
   disabled,
   onToolsUpdate,
+  children,
+  align,
 }: AddAgentToolDropdownProps) => {
   const [openDropdown, setOpenDropdown] = useState(false);
   const [showAddPieceDialog, setShowAddPieceDialog] = useState(false);
@@ -36,12 +39,10 @@ export const AddAgentToolDropdown = ({
       onOpenChange={setOpenDropdown}
     >
       <DropdownMenuTrigger disabled={disabled} asChild>
-        <Button variant="basic">
-          <span>{t('Add tool')}</span>
-          <ChevronDown className="h-4 w-4" />
-        </Button>
+        {children}
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+
+      <DropdownMenuContent align={align}>
         <AgentPieceDialog
           tools={tools}
           open={showAddPieceDialog}
@@ -61,10 +62,11 @@ export const AddAgentToolDropdown = ({
               setShowAddPieceDialog(true);
             }}
           >
-            <Puzzle className="h-4 w-4 me-2" />
-            <span>{t('From piece')}</span>
+            <Hammer className="size-4 me-2" />
+            <span>{t('Piece tool')}</span>
           </DropdownMenuItem>
         </AgentPieceDialog>
+
         <AgentFlowToolDialog
           open={showAddFlowDialog}
           selectedFlows={tools
@@ -89,7 +91,7 @@ export const AddAgentToolDropdown = ({
             }}
           >
             <Workflow className="h-4 w-4 me-2" />
-            <span>{t('From flow')}</span>
+            <span>{t('Flow tool')}</span>
           </DropdownMenuItem>
         </AgentFlowToolDialog>
       </DropdownMenuContent>
