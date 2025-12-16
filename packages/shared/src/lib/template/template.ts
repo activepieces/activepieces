@@ -37,6 +37,10 @@ export const FlowVersionTemplate = Type.Omit(
 )
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 
+export enum TemplateStatus {
+    PUBLISHED = 'PUBLISHED',
+    ARCHIVED = 'ARCHIVED',
+}
 
 export const Template = Type.Object({
     ...BaseModelSchema,
@@ -53,6 +57,7 @@ export const Template = Type.Object({
     pieces: Type.Array(Type.String()),
     platformId: Nullable(Type.String()),
     flows: Type.Optional(Type.Array(FlowVersionTemplate)),
+    status: Type.Enum(TemplateStatus),
 })
 export type Template = Static<typeof Template>
 
