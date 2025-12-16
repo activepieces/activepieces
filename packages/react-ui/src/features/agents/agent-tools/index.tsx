@@ -1,14 +1,27 @@
 import { t } from 'i18next';
+import { Plus } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
 
+import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type { AgentTool } from '@activepieces/shared';
+import type {
+  AgentFlowTool,
+  AgentPieceTool,
+  AgentTool,
+} from '@activepieces/shared';
 import { AgentToolType } from '@activepieces/shared';
 
-import { AddAgentToolDropdown } from './add-agent-tool-dropwdown';
-import { AgentFlowTool } from './flow-tool';
-import { AgentPieceTool } from './piece-tool';
+import { AddToolDropdown } from './add-agent-tool-dropwdown';
+import { AgentFlowToolComponent } from './flow-tool';
+import { AgentPieceToolComponent } from './piece-tool';
+
+const icons = [
+  'https://cdn.activepieces.com/pieces/youtube.png',
+  'https://cdn.activepieces.com/pieces/slack.png',
+  'https://cdn.activepieces.com/pieces/github.png',
+  'https://cdn.activepieces.com/pieces/notion.png',
+];
 
 interface AgentToolsProps {
   toolsField: ControllerRenderProps;
@@ -27,83 +40,95 @@ export const AgentTools = ({
 
   const { pieces } = piecesHooks.usePieces({});
 
-  const removeTool = async (toolIds: string[]): Promise<void> => {
-    const newTools = tools.filter((tool) => !toolIds.includes(tool.toolName));
-
-    onToolsUpdate(newTools);
+  const removeTool = (toolName: string) => {
+    onToolsUpdate(tools.filter((tool) => toolName !== tool.toolName));
   };
 
-  const piecesCount =
-    tools.filter((tool) => tool.type === AgentToolType.PIECE).length || 0;
+  const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
+  const pieceToToolMap = tools
+    .filter((tool) => tool.type === AgentToolType.PIECE)
+    .reduce<Record<string, AgentPieceTool[]>>((acc, tool) => {
+      const key = tool.pieceMetadata?.pieceName;
 
-  const flowsCount =
-    tools.filter((tool) => tool.type === AgentToolType.FLOW).length || 0;
+      if (!key) return acc;
 
-  const totalToolsCount = piecesCount + flowsCount;
-  const hasTools = totalToolsCount > 0;
-  const pieceToToolMap = tools.reduce((acc, tool) => {
-    const key =
-      tool.type === AgentToolType.PIECE
-        ? tool.pieceMetadata?.pieceName
-        : tool.flowId;
-
-    if (key) {
-      acc[key] = acc[key] || [];
-      acc[key].push(tool);
-    }
-
-    return acc;
-  }, {} as Record<string, AgentTool[]>);
+      (acc[key] ??= []).push(tool);
+      return acc;
+    }, {});
 
   return (
-    <div>
+    <div className="">
       <div className="flex items-center justify-between">
-        <div className="space-y-0">
-          <h2 className="text-sm flex font-medium items-center gap-2">
-            {t('Tools')}
-          </h2>
-        </div>
-        <div className="flex gap-2">
-          <AddAgentToolDropdown
-            disabled={disabled}
-            onToolsUpdate={(tools) => {
-              onToolsUpdate?.(tools);
-            }}
-            tools={tools}
-          />
-        </div>
+        <h2 className="text-sm font-medium">{t('Tools')}</h2>
+
+        <AddToolDropdown
+          disabled={disabled}
+          onToolsUpdate={onToolsUpdate}
+          tools={tools}
+          align="end"
+        >
+          <Button variant="ghost" size="icon">
+            <Plus className="size-4" />
+          </Button>
+        </AddToolDropdown>
       </div>
 
       <div className="mt-2">
-        {hasTools && (
+        {tools.length > 0 ? (
           <ScrollArea>
             <div className="space-y-2">
-              {pieceToToolMap &&
-                Object.entries(pieceToToolMap).map(([toolKey, tools]) => {
-                  if (tools[0].type === AgentToolType.PIECE) {
-                    return (
-                      <AgentPieceTool
-                        disabled={disabled}
-                        key={toolKey}
-                        tools={tools}
-                        pieces={pieces || []}
-                        removeTool={removeTool}
-                      />
-                    );
-                  } else if (tools[0].type === AgentToolType.FLOW) {
-                    return (
-                      <AgentFlowTool
-                        disabled={disabled}
-                        key={toolKey}
-                        tool={tools[0]}
-                        removeTool={removeTool}
-                      />
-                    );
-                  }
-                  return null;
-                })}
+              {Object.entries(pieceToToolMap).map(([pieceName, tools]) => (
+                <AgentPieceToolComponent
+                  key={pieceName}
+                  disabled={disabled}
+                  tools={tools}
+                  pieces={pieces || []}
+                  removeTool={removeTool}
+                />
+              ))}
+              {flowTools.map((tool) => (
+                <AgentFlowToolComponent
+                  key={tool.flowId}
+                  disabled={disabled}
+                  tool={tool}
+                  removeTool={removeTool}
+                />
+              ))}
             </div>
           </ScrollArea>
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card px-4 py-8 text-center">
+            <div className="flex items-center gap-2">
+              {icons.slice(0, 4).map((icon) => (
+                <div
+                  key={icon}
+                  className="flex size-9 items-center justify-center rounded-full border border-border bg-background"
+                >
+                  <img
+                    src={icon}
+                    alt={icon}
+                    className="size-4 object-contain"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <p className="text-sm font-medium text-muted-foreground">
+              {t('Your agent have no tools yet !')}
+            </p>
+
+            <AddToolDropdown
+              disabled={disabled}
+              onToolsUpdate={onToolsUpdate}
+              tools={tools}
+              align="center"
+            >
+              <Button variant="accent" className="gap-2">
+                <Plus className="size-4" />
+                {t('Add Tool')}
+              </Button>
+            </AddToolDropdown>
+          </div>
         )}
       </div>
     </div>
