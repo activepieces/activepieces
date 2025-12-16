@@ -69,9 +69,9 @@ export const PredefinedInputsForm = ({
       const cleaned: Record<string, unknown> = {};
 
       for (const key in values) {
-        if (values[key] !== undefined) {
-          cleaned[key] = values[key];
-        }
+        const value = values[key];
+        if (isNil(value)) continue;
+        cleaned[key] = value;
       }
 
       setPredefinedInputs(cleaned);
@@ -138,6 +138,11 @@ export const PredefinedInputsForm = ({
                   property: { ...property, required: false } as PieceProperty,
                   useMentionTextInput: false,
                   disabled: false,
+                  form,
+                  actionOrTriggerName: action.name,
+                  pieceName: piece.pieceName,
+                  pieceVersion: piece.pieceVersion,
+                  inputPrefix: undefined,
                 })
               }
             />

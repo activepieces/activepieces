@@ -5,10 +5,7 @@ import { ControllerRenderProps } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
-import type {
-  AgentPieceTool,
-  AgentTool,
-} from '@activepieces/shared';
+import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
 import { AgentToolType } from '@activepieces/shared';
 
 import { AddToolDropdown } from './add-agent-tool-dropwdown';

@@ -70,6 +70,11 @@ export const AgentSettings = (props: AgentSettingsProps) => {
                   property: properties[propertyName],
                   useMentionTextInput: true,
                   disabled: props.readonly,
+                  form: form,
+                  actionOrTriggerName: actionName,
+                  pieceName: props.step.settings.pieceName,
+                  pieceVersion: props.step.settings.pieceVersion,
+                  inputPrefix: 'settings.input',
                 })
               }
             />

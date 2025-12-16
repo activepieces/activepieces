@@ -39,6 +39,10 @@ export const GenericPropertiesFormComponent = React.memo(
     const form = useFormContext();
     const step = form.getValues() as Step;
 
+    const { settings } = step;
+    const actionOrTriggerName = settings.actionName ?? settings.triggerName;
+    const { pieceName, pieceVersion } = settings;
+
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
@@ -77,6 +81,11 @@ export const GenericPropertiesFormComponent = React.memo(
                     useMentionTextInput: useMentionTextInput,
                     disabled: disabled ?? false,
                     dynamicInputModeToggled,
+                    form: form,
+                    actionOrTriggerName: actionOrTriggerName,
+                    pieceName: pieceName,
+                    pieceVersion: pieceVersion,
+                    inputPrefix: 'settings.input',
                   })
                 }
               />

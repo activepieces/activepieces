@@ -17,6 +17,13 @@ type ConnectionDropdownProps = {
   showError?: boolean;
 };
 
+function unwrapConnection(input?: unknown): string | undefined {
+  if (typeof input !== 'string') return undefined;
+
+  const match = input.match(/^\{\{connections\['([^']+)'\]\}\}$/);
+  return match?.[1];
+}
+
 export const ConnectionDropdown = React.memo(
   ({
     piece,
@@ -60,7 +67,7 @@ export const ConnectionDropdown = React.memo(
 
     const handleChange = (selectedValue: string | null) => {
       if (selectedValue) {
-        onChange(selectedValue as string);
+        onChange(`{{connections['${selectedValue}']}}`);
       } else {
         setConnectionDialogOpen(true);
       }
@@ -74,7 +81,7 @@ export const ConnectionDropdown = React.memo(
           setOpen={(open, connection) => {
             setConnectionDialogOpen(open);
             if (connection) {
-              onChange(connection.externalId);
+              onChange(`{{connections['${connection.externalId}']}}`);
               refetchConnections();
             }
           }}
@@ -84,7 +91,7 @@ export const ConnectionDropdown = React.memo(
 
         <div className="space-y-2">
           <SearchableSelect
-            value={value ?? undefined}
+            value={unwrapConnection(value)}
             onChange={handleChange}
             options={connectionOptionsWithNewConnectionOption}
             placeholder={placeholder}

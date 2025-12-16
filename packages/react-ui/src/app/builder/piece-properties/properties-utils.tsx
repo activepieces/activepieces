@@ -1,5 +1,9 @@
 import { t } from 'i18next';
-import { ControllerRenderProps } from 'react-hook-form';
+import {
+  ControllerRenderProps,
+  FieldValues,
+  UseFormReturn,
+} from 'react-hook-form';
 
 import { JsonEditor } from '@/components/custom/json-editor';
 import { ApMarkdown } from '@/components/custom/markdown';
@@ -31,6 +35,11 @@ export type SelectGenericFormComponentForPropertyParams = {
   useMentionTextInput: boolean;
   disabled: boolean;
   dynamicInputModeToggled: boolean;
+  inputPrefix?: string;
+  actionOrTriggerName: string;
+  pieceName: string;
+  pieceVersion: string;
+  form: UseFormReturn<FieldValues, any, undefined>;
 };
 
 export const selectGenericFormComponentForProperty = ({
@@ -43,6 +52,11 @@ export const selectGenericFormComponentForProperty = ({
   useMentionTextInput,
   disabled,
   dynamicInputModeToggled,
+  actionOrTriggerName,
+  form,
+  pieceName,
+  pieceVersion,
+  inputPrefix,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -195,6 +209,11 @@ export const selectGenericFormComponentForProperty = ({
           <DynamicDropdownPieceProperty
             refreshers={property.refreshers}
             value={field.value}
+            actionOrTriggerName={actionOrTriggerName}
+            pieceName={pieceName}
+            pieceVersion={pieceVersion}
+            form={form}
+            inputPrefix={inputPrefix}
             onChange={field.onChange}
             disabled={disabled}
             propertyName={propertyName}
