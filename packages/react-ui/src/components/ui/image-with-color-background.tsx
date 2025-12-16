@@ -9,6 +9,21 @@ interface ImageWithColorBackgroundProps
   fallback?: React.ReactNode;
 }
 
+const isGrayColor = (r: number, g: number, b: number): boolean => {
+  const threshold = 15;
+  const darkThreshold = 150;
+  const lightThreshold = 225;
+
+  const isDark = r <= darkThreshold && g <= darkThreshold && b <= darkThreshold;
+  const isLight = r >= lightThreshold && g >= lightThreshold && b >= lightThreshold;
+  const diffRG = Math.abs(r - g);
+  const diffRB = Math.abs(r - b);
+  const diffGB = Math.abs(g - b);
+  const isGray =
+    diffRG <= threshold && diffRB <= threshold && diffGB <= threshold;
+  return isDark || isLight || isGray;
+};
+
 const ImageWithColorBackground = ({
   src,
   alt,
@@ -27,14 +42,20 @@ const ImageWithColorBackground = ({
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = src;
-
+    
     img.onload = () => {
+  
       fac
-        .getColorAsync(img)
+        .getColorAsync(img,{algorithm: 'simple'})
         .then((color) => {
-          setBackgroundColor(
-            `color-mix(in srgb, rgb(${color.value[0]},${color.value[1]},${color.value[2]}) 20%, #fff 80%)`
-          );
+          const [r, g, b] = color.value;
+          if (isGrayColor(r, g, b)) {
+            setBackgroundColor(null);
+          } else {
+            setBackgroundColor(
+              `color-mix(in srgb, rgb(${r},${g},${b}) 10%, #fff 92%)`
+            );
+          }
         })
         .catch(() => {
           setBackgroundColor(null);
@@ -59,9 +80,13 @@ const ImageWithColorBackground = ({
 
   return (
     <span
-      className={cn('relative inline-block h-full w-full rounded-lg', className)}
-      style={{
-        backgroundColor: backgroundColor ?? 'transparent',
+      className={cn('relative inline-block h-full w-full rounded-lg', className, {
+        'bg-background': backgroundColor === null,
+        'border border-border/50 dark:bg-foreground/10': backgroundColor === null,
+      })}
+      style={ backgroundColor ? {
+        backgroundColor: backgroundColor,
+      } : {
       }}
     >
       {isLoading && !hasError && (
