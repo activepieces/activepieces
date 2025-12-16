@@ -107,7 +107,7 @@ const ApStepCanvasNode = React.memo(
         {...stepNodeDivAttributes}
         {...stepNodeDivListeners}
       >
-        {isTrigger && <TriggerWidget />}
+        {isTrigger && <TriggerWidget isSelected={isSelected} />}
         <StepInvalidOrSkippedIcon
           isValid={!!isStepValid}
           isSkipped={isSkipped}
