@@ -1,7 +1,7 @@
 import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, Folder, ProjectRelease, ProjectWithLimits, spreadIfDefined, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -35,13 +35,13 @@ import { connectionKeyModule } from './ee/connection-keys/connection-key.module'
 import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 import { domainHelper } from './ee/custom-domains/domain-helper'
 import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
+import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
@@ -60,7 +60,6 @@ import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
-import { communityFlowTemplateModule } from './flows/templates/community-flow-template.module'
 import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { system } from './helper/system/system'
@@ -79,6 +78,7 @@ import { projectHooks } from './project/project-hooks'
 import { projectModule } from './project/project-module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
+import { templateModule } from './template/template.module'
 import { todoActivityModule } from './todos/activity/todos-activity.module'
 import { todoModule } from './todos/todo.module'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
@@ -131,7 +131,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
                     [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
                     [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
-                    'flow-template': FlowTemplate,
+                    'template': Template,
                     'folder': Folder,
                     'user': UserWithMetaInformation,
                     'user-invitation': UserInvitation,
@@ -215,6 +215,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(todoModule)
     await app.register(todoActivityModule)
     await app.register(solutionsModule)
+    await app.register(templateModule)
     await app.register(platformAnalyticsModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
@@ -269,6 +270,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     switch (edition) {
         case ApEdition.CLOUD:
             await app.register(adminPlatformModule)
+            await app.register(adminPlatformTemplatesCloudModule)
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
@@ -285,7 +287,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
-            await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(projectRoleModule)
@@ -311,7 +312,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(enterpriseLocalAuthnModule)
             await app.register(federatedAuthModule)
             await app.register(apiKeyModule)
-            await app.register(platformFlowTemplateModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
             await app.register(projectRoleModule)
@@ -326,7 +326,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
             await app.register(communityPiecesModule)
-            await app.register(communityFlowTemplateModule)
             await app.register(queueMetricsModule)
             break
     }
