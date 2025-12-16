@@ -17,7 +17,7 @@ export const INTERNAL_ERROR_MESSAGE =
 export function internalErrorToast() {
   toast.error('Something went wrong', {
     description: INTERNAL_ERROR_MESSAGE,
-    duration: 3000,
+    duration: 10000000000,
   });
 }
 
@@ -60,9 +60,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          '--normal-text': 'hsl(var(--foreground))',
-          '--normal-bg': 'hsl(var(--background))',
-          '--normal-border': 'hsl(var(--border))',
+          '--normal-text': 'var(--foreground)',
+          '--normal-bg': 'var(--background)',
+          '--normal-border': 'var(--border)',
           '--border-radius': 'var(--radius)',
         } as React.CSSProperties
       }
