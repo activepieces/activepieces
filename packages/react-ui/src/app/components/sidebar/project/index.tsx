@@ -59,12 +59,9 @@ const ProjectSideBarItem = ({
                 variant="ghost"
                 size="icon"
                 onClick={() => handleProjectSelect(project.id)}
-                className={cn(
-                  'relative flex items-center justify-center',
-                  {
-                    '!bg-sidebar-accent': isCurrentProject,
-                  }
-                )}
+                className={cn('relative flex items-center justify-center', {
+                  '!bg-sidebar-accent': isCurrentProject,
+                })}
               >
                 {projectAvatar}
               </Button>
@@ -77,12 +74,9 @@ const ProjectSideBarItem = ({
       ) : (
         <SidebarMenuButton
           asChild
-          className={cn(
-            'px-2 py-5 cursor-pointer group/project',
-             {
-              '!bg-sidebar-accent ': isCurrentProject,
-             }
-          )}
+          className={cn('px-2 py-5 cursor-pointer group/project', {
+            '!bg-sidebar-accent ': isCurrentProject,
+          })}
         >
           <div className="w-full flex items-center justify-between gap-2">
             <div
