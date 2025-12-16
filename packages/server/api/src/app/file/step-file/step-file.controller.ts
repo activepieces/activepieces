@@ -1,4 +1,4 @@
-import { AppSystemProp, engineAccess, publicAccess } from '@activepieces/server-shared'
+import { AppSystemProp, engineAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
