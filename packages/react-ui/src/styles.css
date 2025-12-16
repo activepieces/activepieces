@@ -1,7 +1,32 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
-
 @custom-variant dark (&:is(.dark *));
+
+
+/* inter-regular - latin */
+@font-face {
+  font-display: swap; 
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/inter-v20-latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* inter-700 - latin */
+@font-face {
+  font-display: swap; 
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/inter-v20-latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* inter-800 - latin */
+@font-face {
+  font-display: swap; 
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 800;
+  src: url('../fonts/inter-v20-latin-800.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
 
 @utility container {
   margin-inline: auto;
@@ -75,7 +100,6 @@
   --radius-xs: calc(var(--radius) - 8px);
   --radius-xss: calc(var(--radius) - 10px);
 
-  --font-inter: Inter, sans-serif;
 
   --text-xss: 0.65rem;
   --text-3xl: 1.75rem;
@@ -90,7 +114,7 @@
   --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
   --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
     alternate;
-
+  --font-sans: "Inter",ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji";
   --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.4);
   --shadow-add-button: var(--add-button-shadow);
   --color-builder-background: var(--builder-background);
@@ -329,7 +353,7 @@
     --sidebar-foreground: theme('colors.neutral.950');
     --sidebar-primary: 257 74% 57%;
     --sidebar-primary-foreground: theme('colors.neutral.50');
-    --sidebar-accent: theme('colors.neutral.200');
+    --sidebar-accent: color-mix(in srgb, theme('colors.neutral.200') 60%, transparent);
     --sidebar-accent-foreground: theme('colors.neutral.900');
     --sidebar-border: theme('colors.neutral.200');
     --sidebar-ring: theme('colors.neutral.400');
