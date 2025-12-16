@@ -44,6 +44,29 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
         return session.url
     },
+    async createNewAICreditPaymentCheckoutSession(params: CreateAICreditPaymentParams): Promise<string> {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { customerId, platformId, paymentId, aiCredits } = params
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{ price: AI_CREDIT_PRICE_ID, quantity: aiCredits }],
+            mode: 'payment',
+            metadata: {
+                platformId,
+                paymentId,
+                type: StripeCheckoutPaymentType.AI_CREDIT,
+            },
+            allow_promotion_codes: true,
+            customer: customerId,
+            success_url: `${frontendUrl}/platform/setup/billing/success?action=ai-credit-payment`,
+            cancel_url: `${frontendUrl}/platform/setup/billing/error`,
+        })
+        
+        return session.url!
+    },
     async createNewSubscriptionCheckoutSession(params: StartSubscriptionParams): Promise<string> {
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
@@ -246,6 +269,12 @@ async function createSubscriptionSchedule(params: CreateSubscriptionSchedulePara
     return schedule
 }
 
+type CreateAICreditPaymentParams = {
+    platformId: string
+    paymentId: string
+    customerId: string
+    aiCredits: number
+}
 
 type StartSubscriptionParams = {
     platformId: string
@@ -281,4 +310,8 @@ type CreateSubscriptionScheduleParams = {
     extraActiveFlows: number
     logger: FastifyBaseLogger
     isFreeDowngrade: boolean
+}
+
+export enum StripeCheckoutPaymentType {
+    AI_CREDIT = 'ai-credit-payment',
 }

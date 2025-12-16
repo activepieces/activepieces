@@ -47,6 +47,11 @@ export const CreateCheckoutSessionParamsSchema = Type.Object({
 })
 export type CreateSubscriptionParams = Static<typeof CreateCheckoutSessionParamsSchema>
 
+export const CreateAICreditCheckoutSessionParamsSchema = Type.Object({
+    aiCredits: Type.Number(),
+})
+export type CreateAICreditCheckoutSessionParamsSchema = Static<typeof CreateAICreditCheckoutSessionParamsSchema>
+
 export enum PRICE_NAMES {
     AI_CREDITS = 'ai-credit',
     ACTIVE_FLOWS = 'active-flow',
@@ -66,8 +71,6 @@ export const PRICE_ID_MAP = {
 export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     plan: 'standard',
     includedAiCredits: 200,
-    aiCreditsOverageLimit: undefined,
-    aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
     activeFlowsLimit: 10,
     projectsLimit: 1,
 
@@ -101,8 +104,6 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     todosEnabled: true,
     agentsEnabled: true,
     includedAiCredits: 0,
-    aiCreditsOverageLimit: undefined,
-    aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
     environmentsEnabled: false,
     analyticsEnabled: true,
     showPoweredBy: false,

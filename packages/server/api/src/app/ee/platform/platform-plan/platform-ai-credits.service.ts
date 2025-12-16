@@ -1,12 +1,13 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { apId, isNil, PlatformAiCreditsPaymentStatus } from '@activepieces/shared'
+import { apId, assertNotNullOrUndefined, isNil, PlatformAiCreditsPaymentStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { repoFactory } from '../../../core/db/repo-factory'
 import { distributedLock } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
-import { platformPlanService } from './platform-plan.service'
-import { repoFactory } from '../../../core/db/repo-factory'
-import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
 import { openRouterApi } from './openrouter/openrouter-api'
+import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
+import { platformPlanService } from './platform-plan.service'
+import { stripeHelper } from './stripe-helper'
 
 const platformAiCreditsPaymentRepo = repoFactory(PlatformAiCreditsPaymentEntity)
 
@@ -80,23 +81,38 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async initializeAiCreditsPayment(platformId: string, totalCredits: number): Promise<void> {
+    async initializeAiCreditsPayment(platformId: string, totalCredits: number): Promise<{ stripeCheckoutUrl: string }> {
+        const { stripeCustomerId: customerId } = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
+
         const amountInUsd = totalCredits / CREDIT_PER_DOLLAR
 
+        const id = apId()
         await platformAiCreditsPaymentRepo().insert({
-            id: apId(),
+            id,
             platformId,
             aiCredits: totalCredits,
             amount: amountInUsd,
             status: PlatformAiCreditsPaymentStatus.PAYMENT_PENDING,
-            txId: '',
         })
+
+        const stripeCheckoutUrl = await stripeHelper(log).createNewAICreditPaymentCheckoutSession({
+            aiCredits: totalCredits,
+            platformId,
+            paymentId: id,
+            customerId,
+        })
+
+        return { stripeCheckoutUrl }
     },
 
-    async aiCreditsPaymentSucceeded(id: string): Promise<void> {
-        const payment = await platformAiCreditsPaymentRepo().findOneOrFail({ where: { id } })
+    async aiCreditsPaymentSucceeded(paymentId: string, txId: string): Promise<void> {
+        const payment = await platformAiCreditsPaymentRepo().findOneOrFail({ where: { id: paymentId } })
+        if (payment.status === PlatformAiCreditsPaymentStatus.DONE) {
+            return
+        }
 
-        await platformAiCreditsPaymentRepo().save({ id, status: PlatformAiCreditsPaymentStatus.PAYMENT_SUCCESS })
+        await platformAiCreditsPaymentRepo().save({ id: paymentId, txId, status: PlatformAiCreditsPaymentStatus.PAYMENT_SUCCESS })
 
         const { hash } = await this.provisionKeyIfNeeded(payment.platformId)
         const { data: key } = await openRouterApi.getKey({ hash })
@@ -106,25 +122,25 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             limit: key.limit! + payment.amount,
         })
 
-        await platformAiCreditsPaymentRepo().save({ id, status: PlatformAiCreditsPaymentStatus.DONE })
+        await platformAiCreditsPaymentRepo().save({ id: paymentId, status: PlatformAiCreditsPaymentStatus.DONE })
     },
 
-    async aiCreditsPaymentFailed(id: string): Promise<void> {
-        await platformAiCreditsPaymentRepo().save({ id, status: PlatformAiCreditsPaymentStatus.PAYMENT_FAILED })
+    async aiCreditsPaymentFailed(paymentId: string): Promise<void> {
+        await platformAiCreditsPaymentRepo().save({ id: paymentId, status: PlatformAiCreditsPaymentStatus.PAYMENT_FAILED })
     },
 
-    async resetFreePlanCredit(platformId: string): Promise<void> {
+    async resetPlanIncludedCredits(platformId: string): Promise<void> {
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         const { hash } = await this.provisionKeyIfNeeded(platformId)
         const { data: key } = await openRouterApi.getKey({ hash })
-
 
         let creditsToAdd: number
         const creditsUsedLastMonth = key.usage_monthly * CREDIT_PER_DOLLAR
          
         if (creditsUsedLastMonth > platformPlan.includedAiCredits) {
             creditsToAdd = platformPlan.includedAiCredits
-        } else {
+        }
+        else {
             creditsToAdd = platformPlan.includedAiCredits - creditsUsedLastMonth
         }
 

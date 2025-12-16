@@ -167,7 +167,7 @@ export const PlatformAiCreditsPayment = Type.Object({
     platformId: Type.String(),
     amount: Type.Number(),
     aiCredits: Type.Number(),
-    txId: Type.String(),
+    txId: Type.Optional(Type.String()),
     status: Type.Enum(PlatformAiCreditsPaymentStatus),
 })
 export type PlatformAiCreditsPayment = Static<typeof PlatformAiCreditsPayment>

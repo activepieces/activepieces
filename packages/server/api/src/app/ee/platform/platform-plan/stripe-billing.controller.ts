@@ -1,13 +1,14 @@
 import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil, PlanName } from '@activepieces/shared'
+import { AiOverageState, ALL_PRINCIPAL_TYPES, asserNotEmpty, isNil, PlanName } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
+import { platformAiCreditsService } from './platform-ai-credits.service'
 import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
-import { stripeHelper } from './stripe-helper'
+import { StripeCheckoutPaymentType, stripeHelper } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -31,6 +32,29 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 )
 
                 switch (webhook.type) {
+                    case 'checkout.session.completed': {
+                        const session = webhook.data.object
+                        if (isNil(session.metadata)) {
+                            break
+                        }
+                        if (session.metadata.type === StripeCheckoutPaymentType.AI_CREDIT) {
+                            const paymentId = session.metadata.paymentId as string
+                            const txId = session.payment_intent as string
+                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(paymentId, txId)
+                        }
+                        break
+                    }
+                    case 'checkout.session.expired': {
+                        const session = webhook.data.object
+                        if (isNil(session.metadata)) {
+                            break
+                        }
+                        if (session.metadata.type === StripeCheckoutPaymentType.AI_CREDIT) {
+                            const paymentId = session.metadata.paymentId as string
+                            await platformAiCreditsService(request.log).aiCreditsPaymentFailed(paymentId)
+                        }
+                        break
+                    }
                     case 'customer.subscription.deleted': 
                     case 'customer.subscription.created':
                     case 'customer.subscription.updated': {
@@ -54,7 +78,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                                 platformId,
                                 plan: PlanName.STANDARD,
                                 stripeSubscriptionStatus: ApSubscriptionStatus.CANCELED,
-                                aiCreditsOverageState: AiOverageState.ALLOWED_BUT_OFF,
                                 stripeSubscriptionId: undefined,
                                 stripeSubscriptionStartDate: undefined,
                                 stripeSubscriptionEndDate: undefined,
@@ -73,8 +96,6 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             plan: PlanName.STANDARD,
                             stripeSubscriptionId: subscription.id,
                             stripeSubscriptionStatus: subscription.status as ApSubscriptionStatus,
-                            aiCreditsOverageState: AiOverageState.ALLOWED_AND_ON,
-                            aiCreditsOverageLimit: 500,
                             stripeSubscriptionStartDate: startDate,
                             stripeSubscriptionEndDate: endDate,
                             stripeSubscriptionCancelDate: cancelDate,

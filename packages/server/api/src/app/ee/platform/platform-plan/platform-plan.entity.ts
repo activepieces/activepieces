@@ -21,14 +21,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsOverageLimit: {
-            type: Number,
-            nullable: true,
-        },
-        aiCreditsOverageState: {
-            type: String,
-            nullable: true,
-        },
         stripeSubscriptionStartDate: {
             type: Number,
             nullable: true,

@@ -24,20 +24,14 @@ export const PlatformAiCreditsPaymentEntity = new EntitySchema<PlatformAiCredits
         },
         txId: {
             type: String,
-            nullable: false,
+            nullable: true,
         },
         status: {
             type: String,
             nullable: false,
         },
     },
-    indices: [
-        {
-            name: 'idx_platform_ai_credits_payment_tx_id',
-            columns: ['txId'],
-            unique: true,
-        },
-    ],
+    indices: [],
     relations: {
         platform: {
             type: 'many-to-one',
