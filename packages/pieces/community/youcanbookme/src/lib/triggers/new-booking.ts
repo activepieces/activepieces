@@ -3,8 +3,9 @@ import {
   TriggerStrategy,
   Property,
 } from '@activepieces/pieces-framework';
+import { youcanbookmeAuth } from '../common/auth';
 export const newBooking = createTrigger({
-  // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
+  auth: youcanbookmeAuth,
   name: 'newBooking',
   displayName: 'New Booking',
   description: 'Trigger when a new booking is made',
