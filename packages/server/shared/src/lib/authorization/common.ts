@@ -4,8 +4,7 @@ import { EntitySchema } from 'typeorm'
 export enum AuthorizationType {
     PLATFORM = 'PLATFORM',
     PROJECT = 'PROJECT',
-    WORKER = 'WORKER',
-    ENGINE = 'ENGINE',
+    UNSCOPED = 'UNSCOPED',
     NONE = 'NONE',
 }
 
@@ -35,10 +34,6 @@ export type ProjectBodyResource = {
 
 export type ProjectResource = ProjectTableResource | ProjectQueryResource | ProjectBodyResource
 
-export type WorkerAuthorization = {
-    type: AuthorizationType.WORKER
-}
-
 export type PlatformAuthorization = {
     type: AuthorizationType.PLATFORM
     adminOnly: boolean
@@ -52,13 +47,14 @@ export type ProjectAuthorization = {
     permission?: Permission
 }
 
+export type UnscopedAuthorization = {
+    type: AuthorizationType.UNSCOPED
+    allowedPrincipals: readonly PrincipalType[]
+}
+
 export type NoneAuthorization = {
     type: AuthorizationType.NONE
     reason: string
-}
-
-export type EngineAuthorization = {
-    type: AuthorizationType.ENGINE
 }
 
 export type PublicRoute = {

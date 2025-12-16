@@ -32,13 +32,9 @@ declare module 'fastify' {
         principal:
         ContextConfig extends { allowedPrincipals: infer P extends readonly PrincipalType[] }
             ? PrincipalForTypes<P>
-            : ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
-                ? PrincipalForType<PrincipalType.ENGINE>
-                : ContextConfig['security'] extends { authorization: { type: AuthorizationType.WORKER } }
-                    ? PrincipalForType<PrincipalType.WORKER>
-                    : ContextConfig['security'] extends { authorization: { allowedPrincipals: readonly (infer Q extends PrincipalType)[] } }
-                        ? PrincipalForType<Q>
-                        : Principal
+            : ContextConfig['security'] extends { authorization: { allowedPrincipals: readonly (infer Q extends PrincipalType)[] } }
+                ? PrincipalForType<Q>
+                : Principal
         
         // TODO(@Chaker): to be used in V2 
         // principal: ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
