@@ -1,41 +1,15 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
-    FlowTemplate,
     isNil,
-    ListFlowTemplatesRequest,
+    ListTemplatesRequestQuery,
     SeekPage,
+    Template,
 } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
-
-export const communityFlowTemplateModule: FastifyPluginAsyncTypebox = async (
-    app,
-) => {
-    await app.register(flowTemplateController, { prefix: '/v1/flow-templates' })
-}
-
-const flowTemplateController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.get(
-        '/',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                querystring: ListFlowTemplatesRequest,
-            },
-        },
-        async (request) => {
-            return communityTemplates.get(request.query)
-        },
-    )
-}
+import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { system } from '../helper/system/system'
 
 export const communityTemplates = {
-    get: async (request: ListFlowTemplatesRequest): Promise<SeekPage<FlowTemplate>> => {
-
+    get: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {
             return paginationHelper.createPage([], null)
@@ -54,14 +28,14 @@ export const communityTemplates = {
 }
 
 
-function convertToQueryString(params: ListFlowTemplatesRequest): string {
+function convertToQueryString(params: ListTemplatesRequestQuery): string {
     const searchParams = new URLSearchParams()
 
     Object.entries(params).forEach(([key, value]) => {
         if (Array.isArray(value)) {
             value.forEach((val) => {
                 if (!isNil(val)) {
-                    searchParams.append(key, val)
+                    searchParams.append(key, typeof val === 'string' ? val : JSON.stringify(val))
                 }
             })
         }
