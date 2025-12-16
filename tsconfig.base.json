@@ -280,6 +280,9 @@
       ],
       "@activepieces/piece-alt-text-ai": [
         "packages/pieces/community/alt-text-ai/src/index.ts"
+      ],
+      "@activepieces/piece-dashworks": [
+        "packages/pieces/community/dashworks/src/index.ts"
       ]
     },
     "resolveJsonModule": true
