@@ -2536,6 +2536,31 @@
                       "type",
                       "request"
                     ]
+                  },
+                  {
+                    "title": "Update Minutes Saved",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "UPDATE_MINUTES_SAVED"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "timeSavedPerRun": {
+                            "type": "number",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
                   }
                 ]
               },
@@ -4437,6 +4462,9 @@
               }
             ]
           },
+          "summary": {
+            "type": "string"
+          },
           "description": {
             "type": "string"
           },
@@ -4449,80 +4477,8 @@
                   "type": "string"
                 },
                 "color": {
-                  "anyOf": [
-                    {
-                      "type": "string",
-                      "enum": [
-                        "RED"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "BLUE"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "YELLOW"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "PURPLE"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "GREEN"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "PINK"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "VIOLET"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "ORANGE"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "DARK_GREEN"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "CYAN"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "LAVENDER"
-                      ]
-                    },
-                    {
-                      "type": "string",
-                      "enum": [
-                        "DEEP_ORANGE"
-                      ]
-                    }
-                  ]
+                  "pattern": "^#[0-9A-Fa-f]{6}$",
+                  "type": "string"
                 },
                 "icon": {
                   "type": "string"
@@ -4638,171 +4594,160 @@
             "type": "string",
             "nullable": true
           },
-          "blogUrl": {
-            "type": "string"
-          },
-          "template": {
-            "type": "object",
-            "properties": {
-              "displayName": {
-                "type": "string"
-              },
-              "trigger": {
-                "anyOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "valid": {
-                        "type": "boolean"
-                      },
-                      "displayName": {
-                        "type": "string"
-                      },
-                      "nextAction": {},
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "PIECE_TRIGGER"
-                        ]
-                      },
-                      "settings": {
-                        "type": "object",
-                        "properties": {
-                          "sampleData": {
-                            "additionalProperties": true,
-                            "type": "object",
-                            "properties": {
-                              "sampleDataFileId": {
-                                "type": "string"
-                              },
-                              "sampleDataInputFileId": {
-                                "type": "string"
-                              },
-                              "lastTestDate": {
-                                "type": "string"
-                              }
-                            }
-                          },
-                          "propertySettings": {
-                            "type": "object",
-                            "additionalProperties": {
+          "flows": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "displayName": {
+                  "type": "string"
+                },
+                "trigger": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "valid": {
+                          "type": "boolean"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "nextAction": {},
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "PIECE_TRIGGER"
+                          ]
+                        },
+                        "settings": {
+                          "type": "object",
+                          "properties": {
+                            "sampleData": {
+                              "additionalProperties": true,
                               "type": "object",
                               "properties": {
-                                "type": {
-                                  "anyOf": [
-                                    {
-                                      "type": "string",
-                                      "enum": [
-                                        "MANUAL"
-                                      ]
-                                    },
-                                    {
-                                      "type": "string",
-                                      "enum": [
-                                        "DYNAMIC"
-                                      ]
-                                    }
-                                  ]
+                                "sampleDataFileId": {
+                                  "type": "string"
                                 },
-                                "schema": {}
-                              },
-                              "required": [
-                                "type"
-                              ]
+                                "sampleDataInputFileId": {
+                                  "type": "string"
+                                },
+                                "lastTestDate": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "propertySettings": {
+                              "type": "object",
+                              "additionalProperties": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "MANUAL"
+                                        ]
+                                      },
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "DYNAMIC"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "schema": {}
+                                },
+                                "required": [
+                                  "type"
+                                ]
+                              }
+                            },
+                            "customLogoUrl": {
+                              "type": "string"
+                            },
+                            "pieceName": {
+                              "type": "string"
+                            },
+                            "pieceVersion": {
+                              "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
+                              "type": "string"
+                            },
+                            "triggerName": {
+                              "type": "string"
+                            },
+                            "input": {
+                              "type": "object",
+                              "additionalProperties": {}
                             }
                           },
-                          "customLogoUrl": {
-                            "type": "string"
-                          },
-                          "pieceName": {
-                            "type": "string"
-                          },
-                          "pieceVersion": {
-                            "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
-                            "type": "string"
-                          },
-                          "triggerName": {
-                            "type": "string"
-                          },
-                          "input": {
-                            "type": "object",
-                            "additionalProperties": {}
-                          }
+                          "required": [
+                            "propertySettings",
+                            "pieceName",
+                            "pieceVersion",
+                            "input"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "valid",
+                        "displayName",
+                        "type",
+                        "settings"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
                         },
-                        "required": [
-                          "propertySettings",
-                          "pieceName",
-                          "pieceVersion",
-                          "input"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "valid",
-                      "displayName",
-                      "type",
-                      "settings"
-                    ]
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "name": {
-                        "type": "string"
+                        "valid": {
+                          "type": "boolean"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "nextAction": {},
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "EMPTY"
+                          ]
+                        },
+                        "settings": {}
                       },
-                      "valid": {
-                        "type": "boolean"
-                      },
-                      "displayName": {
-                        "type": "string"
-                      },
-                      "nextAction": {},
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "EMPTY"
-                        ]
-                      },
-                      "settings": {}
-                    },
-                    "required": [
-                      "name",
-                      "valid",
-                      "displayName",
-                      "type",
-                      "settings"
-                    ]
-                  }
-                ]
+                      "required": [
+                        "name",
+                        "valid",
+                        "displayName",
+                        "type",
+                        "settings"
+                      ]
+                    }
+                  ]
+                },
+                "valid": {
+                  "type": "boolean"
+                },
+                "schemaVersion": {
+                  "type": "string",
+                  "nullable": true
+                }
               },
-              "valid": {
-                "type": "boolean"
-              },
-              "schemaVersion": {
-                "type": "string",
-                "nullable": true
-              }
-            },
-            "required": [
-              "displayName",
-              "trigger",
-              "valid"
-            ]
-          },
-          "projectId": {
-            "type": "string"
-          },
-          "platformId": {
-            "type": "string"
-          },
-          "metadata": {
-            "type": "object",
-            "nullable": true,
-            "additionalProperties": {}
+              "required": [
+                "displayName",
+                "trigger",
+                "valid"
+              ]
+            }
           }
         },
         "required": [
@@ -4811,13 +4756,13 @@
           "updated",
           "name",
           "type",
+          "summary",
           "description",
           "tags",
           "usageCount",
           "author",
           "categories",
-          "pieces",
-          "collection"
+          "pieces"
         ]
       },
       "folder": {
@@ -5397,6 +5342,10 @@
                 ]
               }
             ]
+          },
+          "timeSavedPerRun": {
+            "type": "number",
+            "nullable": true
           }
         },
         "required": [
@@ -10909,6 +10858,10 @@
                         }
                       ]
                     },
+                    "timeSavedPerRun": {
+                      "type": "number",
+                      "nullable": true
+                    },
                     "version": {
                       "type": "object",
                       "properties": {
@@ -11378,6 +11331,10 @@
                                 ]
                               }
                             ]
+                          },
+                          "timeSavedPerRun": {
+                            "type": "number",
+                            "nullable": true
                           },
                           "version": {
                             "type": "object",
@@ -14033,6 +13990,31 @@
                       "type",
                       "request"
                     ]
+                  },
+                  {
+                    "title": "Update Minutes Saved",
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "UPDATE_MINUTES_SAVED"
+                        ]
+                      },
+                      "request": {
+                        "type": "object",
+                        "properties": {
+                          "timeSavedPerRun": {
+                            "type": "number",
+                            "nullable": true
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "request"
+                    ]
                   }
                 ]
               }
@@ -14169,6 +14151,10 @@
                           ]
                         }
                       ]
+                    },
+                    "timeSavedPerRun": {
+                      "type": "number",
+                      "nullable": true
                     },
                     "version": {
                       "type": "object",
@@ -14523,6 +14509,9 @@
                         }
                       ]
                     },
+                    "summary": {
+                      "type": "string"
+                    },
                     "description": {
                       "type": "string"
                     },
@@ -14535,80 +14524,8 @@
                             "type": "string"
                           },
                           "color": {
-                            "anyOf": [
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "RED"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "BLUE"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "YELLOW"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "PURPLE"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "GREEN"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "PINK"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "VIOLET"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "ORANGE"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "DARK_GREEN"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "CYAN"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "LAVENDER"
-                                ]
-                              },
-                              {
-                                "type": "string",
-                                "enum": [
-                                  "DEEP_ORANGE"
-                                ]
-                              }
-                            ]
+                            "pattern": "^#[0-9A-Fa-f]{6}$",
+                            "type": "string"
                           },
                           "icon": {
                             "type": "string"
@@ -14632,173 +14549,256 @@
                     "author": {
                       "type": "string"
                     },
-                    "template": {
-                      "type": "object",
-                      "properties": {
-                        "displayName": {
-                          "type": "string"
-                        },
-                        "trigger": {
-                          "anyOf": [
-                            {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
-                                },
-                                "valid": {
-                                  "type": "boolean"
-                                },
-                                "displayName": {
-                                  "type": "string"
-                                },
-                                "nextAction": {},
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "PIECE_TRIGGER"
-                                  ]
-                                },
-                                "settings": {
-                                  "type": "object",
-                                  "properties": {
-                                    "sampleData": {
-                                      "additionalProperties": true,
-                                      "type": "object",
-                                      "properties": {
-                                        "sampleDataFileId": {
-                                          "type": "string"
-                                        },
-                                        "sampleDataInputFileId": {
-                                          "type": "string"
-                                        },
-                                        "lastTestDate": {
-                                          "type": "string"
-                                        }
-                                      }
-                                    },
-                                    "propertySettings": {
-                                      "type": "object",
-                                      "additionalProperties": {
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "enum": [
+                              "ANALYTICS"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "COMMUNICATION"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CONTENT"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "CUSTOMER_SUPPORT"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "DEVELOPMENT"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "E_COMMERCE"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "FINANCE"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "HR"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "IT_OPERATIONS"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "MARKETING"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "PRODUCTIVITY"
+                            ]
+                          },
+                          {
+                            "type": "string",
+                            "enum": [
+                              "SALES"
+                            ]
+                          }
+                        ]
+                      }
+                    },
+                    "pieces": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "flows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "trigger": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "nextAction": {},
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PIECE_TRIGGER"
+                                    ]
+                                  },
+                                  "settings": {
+                                    "type": "object",
+                                    "properties": {
+                                      "sampleData": {
+                                        "additionalProperties": true,
                                         "type": "object",
                                         "properties": {
-                                          "type": {
-                                            "anyOf": [
-                                              {
-                                                "type": "string",
-                                                "enum": [
-                                                  "MANUAL"
-                                                ]
-                                              },
-                                              {
-                                                "type": "string",
-                                                "enum": [
-                                                  "DYNAMIC"
-                                                ]
-                                              }
-                                            ]
+                                          "sampleDataFileId": {
+                                            "type": "string"
                                           },
-                                          "schema": {}
-                                        },
-                                        "required": [
-                                          "type"
-                                        ]
+                                          "sampleDataInputFileId": {
+                                            "type": "string"
+                                          },
+                                          "lastTestDate": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      "propertySettings": {
+                                        "type": "object",
+                                        "additionalProperties": {
+                                          "type": "object",
+                                          "properties": {
+                                            "type": {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "MANUAL"
+                                                  ]
+                                                },
+                                                {
+                                                  "type": "string",
+                                                  "enum": [
+                                                    "DYNAMIC"
+                                                  ]
+                                                }
+                                              ]
+                                            },
+                                            "schema": {}
+                                          },
+                                          "required": [
+                                            "type"
+                                          ]
+                                        }
+                                      },
+                                      "customLogoUrl": {
+                                        "type": "string"
+                                      },
+                                      "pieceName": {
+                                        "type": "string"
+                                      },
+                                      "pieceVersion": {
+                                        "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
+                                        "type": "string"
+                                      },
+                                      "triggerName": {
+                                        "type": "string"
+                                      },
+                                      "input": {
+                                        "type": "object",
+                                        "additionalProperties": {}
                                       }
                                     },
-                                    "customLogoUrl": {
-                                      "type": "string"
-                                    },
-                                    "pieceName": {
-                                      "type": "string"
-                                    },
-                                    "pieceVersion": {
-                                      "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
-                                      "type": "string"
-                                    },
-                                    "triggerName": {
-                                      "type": "string"
-                                    },
-                                    "input": {
-                                      "type": "object",
-                                      "additionalProperties": {}
-                                    }
+                                    "required": [
+                                      "propertySettings",
+                                      "pieceName",
+                                      "pieceVersion",
+                                      "input"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "name": {
+                                    "type": "string"
                                   },
-                                  "required": [
-                                    "propertySettings",
-                                    "pieceName",
-                                    "pieceVersion",
-                                    "input"
-                                  ]
-                                }
-                              },
-                              "required": [
-                                "name",
-                                "valid",
-                                "displayName",
-                                "type",
-                                "settings"
-                              ]
-                            },
-                            {
-                              "type": "object",
-                              "properties": {
-                                "name": {
-                                  "type": "string"
+                                  "valid": {
+                                    "type": "boolean"
+                                  },
+                                  "displayName": {
+                                    "type": "string"
+                                  },
+                                  "nextAction": {},
+                                  "type": {
+                                    "type": "string",
+                                    "enum": [
+                                      "EMPTY"
+                                    ]
+                                  },
+                                  "settings": {}
                                 },
-                                "valid": {
-                                  "type": "boolean"
-                                },
-                                "displayName": {
-                                  "type": "string"
-                                },
-                                "nextAction": {},
-                                "type": {
-                                  "type": "string",
-                                  "enum": [
-                                    "EMPTY"
-                                  ]
-                                },
-                                "settings": {}
-                              },
-                              "required": [
-                                "name",
-                                "valid",
-                                "displayName",
-                                "type",
-                                "settings"
-                              ]
-                            }
-                          ]
+                                "required": [
+                                  "name",
+                                  "valid",
+                                  "displayName",
+                                  "type",
+                                  "settings"
+                                ]
+                              }
+                            ]
+                          },
+                          "valid": {
+                            "type": "boolean"
+                          },
+                          "schemaVersion": {
+                            "type": "string",
+                            "nullable": true
+                          }
                         },
-                        "valid": {
-                          "type": "boolean"
-                        },
-                        "schemaVersion": {
-                          "type": "string",
-                          "nullable": true
-                        }
-                      },
-                      "required": [
-                        "displayName",
-                        "trigger",
-                        "valid"
-                      ]
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "nullable": true,
-                      "additionalProperties": {}
+                        "required": [
+                          "displayName",
+                          "trigger",
+                          "valid"
+                        ]
+                      }
                     }
                   },
                   "required": [
                     "name",
                     "type",
+                    "summary",
                     "description",
                     "tags",
                     "author",
                     "categories",
-                    "pieces",
-                    "collection"
+                    "pieces"
                   ]
                 }
               }
@@ -17401,6 +17401,7 @@
         "parameters": [
           {
             "schema": {
+              "pattern": "^[0-9a-zA-Z]{21}$",
               "type": "string"
             },
             "in": "path",
@@ -18973,6 +18974,9 @@
                   "name": {
                     "type": "string"
                   },
+                  "summary": {
+                    "type": "string"
+                  },
                   "description": {
                     "type": "string"
                   },
@@ -18985,80 +18989,8 @@
                           "type": "string"
                         },
                         "color": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "RED"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "BLUE"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "YELLOW"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "PURPLE"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "GREEN"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "PINK"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "VIOLET"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "ORANGE"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "DARK_GREEN"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "CYAN"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "LAVENDER"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "DEEP_ORANGE"
-                              ]
-                            }
-                          ]
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
                         },
                         "icon": {
                           "type": "string"
@@ -19157,164 +19089,159 @@
                       ]
                     }
                   },
-                  "collection": {
-                    "type": "object",
-                    "properties": {
-                      "flowTemplates": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "displayName": {
-                              "type": "string"
-                            },
-                            "trigger": {
-                              "anyOf": [
-                                {
+                  "flows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "trigger": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "PIECE_TRIGGER"
+                                  ]
+                                },
+                                "settings": {
                                   "type": "object",
                                   "properties": {
-                                    "name": {
-                                      "type": "string"
-                                    },
-                                    "valid": {
-                                      "type": "boolean"
-                                    },
-                                    "displayName": {
-                                      "type": "string"
-                                    },
-                                    "nextAction": {},
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "PIECE_TRIGGER"
-                                      ]
-                                    },
-                                    "settings": {
+                                    "sampleData": {
+                                      "additionalProperties": true,
                                       "type": "object",
                                       "properties": {
-                                        "sampleData": {
-                                          "additionalProperties": true,
-                                          "type": "object",
-                                          "properties": {
-                                            "sampleDataFileId": {
-                                              "type": "string"
-                                            },
-                                            "sampleDataInputFileId": {
-                                              "type": "string"
-                                            },
-                                            "lastTestDate": {
-                                              "type": "string"
-                                            }
-                                          }
+                                        "sampleDataFileId": {
+                                          "type": "string"
                                         },
-                                        "propertySettings": {
-                                          "type": "object",
-                                          "additionalProperties": {
-                                            "type": "object",
-                                            "properties": {
-                                              "type": {
-                                                "anyOf": [
-                                                  {
-                                                    "type": "string",
-                                                    "enum": [
-                                                      "MANUAL"
-                                                    ]
-                                                  },
-                                                  {
-                                                    "type": "string",
-                                                    "enum": [
-                                                      "DYNAMIC"
-                                                    ]
-                                                  }
+                                        "sampleDataInputFileId": {
+                                          "type": "string"
+                                        },
+                                        "lastTestDate": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    "propertySettings": {
+                                      "type": "object",
+                                      "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "MANUAL"
                                                 ]
                                               },
-                                              "schema": {}
-                                            },
-                                            "required": [
-                                              "type"
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "DYNAMIC"
+                                                ]
+                                              }
                                             ]
-                                          }
+                                          },
+                                          "schema": {}
                                         },
-                                        "customLogoUrl": {
-                                          "type": "string"
-                                        },
-                                        "pieceName": {
-                                          "type": "string"
-                                        },
-                                        "pieceVersion": {
-                                          "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
-                                          "type": "string"
-                                        },
-                                        "triggerName": {
-                                          "type": "string"
-                                        },
-                                        "input": {
-                                          "type": "object",
-                                          "additionalProperties": {}
-                                        }
-                                      },
-                                      "required": [
-                                        "propertySettings",
-                                        "pieceName",
-                                        "pieceVersion",
-                                        "input"
-                                      ]
+                                        "required": [
+                                          "type"
+                                        ]
+                                      }
+                                    },
+                                    "customLogoUrl": {
+                                      "type": "string"
+                                    },
+                                    "pieceName": {
+                                      "type": "string"
+                                    },
+                                    "pieceVersion": {
+                                      "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
+                                      "type": "string"
+                                    },
+                                    "triggerName": {
+                                      "type": "string"
+                                    },
+                                    "input": {
+                                      "type": "object",
+                                      "additionalProperties": {}
                                     }
                                   },
                                   "required": [
-                                    "name",
-                                    "valid",
-                                    "displayName",
-                                    "type",
-                                    "settings"
-                                  ]
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "name": {
-                                      "type": "string"
-                                    },
-                                    "valid": {
-                                      "type": "boolean"
-                                    },
-                                    "displayName": {
-                                      "type": "string"
-                                    },
-                                    "nextAction": {},
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "EMPTY"
-                                      ]
-                                    },
-                                    "settings": {}
-                                  },
-                                  "required": [
-                                    "name",
-                                    "valid",
-                                    "displayName",
-                                    "type",
-                                    "settings"
+                                    "propertySettings",
+                                    "pieceName",
+                                    "pieceVersion",
+                                    "input"
                                   ]
                                 }
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
                               ]
                             },
-                            "valid": {
-                              "type": "boolean"
-                            },
-                            "schemaVersion": {
-                              "type": "string",
-                              "nullable": true
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EMPTY"
+                                  ]
+                                },
+                                "settings": {}
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
                             }
-                          },
-                          "required": [
-                            "displayName",
-                            "trigger",
-                            "valid"
                           ]
+                        },
+                        "valid": {
+                          "type": "boolean"
+                        },
+                        "schemaVersion": {
+                          "type": "string",
+                          "nullable": true
                         }
-                      }
+                      },
+                      "required": [
+                        "displayName",
+                        "trigger",
+                        "valid"
+                      ]
                     }
                   }
                 }
@@ -19425,80 +19352,8 @@
                     "type": "string"
                   },
                   "color": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "RED"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "BLUE"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "YELLOW"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "PURPLE"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "GREEN"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "PINK"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "VIOLET"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "ORANGE"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "DARK_GREEN"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "CYAN"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "LAVENDER"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "DEEP_ORANGE"
-                        ]
-                      }
-                    ]
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "type": "string"
                   },
                   "icon": {
                     "type": "string"
@@ -19548,6 +19403,9 @@
                   "name": {
                     "type": "string"
                   },
+                  "summary": {
+                    "type": "string"
+                  },
                   "description": {
                     "type": "string"
                   },
@@ -19560,80 +19418,8 @@
                           "type": "string"
                         },
                         "color": {
-                          "anyOf": [
-                            {
-                              "type": "string",
-                              "enum": [
-                                "RED"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "BLUE"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "YELLOW"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "PURPLE"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "GREEN"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "PINK"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "VIOLET"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "ORANGE"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "DARK_GREEN"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "CYAN"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "LAVENDER"
-                              ]
-                            },
-                            {
-                              "type": "string",
-                              "enum": [
-                                "DEEP_ORANGE"
-                              ]
-                            }
-                          ]
+                          "pattern": "^#[0-9A-Fa-f]{6}$",
+                          "type": "string"
                         },
                         "icon": {
                           "type": "string"
@@ -19757,180 +19543,270 @@
                       }
                     ]
                   },
-                  "collection": {
-                    "type": "object",
-                    "properties": {
-                      "flowTemplates": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "displayName": {
-                              "type": "string"
-                            },
-                            "trigger": {
-                              "anyOf": [
-                                {
+                  "flows": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "trigger": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "PIECE_TRIGGER"
+                                  ]
+                                },
+                                "settings": {
                                   "type": "object",
                                   "properties": {
-                                    "name": {
-                                      "type": "string"
-                                    },
-                                    "valid": {
-                                      "type": "boolean"
-                                    },
-                                    "displayName": {
-                                      "type": "string"
-                                    },
-                                    "nextAction": {},
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "PIECE_TRIGGER"
-                                      ]
-                                    },
-                                    "settings": {
+                                    "sampleData": {
+                                      "additionalProperties": true,
                                       "type": "object",
                                       "properties": {
-                                        "sampleData": {
-                                          "additionalProperties": true,
-                                          "type": "object",
-                                          "properties": {
-                                            "sampleDataFileId": {
-                                              "type": "string"
-                                            },
-                                            "sampleDataInputFileId": {
-                                              "type": "string"
-                                            },
-                                            "lastTestDate": {
-                                              "type": "string"
-                                            }
-                                          }
+                                        "sampleDataFileId": {
+                                          "type": "string"
                                         },
-                                        "propertySettings": {
-                                          "type": "object",
-                                          "additionalProperties": {
-                                            "type": "object",
-                                            "properties": {
-                                              "type": {
-                                                "anyOf": [
-                                                  {
-                                                    "type": "string",
-                                                    "enum": [
-                                                      "MANUAL"
-                                                    ]
-                                                  },
-                                                  {
-                                                    "type": "string",
-                                                    "enum": [
-                                                      "DYNAMIC"
-                                                    ]
-                                                  }
+                                        "sampleDataInputFileId": {
+                                          "type": "string"
+                                        },
+                                        "lastTestDate": {
+                                          "type": "string"
+                                        }
+                                      }
+                                    },
+                                    "propertySettings": {
+                                      "type": "object",
+                                      "additionalProperties": {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "MANUAL"
                                                 ]
                                               },
-                                              "schema": {}
-                                            },
-                                            "required": [
-                                              "type"
+                                              {
+                                                "type": "string",
+                                                "enum": [
+                                                  "DYNAMIC"
+                                                ]
+                                              }
                                             ]
-                                          }
+                                          },
+                                          "schema": {}
                                         },
-                                        "customLogoUrl": {
-                                          "type": "string"
-                                        },
-                                        "pieceName": {
-                                          "type": "string"
-                                        },
-                                        "pieceVersion": {
-                                          "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
-                                          "type": "string"
-                                        },
-                                        "triggerName": {
-                                          "type": "string"
-                                        },
-                                        "input": {
-                                          "type": "object",
-                                          "additionalProperties": {}
-                                        }
-                                      },
-                                      "required": [
-                                        "propertySettings",
-                                        "pieceName",
-                                        "pieceVersion",
-                                        "input"
-                                      ]
+                                        "required": [
+                                          "type"
+                                        ]
+                                      }
+                                    },
+                                    "customLogoUrl": {
+                                      "type": "string"
+                                    },
+                                    "pieceName": {
+                                      "type": "string"
+                                    },
+                                    "pieceVersion": {
+                                      "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
+                                      "type": "string"
+                                    },
+                                    "triggerName": {
+                                      "type": "string"
+                                    },
+                                    "input": {
+                                      "type": "object",
+                                      "additionalProperties": {}
                                     }
                                   },
                                   "required": [
-                                    "name",
-                                    "valid",
-                                    "displayName",
-                                    "type",
-                                    "settings"
-                                  ]
-                                },
-                                {
-                                  "type": "object",
-                                  "properties": {
-                                    "name": {
-                                      "type": "string"
-                                    },
-                                    "valid": {
-                                      "type": "boolean"
-                                    },
-                                    "displayName": {
-                                      "type": "string"
-                                    },
-                                    "nextAction": {},
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "EMPTY"
-                                      ]
-                                    },
-                                    "settings": {}
-                                  },
-                                  "required": [
-                                    "name",
-                                    "valid",
-                                    "displayName",
-                                    "type",
-                                    "settings"
+                                    "propertySettings",
+                                    "pieceName",
+                                    "pieceVersion",
+                                    "input"
                                   ]
                                 }
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
                               ]
                             },
-                            "valid": {
-                              "type": "boolean"
-                            },
-                            "schemaVersion": {
-                              "type": "string",
-                              "nullable": true
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "valid": {
+                                  "type": "boolean"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                },
+                                "nextAction": {},
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "EMPTY"
+                                  ]
+                                },
+                                "settings": {}
+                              },
+                              "required": [
+                                "name",
+                                "valid",
+                                "displayName",
+                                "type",
+                                "settings"
+                              ]
                             }
-                          },
-                          "required": [
-                            "displayName",
-                            "trigger",
-                            "valid"
                           ]
+                        },
+                        "valid": {
+                          "type": "boolean"
+                        },
+                        "schemaVersion": {
+                          "type": "string",
+                          "nullable": true
                         }
-                      }
+                      },
+                      "required": [
+                        "displayName",
+                        "trigger",
+                        "valid"
+                      ]
                     }
                   }
                 },
                 "required": [
                   "name",
+                  "summary",
                   "description",
                   "author",
                   "categories",
-                  "type",
-                  "collection"
+                  "type"
                 ]
               }
             }
           },
           "required": true
         },
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/templates/{id}/increment-usage-count": {
+      "post": {
+        "tags": [
+          "templates"
+        ],
+        "description": "Increment usage count of a template.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/v1/flow-templates": {
+      "get": {
+        "tags": [
+          "templates"
+        ],
+        "description": "List flow templates. This endpoint is deprecated, use /v1/templates instead.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "in": "query",
+            "name": "pieces",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "color": {
+                    "pattern": "^#[0-9A-Fa-f]{6}$",
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "title",
+                  "color"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "tags",
+            "required": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "search",
+            "required": false
+          }
+        ],
+        "deprecated": true,
         "security": [
           {
             "apiKey": []
@@ -21389,330 +21265,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/v1/flow-templates/{id}": {
-      "get": {
-        "tags": [
-          "flow-templates"
-        ],
-        "description": "Get a flow template",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "flow-templates"
-        ],
-        "description": "Delete a flow template",
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      }
-    },
-    "/v1/flow-templates": {
-      "get": {
-        "tags": [
-          "flow-templates"
-        ],
-        "description": "List flow templates",
-        "parameters": [
-          {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "in": "query",
-            "name": "pieces",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            "in": "query",
-            "name": "tags",
-            "required": false
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "query",
-            "name": "search",
-            "required": false
-          }
-        ],
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "flow-templates"
-        ],
-        "description": "Create a flow template",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "description": {
-                    "type": "string"
-                  },
-                  "template": {
-                    "type": "object",
-                    "properties": {
-                      "displayName": {
-                        "type": "string"
-                      },
-                      "trigger": {
-                        "anyOf": [
-                          {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "valid": {
-                                "type": "boolean"
-                              },
-                              "displayName": {
-                                "type": "string"
-                              },
-                              "nextAction": {},
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "PIECE_TRIGGER"
-                                ]
-                              },
-                              "settings": {
-                                "type": "object",
-                                "properties": {
-                                  "sampleData": {
-                                    "additionalProperties": true,
-                                    "type": "object",
-                                    "properties": {
-                                      "sampleDataFileId": {
-                                        "type": "string"
-                                      },
-                                      "sampleDataInputFileId": {
-                                        "type": "string"
-                                      },
-                                      "lastTestDate": {
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  "propertySettings": {
-                                    "type": "object",
-                                    "additionalProperties": {
-                                      "type": "object",
-                                      "properties": {
-                                        "type": {
-                                          "anyOf": [
-                                            {
-                                              "type": "string",
-                                              "enum": [
-                                                "MANUAL"
-                                              ]
-                                            },
-                                            {
-                                              "type": "string",
-                                              "enum": [
-                                                "DYNAMIC"
-                                              ]
-                                            }
-                                          ]
-                                        },
-                                        "schema": {}
-                                      },
-                                      "required": [
-                                        "type"
-                                      ]
-                                    }
-                                  },
-                                  "customLogoUrl": {
-                                    "type": "string"
-                                  },
-                                  "pieceName": {
-                                    "type": "string"
-                                  },
-                                  "pieceVersion": {
-                                    "pattern": "^([~^])?[0-9]+\\.[0-9]+\\.[0-9]+$",
-                                    "type": "string"
-                                  },
-                                  "triggerName": {
-                                    "type": "string"
-                                  },
-                                  "input": {
-                                    "type": "object",
-                                    "additionalProperties": {}
-                                  }
-                                },
-                                "required": [
-                                  "propertySettings",
-                                  "pieceName",
-                                  "pieceVersion",
-                                  "input"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "name",
-                              "valid",
-                              "displayName",
-                              "type",
-                              "settings"
-                            ]
-                          },
-                          {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string"
-                              },
-                              "valid": {
-                                "type": "boolean"
-                              },
-                              "displayName": {
-                                "type": "string"
-                              },
-                              "nextAction": {},
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "EMPTY"
-                                ]
-                              },
-                              "settings": {}
-                            },
-                            "required": [
-                              "name",
-                              "valid",
-                              "displayName",
-                              "type",
-                              "settings"
-                            ]
-                          }
-                        ]
-                      },
-                      "valid": {
-                        "type": "boolean"
-                      },
-                      "schemaVersion": {
-                        "type": "string",
-                        "nullable": true
-                      }
-                    },
-                    "required": [
-                      "displayName",
-                      "trigger",
-                      "valid"
-                    ]
-                  },
-                  "blogUrl": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "enum": [
-                          "PLATFORM"
-                        ]
-                      },
-                      {
-                        "type": "string",
-                        "enum": [
-                          "PROJECT"
-                        ]
-                      }
-                    ]
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "id": {
-                    "type": "string"
-                  },
-                  "metadata": {
-                    "type": "object",
-                    "nullable": true,
-                    "additionalProperties": {}
-                  }
-                },
-                "required": [
-                  "template",
-                  "type"
-                ]
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "apiKey": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Default Response"
           }
         }
       }
