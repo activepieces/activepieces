@@ -124,34 +124,10 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        let aiProvider: AIProviderSchema;
-
-        // this first check is for backward compatibilty, because at first we were returning the provider name as the id
-        if (Object.values(AIProviderName).includes(providerId as AIProviderName)) {
-            const aiProvidersFound = await aiProviderRepo().find({
-                where: {
-                    platformId,
-                    provider: providerId as AIProviderName,
-                },
-                order: { created: 'ASC' },
-                take: 1,
-            })
-
-            if (aiProvidersFound.length === 0) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        message: `AI Provider with providerId ${providerId} not found for platform ${platformId}`,
-                    },
-                })
-            }
-            aiProvider = aiProvidersFound[0]
-        } else {
-            aiProvider = await aiProviderRepo().findOneByOrFail({
-                platformId,
-                id: providerId,
-            })
-        }
+        const aiProvider: AIProviderSchema = await aiProviderRepo().findOneByOrFail({
+            platformId,
+            id: providerId,
+        })
 
         const decrypted = await encryptUtils.decryptObject<AIProviderConfig>(aiProvider.config)
 
