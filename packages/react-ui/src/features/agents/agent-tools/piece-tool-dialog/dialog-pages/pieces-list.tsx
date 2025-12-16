@@ -12,7 +12,7 @@ interface PiecesContentProps {
   pieceMetadata: PieceStepMetadataWithSuggestions[];
   onPieceSelect: (piece: PieceStepMetadataWithSuggestions) => void;
   searchQuery: string;
-  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  setSearchQuery: (searchQuery: string) => void;
 }
 
 export const PiecesList: React.FC<PiecesContentProps> = ({

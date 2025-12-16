@@ -6,15 +6,17 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import type {
-  AgentFlowTool,
   AgentPieceTool,
   AgentTool,
 } from '@activepieces/shared';
 import { AgentToolType } from '@activepieces/shared';
 
 import { AddToolDropdown } from './add-agent-tool-dropwdown';
-import { AgentFlowToolComponent } from './flow-tool';
-import { AgentPieceToolComponent } from './piece-tool';
+import { AgentFlowToolComponent } from './componenets/flow-tool';
+import { AgentPieceToolComponent } from './componenets/piece-tool';
+import { AgentFlowToolDialog } from './flow-tool-dialog';
+import { AgentPieceDialog } from './piece-tool-dialog';
+import { useAgentToolsStore } from './store';
 
 const icons = [
   'https://cdn.activepieces.com/pieces/youtube.png',
@@ -32,6 +34,9 @@ export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
 }: AgentToolsProps) => {
+  const { showAddFlowDialog, setShowAddFlowDialog, openPieceDialog } =
+    useAgentToolsStore();
+
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
     : [];
@@ -42,6 +47,10 @@ export const AgentTools = ({
 
   const removeTool = (toolName: string) => {
     onToolsUpdate(tools.filter((tool) => toolName !== tool.toolName));
+  };
+
+  const handleOpenAddPieceDialog = () => {
+    openPieceDialog('pieces-list');
   };
 
   const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
@@ -63,8 +72,8 @@ export const AgentTools = ({
 
         <AddToolDropdown
           disabled={disabled}
-          onToolsUpdate={onToolsUpdate}
-          tools={tools}
+          setShowAddFlowDialog={setShowAddFlowDialog}
+          setShowAddPieceDialog={handleOpenAddPieceDialog}
           align="end"
         >
           <Button variant="ghost" size="icon">
@@ -119,8 +128,8 @@ export const AgentTools = ({
 
             <AddToolDropdown
               disabled={disabled}
-              onToolsUpdate={onToolsUpdate}
-              tools={tools}
+              setShowAddFlowDialog={setShowAddFlowDialog}
+              setShowAddPieceDialog={handleOpenAddPieceDialog}
               align="center"
             >
               <Button variant="accent" className="gap-2">
@@ -131,6 +140,23 @@ export const AgentTools = ({
           </div>
         )}
       </div>
+
+      <AgentFlowToolDialog
+        open={showAddFlowDialog}
+        selectedFlows={tools
+          .filter((tool) => tool.type === AgentToolType.FLOW)
+          .map((tool) => tool.flowId!)}
+        onToolsUpdate={(newTools) => {
+          onToolsUpdate(newTools);
+          setShowAddFlowDialog(false);
+        }}
+        onClose={() => {
+          setShowAddFlowDialog(false);
+        }}
+        tools={tools}
+      />
+
+      <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import {
   DialogTitle,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   Tooltip,
@@ -20,37 +19,42 @@ import {
 } from '@/components/ui/tooltip';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { ActionBase } from '@activepieces/pieces-framework';
-import {
-  isNil,
-  AgentTool,
-  AgentPieceTool,
-  AgentToolType,
-} from '@activepieces/shared';
+import { AgentTool } from '@activepieces/shared';
+
+import { useAgentToolsStore } from '../store';
 
 import { PieceActionsList } from './dialog-pages/piece-actions-list';
 import { PiecesList } from './dialog-pages/pieces-list';
 import { PredefinedInputsForm } from './dialog-pages/predefined-inputs-form';
 
 type AgentToolsDialogProps = {
-  children: React.ReactNode;
   tools: AgentTool[];
-  open: boolean;
   onToolsUpdate: (tools: AgentTool[]) => void;
-  onClose: () => void;
 };
 
-type SelectedDialogPage = 'pieces-list' | 'piece-selected' | 'action-selected';
 const excludedPieces = ['@activepieces/piece-ai'];
 
 export function AgentPieceDialog({
   tools,
-  open,
   onToolsUpdate,
-  children,
-  onClose,
 }: AgentToolsDialogProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    showAddPieceDialog,
+    selectedPage,
+    searchQuery,
+    selectedPiece,
+    selectedAction,
+    editingTool,
+    setSearchQuery,
+    handlePieceSelect,
+    handleActionSelect,
+    goBackToPiecesList,
+    goBackToPieceSelected,
+    isAuthSet,
+    createNewTool,
+    closePieceDialog,
+  } = useAgentToolsStore();
+
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 
   const { metadata, isLoading: isPiecesLoading } =
@@ -70,57 +74,48 @@ export function AgentPieceDialog({
     );
   }, [metadata]);
 
-  const [predefinedInputs, setPredefinedInputs] = useState<
-    Record<string, unknown>
-  >({});
-  const [selectedPiece, setSelectedPiece] =
-    useState<PieceStepMetadataWithSuggestions | null>(null);
-  const [selectedAction, setSelectedAction] = useState<ActionBase | null>(null);
-  const [selectedPage, setSelectedPage] =
-    useState<SelectedDialogPage>('pieces-list');
+  useEffect(() => {
+    if (showAddPieceDialog && editingTool && pieceMetadata.length > 0) {
+      const piece = pieceMetadata.find(
+        (p) => p.pieceName === editingTool.pieceMetadata.pieceName,
+      );
 
-  const handlePieceSelect = (piece: PieceStepMetadataWithSuggestions) => {
-    setSelectedPiece(piece);
-    setSelectedPage('piece-selected');
+      if (piece) {
+        handlePieceSelect(piece);
+
+        const action = piece.suggestedActions?.find(
+          (a) => a.name === editingTool.toolName,
+        );
+
+        if (action) {
+          handleActionSelect(action);
+        }
+      }
+    }
+  }, [showAddPieceDialog, editingTool, pieceMetadata]);
+
+  const authIsSetValue = isAuthSet();
+
+  const handleSave = () => {
+    const newTool = createNewTool();
+    if (!newTool) return;
+
+    if (editingTool) {
+      const updatedTools = tools.map((tool) =>
+        tool.toolName === editingTool.toolName ? newTool : tool,
+      );
+      onToolsUpdate(updatedTools);
+    } else {
+      onToolsUpdate([...tools, newTool]);
+    }
+
+    closePieceDialog();
   };
 
-  const handleActionSelect = (action: ActionBase) => {
-    setSelectedAction(action);
-    setSelectedPage('action-selected');
-  };
-
-  const authIsSet =
-    !!selectedPiece &&
-    !!selectedAction &&
-    (!selectedAction.requireAuth ||
-      isNil(selectedPiece.auth) ||
-      !isNil(predefinedInputs?.auth));
-
-  const handleNewActionToolSave = () => {
-    if (isNil(selectedAction) || isNil(selectedPiece) || !authIsSet) return;
-
-    const newActionTool: AgentPieceTool = {
-      type: AgentToolType.PIECE,
-      toolName: selectedAction.name,
-      pieceMetadata: {
-        pieceVersion: selectedPiece.pieceVersion,
-        pieceName: selectedPiece.pieceName,
-        actionName: selectedAction.displayName,
-        predefinedInput: predefinedInputs,
-      },
-    };
-
-    onToolsUpdate([...tools, newActionTool]);
-  };
-
-  const resetState = () => {
-    setPredefinedInputs({});
-    setSearchQuery('');
-  };
-
-  const handleClose = () => {
-    resetState();
-    onClose();
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      closePieceDialog();
+    }
   };
 
   const renderDialogMainContent = () => {
@@ -140,6 +135,7 @@ export function AgentPieceDialog({
         return (
           selectedPiece && (
             <PieceActionsList
+              tools={tools}
               setSelectedAction={handleActionSelect}
               piece={selectedPiece}
             />
@@ -153,8 +149,6 @@ export function AgentPieceDialog({
             <PredefinedInputsForm
               action={selectedAction}
               piece={selectedPiece}
-              inputs={predefinedInputs}
-              setInputs={setPredefinedInputs}
             />
           )
         );
@@ -176,10 +170,7 @@ export function AgentPieceDialog({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      resetState();
-                      setSelectedPage('pieces-list');
-                    }}
+                    onClick={goBackToPiecesList}
                   >
                     <ChevronLeft className="size-4" />
                   </Button>
@@ -200,33 +191,23 @@ export function AgentPieceDialog({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      resetState();
-                      setSelectedPage('piece-selected');
-                    }}
+                    onClick={goBackToPieceSelected}
                   >
                     <ChevronLeft className="size-4" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>{t('Back')}</TooltipContent>
               </Tooltip>
-              {t('Back')}
+              {selectedAction.displayName}
             </div>
           )
         );
       }
     }
   };
+
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          handleClose();
-        }
-      }}
-    >
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={showAddPieceDialog} onOpenChange={handleDialogClose}>
       <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
         <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
           <DialogTitle>{renderDialogHeaderContent()}</DialogTitle>
@@ -243,11 +224,11 @@ export function AgentPieceDialog({
             </DialogClose>
             <Button
               loading={false}
-              disabled={!authIsSet}
+              disabled={!authIsSetValue}
               type="button"
-              onClick={handleNewActionToolSave}
+              onClick={handleSave}
             >
-              {t('Add Tool')}
+              {editingTool ? t('Update Tool') : t('Add Tool')}
             </Button>
           </DialogFooter>
         )}

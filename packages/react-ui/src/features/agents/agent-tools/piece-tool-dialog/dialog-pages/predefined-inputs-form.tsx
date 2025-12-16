@@ -13,6 +13,7 @@ import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { ActionBase, PieceProperty } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 
+import { useAgentToolsStore } from '../../store';
 import { ConnectionDropdown } from '../connection-select';
 
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
@@ -31,16 +32,14 @@ const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
 type PredefinedInputsPropsForm = {
   action: ActionBase;
   piece: PieceStepMetadataWithSuggestions;
-  inputs: Record<string, unknown>;
-  setInputs: React.Dispatch<React.SetStateAction<Record<string, unknown>>>;
 };
 
 export const PredefinedInputsForm = ({
   action,
-  inputs,
   piece,
-  setInputs,
 }: PredefinedInputsPropsForm) => {
+  const { predefinedInputs, setPredefinedInputs } = useAgentToolsStore();
+
   const { pieces } = piecesHooks.usePieces({});
   const selectedPiece = pieces?.find((p) => p.name === piece.pieceName);
 
@@ -57,7 +56,7 @@ export const PredefinedInputsForm = ({
     mode: 'all',
     reValidateMode: 'onChange',
     resolver: typeboxResolver(formSchema),
-    defaultValues: inputs,
+    defaultValues: predefinedInputs,
   });
 
   useEffect(() => {
@@ -75,11 +74,11 @@ export const PredefinedInputsForm = ({
         }
       }
 
-      setInputs(cleaned);
+      setPredefinedInputs(cleaned);
     });
 
     return () => subscription.unsubscribe();
-  }, [form, setInputs, pieceHasAuth]);
+  }, [form, setPredefinedInputs, pieceHasAuth]);
 
   return (
     <Form {...form}>
