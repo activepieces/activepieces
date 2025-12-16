@@ -1,4 +1,4 @@
-import { AppSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, engineAccess, publicAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -6,7 +6,6 @@ import {
     File,
     FileLocation,
     FileType,
-    PrincipalType,
     StepFileUpsertRequest,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -99,7 +98,7 @@ const SignedFileRequest = {
 
 const UpsertStepFileRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
     schema: {
         body: StepFileUpsertRequest,

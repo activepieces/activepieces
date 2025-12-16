@@ -52,3 +52,34 @@ export type Principal =
     | ServicePrincipal
     | UserPrincipal
     | EnginePrincipal
+
+
+// TODO(@Chaker): This is a temporary v2 types without projectId
+
+export type ServicePrincipalV2 = {
+    id: ApId
+    type: PrincipalType.SERVICE
+    platform: {
+        id: ApId
+    }
+}
+
+export type UserPrincipalV2 = {
+    id: ApId
+    type: PrincipalType.USER
+    platform: {
+        id: ApId
+    }
+    tokenVersion?: string
+}
+
+export type PrincipalForTypeV2<T extends PrincipalType> = Extract<PrincipalV2, { type: T }>
+
+export type PrincipalForTypesV2<R extends readonly PrincipalType[]> = PrincipalForTypeV2<R[number]>
+
+export type PrincipalV2 =
+    | WorkerPrincipal
+    | AnnonymousPrincipal
+    | ServicePrincipalV2
+    | UserPrincipalV2
+    | EnginePrincipal

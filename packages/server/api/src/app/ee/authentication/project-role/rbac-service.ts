@@ -6,11 +6,11 @@ import {
     FlowOperationType,
     isNil,
     Permission,
-    Principal,
     PrincipalType,
+    PrincipalV2,
     ProjectId,
     ProjectRole,
-    UserPrincipal,
+    UserPrincipalV2,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
@@ -166,26 +166,26 @@ type GrantAccessArgs = {
 }
 
 type AssertRoleHasPermissionParams = {
-    principal: Principal
+    principal: PrincipalV2
     permission: Permission | undefined
     projectId: ProjectId
 }
 
 type GetPrincipalRoleOrThrowParams = {
-    principal: UserPrincipal
+    principal: UserPrincipalV2
     projectId: ProjectId
     log: FastifyBaseLogger
 }
 
 type ThrowPermissionDeniedParams = {
-    principal: UserPrincipal
+    principal: UserPrincipalV2
     projectId: ProjectId
     projectRole: ProjectRole
     permission: Permission | undefined
 }
 
 type AssertUserHasPermissionToFlowParams = {
-    principal: Principal
+    principal: PrincipalV2
     operationType: FlowOperationType
     projectId: ProjectId
 }

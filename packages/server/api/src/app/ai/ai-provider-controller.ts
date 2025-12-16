@@ -1,3 +1,4 @@
+import { engineAccess, publicPlatformAccess } from '@activepieces/server-shared'
 import { AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData, CreateAIProviderRequest, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -41,7 +42,7 @@ const ListAIProviders = {
 
 const GetAIProviderConfig = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: engineAccess(),
     },
     schema: {
         params: Type.Object({
