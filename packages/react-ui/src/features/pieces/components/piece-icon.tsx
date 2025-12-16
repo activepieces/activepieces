@@ -56,7 +56,6 @@ const PieceIcon = React.memo(
                 alt={displayName}
                 className="object-contain w-full h-full p-1"
                 key={logoUrl}
-                
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
               />
             ) : (

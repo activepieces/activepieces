@@ -14,4 +14,3 @@ const StepNodeName = ({ stepName }: { stepName: string }) => {
 };
 
 export { StepNodeName };
-

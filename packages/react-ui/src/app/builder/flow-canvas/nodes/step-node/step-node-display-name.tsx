@@ -37,4 +37,3 @@ const StepNodeDisplayName = ({
 };
 
 export { StepNodeDisplayName };
-

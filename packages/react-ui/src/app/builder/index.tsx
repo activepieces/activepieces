@@ -162,12 +162,9 @@ const BuilderPage = () => {
             {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
           </div>
         </ResizablePanel>
-        {
-          leftSidebar !== LeftSideBarType.NONE && <ResizableHandle
-          onDragging={setIsDraggingHandle}
-        />
-        }
-        
+        {leftSidebar !== LeftSideBarType.NONE && (
+          <ResizableHandle onDragging={setIsDraggingHandle} />
+        )}
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">

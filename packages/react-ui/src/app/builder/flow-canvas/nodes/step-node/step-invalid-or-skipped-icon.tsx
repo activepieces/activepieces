@@ -47,4 +47,3 @@ const StepInvalidOrSkippedIcon = ({
 };
 
 export { StepInvalidOrSkippedIcon };
-
