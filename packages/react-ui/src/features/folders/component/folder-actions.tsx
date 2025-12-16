@@ -67,7 +67,7 @@ export const FolderActions = ({
               variant="ghost"
               size="icon"
               className={cn(
-                'transition-opacity duration-150',
+                'transition-opacity !bg-transparent duration-150',
                 hasOverlayBehavior ? 'absolute inset-0' : '',
                 {
                   'opacity-0 group-hover/item:opacity-100':

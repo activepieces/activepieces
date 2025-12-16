@@ -378,7 +378,7 @@ function FlowItem({ flow, isActive, onClick, refetch }: FlowItemProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="ml-auto group-hover/item:opacity-100 opacity-0"
+            className="ml-auto !bg-transparent group-hover/item:opacity-100 opacity-0"
             onClick={(e) => e.stopPropagation()}
           >
             <EllipsisVertical className="size-4" />
