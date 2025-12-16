@@ -8,7 +8,7 @@ import { ActivepiecesError, AIProviderConfig, AIProviderModel, AIProviderName, A
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits'
+import { platformAiCreditsService } from '../ee/platform/platform-plan/platform-ai-credits.service'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'

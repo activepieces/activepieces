@@ -10,7 +10,7 @@ import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { projectService } from '../../../project/project-service'
 import { userService } from '../../../user/user-service'
-import { platformAiCreditsService } from './platform-ai-credits'
+import { platformAiCreditsService } from './platform-ai-credits.service'
 import { PlatformPlanEntity } from './platform-plan.entity'
 import { stripeHelper } from './stripe-helper'
 

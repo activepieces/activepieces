@@ -53,8 +53,8 @@ export const PlatformPlan = Type.Object({
     openRouterApiKey: Type.Optional(Type.String()),
     platformId: Type.String(),
     includedAiCredits: Type.Number(),
-    aiCreditsOverageLimit: Type.Optional(Type.Number()),
-    aiCreditsOverageState: Type.Optional(Type.String()),
+    // aiCreditsOverageLimit: Type.Optional(Type.Number()),
+    // aiCreditsOverageState: Type.Optional(Type.String()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
@@ -155,3 +155,20 @@ export const PlatformBillingInformation = Type.Object({
     cancelAt: Type.Optional(Type.Number()),
 })
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
+
+export enum PlatformAiCreditsPaymentStatus {
+    PAYMENT_PENDING = 'payment-pending',
+    PAYMENT_SUCCESS = 'payment-success',
+    PAYMENT_FAILED = 'payment-failed',
+    DONE = 'done',
+}
+export const PlatformAiCreditsPayment = Type.Object({
+    ...BaseModelSchema,
+    platformId: Type.String(),
+    amount: Type.Number(),
+    aiCredits: Type.Number(),
+    txId: Type.String(),
+    status: Type.Enum(PlatformAiCreditsPaymentStatus),
+})
+export type PlatformAiCreditsPayment = Static<typeof PlatformAiCreditsPayment>
+
