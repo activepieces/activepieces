@@ -12,7 +12,6 @@ import {
     FlowOperationType,
     flowPieceUtil,
     FlowStatus,
-    FlowTemplateWithoutProjectInformation,
     FlowVersion,
     FlowVersionId,
     FlowVersionState,
@@ -22,7 +21,9 @@ import {
     PopulatedFlow,
     ProjectId,
     SeekPage,
+    SharedTemplate,
     TelemetryEventName,
+    TemplateType,
     TriggerSource,
     UncategorizedFolderId,
     UserId,
@@ -525,7 +526,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
         flowId,
         versionId,
         projectId,
-    }: GetTemplateParams): Promise<FlowTemplateWithoutProjectInformation> {
+    }: GetTemplateParams): Promise<SharedTemplate> {
         const flow = await this.getOnePopulatedOrThrow({
             id: flowId,
             projectId,
@@ -534,16 +535,20 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeSampleData: true,
         })
 
-        return {
+        const template: SharedTemplate = {
             name: flow.version.displayName,
+            summary: '',
             description: '',
             pieces: Array.from(new Set(flowPieceUtil.getUsedPieces(flow.version.trigger))),
-            template: flow.version,
+            flows: [flow.version],
             tags: [],
-            created: Date.now().toString(),
-            updated: Date.now().toString(),
             blogUrl: '',
+            metadata: null,
+            author: '',
+            categories: [],
+            type: TemplateType.SHARED,
         }
+        return template
     },
 
     async count({ projectId, folderId, status }: CountParams): Promise<number> {
