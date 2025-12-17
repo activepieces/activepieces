@@ -322,6 +322,9 @@
       ],
       "@activepieces/piece-chatfly": [
         "packages/pieces/community/chatfly/src/index.ts"
+      ],
+      "@activepieces/piece-metatext": [
+        "packages/pieces/community/metatext/src/index.ts"
       ]
     },
     "resolveJsonModule": true
