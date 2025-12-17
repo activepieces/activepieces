@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateStatus, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
@@ -46,6 +46,7 @@ export const templateService = () => ({
                     categories,
                     pieces,
                     flows: sanatizedFlows,
+                    status: TemplateStatus.PUBLISHED,
                 }
                 return templateRepo().save(newTemplate)
             }
@@ -56,7 +57,7 @@ export const templateService = () => ({
     },
 
     async update({ id, params }: UpdateParams): Promise<Template> {
-        const { name, summary, description, tags, blogUrl, metadata, categories } = params
+        const { name, summary, description, tags, blogUrl, metadata, categories, status } = params
         const template = await templateService().getOneOrThrow({ id })
 
         const newTags = tags ?? []
@@ -76,6 +77,7 @@ export const templateService = () => ({
                     ...spreadIfDefined('flows', sanatizedFlows),
                     ...spreadIfDefined('pieces', pieces),
                     ...spreadIfDefined('tags', newTags),
+                    ...spreadIfDefined('status', status),
                 })
                 return templateRepo().findOneByOrFail({ id })
             }
@@ -104,6 +106,7 @@ export const templateService = () => ({
         }
         commonFilters.platformId = Equal(platformId)
         commonFilters.type = Equal(type)
+        commonFilters.status = Equal(TemplateStatus.PUBLISHED)
         const templates = await templateRepo()
             .createQueryBuilder('template')
             .where(commonFilters)

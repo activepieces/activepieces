@@ -45,6 +45,19 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
         }
         return templateService().update({ id: template.id, params: request.body })
     })
+
+    app.delete('/:id', DeleteTemplateRequest, async (request) => {
+        const template = await templateService().getOneOrThrow({ id: request.params.id })
+        
+        if (template.type !== TemplateType.OFFICIAL) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Only official templates are supported to being deleted' },
+            })
+        }
+
+        return templateService().delete({ id: request.params.id })
+    })
 }
 
 const UpdateTemplatesCategoriesFlagRequest = {
@@ -74,5 +87,16 @@ const UpdateTemplateRequest = {
             id: Type.String(),
         }),
         body: UpdateTemplateRequestBody,
+    },
+}
+
+const DeleteTemplateRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
     },
 }
