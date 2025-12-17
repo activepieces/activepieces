@@ -28,7 +28,6 @@ import {
   PROJECT_COLOR_PALETTE,
   ProjectIcon,
   ProjectType,
-  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 export type FormValues = {
@@ -79,7 +78,7 @@ export const GeneralSettings = ({ form, isSaving }: GeneralSettingsProps) => {
                             disabled={isSaving}
                           >
                             <div
-                              className="h-3 w-3 rounded-none flex-shrink-0"
+                              className="h-3 w-3 rounded-none shrink-0"
                               style={{
                                 backgroundColor:
                                   PROJECT_COLOR_PALETTE[currentColor].color,

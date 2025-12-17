@@ -1,9 +1,10 @@
 import { endClient, sftpAuth } from '../../index';
 import { Property, createAction } from '@activepieces/pieces-framework';
 import Client from 'ssh2-sftp-client';
-import { Client as FTPClient } from 'basic-ftp';
+import { Client as FTPClient, FTPError } from 'basic-ftp';
 import { getClient, getProtocolBackwardCompatibility } from '../..';
 import { MarkdownVariant } from '@activepieces/shared';
+import { getSftpError } from './common';
 
 async function renameFTP(client: FTPClient, oldPath: string, newPath: string) {
   await client.rename(oldPath, newPath);
@@ -57,11 +58,22 @@ export const renameFileOrFolderAction = createAction({
       return {
         status: 'success',
       };
-    } catch (err) {
-      return {
-        status: 'error',
-        error: err,
-      };
+    } 
+    catch (err) {
+      if (err instanceof FTPError) {
+        console.error(getSftpError(err.code));
+        return {
+          status: 'error',
+          content: null,
+          error: getSftpError(err.code),
+        };
+      } else {
+        return {
+          status: 'error',
+          content: null,
+          error: err
+        }
+      }  
     } finally {
       await endClient(client, context.auth.props.protocol);
     } 

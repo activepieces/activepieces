@@ -157,7 +157,7 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
             }
         }
         finally {
-            await queryRunner.query('SET session_replication_role = DEFAULT')
+            await queryRunner.query('SET session_replication_role = origin')
         }
 
         log.info(`[MigrateSqliteToPglite] Successfully migrated ${rows.length} rows to ${tableName}`)

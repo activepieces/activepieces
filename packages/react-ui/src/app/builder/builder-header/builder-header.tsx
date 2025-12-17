@@ -108,7 +108,7 @@ export const BuilderHeader = () => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 onClick={goToFlowsPage}
-                className="cursor-pointer"
+                className="cursor-pointer text-base"
               >
                 {getProjectName(project)}
               </BreadcrumbLink>
@@ -119,7 +119,7 @@ export const BuilderHeader = () => {
         {!embedState.hideFlowNameInBuilder && (
           <BreadcrumbItem>
             <BreadcrumbPage>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-base">
                 <EditableText
                   className="hover:cursor-text"
                   value={flowVersion.displayName}

@@ -298,6 +298,7 @@ import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
 import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
+import { CreateTemplateTable1764777773932 } from './migration/postgres/1764777773932-CreateTemplateTable'
 import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
@@ -308,6 +309,8 @@ import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308
 import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
 import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
 import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
+import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
+import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -632,6 +635,9 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddLastActiveToUser1765325909187,
         AddStepsExecutedAndAICreditsToFlowRun1765461560795,
         ChangeTeamsToPersonalInCommunity1765709274266,
+        AddMinutesSavedToFlowForAnalytics1765732721451,
+        CreateTemplateTable1764777773932,
+        AddTemplateStatus1765894492098,
     ]
     return migrations
 }
