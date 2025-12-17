@@ -61,10 +61,10 @@ function DateEditor() {
             className={cn(
               'w-full h-full flex items-center justify-between gap-2',
               'bg-background text-sm px-2',
-              'focus:outline-none',
+              'focus:outline-hidden',
               {
                 'border-2 border-primary': isEditing,
-                'border-transparent !bg-transparent': !isEditing,
+                'border-transparent bg-transparent!': !isEditing,
               },
             )}
           >
@@ -105,10 +105,10 @@ function DateEditor() {
                 className={cn(
                   'flex-1 h-full min-w-0',
                   'border-none text-sm px-2',
-                  'focus:outline-none',
+                  'focus:outline-hidden',
                   'placeholder:text-muted-foreground',
                   {
-                    'border-transparent !bg-transparent': !isEditing,
+                    'border-transparent bg-transparent!': !isEditing,
                   },
                 )}
                 autoComplete="off"

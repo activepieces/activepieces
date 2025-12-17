@@ -103,7 +103,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
         <Input
           dir="ltr"
           ref={inputRef}
-          className="h-7 flex-grow-0  transition-all duration-300 ease-expand-out text-center focus:text-start rounded-sm  focus:w-full p-1"
+          className="h-7 grow-0  transition-all duration-300 ease-expand-out text-center focus:text-start rounded-sm  focus:w-full p-1"
           style={{
             width: isFocused
               ? '100%'

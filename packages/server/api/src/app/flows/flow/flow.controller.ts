@@ -1,5 +1,4 @@
-
-import { ApplicationEventName, GitPushOperationType } from '@activepieces/ee-shared'
+import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -10,10 +9,8 @@ import {
     FlowOperationType,
     FlowStatus,
     flowStructureUtil,
-    FlowTemplateWithoutProjectInformation,
     FlowTrigger,
     GetFlowQueryParamsRequest,
-    GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
@@ -22,6 +19,7 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SharedTemplate,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -300,7 +298,7 @@ const GetFlowTemplateRequestOptions = {
         }),
         querystring: GetFlowTemplateRequestQuery,
         response: {
-            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+            [StatusCodes.OK]: SharedTemplate,
         },
     },
 }
