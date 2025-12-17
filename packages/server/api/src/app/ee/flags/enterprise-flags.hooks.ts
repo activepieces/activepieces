@@ -11,7 +11,7 @@ import { appearanceHelper } from '../helper/appearance-helper'
 export const enterpriseFlagsHooks: FlagsServiceHooks = {
     async modify({ flags, request }) {
         const modifiedFlags: Record<string, string | boolean | number | Record<string, unknown>> = { ...flags }
-        const platformIdFromPrincipal = request.principal.type === PrincipalType.UNKNOWN || request.principal.type === PrincipalType.WORKER ? null : request.principal.platform.id
+        const platformIdFromPrincipal = !request.principal || request.principal.type === PrincipalType.UNKNOWN || request.principal.type === PrincipalType.WORKER ? null : request.principal.platform.id
         const platformId = platformIdFromPrincipal ?? await platformUtils.getPlatformIdForRequest(request)
         const edition = system.getEdition()
         if (isNil(platformId)) {

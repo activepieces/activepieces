@@ -1,11 +1,9 @@
-import { WorkerSystemProp } from '@activepieces/server-shared'
+import { platformAdminOnly, publicAccess, publicPlatformAccess, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     ApEdition,
     ApId,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
     FileCompression,
     FileType,
@@ -23,7 +21,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { transaction } from '../core/db/transaction'
-import { platformMustBeOwnedByCurrentUser, platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { stripeHelper } from '../ee/platform/platform-plan/stripe-helper'
 import { fileService } from '../file/file.service'
@@ -36,7 +34,6 @@ import { platformRepo, platformService } from './platform.service'
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', UpdatePlatformRequest, async (req, res) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, res)
         await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
 
         const assets = [req.body.logoIcon, req.body.fullLogo, req.body.favIcon]
@@ -120,7 +117,6 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
     if (edition === ApEdition.CLOUD) {
         app.delete('/:id', DeletePlatformRequest, async (req, res) => {
-            await platformMustBeOwnedByCurrentUser.call(app, req, res)
             await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
             assertNotNullOrUndefined(req.principal.platform.id, 'platformId')
             const isCloudNonEnterprisePlan = await platformPlanService(req.log).isCloudNonEnterprisePlan(req.params.id)
@@ -170,8 +166,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
 const UpdatePlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: UpdatePlatformRequestBody,
@@ -187,8 +182,7 @@ const UpdatePlatformRequest = {
 
 const GetPlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['platforms'],
@@ -205,8 +199,7 @@ const GetPlatformRequest = {
 
 const DeletePlatformRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({
@@ -217,7 +210,7 @@ const DeletePlatformRequest = {
 
 const GetAssetRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         params: Type.Object({

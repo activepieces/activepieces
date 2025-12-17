@@ -1,7 +1,6 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, publicAccess, publicPlatformAccess } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
     EndpointScope,
     PlatformRole,
@@ -102,7 +101,7 @@ const rateLimitOptions: RateLimitOptions = {
 
 const SwitchProjectRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: publicPlatformAccess([PrincipalType.USER]),
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -112,7 +111,7 @@ const SwitchProjectRequestOptions = {
 
 const SwitchPlatformRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: publicPlatformAccess([PrincipalType.USER]),
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -122,7 +121,7 @@ const SwitchPlatformRequestOptions = {
 
 const SignUpRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
         rateLimit: rateLimitOptions,
     },
     schema: {
@@ -132,7 +131,7 @@ const SignUpRequestOptions = {
 
 const SignInRequestOptions = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
         rateLimit: rateLimitOptions,
     },
     schema: {

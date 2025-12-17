@@ -42,18 +42,12 @@ async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<
                     allowedPrincipals: security.authorization.allowedPrincipals,
                 },
             }
-        case AuthorizationType.WORKER:
+        case AuthorizationType.UNSCOPED:
             return {
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
-                    type: AuthorizationType.WORKER,
-                },
-            }
-        case AuthorizationType.ENGINE:
-            return {
-                kind: RouteKind.AUTHENTICATED,
-                authorization: {
-                    type: AuthorizationType.ENGINE,
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: security.authorization.allowedPrincipals,
                 },
             }
         case AuthorizationType.NONE:

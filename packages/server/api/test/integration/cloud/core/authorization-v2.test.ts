@@ -448,7 +448,8 @@ describe('authorizeOrThrow', () => {
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
-                    type: AuthorizationType.WORKER,
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.WORKER],
                 },
             }
 
@@ -470,7 +471,8 @@ describe('authorizeOrThrow', () => {
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
-                    type: AuthorizationType.WORKER,
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.WORKER],
                 },
             }
 
@@ -501,7 +503,8 @@ describe('authorizeOrThrow', () => {
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
-                    type: AuthorizationType.ENGINE,
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.ENGINE],
                 },
             }
 
@@ -523,7 +526,8 @@ describe('authorizeOrThrow', () => {
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
                 authorization: {
-                    type: AuthorizationType.ENGINE,
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.ENGINE],
                 },
             }
 

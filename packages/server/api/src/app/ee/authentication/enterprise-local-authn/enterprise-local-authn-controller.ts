@@ -2,7 +2,7 @@ import {
     ApplicationEventName,
     ResetPasswordRequestBody,
     VerifyEmailRequestBody } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { publicAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../../../helper/application-events'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
@@ -29,7 +29,7 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
 
 const VerifyEmailRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         body: VerifyEmailRequestBody,
@@ -38,7 +38,7 @@ const VerifyEmailRequest = {
 
 const ResetPasswordRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         body: ResetPasswordRequestBody,
