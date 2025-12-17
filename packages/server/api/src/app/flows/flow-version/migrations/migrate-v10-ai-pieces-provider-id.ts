@@ -6,6 +6,8 @@ import {
 } from '@activepieces/shared'
 import { databaseConnection } from '../../../database/database-connection'
 import { Migration } from '.'
+import { flowRepo } from '../../flow/flow.repo'
+import { FlowEntity } from '../../flow/flow.entity'
 
 
 export const migrateV10AiPiecesProviderId: Migration = {
@@ -13,14 +15,21 @@ export const migrateV10AiPiecesProviderId: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const db = databaseConnection()
 
-        const aiProviders = await db.query<{ id: string, provider: string }[]>(`
-            SELECT ap.id, ap.provider
-            FROM flow f
-            JOIN project p ON p.id = f.projectId
-            JOIN ai_provider ap ON ap.platformId = p.platformId
-            WHERE f.id = $1
-            ORDER BY ap.created ASC
-        `, [flowVersion.flowId])
+        const aiProviders = await flowRepo()
+            .createQueryBuilder('flow')
+            .innerJoin('flow.project', 'project')
+            .innerJoin(
+                'ai_provider',
+                'aiProvider',
+                'aiProvider.platformId = project.platformId'
+            )
+            .where('flow.id = :flowId', { flowId: flowVersion.flowId })
+            .select([
+                'aiProvider.id AS id',
+                'aiProvider.provider AS provider',
+            ])
+            .orderBy('aiProvider.created', 'ASC')
+            .getRawMany<{ id: string; provider: string }>();
 
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type !== FlowActionType.PIECE) {

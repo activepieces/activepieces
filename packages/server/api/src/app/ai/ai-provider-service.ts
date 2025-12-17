@@ -92,7 +92,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             }
             else {
                 throw new ActivepiecesError({
-                    code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
+                    code: ErrorCode.VALIDATION,
                     params: {
                         message: 'Should not send an empty api key',
                     },
