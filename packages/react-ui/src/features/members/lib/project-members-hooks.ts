@@ -1,11 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 
 import { projectMembersApi } from './project-members-api';
-import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 export const projectMembersHooks = {
   useProjectMembers: () => {
