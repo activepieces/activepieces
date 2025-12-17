@@ -141,7 +141,6 @@ export const runsTableColumns = ({
             checked={isSelected}
             onCheckedChange={(value) => {
               const isChecked = !!value;
-
               if (selectedAll) {
                 if (isChecked) {
                   const newExcluded = new Set(excludedRows);
