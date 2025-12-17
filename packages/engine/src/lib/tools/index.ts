@@ -97,6 +97,8 @@ async function resolveProperties(
                 ? propertySchema 
                 : propertySchema.nullish()
         }
+
+        if (Object.keys(propertyToFill).length === 0) continue
         
         const schemaObject = z.object(propertyToFill) as z.ZodTypeAny
         const extractionPrompt = constructExtractionPrompt(
