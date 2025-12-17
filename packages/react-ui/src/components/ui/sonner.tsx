@@ -17,7 +17,7 @@ export const INTERNAL_ERROR_MESSAGE =
 export function internalErrorToast() {
   toast.error('Something went wrong', {
     description: INTERNAL_ERROR_MESSAGE,
-    duration: 10000000000,
+    duration: 3000,
   });
 }
 
