@@ -23,6 +23,7 @@ import {
     SeekPage,
     SharedTemplate,
     TelemetryEventName,
+    TemplateStatus,
     TemplateType,
     TriggerSource,
     UncategorizedFolderId,
@@ -547,6 +548,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             author: '',
             categories: [],
             type: TemplateType.SHARED,
+            status: TemplateStatus.PUBLISHED,
         }
         return template
     },

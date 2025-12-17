@@ -72,7 +72,7 @@ export const PieceActionsDialog: React.FC<PieceActionsDialogProps> = ({
         <span className="text-sm font-bold select-none">{t('Select all')}</span>
       </div>
 
-      <ScrollArea className="flex-grow overflow-y-auto rounded-md">
+      <ScrollArea className="grow overflow-y-auto rounded-md">
         <div className="flex flex-col gap-2">
           {piece.suggestedActions &&
             piece.suggestedActions.map((action) => (

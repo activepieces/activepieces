@@ -26,7 +26,7 @@ export const Shortcut = ({
   return (
     <span
       className={cn(
-        'flex-grow text-xs tracking-widest text-muted-foreground',
+        'grow text-xs tracking-widest text-muted-foreground',
         className,
       )}
     >

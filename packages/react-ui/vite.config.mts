@@ -5,7 +5,7 @@ import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import checker from 'vite-plugin-checker';
-
+import tailwindcss from '@tailwindcss/vite';
 import customHtmlPlugin from './vite-plugins/html-plugin';
 
 export default defineConfig(({ command, mode }) => {
@@ -65,8 +65,8 @@ export default defineConfig(({ command, mode }) => {
     },
     plugins: [
       react(),
+      tailwindcss(),
       nxViteTsPaths(),
-
       customHtmlPlugin({
         title: AP_TITLE,
         icon: AP_FAVICON,
