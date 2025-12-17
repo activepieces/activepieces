@@ -1,8 +1,9 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, PrincipalForTypeV2, PrincipalType, PrincipalV2, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PrincipalForTypeV2, PrincipalType, PrincipalV2, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { app } from '../server'
 
 export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER, ProjectId = PR extends PrincipalType.USER ? string : undefined> 
@@ -19,7 +20,7 @@ const listener = {
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
-        const principal = await websocketService.verifyPrincipal(socket)
+        const principal = await verifyPrincipal(socket)
         const type = principal.type
         if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
             return
@@ -29,14 +30,7 @@ export const websocketService = {
         switch (type) {
             case PrincipalType.USER: {
                 const projectId = socket.handshake.auth.projectId
-                if (!projectId) {
-                    throw new ActivepiecesError({
-                        code: ErrorCode.AUTHENTICATION,
-                        params: {
-                            message: 'Project ID is required',
-                        },
-                    })
-                }
+                await validateProjectId({ userId: principal.id, projectId, log })
                 log.info({
                     message: 'User connected',
                     userId: principal.id,
@@ -71,15 +65,13 @@ export const websocketService = {
         }
     },
     async onDisconnect(socket: Socket): Promise<void> {
-        const principal = await websocketService.verifyPrincipal(socket)
+        const principal = await verifyPrincipal(socket)
         const castedType = principal.type as keyof typeof listener
         for (const handler of Object.values(listener[castedType][WebsocketServerEvent.DISCONNECT] ?? {})) {
             handler(socket)
         }
     },
-    async verifyPrincipal(socket: Socket): Promise<PrincipalV2> {
-        return accessTokenManager.verifyPrincipalV2(socket.handshake.auth.token)
-    },
+  
     addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
         switch (principalType) {
             case PrincipalType.USER: {
@@ -97,4 +89,33 @@ export const websocketService = {
     emitWithAck<T = unknown>(event: WebsocketServerEvent, workerId: string, data?: unknown): Promise<T> {
         return app!.io.to([workerId]).timeout(4000).emitWithAck(event, data)
     },
+}
+
+const verifyPrincipal = async (socket: Socket): Promise<PrincipalV2> => {
+    return accessTokenManager.verifyPrincipalV2(socket.handshake.auth.token)
+}
+
+const validateProjectId = async ({ userId, projectId, log }: { userId: string, projectId?: string, log: FastifyBaseLogger }): Promise<void> => {
+    
+    if (!projectId) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHENTICATION,
+            params: {
+                message: 'Project ID is required',
+            },
+        })
+    }
+    const role = await projectMemberService(log).getRole({
+        projectId,
+        userId,
+    })
+
+    if (isNil(role)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User not allowed to access this project',
+            },
+        })
+    }
 }
