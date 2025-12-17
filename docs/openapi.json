@@ -19379,7 +19379,7 @@
             },
             "in": "query",
             "name": "type",
-            "required": true
+            "required": false
           },
           {
             "schema": {
