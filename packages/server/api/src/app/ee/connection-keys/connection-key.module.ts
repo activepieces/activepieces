@@ -5,7 +5,8 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, AppConnectionScope, PrincipalType } from '@activepieces/shared'
+import { publicAccess } from '@activepieces/server-shared'
+import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -26,7 +27,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -52,7 +53,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -71,7 +72,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
             schema: {
                 body: UpsertConnectionFromToken,

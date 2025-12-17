@@ -55,7 +55,6 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
 const UpdateTimeSavedPerRunRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
         security: platformAdminOnly([PrincipalType.USER]),
 
     },
@@ -65,7 +64,6 @@ const UpdateTimeSavedPerRunRequestSchema = {
 }
 const UpdatePlatformReportRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
         security: platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
@@ -74,7 +72,6 @@ const UpdatePlatformReportRequestSchema = {
 }
 const PlatformAnalyticsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
         security: platformAdminOnly([PrincipalType.USER]),
     },
 }

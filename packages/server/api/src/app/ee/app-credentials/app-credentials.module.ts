@@ -4,9 +4,9 @@ import {
     ListAppCredentialsRequest,
     UpsertAppCredentialRequest,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, PrincipalType, SeekPage } from '@activepieces/shared'
+import { publicAccess } from '@activepieces/server-shared'
+import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appCredentialService } from './app-credentials.service'
 
@@ -20,20 +20,7 @@ const DEFAULT_LIMIT_SIZE = 10
 
 const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.get(
-        '/',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                querystring: ListAppCredentialsRequest,
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Querystring: ListAppCredentialsRequest
-            }>,
-        ) => {
+        '/', ListCredsRequest, async (request) => {
             const page = await appCredentialService.list(
                 request.query.projectId,
                 request.query.appName,
@@ -45,16 +32,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
     )
 
     fastify.post(
-        '/',
-        {
-            schema: {
-                body: UpsertAppCredentialRequest,
-            },
-            config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
-            },
-        },
-        async (request) => {
+        '/', UpsertAppCredentialRequestOptions, async (request) => {
             return appCredentialService.upsert({
                 projectId: request.principal.projectId,
                 request: request.body,
@@ -63,18 +41,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
     )
 
     fastify.delete(
-        '/:credentialId',
-        {
-            config: {
-                allowedPrincipals: [PrincipalType.USER] as const,
-            },
-            schema: {
-                params: Type.Object({
-                    credentialId: Type.String(),
-                }),
-            },
-        },
-        async (request, reply) => {
+        '/:credentialId', DeleteAppCredentialRequestOptions, async (request, reply) => {
             await appCredentialService.delete({
                 id: request.params.credentialId,
                 projectId: request.principal.projectId,
@@ -95,4 +62,33 @@ function censorClientSecret(
         return f
     })
     return page
+}
+
+const ListCredsRequest = {
+    config: {
+        security: publicAccess(),
+    },
+    schema: {
+        querystring: ListAppCredentialsRequest,
+    },
+}
+
+const UpsertAppCredentialRequestOptions = {
+    schema: {
+        body: UpsertAppCredentialRequest,
+    },
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+}
+
+const DeleteAppCredentialRequestOptions = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+    schema: {
+        params: Type.Object({
+            credentialId: Type.String(),
+        }),
+    },
 }

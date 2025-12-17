@@ -16,7 +16,7 @@ export const googleProvider: AIProviderStrategy<GoogleProviderConfig> = {
         return res.body.models.map((model: GoogleModel) => ({
             id: model.name,
             name: model.displayName,
-            type: AIProviderModelType.TEXT,
+            type: model.name.includes('image') ? AIProviderModelType.IMAGE : AIProviderModelType.TEXT,
         }))
     },
 }

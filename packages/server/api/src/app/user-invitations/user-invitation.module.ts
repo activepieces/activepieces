@@ -1,6 +1,6 @@
+import { publicAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     assertNotNullOrUndefined,
     EndpointScope,
     ErrorCode,
@@ -179,7 +179,7 @@ const ListUserInvitationsRequestParams = {
 
 const AcceptUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         body: Type.Object({

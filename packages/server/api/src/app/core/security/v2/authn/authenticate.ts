@@ -1,9 +1,9 @@
-import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PrincipalType, PrincipalV2 } from '@activepieces/shared'
 import { nanoid } from 'nanoid'
 import { accessTokenManager } from '../../../../authentication/lib/access-token-manager'
 import { apiKeyService } from '../../../../ee/api-keys/api-key-service'
 
-export const authenticateOrThrow = async (rawToken: string | null): Promise<Principal> => {
+export const authenticateOrThrow = async (rawToken: string | null): Promise<PrincipalV2> => {
     if (!isNil(rawToken) && rawToken.startsWith('Bearer sk-')) {
         const trimBearerPrefix = rawToken.replace('Bearer ', '')
         return createPrincipalForApiKey(trimBearerPrefix)
@@ -19,7 +19,7 @@ export const authenticateOrThrow = async (rawToken: string | null): Promise<Prin
 }
 
 
-async function createPrincipalForApiKey(apiKeyValue: string): Promise<Principal> {
+async function createPrincipalForApiKey(apiKeyValue: string): Promise<PrincipalV2> {
     const apiKey = await apiKeyService.getByValue(apiKeyValue)
     if (isNil(apiKey)) {
         throw new ActivepiecesError({
@@ -35,7 +35,6 @@ async function createPrincipalForApiKey(apiKeyValue: string): Promise<Principal>
         platform: {
             id: apiKey.platformId,
         },
-        projectId: 'PLACEHOLDER',
     }
 }
 

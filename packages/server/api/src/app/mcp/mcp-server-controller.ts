@@ -1,4 +1,5 @@
-import { ALL_PRINCIPAL_TYPES, ApId, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { publicAccess } from '@activepieces/server-shared'
+import { ApId, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { mcpServerService } from './mcp-service'
@@ -60,7 +61,7 @@ function validateAuthorizationHeader(authHeader: string | undefined, mcp: Popula
 
 const StreamableHttpRequestRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
         skipAuth: true,
     },
     schema: {
