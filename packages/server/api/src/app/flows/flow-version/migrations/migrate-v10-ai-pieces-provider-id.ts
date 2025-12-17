@@ -13,18 +13,14 @@ export const migrateV10AiPiecesProviderId: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const db = databaseConnection()
 
-        const [platform] = await db.query<{ platformId: string }[]>(`
-            SELECT p.platformId AS platformId
-            FROM flow f
-            JOIN project p ON p.id = f.projectId    
-            WHERE f.id = $1
-        `, [flowVersion.flowId])
         const aiProviders = await db.query<{ id: string; provider: string }[]>(`
-            SELECT id, provider
-            FROM ai_provider 
-            WHERE "platformId" = $1 
-            ORDER BY "created" ASC
-        `, [platform.platformId])
+            SELECT ap.id, ap.provider
+            FROM flow f
+            JOIN project p ON p.id = f.projectId
+            JOIN ai_provider ap ON ap.platformId = p.platformId
+            WHERE f.id = $1
+            ORDER BY ap.created ASC
+        `, [flowVersion.flowId])
 
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type !== FlowActionType.PIECE) {
