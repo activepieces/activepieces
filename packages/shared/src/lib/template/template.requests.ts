@@ -33,7 +33,7 @@ export const UpdateTemplateRequestBody = UpdateFlowTemplateRequestBody
 export type UpdateTemplateRequestBody = Static<typeof UpdateTemplateRequestBody>
 
 export const ListFlowTemplatesRequestQuery = Type.Object({
-    type: Type.Enum(TemplateType),
+    type: Type.Optional(Type.Enum(TemplateType)),
     pieces: Type.Optional(Type.Array(Type.String())),
     tags: Type.Optional(Type.Array(TemplateTag)),
     search: Type.Optional(Type.String()),
