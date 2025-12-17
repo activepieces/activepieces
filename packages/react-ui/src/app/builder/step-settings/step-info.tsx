@@ -1,6 +1,7 @@
 import { ChevronRight, Info } from 'lucide-react';
 import React from 'react';
 
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
@@ -17,7 +18,6 @@ import {
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 
 type StepInfoProps = {
   step: FlowAction | FlowTrigger;
@@ -37,8 +37,6 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
   const actionOrTriggerDisplayName =
     stepMetadata?.actionOrTriggerOrAgentDisplayName;
 
-
-
   return (
     <div className="flex items-center justify-between gap-3 min-h-[36px]">
       <div className="flex items-center gap-2 min-w-0">
@@ -57,9 +55,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
               {actionOrTriggerDisplayName && (
                 <>
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                  <TextWithTooltip
-                    tooltipMessage={actionOrTriggerDisplayName}
-                  >
+                  <TextWithTooltip tooltipMessage={actionOrTriggerDisplayName}>
                     <span className="font-medium text-foreground">
                       {actionOrTriggerDisplayName}
                     </span>
@@ -71,15 +67,17 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
             <Skeleton className="h-4 w-32 rounded" />
           )}
         </div>
-        {!isNil(stepMetadata?.actionOrTriggerOrAgentDescription) && stepMetadata.actionOrTriggerOrAgentDescription.length > 0 && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Info className="size-4 text-muted-foreground shrink-0 cursor-help" />
-            </TooltipTrigger>
-           
-            
-          </Tooltip>
-        )}
+        {!isNil(stepMetadata?.actionOrTriggerOrAgentDescription) &&
+          stepMetadata.actionOrTriggerOrAgentDescription.length > 0 && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="size-4 text-muted-foreground shrink-0 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="max-w-xs">
+                {stepMetadata.actionOrTriggerOrAgentDescription}
+              </TooltipContent>
+            </Tooltip>
+          )}
       </div>
       {pieceVersion && (
         <div className="text-xs text-muted-foreground shrink-0">

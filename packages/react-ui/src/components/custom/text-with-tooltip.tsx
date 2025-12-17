@@ -1,3 +1,5 @@
+import React, { useRef, useState, useCallback, useEffect } from 'react';
+
 import {
   Tooltip,
   TooltipContent,
@@ -5,7 +7,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import React, { useRef, useState, useCallback, useEffect } from 'react';
 
 interface TextWithTooltipProps {
   tooltipMessage: string;

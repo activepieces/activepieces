@@ -15,9 +15,7 @@ const StepNodeDisplayName = ({
   return (
     <div className="grow flex flex-col items-start justify-center min-w-0 w-full">
       <div className=" flex items-center justify-between min-w-0 w-full">
-        <TextWithTooltip
-          tooltipMessage={stepDisplayName}
-        >
+        <TextWithTooltip tooltipMessage={stepDisplayName}>
           <div
             className={cn('text-sm truncate grow shrink ', {
               'text-accent-foreground/70': isSkipped,
