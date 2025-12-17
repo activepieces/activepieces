@@ -6,8 +6,8 @@ import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { app } from '../server'
 
-export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER, ProjectId = PR extends PrincipalType.USER ? string : undefined> 
-= (socket: Socket) => (data: T, principal: PrincipalForTypeV2<PR>, projectId: ProjectId, callback?: (data: unknown) => void) => Promise<void>
+export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER, ProjectId = PR extends PrincipalType.USER ? string : undefined>
+    = (socket: Socket) => (data: T, principal: PrincipalForTypeV2<PR>, projectId: ProjectId, callback?: (data: unknown) => void) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
@@ -25,7 +25,7 @@ export const websocketService = {
         if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
             return
         }
-       
+
         const castedType = type as keyof typeof listener
         switch (type) {
             case PrincipalType.USER: {
@@ -71,7 +71,7 @@ export const websocketService = {
             handler(socket)
         }
     },
-  
+
     addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
         switch (principalType) {
             case PrincipalType.USER: {
@@ -95,9 +95,8 @@ const verifyPrincipal = async (socket: Socket): Promise<PrincipalV2> => {
     return accessTokenManager.verifyPrincipalV2(socket.handshake.auth.token)
 }
 
-const validateProjectId = async ({ userId, projectId, log }: { userId: string, projectId?: string, log: FastifyBaseLogger }): Promise<void> => {
-    
-    if (!projectId) {
+const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<void> => {
+    if (isNil(projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHENTICATION,
             params: {
@@ -118,4 +117,10 @@ const validateProjectId = async ({ userId, projectId, log }: { userId: string, p
             },
         })
     }
+}
+
+type ValidateProjectIdArgs = {
+    userId: string
+    projectId?: string
+    log: FastifyBaseLogger
 }
