@@ -17,12 +17,13 @@ import {
   FlowTrigger,
   FlowTriggerType,
 } from '@activepieces/shared';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 
-type StepCardProps = {
+type StepInfoProps = {
   step: FlowAction | FlowTrigger;
 };
 
-const StepCard: React.FC<StepCardProps> = ({ step }) => {
+const StepCard: React.FC<StepInfoProps> = ({ step }) => {
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
@@ -36,9 +37,7 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
   const actionOrTriggerDisplayName =
     stepMetadata?.actionOrTriggerOrAgentDisplayName;
 
-  if (!isPiece) {
-    return <></>;
-  }
+
 
   return (
     <div className="flex items-center justify-between gap-3 min-h-[36px]">
@@ -47,20 +46,24 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
           logoUrl={stepMetadata?.logoUrl}
           displayName={stepMetadata?.displayName}
           showTooltip={false}
-          size="sm"
+          size="md"
         />
-        <div className="flex items-center gap-1 min-w-0 text-sm">
+        <div className="flex items-center gap-0.5 min-w-0 text-sm">
           {!isNil(stepMetadata?.displayName) ? (
             <>
-              <span className="truncate text-muted-foreground">
+              <span className=" text-muted-foreground">
                 {stepMetadata.displayName}
               </span>
               {actionOrTriggerDisplayName && (
                 <>
                   <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                  <span className="truncate font-medium text-foreground">
-                    {actionOrTriggerDisplayName}
-                  </span>
+                  <TextWithTooltip
+                    tooltipMessage={actionOrTriggerDisplayName}
+                  >
+                    <span className="font-medium text-foreground">
+                      {actionOrTriggerDisplayName}
+                    </span>
+                  </TextWithTooltip>
                 </>
               )}
             </>
@@ -68,14 +71,13 @@ const StepCard: React.FC<StepCardProps> = ({ step }) => {
             <Skeleton className="h-4 w-32 rounded" />
           )}
         </div>
-        {!isNil(stepMetadata?.actionOrTriggerOrAgentDescription) && (
+        {!isNil(stepMetadata?.actionOrTriggerOrAgentDescription) && stepMetadata.actionOrTriggerOrAgentDescription.length > 0 && (
           <Tooltip>
             <TooltipTrigger asChild>
               <Info className="size-4 text-muted-foreground shrink-0 cursor-help" />
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="max-w-xs">
-              {stepMetadata.actionOrTriggerOrAgentDescription}
-            </TooltipContent>
+           
+            
           </Tooltip>
         )}
       </div>
