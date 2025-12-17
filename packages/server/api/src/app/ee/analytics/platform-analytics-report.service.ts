@@ -4,15 +4,15 @@ import { AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsag
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { withStatementTimeout } from '../../database/database-common'
 import { distributedLock } from '../../database/redis-connections'
 import { flowService } from '../../flows/flow/flow.service'
-import { flowRunRepo } from '../../flows/flow-run/flow-run-service'
 import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { projectRepo } from '../../project/project-service'
-import { userRepo } from '../../user/user-service'
-import { auditLogRepo } from '../audit-logs/audit-event-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
+
+const ANALYTICS_QUERY_TIMEOUT_MS = 60000
 
 export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     refreshReport: async (platformId: PlatformId) => {
@@ -156,37 +156,49 @@ function analyzePieces(flows: PopulatedFlow[], pieceMetadataMap: Map<string, Pie
 
 
 async function countProjects(platformId: PlatformId) {
-    return projectRepo().countBy({
-        platformId,
+    return withStatementTimeout({
+        timeoutMs: ANALYTICS_QUERY_TIMEOUT_MS,
+        fn: async (entityManager) => {
+            return entityManager.getRepository('project').countBy({
+                platformId,
+            })
+        },
     })
 }
 
 
 async function analyzeUsers(platformId: PlatformId) {
-    const oneMonthAgo = dayjs().subtract(1, 'month').toISOString()
-    
-    const totalUsersResult = await userRepo()
-        .createQueryBuilder('usr')
-        .select('COUNT(DISTINCT usr.id)', 'totalUsers')
-        .where('usr.platformId = :platformId', { platformId })
-        .getRawOne()
+    return withStatementTimeout({
+        timeoutMs: ANALYTICS_QUERY_TIMEOUT_MS,
+        fn: async (entityManager) => {
+            const oneMonthAgo = dayjs().subtract(1, 'month').toISOString()
+            
+            const totalUsersResult = await entityManager
+                .createQueryBuilder()
+                .select('COUNT(DISTINCT usr.id)', 'totalUsers')
+                .from('user', 'usr')
+                .where('usr.platformId = :platformId', { platformId })
+                .getRawOne()
 
-    const activeUsersResult = await auditLogRepo()
-        .createQueryBuilder('ae')
-        .select('COUNT(DISTINCT ae.userId)', 'activeUsers')
-        .innerJoin('user', 'usr', 'usr.id = ae.userId')
-        .where('ae.platformId = :platformId', { platformId })
-        .andWhere('usr.platformId = :platformId', { platformId })
-        .andWhere('ae.action IN (:...actions)', { 
-            actions: [ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP],
-        })
-        .andWhere('ae.created > :oneMonthAgo', { oneMonthAgo })
-        .getRawOne()
-    
-    return {
-        activeUsers: parseInt(activeUsersResult.activeUsers),
-        totalUsers: parseInt(totalUsersResult.totalUsers),
-    }
+            const activeUsersResult = await entityManager
+                .createQueryBuilder()
+                .select('COUNT(DISTINCT ae.userId)', 'activeUsers')
+                .from('audit_event', 'ae')
+                .innerJoin('user', 'usr', 'usr.id = ae.userId')
+                .where('ae.platformId = :platformId', { platformId })
+                .andWhere('usr.platformId = :platformId', { platformId })
+                .andWhere('ae.action IN (:...actions)', { 
+                    actions: [ApplicationEventName.USER_SIGNED_IN, ApplicationEventName.USER_SIGNED_UP],
+                })
+                .andWhere('ae.created > :oneMonthAgo', { oneMonthAgo })
+                .getRawOne()
+            
+            return {
+                activeUsers: parseInt(activeUsersResult.activeUsers),
+                totalUsers: parseInt(totalUsersResult.totalUsers),
+            }
+        },
+    })
 }
 
 
@@ -210,20 +222,26 @@ function countFlows(flows: PopulatedFlow[], status: FlowStatus | undefined) {
 }
 
 async function analyzeRuns(platformId: PlatformId): Promise<AnalyticsRunsUsageItem[]> {
-    const runsData = await flowRunRepo()
-        .createQueryBuilder('flow_run')
-        .select('DATE(flow_run.created)', 'day')
-        .addSelect('COUNT(*)', 'totalRuns')
-        .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
-        .where('project."platformId" = :platformId', { platformId })
-        .andWhere('flow_run.created >= now() - interval \'3 months\'')
-        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
-        .groupBy('DATE(flow_run.created)')
-        .orderBy('DATE(flow_run.created)', 'ASC')
-        .getRawMany()
+    return withStatementTimeout({
+        timeoutMs: ANALYTICS_QUERY_TIMEOUT_MS,
+        fn: async (entityManager) => {
+            const runsData = await entityManager
+                .createQueryBuilder()
+                .select('DATE(flow_run.created)', 'day')
+                .addSelect('COUNT(*)', 'totalRuns')
+                .from('flow_run', 'flow_run')
+                .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
+                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('flow_run.created >= now() - interval \'3 months\'')
+                .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+                .groupBy('DATE(flow_run.created)')
+                .orderBy('DATE(flow_run.created)', 'ASC')
+                .getRawMany()
 
-    return runsData.map((row) => ({
-        day: row.day,
-        totalRuns: row.totalRuns,
-    }))
+            return runsData.map((row) => ({
+                day: row.day,
+                totalRuns: row.totalRuns,
+            }))
+        },
+    })
 }

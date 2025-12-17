@@ -643,6 +643,8 @@ export const createPostgresDataSource = (): DataSource => {
 
     const url = system.get(AppSystemProp.POSTGRES_URL)
 
+    const statementTimeout = system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
+
     if (!isNil(url)) {
         return new DataSource({
             type: 'postgres',
@@ -651,6 +653,9 @@ export const createPostgresDataSource = (): DataSource => {
             ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
+            extra: {
+                statement_timeout: statementTimeout,
+            },
         })
     }
 
@@ -675,6 +680,7 @@ export const createPostgresDataSource = (): DataSource => {
         ...migrationConfig,
         extra: {
             idleTimeoutMillis,
+            statement_timeout: statementTimeout,
         },
     })
 }
