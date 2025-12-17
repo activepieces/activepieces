@@ -1,10 +1,8 @@
 import { CreateFlowTemplateRequest } from '@activepieces/ee-shared'
-import { AppSystemProp, publicAccess } from '@activepieces/server-shared'
+import { AppSystemProp, unscopedAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     ApEdition,
-    EndpointScope,
     ErrorCode,
     isNil,
     ListFlowTemplatesRequest,
@@ -105,7 +103,7 @@ async function resolveTemplatesPlatformId(principal: Principal): Promise<string 
 
 const GetParams = {
     config: {
-        security: publicAccess(),
+        security: unscopedAccess(),
     },
     schema: {
         tags: ['flow-templates'],
@@ -117,8 +115,7 @@ const GetParams = {
 
 const ListFlowParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-        scope: EndpointScope.PLATFORM,
+        security: unscopedAccess(),
     },
     schema: {
         tags: ['flow-templates'],
@@ -131,7 +128,6 @@ const ListFlowParams = {
 const DeleteParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        // security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Delete a flow template',
@@ -144,7 +140,6 @@ const DeleteParams = {
 const CreateParams = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        // security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]) ,
     },
     schema: {
         description: 'Create a flow template',

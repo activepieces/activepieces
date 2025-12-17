@@ -19,11 +19,8 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
                 await assertPlatformIsOwnedByCurrentPrincipal(principal)
             }
             break
-        case AuthorizationType.WORKER:
-            await assertPrinicpalIsOneOf([PrincipalType.WORKER], principal.type)
-            break
-        case AuthorizationType.ENGINE:
-            await assertPrinicpalIsOneOf([PrincipalType.ENGINE], principal.type)
+        case AuthorizationType.UNSCOPED:
+            await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
             break
         case AuthorizationType.NONE:
             break
