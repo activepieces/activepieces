@@ -28,7 +28,7 @@ export function AccountSettingsDialog({
   const { data: user } = userHooks.useCurrentUser();
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl w-full max-h-[90vh] h-fit pb-4 flex flex-col px-5">
+      <DialogContent className="max-w-2xl w-full max-h-[90vh] pb-4 flex flex-col px-5">
         <DialogHeader>
           <DialogTitle className="font-semibold">
             {t('Account Settings')}
