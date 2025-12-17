@@ -38,7 +38,7 @@ const ProviderCard = ({
         <div className="flex flex-col gap-2 text-center mr-2">
           {providerIcon}
         </div>
-        <div className="flex flex-grow  flex-col">
+        <div className="flex grow  flex-col">
           <div className="text-lg">{providerName}</div>
           <div className="text-sm text-muted-foreground">
             {providerDescription ??

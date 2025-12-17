@@ -1,6 +1,6 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import deepEqual from 'deep-equal';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -34,7 +34,7 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
-import { StepCard } from './step-card';
+import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -126,6 +126,11 @@ const StepSettingsContainer = () => {
     modifiedStep.settings.pieceName === '@activepieces/piece-ai' &&
     modifiedStep.settings.actionName === 'run_agent';
 
+  useEffect(() => {
+    //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
+    form.trigger();
+  }, []);
+
   return (
     <Form {...form}>
       <form
@@ -173,8 +178,8 @@ const StepSettingsContainer = () => {
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel defaultSize={55} className="min-h-[80px]">
               <ScrollArea className="h-full">
-                <div className="flex flex-col gap-4 px-4 pb-6">
-                  <StepCard step={modifiedStep}></StepCard>
+                <div className="flex flex-col gap-2 px-4 pb-6">
+                  <StepInfo step={modifiedStep}></StepInfo>
 
                   {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings readonly={readonly}></LoopsSettings>

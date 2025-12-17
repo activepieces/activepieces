@@ -15,14 +15,14 @@ import {
   ApErrorParams,
   ErrorCode,
   FlowOperationType,
-  FlowTemplate,
+  Template,
 } from '@activepieces/shared';
 
 import { LoadingSpinner } from '../../../components/ui/spinner';
 import { PieceIconList } from '../../pieces/components/piece-icon-list';
 import { templatesApi } from '../lib/templates-api';
 
-const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
+const TemplateViewer = ({ template }: { template: Template }) => {
   const navigate = useNavigate();
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
@@ -30,17 +30,22 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
         projectId: authenticationSession.getProjectId()!,
         displayName: template.name,
       });
+      const flowTemplate = template.flows?.[0];
+      if (!flowTemplate) {
+        throw new Error('Template does not have a flow template');
+      }
       const updatedFlow = await flowsApi.update(flow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
-          displayName: template.template.displayName,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
+          displayName: flowTemplate.displayName,
+          trigger: flowTemplate.trigger,
+          schemaVersion: flowTemplate.schemaVersion,
         },
       });
       return updatedFlow;
     },
     onSuccess: (data) => {
+      templatesApi.incrementUsageCount(template.id);
       navigate(`/flows/${data.id}`);
     },
     onError: (error) => {
@@ -70,10 +75,12 @@ const TemplateViewer = ({ template }: { template: FlowTemplate }) => {
             <div className="flex flex-col gap-2 items-center justify-between mb-4">
               <div className="flex flex-row w-full justify-between items-center">
                 <span>{t('Steps in this flow')}</span>
-                <PieceIconList
-                  trigger={template.template.trigger}
-                  maxNumberOfIconsToShow={5}
-                ></PieceIconList>
+                {template.flows?.[0]?.trigger && (
+                  <PieceIconList
+                    trigger={template.flows[0].trigger}
+                    maxNumberOfIconsToShow={5}
+                  ></PieceIconList>
+                )}
               </div>
               {template.description && (
                 <>

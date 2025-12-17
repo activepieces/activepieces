@@ -47,7 +47,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
             height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
           }}
-          className={cn('transition-all bg-primary/90  rounded-xs', {
+          className={cn('transition-all bg-primary/90  rounded-md', {
             'shadow-add-button': isStepInsideDropZone,
           })}
         >
@@ -56,9 +56,9 @@ const ApAddButton = React.memo((props: ApButtonData) => {
               width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px',
               height: flowUtilConsts.AP_NODE_SIZE.STEP.height + 'px',
               left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
-              top: `${-flowUtilConsts.AP_NODE_SIZE.STEP.height / 2}px`,
+              top: `${-flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2}px`,
             }}
-            className={cn(' absolute    rounded-xs box-content ')}
+            className={cn(' absolute    rounded-md box-content ')}
             ref={setNodeRef}
           ></div>
         </div>
@@ -79,7 +79,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                 width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
                 height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
-              className={cn('rounded-xs cursor-pointer transition-all z-50', {
+              className={cn('rounded-md cursor-pointer transition-all z-50', {
                 'shadow-add-button': isPieceSelectorOpen,
               })}
             >
@@ -89,15 +89,15 @@ const ApAddButton = React.memo((props: ApButtonData) => {
                   height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
-                  'bg-light-blue  relative group overflow-visible rounded-xs cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
+                  'bg-background  border border-border border-solid relative group overflow-visible rounded-md cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',
                   {
-                    'bg-primary ': isPieceSelectorOpen,
+                    'bg-primary border-primary': isPieceSelectorOpen,
                   },
                 )}
                 data-testid="add-action-button"
               >
                 {!isPieceSelectorOpen && (
-                  <Plus className="w-3 h-3 stroke-[3px] text-white" />
+                  <Plus className="w-3 h-3 stroke-[3px] text-foreground" />
                 )}
               </div>
             </div>

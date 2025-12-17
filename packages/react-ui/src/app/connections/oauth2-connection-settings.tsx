@@ -123,7 +123,7 @@ function OAuth2ConnectionSettings({
             <img src={piece.logoUrl} className="w-5 h-5"></img>
           </div>
           <div className="text-sm">{piece.displayName}</div>
-          <div className="flex-grow"></div>
+          <div className="grow"></div>
           <Button
             size={'sm'}
             variant={'basic'}
