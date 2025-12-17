@@ -5,16 +5,15 @@ import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { authenticationSession } from '../../../lib/authentication-session';
 
 import { projectMembersApi } from './project-members-api';
+import { assertNotNullOrUndefined } from '@activepieces/shared';
 
 export const projectMembersHooks = {
   useProjectMembers: () => {
     const query = useQuery<ProjectMemberWithUser[]>({
-      queryKey: ['project-members'],
+      queryKey: ['project-members', authenticationSession.getProjectId()],
       queryFn: async () => {
         const projectId = authenticationSession.getProjectId();
-        if (projectId === null) {
-          throw new Error('Project ID is null');
-        }
+        assertNotNullOrUndefined(projectId, 'Project ID is null');
         const res = await projectMembersApi.list({
           projectId: projectId,
           projectRoleId: undefined,
