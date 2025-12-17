@@ -113,7 +113,7 @@ const CodeEditor = ({
             </div>
           )}
         </div>
-        <div className="flex flex-grow"></div>
+        <div className="flex grow"></div>
         {codeApplicationEnabled ? (
           <Button
             variant="outline"

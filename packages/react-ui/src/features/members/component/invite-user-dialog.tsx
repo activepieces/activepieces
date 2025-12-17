@@ -333,7 +333,7 @@ export const InviteUserDialog = ({
                       event.target.select();
                       copyInvitationLink();
                     }}
-                    className=" rounded-l-md rounded-r-none focus-visible:!ring-0 focus-visible:!ring-offset-0"
+                    className=" rounded-l-md rounded-r-none focus-visible:ring-0! focus-visible:ring-offset-0!"
                   />
 
                   <Tooltip>

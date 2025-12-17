@@ -36,7 +36,7 @@ const AIProviderCard = ({
         <div className="flex flex-col gap-2 text-center mr-2">
           <img src={logoUrl} alt="icon" width={32} height={32} />
         </div>
-        <div className="flex flex-grow flex-col">
+        <div className="flex grow flex-col">
           <div className="text-lg flex items-center">{displayName}</div>
           {allowWrite && (
             <div className="text-sm text-muted-foreground">
