@@ -23,7 +23,7 @@ type StepInfoProps = {
   step: FlowAction | FlowTrigger;
 };
 
-const StepCard: React.FC<StepInfoProps> = ({ step }) => {
+const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
@@ -90,4 +90,4 @@ const StepCard: React.FC<StepInfoProps> = ({ step }) => {
   );
 };
 
-export { StepCard };
+export { StepInfo };

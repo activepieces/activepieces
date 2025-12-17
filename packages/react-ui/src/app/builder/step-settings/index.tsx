@@ -33,7 +33,7 @@ import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
-import { StepCard } from './step-card';
+import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
@@ -174,7 +174,7 @@ const StepSettingsContainer = () => {
             <ResizablePanel defaultSize={55} className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="flex flex-col gap-2 px-4 pb-6">
-                  <StepCard step={modifiedStep}></StepCard>
+                  <StepInfo step={modifiedStep}></StepInfo>
 
                   {modifiedStep.type === FlowActionType.LOOP_ON_ITEMS && (
                     <LoopsSettings readonly={readonly}></LoopsSettings>
