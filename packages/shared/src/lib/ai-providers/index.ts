@@ -11,17 +11,18 @@ export const AnthropicProviderConfig = Type.Object({
 })
 export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
 
+export const ProviderModelConfig = Type.Object({
+    modelId: Type.String(),
+    modelName: Type.String(),
+    modelType: Type.Enum(AIProviderModelType),
+})
+export type ProviderModelConfig = Static<typeof ProviderModelConfig>
+
 export const OpenAICompatibleProviderConfig = Type.Object({
     apiKey: Type.String(),
     apiKeyHeader: Type.String(),
     baseUrl: Type.String(),
-    models: Type.Array(
-        Type.Object({
-            modelId: Type.String(),
-            modelName: Type.String(),
-            modelType: Type.Enum(AIProviderModelType),
-        }),
-    ),
+    models: Type.Array(ProviderModelConfig),
 })
 export type OpenAICompatibleProviderConfig = Static<typeof OpenAICompatibleProviderConfig>
 
@@ -30,13 +31,7 @@ export const CloudflareGatewayProviderConfig = Type.Object({
     apiKey: Type.String(),
     accountId: Type.String(),
     gatewayId: Type.String(),
-    models: Type.Array(
-        Type.Object({
-            modelId: Type.String(),
-            modelName: Type.String(),
-            modelType: Type.Enum(AIProviderModelType),
-        }),
-    ),
+    models: Type.Array(ProviderModelConfig),
 })
 export type CloudflareGatewayProviderConfig = Static<typeof CloudflareGatewayProviderConfig>
 

@@ -1,6 +1,5 @@
 import { t } from 'i18next';
 import { Plus, Pencil, Trash2, ImageIcon, TextIcon } from 'lucide-react';
-import { useState } from 'react';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -14,18 +13,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -33,9 +20,11 @@ import {
 import {
   AIProviderName,
   AIProviderModelType,
-  CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
+  ProviderModelConfig,
 } from '@activepieces/shared';
+
+import { ModelFormPopover } from './model-form-popover';
 
 type UpsertProviderConfigFormProps = {
   form: UseFormReturn<CreateAIProviderRequest>;
@@ -54,10 +43,6 @@ export const UpsertProviderConfigForm = ({
     control: form.control,
     name: 'config.models',
   });
-
-  const handleRemoveModel = (index: number) => {
-    remove(index);
-  };
 
   return (
     <div className="grid space-y-4">
@@ -239,50 +224,13 @@ export const UpsertProviderConfigForm = ({
           ) : (
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div
+                <ProviderConfigModelItem
                   key={field.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <ModelTypeIcon modelType={field.modelType} />
-                      <div className="flex flex-col gap-0">
-                        <p className="text-sm">{field.modelName}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {field.modelId}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ModelFormPopover
-                      initialData={
-                        field as CloudflareGatewayProviderConfig['models'][number]
-                      }
-                      onSubmit={(model) => update(index, model)}
-                    >
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isLoading}
-                      >
-                        <Pencil className="h-4 w-4" />
-                        <span className="sr-only">{t('Edit')}</span>
-                      </Button>
-                    </ModelFormPopover>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveModel(index)}
-                      disabled={isLoading}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                      <span className="sr-only">{t('Delete')}</span>
-                    </Button>
-                  </div>
-                </div>
+                  model={field as ProviderModelConfig}
+                  isLoading={isLoading}
+                  onUpdate={(model) => update(index, model)}
+                  onRemove={() => remove(index)}
+                />
               ))}
             </div>
           )}
@@ -292,117 +240,57 @@ export const UpsertProviderConfigForm = ({
   );
 };
 
-type ModelFormPopoverProps = {
-  initialData?: CloudflareGatewayProviderConfig['models'][0];
-  onSubmit: (model: CloudflareGatewayProviderConfig['models'][0]) => void;
-  children: React.ReactNode;
+type ProviderConfigModelItemProps = {
+  model: ProviderModelConfig;
+  isLoading?: boolean;
+  onUpdate: (model: ProviderModelConfig) => void;
+  onRemove: () => void;
 };
 
-const ModelFormPopover = ({
-  initialData,
-  onSubmit,
-  children,
-}: ModelFormPopoverProps) => {
-  const [open, setOpen] = useState(false);
-  const defaultModel: CloudflareGatewayProviderConfig['models'][number] = {
-    modelId: '',
-    modelName: '',
-    modelType: AIProviderModelType.TEXT,
-  };
-
-  const [model, setModel] = useState<
-    CloudflareGatewayProviderConfig['models'][number]
-  >(initialData || defaultModel);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(model);
-    if (!initialData) {
-      setModel(defaultModel);
-    }
-    setOpen(false);
-  };
-
+const ProviderConfigModelItem = ({
+  model,
+  isLoading,
+  onUpdate,
+  onRemove,
+}: ProviderConfigModelItemProps) => {
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="grid gap-4">
-          <div className="space-y-2">
-            <h4 className="font-medium leading-none">
-              {initialData ? t('Edit Model') : t('Add Model')}
-            </h4>
-            <p className="text-sm text-muted-foreground">
-              {t('Configure the model settings')}
-            </p>
+    <div className="flex items-center justify-between p-4 border rounded-lg transition-colors">
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <ModelTypeIcon modelType={model.modelType} />
+          <div className="flex flex-col gap-0">
+            <p className="text-sm">{model.modelName}</p>
+            <p className="text-sm text-muted-foreground">{model.modelId}</p>
           </div>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="modelId">{t('Model ID')}</Label>
-              <Input
-                id="modelId"
-                value={model.modelId}
-                onChange={(e) =>
-                  setModel({ ...model, modelId: e.target.value })
-                }
-                placeholder="e.g., gpt-4"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="modelName">{t('Model Name')}</Label>
-              <Input
-                id="modelName"
-                value={model.modelName}
-                onChange={(e) =>
-                  setModel({ ...model, modelName: e.target.value })
-                }
-                placeholder="e.g., GPT-4"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="modelType">{t('Model Type')}</Label>
-              <Select
-                value={model.modelType}
-                onValueChange={(value) =>
-                  setModel({
-                    ...model,
-                    modelType: value as AIProviderModelType,
-                  })
-                }
-              >
-                <SelectTrigger id="modelType">
-                  <SelectValue placeholder={'Select model type'} />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(AIProviderModelType).map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
-                {t('Cancel')}
-              </Button>
-              <Button type="submit">
-                {initialData ? t('Update') : t('Add')}
-              </Button>
-            </div>
-          </form>
         </div>
-      </PopoverContent>
-    </Popover>
+      </div>
+      <div className="flex items-center gap-2">
+        <ModelFormPopover
+          initialData={model}
+          onSubmit={(updatedModel) => onUpdate(updatedModel)}
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            disabled={isLoading}
+          >
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">{t('Edit')}</span>
+          </Button>
+        </ModelFormPopover>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => onRemove()}
+          disabled={isLoading}
+        >
+          <Trash2 className="h-4 w-4 text-destructive" />
+          <span className="sr-only">{t('Delete')}</span>
+        </Button>
+      </div>
+    </div>
   );
 };
 

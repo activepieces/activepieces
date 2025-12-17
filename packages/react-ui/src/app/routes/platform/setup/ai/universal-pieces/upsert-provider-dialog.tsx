@@ -5,7 +5,6 @@ import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -59,50 +58,22 @@ export const UpsertAIProviderDialog = ({
   defaultDisplayName = '',
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedProvider, setSelectedProvider] =
-    useState<AIProviderName>(provider);
 
   const { data: config, isLoading: isLoadingConfig } =
-    aiProviderHooks.useConfig(providerId ?? '', open && !!providerId);
+    aiProviderHooks.useConfig({
+      providerId: providerId ?? '',
+      enabled: open && !!providerId,
+    });
 
   const currentProviderDef = useMemo(
-    () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === selectedProvider)!,
-    [selectedProvider],
+    () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)!,
+    [provider],
   );
 
-  const formSchema = useMemo(() => {
-    if (selectedProvider === AIProviderName.AZURE) {
-      return Type.Object({
-        provider: Type.Literal(AIProviderName.AZURE),
-        config: AzureProviderConfig,
-      });
-    }
-    if (selectedProvider === AIProviderName.CLOUDFLARE_GATEWAY) {
-      return Type.Object({
-        provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
-        config: CloudflareGatewayProviderConfig,
-      });
-    }
-    if (selectedProvider === AIProviderName.OPENAI_COMPATIBLE) {
-      return Type.Object({
-        provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
-        config: OpenAICompatibleProviderConfig,
-      });
-    }
-    return Type.Object({
-      provider: Type.Literal(selectedProvider),
-      config: Type.Union([
-        AnthropicProviderConfig,
-        GoogleProviderConfig,
-        OpenAIProviderConfig,
-      ]),
-    });
-  }, [selectedProvider]);
-
   const form = useForm<CreateAIProviderRequest>({
-    resolver: typeboxResolver(formSchema),
+    resolver: typeboxResolver(createFormSchema(provider)),
     defaultValues: {
-      provider: selectedProvider,
+      provider,
       displayName: defaultDisplayName,
       config: {},
     },
@@ -117,14 +88,12 @@ export const UpsertAIProviderDialog = ({
           displayName: defaultDisplayName,
           config: config as any,
         });
-        setSelectedProvider(provider);
       } else if (!providerId) {
         form.reset({
           provider,
           displayName: currentProviderDef.name,
           config: {} as any,
         });
-        setSelectedProvider(provider);
       }
     }
   }, [open, config, defaultDisplayName, form]);
@@ -146,7 +115,11 @@ export const UpsertAIProviderDialog = ({
     ) => {
       const data = error.response?.data;
 
-      toast(data?.message ?? data?.params?.message ?? JSON.stringify(error));
+      form.setError('root.serverError', {
+        type: 'manual',
+        message:
+          data?.message ?? data?.params?.message ?? JSON.stringify(error),
+      });
     },
   });
 
@@ -209,7 +182,7 @@ export const UpsertAIProviderDialog = ({
 
               <UpsertProviderConfigForm
                 form={form}
-                provider={selectedProvider}
+                provider={provider}
                 apiKeyRequired={!config}
                 isLoading={isPending}
               />
@@ -234,9 +207,7 @@ export const UpsertAIProviderDialog = ({
                   {t('Cancel')}
                 </Button>
                 <Button
-                  disabled={
-                    !form.formState.isValid || isPending || !selectedProvider
-                  }
+                  disabled={!form.formState.isValid || isPending}
                   loading={isPending}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -253,4 +224,33 @@ export const UpsertAIProviderDialog = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+const createFormSchema = (provider: AIProviderName) => {
+  if (provider === AIProviderName.AZURE) {
+    return Type.Object({
+      provider: Type.Literal(AIProviderName.AZURE),
+      config: AzureProviderConfig,
+    });
+  }
+  if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
+    return Type.Object({
+      provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
+      config: CloudflareGatewayProviderConfig,
+    });
+  }
+  if (provider === AIProviderName.OPENAI_COMPATIBLE) {
+    return Type.Object({
+      provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
+      config: OpenAICompatibleProviderConfig,
+    });
+  }
+  return Type.Object({
+    provider: Type.Literal(provider),
+    config: Type.Union([
+      AnthropicProviderConfig,
+      GoogleProviderConfig,
+      OpenAIProviderConfig,
+    ]),
+  });
 };
