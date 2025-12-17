@@ -22,6 +22,49 @@ import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
 import fs from 'fs';
 import mime from 'mime-types';
 
+function parseBufferToJson(body: unknown): unknown {
+  const tryParseJson = (text: string): unknown => {
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return text;
+      }
+    }
+    return text;
+  };
+
+  if (Buffer.isBuffer(body)) {
+    try {
+      return tryParseJson(body.toString('utf-8'));
+    } catch {
+      return body;
+    }
+  }
+
+  if (body instanceof ArrayBuffer) {
+    try {
+      return tryParseJson(Buffer.from(body).toString('utf-8'));
+    } catch {
+      return body;
+    }
+  }
+
+  if (typeof body === 'object' && body !== null) {
+    const bufferLike = body as { type?: string; data?: number[] };
+    if (bufferLike.type === 'Buffer' && Array.isArray(bufferLike.data)) {
+      try {
+        return tryParseJson(Buffer.from(bufferLike.data).toString('utf-8'));
+      } catch {
+        return body;
+      }
+    }
+  }
+
+  return body;
+}
+
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
 ): string => {
@@ -237,28 +280,31 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
           response_is_binary
         );
       } catch (error) {
-        if (failsafe) {
-          return (error as HttpError).errorMessage();
-        }
-        
         if (error instanceof HttpError) {
-          const errorMessage = error.errorMessage();
-          const status = errorMessage.response.status;
-          const body = errorMessage.response.body;
-          const message = (errorMessage.response as any).message;
+          const errorResponse = error.errorMessage();
+          const status = errorResponse.response.status;
+          const rawBody = errorResponse.response.body;
+          const parsedBody = parseBufferToJson(rawBody);
+
+          if (failsafe) {
+            return {
+              response: {
+                status,
+                body: parsedBody,
+              },
+              request: errorResponse.request,
+            };
+          }
           
           let userFriendlyMessage = `Request failed with status ${status}`;
           
-          if (message) {
-            userFriendlyMessage = message;
-          } else if (typeof body === 'string') {
-            userFriendlyMessage = body;
-          } else if (typeof body === 'object' && body !== null) {
-            const errorObj = body as Record<string, unknown>;
+          if (typeof parsedBody === 'string') {
+            userFriendlyMessage = parsedBody;
+          } else if (typeof parsedBody === 'object' && parsedBody !== null) {
+            const errorObj = parsedBody as Record<string, unknown>;
             const errorField = errorObj['error'];
             const extractedMessage =
               errorObj['message'] ||
-              errorObj['error'] ||
               (errorField && typeof errorField === 'object' ? (errorField as Record<string, unknown>)['message'] : undefined) ||
               errorObj['description'] ||
               errorObj['detail'] ||
@@ -282,6 +328,10 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
           }
           
           throw new Error(userFriendlyMessage);
+        }
+        
+        if (failsafe) {
+          return (error as HttpError).errorMessage();
         }
         
         throw error;
