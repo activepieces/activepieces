@@ -184,9 +184,6 @@ export type BuilderState = {
   setSelectedPieceMetadataInPieceSelector: (
     metadata: StepMetadataWithSuggestions | null,
   ) => void;
-  /**Need this to re-render the piece settings form on replace step or updating agent */
-  lastRerenderPieceSettingsTimeStamp: number | null;
-  setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -699,9 +696,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               request: defaultValues,
             });
             selectStepByName('trigger');
-            set(() => ({
-              lastRerenderPieceSettingsTimeStamp: Date.now(),
-            }));
             break;
           }
           case FlowOperationType.ADD_ACTION: {
@@ -752,9 +746,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 valid: defaultValues.valid,
               },
             });
-            set(() => ({
-              lastRerenderPieceSettingsTimeStamp: Date.now(),
-            }));
             break;
           }
         }
@@ -786,12 +777,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               : state.rightSidebar,
           };
         });
-      },
-      lastRerenderPieceSettingsTimeStamp: null,
-      setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => {
-        return set(() => ({
-          lastRerenderPieceSettingsTimeStamp: timestamp,
-        }));
       },
     };
   });

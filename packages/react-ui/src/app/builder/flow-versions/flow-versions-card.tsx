@@ -167,7 +167,7 @@ const FlowVersionDetailsCard = React.memo(
             {t('Version')} {flowVersionNumber}
           </p>
         </div>
-        <div className="flex-grow"></div>
+        <div className="grow"></div>
         <div className="flex font-medium gap-2 justify-center items-center">
           {selected && (
             <Tooltip>

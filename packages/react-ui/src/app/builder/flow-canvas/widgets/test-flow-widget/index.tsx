@@ -63,7 +63,7 @@ const TestFlowWidget = () => {
         runFlow();
       }}
       text={t('Test Flow')}
-      disabled={!triggerHasSampleData}
+      triggerHasNoSampleData={!triggerHasSampleData}
       loading={isPending}
     />
   );

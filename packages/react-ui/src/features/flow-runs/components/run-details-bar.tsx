@@ -92,11 +92,11 @@ const RunDetailsBar = React.memo(
     };
 
     return (
-      <div className="absolute bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-[9999]">
+      <div className="absolute bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-9999">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0 flex-1">
             <Icon
-              className={cn('w-6 h-6 flex-shrink-0', {
+              className={cn('w-6 h-6 shrink-0', {
                 'text-foreground': variant === 'default',
                 'text-success': variant === 'success',
                 'text-destructive': variant === 'error',
@@ -130,7 +130,7 @@ const RunDetailsBar = React.memo(
               loading={isLoading}
               onKeyboardShortcut={handleSwitchToDraft}
               keyboardShortcut="Esc"
-              className="flex-shrink-0"
+              className="shrink-0"
               data-testId="exit-run-button"
             >
               {t('Edit Flow')}
