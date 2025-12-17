@@ -87,6 +87,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import { platformAiCreditsService } from './ee/platform/platform-plan/platform-ai-credits.service'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -267,6 +268,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
+            await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
@@ -293,6 +295,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
+            await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)

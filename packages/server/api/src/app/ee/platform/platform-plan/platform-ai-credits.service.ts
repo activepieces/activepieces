@@ -1,19 +1,45 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, PlatformAiCreditsPaymentStatus } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { repoFactory } from '../../../core/db/repo-factory'
 import { distributedLock } from '../../../database/redis-connections'
 import { system } from '../../../helper/system/system'
-import { openRouterApi } from './openrouter/openrouter-api'
+import { platformPlanRepo, platformPlanService } from './platform-plan.service'
+import { repoFactory } from '../../../core/db/repo-factory'
 import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
-import { platformPlanService } from './platform-plan.service'
+import { openRouterApi } from './openrouter/openrouter-api'
 import { stripeHelper } from './stripe-helper'
+import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
+import { SystemJobName } from '../../../helper/system-jobs/common'
+import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
+import { In } from 'typeorm'
 
 const platformAiCreditsPaymentRepo = repoFactory(PlatformAiCreditsPaymentEntity)
 
 const CREDIT_PER_DOLLAR = 1000
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
+    async init(): Promise<void> {
+        systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_RENEW, async () => {
+            log.info(`(platformAiCreditsService) Renewing Free AI credits`)
+            try {
+                await this.resetPlanIncludedCredits()
+            } catch (e) {
+                log.error(e, `(platformAiCreditsService) Renewing Free AI credits failed`)
+            }
+        })
+
+        await systemJobsSchedule(log).upsertJob({
+            job: {
+                name: SystemJobName.AI_CREDIT_RENEW,
+                data: {},
+            },
+            schedule: {
+                type: 'repeated',
+                cron: '0 12 L * *',
+            },
+        })
+    },
+
     isEnabled(): boolean {
         return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
     },
@@ -81,7 +107,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async initializeAiCreditsPayment(platformId: string, totalCredits: number): Promise<{ stripeCheckoutUrl: string }> {
+    async initializeStripeAiCreditsPayment(platformId: string, totalCredits: number): Promise<{ stripeCheckoutUrl: string }> {
         const { stripeCustomerId: customerId } = await platformPlanService(log).getOrCreateForPlatform(platformId)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
@@ -100,7 +126,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             aiCredits: totalCredits,
             platformId,
             paymentId: id,
-            customerId,
+            customerId
         })
 
         return { stripeCheckoutUrl }
@@ -129,27 +155,41 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         await platformAiCreditsPaymentRepo().save({ id: paymentId, status: PlatformAiCreditsPaymentStatus.PAYMENT_FAILED })
     },
 
-    async resetPlanIncludedCredits(platformId: string): Promise<void> {
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        const { hash } = await this.provisionKeyIfNeeded(platformId)
-        const { data: key } = await openRouterApi.getKey({ hash })
-
-        let creditsToAdd: number
-        const creditsUsedLastMonth = key.usage_monthly * CREDIT_PER_DOLLAR
-         
-        if (creditsUsedLastMonth > platformPlan.includedAiCredits) {
-            creditsToAdd = platformPlan.includedAiCredits
+    async resetPlanIncludedCredits(): Promise<void> {
+        const keys: Awaited<ReturnType<typeof openRouterApi.listKeys>>['data'] = []
+        let offset = 0
+        while (true) {
+            const { data } = await openRouterApi.listKeys({ offset })
+            if (data.length === 0) break
+          
+            keys.push(...data)
+            offset += data.length
         }
-        else {
-            creditsToAdd = platformPlan.includedAiCredits - creditsUsedLastMonth
-        }
-
-        const amount = creditsToAdd / CREDIT_PER_DOLLAR
-
-        await openRouterApi.updateKey({
-            hash,
-            limit: key.limit! + amount,
+    
+        const plans = await platformPlanRepo().find({
+            where: { openRouterApiKeyHash: In(keys.map(k => k.hash)) }
         })
+
+        for (const plan of plans) {
+            const key = keys.find(k => k.hash === plan.openRouterApiKeyHash)
+            if (!key) continue
+
+            let creditsToAdd: number
+            const creditsUsedLastMonth = key.usage_monthly * CREDIT_PER_DOLLAR
+            
+            if (creditsUsedLastMonth > plan.includedAiCredits) {
+                creditsToAdd = plan.includedAiCredits
+            } else {
+                creditsToAdd = plan.includedAiCredits - creditsUsedLastMonth
+            }
+
+            const amount = creditsToAdd / CREDIT_PER_DOLLAR
+
+            await openRouterApi.updateKey({
+                hash: key.hash,
+                limit: key.limit! + amount,
+            })
+        }
     },
 })
 

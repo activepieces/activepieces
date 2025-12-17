@@ -53,6 +53,21 @@ export const openRouterApi = {
 
         return res.body
     },
+
+    async listKeys(request: ListKeysRequest): Promise<ListKeysResponse> {
+        const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
+
+        const res = await httpClient.sendRequest<ListKeysResponse>({
+            url: `${OPENROUTER_BASE_URL}/keys`,
+            method: HttpMethod.GET,
+            headers: {
+                Authorization: `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+            },
+        })
+
+        return res.body
+    },
 }
 
 type CreateKeyRequest = {
@@ -88,7 +103,10 @@ type GetKeyResponse = {
 
 type ListKeysRequest = {
     offset?: number
-    include_disabled?: 'true' | 'false'
+    include_disabled?: 'true' | 'false' // default false
+}
+type ListKeysResponse = {
+    data: Apikey[]
 }
 
 type LimitReset = 'daily' | 'weekly' | 'monthly'

@@ -10,6 +10,7 @@ export enum SystemJobName {
     RUN_TELEMETRY = 'run-telemetry',
     DELETE_FLOW = 'delete-flow',
     UPDATE_FLOW_STATUS = 'update-flow-status',
+    AI_CREDIT_RENEW = 'ai-credit-renew',
 }
 
 type DeleteFlowDurableSystemJobData =  {
@@ -33,6 +34,7 @@ type SystemJobDataMap = {
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
+    [SystemJobName.AI_CREDIT_RENEW]: Record<string, never>
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never
