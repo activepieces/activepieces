@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, EnginePrincipal, ErrorCode, PlatformId, Principal, PrincipalType, PrincipalV2, ProjectId, UserStatus, WorkerPrincipal } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
@@ -74,9 +74,34 @@ export const accessTokenManager = {
             })
         }
     },
+
+    async verifyPrincipalV2(token: string): Promise<PrincipalV2> {
+        const secret = await jwtUtils.getJwtSecret()
+
+        try {
+            const decoded = await jwtUtils.decodeAndVerify<PrincipalV2>({
+                jwt: token,
+                key: secret,
+            })
+            assertNotNullOrUndefined(decoded.type, 'decoded.type')
+            await assertUserSession(decoded)
+            return decoded
+        }
+        catch (e) {
+            if (e instanceof ActivepiecesError) {
+                throw e
+            }
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_BEARER_TOKEN,
+                params: {
+                    message: 'invalid access token or session expired',
+                },
+            })
+        }
+    },
 }
 
-async function assertUserSession(decoded: Principal): Promise<void> {
+async function assertUserSession(decoded: Principal | PrincipalV2): Promise<void> {
     if (decoded.type !== PrincipalType.USER) return
     
     const user = await userService.getOneOrFail({ id: decoded.id })
