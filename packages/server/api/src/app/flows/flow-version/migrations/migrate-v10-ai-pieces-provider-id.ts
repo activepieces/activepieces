@@ -4,32 +4,23 @@ import {
     flowStructureUtil,
     FlowVersion,
 } from '@activepieces/shared'
-import { databaseConnection } from '../../../database/database-connection'
-import { Migration } from '.'
+import { aiProviderService } from '../../../ai/ai-provider-service'
+import { system } from '../../../helper/system/system'
 import { flowRepo } from '../../flow/flow.repo'
-import { FlowEntity } from '../../flow/flow.entity'
+import { Migration } from '.'
 
 
 export const migrateV10AiPiecesProviderId: Migration = {
     targetSchemaVersion: '10',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
-        const db = databaseConnection()
 
-        const aiProviders = await flowRepo()
-            .createQueryBuilder('flow')
-            .innerJoin('flow.project', 'project')
-            .innerJoin(
-                'ai_provider',
-                'aiProvider',
-                'aiProvider.platformId = project.platformId'
-            )
-            .where('flow.id = :flowId', { flowId: flowVersion.flowId })
-            .select([
-                'aiProvider.id AS id',
-                'aiProvider.provider AS provider',
-            ])
-            .orderBy('aiProvider.created', 'ASC')
-            .getRawMany<{ id: string; provider: string }>();
+        const { project } = await flowRepo().findOneOrFail({
+            where: {
+                id: flowVersion.flowId,
+            },
+            relations: ['project'],
+        })
+        const aiProviders = await aiProviderService(system.globalLogger()).listProviders(project.platformId)
 
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type !== FlowActionType.PIECE) {
