@@ -34,7 +34,7 @@ const AIProviderCard = ({
           {logoUrl && <img src={logoUrl} alt="icon" width={32} height={32} />}
         </div>
         <div className="flex grow flex-col">
-          <div className="text-lg flex items-center">{displayName}</div>
+          <div className="text-lg flex items-center">{providerConfig?.name ?? providerInfo.name}</div>
           {allowWrite && (
             <div className="text-sm text-muted-foreground">
               {t('Configure credentials for {providerName} AI provider.', {
