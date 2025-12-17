@@ -89,11 +89,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             if (record) {
                 const config = await encryptUtils.decryptObject<AIProviderConfig>(record.config)
                 request.config.apiKey = config.apiKey
-            } else {
+            }
+            else {
                 throw new ActivepiecesError({
                     code: ErrorCode.AI_REQUEST_NOT_SUPPORTED,
                     params: {
-                        message: `Should not send an empty api key`
+                        message: 'Should not send an empty api key',
                     },
                 })
             }

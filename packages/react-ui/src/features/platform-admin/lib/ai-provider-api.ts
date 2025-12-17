@@ -20,5 +20,5 @@ export const aiProviderApi = {
   },
   getConfig(provider: string): Promise<GetProviderConfigResponse> {
     return api.get(`/v1/ai-providers/${provider}/config`);
-  }
+  },
 };

@@ -4,8 +4,9 @@ import { Pencil, Trash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
+
+import { AiProviderInfo } from './supported-ai-providers';
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
-import { AiProviderInfo, SUPPORTED_AI_PROVIDERS } from './supported-ai-providers';
 
 type AIProviderCardProps = {
   providerInfo: AiProviderInfo;
@@ -30,7 +31,7 @@ const AIProviderCard = ({
     <Card className="w-full px-5 py-4">
       <div className="flex w-full gap-2 justify-center items-center">
         <div className="flex flex-col gap-2 text-center mr-2">
-            {logoUrl && <img src={logoUrl} alt="icon" width={32} height={32} />}
+          {logoUrl && <img src={logoUrl} alt="icon" width={32} height={32} />}
         </div>
         <div className="flex flex-grow flex-col">
           <div className="text-lg flex items-center">{providerInfo.name}</div>

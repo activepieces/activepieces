@@ -1,8 +1,9 @@
 import { t } from 'i18next';
-import { UseFormReturn, useFieldArray } from 'react-hook-form';
 import { Plus, Pencil, Trash2, ImageIcon, TextIcon } from 'lucide-react';
 import { useState } from 'react';
+import { UseFormReturn, useFieldArray } from 'react-hook-form';
 
+import { Button } from '@/components/ui/button';
 import {
   FormControl,
   FormField,
@@ -12,17 +13,29 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   AIProviderName,
   AIProviderModelType,
   CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
 } from '@activepieces/shared';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type UpsertProviderConfigFormProps = {
   form: UseFormReturn<CreateAIProviderRequest>;
@@ -55,14 +68,14 @@ export const UpsertProviderConfigForm = ({
           <FormItem className="grid space-y-3">
             <FormLabel htmlFor="apiKey">{t('API Key')}</FormLabel>
             <FormControl>
-                <Input
-                  {...field}
-                  required={apiKeyRequired}
-                  id="apiKey"
-                  placeholder={'sk_************************'}
-                  className="rounded-sm"
-                  disabled={isLoading}
-                />
+              <Input
+                {...field}
+                required={apiKeyRequired}
+                id="apiKey"
+                placeholder={'sk_************************'}
+                className="rounded-sm"
+                disabled={isLoading}
+              />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -77,14 +90,14 @@ export const UpsertProviderConfigForm = ({
             <FormItem className="grid space-y-3">
               <FormLabel htmlFor="resourceName">{t('Resource Name')}</FormLabel>
               <FormControl>
-                  <Input
-                    {...field}
-                    required
-                    id="resourceName"
-                    placeholder={'your-resource-name'}
-                    className="rounded-sm"
-                    disabled={isLoading}
-                  />
+                <Input
+                  {...field}
+                  required
+                  id="resourceName"
+                  placeholder={'your-resource-name'}
+                  className="rounded-sm"
+                  disabled={isLoading}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -101,14 +114,14 @@ export const UpsertProviderConfigForm = ({
               <FormItem className="grid space-y-3">
                 <FormLabel htmlFor="accountId">{t('Account ID')}</FormLabel>
                 <FormControl>
-                    <Input
-                      {...field}
-                      required
-                      id="accountId"
-                      placeholder={'your-account-id'}
-                      className="rounded-sm"
-                      disabled={isLoading}
-                    />
+                  <Input
+                    {...field}
+                    required
+                    id="accountId"
+                    placeholder={'your-account-id'}
+                    className="rounded-sm"
+                    disabled={isLoading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -122,14 +135,14 @@ export const UpsertProviderConfigForm = ({
               <FormItem className="grid space-y-3">
                 <FormLabel htmlFor="gatewayId">{t('Gateway ID')}</FormLabel>
                 <FormControl>
-                    <Input
-                      {...field}
-                      required
-                      id="gatewayId"
-                      placeholder={'your-gateway-id'}
-                      className="rounded-sm"
-                      disabled={isLoading}
-                    />
+                  <Input
+                    {...field}
+                    required
+                    id="gatewayId"
+                    placeholder={'your-gateway-id'}
+                    className="rounded-sm"
+                    disabled={isLoading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -147,14 +160,14 @@ export const UpsertProviderConfigForm = ({
               <FormItem className="grid space-y-3">
                 <FormLabel htmlFor="baseUrl">{t('Base URL')}</FormLabel>
                 <FormControl>
-                    <Input
-                      {...field}
-                      required
-                      id="baseUrl"
-                      placeholder={'your-base-url'}
-                      className="rounded-sm"
-                      disabled={isLoading}
-                    />
+                  <Input
+                    {...field}
+                    required
+                    id="baseUrl"
+                    placeholder={'your-base-url'}
+                    className="rounded-sm"
+                    disabled={isLoading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -166,16 +179,18 @@ export const UpsertProviderConfigForm = ({
             name="config.apiKeyHeader"
             render={({ field }) => (
               <FormItem className="grid space-y-3">
-                <FormLabel htmlFor="apiKeyHeader">{t('API Key Header')}</FormLabel>
+                <FormLabel htmlFor="apiKeyHeader">
+                  {t('API Key Header')}
+                </FormLabel>
                 <FormControl>
-                    <Input
-                      {...field}
-                      required
-                      id="apiKeyHeader"
-                      placeholder={'your-api-key-header'}
-                      className="rounded-sm"
-                      disabled={isLoading}
-                    />
+                  <Input
+                    {...field}
+                    required
+                    id="apiKeyHeader"
+                    placeholder={'your-api-key-header'}
+                    className="rounded-sm"
+                    disabled={isLoading}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -191,9 +206,7 @@ export const UpsertProviderConfigForm = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-base">{t('Models Configuration')}</Label>
-            <ModelFormPopover
-              onSubmit={(model) => append(model)}
-            >
+            <ModelFormPopover onSubmit={(model) => append(model)}>
               <Button
                 type="button"
                 variant="outline"
@@ -211,9 +224,7 @@ export const UpsertProviderConfigForm = ({
               <p className="text-muted-foreground">
                 {t('No models configured yet')}
               </p>
-              <ModelFormPopover
-                onSubmit={(model) => append(model)}
-              >
+              <ModelFormPopover onSubmit={(model) => append(model)}>
                 <Button
                   type="button"
                   variant="ghost"
@@ -236,14 +247,18 @@ export const UpsertProviderConfigForm = ({
                     <div className="flex items-center gap-2">
                       <ModelTypeIcon modelType={field.modelType} />
                       <div className="flex flex-col gap-0">
-                      <p className="text-sm">{field.modelName}</p>
-                      <p className="text-sm text-muted-foreground">{field.modelId}</p>
-                        </div>
+                        <p className="text-sm">{field.modelName}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {field.modelId}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <ModelFormPopover
-                      initialData={field as CloudflareGatewayProviderConfig['models'][number]}
+                      initialData={
+                        field as CloudflareGatewayProviderConfig['models'][number]
+                      }
                       onSubmit={(model) => update(index, model)}
                     >
                       <Button
@@ -273,10 +288,9 @@ export const UpsertProviderConfigForm = ({
           )}
         </div>
       )}
-      </div>
-  )
-}
-
+    </div>
+  );
+};
 
 type ModelFormPopoverProps = {
   initialData?: CloudflareGatewayProviderConfig['models'][0];
@@ -392,16 +406,21 @@ const ModelFormPopover = ({
   );
 };
 
-
 const ModelTypeIcon = ({ modelType }: { modelType: AIProviderModelType }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {modelType === AIProviderModelType.IMAGE ? <ImageIcon className="size-8" /> : <TextIcon className="size-8" />}
+        {modelType === AIProviderModelType.IMAGE ? (
+          <ImageIcon className="size-8" />
+        ) : (
+          <TextIcon className="size-8" />
+        )}
       </TooltipTrigger>
       <TooltipContent>
-        {modelType === AIProviderModelType.IMAGE ? t('Image Model') : t('Text Model')}
+        {modelType === AIProviderModelType.IMAGE
+          ? t('Image Model')
+          : t('Text Model')}
       </TooltipContent>
     </Tooltip>
-  )
+  );
 };

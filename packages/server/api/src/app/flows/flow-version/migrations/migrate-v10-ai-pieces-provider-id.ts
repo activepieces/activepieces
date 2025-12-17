@@ -4,8 +4,8 @@ import {
     flowStructureUtil,
     FlowVersion,
 } from '@activepieces/shared'
-import { Migration } from '.'
 import { databaseConnection } from '../../../database/database-connection'
+import { Migration } from '.'
 
 
 export const migrateV10AiPiecesProviderId: Migration = {
@@ -13,7 +13,7 @@ export const migrateV10AiPiecesProviderId: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const db = databaseConnection()
 
-        const aiProviders = await db.query<{ id: string; provider: string }[]>(`
+        const aiProviders = await db.query<{ id: string, provider: string }[]>(`
             SELECT ap.id, ap.provider
             FROM flow f
             JOIN project p ON p.id = f.projectId
@@ -36,7 +36,7 @@ export const migrateV10AiPiecesProviderId: Migration = {
                 return step
             }
 
-            const isLegacyProviderId = Object.values(AIProviderName).includes(provider as AIProviderName);
+            const isLegacyProviderId = Object.values(AIProviderName).includes(provider as AIProviderName)
             if (!isLegacyProviderId) {
                 return step
             }

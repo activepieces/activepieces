@@ -20,8 +20,8 @@ export const OpenAICompatibleProviderConfig = Type.Object({
             modelId: Type.String(),
             modelName: Type.String(),
             modelType: Type.Enum(AIProviderModelType),
-        })
-    )
+        }),
+    ),
 })
 export type OpenAICompatibleProviderConfig = Static<typeof OpenAICompatibleProviderConfig>
 
@@ -35,8 +35,8 @@ export const CloudflareGatewayProviderConfig = Type.Object({
             modelId: Type.String(),
             modelName: Type.String(),
             modelType: Type.Enum(AIProviderModelType),
-        })
-    )
+        }),
+    ),
 })
 export type CloudflareGatewayProviderConfig = Static<typeof CloudflareGatewayProviderConfig>
 

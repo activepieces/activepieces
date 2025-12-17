@@ -34,7 +34,7 @@ export default function AIProvidersPage() {
       locked={currentUser?.platformRole !== PlatformRole.ADMIN}
       lockTitle={t('Unlock AI')}
       lockDescription={t(
-        'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces'
+        'Set your AI providers so your users enjoy a seamless building experience with our universal AI pieces',
       )}
     >
       <div className="flex flex-col w-full gap-4">
@@ -43,20 +43,19 @@ export default function AIProvidersPage() {
           description={
             allowWrite
               ? t(
-                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.'
+                  'Set provider credentials that will be used by universal AI pieces, i.e Text AI.',
                 )
               : t(
-                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.'
+                  'Available AI providers that will be used by universal AI pieces, i.e Text AI.',
                 )
           }
-        >
-        </DashboardPageHeader>
+        ></DashboardPageHeader>
         <div className="flex flex-col gap-4">
           {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
             const config = providers?.find(
-              (p) => p.provider === providerDef.provider
+              (p) => p.provider === providerDef.provider,
             );
-          
+
             return (
               <AIProviderCard
                 key={providerDef.provider}

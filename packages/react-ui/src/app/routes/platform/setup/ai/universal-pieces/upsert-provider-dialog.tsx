@@ -1,9 +1,11 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
 import { useMutation } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { t } from 'i18next';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,9 +26,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
-import { flagsHooks } from '@/hooks/flags-hooks';
+import { aiProviderHooks } from '@/features/platform-admin/lib/ai-provider-hooks';
 import {
-  AIProviderConfig,
   AIProviderName,
   AnthropicProviderConfig,
   AzureProviderConfig,
@@ -36,20 +37,11 @@ import {
   OpenAICompatibleProviderConfig,
   OpenAIProviderConfig,
 } from '@activepieces/shared';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
-import { aiProviderHooks } from '@/features/platform-admin/lib/ai-provider-hooks';
-import { UpsertProviderConfigForm } from './upsert-provider-config-form';
+
 import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers';
-import { toast } from 'sonner';
-import { AxiosError } from 'axios';
+import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 
 type UpsertAIProviderDialogProps = {
   provider: AIProviderName;
@@ -67,19 +59,15 @@ export const UpsertAIProviderDialog = ({
   defaultDisplayName = '',
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<AIProviderName>(
-    provider
-  );
+  const [selectedProvider, setSelectedProvider] =
+    useState<AIProviderName>(provider);
 
   const { data: config, isLoading: isLoadingConfig } =
-    aiProviderHooks.useConfig(
-      providerId ?? '',
-      open && !!providerId
-    );
+    aiProviderHooks.useConfig(providerId ?? '', open && !!providerId);
 
   const currentProviderDef = useMemo(
     () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === selectedProvider)!,
-    [selectedProvider]
+    [selectedProvider],
   );
 
   const formSchema = useMemo(() => {
@@ -153,8 +141,10 @@ export const UpsertAIProviderDialog = ({
       setOpen(false);
       onSave();
     },
-    onError: (error: AxiosError<{ message?: string; params?: { message: string } }>) => {
-      const data = error.response?.data
+    onError: (
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
+    ) => {
+      const data = error.response?.data;
 
       toast(data?.message ?? data?.params?.message ?? JSON.stringify(error));
     },
@@ -189,7 +179,13 @@ export const UpsertAIProviderDialog = ({
                 control={form.control}
                 name="displayName"
                 render={({ field }) => (
-                  <FormItem className="space-y-3" hidden={currentProviderDef.provider !== AIProviderName.OPENAI_COMPATIBLE}>
+                  <FormItem
+                    className="space-y-3"
+                    hidden={
+                      currentProviderDef.provider !==
+                      AIProviderName.OPENAI_COMPATIBLE
+                    }
+                  >
                     <FormLabel>{t('Display Name')}</FormLabel>
                     <FormControl>
                       <Input
@@ -210,7 +206,7 @@ export const UpsertAIProviderDialog = ({
                   ></ApMarkdown>
                 </div>
               )}
-            
+
               <UpsertProviderConfigForm
                 form={form}
                 provider={selectedProvider}

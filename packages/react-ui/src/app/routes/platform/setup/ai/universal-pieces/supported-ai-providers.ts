@@ -65,7 +65,7 @@ It is strongly recommended that you add your credit card information to your Ope
 1. Set the base url to your proxy url.
 2. In the api key header, set the value of your auth header name.
 3. In the api key, set your auth header value (full value including the Bearer if any).`,
-  }
+  },
 ];
 
 export type AiProviderInfo = {
