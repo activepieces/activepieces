@@ -92,7 +92,7 @@ const UpdateTemplateRequest = {
 
 const DeleteTemplateRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         params: Type.Object({

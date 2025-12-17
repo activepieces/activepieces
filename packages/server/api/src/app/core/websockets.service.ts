@@ -6,8 +6,8 @@ import { accessTokenManager } from '../authentication/lib/access-token-manager'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { app } from '../server'
 
-export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER, ProjectId = PR extends PrincipalType.USER ? string : undefined>
-    = (socket: Socket) => (data: T, principal: PrincipalForTypeV2<PR>, projectId: ProjectId, callback?: (data: unknown) => void) => Promise<void>
+export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER, ProjectId = PR extends PrincipalType.USER ? string : undefined> 
+= (socket: Socket) => (data: T, principal: PrincipalForTypeV2<PR>, projectId: ProjectId, callback?: (data: unknown) => void) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
@@ -20,7 +20,7 @@ const listener = {
 export const websocketService = {
     to: (workerId: string) => app!.io.to(workerId),
     async init(socket: Socket, log: FastifyBaseLogger): Promise<void> {
-        const principal = await verifyPrincipal(socket)
+        const principal = await websocketService.verifyPrincipal(socket)
         const type = principal.type
         if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
             return
@@ -65,13 +65,15 @@ export const websocketService = {
         }
     },
     async onDisconnect(socket: Socket): Promise<void> {
-        const principal = await verifyPrincipal(socket)
+        const principal = await websocketService.verifyPrincipal(socket)
         const castedType = principal.type as keyof typeof listener
         for (const handler of Object.values(listener[castedType][WebsocketServerEvent.DISCONNECT] ?? {})) {
             handler(socket)
         }
     },
-
+    async verifyPrincipal(socket: Socket): Promise<PrincipalV2> {
+        return accessTokenManager.verifyPrincipalV2(socket.handshake.auth.token)
+    },
     addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
         switch (principalType) {
             case PrincipalType.USER: {
@@ -89,10 +91,6 @@ export const websocketService = {
     emitWithAck<T = unknown>(event: WebsocketServerEvent, workerId: string, data?: unknown): Promise<T> {
         return app!.io.to([workerId]).timeout(4000).emitWithAck(event, data)
     },
-}
-
-const verifyPrincipal = async (socket: Socket): Promise<PrincipalV2> => {
-    return accessTokenManager.verifyPrincipalV2(socket.handshake.auth.token)
 }
 
 const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<void> => {
