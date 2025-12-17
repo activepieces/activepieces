@@ -307,8 +307,9 @@
     --background: theme('colors.white');
     --foreground: theme('colors.neutral.950');
     --popover: theme('colors.white');
-    --secondary: theme('colors.neutral.100');
-    --secondary-foreground: theme('colors.neutral.900');
+  
+    --secondary: theme('colors.black');
+    --secondary-foreground: theme('colors.white');
 
     --muted: theme('colors.neutral.100');
     --muted-foreground: theme('colors.neutral.500');
