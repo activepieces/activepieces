@@ -36,11 +36,8 @@ export const migrateV10AiPiecesProviderId: Migration = {
                 return step
             }
 
-            const isLegacyProviderId = Object.values(AIProviderName).includes(provider as AIProviderName)
-            if (!isLegacyProviderId) {
-                return step
-            }
-            if (provider === AIProviderName.ACTIVEPIECES) {
+            const providerExists = Object.values(AIProviderName).includes(provider as AIProviderName)
+            if (provider === AIProviderName.ACTIVEPIECES || !providerExists) {
                 return step
             }
 
