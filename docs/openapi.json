@@ -4748,6 +4748,22 @@
                 "valid"
               ]
             }
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "PUBLISHED"
+                ]
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "ARCHIVED"
+                ]
+              }
+            ]
           }
         },
         "required": [
@@ -4762,7 +4778,8 @@
           "usageCount",
           "author",
           "categories",
-          "pieces"
+          "pieces",
+          "status"
         ]
       },
       "folder": {
@@ -14788,6 +14805,22 @@
                           "valid"
                         ]
                       }
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "PUBLISHED"
+                          ]
+                        },
+                        {
+                          "type": "string",
+                          "enum": [
+                            "ARCHIVED"
+                          ]
+                        }
+                      ]
                     }
                   },
                   "required": [
@@ -14798,7 +14831,8 @@
                     "tags",
                     "author",
                     "categories",
-                    "pieces"
+                    "pieces",
+                    "status"
                   ]
                 }
               }
@@ -19009,6 +19043,22 @@
                     "type": "object",
                     "nullable": true,
                     "additionalProperties": {}
+                  },
+                  "status": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "PUBLISHED"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "enum": [
+                          "ARCHIVED"
+                        ]
+                      }
+                    ]
                   },
                   "categories": {
                     "type": "array",

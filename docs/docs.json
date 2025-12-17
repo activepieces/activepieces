@@ -401,14 +401,14 @@
                         ]
                      },
                      {
-                        "group": "Flow Templates",
+                        "group": "Templates",
                         "icon": "copy",
                         "pages": [
-                           "endpoints/flow-templates/schema",
-                           "endpoints/flow-templates/create",
-                           "endpoints/flow-templates/delete",
-                           "endpoints/flow-templates/get",
-                           "endpoints/flow-templates/list"
+                           "endpoints/templates/schema",
+                           "endpoints/templates/create",
+                           "endpoints/templates/delete",
+                           "endpoints/templates/get",
+                           "endpoints/templates/list"
                         ]
                      },
                      {
