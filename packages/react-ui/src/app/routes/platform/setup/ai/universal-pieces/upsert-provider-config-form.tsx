@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, ImageIcon, TextIcon } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -22,6 +22,7 @@ import {
 } from '@activepieces/shared';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type UpsertProviderConfigFormProps = {
   form: UseFormReturn<CreateAIProviderRequest>;
@@ -232,17 +233,17 @@ export const UpsertProviderConfigForm = ({
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="ghost" className="font-mono">
-                        {field.modelId}
-                      </Badge>
-                      <span className="font-medium">{field.modelName}</span>
-                      <Badge variant="outline">{field.modelType}</Badge>
+                    <div className="flex items-center gap-2">
+                      <ModelTypeIcon modelType={field.modelType} />
+                      <div className="flex flex-col gap-0">
+                      <p className="text-sm">{field.modelName}</p>
+                      <p className="text-sm text-muted-foreground">{field.modelId}</p>
+                        </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <ModelFormPopover
-                      initialData={field as CloudflareGatewayProviderConfig['models'][0]}
+                      initialData={field as CloudflareGatewayProviderConfig['models'][number]}
                       onSubmit={(model) => update(index, model)}
                     >
                       <Button
@@ -389,4 +390,18 @@ const ModelFormPopover = ({
       </PopoverContent>
     </Popover>
   );
+};
+
+
+const ModelTypeIcon = ({ modelType }: { modelType: AIProviderModelType }) => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {modelType === AIProviderModelType.IMAGE ? <ImageIcon className="size-8" /> : <TextIcon className="size-8" />}
+      </TooltipTrigger>
+      <TooltipContent>
+        {modelType === AIProviderModelType.IMAGE ? t('Image Model') : t('Text Model')}
+      </TooltipContent>
+    </Tooltip>
+  )
 };
