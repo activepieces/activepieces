@@ -139,7 +139,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       pieceMetadata: {
         pieceVersion: selectedPiece.pieceVersion,
         pieceName: selectedPiece.pieceName,
-        actionName: selectedAction.displayName,
+        actionName: selectedAction.name,
         predefinedInput: predefinedInputs,
       },
     };

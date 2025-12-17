@@ -14,6 +14,7 @@ export const agentTools = {
         const piecesTools = await Promise.all(tools
             .filter((tool) => tool.type === AgentToolType.PIECE)
             .map(async (tool) => {
+
                 const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
                     pieceName: tool.pieceMetadata.pieceName,
                     pieceVersion: tool.pieceMetadata.pieceVersion,
@@ -45,51 +46,95 @@ export const agentTools = {
     },
 }
 
-async function resolveProperties(depthToPropertyMap: Record<number, string[]>, instruction: string, action: Action, model: LanguageModel, operation: ExecuteToolOperation): Promise<Record<string, unknown>> {
-    let result: Record<string, unknown> = operation.predefinedInput
+async function resolveProperties(
+    depthToPropertyMap: Record<number, string[]>, 
+    instruction: string, 
+    action: Action, 
+    model: LanguageModel, 
+    operation: ExecuteToolOperation,
+): Promise<Record<string, unknown>> {
+    let result: Record<string, unknown> = { ...operation.predefinedInput }
+    const predefinedKeys = Object.keys(operation.predefinedInput);
+
     for (const [_, properties] of Object.entries(depthToPropertyMap)) {
         const propertyToFill: Record<string, z.ZodTypeAny> = {}
         const propertyPrompts: string[] = []
+        
         for (const property of properties) {
             const propertyFromAction = action.props[property]
             const propertyType = propertyFromAction.type
-            const skip = [PropertyType.BASIC_AUTH, PropertyType.OAUTH2, PropertyType.CUSTOM_AUTH, PropertyType.CUSTOM, PropertyType.MARKDOWN]
-            if (skip.includes(propertyType) || property in operation.predefinedInput) {
+
+            const skipTypes = [
+                PropertyType.BASIC_AUTH, 
+                PropertyType.OAUTH2, 
+                PropertyType.CUSTOM_AUTH, 
+                PropertyType.CUSTOM, 
+                PropertyType.MARKDOWN,
+            ]
+            
+            if (skipTypes.includes(propertyType) || predefinedKeys.includes(property)) {
                 continue
             }
-            const propertyPrompt = await buildPromptForProperty(property, propertyFromAction, operation, result)
+            
+            const propertyPrompt = await buildPromptForProperty(
+                property, 
+                propertyFromAction, 
+                operation, 
+                result,
+            )
+
             if (!isNil(propertyPrompt)) {
                 propertyPrompts.push(propertyPrompt)
             }
-            const propertySchema = await propertyToSchema(property, propertyFromAction, operation, result)
-            propertyToFill[property] = propertyFromAction.required ? propertySchema : propertySchema.nullish()
+            
+            const propertySchema = await propertyToSchema(
+                property, 
+                propertyFromAction, 
+                operation, 
+                result,
+            )
+            propertyToFill[property] = propertyFromAction.required 
+                ? propertySchema 
+                : propertySchema.nullish()
         }
+        
         const schemaObject = z.object(propertyToFill) as z.ZodTypeAny
-        const extractionPrompt = constructExtractionPrompt(instruction, propertyToFill, propertyPrompts)
+        const extractionPrompt = constructExtractionPrompt(
+            instruction, 
+            propertyToFill, 
+            propertyPrompts,
+            result,
+        )
 
         const { object } = await generateObject({
             model,
             schema: schemaObject,
             prompt: extractionPrompt,
+            mode: 'json',
+            output: 'object'
         })
+
         result = {
             ...result,
             ...(object as Record<string, unknown>),
         }
     }
+
     return result
 }
 
-
 async function execute(operation: ExecuteToolOperationWithModel): Promise<ExecuteToolResponse> {
+    
     const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
         pieceName: operation.pieceName,
         pieceVersion: operation.pieceVersion,
         actionName: operation.actionName,
         devPieces: EngineConstants.DEV_PIECES,
     })
+
     const depthToPropertyMap = tsort.sortPropertiesByDependencies(pieceAction.props)
     const resolvedInput = await resolveProperties(depthToPropertyMap, operation.instruction, pieceAction, operation.model, operation)
+
     const step: PieceAction = {
         name: operation.actionName,
         displayName: operation.actionName,
@@ -127,13 +172,23 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
 }
 
 
-const constructExtractionPrompt = (instruction: string, propertyToFill: Record<string, z.ZodTypeAny>, propertyPrompts: string[]): string => {
+const constructExtractionPrompt = (
+    instruction: string, 
+    propertyToFill: Record<string, z.ZodTypeAny>, 
+    propertyPrompts: string[],
+    existingValues: Record<string, unknown>,
+): string => {
     const propertyNames = Object.keys(propertyToFill).join('", "')
+    
+    const existingValuesContext = Object.keys(existingValues).length > 0
+        ? `\nALREADY FILLED VALUES (for context):\n${JSON.stringify(existingValues, null, 2)}\n`
+        : ''
+    
     return `
 You are an expert at understanding API schemas and filling out properties based on user instructions.
 
 TASK: Fill out the properties "${propertyNames}" based on the user's instructions.
-
+${existingValuesContext}
 USER INSTRUCTIONS:
 ${instruction}
 
@@ -146,6 +201,7 @@ IMPORTANT:
 - THE OPTIONS ARRAY WILL BE [{ label: string, value: string | object }]. YOU MUST SELECT THE value FIELD FROM THE OPTION OBJECT.
 - For DATE_TIME properties, return date strings in ISO format (YYYY-MM-DDTHH:mm:ss.sssZ)
 - Use actual values from the user instructions to determine the correct value for each property, either as a hint for selecting options from dropdowns or to fill in the property if possible.
+- Use the ALREADY FILLED VALUES as context to understand the task better and make consistent choices.
 - Must include all required properties, even if the user does not provide a value. If a required field is missing, look up the correct value or provide a reasonable default—otherwise, the task may fail.
 - IMPORTANT: If a property is not required and you do not have any information to fill it, you MUST skip it.
 `
