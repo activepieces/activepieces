@@ -42,7 +42,6 @@ describe('authenticateOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
             })
         })
 
