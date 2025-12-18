@@ -1,14 +1,12 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, AdminRetryRunsRequestBody, ALL_PRINCIPAL_TYPES, ApplyLicenseKeyByEmailRequestBody, CreateTemplateRequestBody, ErrorCode, ExactVersionType, isNil, PackageType, PieceCategory, PieceType, TemplateType, TriggerStrategy, TriggerTestStrategy, UpdateFlagRequestBody, UpdateFlagRequestParams, UpdateTemplateRequestBody, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ALL_PRINCIPAL_TYPES, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { flagService } from '../../../flags/flag.service'
 import { system } from '../../../helper/system/system'
 import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
-import { templateService } from '../../../template/template.service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
 import { adminPlatformService } from './admin-platform.service'
 
@@ -63,42 +61,6 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
             trustedEnvironment: req.body.trustedEnvironment,
         })
         return res.status(StatusCodes.OK).send()
-    })
-
-    app.post('/flags/:id', UpdateFlagRequest, async (request) => {
-        return flagService.save({
-            id: request.params.id,
-            value: request.body.value,
-        })
-    })
-
-    app.post('/templates', CreateTemplateRequest, async (request) => {
-        const { type } = request.body
-        if (type !== TemplateType.OFFICIAL) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Only official templates are supported to being created',
-                },
-            })
-        }
-        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-        return templateService().create({
-            platformId: cloudPlatformId,
-            params: request.body,
-        })
-    })
-
-    app.post('/templates/:id', UpdateParams, async (request) => {
-        const template = await templateService().getOneOrThrow({ id: request.params.id })
-        
-        if (template.type !== TemplateType.OFFICIAL) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: { message: 'Only official templates are supported to being updated' },
-            })
-        }
-        return templateService().update({ id: template.id, params: request.body })
     })
 }
 
@@ -176,36 +138,5 @@ const CreatePieceRequest = {
     },
     config: {
         allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-}
-
-const UpdateFlagRequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        params: UpdateFlagRequestParams,
-        body: UpdateFlagRequestBody,
-    },
-}
-
-const CreateTemplateRequest = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        body: CreateTemplateRequestBody,
-    },
-}
-
-const UpdateParams = {
-    config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
-    },
-    schema: {
-        params: Type.Object({
-            id: Type.String(),
-        }),
-        body: UpdateTemplateRequestBody,
     },
 }
