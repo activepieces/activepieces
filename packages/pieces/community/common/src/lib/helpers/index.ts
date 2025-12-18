@@ -65,6 +65,23 @@ function parseBufferToJson(body: unknown): unknown {
   return body;
 }
 
+function getParsedErrorResponse(error: HttpError) {
+  const errorResponse = error.errorMessage();
+  const parsedBody = parseBufferToJson(errorResponse.response.body);
+  return {
+    response: {
+      status: errorResponse.response.status,
+      body: parsedBody,
+    },
+    request: errorResponse.request,
+  };
+}
+
+function throwParsedError(error: HttpError): never {
+  const parsed = getParsedErrorResponse(error);
+  throw new Error(JSON.stringify(parsed, null, 2));
+}
+
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
 ): string => {
@@ -281,59 +298,14 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         );
       } catch (error) {
         if (error instanceof HttpError) {
-          const errorResponse = error.errorMessage();
-          const status = errorResponse.response.status;
-          const rawBody = errorResponse.response.body;
-          const parsedBody = parseBufferToJson(rawBody);
-
           if (failsafe) {
-            return {
-              response: {
-                status,
-                body: parsedBody,
-              },
-              request: errorResponse.request,
-            };
+            return getParsedErrorResponse(error);
           }
-          
-          let userFriendlyMessage = `Request failed with status ${status}`;
-          
-          if (typeof parsedBody === 'string') {
-            userFriendlyMessage = parsedBody;
-          } else if (typeof parsedBody === 'object' && parsedBody !== null) {
-            const errorObj = parsedBody as Record<string, unknown>;
-            const errorField = errorObj['error'];
-            const extractedMessage =
-              errorObj['message'] ||
-              (errorField && typeof errorField === 'object' ? (errorField as Record<string, unknown>)['message'] : undefined) ||
-              errorObj['description'] ||
-              errorObj['detail'] ||
-              errorObj['msg'];
-            
-            if (extractedMessage) {
-              userFriendlyMessage = String(extractedMessage);
-            } else {
-              if (status === 401) {
-                userFriendlyMessage = 'Authentication failed. Please check your credentials.';
-              } else if (status === 403) {
-                userFriendlyMessage = 'Access forbidden. Please check your permissions.';
-              } else if (status === 404) {
-                userFriendlyMessage = 'Resource not found. Please check the endpoint URL.';
-              } else if (status === 429) {
-                userFriendlyMessage = 'Rate limit exceeded. Please try again later.';
-              } else if (status >= 500) {
-                userFriendlyMessage = 'Server error. Please try again later.';
-              }
-            }
-          }
-          
-          throw new Error(userFriendlyMessage);
+          throwParsedError(error);
         }
-        
         if (failsafe) {
           return (error as HttpError).errorMessage();
         }
-        
         throw error;
       }
     },
