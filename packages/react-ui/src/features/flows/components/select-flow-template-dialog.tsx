@@ -30,7 +30,7 @@ const SelectFlowTemplateDialog = ({
   folderId,
 }: {
   children: React.ReactNode;
-  folderId: string;
+  folderId?: string;
 }) => {
   const { templates, isLoading, search, setSearch } = useTemplates(
     TemplateType.CUSTOM,

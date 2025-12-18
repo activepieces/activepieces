@@ -45,8 +45,8 @@ import {
 
 import { FlowDependencyCard } from './flow-dependency-card';
 import { PieceCard } from './piece-card';
-import { UseTemplateDialog } from './use-template-dialog';
 import { useEffectOnce } from 'react-use';
+import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
 
 const TemplateDetailsPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -341,11 +341,12 @@ const TemplateDetailsPage = () => {
         </div>
       </div>
 
-      <UseTemplateDialog
-        template={template}
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-      />
+      <SelectFlowTemplateDialog>
+        <Button variant="outline" size="sm" onClick={handleUseTemplate}>
+          {t('Use Template')}
+          <ArrowRight className="w-4 h-4 mr-2" />
+        </Button>
+      </SelectFlowTemplateDialog>
     </div>
   );
 };

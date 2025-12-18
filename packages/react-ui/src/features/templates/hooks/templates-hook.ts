@@ -1,36 +1,63 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useDebounce } from 'use-debounce';
 
-import { ListTemplatesRequestQuery, Template } from '@activepieces/shared';
+import { Template, TemplateType, TemplateCategory } from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 
-export const useTemplates = (request: ListTemplatesRequestQuery) => {
-  const [search, setSearch] = useState<string>('');
+export const useTemplates = (type?: TemplateType) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const search = searchParams.get('search') ?? '';
+  const category =
+    (searchParams.get('category') as TemplateCategory | undefined) ?? undefined;
+
+  const [debouncedSearch] = useDebounce(search, 300);
 
   const { data: templates, isLoading } = useQuery<Template[], Error>({
-    queryKey: ['templates'],
+    queryKey: ['templates', debouncedSearch, category],
     queryFn: async () => {
-      const templates = await templatesApi.list(request);
+      const templates = await templatesApi.list({
+        type,
+        search: debouncedSearch || undefined,
+        category,
+      });
       return templates.data;
     },
     staleTime: 0,
   });
 
-  const filteredTemplates = templates?.filter((template) => {
-    const templateName = template.name.toLowerCase();
-    const templateDescription = template.description.toLowerCase();
-    return (
-      templateName.includes(search.toLowerCase()) ||
-      templateDescription.includes(search.toLowerCase())
-    );
-  });
+  const setSearch = (newSearch: string) => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (newSearch) {
+        params.set('search', newSearch);
+      } else {
+        params.delete('search');
+      }
+      return params;
+    });
+  };
+
+  const setCategory = (newCategory: TemplateCategory | 'All') => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      if (newCategory && newCategory !== 'All') {
+        params.set('category', newCategory);
+      } else {
+        params.delete('category');
+      }
+      return params;
+    });
+  };
 
   return {
     templates,
-    filteredTemplates,
     isLoading,
     search,
     setSearch,
+    category: category || 'All',
+    setCategory,
   };
 };
