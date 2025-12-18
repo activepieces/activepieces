@@ -1,224 +1,127 @@
-import { useMutation } from '@tanstack/react-query';
+import { DialogDescription } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { ArrowLeft, Search, SearchX } from 'lucide-react';
+import React, { useRef, useState } from 'react';
 
-import { ApProjectDisplay } from '@/app/components/ap-project-display';
+import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselApi,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { foldersApi } from '@/features/folders/lib/folders-api';
-import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import {
-  FlowOperationType,
-  PopulatedFlow,
-  Template,
-  UncategorizedFolderId,
-  isNil,
-} from '@activepieces/shared';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { TemplateCard } from '@/features/templates/components/template-card';
+import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
+import { useTemplates } from '@/features/templates/hooks/templates-hook';
+import { Template, TemplateType } from '@activepieces/shared';
 
-type UseTemplateDialogProps = {
-  template: Template;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-};
-
-export const UseTemplateDialog = ({
-  template,
-  open,
-  onOpenChange,
-}: UseTemplateDialogProps) => {
-  const navigate = useNavigate();
-  const [selectedProjectId, setSelectedProjectId] = useState<string>('');
-  const [selectedFolderId, setSelectedFolderId] = useState<string>('');
-
-  const { data: projects } = projectHooks.useProjects();
-  const { folders } = foldersHooks.useFolders();
-
-  // Set default values when dialog opens
-  useEffect(() => {
-    if (open) {
-      const currentProjectId = authenticationSession.getProjectId();
-      if (currentProjectId) {
-        setSelectedProjectId(currentProjectId);
-      } else if (projects && projects.length > 0) {
-        setSelectedProjectId(projects[0].id);
-      }
-      setSelectedFolderId(UncategorizedFolderId);
-    }
-  }, [open, projects]);
-
-  const { mutate: createFlow, isPending } = useMutation<
-    PopulatedFlow[],
-    Error,
-    { projectId: string; folderId: string }
-  >({
-    mutationFn: async ({ projectId, folderId }) => {
-      const flows = template.flows || [];
-      const hasMultipleFlows = flows.length > 1;
-
-      let folderName: string | undefined;
-
-      if (hasMultipleFlows) {
-        const newFolder = await foldersApi.create({
-          displayName: template.name,
-          projectId: projectId,
-        });
-        folderName = newFolder.displayName;
-      } else if (!isNil(folderId) && folderId !== UncategorizedFolderId) {
-        const folder = await foldersApi.get(folderId);
-        folderName = folder.displayName;
-      }
-
-      return Promise.all(
-        flows.map(async (flowTemplate) => {
-          const newFlow = await flowsApi.create({
-            displayName: flowTemplate.displayName,
-            projectId: projectId,
-            folderName: folderName,
-          });
-
-          return flowsApi.update(newFlow.id, {
-            type: FlowOperationType.IMPORT_FLOW,
-            request: {
-              displayName: flowTemplate.displayName,
-              trigger: flowTemplate.trigger,
-              schemaVersion: flowTemplate.schemaVersion,
-              templateId: template.id,
-            },
-          });
-        }),
-      );
-    },
-    onSuccess: (flows) => {
-      onOpenChange(false);
-      if (flows.length === 1) {
-        toast.success(t('Flow created successfully'));
-        navigate(`/flows/${flows[0].id}`);
-      } else {
-        toast.success(
-          t('{count} flows created successfully in a new folder', {
-            count: flows.length,
-          }),
-        );
-        navigate(`/flows`);
-      }
-    },
-    onError: (error) => {
-      toast.error(t('Failed to create flow from template'));
-      console.error('Error creating flow:', error);
-    },
+const SelectFlowTemplateDialog = ({
+  children,
+  folderId,
+}: {
+  children: React.ReactNode;
+  folderId: string;
+}) => {
+  const { filteredTemplates, isLoading, search, setSearch } = useTemplates({
+    type: TemplateType.CUSTOM,
   });
+  const carousel = useRef<CarouselApi>();
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
+    null,
+  );
 
-  const handleConfirmUseTemplate = () => {
-    if (!selectedProjectId) {
-      toast.error(t('Please select a project'));
-      return;
-    }
-    createFlow({ projectId: selectedProjectId, folderId: selectedFolderId });
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(event.target.value);
   };
 
-  const flowCount = template.flows?.length || 0;
-  const hasMultipleFlows = flowCount > 1;
+  const unselectTemplate = () => {
+    setSelectedTemplate(null);
+    carousel.current?.scrollPrev();
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog onOpenChange={unselectTemplate}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className=" lg:min-w-[850px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>{t('Duplicate Template')}</DialogTitle>
-          <DialogDescription>
-            {hasMultipleFlows
-              ? t(
-                  'This template includes {count} flows with all dependencies. A new folder will be created to organize them.',
-                  { count: flowCount },
-                )
-              : t(
-                  'Select the project and folder where you want to duplicate this template.',
-                )}
-          </DialogDescription>
+          <DialogTitle className="flex min-h-9 flex-row items-center justify-start gap-2 items-center h-full">
+            {selectedTemplate && (
+              <Button variant="ghost" size="sm" onClick={unselectTemplate}>
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+            )}
+
+            {t('Browse Templates')}
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="project">{t('Project')}</Label>
-            <Select
-              value={selectedProjectId}
-              onValueChange={setSelectedProjectId}
-            >
-              <SelectTrigger id="project">
-                <SelectValue placeholder={t('Select a project')} />
-              </SelectTrigger>
-              <SelectContent>
-                {projects?.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    <ApProjectDisplay
-                      title={project.displayName}
-                      icon={project.icon}
-                      projectType={project.type}
-                    />
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {!hasMultipleFlows && (
-            <div className="space-y-2">
-              <Label htmlFor="folder">{t('Folder')}</Label>
-              <Select
-                value={selectedFolderId}
-                onValueChange={setSelectedFolderId}
-              >
-                <SelectTrigger id="folder">
-                  <SelectValue placeholder={t('Select a folder')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={UncategorizedFolderId}>
-                    {t('Uncategorized')}
-                  </SelectItem>
-                  {folders?.map((folder) => (
-                    <SelectItem key={folder.id} value={folder.id}>
-                      {folder.displayName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}
-          >
-            {t('Cancel')}
-          </Button>
-          <Button
-            onClick={handleConfirmUseTemplate}
-            loading={isPending}
-            disabled={!selectedProjectId}
-          >
-            {hasMultipleFlows ? t('Create All Flows') : t('Create Flow')}
-          </Button>
-        </DialogFooter>
+        <Carousel setApi={(api) => (carousel.current = api)}>
+          <CarouselContent className="min-h-[300px] h-[70vh] max-h-[820px] ">
+            <CarouselItem key="templates">
+              <div>
+                <div className="p-1 ">
+                  <InputWithIcon
+                    icon={<Search className="w-4 h-4" />}
+                    type="text"
+                    value={search}
+                    onChange={handleSearchChange}
+                    placeholder={t('Search templates')}
+                    className="mb-4"
+                  />
+                </div>
+
+                <DialogDescription>
+                  {isLoading ? (
+                    <div className="min-h-[300px] h-[70vh] max-h-[680px]  o flex justify-center items-center">
+                      <LoadingSpinner />
+                    </div>
+                  ) : (
+                    <>
+                      {filteredTemplates?.length === 0 && (
+                        <div className="flex flex-col items-center justify-center gap-2 text-center ">
+                          <SearchX className="w-10 h-10" />
+                          {t('No templates found, try adjusting your search')}
+                        </div>
+                      )}
+                      <ScrollArea className="min-h-[260px] h-[calc(70vh-80px)] max-h-[740px]   overflow-y-auto px-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {filteredTemplates?.map((template) => (
+                            <TemplateCard
+                              key={template.id}
+                              template={template}
+                              folderId={folderId}
+                              onSelectTemplate={(template) => {
+                                setSelectedTemplate(template);
+                                carousel.current?.scrollNext();
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </>
+                  )}
+                </DialogDescription>
+              </div>
+            </CarouselItem>
+            <CarouselItem key="template-details">
+              {selectedTemplate && (
+                <TemplateDetailsView template={selectedTemplate} />
+              )}
+            </CarouselItem>
+          </CarouselContent>
+        </Carousel>
       </DialogContent>
     </Dialog>
   );
 };
+
+export { SelectFlowTemplateDialog };

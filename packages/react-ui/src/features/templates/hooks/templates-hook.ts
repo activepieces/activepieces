@@ -1,63 +1,36 @@
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
-import { useDebounce } from 'use-debounce';
+import { useState } from 'react';
 
-import { Template, TemplateType, TemplateCategory } from '@activepieces/shared';
+import { ListTemplatesRequestQuery, Template } from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 
-export const useTemplates = (type: TemplateType) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const search = searchParams.get('search') ?? '';
-  const category =
-    (searchParams.get('category') as TemplateCategory | undefined) ?? undefined;
-
-  const [debouncedSearch] = useDebounce(search, 300);
+export const useTemplates = (request: ListTemplatesRequestQuery) => {
+  const [search, setSearch] = useState<string>('');
 
   const { data: templates, isLoading } = useQuery<Template[], Error>({
-    queryKey: ['templates', debouncedSearch, category],
+    queryKey: ['templates'],
     queryFn: async () => {
-      const templates = await templatesApi.list({
-        type,
-        search: debouncedSearch || undefined,
-        category,
-      });
+      const templates = await templatesApi.list(request);
       return templates.data;
     },
     staleTime: 0,
   });
 
-  const setSearch = (newSearch: string) => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (newSearch) {
-        params.set('search', newSearch);
-      } else {
-        params.delete('search');
-      }
-      return params;
-    });
-  };
-
-  const setCategory = (newCategory: TemplateCategory | 'All') => {
-    setSearchParams((prev) => {
-      const params = new URLSearchParams(prev);
-      if (newCategory && newCategory !== 'All') {
-        params.set('category', newCategory);
-      } else {
-        params.delete('category');
-      }
-      return params;
-    });
-  };
+  const filteredTemplates = templates?.filter((template) => {
+    const templateName = template.name.toLowerCase();
+    const templateDescription = template.description.toLowerCase();
+    return (
+      templateName.includes(search.toLowerCase()) ||
+      templateDescription.includes(search.toLowerCase())
+    );
+  });
 
   return {
     templates,
+    filteredTemplates,
     isLoading,
     search,
     setSearch,
-    category: category || 'All',
-    setCategory,
   };
 };
