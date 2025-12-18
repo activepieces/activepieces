@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
+  border?: boolean;
 }
 
 const isGrayColor = (r: number, g: number, b: number): boolean => {
@@ -86,7 +87,7 @@ const ImageWithColorBackground = ({
         {
           'bg-background': backgroundColor === null,
           'border border-border/50 dark:bg-foreground/10':
-            backgroundColor === null,
+            backgroundColor === null && props.border,
         },
       )}
       style={
