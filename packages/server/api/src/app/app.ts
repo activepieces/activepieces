@@ -65,7 +65,6 @@ import { SystemJobName } from './helper/system-jobs/common'
 import { systemJobHandlers } from './helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from './helper/system-jobs/system-job'
 import { validateEnvPropsOnStartup } from './helper/system-validator'
-import { mcpServerModule } from './mcp/mcp-module'
 import { communityPiecesModule } from './pieces/community-piece-module'
 import { pieceModule } from './pieces/metadata/piece-metadata-controller'
 import { pieceMetadataService } from './pieces/metadata/piece-metadata-service'
@@ -197,7 +196,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     await app.register(platformModule)
     await app.register(humanInputModule)
     await app.register(tagsModule)
-    await app.register(mcpServerModule)
     await app.register(platformUserModule)
     await app.register(alertsModule)
     await app.register(invitationModule)
