@@ -9,6 +9,7 @@ import { Server } from 'socket.io'
 import { cacheState } from '../../cache-state'
 import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
 import { devPiecesInstaller } from './dev-pieces-installer'
+import { devPiecesState } from './dev-pieces-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
@@ -58,6 +59,7 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
         await cache.saveCache('@activepieces/shared', CacheState.PENDING)
         await cache.saveCache(packageName, CacheState.PENDING)
 
+        devPiecesState.incrementGeneration()
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
     }
     catch (error) {
