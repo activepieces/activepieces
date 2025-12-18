@@ -313,6 +313,7 @@ import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/post
 import { AddDisplayNameToAiProviders1765757655723 } from './migration/postgres/1765757655723-add-display-name-to-ai-providers'
 import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
 import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
+import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/postgres/1766094015801-removeOpenRounterKeysFromPlatformPlan'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -642,6 +643,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         CreateTemplateTable1764777773932,
         AddTemplateStatus1765894492098,
         MigrateOldTemplatesToNewSchema1765993826655,
+        RemoveOpenRounterKeysFromPlatformPlan1766094015801,
     ]
     return migrations
 }

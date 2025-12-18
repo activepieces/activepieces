@@ -11,6 +11,12 @@ export const AnthropicProviderConfig = Type.Object({
 })
 export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
 
+export const ActivePiecesProviderConfig = Type.Object({
+    apiKey: Type.String(),
+    apiKeyHash: Type.String(),
+})
+export type ActivePiecesProviderConfig = Static<typeof ActivePiecesProviderConfig>
+
 export const ProviderModelConfig = Type.Object({
     modelId: Type.String(),
     modelName: Type.String(),
@@ -64,6 +70,7 @@ export const AIProviderConfig = Type.Union([
     OpenRouterProviderConfig,
     CloudflareGatewayProviderConfig,
     OpenAICompatibleProviderConfig,
+    ActivePiecesProviderConfig,
 ])
 export type AIProviderConfig = Static<typeof AIProviderConfig>
 
@@ -118,6 +125,11 @@ const ProviderConfigUnion = DiscriminatedUnion('provider', [
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
         config: OpenAICompatibleProviderConfig,
+    }),
+    Type.Object({
+        displayName: Type.String({ minLength: 1 }),
+        provider: Type.Literal(AIProviderName.ACTIVEPIECES),
+        config: ActivePiecesProviderConfig,
     }),
 ])
 
