@@ -50,6 +50,7 @@ const AIProviderCard = ({
             <UpsertAIProviderDialog
               key={providerConfig?.id ?? providerInfo.provider}
               providerId={providerConfig?.id}
+              config={providerConfig?.config}
               provider={providerInfo.provider}
               defaultDisplayName={providerConfig?.name ?? providerInfo.name}
               onSave={onSave}

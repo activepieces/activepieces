@@ -25,9 +25,9 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
-import { aiProviderHooks } from '@/features/platform-admin/lib/ai-provider-hooks';
 import {
   AIProviderName,
+  AIProviderWithoutSensitiveData,
   AnthropicProviderConfig,
   AzureProviderConfig,
   CloudflareGatewayProviderConfig,
@@ -45,6 +45,7 @@ import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 type UpsertAIProviderDialogProps = {
   provider: AIProviderName;
   providerId?: string;
+  config?: AIProviderWithoutSensitiveData['config'];
   children: React.ReactNode;
   onSave: () => void;
   defaultDisplayName?: string;
@@ -53,21 +54,16 @@ type UpsertAIProviderDialogProps = {
 export const UpsertAIProviderDialog = ({
   children,
   onSave,
+  config,
   provider,
   providerId,
   defaultDisplayName = '',
 }: UpsertAIProviderDialogProps) => {
   const [open, setOpen] = useState(false);
 
-  const { data: config, isLoading: isLoadingConfig } =
-    aiProviderHooks.useConfig({
-      providerId: providerId ?? '',
-      enabled: open && !!providerId,
-    });
-
   const currentProviderDef = useMemo(
     () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)!,
-    [provider],
+    [provider]
   );
 
   const form = useForm<CreateAIProviderRequest>({
@@ -75,7 +71,7 @@ export const UpsertAIProviderDialog = ({
     defaultValues: {
       provider,
       displayName: defaultDisplayName,
-      config: {},
+      config: config as any,
     },
   });
 
@@ -111,7 +107,7 @@ export const UpsertAIProviderDialog = ({
       onSave();
     },
     onError: (
-      error: AxiosError<{ message?: string; params?: { message: string } }>,
+      error: AxiosError<{ message?: string; params?: { message: string } }>
     ) => {
       const data = error.response?.data;
 
@@ -138,89 +134,78 @@ export const UpsertAIProviderDialog = ({
           </DialogTitle>
         </DialogHeader>
 
-        {isLoadingConfig && providerId ? (
-          <div className="flex justify-center items-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <Form {...form}>
-            <form
-              className="grid space-y-4"
-              onSubmit={(e) => e.preventDefault()}
-            >
-              <FormField
-                control={form.control}
-                name="displayName"
-                render={({ field }) => (
-                  <FormItem
-                    className="space-y-3"
-                    hidden={
-                      currentProviderDef.provider !==
-                      AIProviderName.OPENAI_COMPATIBLE
-                    }
-                  >
-                    <FormLabel>{t('Display Name')}</FormLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder={'My Provider'}
-                        disabled={isPending}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              {currentProviderDef.markdown && (
-                <div className="mb-4 text-sm text-muted-foreground">
-                  <ApMarkdown
-                    markdown={currentProviderDef.markdown}
-                  ></ApMarkdown>
-                </div>
-              )}
-
-              <UpsertProviderConfigForm
-                form={form}
-                provider={provider}
-                apiKeyRequired={!config}
-                isLoading={isPending}
-              />
-
-              {form.formState.errors.root?.serverError && (
-                <FormMessage>
-                  {form.formState.errors.root.serverError.message}
-                </FormMessage>
-              )}
-
-              <DialogFooter>
-                <Button
-                  variant={'outline'}
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    setOpen(false);
-                  }}
-                  disabled={isPending}
+        <Form {...form}>
+          <form className="grid space-y-4" onSubmit={(e) => e.preventDefault()}>
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <FormItem
+                  className="space-y-3"
+                  hidden={
+                    currentProviderDef.provider !==
+                    AIProviderName.OPENAI_COMPATIBLE
+                  }
                 >
-                  {t('Cancel')}
-                </Button>
-                <Button
-                  disabled={!form.formState.isValid || isPending}
-                  loading={isPending}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    mutate(form.getValues());
-                  }}
-                >
-                  {t('Save')}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        )}
+                  <FormLabel>{t('Display Name')}</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder={'My Provider'}
+                      disabled={isPending}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {currentProviderDef.markdown && (
+              <div className="mb-4 text-sm text-muted-foreground">
+                <ApMarkdown markdown={currentProviderDef.markdown}></ApMarkdown>
+              </div>
+            )}
+
+            <UpsertProviderConfigForm
+              form={form}
+              provider={provider}
+              apiKeyRequired={!config}
+              isLoading={isPending}
+            />
+
+            {form.formState.errors.root?.serverError && (
+              <FormMessage>
+                {form.formState.errors.root.serverError.message}
+              </FormMessage>
+            )}
+
+            <DialogFooter>
+              <Button
+                variant={'outline'}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setOpen(false);
+                }}
+                disabled={isPending}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                disabled={!form.formState.isValid || isPending}
+                loading={isPending}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  mutate(form.getValues());
+                }}
+              >
+                {t('Save')}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

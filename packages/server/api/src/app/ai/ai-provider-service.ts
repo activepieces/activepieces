@@ -30,11 +30,16 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
-        const formattedProviders: AIProviderWithoutSensitiveData[] = configuredProviders.map(p => ({ 
-            id: p.id,
-            name: p.displayName,
-            provider: p.provider,
-            configured: true,
+        const formattedProviders: AIProviderWithoutSensitiveData[] = await Promise.all(configuredProviders.map(async p => {
+            const { apiKey: _, ...rest } = await encryptUtils.decryptObject<AIProviderConfig>(p.config)
+
+            return { 
+                id: p.id,
+                name: p.displayName,
+                provider: p.provider,
+                config: rest,
+                configured: true,
+            }
         }))
 
         const enableOpenRouterProvider = platformAiCreditsService(log).isEnabled()
@@ -44,6 +49,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 name: aiProviders[AIProviderName.ACTIVEPIECES].name,
                 provider: AIProviderName.ACTIVEPIECES,
                 configured: true,
+                config: {},
             })
         }
 

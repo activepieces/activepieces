@@ -136,6 +136,7 @@ export const AIProviderWithoutSensitiveData = Type.Object({
     id: Type.String(),
     name: Type.String(),
     provider: Type.Enum(AIProviderName),
+    config: Type.Omit(AIProviderConfig, ["apiKey"]),
 
     // DEPRECTED: KEPT FOR BACKWARD COMPATIBILITY
     configured: Type.Boolean(),

@@ -10,13 +10,7 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     })
     app.get('/:id/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
-
-        const config = await aiProviderService(app.log).getConfig(platformId, request.params.id)
-        if (request.principal.type === PrincipalType.USER && config.apiKey) {
-            config.apiKey = ''
-        }
-
-        return config
+        return await aiProviderService(app.log).getConfig(platformId, request.params.id)
     })
     app.get('/:id/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
@@ -43,16 +37,11 @@ const ListAIProviders = {
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
     },
-    schema: {
-        response: {
-            [StatusCodes.OK]: Type.Array(AIProviderWithoutSensitiveData),
-        },
-    },
 }
 
 const GetAIProviderConfig = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         params: Type.Object({
