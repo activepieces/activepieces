@@ -59,7 +59,7 @@ export enum PRICE_NAMES {
 
 export const PRICE_ID_MAP = {
     [PRICE_NAMES.AI_CREDITS]: {
-        dev: 'price_1RnbNPQN93Aoq4f8GLiZbJFj',
+        dev: 'price_1SfgNxKTWXpWeD7hmDBG4YMZ',
         prod: 'price_1Rnj5bKZ0dZRqLEKQx2gwL7s',
     },
     [PRICE_NAMES.ACTIVE_FLOWS]: {

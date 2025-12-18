@@ -63,7 +63,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
 
         const { data: usage } = await openRouterApi.getKey({ hash: platformPlan.openRouterApiKeyHash })
-        
+
         return {
             usageMonthly: usage.usage_monthly * CREDIT_PER_DOLLAR,
             limitMonthly: usage.limit! * CREDIT_PER_DOLLAR,
@@ -161,11 +161,11 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         while (true) {
             const { data } = await openRouterApi.listKeys({ offset })
             if (data.length === 0) break
-          
+
             keys.push(...data)
             offset += data.length
         }
-    
+
         const plans = await platformPlanRepo().find({
             where: { openRouterApiKeyHash: In(keys.map(k => k.hash)) }
         })
@@ -176,7 +176,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
             let creditsToAdd: number
             const creditsUsedLastMonth = key.usage_monthly * CREDIT_PER_DOLLAR
-            
+
             if (creditsUsedLastMonth > plan.includedAiCredits) {
                 creditsToAdd = plan.includedAiCredits
             } else {
