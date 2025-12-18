@@ -6,8 +6,6 @@ import chalk from 'chalk'
 import chokidar, { FSWatcher } from 'chokidar'
 import { FastifyBaseLogger, FastifyInstance } from 'fastify'
 import { Server } from 'socket.io'
-import { cacheState } from '../../cache-state'
-import { CacheState, GLOBAL_CACHE_COMMON_PATH } from '../../worker-cache'
 import { devPiecesInstaller } from './dev-pieces-installer'
 import { devPiecesState } from './dev-pieces-state'
 
@@ -52,12 +50,6 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
         const buildTime = (endTime - startTime) / 1000
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
-
-        const cache = cacheState(GLOBAL_CACHE_COMMON_PATH, log)
-        await cache.saveCache('@activepieces/pieces-framework', CacheState.PENDING)
-        await cache.saveCache('@activepieces/pieces-common', CacheState.PENDING)
-        await cache.saveCache('@activepieces/shared', CacheState.PENDING)
-        await cache.saveCache(packageName, CacheState.PENDING)
 
         devPiecesState.incrementGeneration()
         io.emit(WebsocketClientEvent.REFRESH_PIECE)
