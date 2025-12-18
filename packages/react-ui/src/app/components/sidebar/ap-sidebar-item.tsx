@@ -58,7 +58,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                 onClick={handleClick}
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  isLinkActive && 'bg-sidebar-active hover:!bg-sidebar-active',
+                  isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
                   'relative',
                 )}
               >
@@ -82,7 +82,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
           onClick={handleClick}
           className={cn(
             'px-2 py-5',
-            isLinkActive && 'bg-sidebar-active hover:!bg-sidebar-active',
+            isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
           )}
         >
           <Link

@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -17,8 +16,7 @@ const edition = system.getEdition()
 export const deprecatedFlowTemplateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListFlowTemplatesParams, async (request) => {
         if (edition === ApEdition.CLOUD) {
-            const platformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-            return templateService().list({ platformId, requestQuery: {
+            return templateService().list({ platformId: null, requestQuery: {
                 ...request.query,
                 type: TemplateType.OFFICIAL,
             } })

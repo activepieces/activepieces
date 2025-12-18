@@ -1,4 +1,4 @@
-import { apId, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { apId, flowPieceUtil, FlowVersionTemplate, Metadata, sanitizeObjectForPostgresql, spreadIfDefined, Template, TemplateCategory, TemplateStatus, TemplateTag, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { TemplateEntity } from '../../template/template.entity'
 
@@ -23,11 +23,12 @@ export const platformTemplateService = () => ({
             categories,
             pieces,
             flows,
+            status: TemplateStatus.PUBLISHED,
         }
         return templateRepo().save(newTemplate)
     },
     async update({ id, params }: UpdateParams): Promise<Template> {
-        const { name, description, tags, blogUrl, metadata, categories, flows } = params
+        const { name, description, tags, blogUrl, metadata, categories, flows, status } = params
         const flow: FlowVersionTemplate | undefined = flows?.[0] ? sanitizeObjectForPostgresql(flows[0]) : undefined
         const pieces = flow ? flowPieceUtil.getUsedPieces(flow.trigger) : undefined
         await templateRepo().update(id, {
@@ -39,6 +40,7 @@ export const platformTemplateService = () => ({
             ...spreadIfDefined('categories', categories),
             ...spreadIfDefined('flows', flows),
             ...spreadIfDefined('pieces', pieces),
+            ...spreadIfDefined('status', status),
         })
         return templateRepo().findOneByOrFail({ id })
     },

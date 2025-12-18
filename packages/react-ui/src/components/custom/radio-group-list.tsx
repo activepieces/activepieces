@@ -46,7 +46,7 @@ const RadioGroupList = <T,>({
                   {item.label}
                   {item.labelExtra}
                 </h4>
-                <div className="flex-shrink-0 w-5 h-5">
+                <div className="shrink-0 w-5 h-5">
                   <RadioGroupItem
                     value={JSON.stringify(item.value)}
                     className="scale-125"

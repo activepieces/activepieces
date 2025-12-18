@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Metadata, Nullable } from '../common'
-import { FlowVersionTemplate, TemplateCategory, TemplateTag, TemplateType } from './template'
+import { FlowVersionTemplate, TemplateCategory, TemplateStatus, TemplateTag, TemplateType } from './template'
 
 export const CreateTemplateRequestBody = Type.Object({
     name: Type.String(),
@@ -23,6 +23,7 @@ export const UpdateFlowTemplateRequestBody = Type.Object({
     tags: Type.Optional(Type.Array(TemplateTag)),
     blogUrl: Type.Optional(Type.String()),
     metadata: Nullable(Metadata),
+    status: Type.Optional(Type.Enum(TemplateStatus)),
     categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
     flows: Type.Optional(Type.Array(FlowVersionTemplate)),
 })
@@ -32,7 +33,7 @@ export const UpdateTemplateRequestBody = UpdateFlowTemplateRequestBody
 export type UpdateTemplateRequestBody = Static<typeof UpdateTemplateRequestBody>
 
 export const ListFlowTemplatesRequestQuery = Type.Object({
-    type: Type.Enum(TemplateType),
+    type: Type.Optional(Type.Enum(TemplateType)),
     pieces: Type.Optional(Type.Array(Type.String())),
     tags: Type.Optional(Type.Array(TemplateTag)),
     search: Type.Optional(Type.String()),

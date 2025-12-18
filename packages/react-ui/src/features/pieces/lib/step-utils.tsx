@@ -106,6 +106,7 @@ export const stepUtils = {
           ...CORE_STEP_METADATA[step.type],
           ...spreadIfDefined('logoUrl', customLogoUrl),
           actionOrTriggerOrAgentDisplayName: '',
+          actionOrTriggerOrAgentDescription: '',
         };
       case FlowActionType.PIECE:
       case FlowTriggerType.PIECE: {
@@ -122,9 +123,14 @@ export const stepUtils = {
           step.type === FlowActionType.PIECE
             ? piece.actions[step.settings.actionName!].displayName
             : piece.triggers[step.settings.triggerName!].displayName;
+        const actionOrTriggerDescription =
+          step.type === FlowActionType.PIECE
+            ? piece.actions[step.settings.actionName!].description
+            : piece.triggers[step.settings.triggerName!].description;
         return {
           ...metadata,
           errorHandlingOptions: mapErrorHandlingOptions(piece, step),
+          actionOrTriggerOrAgentDescription: actionOrTriggerDescription,
           actionOrTriggerOrAgentDisplayName: actionOrTriggerDisplayName,
         };
       }
