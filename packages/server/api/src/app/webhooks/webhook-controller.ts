@@ -11,7 +11,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
-import { FastifyRequest } from 'fastify'
+import { FastifyRequest, HTTPMethods } from 'fastify'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
@@ -20,12 +20,18 @@ import { webhookService } from './webhook.service'
 
 const tracer = trace.getTracer('webhook-controller')
 
+const ALL_HTTP_METHODS: HTTPMethods[] = [
+    'GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'HEAD', 'OPTIONS', 'TRACE',
+    'PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY', 'MOVE', 'LOCK', 'UNLOCK', 'REPORT',
+] as HTTPMethods[]
+
 export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.all(
-        '/:flowId/sync',
-        WEBHOOK_PARAMS,
-        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+    app.route({
+        method: ALL_HTTP_METHODS,
+        url: '/:flowId/sync',
+        ...WEBHOOK_PARAMS,
+        handler: async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             return tracer.startActiveSpan('webhook.receive.sync', {
                 attributes: {
                     'webhook.flowId': request.params.flowId,
@@ -59,12 +65,13 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 }
             })
         },
-    )
+    })
 
-    app.all(
-        '/:flowId',
-        WEBHOOK_PARAMS,
-        async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
+    app.route({
+        method: ALL_HTTP_METHODS,
+        url: '/:flowId',
+        ...WEBHOOK_PARAMS,
+        handler: async (request: FastifyRequest<{ Params: WebhookUrlParams }>, reply) => {
             return tracer.startActiveSpan('webhook.receive.async', {
                 attributes: {
                     'webhook.flowId': request.params.flowId,
@@ -98,60 +105,75 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
                 }
             })
         },
-    )
-
-    app.all('/:flowId/draft/sync', WEBHOOK_PARAMS, async (request, reply) => {
-        const response = await webhookService.handleWebhook({
-            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
-            logger: request.log,
-            flowId: request.params.flowId,
-            async: false,
-            saveSampleData: true,
-            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
-            execute: true,
-            onRunCreated: (run) => {
-                app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
-            },
-            ...extractHeaderFromRequest(request),
-        })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
     })
 
-    app.all('/:flowId/draft', WEBHOOK_PARAMS, async (request, reply) => {
-        const response = await webhookService.handleWebhook({
-            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
-            logger: request.log,
-            flowId: request.params.flowId,
-            async: true,
-            saveSampleData: true,
-            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
-            execute: true,
-            ...extractHeaderFromRequest(request),
-        })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+    app.route({
+        method: ALL_HTTP_METHODS,
+        url: '/:flowId/draft/sync',
+        ...WEBHOOK_PARAMS,
+        handler: async (request, reply) => {
+            const response = await webhookService.handleWebhook({
+                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                logger: request.log,
+                flowId: request.params.flowId,
+                async: false,
+                saveSampleData: true,
+                flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+                execute: true,
+                onRunCreated: (run) => {
+                    app.io.to(run.projectId).emit(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, run)
+                },
+                ...extractHeaderFromRequest(request),
+            })
+            await reply
+                .status(response.status)
+                .headers(response.headers)
+                .send(response.body)
+        },
     })
 
-    app.all('/:flowId/test', WEBHOOK_PARAMS, async (request, reply) => {
-        const response = await webhookService.handleWebhook({
-            data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
-            logger: request.log,
-            flowId: request.params.flowId,
-            async: true,
-            saveSampleData: true,
-            flowVersionToRun: WebhookFlowVersionToRun.LATEST,
-            execute: false,
-            ...extractHeaderFromRequest(request),
-        })
-        await reply
-            .status(response.status)
-            .headers(response.headers)
-            .send(response.body)
+    app.route({
+        method: ALL_HTTP_METHODS,
+        url: '/:flowId/draft',
+        ...WEBHOOK_PARAMS,
+        handler: async (request, reply) => {
+            const response = await webhookService.handleWebhook({
+                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                logger: request.log,
+                flowId: request.params.flowId,
+                async: true,
+                saveSampleData: true,
+                flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+                execute: true,
+                ...extractHeaderFromRequest(request),
+            })
+            await reply
+                .status(response.status)
+                .headers(response.headers)
+                .send(response.body)
+        },
+    })
+
+    app.route({
+        method: ALL_HTTP_METHODS,
+        url: '/:flowId/test',
+        ...WEBHOOK_PARAMS,
+        handler: async (request, reply) => {
+            const response = await webhookService.handleWebhook({
+                data: (projectId: string) => convertRequest(request, projectId, request.params.flowId),
+                logger: request.log,
+                flowId: request.params.flowId,
+                async: true,
+                saveSampleData: true,
+                flowVersionToRun: WebhookFlowVersionToRun.LATEST,
+                execute: false,
+                ...extractHeaderFromRequest(request),
+            })
+            await reply
+                .status(response.status)
+                .headers(response.headers)
+                .send(response.body)
+        },
     })
 
 }

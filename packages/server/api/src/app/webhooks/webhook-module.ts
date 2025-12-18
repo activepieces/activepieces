@@ -2,7 +2,13 @@ import { FastifyPluginAsync } from 'fastify'
 import fastifyXmlBodyParser from 'fastify-xml-body-parser'
 import { webhookController } from './webhook-controller'
 
+const WEBDAV_METHODS = ['PROPFIND', 'PROPPATCH', 'MKCOL', 'COPY', 'MOVE', 'LOCK', 'UNLOCK', 'REPORT'] as const
+
 export const webhookModule: FastifyPluginAsync = async (app) => {
+    for (const method of WEBDAV_METHODS) {
+        app.addHttpMethod(method, { hasBody: true })
+    }
+
     app.addContentTypeParser(
         'application/json',
         { parseAs: 'string' },
