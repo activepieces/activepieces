@@ -1,6 +1,6 @@
 import os from 'os'
 import path from 'path'
-import { AppSystemProp, ContainerType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, ContainerType, DatabaseType, environmentVariables, pinoLogging, RedisType, SystemProp, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -13,11 +13,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'pino'
 
-
-export enum DatabaseType {
-    POSTGRES = 'POSTGRES',
-    SQLITE3 = 'SQLITE3',
-}
 
 
 const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
@@ -54,7 +49,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.STANDALONE,
     [AppSystemProp.TEMPLATES_SOURCE_URL]:
-        'https://cloud.activepieces.com/api/v1/flow-templates',
+        'https://cloud.activepieces.com/api/v1/templates',
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',

@@ -1,6 +1,5 @@
-import { ApEdition, apId } from '@activepieces/shared'
+import { apId } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
-import { isNotOneOfTheseEditions } from '../../database-common'
 
 enum ProjectType {
     TEAM = 'TEAM',
@@ -106,15 +105,13 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
         `)
 
         let excludedUsers: string[] = []
-        // todo(Rupal): Since we have our own projects, we will skip this check
-        if (isNotOneOfTheseEditions([ApEdition.COMMUNITY, ApEdition.ENTERPRISE, ApEdition.CLOUD])) {
-            const rows = await queryRunner.query('SELECT "ownerId" FROM "project"')
-            await queryRunner.query(`
+        const rows = await queryRunner.query('SELECT "ownerId" FROM "project"')
+        await queryRunner.query(`
                 UPDATE "project"
                 SET "type" = '${ProjectType.PERSONAL}'
             `)
-            excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
-        }
+        excludedUsers = rows.map((row: { ownerId: string }) => row.ownerId) as string[]
+
 
         if (users.length > 0) {
             const values: string[] = []

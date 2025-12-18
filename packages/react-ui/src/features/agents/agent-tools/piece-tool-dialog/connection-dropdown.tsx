@@ -110,7 +110,7 @@ export const ConnectionDropdown = React.memo(
             }
           />
           {shouldShowError && (
-            <p className="text-sm font-medium text-destructive break-words">
+            <p className="text-sm font-medium text-destructive wrap-break-word">
               {t('Connection is required')}
             </p>
           )}

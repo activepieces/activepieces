@@ -1,5 +1,4 @@
-
-// import { ApplicationEventName } from '@activepieces/ee-shared'
+// import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -10,10 +9,8 @@ import {
     FlowOperationType,
     FlowStatus,
     flowStructureUtil,
-    FlowTemplateWithoutProjectInformation,
     FlowTrigger,
     GetFlowQueryParamsRequest,
-    GetFlowTemplateRequestQuery,
     isNil,
     ListFlowsRequest,
     Permission,
@@ -22,6 +19,7 @@ import {
     PrincipalType,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SharedTemplate,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -35,9 +33,9 @@ import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/author
 // import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 // import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
+import { platformPlanService } from '../../platform-plan/platform-plan.service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { flowService } from './flow.service'
-import { platformPlanService } from '../../platform-plan/platform-plan.service'
 
 const DEFAULT_PAGE_SIZE = 10
 
@@ -309,9 +307,9 @@ const GetFlowTemplateRequestOptions = {
         params: Type.Object({
             id: ApId,
         }),
-        querystring: GetFlowTemplateRequestQuery,
+        querystring: GetFlowQueryParamsRequest,
         response: {
-            [StatusCodes.OK]: FlowTemplateWithoutProjectInformation,
+            [StatusCodes.OK]: SharedTemplate,
         },
     },
 }

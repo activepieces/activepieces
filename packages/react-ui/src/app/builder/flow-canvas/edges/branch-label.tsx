@@ -60,7 +60,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
     StepLocationRelativeToParent.INSIDE_BRANCH;
-  const isBranchNonInteractive = isNotInsideRoute || isFallbackBranch;
+  const isOtherwiseBranch = isNotInsideRoute || isFallbackBranch;
   const isBranchSelected =
     selectedStep === props.sourceNodeName &&
     props.stepLocationRelativeToParent ===
@@ -83,7 +83,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
       }}
     >
       <div
-        className="bg-background"
+        className="bg-builder-background"
         style={{
           paddingTop: flowUtilConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
           paddingBottom: flowUtilConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
@@ -91,11 +91,11 @@ const BranchLabel = (props: BaseBranchLabel) => {
       >
         <div
           className={cn(
-            'flex items-center justify-center gap-0.5 select-none transition-all rounded-full  text-sm border  border-solid bg-primary-100/30 dark:bg-primary-100/15  border-primary/50   px-2 text-primary/80 dark:text-primary/90   hover:text-primary hover:border-primary',
+            'flex items-center justify-center gap-0.5 select-none transition-all rounded-md  text-sm border  border-solid bg-primary-100/30 dark:bg-primary-100/15  border-primary/50   px-2 text-primary/80 dark:text-primary/90   hover:text-primary hover:border-primary',
             {
               'border-primary text-primary': isBranchSelected,
-              'bg-accent dark:bg-accent text-foreground/70 dark:text-foreground/70  border-accent hover:text-foreground/70 hover:bg-accent hover:border-accent cursor-default':
-                isBranchNonInteractive,
+              'bg-border/60 text-foreground/70 dark:text-foreground/70  border-border hover:text-foreground/70 hover:bg-border/60 hover:border-border cursor-default':
+                isOtherwiseBranch,
             },
           )}
           style={{
@@ -106,7 +106,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
             if (
               props.stepLocationRelativeToParent ===
                 StepLocationRelativeToParent.INSIDE_BRANCH &&
-              !isBranchNonInteractive
+              !isOtherwiseBranch
             ) {
               selectStepByName(props.sourceNodeName);
               setSelectedBranchIndex(props.branchIndex);
@@ -122,7 +122,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
             {props.label === 'Otherwise' ? t('Otherwise') : props.label}
           </div>
 
-          {!isBranchNonInteractive &&
+          {!isOtherwiseBranch &&
             !readonly &&
             step.type === FlowActionType.ROUTER && (
               <DropdownMenu

@@ -203,6 +203,8 @@ export const authenticationUtils = {
     },
 
     async saveNewsLetterSubscriber(user: User, platformId: string, identity: UserIdentity, log: FastifyBaseLogger): Promise<void> {
+        // todo(Rupal): Nope, we don't want this
+        return
         const platform = await platformService.getOneWithPlanOrThrow(platformId)
         const environment = system.get(AppSystemProp.ENVIRONMENT)
         if (environment !== ApEnvironment.PRODUCTION) {
@@ -222,7 +224,6 @@ export const authenticationUtils = {
                     body: JSON.stringify({ email: identity.email }),
                 },
             )
-            // return await response.json()
             await response.json()
         }
         catch (error) {

@@ -4,7 +4,6 @@ import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, ApEnvironment } from '@activepieces/shared'
 import { DataSource, MigrationInterface } from 'typeorm'
 import { system } from '../helper/system/system'
-import { commonProperties } from './database-connection'
 import 'sqlite3'
 import { SwitchToRouter1741578250432 } from './migration/common/1741578250432-switch-to-router'
 import { ChangeExternalIdsForTables1747346473001 } from './migration/common/1747346473001-ChangeExternalIdsForTables'
@@ -109,7 +108,7 @@ const getSqliteDatabaseInMemory = (): string => {
     return ':memory:'
 }
 
-const getSqliteDatabase = (): string => {
+export const getSqliteDatabase = (): string => {
     const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
     if (env === ApEnvironment.TESTING) {
@@ -235,26 +234,17 @@ const getMigrationConfig = (): MigrationConfig => {
     }
 }
 
-const getSynchronize = (): boolean => {
-    const env = system.getOrThrow<ApEnvironment>(AppSystemProp.ENVIRONMENT)
-
-    const value: Partial<Record<ApEnvironment, boolean>> = {
-        [ApEnvironment.TESTING]: true,
-    }
-
-    return value[env] ?? false
-}
-
-
-export const createSqlLiteDataSource = (): DataSource => {
-    const migrationConfig = getMigrationConfig()
-
+/**
+ * @deprecated SQLite3 is deprecated and only exists for migration purposes. Use PGLite instead.
+ */
+export const createSqlLiteDataSourceForMigrations = (): DataSource => {
     return new DataSource({
         type: 'sqlite',
         database: getSqliteDatabase(),
-        ...migrationConfig,
-        ...commonProperties,
-        synchronize: getSynchronize(),
+        ...getMigrationConfig(),
+        entities: [],
+        subscribers: [],
+        synchronize: false,
     })
 }
 

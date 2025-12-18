@@ -8,7 +8,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 
 type BuilderMessageSchema = BuilderMessage & {
@@ -32,7 +31,7 @@ export const BuilderMessageEntity = new EntitySchema<BuilderMessageSchema>({
             nullable: false,
         },
         usage: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
     },
