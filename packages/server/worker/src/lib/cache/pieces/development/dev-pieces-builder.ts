@@ -45,16 +45,13 @@ async function handleFileChange(packages: string[], pieceName: string, packageNa
             throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
         }
 
-        const startTime = Date.now()
-        await spawnWithKill({ cmd: `npx nx run-many -t ${buildTarget} --projects=${pieceProjectName}`, printOutput: true })
-        const endTime = Date.now()
+        const startTime = performance.now()
+        await spawnWithKill({ cmd: `npx nx run-many --batch -t ${buildTarget} --projects=${pieceProjectName}`, printOutput: true })
+        const endTime = performance.now()
         const buildTime = (endTime - startTime) / 1000
 
         log.info(chalk.blue.bold(`Build completed in ${buildTime.toFixed(2)} seconds`))
 
-        await devPiecesInstaller(log).linkSharedActivepiecesPackagesToPiece(packageName)
-        await devPiecesInstaller(log).linkSharedActivepiecesPackagesToEachOther()
-     
         const cache = cacheState(GLOBAL_CACHE_COMMON_PATH, log)
         await cache.saveCache('@activepieces/pieces-framework', CacheState.PENDING)
         await cache.saveCache('@activepieces/pieces-common', CacheState.PENDING)
@@ -83,6 +80,7 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
     const watchers: FSWatcher[] = []
   
     await devPiecesInstaller(app.log).installPiecesDependencies(packages)
+    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
 
     for (const packageName of packages) {
         app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
@@ -96,6 +94,8 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
 
         const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
         const nxProjectJson = await filePiecesUtils(app.log).getProjectJsonFromFolderPath(pieceDirectory)
+
+        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
 
         const debouncedHandleFileChange = debounce(() => {
             handleFileChange(packages, packageName, packageJsonName, nxProjectJson, io, app.log).catch(app.log.error)

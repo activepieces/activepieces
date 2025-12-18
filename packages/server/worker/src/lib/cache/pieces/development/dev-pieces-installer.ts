@@ -52,14 +52,14 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
 
         const apDependencies = Object.keys(dependencies ?? {}).filter(dep => dep.startsWith('@activepieces/') && packageName !== dep)
 
-        apDependencies.forEach(async (dependency) => {
+        await Promise.all(apDependencies.map(async (dependency) => {
             await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency} --quiet`, printOutput: true }).catch(e => {
                 log.error({
                     name: 'linkSharedActivepiecesPackagesToPiece',
                     message: JSON.stringify(e),
                 }, 'Error linking shared activepieces packages to piece')
             })
-        })
+        }))
     }
 
     async function initSharedPackagesLinks() {
@@ -80,7 +80,7 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
 
         const noneRegisteryPackagesKeys = Object.keys(noneRegisteryPackages)
 
-        noneRegisteryPackagesKeys.forEach(async key => linkSharedActivepiecesPackagesToPiece(key))
+        await Promise.all(noneRegisteryPackagesKeys.map(key => linkSharedActivepiecesPackagesToPiece(key)))
     }
 
     return {
