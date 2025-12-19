@@ -107,10 +107,16 @@ import { RemoveDurationAndAddArchivedAtIdxPostgres1763378445659 } from './migrat
 import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-AddProjectType'
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
+import { CreateTemplateTable1764777773932 } from './migration/postgres/1764777773932-CreateTemplateTable'
 import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { RemovePlatformSMTP1764945141702 } from './migration/postgres/1764945141702-RemovePlatformSMTP'
 import { AddPersonalProjectsForAllUsers1765107860778 } from './migration/postgres/1765107860778-AddPersonalProjectsForAllUsers'
+import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
+import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
+import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
+import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
+import { AddAnalyticsReport1766038629198 } from './migration/postgres/1766038629198-add-analytics-report'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -122,8 +128,14 @@ const getSslConfig = (): boolean | TlsOptions => {
     return false
 }
 
-const getMigrations = (): (new () => MigrationInterface)[] => {
+export const getMigrations = (): (new () => MigrationInterface)[] => {
     const migrations: (new () => MigrationInterface)[] = [
+        MigrateOldTemplatesToNewSchema1765993826655,
+        AddAnalyticsReport1766038629198,
+        AddTemplateStatus1765894492098,
+        AddStepsExecutedAndAICreditsToFlowRun1765461560795,
+        AddLastActiveToUser1765325909187,
+        CreateTemplateTable1764777773932,
         AddPersonalProjectsForAllUsers1765107860778,
         RemovePlatformSMTP1764945141702,
         DropProjectIdFromPieceMetadata1764866386989,

@@ -10,7 +10,7 @@ export const TestStepSection = ({ stepName }: { stepName: string }) => {
   );
 
   return (
-    <div className="flex flex-col gap-3 select-none text-center px-12 py-10 flex-grow items-center justify-center ">
+    <div className="flex flex-col gap-3 select-none text-center px-12 py-10 grow items-center justify-center ">
       <div>
         {isTrigger
           ? t(

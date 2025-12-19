@@ -52,7 +52,7 @@ const TextEditor = () => {
             className={cn(
               'flex-1 h-full min-w-0 rounded-none',
               'border-none text-sm px-2 resize-none ',
-              'focus:outline-none',
+              'focus:outline-hidden',
               'placeholder:text-muted-foreground',
             )}
             autoComplete="off"

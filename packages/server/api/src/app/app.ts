@@ -1,7 +1,7 @@
-// import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
+// import { ApplicationEventName, AuthenticationEvent, ConnectionEvent, FlowCreatedEvent, FlowDeletedEvent, FlowRunEvent, FlowUpdatedEvent, FolderEvent, GitRepoWithoutSensitiveData, ProjectMember, ProjectReleaseEvent, ProjectRoleEvent, SigningKeyEvent, SignUpEvent } from '@activepieces/ee-shared'
 import { PieceMetadata } from '@activepieces/pieces-framework'
 import { AppSystemProp, exceptionHandler, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, FlowTemplate, Folder, ProjectRelease, ProjectWithLimits, spreadIfDefined, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
+import { ApEdition, ApEnvironment, AppConnectionWithoutSensitiveData, Flow, FlowRun, Folder, ProjectRelease, ProjectWithLimits, spreadIfDefined, Template, UserInvitation, UserWithMetaInformation } from '@activepieces/shared'
 import swagger from '@fastify/swagger'
 import { createAdapter } from '@socket.io/redis-adapter'
 import { FastifyInstance, FastifyRequest, HTTPMethods } from 'fastify'
@@ -9,8 +9,8 @@ import fastifySocketIO from 'fastify-socket'
 import { Socket } from 'socket.io'
 import { aiProviderService } from './ai/ai-provider-service'
 import { aiProviderModule } from './ai/ai-provider.module'
-// import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { analyticsModule } from './analytics/analytics-module'
+import { platformAnalyticsModule } from './analytics/platform-analytics.module'
 import { setPlatformOAuthService } from './app-connection/app-connection-service/oauth2'
 import { userOAuth2Service } from './app-connection/app-connection-service/oauth2/services/user-oauth2-service'
 import { appConnectionModule } from './app-connection/app-connection.module'
@@ -20,8 +20,6 @@ import { securityHandlerChain } from './core/security/security-handler-chain'
 import { websocketService } from './core/websockets.service'
 import { distributedLock, redisConnections } from './database/redis-connections'
 // import { alertsModule } from './ee/alerts/alerts-module'
-// import { alertsService } from './ee/alerts/alerts-service'
-// import { platformAnalyticsModule } from './ee/analytics/platform-analytics.module'
 // import { apiKeyModule } from './ee/api-keys/api-key-module'
 // import { platformOAuth2Service } from './ee/app-connections/platform-oauth2-service'
 // import { appCredentialModule } from './ee/app-credentials/app-credentials.module'
@@ -37,13 +35,13 @@ import { distributedLock, redisConnections } from './database/redis-connections'
 // import { customDomainModule } from './ee/custom-domains/custom-domain.module'
 // import { domainHelper } from './ee/custom-domains/domain-helper'
 // import { enterpriseFlagsHooks } from './ee/flags/enterprise-flags.hooks'
-// import { platformFlowTemplateModule } from './ee/flow-template/platform-flow-template.module'
 // import { globalConnectionModule } from './ee/global-connections/global-connection-module'
 // import { licenseKeysModule } from './ee/license-keys/license-keys-module'
 // import { managedAuthnModule } from './ee/managed-authn/managed-authn-module'
 // import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 // import { platformPieceModule } from './ee/pieces/platform-piece-module'
 // import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
+// import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 // import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 // import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 // import { platformProjectModule } from './ee/projects/platform-project-module'
@@ -54,7 +52,6 @@ import { distributedLock, redisConnections } from './database/redis-connections'
 // import { signingKeyModule } from './ee/signing-key/signing-key-module'
 // import { solutionsModule } from './ee/solutions/solutions.module'
 // import { userModule } from './ee/users/user.module'
-import { builderModule } from './builder/builder.module'
 import { fileModule } from './file/file.module'
 import { flagModule } from './flags/flag.module'
 // import { flagHooks } from './flags/flags.hooks'
@@ -63,10 +60,7 @@ import { humanInputModule } from './flows/flow/human-input/human-input.module'
 import { flowRunModule } from './flows/flow-run/flow-run-module'
 import { flowModule } from './flows/flow.module'
 import { folderModule } from './flows/folder/folder.module'
-import { cloudFlowTemplateModule } from './flows/templates/cloud-flow-template.module'
-import { communityFlowTemplateModule } from './flows/templates/community-flow-template.module'
-// import { eventsHooks } from './helper/application-events'
-import { flowTemplateModule } from './flows/templates/flow-template.module'
+import { eventsHooks } from './helper/application-events'
 import { openapiModule } from './helper/openapi/openapi.module'
 import { system } from './helper/system/system'
 import { SystemJobName } from './helper/system-jobs/common'
@@ -88,6 +82,7 @@ import { projectMemberModule } from './project-member/project-member.module'
 import { projectRoleModule } from './project-role/project-role.module'
 import { storeEntryModule } from './store-entry/store-entry.module'
 import { tablesModule } from './tables/tables.module'
+import { templateModule } from './template/template.module'
 import { todoActivityModule } from './todos/activity/todos-activity.module'
 import { todoModule } from './todos/todo.module'
 import { appEventRoutingModule } from './trigger/app-event-routing/app-event-routing.module'
@@ -99,6 +94,7 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
+import { builderModule } from './builder/builder.module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -125,6 +121,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                 },
                 schemas: {
                     // [ApplicationEventName.FLOW_CREATED]: FlowCreatedEvent,
+                    // [ApplicationEventName.FLOW_UPDATED]: FlowUpdatedEvent,
                     // [ApplicationEventName.FLOW_DELETED]: FlowDeletedEvent,
                     // [ApplicationEventName.CONNECTION_UPSERTED]: ConnectionEvent,
                     // [ApplicationEventName.CONNECTION_DELETED]: ConnectionEvent,
@@ -140,7 +137,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
                     // [ApplicationEventName.SIGNING_KEY_CREATED]: SigningKeyEvent,
                     // [ApplicationEventName.PROJECT_ROLE_CREATED]: ProjectRoleEvent,
                     // [ApplicationEventName.PROJECT_RELEASE_CREATED]: ProjectReleaseEvent,
-                    'flow-template': FlowTemplate,
+                    'template': Template,
                     'folder': Folder,
                     'user': UserWithMetaInformation,
                     'user-invitation': UserInvitation,
@@ -217,21 +214,20 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     // await app.register(licenseKeysModule)
     await app.register(tablesModule)
     await app.register(userModule)
-    await app.register(flowTemplateModule)
-    await app.register(cloudFlowTemplateModule)
     await app.register(globalOAuthAppModule)
     await app.register(oauthAppModule)
     await app.register(todoModule)
     await app.register(analyticsModule)
     setPlatformOAuthService(userOAuth2Service(app.log))
 
-    // await app.register(adminPlatformModule)
     await app.register(projectRoleModule)
     await app.register(projectMemberModule)
 
     await app.register(builderModule)
     await app.register(todoActivityModule)
     // await app.register(solutionsModule)
+    await app.register(templateModule)
+    await app.register(platformAnalyticsModule)
     systemJobHandlers.registerJobHandler(SystemJobName.DELETE_FLOW, (data) => flowBackgroundJobs(app.log).deleteHandler(data))
     systemJobHandlers.registerJobHandler(SystemJobName.UPDATE_FLOW_STATUS, (data) => flowBackgroundJobs(app.log).updateStatusHandler(data))
 
@@ -285,6 +281,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
     switch (edition) {
         case ApEdition.CLOUD:
             // await app.register(adminPlatformModule)
+            // await app.register(adminPlatformTemplatesCloudModule)
             // await app.register(appCredentialModule)
             // await app.register(connectionKeyModule)
             // await app.register(platformProjectModule)
@@ -301,10 +298,8 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             // await app.register(enterpriseLocalAuthnModule)
             // await app.register(federatedAuthModule)
             // await app.register(apiKeyModule)
-            // await app.register(platformFlowTemplateModule)
             // await app.register(gitRepoModule)
             // await app.register(auditEventModule)
-            // await app.register(platformAnalyticsModule)
             // await app.register(projectRoleModule)
             // await app.register(projectReleaseModule)
             // await app.register(globalConnectionModule)
@@ -312,7 +307,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             // projectHooks.set(projectEnterpriseHooks)
             // eventsHooks.set(auditLogService)
             // flagHooks.set(enterpriseFlagsHooks)
-            // systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => alertsService(app.log).runScheduledReminderJob(data))
             // exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
@@ -329,15 +323,12 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             // await app.register(enterpriseLocalAuthnModule)
             // await app.register(federatedAuthModule)
             // await app.register(apiKeyModule)
-            // await app.register(platformFlowTemplateModule)
             // await app.register(gitRepoModule)
             // await app.register(auditEventModule)
-            // await app.register(platformAnalyticsModule)
             // await app.register(projectRoleModule)
             // await app.register(projectReleaseModule)
             // await app.register(globalConnectionModule)
             // await app.register(queueMetricsModule)
-            // systemJobHandlers.registerJobHandler(SystemJobName.ISSUES_SUMMARY, (data) => alertsService(app.log).runScheduledReminderJob(data))
             // setPlatformOAuthService(platformOAuth2Service(app.log))
             // projectHooks.set(projectEnterpriseHooks)
             // eventsHooks.set(auditLogService)
@@ -346,7 +337,6 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.COMMUNITY:
             await app.register(projectModule)
             await app.register(communityPiecesModule)
-            await app.register(communityFlowTemplateModule)
             await app.register(queueMetricsModule)
             break
     }

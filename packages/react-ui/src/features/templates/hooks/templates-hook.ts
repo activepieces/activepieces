@@ -1,9 +1,11 @@
 import { useQueries } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { ListTemplatesRequestQuery, Template } from '@activepieces/shared';
+
 import { templatesApi } from '../lib/templates-api';
 
-export const useTemplates = () => {
+export const useTemplates = (request: ListTemplatesRequestQuery) => {
   const [search, setSearch] = useState<string>('');
 
   // Fetch community, cloud, and user templates
@@ -12,7 +14,7 @@ export const useTemplates = () => {
       {
         queryKey: ['templates'],
         queryFn: async () => {
-          const result = await templatesApi.list();
+          const result = await templatesApi.list(request);
           return result.data;
         },
         staleTime: 0, // Always fetch when needed
@@ -20,7 +22,7 @@ export const useTemplates = () => {
       {
         queryKey: ['cloud-templates'],
         queryFn: async () => {
-          const result = await templatesApi.listCloud();
+          const result = await templatesApi.listCloud(request);
           return result.data;
         },
         staleTime: 1000 * 60 * 5, // Cache for 5 minutes
@@ -28,7 +30,7 @@ export const useTemplates = () => {
       {
         queryKey: ['community-templates'],
         queryFn: async () => {
-          const result = await templatesApi.listCommunity();
+          const result = await templatesApi.listCommunity(request);
           return result.data;
         },
         staleTime: 1000 * 60 * 10, // Cache for 10 minutes

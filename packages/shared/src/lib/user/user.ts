@@ -45,6 +45,7 @@ export const User = Type.Object({
     identityId: Type.String(),
     externalId: Nullable(Type.String()),
     platformId: Nullable(Type.String()),
+    lastActiveDate: Nullable(Type.String()),
 })
 
 export type User = Static<typeof User>
@@ -62,6 +63,7 @@ export const UserWithMetaInformation = Type.Object({
     created: Type.String(),
     updated: Type.String(),
     profileImageUrl: Type.Optional(Type.String()),
+    lastActiveDate: Nullable(Type.String()),
 })
 
 export type UserWithMetaInformation = Static<typeof UserWithMetaInformation>
@@ -83,6 +85,7 @@ export const UserWithMetaInformationAndProject = Type.Object({
     newsLetter: Type.Boolean(),
     verified: Type.Boolean(),
     profileImageUrl: Type.Optional(Type.String()),
+    lastActiveDate: Nullable(Type.String()),
 })
 
 export type UserWithMetaInformationAndProject = Static<typeof UserWithMetaInformationAndProject>

@@ -22,6 +22,7 @@ import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { buttonVariants } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sidebar,
   SidebarContent,
@@ -67,6 +68,7 @@ export function PlatformSidebar() {
           to: '/platform/analytics',
           label: t('Overview'),
           icon: LineChart,
+          show: isCloudPlatform,
           locked: !platform.plan.analyticsEnabled,
         },
         {
@@ -193,7 +195,7 @@ export function PlatformSidebar() {
 
   return (
     <Sidebar className="px-4" variant="inset">
-      <SidebarHeader>
+      <SidebarHeader className="px-0">
         <div className="w-full pb-2 flex items-center gap-2">
           <Link
             to={defaultRoute}
@@ -218,26 +220,33 @@ export function PlatformSidebar() {
           </SidebarMenuButton>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        {groups.map((group) => (
-          <SidebarGroup
-            key={group.label}
-            className="px-0 border-t border-gray-300 pt-4 list-none"
-          >
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-            {group.items.filter(item => !!item.show).map((item) => (
-              <ApSidebarItem
-                type="link"
-                key={item.label}
-                to={item.to}
-                label={item.label}
-                icon={item.icon}
-                locked={item.locked}
-              />
-            ))}
-          </SidebarGroup>
-        ))}
-      </SidebarContent>
+      <ScrollArea className="h-full">
+        <SidebarContent>
+          {groups.map((group, idx) => (
+            <SidebarGroup
+              key={group.label}
+              className={cn('px-0 pt-4 list-none gap-2', {
+                'border-t border-gray-300 ': idx > 0,
+              })}
+            >
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              {group.items
+                .filter((item) => !!item.show)
+                .map((item) => (
+                  <ApSidebarItem
+                    type="link"
+                    key={item.label}
+                    to={item.to}
+                    label={item.label}
+                    icon={item.icon}
+                    locked={item.locked}
+                  />
+                ))}
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+      </ScrollArea>
+
       <SidebarFooter>
         <SidebarUser />
       </SidebarFooter>

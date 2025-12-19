@@ -62,7 +62,7 @@ export function ProjectDashboardSidebar() {
     refetch: refetchProjects,
   } = projectHooks.useProjectsInfinite(20);
   const { embedState } = useEmbedding();
-  const { state, setOpen } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
@@ -185,16 +185,8 @@ export function ProjectDashboardSidebar() {
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar
-        variant="inset"
-        collapsible="icon"
-        onClick={() => setOpen(true)}
-        className={cn(
-          state === 'collapsed' ? 'cursor-nesw-resize' : '',
-          'group',
-          'p-1',
-        )}
-      >
+      <Sidebar variant="inset" collapsible="icon" className="group p-1">
+        {/* onClick removed - handled in base Sidebar component to prevent auto-expansion on navigation */}
         <AppSidebarHeader />
 
         {state === 'collapsed' && <div className="mt-1" />}
@@ -210,7 +202,7 @@ export function ProjectDashboardSidebar() {
             'overflow-hidden',
           )}
         >
-          <SidebarGroup className="cursor-default flex-shrink-0">
+          <SidebarGroup className="cursor-default shrink-0">
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
@@ -221,10 +213,7 @@ export function ProjectDashboardSidebar() {
           </SidebarGroup>
 
           <SidebarSeparator
-            className={cn(
-              state === 'collapsed' ? 'mb-3' : 'mb-5',
-              'flex-shrink-0',
-            )}
+            className={cn(state === 'collapsed' ? 'mb-3' : 'mb-5', 'shrink-0')}
           />
 
           <SidebarGroup className="flex-1 flex flex-col overflow-hidden">

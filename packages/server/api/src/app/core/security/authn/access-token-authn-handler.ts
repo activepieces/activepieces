@@ -1,6 +1,7 @@
-import { ActivepiecesError, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { accessTokenManager } from '../../../authentication/lib/access-token-manager'
+import { userService } from '../../../user/user-service'
 import { BaseSecurityHandler } from '../security-handler'
 import { distributedStore } from '../../../database/redis-connections'
 
@@ -20,6 +21,9 @@ export class AccessTokenAuthnHandler extends BaseSecurityHandler {
         const accessToken = this.extractAccessTokenOrThrow(request)
         await this.checkIfAccessTokenIsRevokedAndThrow(accessToken)
         const principal = await accessTokenManager.verifyPrincipal(accessToken)
+        if (principal.type === PrincipalType.USER) {
+            await userService.updateLastActiveDate({ id: principal.id })
+        }
         request.principal = principal
     }
 

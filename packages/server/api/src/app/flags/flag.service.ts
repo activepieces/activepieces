@@ -1,5 +1,5 @@
 import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces/server-shared'
-import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
+import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil, TemplateCategory } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 // import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
@@ -52,6 +52,7 @@ export const flagService = {
                 ApFlagId.MAX_FIELDS_PER_TABLE,
                 ApFlagId.MAX_RECORDS_PER_TABLE,
                 ApFlagId.MAX_FILE_SIZE_MB,
+                ApFlagId.TEMPLATES_CATEGORIES,
             ]),
         })
         const now = new Date().toISOString()
@@ -328,6 +329,7 @@ export type FlagType =
     | BaseFlagStructure<ApFlagId.TELEMETRY_ENABLED, boolean>
     | BaseFlagStructure<ApFlagId.USER_CREATED, boolean>
     | BaseFlagStructure<ApFlagId.WEBHOOK_URL_PREFIX, string>
+    | BaseFlagStructure<ApFlagId.TEMPLATES_CATEGORIES, TemplateCategory[]>
 
 type BaseFlagStructure<K extends ApFlagId, V> = {
     id: K

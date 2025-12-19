@@ -1,4 +1,60 @@
+import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { system } from '../../../helper/system/system'
+
+const databaseType = system.get(AppSystemProp.DB_TYPE)
+const tableWithCollation = `
+CREATE TABLE "piece_metadata" (
+    "id" character varying(21) NOT NULL,
+    "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    "name" character varying NOT NULL,
+    "authors" character varying array NOT NULL,
+    "displayName" character varying NOT NULL,
+    "logoUrl" character varying NOT NULL,
+    "projectUsage" integer NOT NULL DEFAULT '0',
+    "description" character varying,
+    "projectId" character varying,
+    "platformId" character varying,
+    "version" character varying COLLATE "en_natural" NOT NULL,
+    "minimumSupportedRelease" character varying COLLATE "en_natural" NOT NULL,
+    "maximumSupportedRelease" character varying COLLATE "en_natural" NOT NULL,
+    "auth" json,
+    "actions" json NOT NULL,
+    "triggers" json NOT NULL,
+    "pieceType" character varying NOT NULL,
+    "categories" character varying array,
+    "packageType" character varying NOT NULL,
+    "archiveId" character varying(21),
+    CONSTRAINT "REL_b43d7b070f0fc309932d4cf016" UNIQUE ("archiveId"),
+    CONSTRAINT "PK_b045821e9caf2be9aba520d96da" PRIMARY KEY ("id")
+)`
+const tableWithoutCollation = `
+CREATE TABLE "piece_metadata" (
+    "id" character varying(21) NOT NULL,
+    "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    "name" character varying NOT NULL,
+    "authors" character varying array NOT NULL,
+    "displayName" character varying NOT NULL,
+    "logoUrl" character varying NOT NULL,
+    "projectUsage" integer NOT NULL DEFAULT '0',
+    "description" character varying,
+    "projectId" character varying,
+    "platformId" character varying,
+    "version" character varying NOT NULL,
+    "minimumSupportedRelease" character varying NOT NULL,
+    "maximumSupportedRelease" character varying NOT NULL,
+    "auth" json,
+    "actions" json NOT NULL,
+    "triggers" json NOT NULL,
+    "pieceType" character varying NOT NULL,
+    "categories" character varying array,
+    "packageType" character varying NOT NULL,
+    "archiveId" character varying(21),
+    CONSTRAINT "REL_b43d7b070f0fc309932d4cf016" UNIQUE ("archiveId"),
+    CONSTRAINT "PK_b045821e9caf2be9aba520d96da" PRIMARY KEY ("id")
+)`
 
 export class InitialPg1740031656104 implements MigrationInterface {
     name = 'InitialPg1740031656104'
@@ -275,33 +331,12 @@ export class InitialPg1740031656104 implements MigrationInterface {
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_folder_project_id_display_name" ON "folder" ("projectId", "displayName")
         `)
-        await queryRunner.query(`
-            CREATE TABLE "piece_metadata" (
-                "id" character varying(21) NOT NULL,
-                "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-                "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-                "name" character varying NOT NULL,
-                "authors" character varying array NOT NULL,
-                "displayName" character varying NOT NULL,
-                "logoUrl" character varying NOT NULL,
-                "projectUsage" integer NOT NULL DEFAULT '0',
-                "description" character varying,
-                "projectId" character varying,
-                "platformId" character varying,
-                "version" character varying COLLATE "en_natural" NOT NULL,
-                "minimumSupportedRelease" character varying COLLATE "en_natural" NOT NULL,
-                "maximumSupportedRelease" character varying COLLATE "en_natural" NOT NULL,
-                "auth" json,
-                "actions" json NOT NULL,
-                "triggers" json NOT NULL,
-                "pieceType" character varying NOT NULL,
-                "categories" character varying array,
-                "packageType" character varying NOT NULL,
-                "archiveId" character varying(21),
-                CONSTRAINT "REL_b43d7b070f0fc309932d4cf016" UNIQUE ("archiveId"),
-                CONSTRAINT "PK_b045821e9caf2be9aba520d96da" PRIMARY KEY ("id")
-            )
-        `)
+        if (databaseType !== DatabaseType.PGLITE) {
+            await queryRunner.query(tableWithCollation)
+        }
+        else {
+            await queryRunner.query(tableWithoutCollation)
+        }
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_piece_metadata_name_project_id_version" ON "piece_metadata" ("name", "version", "projectId")
         `)

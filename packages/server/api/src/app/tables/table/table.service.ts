@@ -13,9 +13,8 @@ import {
     TableWebhookEventType,
     UpdateTableRequest,
 } from '@activepieces/shared'
-import { ILike, In } from 'typeorm'
+import { ArrayContains, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { APArrayContains } from '../../database/database-connection'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
 import { fieldService } from '../field/field.service'
@@ -175,7 +174,7 @@ export const tableService = {
         events,
     }: GetWebhooksParams): Promise<TableWebhook[]> {
         return tableWebhookRepo().find({
-            where: { projectId, tableId: id, ...APArrayContains('events', events) },
+            where: { projectId, tableId: id, events: ArrayContains(events) },
         })
     },
 

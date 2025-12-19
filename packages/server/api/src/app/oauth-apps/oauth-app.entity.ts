@@ -3,7 +3,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
@@ -28,7 +27,7 @@ export const OAuthAppEntity = new EntitySchema<OAuthAppSchema>({
             type: String,
         },
         clientSecret: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
         },
     },
     indices: [

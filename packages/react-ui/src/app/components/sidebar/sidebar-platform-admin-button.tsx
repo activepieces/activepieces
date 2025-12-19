@@ -4,8 +4,6 @@ import { t } from 'i18next';
 import { Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { notificationHooks } from '../../routes/platform/notifications/hooks/notifications-hooks';
-
 import { useEmbedding } from '@/components/embed-provider';
 import { Dot } from '@/components/ui/dot';
 import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
@@ -16,7 +14,6 @@ export function SidebarPlatformAdminButton() {
   const showPlatformAdminDashboard = useIsPlatformAdmin();
   const { embedState } = useEmbedding();
   const navigate = useNavigate();
-  const messages = notificationHooks.useNotifications();
   const platformRole = userHooks.getCurrentUserPlatformRole();
 
   if (embedState.isEmbedded || !showPlatformAdminDashboard) {
@@ -32,7 +29,7 @@ export function SidebarPlatformAdminButton() {
         <Shield className="size-4" />
         <span className={`text-sm`}>{t('Platform Admin')}</span>
       </div>
-      {false && messages.length > 0 && platformRole === PlatformRole.ADMIN && (
+      {false && platformRole === PlatformRole.ADMIN && (
         <Dot
           variant="primary"
           className="absolute right-3 top-1/2 transform -translate-y-1/2 size-2 rounded-full"

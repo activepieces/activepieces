@@ -76,7 +76,6 @@ export function useBuilderStateContext<T>(
 
 export enum LeftSideBarType {
   RUNS = 'runs',
-  VERSIONS = 'versions',
   RUN_DETAILS = 'run-details',
   AI_COPILOT = 'chat',
   PROMPT_TO_FLOW = 'prompt-to-flow',
@@ -86,6 +85,7 @@ export enum LeftSideBarType {
 export enum RightSideBarType {
   NONE = 'none',
   PIECE_SETTINGS = 'piece-settings',
+  VERSIONS = 'versions',
 }
 
 export enum ChatDrawerSource {
@@ -186,9 +186,6 @@ export type BuilderState = {
   setSelectedPieceMetadataInPieceSelector: (
     metadata: StepMetadataWithSuggestions | null,
   ) => void;
-  /**Need this to re-render the piece settings form on replace step or updating agent */
-  lastRerenderPieceSettingsTimeStamp: number | null;
-  setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -701,9 +698,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               request: defaultValues,
             });
             selectStepByName('trigger');
-            set(() => ({
-              lastRerenderPieceSettingsTimeStamp: Date.now(),
-            }));
             break;
           }
           case FlowOperationType.ADD_ACTION: {
@@ -754,9 +748,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 valid: defaultValues.valid,
               },
             });
-            set(() => ({
-              lastRerenderPieceSettingsTimeStamp: Date.now(),
-            }));
             break;
           }
         }
@@ -788,12 +779,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               : state.rightSidebar,
           };
         });
-      },
-      lastRerenderPieceSettingsTimeStamp: null,
-      setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => {
-        return set(() => ({
-          lastRerenderPieceSettingsTimeStamp: timestamp,
-        }));
       },
     };
   });

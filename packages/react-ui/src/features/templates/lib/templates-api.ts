@@ -1,28 +1,35 @@
 import { api } from '@/lib/api';
-import { CreateFlowTemplateRequest } from '@activepieces/shared';
 import {
-  FlowTemplate,
-  ListFlowTemplatesRequest,
+  CreateTemplateRequestBody,
+  ListTemplatesRequestQuery,
+  Template,
   SeekPage,
+  UpdateTemplateRequestBody,
 } from '@activepieces/shared';
 
 export const templatesApi = {
   getTemplate(templateId: string) {
-    return api.get<FlowTemplate>(`/v1/flow-templates/${templateId}`);
+    return api.get<Template>(`/v1/templates/${templateId}`);
   },
-  create(request: CreateFlowTemplateRequest) {
-    return api.post<FlowTemplate>(`/v1/flow-templates`, request);
+  create(request: CreateTemplateRequestBody) {
+    return api.post<Template>(`/v1/templates`, request);
   },
-  list(request?: ListFlowTemplatesRequest) {
-    return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates`, request ?? {});
+  update(templateId: string, request: UpdateTemplateRequestBody) {
+    return api.post<Template>(`/v1/templates/${templateId}`, request);
   },
-  listCommunity(request?: ListFlowTemplatesRequest) {
-    return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates/community`, request ?? {});
+  list(request: ListTemplatesRequestQuery) {
+    return api.get<SeekPage<Template>>(`/v1/templates`, request);
   },
-  listCloud(request?: ListFlowTemplatesRequest) {
-    return api.get<SeekPage<FlowTemplate>>(`/v1/flow-templates/cloud`, request ?? {});
+  listCommunity(request: ListTemplatesRequestQuery) {
+    return api.get<SeekPage<Template>>(`/v1/flow-templates/community`, request);
+  },
+  listCloud(request: ListTemplatesRequestQuery) {
+    return api.get<SeekPage<Template>>(`/v1/flow-templates/cloud`, request);
   },
   delete(templateId: string) {
-    return api.delete<void>(`/v1/flow-templates/${templateId}`);
+    return api.delete<void>(`/v1/templates/${templateId}`);
+  },
+  incrementUsageCount(templateId: string) {
+    return api.post<void>(`/v1/templates/${templateId}/increment-usage-count`);
   },
 };

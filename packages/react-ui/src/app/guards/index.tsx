@@ -9,7 +9,7 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
 // import { EmbedPage } from '@/app/routes/embed';
-// import AnalyticsPage from '@/app/routes/platform/analytics';
+import AnalyticsPage from '@/app/routes/platform/analytics';
 // import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 // import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 // import { SSOPage } from '@/app/routes/platform/security/sso';
@@ -43,8 +43,7 @@ import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
-// import { PlatformMessages } from '../routes/platform/notifications/platform-messages';
-// import ProjectsPage from '../routes/platform/projects';
+import ProjectsPage from '../routes/platform/projects';
 // import AuditLogsPage from '../routes/platform/security/audit-logs';
 // import { ProjectRolePage } from '../routes/platform/security/project-role';
 // import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
@@ -70,7 +69,6 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import ProjectsPage from '../routes/platform/projects';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -342,19 +340,16 @@ const routes = [
       </PlatformLayout>
     ),
   },
-  // {
-  //   path: '/platform/analytics',
-  //   element: (
-  //     <PlatformLayout>
-  //       <PageTitle title="Analytics">
-  //         <div className="flex flex-col gap-4 w-full">
-  //           <PlatformMessages />
-  //           <AnalyticsPage />
-  //         </div>
-  //       </PageTitle>
-  //     </PlatformLayout>
-  //   ),
-  // },
+  {
+    path: '/platform/analytics',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Analytics">
+          <AnalyticsPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
   {
     path: '/platform',
     element: (

@@ -2,6 +2,7 @@ import {
     ActivepiecesError,
     ApEdition,
     apId,
+    assertNotNullOrUndefined,
     Cursor,
     ErrorCode,
     isNil,
@@ -66,9 +67,24 @@ export const userService = {
         }
         return user
     },
+    async updateLastActiveDate({ id }: UpdateLastActiveDateParams): Promise<void> {
+        await userRepo().update({ id }, { lastActiveDate: dayjs().toISOString() })
+    },
     async update({ id, status, platformId, platformRole, externalId }: UpdateParams): Promise<UserWithMetaInformation> {
         const user = await this.getOrThrow({ id })
-        const platform = await platformService.getOneOrThrow(user.platformId!)
+        assertNotNullOrUndefined(user.platformId, 'platformId')
+
+        if (user.platformId !== platformId) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'user',
+                    entityId: id,
+                },
+            })
+        }
+
+        const platform = await platformService.getOneOrThrow(user.platformId)
         if (platform.ownerId === user.id && status === UserStatus.INACTIVE) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -78,7 +94,7 @@ export const userService = {
             })
         }
 
-        const updateResult = await userRepo().update({
+        await userRepo().update({
             id,
             platformId,
         }, {
@@ -87,15 +103,6 @@ export const userService = {
             ...spreadIfDefined('externalId', externalId),
         })
 
-        if (updateResult.affected !== 1) {
-            throw new ActivepiecesError({
-                code: ErrorCode.ENTITY_NOT_FOUND,
-                params: {
-                    entityType: 'user',
-                    entityId: id,
-                },
-            })
-        }
         return this.getMetaInformation({ id })
     },
     async list({ platformId, externalId, cursorRequest, limit }: ListParams): Promise<SeekPage<UserWithMetaInformation>> {
@@ -181,6 +188,7 @@ export const userService = {
             externalId: user.externalId,
             created: user.created,
             updated: user.updated,
+            lastActiveDate: user.lastActiveDate,
         }
     },
 
@@ -197,7 +205,7 @@ export const userService = {
 }
 
 
-async function getUsersForProject(platformId: PlatformId, projectId: string) {
+async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
     // const edition = system.getEdition()
     // if (edition === ApEdition.COMMUNITY) {
@@ -209,6 +217,10 @@ async function getUsersForProject(platformId: PlatformId, projectId: string) {
 
     const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
     return [...platformAdmins, ...projectMembers]
+}
+
+type UpdateLastActiveDateParams = {
+    id: UserId
 }
 
 type ListUsersForProjectParams = {

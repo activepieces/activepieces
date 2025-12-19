@@ -122,7 +122,7 @@ export function AgentFlowToolDialog({
           </div>
         </div>
 
-        <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
+        <ScrollArea className="grow overflow-y-auto px-1 pt-4">
           <FlowDialogContent
             flows={flows || []}
             searchQuery={searchQuery}
