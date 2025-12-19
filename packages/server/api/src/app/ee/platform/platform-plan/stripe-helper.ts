@@ -10,7 +10,7 @@ const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
 
 export const stripeHelper = (log: FastifyBaseLogger) => ({
     getStripe: (): Stripe | undefined => {
-        if (system.getEdition() !== ApEdition.CLOUD) return undefined
+        // if (system.getEdition() !== ApEdition.CLOUD) return undefined
 
         const stripeSecret = system.getOrThrow(AppSystemProp.STRIPE_SECRET_KEY)
         return new Stripe(stripeSecret, {
@@ -44,20 +44,75 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
         return session.url
     },
+    async createNewAICreditAutoTopUpCheckoutSession(params: CreateAICreditAutoTopUpCheckoutSessionParams): Promise<string> {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { customerId, platformId } = params
+
+        const session = await stripe.checkout.sessions.create({
+            mode: 'setup',
+            payment_method_types: ['card'],
+            customer: customerId,
+            metadata: {
+                platformId,
+                type: StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP,
+            },
+            success_url: `${frontendUrl}/platform/setup/billing/success?action=ai-credit-auto-topup`,
+            cancel_url: `${frontendUrl}/platform/setup/billing/error`,
+        })
+
+        return session.url!
+    },
+    async createNewAICreditAutoTopUpPaymentIntent(params: CreateAICreditAutoTopUpPaymentIntentParams): Promise<string> {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const { customerId, platformId, amountInUsd, paymentId, paymentMethod } = params
+
+        const amountInCents = amountInUsd * 100
+
+        const paymentIntent = await stripe.paymentIntents.create({
+            amount: amountInCents,
+            currency: 'usd',
+            customer: customerId,
+            payment_method: paymentMethod,
+            off_session: true,
+            confirm: true,
+            metadata: {
+                platformId,
+                paymentId,
+                type: StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP,
+            },
+        })
+
+        return paymentIntent.id
+    },
     async createNewAICreditPaymentCheckoutSession(params: CreateAICreditPaymentParams): Promise<string> {
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { customerId, platformId, paymentId, aiCredits } = params
+        const { customerId, platformId, paymentId, amountInUsd } = params
+
+        const amountInCents = amountInUsd * 100
 
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            line_items: [{ price: AI_CREDIT_PRICE_ID, quantity: aiCredits }],
+            line_items: [{ 
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'AI Credits Top-up',
+                    },
+                    unit_amount: amountInCents,
+                },
+                quantity: 1,    
+            }],
             mode: 'payment',
             metadata: {
                 platformId,
                 paymentId,
-                type: StripeCheckoutPaymentType.AI_CREDIT,
+                type: StripeCheckoutType.AI_CREDIT_PAYMENT,
             },
             allow_promotion_codes: true,
             customer: customerId,
@@ -73,7 +128,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
 
         const { customerId, platformId, extraActiveFlows } = params
 
-        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{ price: AI_CREDIT_PRICE_ID }]
+        const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = []
 
         if (!isNil(extraActiveFlows) && extraActiveFlows > 0) {
             lineItems.push({
@@ -273,7 +328,7 @@ type CreateAICreditPaymentParams = {
     platformId: string
     paymentId: string
     customerId: string
-    aiCredits: number
+    amountInUsd: number
 }
 
 type StartSubscriptionParams = {
@@ -312,6 +367,20 @@ type CreateSubscriptionScheduleParams = {
     isFreeDowngrade: boolean
 }
 
-export enum StripeCheckoutPaymentType {
-    AI_CREDIT = 'ai-credit-payment',
+type CreateAICreditAutoTopUpCheckoutSessionParams = {
+    platformId: string
+    customerId: string
+}
+
+type CreateAICreditAutoTopUpPaymentIntentParams = {
+    platformId: string
+    paymentId: string
+    customerId: string
+    amountInUsd: number
+    paymentMethod: string
+}
+
+export enum StripeCheckoutType {
+    AI_CREDIT_PAYMENT = 'ai-credit-payment',
+    AI_CREDIT_AUTO_TOP_UP = 'ai-credit-auto-top-up',
 }

@@ -45,6 +45,12 @@ export enum TeamProjectsLimit {
     UNLIMITED = 'UNLIMITED',
 }
 
+export enum AiCreditsAutoTopUpState {
+    NOT_ALLOWED = 'not_allowed',
+    ALLOWED_BUT_OFF = 'allowed_but_off',
+    ALLOWED_AND_ON = 'allowed_and_on',
+}
+
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
     // TODO: We have to use the enum when we finalize the plan names
@@ -55,6 +61,11 @@ export const PlatformPlan = Type.Object({
     includedAiCredits: Type.Number(),
     // aiCreditsOverageLimit: Type.Optional(Type.Number()),
     // aiCreditsOverageState: Type.Optional(Type.String()),
+
+    aiCreditsAutoTopUpState: Type.Optional(Type.Enum(AiCreditsAutoTopUpState)),
+    aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
+    aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
+    aiCreditsAutoTopUpStripePaymentMethod: Type.Optional(Type.String()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
@@ -162,6 +173,10 @@ export enum PlatformAiCreditsPaymentStatus {
     PAYMENT_FAILED = 'payment-failed',
     DONE = 'done',
 }
+export enum PlatformAiCreditsPaymentType {
+    AUTO_TOPUP = 'auto-topup',
+    MANUAL = 'manual',
+}
 export const PlatformAiCreditsPayment = Type.Object({
     ...BaseModelSchema,
     platformId: Type.String(),
@@ -169,6 +184,7 @@ export const PlatformAiCreditsPayment = Type.Object({
     aiCredits: Type.Number(),
     txId: Type.Optional(Type.String()),
     status: Type.Enum(PlatformAiCreditsPaymentStatus),
+    type: Type.Enum(PlatformAiCreditsPaymentType),
 })
 export type PlatformAiCreditsPayment = Static<typeof PlatformAiCreditsPayment>
 

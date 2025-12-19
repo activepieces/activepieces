@@ -8,7 +8,7 @@ import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
-import { StripeCheckoutPaymentType, stripeHelper } from './stripe-helper'
+import { StripeCheckoutType, stripeHelper } from './stripe-helper'
 
 export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post(
@@ -20,7 +20,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                 const signature = request.headers['stripe-signature'] as string
 
                 const stripe = stripeHelper(request.log).getStripe()
-                if (isNil(stripe)) {
+                if (isNil(stripe)) { 
                     return await reply.status(StatusCodes.OK).send({ received: true })
                 }
 
@@ -37,10 +37,42 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         if (isNil(session.metadata)) {
                             break
                         }
-                        if (session.metadata.type === StripeCheckoutPaymentType.AI_CREDIT) {
+                        if (session.metadata.type === StripeCheckoutType.AI_CREDIT_PAYMENT) {
                             const paymentId = session.metadata.paymentId as string
                             const txId = session.payment_intent as string
                             await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(paymentId, txId)
+                        }
+                        if (session.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
+                            const setupIntent = await stripe.setupIntents.retrieve(
+                                session.setup_intent as string
+                            );
+
+                            const paymentMethodId = setupIntent.payment_method as string;
+                            const platformId = session.metadata.platformId as string
+                            await platformAiCreditsService(request.log).handleAutoTopUpCheckoutSessionCompleted(platformId, paymentMethodId)
+                        }
+                        break
+                    }
+                    case 'payment_intent.succeeded': {
+                        const paymentIntent = webhook.data.object
+                        if (isNil(paymentIntent.metadata)) {
+                            break
+                        }
+                        if (paymentIntent.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
+                            const paymentId = paymentIntent.metadata.paymentId as string
+                            const txId = paymentIntent.id as string
+                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(paymentId, txId)
+                        }
+                        break
+                    }
+                    case 'payment_intent.payment_failed': {
+                        const paymentIntent = webhook.data.object
+                        if (isNil(paymentIntent.metadata)) {
+                            break
+                        }
+                        if (paymentIntent.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
+                            const paymentId = paymentIntent.metadata.paymentId as string
+                            await platformAiCreditsService(request.log).aiCreditsPaymentFailed(paymentId)
                         }
                         break
                     }
@@ -49,7 +81,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         if (isNil(session.metadata)) {
                             break
                         }
-                        if (session.metadata.type === StripeCheckoutPaymentType.AI_CREDIT) {
+                        if (session.metadata.type === StripeCheckoutType.AI_CREDIT_PAYMENT) {
                             const paymentId = session.metadata.paymentId as string
                             await platformAiCreditsService(request.log).aiCreditsPaymentFailed(paymentId)
                         }

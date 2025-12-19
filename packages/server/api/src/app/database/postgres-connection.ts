@@ -312,6 +312,7 @@ import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postg
 import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
 import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
 import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
+import { AddPlatformAiCreditsPaymentTable1766186963979 } from './migration/postgres/1766186963979-addPlatformAiCreditsPaymentTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -640,6 +641,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         CreateTemplateTable1764777773932,
         AddTemplateStatus1765894492098,
         MigrateOldTemplatesToNewSchema1765993826655,
+        AddPlatformAiCreditsPaymentTable1766186963979,
     ]
     return migrations
 }

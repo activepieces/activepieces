@@ -1,4 +1,4 @@
-import { Platform, PlatformAiCreditsPayment, PlatformPlan } from '@activepieces/shared'
+import { Platform, PlatformAiCreditsPayment } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
@@ -15,11 +15,11 @@ export const PlatformAiCreditsPaymentEntity = new EntitySchema<PlatformAiCredits
         ...BaseColumnSchemaPart,
         platformId: ApIdSchema,
         amount: {
-            type: Number,
+            type: 'float',
             nullable: false,
         },
         aiCredits: {
-            type: Number,
+            type: 'float',
             nullable: false,
         },
         txId: {
@@ -30,6 +30,10 @@ export const PlatformAiCreditsPaymentEntity = new EntitySchema<PlatformAiCredits
             type: String,
             nullable: false,
         },
+        type: {
+            type: String,
+            nullable: false,
+        }
     },
     indices: [],
     relations: {

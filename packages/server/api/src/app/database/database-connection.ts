@@ -53,6 +53,7 @@ import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
+import { PlatformAiCreditsPaymentEntity } from '../ee/platform/platform-plan/platform-ai-credits-payment.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -106,6 +107,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ConnectionKeyEntity,
         AppCredentialEntity,
         PlatformPlanEntity,
+        PlatformAiCreditsPaymentEntity,
     ]
 }
 
