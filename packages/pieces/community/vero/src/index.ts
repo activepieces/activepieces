@@ -9,6 +9,16 @@ import { updateUsersTags } from './lib/actions/update-users-tags';
 import { unsubscribe } from './lib/actions/unsubscribe';
 import { trackEvent } from './lib/actions/track-event';
 import { emailBounced } from './lib/triggers/email-bounced';
+import { emailClicked } from './lib/triggers/email-clicked';
+import { emailComplained } from './lib/triggers/email-complained';
+import { emailConverted } from './lib/triggers/email-converted';
+import { emailDelivered } from './lib/triggers/email-delivered';
+import { emailOpened } from './lib/triggers/email-opened';
+import { emailSent } from './lib/triggers/email-sent';
+import { newUser } from './lib/triggers/new-user';
+import { updateUser } from './lib/triggers/update-user';
+import { unsubscribeUser } from './lib/triggers/unsubscribe-user';
+import { resubscribeUserTrigger } from './lib/triggers/resubscribe-user';
 
 export const vero = createPiece({
   displayName: 'Vero',
@@ -29,6 +39,16 @@ export const vero = createPiece({
     updateUsersTags,
   ],
   triggers: [
-    emailBounced
+    emailBounced,
+    emailClicked,
+    emailComplained,
+    emailConverted,
+    emailDelivered,
+    emailOpened,
+    emailSent,
+    newUser,
+    resubscribeUserTrigger,
+    unsubscribeUser,
+    updateUser,
   ],
 });

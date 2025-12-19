@@ -4,27 +4,25 @@ import {
   TriggerStrategy,
 } from '@activepieces/pieces-framework';
 import { veroAuth } from '../common/auth';
-export const emailClicked = createTrigger({
+export const emailDelivered = createTrigger({
   auth: veroAuth,
-  name: 'emailClicked',
-  displayName: 'Email Clicked',
-  description: 'Triggered when an email is clicked',
+  name: 'emailDelivered',
+  displayName: 'Email Delivered',
+  description: '',
   props: {
     instruction: Property.MarkDown({
       value: `## Vero Webhook Setup
-To enable the webhooks, go to **Settings** > **Integrations** > **Webhooks** and enter the URL at which you wish to receive the webhooks.
-
-\`\`\`text
-{{webhookUrl}}
-\`\`\`
-`,
+            To enable the webhooks, go to **Settings** > **Integrations** > **Webhooks** and enter the URL at which you wish to receive the webhooks.
+            
+            \`\`\`text
+            {{webhookUrl}}
+            \`\`\`
+            `,
     }),
   },
   sampleData: {
-    clicked_at: 1435016238,
-    user_agent:
-      'Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)',
-    type: 'clicked',
+    delivered_at: 1435016238,
+    type: 'delivered',
     user: {
       id: 123,
       email: 'steve@getvero.com',
@@ -54,7 +52,7 @@ To enable the webhooks, go to **Settings** > **Integrations** > **Webhooks** and
   },
   async run(context) {
     const body = context.payload.body as any;
-    if (body.type === 'clicked') {
+    if (body.type === 'delivered') {
       return [body];
     }
     return [];
