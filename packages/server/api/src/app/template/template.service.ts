@@ -1,5 +1,5 @@
 import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateStatus, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
-import { ArrayContains, ArrayOverlap, Equal, ILike } from 'typeorm'
+import { ArrayContains, ArrayOverlap, Equal, ILike, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -94,6 +94,8 @@ export const templateService = () => ({
     async list({ platformId, requestQuery }: ListParams): Promise<SeekPage<Template>> {
         const { pieces, tags, search, type } = requestQuery
         const commonFilters: Record<string, unknown> = {}
+        const typeFilter = type ?? TemplateType.OFFICIAL
+
         if (pieces) {
             commonFilters.pieces = ArrayOverlap(pieces)
         }
@@ -104,8 +106,31 @@ export const templateService = () => ({
             commonFilters.name = ILike(`%${search}%`)
             commonFilters.description = ILike(`%${search}%`)
         }
-        commonFilters.platformId = Equal(platformId)
-        commonFilters.type = Equal(type)
+        switch (typeFilter) {
+            case TemplateType.OFFICIAL:
+                commonFilters.type = Equal(TemplateType.OFFICIAL)
+                commonFilters.platformId = IsNull()
+                break
+            case TemplateType.CUSTOM:
+                commonFilters.type = Equal(TemplateType.CUSTOM)
+                if (isNil(platformId)) {
+                    throw new ActivepiecesError({
+                        code: ErrorCode.VALIDATION,
+                        params: {
+                            message: 'Platform ID is required to list custom templates',
+                        },
+                    })
+                }
+                commonFilters.platformId = Equal(platformId)
+                break
+            case TemplateType.SHARED:
+                throw new ActivepiecesError({
+                    code: ErrorCode.VALIDATION,
+                    params: {
+                        message: 'Shared templates are not supported to being listed',
+                    },
+                })
+        }
         commonFilters.status = Equal(TemplateStatus.PUBLISHED)
         const templates = await templateRepo()
             .createQueryBuilder('template')
@@ -131,7 +156,7 @@ type CreateParams = {
 type NewTemplate = Omit<Template, 'created' | 'updated'>
 
 type ListParams = {
-    platformId: string
+    platformId: string | null
     requestQuery: ListTemplatesRequestQuery
 }
 

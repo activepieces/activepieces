@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.74.0",
-  "rcVersion": "0.74.0-rc.0",
+  "version": "0.74.3",
+  "rcVersion": "0.74.3-rc.0",
   "scripts": {
     "prepare": "husky install",
     "prebuild": "node tools/scripts/install-bun.js",
