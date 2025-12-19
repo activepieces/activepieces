@@ -325,6 +325,9 @@
       ],
       "@activepieces/piece-metatext": [
         "packages/pieces/community/metatext/src/index.ts"
+      ],
+      "@activepieces/piece-kudosity": [
+        "packages/pieces/community/kudosity/src/index.ts"
       ]
     },
     "resolveJsonModule": true
