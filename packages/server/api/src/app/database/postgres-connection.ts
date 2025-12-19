@@ -116,7 +116,9 @@ import { AddLastActiveToUser1765325909187 } from './migration/postgres/176532590
 import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
 import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
 import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
+import { DropLegacyTables1766015156683 } from './migration/postgres/1766015156683-DropLegacyTables'
 import { AddAnalyticsReport1766038629198 } from './migration/postgres/1766038629198-add-analytics-report'
+import { RecreateMcpToolTable1766072572000 } from './migration/postgres/1766072572000-RecreateMcpToolTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -130,6 +132,8 @@ const getSslConfig = (): boolean | TlsOptions => {
 
 export const getMigrations = (): (new () => MigrationInterface)[] => {
     const migrations: (new () => MigrationInterface)[] = [
+        RecreateMcpToolTable1766072572000,
+        DropLegacyTables1766015156683,
         MigrateOldTemplatesToNewSchema1765993826655,
         AddAnalyticsReport1766038629198,
         AddTemplateStatus1765894492098,
