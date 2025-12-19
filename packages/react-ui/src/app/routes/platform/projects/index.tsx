@@ -111,7 +111,11 @@ export default function ProjectsPage() {
       header: ({ table }) => {
         const selectableRows = table
           .getRowModel()
-          .rows.filter((row) => row.original.id !== currentProject?.id);
+          .rows.filter(
+            (row) =>
+              row.original.id !== currentProject?.id &&
+              row.original.type !== ProjectType.PERSONAL,
+          );
         const allSelectableSelected =
           selectableRows.length > 0 &&
           selectableRows.every((row) => row.getIsSelected());
@@ -153,6 +157,8 @@ export default function ProjectsPage() {
       },
       cell: ({ row }) => {
         const isCurrentProject = row.original.id === currentProject?.id;
+        const isPersonalProject = row.original.type === ProjectType.PERSONAL;
+        const isDisabled = isCurrentProject || isPersonalProject;
         const isChecked = selectedRows.some(
           (selectedRow) => selectedRow.id === row.original.id,
         );
@@ -160,12 +166,12 @@ export default function ProjectsPage() {
         return (
           <Tooltip>
             <TooltipTrigger>
-              <div className={isCurrentProject ? 'cursor-not-allowed' : ''}>
+              <div className={isDisabled ? 'cursor-not-allowed' : ''}>
                 <Checkbox
                   checked={isChecked}
-                  disabled={isCurrentProject}
+                  disabled={isDisabled}
                   onCheckedChange={(value) => {
-                    if (isCurrentProject) return;
+                    if (isDisabled) return;
 
                     const isChecked = !!value;
                     let newSelectedRows = [...selectedRows];
@@ -187,11 +193,13 @@ export default function ProjectsPage() {
                 />
               </div>
             </TooltipTrigger>
-            {isCurrentProject && (
+            {isDisabled && (
               <TooltipContent side="right">
-                {t(
-                  'Cannot delete active project, switch to another project first',
-                )}
+                {isCurrentProject
+                  ? t(
+                      'Cannot delete active project, switch to another project first',
+                    )
+                  : t('Personal projects cannot be deleted')}
               </TooltipContent>
             )}
           </Tooltip>
@@ -207,7 +215,9 @@ export default function ProjectsPage() {
       {
         render: (_, resetSelection) => {
           const canDeleteAny = selectedRows.some(
-            (row) => row.id !== currentProject?.id,
+            (row) =>
+              row.id !== currentProject?.id &&
+              row.type !== ProjectType.PERSONAL,
           );
           return (
             <div onClick={(e) => e.stopPropagation()}>
@@ -219,7 +229,9 @@ export default function ProjectsPage() {
                 entityName={t('Projects')}
                 mutationFn={async () => {
                   const deletableProjects = selectedRows.filter(
-                    (row) => row.id !== currentProject?.id,
+                    (row) =>
+                      row.id !== currentProject?.id &&
+                      row.type !== ProjectType.PERSONAL,
                   );
                   await bulkDeleteMutation.mutateAsync(
                     deletableProjects.map((row) => row.id),

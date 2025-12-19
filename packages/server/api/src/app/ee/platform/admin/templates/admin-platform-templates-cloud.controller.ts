@@ -1,9 +1,7 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { flagService } from '../../../../flags/flag.service'
-import { system } from '../../../../helper/system/system'
 import { templateService } from '../../../../template/template.service'
 
 export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = async (
@@ -27,9 +25,8 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
                 },
             })
         }
-        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         return templateService().create({
-            platformId: cloudPlatformId,
+            platformId: undefined,
             params: request.body,
         })
     })
@@ -44,6 +41,19 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
             })
         }
         return templateService().update({ id: template.id, params: request.body })
+    })
+
+    app.delete('/:id', DeleteTemplateRequest, async (request) => {
+        const template = await templateService().getOneOrThrow({ id: request.params.id })
+        
+        if (template.type !== TemplateType.OFFICIAL) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Only official templates are supported to being deleted' },
+            })
+        }
+
+        return templateService().delete({ id: request.params.id })
     })
 }
 
@@ -74,5 +84,16 @@ const UpdateTemplateRequest = {
             id: Type.String(),
         }),
         body: UpdateTemplateRequestBody,
+    },
+}
+
+const DeleteTemplateRequest = {
+    config: {
+        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
     },
 }

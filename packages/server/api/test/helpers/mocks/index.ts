@@ -63,6 +63,7 @@ import { AiOverageState,
     Table,
     TeamProjectsLimit,
     Template,
+    TemplateStatus,
     TemplateType,
     User,
     UserIdentity,
@@ -151,6 +152,7 @@ export const createMockTemplate = (
         usageCount: template?.usageCount ?? 0,
         author: template?.author ?? faker.person.fullName(),
         categories: template?.categories ?? [],
+        status: template?.status ?? TemplateStatus.PUBLISHED,
     }
 }
 

@@ -226,7 +226,7 @@ export function AgentPieceDialog({
                 />
               </div>
             </div>
-            <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
+            <ScrollArea className="grow overflow-y-auto px-1 pt-4">
               <PiecesContent
                 isPiecesLoading={isPiecesLoading}
                 pieceMetadata={pieceMetadata}

@@ -11,7 +11,6 @@ import {
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { useTheme } from '@/components/theme-provider';
 import {
   FlowActionType,
   flowStructureUtil,
@@ -42,7 +41,6 @@ import {
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -64,7 +62,6 @@ const getChildrenKey = (step: Step) => {
       return '';
   }
 };
-
 const createGraphKey = (flowVersion: FlowVersion) => {
   return flowStructureUtil
     .getAllSteps(flowVersion.trigger)
@@ -88,7 +85,6 @@ export const FlowCanvas = React.memo(
   }: {
     setHasCanvasBeenInitialised: (value: boolean) => void;
   }) => {
-    const { theme } = useTheme();
     const [
       flowVersion,
       setSelectedNodes,
@@ -203,11 +199,12 @@ export const FlowCanvas = React.memo(
     return (
       <div
         ref={containerRef}
-        className="size-full relative overflow-hidden z-30"
+        className="size-full relative overflow-hidden z-30 bg-builder-background"
       >
         <FlowDragLayer cursorPosition={cursorPosition}>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
+              className="bg-builder-background"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
                 storeApi.getState().unselectNodesAndEdges();
@@ -243,11 +240,11 @@ export const FlowCanvas = React.memo(
             >
               <AboveFlowWidgets></AboveFlowWidgets>
               <Background
-                gap={30}
-                size={4}
+                gap={10}
+                size={1}
                 variant={BackgroundVariant.Dots}
-                bgColor={theme === 'dark' ? ' #1a1e23' : '#ffffff'}
-                color={theme === 'dark' ? 'rgba(77, 77, 77, 0.45)' : '#F2F2F2'}
+                bgColor={`var(--builder-background)`}
+                color={`var(--builder-background-pattern)`}
               />
             </ReactFlow>
           </CanvasContextMenu>

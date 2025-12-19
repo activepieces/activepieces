@@ -233,7 +233,7 @@ const generateMentionHtmlElement = (mentionAttrs: MentionNodeAttrs) => {
     mentionAttrs.label || '{}',
   );
   mentionElement.className =
-    'inline-flex bg-muted/10 break-all my-1 mx-[1px] border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
+    'inline-flex bg-muted/10 break-all my-1 mx-px border border-[#9e9e9e] border-solid items-center gap-2 py-1 px-2 rounded-[3px] text-muted-foreground ';
   assertNotNullOrUndefined(mentionAttrs.label, 'mentionAttrs.label');
   assertNotNullOrUndefined(mentionAttrs.id, 'mentionAttrs.id');
   assertNotNullOrUndefined(

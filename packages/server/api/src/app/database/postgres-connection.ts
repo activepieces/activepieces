@@ -310,6 +310,10 @@ import { AddLastActiveToUser1765325909187 } from './migration/postgres/176532590
 import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
 import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
 import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
+import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
+import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
+import { DropLegacyTables1766015156683 } from './migration/postgres/1766015156683-DropLegacyTables'
+import { RecreateMcpToolTable1766072572000 } from './migration/postgres/1766072572000-RecreateMcpToolTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -636,6 +640,10 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         ChangeTeamsToPersonalInCommunity1765709274266,
         AddMinutesSavedToFlowForAnalytics1765732721451,
         CreateTemplateTable1764777773932,
+        AddTemplateStatus1765894492098,
+        MigrateOldTemplatesToNewSchema1765993826655,
+        DropLegacyTables1766015156683,
+        RecreateMcpToolTable1766072572000,
     ]
     return migrations
 }

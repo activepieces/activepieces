@@ -49,7 +49,7 @@ export const FlowDialogContent = ({
   };
 
   return (
-    <ScrollArea className="flex-grow overflow-y-auto rounded-md">
+    <ScrollArea className="grow overflow-y-auto rounded-md">
       <div className="grid grid-cols-4 gap-4">
         <CreateMcpFlowButton />
 
