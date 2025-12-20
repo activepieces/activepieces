@@ -1,0 +1,20 @@
+{
+  "name": "@vqnguyen1/piece-gelato",
+  "version": "0.0.3",
+  "license": "MIT",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.7",
+    "tslib": "^2.3.0"
+  },
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/pieces-common": "*",
+    "@activepieces/shared": "*"
+  }
+}

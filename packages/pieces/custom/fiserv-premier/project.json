@@ -1,0 +1,19 @@
+{
+  "name": "pieces-fiserv-premier",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/fiserv-premier/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/fiserv-premier",
+        "main": "packages/pieces/custom/fiserv-premier/src/index.ts",
+        "tsConfig": "packages/pieces/custom/fiserv-premier/tsconfig.lib.json",
+        "assets": ["packages/pieces/custom/fiserv-premier/*.md"]
+      }
+    }
+  },
+  "tags": []
+}

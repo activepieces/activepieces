@@ -1,0 +1,19 @@
+{
+  "name": "pieces-gelato",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/gelato/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/gelato",
+        "main": "packages/pieces/custom/gelato/src/index.ts",
+        "tsConfig": "packages/pieces/custom/gelato/tsconfig.lib.json",
+        "assets": ["packages/pieces/custom/gelato/*.md"]
+      }
+    }
+  },
+  "tags": []
+}
