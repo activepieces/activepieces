@@ -1,6 +1,6 @@
 import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { AiOverageState, ALL_PRINCIPAL_TYPES, isNil, PlanName } from '@activepieces/shared'
+import { AppSystemProp, exceptionHandler, publicAccess } from '@activepieces/server-shared'
+import { AiOverageState, isNil, PlanName } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -101,7 +101,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
 const WebhookRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
         rawBody: true,
     },
 }

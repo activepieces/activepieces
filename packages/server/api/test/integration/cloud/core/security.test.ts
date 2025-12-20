@@ -9,7 +9,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyInstance, FastifyRequest } from 'fastify'
 import { nanoid } from 'nanoid'
-import { securityHandlerChain } from '../../../../src/app/core/security/security-handler-chain'
+import { securityHandlerChain } from '../../../../src/app/core/security/v1/security-handler-chain'
 import { initializeDatabase } from '../../../../src/app/database'
 import { databaseConnection } from '../../../../src/app/database/database-connection'
 import { setupServer } from '../../../../src/app/server'

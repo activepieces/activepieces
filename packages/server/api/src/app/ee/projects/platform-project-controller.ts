@@ -3,6 +3,7 @@ import {
     ListProjectRequestForPlatformQueryParams,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
+import { publicPlatformAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -11,8 +12,8 @@ import {
     Permission,
     PiecesFilterType,
     PlatformRole,
-    Principal,
     PrincipalType,
+    PrincipalV2,
     ProjectType,
     ProjectWithLimits,
     SeekPage,
@@ -109,7 +110,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     })
 }
 
-async function getUserId(principal: Principal): Promise<string> {
+async function getUserId(principal: PrincipalV2): Promise<string> {
     if (principal.type === PrincipalType.SERVICE) {
         const platform = await platformService.getOneOrThrow(principal.platform.id)
         return platform.ownerId
@@ -204,8 +205,7 @@ const UpdateProjectRequest = {
 
 const CreateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['projects'],
@@ -219,8 +219,7 @@ const CreateProjectRequest = {
 
 const ListProjectRequestForPlatform = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         response: {

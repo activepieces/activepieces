@@ -1,18 +1,19 @@
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, Principal, PrincipalForType, PrincipalType, WebsocketServerEvent } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PrincipalForTypeV2, PrincipalType, PrincipalV2, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
+import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { app } from '../server'
 
-export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER> 
-= (socket: Socket) => (data: T, principal: PrincipalForType<PR>, callback?: (data: unknown) => void) => Promise<void>
+export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER, ProjectId = PR extends PrincipalType.USER ? string : undefined> 
+= (socket: Socket) => (data: T, principal: PrincipalForTypeV2<PR>, projectId: ProjectId, callback?: (data: unknown) => void) => Promise<void>
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ListenerMap<PR extends PrincipalType.USER | PrincipalType.WORKER> = Partial<Record<WebsocketServerEvent, WebsocketListener<any, PR>>>
 
 const listener = {
-    [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER  >,
+    [PrincipalType.USER]: {} as ListenerMap<PrincipalType.USER>,
     [PrincipalType.WORKER]: {} as ListenerMap<PrincipalType.WORKER>,
 }
 
@@ -24,15 +25,18 @@ export const websocketService = {
         if (![PrincipalType.USER, PrincipalType.WORKER].includes(type)) {
             return
         }
+
         const castedType = type as keyof typeof listener
         switch (type) {
             case PrincipalType.USER: {
+                const projectId = socket.handshake.auth.projectId
+                await validateProjectId({ userId: principal.id, projectId, log })
                 log.info({
                     message: 'User connected',
                     userId: principal.id,
-                    projectId: principal.projectId,
+                    projectId,
                 })
-                await socket.join(principal.projectId)
+                await socket.join(projectId)
                 break
             }
             case PrincipalType.WORKER: {
@@ -67,8 +71,8 @@ export const websocketService = {
             handler(socket)
         }
     },
-    async verifyPrincipal(socket: Socket): Promise<Principal> {
-        return accessTokenManager.verifyPrincipal(socket.handshake.auth.token)
+    async verifyPrincipal(socket: Socket): Promise<PrincipalV2> {
+        return accessTokenManager.verifyPrincipalV2(socket.handshake.auth.token)
     },
     addListener<T, PR extends PrincipalType.WORKER | PrincipalType.USER>(principalType: PR, event: WebsocketServerEvent, handler: WebsocketListener<T, PR>): void {
         switch (principalType) {
@@ -87,4 +91,34 @@ export const websocketService = {
     emitWithAck<T = unknown>(event: WebsocketServerEvent, workerId: string, data?: unknown): Promise<T> {
         return app!.io.to([workerId]).timeout(4000).emitWithAck(event, data)
     },
+}
+
+const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<void> => {
+    if (isNil(projectId)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHENTICATION,
+            params: {
+                message: 'Project ID is required',
+            },
+        })
+    }
+    const role = await projectMemberService(log).getRole({
+        projectId,
+        userId,
+    })
+
+    if (isNil(role)) {
+        throw new ActivepiecesError({
+            code: ErrorCode.AUTHORIZATION,
+            params: {
+                message: 'User not allowed to access this project',
+            },
+        })
+    }
+}
+
+type ValidateProjectIdArgs = {
+    userId: string
+    projectId?: string
+    log: FastifyBaseLogger
 }

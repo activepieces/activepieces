@@ -1,7 +1,7 @@
-import { ALL_PRINCIPAL_TYPES, GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
+import { platformAdminOnly, publicAccess } from '@activepieces/server-shared'
+import { GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { healthStatusService } from './health.service'
 
 export const healthModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -13,7 +13,7 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: publicAccess(),
             },
         },
         async (_request, reply) => {
@@ -25,15 +25,14 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
             await reply.status(StatusCodes.OK).send({ status: 'Healthy' })
         },
     ),
-    app.get('/system', GetSystemHealthChecks, async (request, reply) => {
-        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+    app.get('/system', GetSystemHealthChecks, async (_request, reply) => {
         await reply.status(StatusCodes.OK).send(await healthStatusService(app.log).getSystemHealthChecks())
     })
 }
 
 const GetSystemHealthChecks = {
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: platformAdminOnly([PrincipalType.USER]),
     },
     response: {
         200: {

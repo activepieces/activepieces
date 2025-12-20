@@ -1,4 +1,5 @@
-import { ActivepiecesError, ALL_PRINCIPAL_TYPES, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
+import { publicAccess } from '@activepieces/server-shared'
+import { ActivepiecesError, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { flagService } from '../../../../flags/flag.service'
@@ -59,7 +60,7 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
 
 const UpdateTemplatesCategoriesFlagRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         body: UpdateTemplatesCategoriesFlagRequestBody,
@@ -68,7 +69,7 @@ const UpdateTemplatesCategoriesFlagRequest = {
 
 const CreateTemplateRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         body: CreateTemplateRequestBody,
@@ -77,7 +78,7 @@ const CreateTemplateRequest = {
 
 const UpdateTemplateRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         params: Type.Object({
@@ -89,7 +90,7 @@ const UpdateTemplateRequest = {
 
 const DeleteTemplateRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         params: Type.Object({

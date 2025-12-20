@@ -25,6 +25,7 @@
     "redis-memory-server": "0.13.0",
     "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",
-    "tree-kill": "1.2.2"
+    "tree-kill": "1.2.2",
+    "typeorm": "0.3.26"
   }
 }

@@ -789,7 +789,6 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     return mockAIProvider
 }
 
-
 type CreateMockPlatformWithOwnerParams = {
     platform?: Partial<Omit<Platform, 'ownerId'>>
     owner?: Partial<Omit<User, 'platformId'>>
