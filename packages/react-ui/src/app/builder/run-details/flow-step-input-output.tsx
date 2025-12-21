@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Timer } from 'lucide-react';
+import { Info, Timer } from 'lucide-react';
 
 import { JsonViewer } from '@/components/json-viewer';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -12,6 +12,7 @@ import {
   StepOutputStatus,
   flowStructureUtil,
   AgentResult,
+  isFlowRunStateTerminal,
 } from '@activepieces/shared';
 import { useBuilderStateContext } from '../builder-hooks';
 import { useMemo } from 'react';
@@ -37,23 +38,31 @@ export const FlowStepInputOutput = () => {
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isAgent = selectedStep ? flowStructureUtil.isAgentPiece(selectedStep) : false;
-  const isRunning =
+  const isStepRunning =
   selectedStepOutput?.status === StepOutputStatus.RUNNING ||
   selectedStepOutput?.status === StepOutputStatus.PAUSED;
-
   const parsedOutput =
     selectedStepOutput?.errorMessage ?? selectedStepOutput?.output ?? 'No output';
 
   const tabCount = isAgent ? 3 : 2;
   const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
-
-  if (!selectedStepOutput || !selectedStep) {
-    return null;
+  if(!run) {
+    return <></>
+  }
+  const isRunDone = isFlowRunStateTerminal({ status: run.status, ignoreInternalError: true });
+  if(!selectedStepOutput || !selectedStep) {
+    if(!isRunDone) {
+      return <OutputSkeleton />
+    }
+    return <div className='px-4 bg-muted rounded-md m-4 py-2 flex items-center gap-1'>
+      <Info className='w-4 h-4' />
+      <span>{t('This step didn\'t run')}</span>
+      </div>
   }
   return (
     <ScrollArea className="h-full p-4">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-2 text-base font-medium">
+        <div className="flex items-center gap-1 text-base font-medium">
           <StepStatusIcon status={selectedStepOutput.status} size="5" />
           <span>{selectedStep.displayName}</span>
         </div>
@@ -84,12 +93,8 @@ export const FlowStepInputOutput = () => {
           </TabsContent>
 
           <TabsContent value="output">
-            {isRunning ? (
-              <div className="mt-4 space-y-4">
-                <Skeleton className="h-8 w-1/3" />
-                <Skeleton className="h-32 w-full" />
-                <Skeleton className="h-4 w-1/4" />
-              </div>
+            {isStepRunning ? (
+             <OutputSkeleton />
             ) : (
               <JsonViewer json={parsedOutput} title={t('Output')} />
             )}
@@ -97,5 +102,19 @@ export const FlowStepInputOutput = () => {
         </Tabs>
       </div>
     </ScrollArea>
+  );
+};
+
+
+const OutputSkeleton = () => {
+  return (
+    <div className="flex  w-full  h-full  p-4">
+      <div className="space-y-2 grow">
+        <div className="flex items-center gap-2">
+          <Skeleton className="w-40 h-4" /> 
+        </div>
+        <Skeleton className="w-full h-40" />
+      </div>
+    </div>
   );
 };
