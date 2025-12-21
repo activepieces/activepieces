@@ -19,7 +19,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { RunStatus } from '@/features/flow-runs/components/run-status';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -146,7 +146,7 @@ const BuilderPage = () => {
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
 
-            <RunDetailsBar
+            <RunStatus
               run={run}
               isLoading={isSwitchingToDraftPending}
             />

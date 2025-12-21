@@ -14,7 +14,6 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { cn, formatUtils } from '@/lib/utils';
 import { Tooltip, TooltipTrigger,TooltipContent } from '@/components/ui/tooltip';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { Copy } from 'lucide-react';
 
 type RunStatusProps = {
   run: FlowRun | null;
@@ -122,5 +121,5 @@ const RunStatus = React.memo(
   },
 );
 
-RunStatus.displayName = 'RunDetailsBar';
-export { RunStatus as RunDetailsBar };
+RunStatus.displayName = 'RunStatus';
+export { RunStatus };
