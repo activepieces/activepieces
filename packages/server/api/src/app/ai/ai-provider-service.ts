@@ -165,11 +165,15 @@ async function getOrCreateActivepiecesConfig(platformId: PlatformId, log: Fastif
             if (activepiecesConfigured) {
                 return
             }
+            const existingActivepieces = await aiProviderRepo().findOneBy({
+                platformId,
+                provider: AIProviderName.ACTIVEPIECES,
+            })
             const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
             const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
             const { key, data } = await openRouterCreateKey(`Platform ${platformId}`, limit)
             await aiProviderRepo().save({
-                id: apId(),
+                id: existingActivepieces?.id ?? apId(),
                 platformId,
                 provider: AIProviderName.ACTIVEPIECES,
                 displayName: 'Activepieces',
