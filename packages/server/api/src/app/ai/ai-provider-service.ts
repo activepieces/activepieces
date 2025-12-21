@@ -36,7 +36,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const activepiecesConfigured = await this.isActivepiecesConfigured(platformId)
 
         if (flagService.aiCreditsEnabled() && !activepiecesConfigured) {
-            await getOrCreateActivepiecesConfig(platformId, log)
+
+            await aiProviderRepo().upsert({
+                id: apId(),
+                auth: await encryptUtils.encryptObject({}),
+                config: {},
+                provider: AIProviderName.ACTIVEPIECES,
+                displayName: 'Activepieces',
+                platformId,
+            }, ['platformId'])
         }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
