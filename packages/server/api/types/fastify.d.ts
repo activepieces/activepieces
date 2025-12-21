@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AuthorizationForType, AuthorizationType, FastifyRouteSecurity, ProjectAuthorization, RequestProject, RouteAccessRequest, RouteKind } from '@activepieces/server-shared'
-import { EndpointScope, Permission, Principal, PrincipalForTypes, PrincipalForTypesV2, PrincipalType, PrincipalV2 } from '@activepieces/shared'
+import { ApId, EndpointScope, MaybeProjectExtra, Permission, Principal, PrincipalForTypes, PrincipalForTypesV2, PrincipalType, PrincipalV2 } from '@activepieces/shared'
 import fastify, {
     RouteShorthandOptions as BaseRouteShorthandOptions,
     FastifyBaseLogger,
@@ -35,9 +35,12 @@ declare module 'fastify' {
             : ContextConfig['security'] extends { authorization: { allowedPrincipals: infer Q extends readonly PrincipalType[] } }
                 ? ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } }
                     ? PrincipalForTypesV2<Q> & { projectId: string }
-                    : PrincipalForTypesV2<Q>
+                    : ContextConfig['security'] extends { authorization: { type: AuthorizationType.MAYBE_PROJECT } }
+                        ? PrincipalForTypesV2<Q> & MaybeProjectExtra
+                        : PrincipalForTypesV2<Q>
                 : typeof ContextConfig['security'] extends undefined ? Principal : PrincipalV2
         
+
         // TODO(@Chaker): to be used in V2 
         // principal: ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
         // ? PrincipalForType<PrincipalType.ENGINE> :

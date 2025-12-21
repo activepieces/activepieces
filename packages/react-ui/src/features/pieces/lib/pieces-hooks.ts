@@ -152,6 +152,7 @@ export const piecesHooks = {
       queryKey: ['pieces', searchQuery, includeHidden],
       queryFn: () =>
         piecesApi.list({
+          projectId: authenticationSession.getProjectId()!,
           searchQuery,
           includeHidden,
           includeTags,

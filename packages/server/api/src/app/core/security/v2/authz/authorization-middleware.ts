@@ -48,6 +48,17 @@ async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<
                     allowedPrincipals: security.authorization.allowedPrincipals,
                 },
             }
+        case AuthorizationType.MAYBE_PROJECT:
+            return {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.MAYBE_PROJECT,
+                    allowedPrincipals: security.authorization.allowedPrincipals,
+                    permission: security.authorization.permission,
+                    projectResource: security.authorization.projectResource,
+                    projectId: await getProjectIdFromRequest(request),
+                },
+            }
         case AuthorizationType.UNSCOPED:
             return {
                 kind: RouteKind.AUTHENTICATED,
@@ -78,10 +89,14 @@ async function getProjectIdFromRequest(request: FastifyRequest): Promise<string 
     if (security.kind === RouteKind.PUBLIC) {
         return undefined
     }
-    if (security.authorization.type !== AuthorizationType.PROJECT) {
+    if (security.authorization.type !== AuthorizationType.PROJECT && security.authorization.type !== AuthorizationType.MAYBE_PROJECT) {
         return undefined
     }
     const projectResource = security.authorization.projectResource
+    if (isNil(projectResource)) {
+        return undefined
+    }
+    
     switch (projectResource.type) {
         case ProjectResourceType.TABLE:
             return extractProjectIdFromTable(request, projectResource)

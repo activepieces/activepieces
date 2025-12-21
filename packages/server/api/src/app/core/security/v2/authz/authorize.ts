@@ -1,8 +1,10 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationRouteSecurity, AuthorizationType, MaybeProjectAuthorizationConfig, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'
 import { userService } from '../../../../user/user-service'
+
+const NON_PROJECT_PRINCIPAL_TYPES = [PrincipalType.UNKNOWN, PrincipalType.WORKER]
 
 export const authorizeOrThrow = async (principal: Principal, security: AuthorizationRouteSecurity, log: FastifyBaseLogger): Promise<void> => {
     if (security.kind === RouteKind.PUBLIC) {
@@ -17,6 +19,12 @@ export const authorizeOrThrow = async (principal: Principal, security: Authoriza
             await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
             if (security.authorization.adminOnly) {
                 await assertPlatformIsOwnedByCurrentPrincipal(principal)
+            }
+            break
+        case AuthorizationType.MAYBE_PROJECT:
+            await assertPrinicpalIsOneOf(security.authorization.allowedPrincipals, principal.type)
+            if (!NON_PROJECT_PRINCIPAL_TYPES.includes(principal.type) && !isNil(security.authorization.projectResource)) {
+                await assertAccessToProject(principal, security.authorization, log)
             }
             break
         case AuthorizationType.UNSCOPED:
@@ -44,7 +52,7 @@ async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal): Pr
 }
 
 
-async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, log: FastifyBaseLogger): Promise<void> {
+async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig | MaybeProjectAuthorizationConfig, log: FastifyBaseLogger): Promise<void> {
     if (isNil(projectSecurity.projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,

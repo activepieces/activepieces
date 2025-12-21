@@ -1,6 +1,7 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowAction,
   FlowActionType,
@@ -59,6 +60,7 @@ export const stepsHooks = {
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
         const pieces = await piecesApi.list({
+          projectId: authenticationSession.getProjectId()!,
           searchQuery,
           suggestionType:
             type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,

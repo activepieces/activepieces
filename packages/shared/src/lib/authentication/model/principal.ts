@@ -73,9 +73,17 @@ export type UserPrincipalV2 = {
     tokenVersion?: string
 }
 
+export type MaybeProjectExtra = {
+    projectId?: string
+    platform?: {
+        id: ApId
+    }
+}
+
 export type PrincipalForTypeV2<T extends PrincipalType> = Extract<PrincipalV2, { type: T }>
 
 export type PrincipalForTypesV2<R extends readonly PrincipalType[]> = PrincipalForTypeV2<R[number]>
+
 
 export type PrincipalV2 =
     | WorkerPrincipal
