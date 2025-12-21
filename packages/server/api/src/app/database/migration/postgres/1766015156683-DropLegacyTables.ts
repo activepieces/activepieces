@@ -5,7 +5,6 @@ export class DropLegacyTables1766015156683 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query('DROP TABLE IF EXISTS "mcp_run"')
-        await queryRunner.query('DROP TABLE IF EXISTS "mcp_tool"')
         await queryRunner.query('DROP TABLE IF EXISTS "issue"')
         await queryRunner.query('DROP TABLE IF EXISTS "ai_usage"')
 
