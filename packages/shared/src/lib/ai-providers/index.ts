@@ -6,15 +6,44 @@ export enum AIProviderModelType {
     TEXT = 'text',
 }
 
-export const AnthropicProviderConfig = Type.Object({
+export const BaseAIProviderAuthConfig = Type.Object({
     apiKey: Type.String(),
 })
+export type BaseAIProviderAuthConfig = Static<typeof BaseAIProviderAuthConfig>
+
+export const AnthropicProviderAuthConfig = BaseAIProviderAuthConfig
+export type AnthropicProviderAuthConfig = Static<typeof AnthropicProviderAuthConfig>
+
+export const ActivePiecesProviderAuthConfig = Type.Intersect([
+    BaseAIProviderAuthConfig,
+    Type.Object({
+        apiKeyHash: Type.String(),
+    })
+])
+export type ActivePiecesProviderAuthConfig = Static<typeof ActivePiecesProviderAuthConfig>
+
+export const OpenAICompatibleProviderAuthConfig = BaseAIProviderAuthConfig
+export type OpenAICompatibleProviderAuthConfig = Static<typeof OpenAICompatibleProviderAuthConfig>
+
+export const CloudflareGatewayProviderAuthConfig = BaseAIProviderAuthConfig
+export type CloudflareGatewayProviderAuthConfig = Static<typeof CloudflareGatewayProviderAuthConfig>
+
+export const AzureProviderAuthConfig = BaseAIProviderAuthConfig
+export type AzureProviderAuthConfig = Static<typeof AzureProviderAuthConfig>
+
+export const GoogleProviderAuthConfig = BaseAIProviderAuthConfig
+export type GoogleProviderAuthConfig = Static<typeof GoogleProviderAuthConfig>
+
+export const OpenAIProviderAuthConfig = BaseAIProviderAuthConfig
+export type OpenAIProviderAuthConfig = Static<typeof OpenAIProviderAuthConfig>
+
+export const OpenRouterProviderAuthConfig = BaseAIProviderAuthConfig
+export type OpenRouterProviderAuthConfig = Static<typeof OpenRouterProviderAuthConfig>
+
+export const AnthropicProviderConfig = Type.Object({})
 export type AnthropicProviderConfig = Static<typeof AnthropicProviderConfig>
 
-export const ActivePiecesProviderConfig = Type.Object({
-    apiKey: Type.String(),
-    apiKeyHash: Type.String(),
-})
+export const ActivePiecesProviderConfig = Type.Object({})
 export type ActivePiecesProviderConfig = Static<typeof ActivePiecesProviderConfig>
 
 export const ProviderModelConfig = Type.Object({
@@ -25,7 +54,6 @@ export const ProviderModelConfig = Type.Object({
 export type ProviderModelConfig = Static<typeof ProviderModelConfig>
 
 export const OpenAICompatibleProviderConfig = Type.Object({
-    apiKey: Type.String(),
     apiKeyHeader: Type.String(),
     baseUrl: Type.String(),
     models: Type.Array(ProviderModelConfig),
@@ -34,7 +62,6 @@ export type OpenAICompatibleProviderConfig = Static<typeof OpenAICompatibleProvi
 
 
 export const CloudflareGatewayProviderConfig = Type.Object({
-    apiKey: Type.String(),
     accountId: Type.String(),
     gatewayId: Type.String(),
     models: Type.Array(ProviderModelConfig),
@@ -42,25 +69,30 @@ export const CloudflareGatewayProviderConfig = Type.Object({
 export type CloudflareGatewayProviderConfig = Static<typeof CloudflareGatewayProviderConfig>
 
 export const AzureProviderConfig = Type.Object({
-    apiKey: Type.String(),
     resourceName: Type.String(),
 })
 export type AzureProviderConfig = Static<typeof AzureProviderConfig>
 
-export const GoogleProviderConfig = Type.Object({
-    apiKey: Type.String(),
-})
+export const GoogleProviderConfig = Type.Object({})
 export type GoogleProviderConfig = Static<typeof GoogleProviderConfig>
 
-export const OpenAIProviderConfig = Type.Object({
-    apiKey: Type.String(),
-})
+export const OpenAIProviderConfig = Type.Object({})
 export type OpenAIProviderConfig = Static<typeof OpenAIProviderConfig>
 
-export const OpenRouterProviderConfig = Type.Object({
-    apiKey: Type.String(),
-})
+export const OpenRouterProviderConfig = Type.Object({})
 export type OpenRouterProviderConfig = Static<typeof OpenRouterProviderConfig>
+
+export const AIProviderAuthConfig = Type.Union([
+    AnthropicProviderAuthConfig,
+    AzureProviderAuthConfig,
+    GoogleProviderAuthConfig,
+    OpenAIProviderAuthConfig,
+    OpenRouterProviderAuthConfig,
+    CloudflareGatewayProviderAuthConfig,
+    OpenAICompatibleProviderAuthConfig,
+    ActivePiecesProviderAuthConfig,
+])
+export type AIProviderAuthConfig = Static<typeof AIProviderAuthConfig>
 
 export const AIProviderConfig = Type.Union([
     AnthropicProviderConfig,
@@ -90,46 +122,49 @@ const ProviderConfigUnion = DiscriminatedUnion('provider', [
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.OPENAI),
         config: OpenAIProviderConfig,
+        authConfig: OpenAIProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.OPENROUTER),
         config: OpenRouterProviderConfig,
+        authConfig: OpenRouterProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.ANTHROPIC),
         config: AnthropicProviderConfig,
+        authConfig: AnthropicProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.AZURE),
         config: AzureProviderConfig,
+        authConfig: AzureProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.GOOGLE),
         config: GoogleProviderConfig,
-    }),
-    Type.Object({
-        displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.ACTIVEPIECES),
-        config: OpenRouterProviderConfig,
+        authConfig: GoogleProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
         config: CloudflareGatewayProviderConfig,
+        authConfig: CloudflareGatewayProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
         config: OpenAICompatibleProviderConfig,
+        authConfig: OpenAICompatibleProviderAuthConfig,
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
         provider: Type.Literal(AIProviderName.ACTIVEPIECES),
         config: ActivePiecesProviderConfig,
+        authConfig: ActivePiecesProviderAuthConfig,
     }),
 ])
 
@@ -148,10 +183,7 @@ export const AIProviderWithoutSensitiveData = Type.Object({
     id: Type.String(),
     name: Type.String(),
     provider: Type.Enum(AIProviderName),
-    config: Type.Omit(AIProviderConfig, ["apiKey"]),
-
-    // DEPRECTED: KEPT FOR BACKWARD COMPATIBILITY
-    configured: Type.Boolean(),
+    config: AIProviderConfig,
 })
 export type AIProviderWithoutSensitiveData = Static<typeof AIProviderWithoutSensitiveData>
 
@@ -166,12 +198,11 @@ export const CreateAIProviderRequest = ProviderConfigUnion
 export type CreateAIProviderRequest = Static<typeof CreateAIProviderRequest>
 
 
-export const GetProviderConfigResponse = Type.Intersect([
-    AIProviderConfig,
-    Type.Object({
-        provider: Type.Enum(AIProviderName),
-    }),
-])
+export const GetProviderConfigResponse = Type.Object({
+    provider: Type.Enum(AIProviderName),
+    config: AIProviderConfig,
+    authConfig: AIProviderAuthConfig,
+})
 export type GetProviderConfigResponse = Static<typeof GetProviderConfigResponse>
 
 

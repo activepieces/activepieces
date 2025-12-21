@@ -48,7 +48,7 @@ export const UpsertProviderConfigForm = ({
     <div className="grid space-y-4">
       <FormField
         control={form.control}
-        name="config.apiKey"
+        name="authConfig.apiKey"
         render={({ field }) => (
           <FormItem className="grid space-y-3">
             <FormLabel htmlFor="apiKey">{t('API Key')}</FormLabel>

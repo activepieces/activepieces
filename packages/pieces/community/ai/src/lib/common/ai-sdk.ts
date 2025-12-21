@@ -28,7 +28,11 @@ export async function createAIModel({
     openaiResponsesModel = false,
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModelV2> {
-    const { body: config } = await httpClient.sendRequest<GetProviderConfigResponse>({
+    const { body: {
+        provider,
+        config,
+        authConfig,
+    } } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${apiUrl}v1/ai-providers/${providerId}/config`,
         headers: {
@@ -36,54 +40,54 @@ export async function createAIModel({
         },
     });
 
-    switch (config.provider) {
+    switch (provider) {
         case AIProviderName.OPENAI: {
-            const provider = createOpenAI({ apiKey: config.apiKey })
+            const provider = createOpenAI({ apiKey: authConfig.apiKey })
             if (isImage) {
                 return provider.imageModel(modelId)
             }
             return (openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId))
         }
         case AIProviderName.ANTHROPIC: {
-            const provider = createAnthropic({ apiKey: config.apiKey })
+            const provider = createAnthropic({ apiKey: authConfig.apiKey })
             if (isImage) {
-                throw new Error(`Provider ${config.provider} does not support image models`)
+                throw new Error(`Provider ${provider} does not support image models`)
             }
             return provider(modelId)
         }
         case AIProviderName.GOOGLE: {
-            const provider = createGoogleGenerativeAI({ apiKey: config.apiKey })
+            const provider = createGoogleGenerativeAI({ apiKey: authConfig.apiKey })
 
             return provider(modelId)
         }
         case AIProviderName.AZURE: {
-            const { apiKey, resourceName } = config as AzureProviderConfig
-            const provider = createAzure({ resourceName, apiKey })
+            const { resourceName } = config as AzureProviderConfig
+            const provider = createAzure({ resourceName, apiKey: authConfig.apiKey })
             if (isImage) {
                 return provider.imageModel(modelId)
             }
             return provider.chat(modelId)
         }
         case AIProviderName.CLOUDFLARE_GATEWAY: {
-            const { accountId, apiKey, gatewayId } = config as CloudflareGatewayProviderConfig
+            const { accountId, gatewayId } = config as CloudflareGatewayProviderConfig
 
             const provider = createOpenAICompatible({ 
                 name: 'cloudflare',
                 baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
                 headers: {
-                    'cf-aig-authorization': `Bearer ${apiKey}`
+                    'cf-aig-authorization': `Bearer ${authConfig.apiKey}`
                 }
             })
             return provider.chatModel(modelId)
         }
         case AIProviderName.OPENAI_COMPATIBLE: {
-            const { apiKey, apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
+            const { apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
 
             const provider = createOpenAICompatible({ 
                 name: 'openai-compatible',
                 baseURL: baseUrl,
                 headers: {
-                    [apiKeyHeader]: apiKey
+                    [apiKeyHeader]: authConfig.apiKey
                 }
             })
             if (isImage) {
@@ -93,11 +97,11 @@ export async function createAIModel({
         }
         case AIProviderName.ACTIVEPIECES: 
         case AIProviderName.OPENROUTER: {
-            const provider = createOpenRouter({ apiKey: config.apiKey })
+            const provider = createOpenRouter({ apiKey: authConfig.apiKey })
             return provider.chat(modelId)
         }
         default:
-            throw new Error(`Provider ${config.provider} is not supported`)
+            throw new Error(`Provider ${provider} is not supported`)
     }
 }
 

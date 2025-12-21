@@ -20,6 +20,13 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
 
         const config = await aiProviderService(log).getActivePiecesProviderConfig(platformId)
+        if (config.apiKey === '') {
+            return {
+                usageMonthly: 0,
+                limitMonthly: 0,
+                limitRemaining: 0,
+            }
+        }
 
         const usage = await openRouterGetKey(config.apiKeyHash)
         return {

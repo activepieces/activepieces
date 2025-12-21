@@ -26,14 +26,21 @@ import {
 import { Input } from '@/components/ui/input';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import {
+  AIProviderConfig,
   AIProviderName,
   AIProviderWithoutSensitiveData,
+  AnthropicProviderAuthConfig,
   AnthropicProviderConfig,
+  AzureProviderAuthConfig,
   AzureProviderConfig,
+  CloudflareGatewayProviderAuthConfig,
   CloudflareGatewayProviderConfig,
   CreateAIProviderRequest,
+  GoogleProviderAuthConfig,
   GoogleProviderConfig,
+  OpenAICompatibleProviderAuthConfig,
   OpenAICompatibleProviderConfig,
+  OpenAIProviderAuthConfig,
   OpenAIProviderConfig,
 } from '@activepieces/shared';
 
@@ -45,7 +52,7 @@ import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 type UpsertAIProviderDialogProps = {
   provider: AIProviderName;
   providerId?: string;
-  config?: AIProviderWithoutSensitiveData['config'];
+  config?: AIProviderConfig;
   children: React.ReactNode;
   onSave: () => void;
   defaultDisplayName?: string;
@@ -83,12 +90,14 @@ export const UpsertAIProviderDialog = ({
           provider,
           displayName: defaultDisplayName,
           config: config as any,
+          authConfig: { apiKey: '' } as any,
         });
       } else if (!providerId) {
         form.reset({
           provider,
           displayName: currentProviderDef.name,
           config: {} as any,
+          authConfig: {} as any,
         });
       }
     }
@@ -216,22 +225,30 @@ const createFormSchema = (provider: AIProviderName) => {
     return Type.Object({
       provider: Type.Literal(AIProviderName.AZURE),
       config: AzureProviderConfig,
+      authConfig: AzureProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
     return Type.Object({
       provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
       config: CloudflareGatewayProviderConfig,
+      authConfig: CloudflareGatewayProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.OPENAI_COMPATIBLE) {
     return Type.Object({
       provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
       config: OpenAICompatibleProviderConfig,
+      authConfig: OpenAICompatibleProviderAuthConfig,
     });
   }
   return Type.Object({
     provider: Type.Literal(provider),
+    authConfig: Type.Union([
+      AnthropicProviderAuthConfig,
+      GoogleProviderAuthConfig,
+      OpenAIProviderAuthConfig,
+    ]),
     config: Type.Union([
       AnthropicProviderConfig,
       GoogleProviderConfig,

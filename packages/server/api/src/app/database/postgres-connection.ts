@@ -314,6 +314,7 @@ import { AddDisplayNameToAiProviders1765757655723 } from './migration/postgres/1
 import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
 import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
 import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/postgres/1766094015801-removeOpenRounterKeysFromPlatformPlan'
+import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -644,6 +645,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTemplateStatus1765894492098,
         MigrateOldTemplatesToNewSchema1765993826655,
         RemoveOpenRounterKeysFromPlatformPlan1766094015801,
+        AddAuthConfigInAiProviders1766328841463,
     ]
     return migrations
 }

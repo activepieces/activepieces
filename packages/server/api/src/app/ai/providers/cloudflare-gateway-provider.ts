@@ -1,9 +1,9 @@
-import { AIProviderModel, CloudflareGatewayProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
-export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProviderConfig> = {
+export const cloudflareGatewayProvider: AIProviderStrategy<CloudflareGatewayProviderAuthConfig, CloudflareGatewayProviderConfig> = {
     name: 'Cloudflare Gateway',
-    async listModels(config: CloudflareGatewayProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(authConfig: CloudflareGatewayProviderAuthConfig, config: CloudflareGatewayProviderConfig): Promise<AIProviderModel[]> {
         return config.models.map(m => ({
             id: m.modelId,
             name: m.modelName,
