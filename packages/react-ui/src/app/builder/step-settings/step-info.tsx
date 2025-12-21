@@ -49,7 +49,7 @@ const StepInfo: React.FC<StepInfoProps> = ({ step }) => {
         <div className="flex items-center gap-0.5 min-w-0 text-sm">
           {!isNil(stepMetadata?.displayName) ? (
             <>
-              <span className=" text-muted-foreground">
+              <span className={!actionOrTriggerDisplayName ? 'text-foreground font-medium' : 'text-muted-foreground'}>
                 {stepMetadata.displayName}
               </span>
               {actionOrTriggerDisplayName && (
