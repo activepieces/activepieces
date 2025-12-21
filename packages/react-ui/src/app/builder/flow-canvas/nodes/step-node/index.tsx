@@ -27,6 +27,7 @@ import { StepNodeLogo } from './step-node-logo';
 import { StepNodeName } from './step-node-name';
 import { ApStepNodeStatus } from './step-node-status';
 import { TriggerWidget } from './trigger-widget';
+import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 
 const ApStepCanvasNode = React.memo(
   ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {
@@ -113,6 +114,7 @@ const ApStepCanvasNode = React.memo(
           isValid={!!isStepValid}
           isSkipped={isSkipped}
         />
+        <LoopIterationInput stepName={step.name} />
         <ApStepNodeStatus stepName={step.name} />
         <StepNodeName stepName={step.name} />
         <div className="px-3 h-full w-full overflow-hidden">
