@@ -186,7 +186,7 @@ export const BuilderHeader = () => {
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"
-          onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+          onClick={() => setRightSidebar(RightSideBarType.RUNS)}
           className="gap-2 px-2"
         >
           <Logs className="w-4 h-4" />

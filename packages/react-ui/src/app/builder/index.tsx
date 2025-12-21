@@ -157,7 +157,6 @@ const BuilderPage = () => {
           })}
         >
           <div id={LEFT_SIDEBAR_ID} className="w-full h-full">
-            {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
           </div>
         </ResizablePanel>
 
@@ -242,6 +241,7 @@ const BuilderPage = () => {
                   <StepSettingsContainer />
                 </StepSettingsProvider>
               )}
+            {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}
           </div>
         </ResizablePanel>
