@@ -7,8 +7,9 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { FlowVersionState, Permission } from '@activepieces/shared';
 
 import { useBuilderStateContext, useSwitchToDraft } from '../../builder-hooks';
+import { AboveTriggerButton } from '../../flow-canvas/widgets/above-trigger-button';
 
-const EditFlowOrViewDraftButton = () => {
+const EditFlowOrViewDraftButton = ({onCanvas}: {onCanvas: boolean}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
@@ -21,22 +22,43 @@ const EditFlowOrViewDraftButton = () => {
   if (!readonly || (isViewingDraft && !run)) {
     return null;
   }
+  const handleClick = () => {
+    if (location.pathname?.includes('/runs')) {
+      navigate(`/flows/${flowId}`);
+    } else {
+      switchToDraft();
+    }
+  };
+  const text = permissionToEditFlow ? t('Edit Flow') : t('View Draft');
 
   return (
-    <Button
-      size={'sm'}
-      variant={'outline'}
-      loading={isSwitchingToDraftPending}
-      onClick={() => {
-        if (location.pathname?.includes('/runs')) {
-          navigate(`/flows/${flowId}`);
-        } else {
-          switchToDraft();
-        }
-      }}
-    >
-      {permissionToEditFlow ? t('Edit Flow') : t('View Draft')}
-    </Button>
+  <>
+     {
+      onCanvas && (
+         <AboveTriggerButton onClick={handleClick} text={text}>
+         </AboveTriggerButton>
+      )
+     }
+
+     {
+      !onCanvas && (
+        <Button
+        size={'sm'}
+        variant={'default'}
+        loading={isSwitchingToDraftPending}
+        onClick={() => {
+          if (location.pathname?.includes('/runs')) {
+            navigate(`/flows/${flowId}`);
+          } else {
+            switchToDraft();
+          }
+        }}
+      >
+        {text}
+      </Button>
+      )
+     }
+  </>
   );
 };
 EditFlowOrViewDraftButton.displayName = 'EditFlowOrViewDraftButton';

@@ -7,10 +7,8 @@ import {
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, FlowTriggerType } from '@activepieces/shared';
-
-import ViewOnlyWidget from '../view-only-widget';
-
-import { TestButton } from './test-button';
+import { AboveTriggerButton } from '../above-trigger-button';
+import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
 
 const TestFlowWidget = () => {
   const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
@@ -43,7 +41,7 @@ const TestFlowWidget = () => {
 
   if (isChatTrigger) {
     return (
-      <TestButton
+      <AboveTriggerButton
         onClick={() => {
           setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
         }}
@@ -54,11 +52,11 @@ const TestFlowWidget = () => {
   }
 
   if (readonly) {
-    return <ViewOnlyWidget />;
+    return <EditFlowOrViewDraftButton onCanvas={true}></EditFlowOrViewDraftButton>
   }
 
   return (
-    <TestButton
+    <AboveTriggerButton
       onClick={() => {
         runFlow();
       }}

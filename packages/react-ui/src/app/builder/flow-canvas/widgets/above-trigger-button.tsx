@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-type TestButtonProps = {
+type  AboveTriggerButtonProps = {
   onClick: () => void;
   text: string;
   triggerHasNoSampleData?: boolean;
@@ -16,13 +16,13 @@ type TestButtonProps = {
   showKeyboardShortcut?: boolean;
 };
 
-const TestButton = ({
+const AboveTriggerButton = ({ 
   onClick,
   text,
   triggerHasNoSampleData = false,
   loading = false,
   showKeyboardShortcut = true,
-}: TestButtonProps) => {
+}: AboveTriggerButtonProps) => {
   const isMac = /(Mac)/i.test(navigator.userAgent);
 
   useEffect(() => {
@@ -78,6 +78,6 @@ const TestButton = ({
   );
 };
 
-TestButton.displayName = 'TestButton';
+AboveTriggerButton.displayName = 'AboveTriggerButton';
 
-export { TestButton };
+export { AboveTriggerButton };
