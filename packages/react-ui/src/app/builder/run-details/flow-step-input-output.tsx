@@ -54,7 +54,7 @@ export const FlowStepInputOutput = () => {
     if(!isRunDone) {
       return <OutputSkeleton />
     }
-    return <div className='px-4 bg-muted rounded-md m-4 py-2 flex items-center gap-1'>
+    return <div className='px-4 bg-muted rounded-md m-4 py-2 flex items-center gap-1.5'>
       <Info className='w-4 h-4' />
       <span>{t('This step didn\'t run')}</span>
       </div>

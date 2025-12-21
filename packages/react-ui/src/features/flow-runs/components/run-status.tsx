@@ -75,7 +75,7 @@ const RunStatus = React.memo(
       <div className="absolute top-[8px]  left-[12px] rounded-md bg-builder-background z-50">
         <Tooltip>
          <TooltipTrigger asChild>
-         <div className={cn('flex items-center gap-1 animate-in fade-in slide-in-from-top duration-500 textsm select-none', flowRunUtils.getStatusContainerClassName(variant))}>
+         <div className={cn('flex items-center gap-1 animate-in fade-in slide-in-from-top duration-500 !text-sm select-none', flowRunUtils.getStatusContainerClassName(variant))}>
           <Icon className="w-4 h-4" />
            {getStatusText({status: run.status, timeout: timeoutSeconds ?? -1, memoryLimit: memoryLimit ?? -1})}
         </div>

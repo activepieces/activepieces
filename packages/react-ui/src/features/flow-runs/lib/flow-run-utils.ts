@@ -91,9 +91,9 @@ export const flowRunUtils = {
   },
   getStatusContainerClassName(variant: 'default' | 'success' | 'error') {
     return cn('text-xs px-2 py-1  border rounded-md leading-none',{
-      'text-green-800 bg-green-50 border-green-200':
+      'text-green-800 bg-green-50 border-green-200 dark:text-green-200 dark:bg-green-900 dark:border-green-800':
         variant === 'success',
-      'text-red-800 bg-red-50  border-red-200': variant === 'error',
+      'text-red-800 bg-red-50  border-red-200 dark:text-red-200 dark:bg-red-900 dark:border-red-800': variant === 'error',
       'bg-background  border-border text-foreground':
         variant === 'default',
     })
