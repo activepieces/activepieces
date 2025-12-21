@@ -2,6 +2,7 @@ import { t } from 'i18next';
 import { Wand } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
@@ -20,6 +21,23 @@ import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 export default function Billing() {
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
+
+  return (
+    <LockedFeatureGuard
+      featureKey="BILLING"
+      locked={edition === ApEdition.COMMUNITY}
+      lockTitle={t('Unlock Billing Page')}
+      lockDescription={t(
+        'Upgrade to the Enterprise edition to access billing and usage management.',
+      )}
+    >
+      <BillingPageDetails />
+    </LockedFeatureGuard>
+  );
+}
+
+const BillingPageDetails = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const {
@@ -103,4 +121,4 @@ export default function Billing() {
       </section>
     </>
   );
-}
+};
