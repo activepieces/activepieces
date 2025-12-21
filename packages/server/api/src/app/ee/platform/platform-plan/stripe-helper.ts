@@ -10,7 +10,7 @@ const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
 
 export const stripeHelper = (log: FastifyBaseLogger) => ({
     getStripe: (): Stripe | undefined => {
-        // if (system.getEdition() !== ApEdition.CLOUD) return undefined
+        if (system.getEdition() !== ApEdition.CLOUD) return undefined
 
         const stripeSecret = system.getOrThrow(AppSystemProp.STRIPE_SECRET_KEY)
         return new Stripe(stripeSecret, {
