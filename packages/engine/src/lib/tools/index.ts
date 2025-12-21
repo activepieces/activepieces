@@ -54,7 +54,7 @@ async function resolveProperties(
     operation: ExecuteToolOperation,
 ): Promise<Record<string, unknown>> {
     let result: Record<string, unknown> = { ...operation.predefinedInput }
-    const predefinedKeys = Object.keys(operation.predefinedInput);
+    const predefinedKeys = Object.keys(operation.predefinedInput)
 
     for (const [_, properties] of Object.entries(depthToPropertyMap)) {
         const propertyToFill: Record<string, z.ZodTypeAny> = {}
@@ -113,7 +113,7 @@ async function resolveProperties(
             schema: schemaObject,
             prompt: extractionPrompt,
             mode: 'json',
-            output: 'object'
+            output: 'object',
         })
 
         result = {
