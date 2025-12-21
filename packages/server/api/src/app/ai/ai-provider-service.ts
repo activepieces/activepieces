@@ -1,6 +1,6 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
-    ActivepiecesError, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
+    ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
     CreateAIProviderRequest,
     ErrorCode,
@@ -33,10 +33,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
-        const activepiecesConfigured = await this.isActivepiecesConfigured(platformId)
+        const activepiecesExists = await aiProviderRepo().existsBy({
+            platformId,
+            provider: AIProviderName.ACTIVEPIECES,
+        })
 
-        if (flagService.aiCreditsEnabled() && !activepiecesConfigured) {
-
+        if (flagService.aiCreditsEnabled() && !activepiecesExists) {
             await aiProviderRepo().upsert({
                 id: apId(),
                 auth: await encryptUtils.encryptObject({}),
@@ -118,10 +120,15 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async isActivepiecesConfigured(platformId: PlatformId): Promise<boolean> {
-        return aiProviderRepo().existsBy({
+        const aiProvider = await aiProviderRepo().findOneBy({
             platformId,
             provider: AIProviderName.ACTIVEPIECES,
         })
+        if (isNil(aiProvider) || isNil(aiProvider.auth)) {
+            return false
+        }
+        const decryptedAuth = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
+        return !isNil(decryptedAuth) && !isNil(decryptedAuth.apiKey) && decryptedAuth.apiKey !== ''
     },
     async getConfigOrThrow(platformId: PlatformId, providerId: string): Promise<GetProviderConfigResponse> {
         if (providerId === AIProviderName.ACTIVEPIECES) {
@@ -146,36 +153,31 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 })
 
 async function getOrCreateActivepiecesConfig(platformId: PlatformId, log: FastifyBaseLogger): Promise<GetProviderConfigResponse> {
-    const aiProvider = await aiProviderRepo().findOneBy({
-        platformId,
-        provider: AIProviderName.ACTIVEPIECES,
-    })
-    if (isNil(aiProvider)) {
-        await distributedLock(log).runExclusive({
-            key: `platform_ai_credits_${platformId}`,
-            timeoutInSeconds: 60,
-            fn: async () => {
-                const providerCreated = await aiProviderRepo().findOneBy({
-                    provider: AIProviderName.ACTIVEPIECES,
-                    platformId,
-                })
-                if (!isNil(providerCreated) ) {
-                    return
-                }
-                const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-                const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
-                const { key, data } = await openRouterCreateKey(`Platform ${platformId}`, limit)
-                await aiProviderRepo().save({
-                    id: apId(),
-                    platformId,
-                    provider: AIProviderName.ACTIVEPIECES,
-                    displayName: 'Activepieces',
-                    config: {},
-                    authConfig: await encryptUtils.encryptObject({ apiKey: key, apiKeyHash: data.hash }),
-                })
-            },
-        })
+    const activepiecesConfigured = await aiProviderService(log).isActivepiecesConfigured(platformId)
+    if (activepiecesConfigured) {
+        return aiProviderService(log).getConfigOrThrow(platformId, AIProviderName.ACTIVEPIECES)
     }
+    await distributedLock(log).runExclusive({
+        key: `platform_ai_credits_${platformId}`,
+        timeoutInSeconds: 60,
+        fn: async () => {
+            const activepiecesConfigured = await aiProviderService(log).isActivepiecesConfigured(platformId)
+            if (activepiecesConfigured) {
+                return
+            }
+            const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+            const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
+            const { key, data } = await openRouterCreateKey(`Platform ${platformId}`, limit)
+            await aiProviderRepo().save({
+                id: apId(),
+                platformId,
+                provider: AIProviderName.ACTIVEPIECES,
+                displayName: 'Activepieces',
+                config: {},
+                authConfig: await encryptUtils.encryptObject({ apiKey: key, apiKeyHash: data.hash }),
+            })
+        },
+    })
     return aiProviderService(log).getConfigOrThrow(platformId, AIProviderName.ACTIVEPIECES)
 }
 
@@ -198,3 +200,4 @@ async function openRouterCreateKey(name: string, limit: number): Promise<{ key: 
     const data = await res.json()
     return { key: data.key, data: data.data }
 }
+
