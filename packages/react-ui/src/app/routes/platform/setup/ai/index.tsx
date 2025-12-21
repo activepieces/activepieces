@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
+import { useMemo } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
@@ -11,54 +12,39 @@ import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
-const SUPPORTED_AI_PROVIDERS = [
+const getSupportedAIProviders = () => [
   {
     provider: AIProviderName.OPENAI,
     displayName: 'OpenAI',
-    markdown: `Follow these instructions to get your OpenAI API Key:
-
-1. Visit the following website: https://platform.openai.com/account/api-keys.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
-
-It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
-`,
+    markdown: t('aiProviders.openai.instructions'),
     logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
   },
   {
     provider: AIProviderName.ANTHROPIC,
     displayName: 'Anthropic',
-    markdown: `Follow these instructions to get your Claude API Key:
-
-1. Visit the following website: https://console.anthropic.com/settings/keys.
-2. Once on the website, locate and click on the option to obtain your Claude API Key.
-`,
+    markdown: t('aiProviders.anthropic.instructions'),
     logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
   },
   {
     provider: AIProviderName.GOOGLE,
     displayName: 'Google Gemini',
-    markdown: `Follow these instructions to get your Google API Key:
-1. Visit the following website: https://console.cloud.google.com/apis/credentials.
-2. Once on the website, locate and click on the option to obtain your Google API Key.
-`,
+    markdown: t('aiProviders.google.instructions'),
     logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
   },
   {
     provider: AIProviderName.AZURE,
     displayName: 'Azure',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
-    markdown:
-      'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
+    markdown: t('aiProviders.azure.instructions'),
   },
   {
     provider: AIProviderName.OPENROUTER,
     displayName: 'OpenRouter',
     logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',
-    markdown: `Follow these instructions to get your OpenRouter API Key:
-1. Visit the following website: https://openrouter.ai/settings/keys.
-2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`,
+    markdown: t('aiProviders.openrouter.instructions'),
   },
 ];
+
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({
     queryKey: ['ai-providers'],
@@ -74,6 +60,8 @@ export default function AIProvidersPage() {
       refetch();
     },
   });
+
+  const supportedProviders = useMemo(() => getSupportedAIProviders(), []);
 
   return (
     <LockedFeatureGuard
@@ -98,7 +86,7 @@ export default function AIProvidersPage() {
           }
         ></DashboardPageHeader>
         <div className="flex flex-col gap-4">
-          {SUPPORTED_AI_PROVIDERS.map((provider) => (
+          {supportedProviders.map((provider) => (
             <AIProviderCard
               key={provider.provider}
               provider={provider.provider}
