@@ -35,6 +35,7 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
+import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectHooks.useCurrentProject();
@@ -222,12 +223,12 @@ const StepSettingsContainer = () => {
                 </div>
               </ScrollArea>
             </ResizablePanel>
-            {!readonly && (
+       
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel defaultSize={45} className="min-h-[130px]">
-                  <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
-                    {modifiedStep.type && (
+                  <ScrollArea className="h-[calc(100%-35px)]  ">
+                    {modifiedStep.type && !readonly && (
                       <TestStepContainer
                         type={modifiedStep.type}
                         flowId={flowVersion.flowId}
@@ -236,10 +237,12 @@ const StepSettingsContainer = () => {
                         isSaving={saving}
                       ></TestStepContainer>
                     )}
+                    {readonly && (
+                      <FlowStepInputOutput></FlowStepInputOutput>
+                    )}
                   </ScrollArea>
                 </ResizablePanel>
               </>
-            )}
           </ResizablePanelGroup>
         </DynamicPropertiesProvider>
       </form>

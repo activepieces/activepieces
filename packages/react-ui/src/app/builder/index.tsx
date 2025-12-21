@@ -41,7 +41,6 @@ import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
 import { LEFT_SIDEBAR_ID } from './flow-canvas/utils/consts';
 import { FlowVersionsList } from './flow-versions';
-import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 
@@ -159,7 +158,6 @@ const BuilderPage = () => {
         >
           <div id={LEFT_SIDEBAR_ID} className="w-full h-full">
             {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
-            {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
           </div>
         </ResizablePanel>
 

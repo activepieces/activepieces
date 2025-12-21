@@ -76,7 +76,6 @@ export function useBuilderStateContext<T>(
 
 export enum LeftSideBarType {
   RUNS = 'runs',
-  RUN_DETAILS = 'run-details',
   NONE = 'none',
 }
 
@@ -233,9 +232,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       inputSampleData: initialState.inputSampleData,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
-      leftSidebar: initialState.run
-        ? LeftSideBarType.RUN_DETAILS
-        : LeftSideBarType.NONE,
+      leftSidebar: LeftSideBarType.NONE,
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
@@ -302,9 +299,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
-          const leftSidebar = !isNil(state.run)
-            ? LeftSideBarType.RUN_DETAILS
-            : LeftSideBarType.NONE;
 
           const isEmptyTrigger =
             selectedStep === 'trigger' &&
@@ -316,7 +310,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               : null,
             selectedStep,
             rightSidebar,
-            leftSidebar,
             selectedBranchIndex: null,
             askAiButtonProps: null,
             selectedNodes,
@@ -398,7 +391,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             ),
             run,
             flowVersion,
-            leftSidebar: LeftSideBarType.RUN_DETAILS,
+            leftSidebar: LeftSideBarType.NONE,
             rightSidebar: initiallySelectedStep
               ? RightSideBarType.PIECE_SETTINGS
               : RightSideBarType.NONE,

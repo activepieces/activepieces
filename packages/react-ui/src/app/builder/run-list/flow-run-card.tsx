@@ -54,8 +54,7 @@ const FlowRunCard = React.memo(
     );
     const projectId = authenticationSession.getProjectId();
 
-    const [setLeftSidebar, setRun] = useBuilderStateContext((state) => [
-      state.setLeftSidebar,
+    const [setRun] = useBuilderStateContext((state) => [
       state.setRun,
     ]);
     const { mutate: viewRun, isPending: isFetchingRun } = useMutation<
@@ -78,7 +77,6 @@ const FlowRunCard = React.memo(
       },
       onSuccess: ({ run, populatedFlow }) => {
         setRun(run, populatedFlow.version);
-        setLeftSidebar(LeftSideBarType.RUN_DETAILS);
         refetchRuns();
       },
     });
@@ -115,7 +113,6 @@ const FlowRunCard = React.memo(
       onSuccess: ({ populatedFlow, run }) => {
         refetchRuns();
         setRun(run, populatedFlow.version);
-        setLeftSidebar(LeftSideBarType.RUN_DETAILS);
       },
     });
 

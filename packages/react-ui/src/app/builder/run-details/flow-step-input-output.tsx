@@ -9,35 +9,52 @@ import { AgentTimeline } from '@/features/agents/agent-timeline';
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { formatUtils } from '@/lib/utils';
 import {
-  FlowAction,
-  StepOutput,
   StepOutputStatus,
   flowStructureUtil,
   AgentResult,
 } from '@activepieces/shared';
+import { useBuilderStateContext } from '../builder-hooks';
+import { useMemo } from 'react';
+import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 
-type Props = {
-  stepDetails: StepOutput;
-  selectedStep: FlowAction;
-};
 
-export const FlowStepInputOutput = ({ stepDetails, selectedStep }: Props) => {
-  const isAgent = flowStructureUtil.isAgentPiece(selectedStep);
+
+export const FlowStepInputOutput = () => {
+  const [run, loopsIndexes, flowVersion, selectedStep] = useBuilderStateContext((state) => [
+    state.run,
+    state.loopsIndexes,
+    state.flowVersion,
+    state.selectedStep ? flowStructureUtil.getStepOrThrow(state.selectedStep, state.flowVersion.trigger) : null,
+  ]);
+  const selectedStepOutput = useMemo(() => {
+    return run && selectedStep && run.steps
+      ? flowRunUtils.extractStepOutput(
+        selectedStep.name,
+          loopsIndexes,
+          run.steps,
+          flowVersion.trigger,
+        )
+      : null;
+  }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
+  const isAgent = selectedStep ? flowStructureUtil.isAgentPiece(selectedStep) : false;
   const isRunning =
-    stepDetails.status === StepOutputStatus.RUNNING ||
-    stepDetails.status === StepOutputStatus.PAUSED;
+  selectedStepOutput?.status === StepOutputStatus.RUNNING ||
+  selectedStepOutput?.status === StepOutputStatus.PAUSED;
 
   const parsedOutput =
-    stepDetails.errorMessage ?? stepDetails.output ?? 'No output';
+    selectedStepOutput?.errorMessage ?? selectedStepOutput?.output ?? 'No output';
 
   const tabCount = isAgent ? 3 : 2;
   const gridCols = tabCount === 3 ? 'grid-cols-3' : 'grid-cols-2';
 
+  if (!selectedStepOutput || !selectedStep) {
+    return null;
+  }
   return (
     <ScrollArea className="h-full p-4">
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-2 text-base font-medium">
-          <StepStatusIcon status={stepDetails.status} size="5" />
+          <StepStatusIcon status={selectedStepOutput.status} size="5" />
           <span>{selectedStep.displayName}</span>
         </div>
 
@@ -45,7 +62,7 @@ export const FlowStepInputOutput = ({ stepDetails, selectedStep }: Props) => {
           <Timer className="w-4 h-4" />
           <span>
             {t('Duration')}:{' '}
-            {formatUtils.formatDuration(stepDetails.duration ?? 0, false)}
+            {formatUtils.formatDuration(selectedStepOutput.duration ?? 0, false)}
           </span>
         </div>
 
@@ -59,11 +76,11 @@ export const FlowStepInputOutput = ({ stepDetails, selectedStep }: Props) => {
           </TabsList>
 
           <TabsContent value="input">
-            <JsonViewer json={stepDetails.input} title={t('Input')} />
+            <JsonViewer json={selectedStepOutput.input} title={t('Input')} />
           </TabsContent>
 
           <TabsContent value="timeline">
-            <AgentTimeline agentResult={stepDetails.output as AgentResult} />
+            <AgentTimeline agentResult={selectedStepOutput.output as AgentResult} />
           </TabsContent>
 
           <TabsContent value="output">
