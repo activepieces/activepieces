@@ -10,7 +10,7 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     })
     app.get('/:id/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
-        return await aiProviderService(app.log).getConfig(platformId, request.params.id)
+        return await aiProviderService(app.log).getConfigOrThrow(platformId, request.params.id)
     })
     app.get('/:id/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
