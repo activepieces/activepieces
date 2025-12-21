@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { Plus, Pencil, Trash2, ImageIcon, TextIcon, AlertCircle } from 'lucide-react';
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ImageIcon,
+  TextIcon,
+  AlertCircle,
+} from 'lucide-react';
 import { useState } from 'react';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
 
@@ -231,7 +238,9 @@ export const UpsertProviderConfigForm = ({
                 <AlertCircle className="h-8 w-8 mx-auto" />
               </span>
               <p className="text-sm text-muted-foreground">
-                {t('This provider does not support listing models via API, please add models manually.')}
+                {t(
+                  'This provider does not support listing models via API, please add models manually.',
+                )}
               </p>
             </div>
           ) : (

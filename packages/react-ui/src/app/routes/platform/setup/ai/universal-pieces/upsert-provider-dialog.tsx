@@ -225,34 +225,44 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
     return Type.Object({
       provider: Type.Literal(AIProviderName.AZURE),
       config: AzureProviderConfig,
-      auth: editMode ? Type.Optional(AzureProviderAuthConfig) : AzureProviderAuthConfig,
+      auth: editMode
+        ? Type.Optional(AzureProviderAuthConfig)
+        : AzureProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
     return Type.Object({
       provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
       config: CloudflareGatewayProviderConfig,
-      auth: editMode ? Type.Optional(CloudflareGatewayProviderAuthConfig) : CloudflareGatewayProviderAuthConfig,
+      auth: editMode
+        ? Type.Optional(CloudflareGatewayProviderAuthConfig)
+        : CloudflareGatewayProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.OPENAI_COMPATIBLE) {
     return Type.Object({
       provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
       config: OpenAICompatibleProviderConfig,
-      auth: editMode ? Type.Optional(OpenAICompatibleProviderAuthConfig) : OpenAICompatibleProviderAuthConfig,
+      auth: editMode
+        ? Type.Optional(OpenAICompatibleProviderAuthConfig)
+        : OpenAICompatibleProviderAuthConfig,
     });
   }
   return Type.Object({
     provider: Type.Literal(provider),
-    auth: editMode ? Type.Optional(Type.Union([
-      AnthropicProviderAuthConfig,
-      GoogleProviderAuthConfig,
-      OpenAIProviderAuthConfig,
-    ])) : Type.Union([
-      AnthropicProviderAuthConfig,
-      GoogleProviderAuthConfig,
-      OpenAIProviderAuthConfig,
-    ]),
+    auth: editMode
+      ? Type.Optional(
+          Type.Union([
+            AnthropicProviderAuthConfig,
+            GoogleProviderAuthConfig,
+            OpenAIProviderAuthConfig,
+          ]),
+        )
+      : Type.Union([
+          AnthropicProviderAuthConfig,
+          GoogleProviderAuthConfig,
+          OpenAIProviderAuthConfig,
+        ]),
     config: Type.Union([
       AnthropicProviderConfig,
       GoogleProviderConfig,
