@@ -315,6 +315,8 @@ import { AddTemplateStatus1765894492098 } from './migration/postgres/17658944920
 import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
 import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/postgres/1766094015801-removeOpenRounterKeysFromPlatformPlan'
 import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
+import { DropLegacyTables1766015156683 } from './migration/postgres/1766015156683-DropLegacyTables'
+import { RecreateMcpToolTable1766072572000 } from './migration/postgres/1766072572000-RecreateMcpToolTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -646,6 +648,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateOldTemplatesToNewSchema1765993826655,
         RemoveOpenRounterKeysFromPlatformPlan1766094015801,
         AddAuthConfigInAiProviders1766328841463,
+        DropLegacyTables1766015156683,
+        RecreateMcpToolTable1766072572000,
     ]
     return migrations
 }

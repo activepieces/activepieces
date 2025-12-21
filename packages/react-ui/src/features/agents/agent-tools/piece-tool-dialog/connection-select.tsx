@@ -4,23 +4,25 @@ import React, { useState } from 'react';
 // eslint-disable-next-line import/no-restricted-paths
 import { CreateOrEditConnectionDialog } from '@/app/connections/create-edit-connection-dialog';
 import { SearchableSelect } from '@/components/custom/searchable-select';
-import { Label } from '@/components/ui/label';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { PieceMetadataModelSummary } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
 
 type ConnectionDropdownProps = {
   piece: PieceMetadataModelSummary;
   value: string | null;
   onChange: (connectionExternalId: string | null) => void;
   disabled?: boolean;
-  label?: string;
   placeholder?: string;
-  showLabel?: boolean;
-  required?: boolean;
   showError?: boolean;
 };
+
+function unwrapConnection(input?: unknown): string | undefined {
+  if (typeof input !== 'string') return undefined;
+
+  const match = input.match(/^\{\{connections\['([^']+)'\]\}\}$/);
+  return match?.[1];
+}
 
 export const ConnectionDropdown = React.memo(
   ({
@@ -28,11 +30,8 @@ export const ConnectionDropdown = React.memo(
     value,
     onChange,
     disabled = false,
-    label = t('Connection'),
-    placeholder = t('Select a connection'),
-    showLabel = true,
-    required = false,
     showError = false,
+    placeholder = t('Select a connection'),
   }: ConnectionDropdownProps) => {
     const [connectionDialogOpen, setConnectionDialogOpen] = useState(false);
 
@@ -51,12 +50,7 @@ export const ConnectionDropdown = React.memo(
       staleTime: 0,
     });
 
-    const pieceHasAuth = !isNil(piece?.auth);
-
-    const shouldShowError =
-      showError && required && pieceHasAuth && value === null;
-
-    if (!piece || !pieceHasAuth) {
+    if (!piece) {
       return null;
     }
 
@@ -73,7 +67,7 @@ export const ConnectionDropdown = React.memo(
 
     const handleChange = (selectedValue: string | null) => {
       if (selectedValue) {
-        onChange(selectedValue as string);
+        onChange(`{{connections['${selectedValue}']}}`);
       } else {
         setConnectionDialogOpen(true);
       }
@@ -87,7 +81,7 @@ export const ConnectionDropdown = React.memo(
           setOpen={(open, connection) => {
             setConnectionDialogOpen(open);
             if (connection) {
-              onChange(connection.externalId);
+              onChange(`{{connections['${connection.externalId}']}}`);
               refetchConnections();
             }
           }}
@@ -96,21 +90,18 @@ export const ConnectionDropdown = React.memo(
         />
 
         <div className="space-y-2">
-          {showLabel && <Label>{label}</Label>}
           <SearchableSelect
-            value={value ?? undefined}
+            value={unwrapConnection(value)}
             onChange={handleChange}
             options={connectionOptionsWithNewConnectionOption}
             placeholder={placeholder}
             loading={connectionsLoading || isRefetchingConnections}
             disabled={disabled}
-            showDeselect={!required && !disabled && value !== null}
-            triggerClassName={
-              shouldShowError ? 'border-destructive' : undefined
-            }
+            showDeselect={!disabled && value !== null}
+            triggerClassName={showError ? 'border-destructive' : undefined}
           />
-          {shouldShowError && (
-            <p className="text-sm font-medium text-destructive wrap-break-word">
+          {showError && (
+            <p className="text-sm font-medium text-destructive break-words">
               {t('Connection is required')}
             </p>
           )}
