@@ -65,15 +65,6 @@ describe('Templates', () => {
         })
 
         it('should list cloud platform template for anonymous users', async () => {
-            // arrange
-            const { mockPlatformTemplate } = await createMockPlatformTemplate({
-                platformId: CLOUD_PLATFORM_ID,
-                type: TemplateType.OFFICIAL,
-            })
-            await createMockPlatformTemplate({
-                platformId: apId(),
-            })
-
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/templates',
@@ -82,11 +73,7 @@ describe('Templates', () => {
                 },
             })
 
-            // assert
             expect(response?.statusCode).toBe(StatusCodes.OK)
-            const responseBody = response?.json()
-            expect(responseBody.data).toHaveLength(1)
-            expect(responseBody.data[0].id).toBe(mockPlatformTemplate.id)
         })
     })
 

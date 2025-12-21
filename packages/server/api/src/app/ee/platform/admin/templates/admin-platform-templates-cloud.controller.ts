@@ -1,9 +1,8 @@
-import { AppSystemProp, publicAccess } from '@activepieces/server-shared'
+import { publicAccess } from '@activepieces/server-shared'
 import { ActivepiecesError, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { flagService } from '../../../../flags/flag.service'
-import { system } from '../../../../helper/system/system'
 import { templateService } from '../../../../template/template.service'
 
 export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = async (
@@ -27,9 +26,8 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
                 },
             })
         }
-        const cloudPlatformId = system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
         return templateService().create({
-            platformId: cloudPlatformId,
+            platformId: undefined,
             params: request.body,
         })
     })

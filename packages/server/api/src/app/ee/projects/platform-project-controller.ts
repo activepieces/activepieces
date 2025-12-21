@@ -99,6 +99,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
         await platformMustBeOwnedByCurrentUser.call(app, req, res)
         assertProjectToDeleteIsNotPrincipalProject(req.principal, req.params.id)
+        await assertProjectToDeleteIsNotPersonalProject(req.params.id)
 
         await platformProjectService(req.log).hardDelete({
             id: req.params.id,
@@ -136,6 +137,18 @@ const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal 
             code: ErrorCode.VALIDATION,
             params: {
                 message: 'ACTIVE_PROJECT',
+            },
+        })
+    }
+}
+
+async function assertProjectToDeleteIsNotPersonalProject(projectId: string): Promise<void> {
+    const project = await projectService.getOneOrThrow(projectId)
+    if (project.type === ProjectType.PERSONAL) {
+        throw new ActivepiecesError({
+            code: ErrorCode.VALIDATION,
+            params: {
+                message: 'Personal projects cannot be deleted',
             },
         })
     }
