@@ -313,10 +313,10 @@ import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/post
 import { AddDisplayNameToAiProviders1765757655723 } from './migration/postgres/1765757655723-add-display-name-to-ai-providers'
 import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
 import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
-import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/postgres/1766094015801-removeOpenRounterKeysFromPlatformPlan'
-import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 import { DropLegacyTables1766015156683 } from './migration/postgres/1766015156683-DropLegacyTables'
 import { RecreateMcpToolTable1766072572000 } from './migration/postgres/1766072572000-RecreateMcpToolTable'
+import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/postgres/1766094015801-removeOpenRounterKeysFromPlatformPlan'
+import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)

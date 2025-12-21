@@ -1,5 +1,6 @@
 import { t } from 'i18next';
-import { Plus, Pencil, Trash2, ImageIcon, TextIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, ImageIcon, TextIcon, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
 import { UseFormReturn, useFieldArray } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
@@ -31,6 +32,7 @@ type UpsertProviderConfigFormProps = {
   provider: AIProviderName;
   apiKeyRequired?: boolean;
   isLoading?: boolean;
+  isEditMode?: boolean;
 };
 
 export const UpsertProviderConfigForm = ({
@@ -38,30 +40,49 @@ export const UpsertProviderConfigForm = ({
   provider,
   apiKeyRequired = true,
   isLoading,
+  isEditMode = false,
 }: UpsertProviderConfigFormProps) => {
   const { fields, append, remove, update } = useFieldArray({
     control: form.control,
     name: 'config.models',
   });
 
+  const [showApiKeyInput, setShowApiKeyInput] = useState(!isEditMode);
+
   return (
     <div className="grid space-y-4">
       <FormField
         control={form.control}
-        name="authConfig.apiKey"
+        name="auth.apiKey"
         render={({ field }) => (
           <FormItem className="grid space-y-3">
-            <FormLabel htmlFor="apiKey">{t('API Key')}</FormLabel>
-            <FormControl>
-              <Input
-                {...field}
-                required={apiKeyRequired}
-                id="apiKey"
-                placeholder={'sk_************************'}
-                className="rounded-sm"
-                disabled={isLoading}
-              />
-            </FormControl>
+            <div className="flex items-center justify-between">
+              <FormLabel htmlFor="apiKey">{t('API Key')}</FormLabel>
+              {!showApiKeyInput && (
+                <Button
+                  type="button"
+                  variant="basic"
+                  size="sm"
+                  onClick={() => setShowApiKeyInput(true)}
+                  disabled={isLoading}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  {t('Edit')}
+                </Button>
+              )}
+            </div>
+            {showApiKeyInput && (
+              <FormControl>
+                <Input
+                  {...field}
+                  required={apiKeyRequired}
+                  id="apiKey"
+                  placeholder={'sk_************************'}
+                  className="rounded-sm"
+                  disabled={isLoading}
+                />
+              </FormControl>
+            )}
             <FormMessage />
           </FormItem>
         )}
@@ -194,8 +215,8 @@ export const UpsertProviderConfigForm = ({
             <ModelFormPopover onSubmit={(model) => append(model)}>
               <Button
                 type="button"
-                variant="outline"
                 size="sm"
+                variant="basic"
                 disabled={isLoading}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -205,21 +226,13 @@ export const UpsertProviderConfigForm = ({
           </div>
 
           {fields.length === 0 ? (
-            <div className="text-center py-8 border border-dashed rounded-lg">
-              <p className="text-muted-foreground">
-                {t('No models configured yet')}
+            <div className="text-center py-8 border border-dashed rounded-lg flex flex-col items-center justify-center gap-2">
+              <span className="mb-2 flex justify-center text-muted-foreground">
+                <AlertCircle className="h-8 w-8 mx-auto" />
+              </span>
+              <p className="text-sm text-muted-foreground">
+                {t('This provider does not support listing models via API, please add models manually.')}
               </p>
-              <ModelFormPopover onSubmit={(model) => append(model)}>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="mt-2"
-                  disabled={isLoading}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {t('Add your first model')}
-                </Button>
-              </ModelFormPopover>
             </div>
           ) : (
             <div className="space-y-3">

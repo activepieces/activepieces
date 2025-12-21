@@ -28,7 +28,6 @@ import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import {
   AIProviderConfig,
   AIProviderName,
-  AIProviderWithoutSensitiveData,
   AnthropicProviderAuthConfig,
   AnthropicProviderConfig,
   AzureProviderAuthConfig,
@@ -70,16 +69,16 @@ export const UpsertAIProviderDialog = ({
 
   const currentProviderDef = useMemo(
     () => SUPPORTED_AI_PROVIDERS.find((p) => p.provider === provider)!,
-    [provider]
+    [provider],
   );
 
   const form = useForm<CreateAIProviderRequest>({
-    resolver: typeboxResolver(createFormSchema(provider)),
+    resolver: typeboxResolver(createFormSchema(provider, !!providerId)),
     defaultValues: {
       provider,
       displayName: defaultDisplayName,
-      config: config as any,
-    },
+      config: config,
+    } as CreateAIProviderRequest,
   });
 
   // Reset form when dialog opens
@@ -89,16 +88,16 @@ export const UpsertAIProviderDialog = ({
         form.reset({
           provider,
           displayName: defaultDisplayName,
-          config: config as any,
-          authConfig: { apiKey: '' } as any,
-        });
+          config: config ?? {},
+          auth: { apiKey: '' },
+        } as CreateAIProviderRequest);
       } else if (!providerId) {
         form.reset({
           provider,
           displayName: currentProviderDef.name,
-          config: {} as any,
-          authConfig: {} as any,
-        });
+          config: {},
+          auth: {},
+        } as CreateAIProviderRequest);
       }
     }
   }, [open, config, defaultDisplayName, form]);
@@ -116,7 +115,7 @@ export const UpsertAIProviderDialog = ({
       onSave();
     },
     onError: (
-      error: AxiosError<{ message?: string; params?: { message: string } }>
+      error: AxiosError<{ message?: string; params?: { message: string } }>,
     ) => {
       const data = error.response?.data;
 
@@ -180,6 +179,7 @@ export const UpsertAIProviderDialog = ({
               provider={provider}
               apiKeyRequired={!config}
               isLoading={isPending}
+              isEditMode={!!providerId}
             />
 
             {form.formState.errors.root?.serverError && (
@@ -220,31 +220,35 @@ export const UpsertAIProviderDialog = ({
   );
 };
 
-const createFormSchema = (provider: AIProviderName) => {
+const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
   if (provider === AIProviderName.AZURE) {
     return Type.Object({
       provider: Type.Literal(AIProviderName.AZURE),
       config: AzureProviderConfig,
-      authConfig: AzureProviderAuthConfig,
+      auth: editMode ? Type.Optional(AzureProviderAuthConfig) : AzureProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.CLOUDFLARE_GATEWAY) {
     return Type.Object({
       provider: Type.Literal(AIProviderName.CLOUDFLARE_GATEWAY),
       config: CloudflareGatewayProviderConfig,
-      authConfig: CloudflareGatewayProviderAuthConfig,
+      auth: editMode ? Type.Optional(CloudflareGatewayProviderAuthConfig) : CloudflareGatewayProviderAuthConfig,
     });
   }
   if (provider === AIProviderName.OPENAI_COMPATIBLE) {
     return Type.Object({
       provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
       config: OpenAICompatibleProviderConfig,
-      authConfig: OpenAICompatibleProviderAuthConfig,
+      auth: editMode ? Type.Optional(OpenAICompatibleProviderAuthConfig) : OpenAICompatibleProviderAuthConfig,
     });
   }
   return Type.Object({
     provider: Type.Literal(provider),
-    authConfig: Type.Union([
+    auth: editMode ? Type.Optional(Type.Union([
+      AnthropicProviderAuthConfig,
+      GoogleProviderAuthConfig,
+      OpenAIProviderAuthConfig,
+    ])) : Type.Union([
       AnthropicProviderAuthConfig,
       GoogleProviderAuthConfig,
       OpenAIProviderAuthConfig,

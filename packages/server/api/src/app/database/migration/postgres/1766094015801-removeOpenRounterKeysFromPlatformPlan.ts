@@ -1,6 +1,6 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
-import { apId, AIProviderName, ActivePiecesProviderConfig } from "@activepieces/shared";
-import { encryptUtils } from "../../../helper/encryption";
+import { ActivePiecesProviderConfig, AIProviderName, apId } from '@activepieces/shared'
+import { MigrationInterface, QueryRunner } from 'typeorm'
+import { encryptUtils } from '../../../helper/encryption'
 
 export class RemoveOpenRounterKeysFromPlatformPlan1766094015801 implements MigrationInterface {
     name = 'RemoveOpenRounterKeysFromPlatformPlan1766094015801'
@@ -10,15 +10,15 @@ export class RemoveOpenRounterKeysFromPlatformPlan1766094015801 implements Migra
             SELECT id, "platformId", "openRouterApiKey", "openRouterApiKeyHash"
             FROM "platform_plan"
             WHERE "openRouterApiKey" IS NOT NULL
-        `);
+        `)
 
         for (const plan of plans) {
             const config: ActivePiecesProviderConfig = {
                 apiKey: plan.openRouterApiKey,
                 apiKeyHash: plan.openRouterApiKeyHash,
-            };
+            }
 
-            const encryptedConfig = await encryptUtils.encryptObject(config);
+            const encryptedConfig = await encryptUtils.encryptObject(config)
 
             await queryRunner.query(`
                 INSERT INTO "ai_provider" ("id", "platformId", "provider", "displayName", "config", "created", "updated")
@@ -28,27 +28,27 @@ export class RemoveOpenRounterKeysFromPlatformPlan1766094015801 implements Migra
                 plan.platformId,
                 AIProviderName.ACTIVEPIECES,
                 'Activepieces',
-                encryptedConfig
-            ]);
+                encryptedConfig,
+            ])
         }
 
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "openRouterApiKeyHash"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "openRouterApiKey"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ADD "openRouterApiKey" character varying
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ADD "openRouterApiKeyHash" character varying
-        `);
+        `)
     }
 
 }

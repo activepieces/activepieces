@@ -4,7 +4,7 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAIProviderConfig> = {
     name: 'OpenAI',
-    async listModels(authConfig: OpenAIProviderAuthConfig, config: OpenAIProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(authConfig: OpenAIProviderAuthConfig, _config: OpenAIProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: OpenAIModel[] }>({
             url: 'https://api.openai.com/v1/models',
             method: HttpMethod.GET,

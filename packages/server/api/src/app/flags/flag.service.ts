@@ -287,7 +287,7 @@ export const flagService = {
 
     aiCreditsEnabled(): boolean {
         return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
-    }
+    },
 }
 
 

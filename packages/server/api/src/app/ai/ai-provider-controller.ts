@@ -1,4 +1,4 @@
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType } from '@activepieces/shared'
+import { AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'
@@ -10,21 +10,19 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
     })
     app.get('/:id/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
-        return await aiProviderService(app.log).getConfigOrThrow(platformId, request.params.id)
+        return aiProviderService(app.log).getConfigOrThrow(platformId, request.params.id)
     })
     app.get('/:id/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).listModels(platformId, request.params.id)
     })
-    app.post('/', CreateAIProvider, async (request, reply) => {
+    app.post('/', CreateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
-        await aiProviderService(app.log).upsert(platformId, request.body)
-        return reply.status(StatusCodes.NO_CONTENT).send()
+        return aiProviderService(app.log).create(platformId, request.body)
     })
-    app.post('/:id', UpdateAIProvider, async (request, reply) => {
+    app.post('/:id', UpdateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
-        await aiProviderService(app.log).upsert(platformId, request.body, request.params.id)
-        return reply.status(StatusCodes.NO_CONTENT).send()
+        return aiProviderService(app.log).update(platformId, request.params.id, request.body)
     })
     app.delete('/:id', DeleteAIProvider, async (request, reply) => {
         const platformId = request.principal.platform.id
@@ -81,7 +79,7 @@ const UpdateAIProvider = {
         params: Type.Object({
             id: Type.String(),
         }),
-        body: CreateAIProviderRequest,
+        body: UpdateAIProviderRequest,
     },
 }
 

@@ -31,7 +31,7 @@ export async function createAIModel({
     const { body: {
         provider,
         config,
-        authConfig,
+        auth,
     } } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
         url: `${apiUrl}v1/ai-providers/${providerId}/config`,
@@ -42,27 +42,27 @@ export async function createAIModel({
 
     switch (provider) {
         case AIProviderName.OPENAI: {
-            const provider = createOpenAI({ apiKey: authConfig.apiKey })
+            const provider = createOpenAI({ apiKey: auth.apiKey })
             if (isImage) {
                 return provider.imageModel(modelId)
             }
             return (openaiResponsesModel ? provider.responses(modelId) : provider.chat(modelId))
         }
         case AIProviderName.ANTHROPIC: {
-            const provider = createAnthropic({ apiKey: authConfig.apiKey })
+            const provider = createAnthropic({ apiKey: auth.apiKey })
             if (isImage) {
                 throw new Error(`Provider ${provider} does not support image models`)
             }
             return provider(modelId)
         }
         case AIProviderName.GOOGLE: {
-            const provider = createGoogleGenerativeAI({ apiKey: authConfig.apiKey })
+            const provider = createGoogleGenerativeAI({ apiKey: auth.apiKey })
 
             return provider(modelId)
         }
         case AIProviderName.AZURE: {
             const { resourceName } = config as AzureProviderConfig
-            const provider = createAzure({ resourceName, apiKey: authConfig.apiKey })
+            const provider = createAzure({ resourceName, apiKey: auth.apiKey })
             if (isImage) {
                 return provider.imageModel(modelId)
             }
@@ -75,7 +75,7 @@ export async function createAIModel({
                 name: 'cloudflare',
                 baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
                 headers: {
-                    'cf-aig-authorization': `Bearer ${authConfig.apiKey}`
+                    'cf-aig-authorization': `Bearer ${auth.apiKey}`
                 }
             })
             return provider.chatModel(modelId)
@@ -87,7 +87,7 @@ export async function createAIModel({
                 name: 'openai-compatible',
                 baseURL: baseUrl,
                 headers: {
-                    [apiKeyHeader]: authConfig.apiKey
+                    [apiKeyHeader]: auth.apiKey
                 }
             })
             if (isImage) {
@@ -97,7 +97,7 @@ export async function createAIModel({
         }
         case AIProviderName.ACTIVEPIECES: 
         case AIProviderName.OPENROUTER: {
-            const provider = createOpenRouter({ apiKey: authConfig.apiKey })
+            const provider = createOpenRouter({ apiKey: auth.apiKey })
             return provider.chat(modelId)
         }
         default:

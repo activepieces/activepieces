@@ -1,8 +1,9 @@
 import { AppSystemProp } from '@activepieces/server-shared'
+import { AIProviderName, assertNotNullOrUndefined } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { system } from '../../../helper/system/system'
 import { aiProviderService } from '../../../ai/ai-provider-service'
 import { flagService } from '../../../flags/flag.service'
+import { system } from '../../../helper/system/system'
 
 const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1/keys'
 
@@ -18,10 +19,18 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
                 limitRemaining: 0,
             }
         }
-
-        const config = await 
-
-        const usage = await openRouterGetKey(config.apiKeyHash)
+        const isConfigured = await aiProviderService(log).isActivepiecesConfigured(platformId)
+        if (!isConfigured) {
+            return {
+                usageMonthly: 0,
+                limitMonthly: 0,
+                limitRemaining: 0,
+            }
+        }
+        const config = await aiProviderService(log).getConfigOrThrow(platformId, AIProviderName.ACTIVEPIECES)
+        const apiKeyHash = 'apiKeyHash' in config.auth ? config.auth.apiKeyHash : null
+        assertNotNullOrUndefined(apiKeyHash, 'apiKeyHash is required')
+        const usage = await openRouterGetKey(apiKeyHash)
         return {
             usageMonthly: usage.data.usage_monthly * 1000,
             limitMonthly: usage.data.limit * 1000,

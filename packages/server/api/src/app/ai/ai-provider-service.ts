@@ -1,24 +1,24 @@
+import { AppSystemProp } from '@activepieces/server-shared'
 import {
-    ActivepiecesError, ActivePiecesProviderAuthConfig, ActivePiecesProviderConfig, AIProvider, AIProviderAuthConfig, AIProviderConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
-    ApEdition,
+    ActivepiecesError, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
     CreateAIProviderRequest,
     ErrorCode,
     GetProviderConfigResponse,
     isNil,
     PlatformId,
+    UpdateAIProviderRequest,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
+import { distributedLock } from '../database/redis-connections'
+import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
+import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
 import { system } from '../helper/system/system'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
-import { AppSystemProp } from '@activepieces/server-shared'
-import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
-import { distributedLock } from '../database/redis-connections'
-import { flagService } from '../flags/flag.service'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
@@ -33,6 +33,11 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
     },
 
     async listProviders(platformId: PlatformId): Promise<AIProviderWithoutSensitiveData[]> {
+        const activepiecesConfigured = await this.isActivepiecesConfigured(platformId)
+
+        if (flagService.aiCreditsEnabled() && !activepiecesConfigured) {
+            await getOrCreateActivepiecesConfig(platformId, log)
+        }
         const configuredProviders = await aiProviderRepo().findBy({ platformId })
 
         const formattedProviders: AIProviderWithoutSensitiveData[] = await Promise.all(configuredProviders.map(async p => {
@@ -43,29 +48,18 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 config: p.config,
             }
         }))
-
-        const isActivepiecesConfigured = configuredProviders.find(p => p.provider === AIProviderName.ACTIVEPIECES)
-        if (flagService.aiCreditsEnabled() && !isActivepiecesConfigured) {
-            formattedProviders.push({
-                id: apId(),
-                name: 'Activepieces',
-                provider: AIProviderName.ACTIVEPIECES,
-                config: {},
-            })
-        }
-
         return formattedProviders
     },
 
     async listModels(platformId: PlatformId, providerId: string): Promise<AIProviderModel[]> {
-        const { provider, config, authConfig } = await this.getConfigOrThrow(platformId, providerId)
+        const { provider, config, auth } = await this.getConfigOrThrow(platformId, providerId)
 
-        const cacheKey = `${provider}-${authConfig.apiKey}`
+        const cacheKey = `${provider}-${auth.apiKey}`
         if (modelsCache.has(cacheKey) && !('models' in config)) {
             return modelsCache.get(cacheKey)!
         }
 
-        const data = await aiProviders[provider].listModels(authConfig, config)
+        const data = await aiProviders[provider].listModels(auth, config)
 
         modelsCache.set(cacheKey, data.map(model => ({
             id: model.id,
@@ -76,29 +70,33 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return modelsCache.get(cacheKey)!
     },
 
-    async upsert(platformId: PlatformId, request: CreateAIProviderRequest, providerId?: string): Promise<void> {
-        if (request.provider === AIProviderName.AZURE && system.getEdition() !== ApEdition.ENTERPRISE) {
+    async create(platformId: PlatformId, request: CreateAIProviderRequest): Promise<void> {
+        await aiProviderRepo().save({
+            id: apId(),
+            auth: await encryptUtils.encryptObject(request.auth),
+            config: request.config,
+            provider: request.provider,
+            displayName: request.displayName,
+            platformId,
+        })
+    },
+    async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
+        const aiProvider = await aiProviderRepo().findOneBy({
+            platformId,
+            id: providerId,
+        })
+        if (isNil(aiProvider) || aiProvider.provider === AIProviderName.ACTIVEPIECES) {
             throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: {
-                    message: 'Azure OpenAI is only available for enterprise customers',
-                },
-            })
-        }
-        if (request.provider === AIProviderName.ACTIVEPIECES) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: {
-                    message: 'ActivePieces provider cannot be updated',
-                },
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityId: providerId, entityType: 'AIProvider' },
             })
         }
 
         await aiProviderRepo().upsert({
             id: providerId ?? apId(),
-            authConfig: await encryptUtils.encryptObject(request.authConfig),
+            auth: await encryptUtils.encryptObject(request.auth),
             config: request.config,
-            provider: request.provider,
+            provider: aiProvider.provider,
             displayName: request.displayName,
             platformId,
         }, ['id'])
@@ -111,6 +109,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async isActivepiecesConfigured(platformId: PlatformId): Promise<boolean> {
+        return aiProviderRepo().existsBy({
+            platformId,
+            provider: AIProviderName.ACTIVEPIECES,
+        })
+    },
     async getConfigOrThrow(platformId: PlatformId, providerId: string): Promise<GetProviderConfigResponse> {
         if (providerId === AIProviderName.ACTIVEPIECES) {
             return getOrCreateActivepiecesConfig(platformId, log)
@@ -128,8 +132,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        let authConfig = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.authConfig)
-        return { provider: aiProvider.provider, authConfig, config: aiProvider.config }
+        const auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
+        return { provider: aiProvider.provider, auth, config: aiProvider.config }
     },
 })
 
@@ -143,12 +147,12 @@ async function getOrCreateActivepiecesConfig(platformId: PlatformId, log: Fastif
             key: `platform_ai_credits_${platformId}`,
             timeoutInSeconds: 60,
             fn: async () => {
-                const providerCreated = await aiProviderRepo().existsBy({
+                const providerCreated = await aiProviderRepo().findOneBy({
                     provider: AIProviderName.ACTIVEPIECES,
                     platformId,
                 })
-                if (providerCreated) {
-                    return;
+                if (!isNil(providerCreated) ) {
+                    return
                 }
                 const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
                 const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
@@ -167,7 +171,7 @@ async function getOrCreateActivepiecesConfig(platformId: PlatformId, log: Fastif
     return aiProviderService(log).getConfigOrThrow(platformId, AIProviderName.ACTIVEPIECES)
 }
 
-async function openRouterCreateKey(name: string, limit: number): Promise<{ key: string; data: { hash: string } }> {
+async function openRouterCreateKey(name: string, limit: number): Promise<{ key: string, data: { hash: string } }> {
     const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
     const res = await fetch('https://openrouter.ai/api/v1/keys', {
         method: 'POST',

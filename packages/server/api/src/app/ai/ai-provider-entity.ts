@@ -4,8 +4,8 @@ import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 import { EncryptedObject } from '../helper/encryption'
 
-const AIProviderEncrypted = Type.Composite([Type.Omit(AIProvider, ['authConfig']), Type.Object({
-    authConfig: EncryptedObject,
+const AIProviderEncrypted = Type.Composite([Type.Omit(AIProvider, ['auth']), Type.Object({
+    auth: EncryptedObject,
     config: AIProviderConfig,
 })])
 type AIProviderEncrypted = Static<typeof AIProviderEncrypted>
@@ -23,7 +23,7 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             type: 'json',
             nullable: false,
         },
-        authConfig: {
+        auth: {
             type: 'json',
             nullable: false,
         },
