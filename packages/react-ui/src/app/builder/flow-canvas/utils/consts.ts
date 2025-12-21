@@ -19,13 +19,13 @@ const ARC_RIGHT_UP = `a${ARC_LENGTH},${ARC_LENGTH} 0 0,1 -${ARC_LENGTH},-${ARC_L
 const ARC_LEFT_UP = `a-${ARC_LENGTH},-${ARC_LENGTH} 0 0,0 ${ARC_LENGTH},-${ARC_LENGTH}`;
 const ARROW_DOWN = 'm6 -6 l-6 6 m-6 -6 l6 6';
 const VERTICAL_SPACE_BETWEEN_STEP_AND_LINE = 7;
-const VERTICAL_SPACE_BETWEEN_STEPS = 85;
+const VERTICAL_SPACE_BETWEEN_STEPS = 60;
 const VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD =
   VERTICAL_SPACE_BETWEEN_STEPS * 1.5 + 2 * ARC_LENGTH;
 const LABEL_HEIGHT = 30;
 const LABEL_VERTICAL_PADDING = 12;
-const STEP_DRAG_OVERLAY_WIDTH = 100;
-const STEP_DRAG_OVERLAY_HEIGHT = 100;
+const STEP_DRAG_OVERLAY_WIDTH = 75;
+const STEP_DRAG_OVERLAY_HEIGHT = 75;
 const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
   VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
 const LINE_WIDTH = 1.5;
@@ -40,16 +40,16 @@ const AP_NODE_SIZE: Record<
     width: 50,
   },
   [ApNodeType.ADD_BUTTON]: {
-    height: 18,
-    width: 18,
+    height: 20,
+    width: 20,
   },
   [ApNodeType.STEP]: {
-    height: 70,
-    width: 260,
+    height: 60,
+    width: 232,
   },
   [ApNodeType.LOOP_RETURN_NODE]: {
-    height: 70,
-    width: 260,
+    height: 60,
+    width: 232,
   },
   [ApNodeType.GRAPH_END_WIDGET]: {
     height: 0,

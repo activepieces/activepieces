@@ -1,0 +1,74 @@
+import { t } from 'i18next';
+import { Workflow, Trash2, EllipsisVertical } from 'lucide-react';
+import { useState } from 'react';
+
+import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { AgentFlowTool } from '@activepieces/shared';
+
+type AgentFlowToolProps = {
+  disabled?: boolean;
+  tool: AgentFlowTool;
+  removeTool: (toolname: string) => void;
+};
+
+export const AgentFlowToolComponent = ({
+  disabled,
+  tool,
+  removeTool,
+}: AgentFlowToolProps) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Card key={`flow-${tool.toolName}`}>
+      <CardContent className="flex items-center justify-between p-3 min-h-[48px]">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center shrink-0">
+            <Workflow className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-medium truncate">
+              {tool.toolName.split('_')[0] || t('Flow')}
+            </h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger
+              disabled={disabled}
+              className="rounded-full p-2 hover:bg-muted cursor-pointer"
+              asChild
+            >
+              <EllipsisVertical className="h-8 w-8" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              noAnimationOnOut={true}
+              onCloseAutoFocus={(e) => e.preventDefault()}
+            >
+              <ConfirmationDeleteDialog
+                title={`${t('Delete')} ${tool.toolName}`}
+                message={t('Are you sure you want to delete this tool?')}
+                mutationFn={async () => removeTool(tool.toolName)}
+                entityName={t('Tool')}
+              >
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                  <div className="flex cursor-pointer flex-row gap-2 items-center">
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                    <span className="text-destructive">{t('Delete')}</span>
+                  </div>
+                </DropdownMenuItem>
+              </ConfirmationDeleteDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

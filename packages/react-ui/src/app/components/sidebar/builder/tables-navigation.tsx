@@ -165,7 +165,7 @@ function TableItem({ table, isActive, onClick, refetch }: FlowItemProps) {
           <Button
             variant="ghost"
             onClick={(e) => e.stopPropagation()}
-            className="ml-auto group-hover/item:opacity-100 opacity-0"
+            className="ml-auto !bg-transparent group-hover/item:opacity-100 opacity-0"
             size="icon"
           >
             <EllipsisVertical />

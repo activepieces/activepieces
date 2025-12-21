@@ -298,6 +298,7 @@ import { AddProjectType1763644863137 } from './migration/postgres/1763644863137-
 import { AddFlowOperationStatusField1764079041445 } from './migration/postgres/1764079041445-AddFlowOperationStatusField'
 import { RenameManageProjectsToTeamProjectLimits1764100884963 } from './migration/postgres/1764100884963-RenameManageProjectsToTeamProjectLimits'
 import { AddMcpServer1764606838149 } from './migration/postgres/1764606838149-AddMcpServer'
+import { CreateTemplateTable1764777773932 } from './migration/postgres/1764777773932-CreateTemplateTable'
 import { AddPieceVersionToAppConnection1764841091811 } from './migration/postgres/1764841091811-addPieceVersionToAppConnection'
 import { DropProjectIdFromPieceMetadata1764866386989 } from './migration/postgres/1764866386989-DropProjectIdFromPieceMetadata'
 import { UnifyCommunityWithEnterprise1764867709704 } from './migration/postgres/1764867709704-UnifyCommunityWithEnterprise'
@@ -306,6 +307,13 @@ import { AddPersonalProjectsForAllUsers1765107860778 } from './migration/postgre
 import { AddOpenRouterKeyToPlatformPlan1765109187883 } from './migration/postgres/1765109187883-AddOpenRouterKeyToPlatformPlan'
 import { MigrateSqliteToPglite1765308234291 } from './migration/postgres/1765308234291-MigrateSqliteToPglite'
 import { AddLastActiveToUser1765325909187 } from './migration/postgres/1765325909187-AddLastActiveToUser'
+import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
+import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
+import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
+import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
+import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
+import { DropLegacyTables1766015156683 } from './migration/postgres/1766015156683-DropLegacyTables'
+import { RecreateMcpToolTable1766072572000 } from './migration/postgres/1766072572000-RecreateMcpToolTable'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -628,6 +636,14 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddPersonalProjectsForAllUsers1765107860778,
         MigrateSqliteToPglite1765308234291,
         AddLastActiveToUser1765325909187,
+        AddStepsExecutedAndAICreditsToFlowRun1765461560795,
+        ChangeTeamsToPersonalInCommunity1765709274266,
+        AddMinutesSavedToFlowForAnalytics1765732721451,
+        CreateTemplateTable1764777773932,
+        AddTemplateStatus1765894492098,
+        MigrateOldTemplatesToNewSchema1765993826655,
+        DropLegacyTables1766015156683,
+        RecreateMcpToolTable1766072572000,
     ]
     return migrations
 }

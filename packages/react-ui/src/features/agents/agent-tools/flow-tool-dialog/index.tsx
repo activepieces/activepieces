@@ -1,8 +1,7 @@
-import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -29,8 +28,7 @@ import {
 import { FlowDialogContent } from './flow-dialog-content';
 
 type AgentFlowToolDialogProps = {
-  children: React.ReactNode;
-  selectedFlows: AgentFlowTool[];
+  selectedFlows: string[];
   open: boolean;
   onToolsUpdate: (tools: AgentTool[]) => void;
   onClose: () => void;
@@ -41,7 +39,6 @@ export function AgentFlowToolDialog({
   open,
   selectedFlows: initialSelectedFlows,
   onToolsUpdate,
-  children,
   onClose,
   tools,
 }: AgentFlowToolDialogProps) {
@@ -96,7 +93,6 @@ export function AgentFlowToolDialog({
         }
       }}
     >
-      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
@@ -117,7 +113,7 @@ export function AgentFlowToolDialog({
           </div>
         </div>
 
-        <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
+        <ScrollArea className="grow overflow-y-auto px-1 pt-4">
           <FlowDialogContent
             flows={flows || []}
             searchQuery={searchQuery}

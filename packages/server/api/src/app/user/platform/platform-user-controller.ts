@@ -84,6 +84,9 @@ const UpdateUserRequest = {
         response: {
             [StatusCodes.OK]: UserWithMetaInformation,
         },
+        tags: ['users'],
+        description: 'Update user',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     config: {
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,

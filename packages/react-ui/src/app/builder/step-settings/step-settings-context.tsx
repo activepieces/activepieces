@@ -16,7 +16,6 @@ import {
 import { FlowAction, setAtPath, FlowTrigger } from '@activepieces/shared';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
-
 const numberReplacement = 'anyOf[0]items';
 const stringReplacement = 'properties.';
 const createUpdatedSchemaKey = (propertyKey: string) => {
