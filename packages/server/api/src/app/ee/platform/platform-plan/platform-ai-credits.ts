@@ -1,5 +1,5 @@
-import { AppSystemProp } from '@activepieces/server-shared'
-import { AIProviderName, assertNotNullOrUndefined } from '@activepieces/shared'
+import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
+import { AIProviderName, assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
 import { flagService } from '../../../flags/flag.service'
@@ -19,11 +19,19 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
                 limitRemaining: 0,
             }
         }
-        return {
-            usageMonthly: 0,
-            limitMonthly: 0,
-            limitRemaining: 0,
+        const config = await aiProviderService(log).getConfigOrThrow(platformId, AIProviderName.ACTIVEPIECES)
+        const apiKeyHash = 'apiKeyHash' in config.auth ? config.auth.apiKeyHash : null
+        assertNotNullOrUndefined(apiKeyHash, 'apiKeyHash is required')
+        const { data: usage, error } = await tryCatch<OpenRouterGetKeyResponse, Error>(async () => await openRouterGetKey(apiKeyHash))
+        if (!isNil(error) || isNil(usage)) {
+            exceptionHandler.handle(error, log)
+            return {
+                usageMonthly: 0,
+                limitMonthly: 0,
+                limitRemaining: 0,
+            }
         }
+        return { usageMonthly: usage.data.usage_monthly * 1000, limitMonthly: usage.data.limit * 1000, limitRemaining: usage.data.limit_remaining * 1000 }
     },
 })
 
@@ -34,6 +42,7 @@ async function openRouterGetKey(hash: string): Promise<OpenRouterGetKeyResponse>
             Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json',
         },
+        signal: AbortSignal.timeout(2000),
     })
     if (!res.ok) {
         throw new Error(`Failed to get OpenRouter key: ${res.status} ${await res.text()}`)
