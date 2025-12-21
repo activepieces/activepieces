@@ -46,41 +46,79 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
  
     async function linkSharedActivepiecesPackagesToPiece(packageName: string) {
         const packagePath = await utils.findDistPiecePathByPackageName(packageName)
-        if (!packagePath) return
+        if (!packagePath) {
+            log.error({ packageName }, 'Could not find dist path for package')
+            return
+        }
 
         const dependencies = await utils.getPieceDependencies(packagePath)
 
         const apDependencies = Object.keys(dependencies ?? {}).filter(dep => dep.startsWith('@activepieces/') && packageName !== dep)
 
-        await Promise.all(apDependencies.map(async (dependency) => {
-            await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency} --quiet`, printOutput: true }).catch(e => {
+        for (const dependency of apDependencies) {
+            try {
+                await spawnWithKill({ cmd: `bun link --cwd ${packagePath} --save ${dependency} --quiet`, printOutput: true })
+            }
+            catch (e: unknown) {
+                const errorMessage = e instanceof Error ? e.message : String(e)
                 log.error({
                     name: 'linkSharedActivepiecesPackagesToPiece',
-                    message: JSON.stringify(e),
-                }, 'Error linking shared activepieces packages to piece')
-            })
-        }))
+                    packageName,
+                    dependency,
+                    packagePath,
+                    error: errorMessage,
+                }, 'Error linking dependency to piece (non-fatal)')
+            }
+        }
     }
 
     async function initSharedPackagesLinks() {
-        await Promise.all(Object.values(sharedPiecesPackages()).map(pkg => 
-            spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --quiet`, printOutput: true }).catch(e => {
+        const packages = sharedPiecesPackages()
+        for (const [name, pkg] of Object.entries(packages)) {
+            try {
+                await spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --quiet`, printOutput: true })
+            }
+            catch (e: unknown) {
+                const errorMessage = e instanceof Error ? e.message : String(e)
                 log.error({
                     name: 'initSharedPackagesLinks',
-                    message: JSON.stringify(e),
-                }, 'Error initializing shared packages links')
-            }),
-        ))
+                    packageName: name,
+                    path: pkg.path,
+                    error: errorMessage,
+                }, 'Error initializing shared package link (non-fatal)')
+            }
+        }
     }
 
     async function linkSharedActivepiecesPackagesToEachOther() {
         await initSharedPackagesLinks()
 
-        const noneRegisteryPackages = sharedPiecesPackages()
+        const packages = sharedPiecesPackages()
+        const packageNames = Object.keys(packages)
 
-        const noneRegisteryPackagesKeys = Object.keys(noneRegisteryPackages)
+        for (const [packageName, pkg] of Object.entries(packages)) {
+            // Get dependencies for this shared package
+            const dependencies = await utils.getPieceDependencies(pkg.path)
+            const apDependencies = Object.keys(dependencies ?? {}).filter(
+                dep => dep.startsWith('@activepieces/') && packageName !== dep && packageNames.includes(dep),
+            )
 
-        await Promise.all(noneRegisteryPackagesKeys.map(key => linkSharedActivepiecesPackagesToPiece(key)))
+            for (const dependency of apDependencies) {
+                try {
+                    await spawnWithKill({ cmd: `bun link --cwd ${pkg.path} --save ${dependency} --quiet`, printOutput: true })
+                }
+                catch (e: unknown) {
+                    const errorMessage = e instanceof Error ? e.message : String(e)
+                    log.error({
+                        name: 'linkSharedActivepiecesPackagesToEachOther',
+                        packageName,
+                        dependency,
+                        path: pkg.path,
+                        error: errorMessage,
+                    }, 'Error linking shared packages to each other')
+                }
+            }
+        }
     }
 
     return {

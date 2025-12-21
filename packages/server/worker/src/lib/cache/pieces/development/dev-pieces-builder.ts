@@ -10,26 +10,26 @@ import { devPiecesState } from './dev-pieces-state'
 
 export const PIECES_BUILDER_MUTEX_KEY = 'pieces-builder'
 
-async function handleFileChange(pieceName: string, io: Server, log: FastifyBaseLogger): Promise<void> {
-    const pieceProjectName = `pieces-${pieceName}`
+async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLogger): Promise<void> {
+    if (pieceNames.length === 0) return
 
-    log.info(
-        chalk.blueBright.bold(
-            '👀 Detected changes in pieces. Waiting... 👀 ' + pieceProjectName,
-        ),
-    )
+    const projectNames = pieceNames.map(name => `pieces-${name}`)
+
+    for (const projectName of projectNames) {
+        if (!/^[A-Za-z0-9-]+$/.test(projectName)) {
+            throw new Error(`Piece package name contains invalid character: ${projectName}`)
+        }
+    }
+
+    const projectList = projectNames.join(',')
+    log.info(chalk.blue.bold(`🤌 Building ${projectNames.length} piece(s): ${projectList}... 🤌`))
+
     let lock: ApLock | undefined
     try {
         lock = await memoryLock.acquire(PIECES_BUILDER_MUTEX_KEY)
 
-        log.info(chalk.blue.bold(`🤌 Building pieces with target: build for ${pieceProjectName}... 🤌`))
-
-        if (!/^[A-Za-z0-9-]+$/.test(pieceProjectName)) {
-            throw new Error(`Piece package name contains invalid character: ${pieceProjectName}`)
-        }
-
         const startTime = performance.now()
-        await spawnWithKill({ cmd: `npx nx run-many --batch -t build --projects=${pieceProjectName}`, printOutput: true })
+        await spawnWithKill({ cmd: `npx nx run-many --batch -t build --projects=${projectList}`, printOutput: true })
         const endTime = performance.now()
         const buildTime = (endTime - startTime) / 1000
 
@@ -54,31 +54,33 @@ async function handleFileChange(pieceName: string, io: Server, log: FastifyBaseL
 }
 
 export async function devPiecesBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
-
     const watchers: FSWatcher[] = []
-  
-    await devPiecesInstaller(app.log).installPiecesDependencies(packages)
-    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
 
+    const pieceInfos: { packageName: string, pieceDirectory: string, packageJsonName: string }[] = []
     for (const packageName of packages) {
-        app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
-
         const pieceDirectory = await filePiecesUtils(app.log).findSourcePiecePathByPieceName(packageName)
         if (isNil(pieceDirectory)) {
             app.log.info(chalk.yellow(`Piece directory not found for package: ${packageName}`))
             continue
         }
+        const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
+        pieceInfos.push({ packageName, pieceDirectory, packageJsonName })
+    }
+
+    await buildPieces(pieceInfos.map(p => p.packageName), io, app.log)
+
+    await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToEachOther()
+    for (const { packageJsonName } of pieceInfos) {
+        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
+    }
+
+    for (const { packageName, pieceDirectory } of pieceInfos) {
+        app.log.info(chalk.blue(`Starting watch for package: ${packageName}`))
         app.log.info(chalk.yellow(`Found piece directory: ${pieceDirectory}`))
 
-        const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
-
-        await devPiecesInstaller(app.log).linkSharedActivepiecesPackagesToPiece(packageJsonName)
-
-        const debouncedHandleFileChange = debounce(() => {
-            handleFileChange(packageName, io, app.log).catch(app.log.error)
+        const debouncedBuild = debounce(() => {
+            buildPieces([packageName], io, app.log).catch(app.log.error)
         }, 2000)
-
-        await handleFileChange(packageName, io, app.log)
 
         const watcher = watch(resolve(pieceDirectory), {
             ignored: [/^\./, /node_modules/, /dist/],
@@ -91,13 +93,12 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
         })
         watcher.on('all', (_event, path) => {
             if (path.endsWith('.ts') || path.endsWith('package.json')) {
-                debouncedHandleFileChange()
+                debouncedBuild()
             }
         })
 
         watchers.push(watcher)
     }
-
 
     app.addHook('onClose', () => {
         for (const watcher of watchers) {
