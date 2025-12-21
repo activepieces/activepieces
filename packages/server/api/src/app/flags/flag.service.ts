@@ -11,7 +11,7 @@ import { defaultTheme } from './theme'
 const flagRepo = repoFactory(FlagEntity)
 
 export const flagService = {
-    save: async (flag: { id: string, value: unknown }): Promise<Flag> => {
+    save: async (flag: FlagType): Promise<Flag> => {
         return flagRepo().save({
             id: flag.id,
             value: flag.value,

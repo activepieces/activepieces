@@ -4,7 +4,7 @@ import dayjs from 'dayjs';
 import { extractColors } from 'extract-colors';
 import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
-import { useEffect, useRef, useState, RefObject } from 'react';
+import { useEffect, useRef, useState, RefObject, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
@@ -411,26 +411,52 @@ export const routesThatRequireProjectId = {
   singleRelease: '/releases/:releaseId',
 };
 
+const gradientCache = new Map<string, string>();
+
 export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
   const [gradient, setGradient] = useState<string>('');
 
-  const steps = trigger ? flowStructureUtil.getAllSteps(trigger) : [];
-  const stepsMetadata: StepMetadata[] = stepsHooks
-    .useStepsMetadata(steps)
-    .map((data) => data.data)
-    .filter((data) => !!data) as StepMetadata[];
+  const steps = useMemo(
+    () => (trigger ? flowStructureUtil.getAllSteps(trigger) : []),
+    [trigger],
+  );
+  
+  const stepsMetadataResults = stepsHooks.useStepsMetadata(steps);
+  
+  const stepsMetadata: StepMetadata[] = useMemo(
+    () =>
+      stepsMetadataResults
+        .map((data) => data.data)
+        .filter((data) => !!data) as StepMetadata[],
+    [JSON.stringify(stepsMetadataResults.map((r) => r.dataUpdatedAt))],
+  );
 
-  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
-    (item, index, self) =>
-      self.findIndex(
-        (secondItem) => item.displayName === secondItem.displayName,
-      ) === index,
+  const uniqueMetadata: StepMetadata[] = useMemo(
+    () =>
+      stepsMetadata.filter(
+        (item, index, self) =>
+          self.findIndex(
+            (secondItem) => item.displayName === secondItem.displayName,
+          ) === index,
+      ),
+    [stepsMetadata.map((m) => m.displayName).join(',')],
+  );
+
+  const cacheKey = useMemo(
+    () => uniqueMetadata.map((m) => m.logoUrl).join(','),
+    [uniqueMetadata],
   );
 
   useEffect(() => {
+    if (gradientCache.has(cacheKey)) {
+      setGradient(gradientCache.get(cacheKey)!);
+      return;
+    }
+
     const extractColorsFromPieces = async () => {
       if (uniqueMetadata.length === 0) {
         setGradient('');
+        gradientCache.set(cacheKey, '');
         return;
       }
 
@@ -463,30 +489,31 @@ export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
           }
         }
 
+        let resultGradient = '';
         if (allColors.length > 0) {
           const uniqueColors = Array.from(new Set(allColors)).slice(0, 4);
 
           if (uniqueColors.length === 1) {
-            setGradient(
-              `linear-gradient(135deg, ${uniqueColors[0]}15, ${uniqueColors[0]}30)`,
-            );
+            resultGradient = `linear-gradient(135deg, ${uniqueColors[0]}15, ${uniqueColors[0]}30)`;
           } else {
             const gradientColors = uniqueColors
               .map((color) => `${color}20`)
               .join(', ');
-            setGradient(`linear-gradient(135deg, ${gradientColors})`);
+            resultGradient = `linear-gradient(135deg, ${gradientColors})`;
           }
-        } else {
-          setGradient('');
         }
+
+        setGradient(resultGradient);
+        gradientCache.set(cacheKey, resultGradient);
       } catch (error) {
         console.error('Failed to extract colors:', error);
         setGradient('');
+        gradientCache.set(cacheKey, '');
       }
     };
 
     extractColorsFromPieces();
-  }, [uniqueMetadata.map((m) => m.logoUrl).join(',')]);
+  }, [cacheKey, uniqueMetadata]);
 
   return gradient;
 };

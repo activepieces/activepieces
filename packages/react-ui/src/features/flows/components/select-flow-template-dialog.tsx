@@ -22,7 +22,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { TemplateCard } from '@/features/templates/components/template-card';
 import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
-import { useTemplates } from '@/features/templates/hooks/templates-hook';
+import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { Template, TemplateType } from '@activepieces/shared';
 
 const SelectFlowTemplateDialog = ({
@@ -32,7 +32,7 @@ const SelectFlowTemplateDialog = ({
   children: React.ReactNode;
   folderId?: string;
 }) => {
-  const { templates, isLoading, search, setSearch } = useTemplates(
+  const { templates, isLoading, search, setSearch } = templatesHooks.useTemplates(
     TemplateType.CUSTOM,
   );
   const carousel = useRef<CarouselApi>();

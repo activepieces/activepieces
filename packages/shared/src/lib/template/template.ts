@@ -29,6 +29,7 @@ export enum TemplateCategory {
     MARKETING = 'MARKETING',
     PRODUCTIVITY = 'PRODUCTIVITY',
     SALES = 'SALES',
+    OTHER = 'OTHER',
 }
 
 export const FlowVersionTemplate = Type.Composite([Type.Omit(

@@ -5,7 +5,6 @@ import { useNavigate } from 'react-router-dom';
 
 import { ProjectDashboardPageHeader } from '@/app/components/project-layout/project-dashboard-page-header';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
-import { useTemplates } from '@/features/templates/hooks/templates-hook';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   PlatformRole,
@@ -22,11 +21,12 @@ import {
   AllCategoriesViewSkeleton,
   SelectedCategoryViewSkeleton,
 } from './skeletons';
+import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 
 const TemplatesPage = () => {
   const navigate = useNavigate();
   const { templates, isLoading, search, setSearch, category, setCategory } =
-    useTemplates(TemplateType.OFFICIAL);
+    templatesHooks.useTemplates(TemplateType.OFFICIAL);
   const selectedCategory = category as TemplateCategory | 'All';
   const { data: user } = userHooks.useCurrentUser();
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
@@ -56,11 +56,16 @@ const TemplatesPage = () => {
     });
 
     templates?.forEach((template) => {
-      template.categories?.forEach((category) => {
-        if (grouped[category]) {
-          grouped[category].push(template);
-        }
-      });
+      if (template.categories?.length) {
+        template.categories?.forEach((category) => {
+          if (grouped[category]) {
+            grouped[category].push(template);
+          }
+        });
+      }
+      else{
+        grouped[TemplateCategory.OTHER].push(template);
+      }
     });
 
     return grouped;

@@ -11,6 +11,7 @@ import {
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
     TemplateType,
+    GetFlowTemplateRequestQuery,
     UpdateTemplateRequestBody,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -27,6 +28,9 @@ const edition = system.getEdition()
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
+        if (request.query.type === TemplateType.OFFICIAL) {
+            return communityTemplates.get(request.params.id)
+        }
         return templateService().getOneOrThrow({ id: request.params.id })
     })
 
@@ -36,7 +40,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
             if (edition === ApEdition.CLOUD) {
                 return templateService().list({ platformId: null, requestQuery: request.query })
             }
-            return communityTemplates.get(request.query)
+            return communityTemplates.list(request.query)
         }
         return templateService().list({ platformId, requestQuery: request.query })
     })
@@ -145,6 +149,7 @@ const GetParams = {
         description: 'Get a template.',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
+        querystring: GetFlowTemplateRequestQuery,
     },
 }
 

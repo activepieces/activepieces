@@ -53,7 +53,6 @@ export const UseTemplateDialog = ({
   const { data: projects } = projectHooks.useProjects();
   const { folders } = foldersHooks.useFolders();
 
-  // Set default values when dialog opens
   useEffect(() => {
     if (open) {
       const currentProjectId = authenticationSession.getProjectId();
@@ -155,7 +154,7 @@ export const UseTemplateDialog = ({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Label htmlFor="project">{t('Project')}</Label>
             <Select
               value={selectedProjectId}
@@ -178,7 +177,7 @@ export const UseTemplateDialog = ({
             </Select>
           </div>
           {!hasMultipleFlows && (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <Label htmlFor="folder">{t('Folder')}</Label>
               <Select
                 value={selectedFolderId}

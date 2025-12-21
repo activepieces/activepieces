@@ -9,9 +9,8 @@ import {
   Calendar,
   Users,
   ArrowRight,
-  AlertTriangle,
 } from 'lucide-react';
-import { useMemo, useState, useRef } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import {
   Navigate,
   useLocation,
@@ -23,68 +22,59 @@ import { toast } from 'sonner';
 import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
 import { FlowCanvas } from '@/app/builder/flow-canvas';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar-shadcn';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
-import { useTemplates } from '@/features/templates/hooks/templates-hook';
+import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
 import {
   isNil,
-  TemplateType,
   PopulatedFlow,
   FlowVersionState,
   apId,
   FlowStatus,
   FlowOperationStatus,
+  TemplateType,
 } from '@activepieces/shared';
 
-import { FlowDependencyCard } from './flow-dependency-card';
 import { PieceCard } from './piece-card';
-import { useEffectOnce } from 'react-use';
-import { SelectFlowTemplateDialog } from '@/features/flows/components/select-flow-template-dialog';
+import { LoadingScreen } from '@/components/ui/loading-screen';
+import { UseTemplateDialog } from './use-template-dialog';
+import { FlowCard } from './flow-card';
 
 const TemplateDetailsPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
   const token = authenticationSession.getToken();
   const location = useLocation();
   const navigate = useNavigate();
-  const { templates } = useTemplates(TemplateType.OFFICIAL);
-  const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
-    useState(false);
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { setOpen } = useSidebar();
-
-  useEffectOnce(() => {
-    setOpen(false);
-  });
-
   if (!templateId) {
     return <Navigate to="/templates" replace />;
   }
 
-  if (isNil(token)) {
-    return (
-      <Navigate
-        to={`/sign-in?${FROM_QUERY_PARAM}=${location.pathname}${location.search}`}
-        replace
-      />
-    );
-  }
-
-  const template = templates?.find((t) => t.id === templateId);
-
-  if (!template) {
-    return <Navigate to="/templates" replace />;
-  }
+  const { data: template, isLoading } = templatesHooks.useTemplate(templateId, {
+    type: TemplateType.OFFICIAL,
+  });
+  console.log('template', template);
+  const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
+    useState(false);
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedFlowIndex, setSelectedFlowIndex] = useState(0);
+  const [renderKey, setRenderKey] = useState(0);
+  const { setOpen } = useSidebar();
+  const hasClosedSidebar = useRef(false);
 
   const mockFlow = useMemo<PopulatedFlow | null>(() => {
-    if (!template.flows || template.flows.length === 0) {
+    if (!template || !template.flows || template.flows.length === 0) {
+      return null;
+    }
+
+    const selectedFlow = template.flows[selectedFlowIndex];
+    if (!selectedFlow) {
       return null;
     }
 
@@ -101,7 +91,7 @@ const TemplateDetailsPage = () => {
       created: template.created,
       updated: template.updated,
       version: {
-        ...template.flows[0],
+        ...selectedFlow,
         id: apId(),
         flowId: flowId,
         created: template.created,
@@ -112,7 +102,39 @@ const TemplateDetailsPage = () => {
         connectionIds: [],
       },
     };
-  }, [template]);
+  }, [template, selectedFlowIndex]);
+
+  useEffect(() => {
+    if (!hasClosedSidebar.current) {
+      setOpen(false);
+      hasClosedSidebar.current = true;
+    }
+  }, [setOpen]);
+
+  useEffect(() => {
+    setHasCanvasBeenInitialised(false);
+    const timer = setTimeout(() => {
+      setRenderKey(prev => prev + 1);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [selectedFlowIndex]);
+
+  if (isNil(token)) {
+    return (
+      <Navigate
+        to={`/sign-in?${FROM_QUERY_PARAM}=${location.pathname}${location.search}`}
+        replace
+      />
+    );
+  }
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (!template) {
+    return <Navigate to="/templates" replace />;
+  }
 
   const formatUsageCount = (count: number): string => {
     if (count >= 1000000) {
@@ -192,8 +214,8 @@ const TemplateDetailsPage = () => {
       <div className="flex-1 min-h-0">
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] h-full">
           <ScrollArea className="h-full">
-            <div className="space-y-6 px-6 py-6">
-              <span className="text-2xl font-bold mb-4">{template.name}</span>
+            <div className="flex flex-col gap-4 px-6 mt-6">
+              <span className="text-2xl font-bold">{template.name}</span>
 
               <div className="flex gap-2 flex-wrap">
                 {template.tags.map((tag, index) => (
@@ -207,101 +229,103 @@ const TemplateDetailsPage = () => {
                 ))}
               </div>
 
-              <div className="flex flex-col gap-3">
-                <Button onClick={handleUseTemplate} size="xl">
-                  {t('Use Template')}
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleUseWithGuide}
-                  size="xl"
-                >
-                  {t('Use with the guide setup')}
-                  <BookOpen className="w-4 h-4 mr-2" />
-                </Button>
-              </div>
+              <div className="flex flex-col gap-8">
 
-              <div className="space-y-3">
-                <span className="text-sm font-semibold">
-                  {t('About this template')}
-                </span>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  {template.description}
-                </p>
-              </div>
+                <div className="flex flex-col gap-3">
+                  <Button onClick={handleUseTemplate} size="xl">
+                    {t('Use Template')}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleUseWithGuide}
+                    size="xl"
+                  >
+                    {t('Use with the guide setup')}
+                    <BookOpen className="w-4 h-4 ml-2" />
+                  </Button>
+                </div>
 
-              {template.flows && template.flows.length > 1 && (
-                <div className="space-y-3">
+                <div className="flex flex-col gap-2">
                   <span className="text-sm font-semibold">
-                    {t('Dependencies')}
+                    {t('About this template')}
                   </span>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {template.description}
+                  </p>
+                </div>
 
-                  <Alert variant="warning" className="bg-[#fffbea]">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      {t(
-                        'This template requires the following template to be set up first to work properly.',
-                      )}
-                    </AlertDescription>
-                  </Alert>
+                {template.flows && template.flows.length > 1 && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-semibold">
+                      {t('Included Flows')}
+                    </span>
 
-                  <div className="flex flex-wrap gap-4">
-                    {template.flows.slice(1).map((flow, index) => (
-                      <FlowDependencyCard key={index} flow={flow} />
+                    <div className="grid grid-cols-1 gap-3">
+                      {template.flows.map((flow, index) => (
+                        <FlowCard
+                          key={index}
+                          flow={flow}
+                          isSelected={selectedFlowIndex === index}
+                          onClick={() => setSelectedFlowIndex(index)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-semibold">
+                    {t('Tools & Services')}
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    {template.pieces.map((pieceName, index) => (
+                      <PieceCard key={index} pieceName={pieceName} />
                     ))}
                   </div>
                 </div>
-              )}
 
-              <div className="space-y-3">
-                <span className="text-sm font-semibold">
-                  {t('Tools & Services')}
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {template.pieces.map((pieceName, index) => (
-                    <PieceCard key={index} pieceName={pieceName} />
-                  ))}
+
+                <Separator className="my-2" />
+
+                <div className="flex flex-col gap-4 mb-12">
+                  <div className="flex gap-2 text-sm">
+                    <User className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex flex-col gap-2">
+                      <span className="text-muted-foreground text-xs">
+                        {t('Author')}
+                      </span>
+                      <span className="font-medium">{template.author}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 text-sm">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex flex-col gap-2">
+                      <span className="text-muted-foreground text-xs">
+                        {t('Created')}
+                      </span>
+                      <span className="font-medium">
+                        {formatUtils.formatDate(new Date(template.created))}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 text-sm">
+                    <Users className="w-4 h-4 text-muted-foreground" />
+                    <div className="flex flex-col gap-2">
+                      <span className="text-muted-foreground text-xs">
+                        {t('Used by')}
+                      </span>
+                      <span className="font-medium">
+                        {formatUsageCount(template.usageCount)} {t('users')}
+                      </span>
+                    </div>
+                  </div>
                 </div>
+
               </div>
 
-              <Separator />
-
-              <div className="space-y-4">
-                <div className="flex gap-2 text-sm">
-                  <User className="w-4 h-4 text-muted-foreground" />
-                  <div className="flex flex-col gap-2">
-                    <span className="text-muted-foreground text-xs">
-                      {t('Author')}
-                    </span>
-                    <span className="font-medium">{template.author}</span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 text-sm">
-                  <Calendar className="w-4 h-4 text-muted-foreground" />
-                  <div className="flex flex-col gap-2">
-                    <span className="text-muted-foreground text-xs">
-                      {t('Created')}
-                    </span>
-                    <span className="font-medium">
-                      {formatUtils.formatDate(new Date(template.created))}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex gap-2 text-sm">
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                  <div className="flex flex-col gap-2">
-                    <span className="text-muted-foreground text-xs">
-                      {t('Used by')}
-                    </span>
-                    <span className="font-medium">
-                      {formatUsageCount(template.usageCount)} {t('users')}
-                    </span>
-                  </div>
-                </div>
-              </div>
             </div>
           </ScrollArea>
 
@@ -309,29 +333,33 @@ const TemplateDetailsPage = () => {
             ref={canvasContainerRef}
             className="bg-muted/30 h-full relative overflow-hidden border-l"
           >
-            {mockFlow ? (
-              <ReactFlowProvider>
-                <BuilderStateProvider
-                  flow={mockFlow}
-                  flowVersion={mockFlow.version}
-                  readonly={true}
-                  run={null}
-                  outputSampleData={{}}
-                  inputSampleData={{}}
-                >
-                  <FlowCanvas
-                    setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-                  />
-                  {canvasContainerRef.current && hasCanvasBeenInitialised && (
-                    <CanvasControls
-                      canvasHeight={canvasContainerRef.current.clientHeight}
-                      canvasWidth={canvasContainerRef.current.clientWidth}
-                      hasCanvasBeenInitialised={hasCanvasBeenInitialised}
-                      selectedStep={null}
+            {mockFlow && renderKey > 0 ? (
+              <div key={renderKey} className="h-full w-full">
+                <ReactFlowProvider>
+                  <BuilderStateProvider
+                    flow={mockFlow}
+                    flowVersion={mockFlow.version}
+                    readonly={true}
+                    run={null}
+                    outputSampleData={{}}
+                    inputSampleData={{}}
+                  >
+                    <FlowCanvas
+                      setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
                     />
-                  )}
-                </BuilderStateProvider>
-              </ReactFlowProvider>
+                    {canvasContainerRef.current && hasCanvasBeenInitialised && (
+                      <CanvasControls
+                        canvasHeight={canvasContainerRef.current.clientHeight}
+                        canvasWidth={canvasContainerRef.current.clientWidth}
+                        hasCanvasBeenInitialised={hasCanvasBeenInitialised}
+                        selectedStep={null}
+                      />
+                    )}
+                  </BuilderStateProvider>
+                </ReactFlowProvider>
+              </div>
+            ) : mockFlow ? (
+              <div className="text-muted-foreground text-sm flex items-center justify-center h-full" />
             ) : (
               <div className="text-muted-foreground text-sm flex items-center justify-center h-full">
                 {t('No flow preview available')}
@@ -340,13 +368,7 @@ const TemplateDetailsPage = () => {
           </div>
         </div>
       </div>
-
-      <SelectFlowTemplateDialog>
-        <Button variant="outline" size="sm" onClick={handleUseTemplate}>
-          {t('Use Template')}
-          <ArrowRight className="w-4 h-4 mr-2" />
-        </Button>
-      </SelectFlowTemplateDialog>
+      <UseTemplateDialog template={template} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
     </div>
   );
 };
