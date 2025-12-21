@@ -1,4 +1,4 @@
-import { ALL_PRINCIPAL_TYPES, Permission, PrincipalType } from '@activepieces/shared'
+import { Permission, PrincipalType } from '@activepieces/shared'
 import { AuthorizationType, NoneAuthorization, PlatformAuthorization, ProjectAuthorization, ProjectResource, PublicRoute, RouteKind, UnscopedAuthorization } from './common'
 
 type FastifySecurityAuthorization =
@@ -55,7 +55,7 @@ export function projectAccess(allowedPrincipals: readonly (PrincipalType.USER | 
     } as const
 }
 
-export function unscopedAccess(allowedPrincipals: readonly PrincipalType[] = ALL_PRINCIPAL_TYPES) {
+export function unscopedAccess<T extends readonly PrincipalType[]>(allowedPrincipals: T) {
     return {
         kind: RouteKind.AUTHENTICATED,
         authorization: {
@@ -66,9 +66,9 @@ export function unscopedAccess(allowedPrincipals: readonly PrincipalType[] = ALL
 }
 
 export function engineAccess() {
-    return unscopedAccess([PrincipalType.ENGINE])
+    return unscopedAccess<[PrincipalType.ENGINE]>([PrincipalType.ENGINE])
 }
 
 export function workerAccess() {
-    return unscopedAccess([PrincipalType.WORKER])
+    return unscopedAccess<[PrincipalType.WORKER]>([PrincipalType.WORKER])
 }

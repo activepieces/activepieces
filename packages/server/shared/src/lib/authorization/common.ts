@@ -12,6 +12,7 @@ export enum ProjectResourceType {
     TABLE = 'TABLE',
     QUERY = 'QUERY',
     BODY = 'BODY',
+    PARAM = 'PARAM',
 }
 
 export enum RouteKind {
@@ -22,17 +23,28 @@ export enum RouteKind {
 export type ProjectTableResource = {
     type: ProjectResourceType.TABLE
     tableName: EntitySchema<unknown>
+    lookup?: {
+        paramKey: string
+        entityField: string
+    }
 }
 
 export type ProjectQueryResource = {
     type: ProjectResourceType.QUERY
+    queryKey?: string // defaults to projectId
 }
 
 export type ProjectBodyResource = {
     type: ProjectResourceType.BODY
+    bodyKey?: string // defaults to projectId
 }
 
-export type ProjectResource = ProjectTableResource | ProjectQueryResource | ProjectBodyResource
+export type ProjectParamResource = {
+    type: ProjectResourceType.PARAM
+    paramKey?: string // defaults to projectId
+}
+
+export type ProjectResource = ProjectTableResource | ProjectQueryResource | ProjectBodyResource | ProjectParamResource
 
 export type PlatformAuthorization = {
     type: AuthorizationType.PLATFORM

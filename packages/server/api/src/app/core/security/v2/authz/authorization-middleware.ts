@@ -1,4 +1,4 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectBodyResource, ProjectQueryResource, ProjectResourceType, ProjectTableResource, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationRouteSecurity, AuthorizationType, ProjectBodyResource, ProjectParamResource, ProjectQueryResource, ProjectResourceType, ProjectTableResource, RouteKind } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, isNil, isObject, PrincipalType } from '@activepieces/shared'
 import { FastifyRequest } from 'fastify'
 import { databaseConnection } from '../../../../database/database-connection'
@@ -13,6 +13,12 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     }
     const securityAccessRequest = await convertToSecurityAccessRequest(request)
     await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
+    
+    if (security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
+        // @ts-expect-error: explicit override for Fastify typing assignment
+        request.projectId = securityAccessRequest.authorization.projectId
+    }
+    
 }
 
 async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<AuthorizationRouteSecurity> {
@@ -83,6 +89,8 @@ async function getProjectIdFromRequest(request: FastifyRequest): Promise<string 
             return extractProjectIdFromQuery(request, projectResource)
         case ProjectResourceType.BODY:
             return extractProjectIdFromBody(request, projectResource)
+        case ProjectResourceType.PARAM:
+            return extractProjectIdFromParam(request, projectResource)
     }
 }
 
@@ -92,37 +100,49 @@ async function extractProjectIdFromTable(
 ): Promise<string | undefined> {
     const routerPath = request.routeOptions.url
     assertNotNullOrUndefined(routerPath, 'routerPath is undefined')
+    const { paramKey, entityField } = projectTableResource.lookup ?? {
+        paramKey: 'id',
+        entityField: 'id',
+    }
 
-    const hasIdParam = routerPath.includes(':id') &&
+    const hasIdParam = routerPath.includes(`:${paramKey}`) &&
         isObject(request.params) &&
-        'id' in request.params &&
-        typeof request.params.id === 'string'
+        paramKey in request.params &&
+        typeof request.params[paramKey] === 'string'
 
     if (!hasIdParam) {
         return undefined
     }
 
-    const { id } = request.params as { id: string }
+    const { [paramKey]: paramValue } = request.params as Record<string, string>
 
     const entity = await databaseConnection().getRepository(projectTableResource.tableName).findOneBy({
-        id,
+        [entityField]: paramValue,
     })
-    return entity?.projectId ?? undefined
+
+    return entity?.projectId ?? entity?.projectIds?.[0] ?? undefined
 }
 
-function extractProjectIdFromBody(request: FastifyRequest, _projectBodyResource: ProjectBodyResource): string | undefined {
-
-    if (isObject(request.body) && 'projectId' in request.body) {
-        return request.body.projectId as string
+function extractProjectIdFromBody(request: FastifyRequest, projectBodyResource: ProjectBodyResource): string | undefined {
+    const key = projectBodyResource.bodyKey ?? 'projectId'
+    if (isObject(request.body) && key in request.body) {
+        return request.body[key] as string
     }
 
     return undefined
 }
 
-function extractProjectIdFromQuery(request: FastifyRequest, _projectQueryResource: ProjectQueryResource): string | undefined {
-    if (isObject(request.query) && 'projectId' in request.query) {
-        return request.query.projectId as string
+function extractProjectIdFromQuery(request: FastifyRequest, projectQueryResource: ProjectQueryResource): string | undefined {
+    const key = projectQueryResource.queryKey ?? 'projectId'
+    if (isObject(request.query) && key in request.query) {
+        return request.query[key] as string
     }
 
     return undefined
+}
+
+async function extractProjectIdFromParam(request: FastifyRequest, projectParamResource: ProjectParamResource): Promise<string | undefined> {
+    const key = projectParamResource.paramKey ?? 'projectId'
+    const { [key]: paramValue } = request.params as Record<string, string>
+    return paramValue ?? undefined
 }
