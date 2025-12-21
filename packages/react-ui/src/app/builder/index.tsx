@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import {
-  LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
   useShowBuilderIsSavingWarningBeforeLeaving,
@@ -48,12 +47,10 @@ const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
 
 const useAnimateSidebar = (
-  sidebarValue: LeftSideBarType | RightSideBarType,
+  sidebarValue: RightSideBarType,
 ) => {
   const handleRef = useRef<ImperativePanelHandle>(null);
-  const sidebarClosed = [LeftSideBarType.NONE, RightSideBarType.NONE].includes(
-    sidebarValue,
-  );
+  const sidebarClosed = sidebarValue === RightSideBarType.NONE;
   useEffect(() => {
     const sidebarSize = handleRef.current?.getSize() ?? 0;
     if (sidebarClosed) {
@@ -67,11 +64,10 @@ const useAnimateSidebar = (
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep] =
+  const [setRun, flowVersion, rightSidebar, run, selectedStep] =
     useBuilderStateContext((state) => [
       state.setRun,
       state.flowVersion,
-      state.leftSidebar,
       state.rightSidebar,
       state.run,
       state.selectedStep,
@@ -99,7 +95,6 @@ const BuilderPage = () => {
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
-  const leftHandleRef = useAnimateSidebar(leftSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
@@ -144,29 +139,6 @@ const BuilderPage = () => {
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel
-          id="left-sidebar"
-          defaultSize={0}
-          minSize={0}
-          maxSize={39}
-          order={1}
-          ref={leftHandleRef}
-          className={cn('min-w-0 z-20 ', {
-            [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
-            [animateResizeClassName]: !isDraggingHandle,
-          })}
-        >
-          <div id={LEFT_SIDEBAR_ID} className="w-full h-full">
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle
-          onDragging={setIsDraggingHandle}
-          withHandle={leftSidebar !== LeftSideBarType.NONE}
-          className={
-            leftSidebar === LeftSideBarType.NONE ? 'bg-transparent' : ''
-          }
-        />
 
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">

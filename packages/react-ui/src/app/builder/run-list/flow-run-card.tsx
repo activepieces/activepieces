@@ -5,7 +5,6 @@ import { Eye, Repeat } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
-  LeftSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';

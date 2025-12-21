@@ -74,9 +74,6 @@ export function useBuilderStateContext<T>(
   return useStore(store, selector);
 }
 
-export enum LeftSideBarType {
-  NONE = 'none',
-}
 
 export enum RightSideBarType {
   NONE = 'none',
@@ -99,7 +96,6 @@ export type BuilderState = {
   inputSampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
-  leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
   activeDraggingStep: string | null;
@@ -119,7 +115,6 @@ export type BuilderState = {
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
-  setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   applyOperation: (
     operation: FlowOperationRequest,
@@ -232,7 +227,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       inputSampleData: initialState.inputSampleData,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
-      leftSidebar: LeftSideBarType.NONE,
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
@@ -359,21 +353,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           run: null,
           readonly: !userHasPermissionToEditFlow,
           loopsIndexes: {},
-          leftSidebar: LeftSideBarType.NONE,
           selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
         set((state) => ({
           rightSidebar: RightSideBarType.NONE,
-          leftSidebar: state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
           askAiButtonProps: null,
         })),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
-      setLeftSidebar: (leftSidebar: LeftSideBarType) =>
-        set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
           const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(
@@ -391,7 +381,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             ),
             run,
             flowVersion,
-            leftSidebar: LeftSideBarType.NONE,
             rightSidebar: initiallySelectedStep
               ? RightSideBarType.PIECE_SETTINGS
               : RightSideBarType.NONE,
@@ -561,7 +550,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           readonly:
             state.flow.publishedVersionId !== flowVersion.id &&
             flowVersion.state === FlowVersionState.LOCKED,
-          leftSidebar: LeftSideBarType.NONE,
           rightSidebar:
             initiallySelectedStep && !isEmptyTriggerInitiallySelected
               ? RightSideBarType.PIECE_SETTINGS
@@ -598,7 +586,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       askAiButtonProps: null,
       setAskAiButtonProps: (props) => {
         return set((state) => {
-          const leftSidebar = state.leftSidebar;
 
           let rightSidebar = state.rightSidebar;
           if (props && props.type === FlowOperationType.UPDATE_ACTION) {
@@ -616,7 +603,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
 
           return {
             askAiButtonProps: props,
-            leftSidebar,
             rightSidebar,
             selectedStep,
           };

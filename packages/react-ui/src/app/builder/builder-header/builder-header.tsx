@@ -10,7 +10,6 @@ import {
 } from 'react-router-dom';
 
 import {
-  LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
@@ -63,14 +62,12 @@ export const BuilderHeader = () => {
   const [
     flow,
     flowVersion,
-    setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
-    state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
