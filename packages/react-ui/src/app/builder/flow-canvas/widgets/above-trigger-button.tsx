@@ -14,6 +14,7 @@ type  AboveTriggerButtonProps = {
   triggerHasNoSampleData?: boolean;
   loading?: boolean;
   showKeyboardShortcut?: boolean;
+  shortCutIsEscape?: boolean;
 };
 
 const AboveTriggerButton = ({ 
@@ -22,18 +23,18 @@ const AboveTriggerButton = ({
   triggerHasNoSampleData = false,
   loading = false,
   showKeyboardShortcut = true,
+  shortCutIsEscape = false,
 }: AboveTriggerButtonProps) => {
   const isMac = /(Mac)/i.test(navigator.userAgent);
 
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
-      if (
-        (isMac && event.metaKey && event.key.toLocaleLowerCase() === 'd') ||
-        (!isMac && event.ctrlKey && event.key.toLocaleLowerCase() === 'd')
-      ) {
+      const isEscapePressed = event.key === 'Escape' && shortCutIsEscape;
+      const ctrlAndDPressed =  (isMac && event.metaKey && event.key.toLocaleLowerCase() === 'd') ||
+      (!isMac && event.ctrlKey && event.key.toLocaleLowerCase() === 'd')
+      if (isEscapePressed || ctrlAndDPressed) {
         event.preventDefault();
         event.stopPropagation();
-
         if (!loading && !triggerHasNoSampleData) {
           onClick();
         }
@@ -62,7 +63,7 @@ const AboveTriggerButton = ({
               {text}
               {showKeyboardShortcut && (
                 <span className="text-[10px] bg-primary/13 h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap">
-                  {isMac ? '⌘ + D' : 'Ctrl + D'}
+                  {shortCutIsEscape ? 'Esc' : isMac ? '⌘ + D' : 'Ctrl + D'}
                 </span>
               )}
             </div>

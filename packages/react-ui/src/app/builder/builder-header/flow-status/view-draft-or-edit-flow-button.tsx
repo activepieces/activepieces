@@ -35,8 +35,8 @@ const EditFlowOrViewDraftButton = ({onCanvas}: {onCanvas: boolean}) => {
   <>
      {
       onCanvas && (
-         <AboveTriggerButton onClick={handleClick} text={text}>
-         </AboveTriggerButton>
+         <AboveTriggerButton shortCutIsEscape={true} onClick={handleClick} text={text}>
+         </AboveTriggerButton >
       )
      }
 
