@@ -1,13 +1,11 @@
 import { t } from 'i18next';
 import {
-  Check,
   CircleCheck,
   CircleX,
   PauseCircleIcon,
   PauseIcon,
   Play,
   Timer,
-  X,
 } from 'lucide-react';
 
 import {
@@ -24,6 +22,7 @@ import {
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
+import { cn } from '@/lib/utils';
 
 export const flowRunUtils = {
   findLastStepWithStatus,
@@ -88,9 +87,18 @@ export const flowRunUtils = {
         };
     }
   },
+  getStatusContainerClassName(variant: 'default' | 'success' | 'error') {
+    return cn('text-sm px-2  border rounded-md',{
+      'text-green-800 bg-green-50 border-green-200':
+        variant === 'success',
+      'text-red-800 bg-red-50  border-red-200': variant === 'error',
+      'bg-background  border-border text-foreground':
+        variant === 'default',
+    })
+  },
   getStatusIcon(status: FlowRunStatus): {
     variant: 'default' | 'success' | 'error';
-    Icon: typeof Timer | typeof Check | typeof PauseIcon | typeof X;
+    Icon: typeof Timer | typeof CircleCheck | typeof PauseIcon | typeof CircleX;
   } {
     switch (status) {
       case FlowRunStatus.QUEUED:
@@ -106,12 +114,12 @@ export const flowRunUtils = {
       case FlowRunStatus.SUCCEEDED:
         return {
           variant: 'success',
-          Icon: Check,
+          Icon: CircleCheck,
         };
       case FlowRunStatus.FAILED:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleX,
         };
       case FlowRunStatus.PAUSED:
         return {
@@ -121,27 +129,27 @@ export const flowRunUtils = {
       case FlowRunStatus.CANCELED:
         return {
           variant: 'default',
-          Icon: X,
+          Icon: CircleX,
         };
       case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleX,
         };
       case FlowRunStatus.QUOTA_EXCEEDED:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleX,
         };
       case FlowRunStatus.INTERNAL_ERROR:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleX,
         };
       case FlowRunStatus.TIMEOUT:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleX,
         };
     }
   },

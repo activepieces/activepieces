@@ -149,12 +149,6 @@ const BuilderPage = () => {
             <RunDetailsBar
               run={run}
               isLoading={isSwitchingToDraftPending}
-              exitRun={() => {
-                socket.removeAllListeners(
-                  WebsocketClientEvent.FLOW_RUN_PROGRESS,
-                );
-                switchToDraft();
-              }}
             />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (

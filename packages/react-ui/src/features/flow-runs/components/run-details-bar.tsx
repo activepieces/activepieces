@@ -1,32 +1,28 @@
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 
-import { Button } from '@/components/ui/button';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { cn, formatUtils } from '@/lib/utils';
 import {
   ApFlagId,
   FlowRun,
   FlowRunStatus,
-  Permission,
 } from '@activepieces/shared';
 
-import { useAuthorization } from '../../../hooks/authorization-hooks';
 import { flowRunUtils } from '../lib/flow-run-utils';
+import { LoadingSpinner } from '@/components/ui/spinner';
+import { cn, formatUtils } from '@/lib/utils';
+import { Tooltip, TooltipTrigger,TooltipContent } from '@/components/ui/tooltip';
+import { CopyButton } from '@/components/custom/clipboard/copy-button';
+import { Copy } from 'lucide-react';
 
-type RunDetailsBarProps = {
+type RunStatusProps = {
   run: FlowRun | null;
-  exitRun: (userHasPermissionToUpdateFlow: boolean) => void;
   isLoading: boolean;
 };
 
 function getStatusText(
-  status: FlowRunStatus,
-  timeout: number,
-  memoryLimit: number,
+  {status, timeout, memoryLimit}: {status: FlowRunStatus, timeout: number, memoryLimit: number}
 ) {
   switch (status) {
     case FlowRunStatus.SUCCEEDED:
@@ -34,9 +30,9 @@ function getStatusText(
     case FlowRunStatus.FAILED:
       return t('Run Failed');
     case FlowRunStatus.PAUSED:
-      return t('Flow Run is paused');
+      return t('Run Paused');
     case FlowRunStatus.QUOTA_EXCEEDED:
-      return t('Run Failed due to quota exceeded');
+      return t('Quota Exceeded');
     case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
       return t(
         'Run failed due to exceeding the memory limit of {memoryLimit} MB',
@@ -59,88 +55,72 @@ function getStatusText(
   }
 }
 
-const RunDetailsBar = React.memo(
-  ({ run, exitRun, isLoading }: RunDetailsBarProps) => {
-    const { Icon, variant } = run
+const RunStatus = React.memo(
+  ({ run, isLoading }: RunStatusProps) => {
+    const { variant, Icon  } = run
       ? flowRunUtils.getStatusIcon(run.status)
-      : { Icon: QuestionMarkIcon, variant: 'default' };
-    const navigate = useNavigate();
+      : { variant: 'default' as const, Icon: isLoading ? LoadingSpinner : QuestionMarkIcon };
 
-    const isInRunsPage = useLocation().pathname.includes('/runs/');
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
     );
     const { data: memoryLimit } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_MEMORY_LIMIT_KB,
     );
-    const { checkAccess } = useAuthorization();
-    const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
-
+    
     if (!run) {
       return <></>;
     }
-    const handleSwitchToDraft = () => {
-      if (isInRunsPage) {
-        navigate(
-          authenticationSession.appendProjectRoutePrefix(
-            `/flows/${run.flowId}`,
-          ),
-        );
-      } else {
-        exitRun(userHasPermissionToEditFlow);
-      }
-    };
 
     return (
-      <div className="absolute bottom-4 p-4 left-1/2 transform -translate-x-1/2 w-[480px] bg-background shadow-lg border rounded-lg z-9999">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Icon
-              className={cn('w-6 h-6 shrink-0', {
-                'text-foreground': variant === 'default',
-                'text-success': variant === 'success',
-                'text-destructive': variant === 'error',
-              })}
-            />
-            <div className="flex flex-col gap-1 min-w-0 flex-1">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="text-sm font-medium text-foreground truncate">
-                    {getStatusText(
-                      run.status,
-                      timeoutSeconds ?? -1,
-                      memoryLimit ?? -1,
-                    )}
-                  </span>
-                </div>
-                {run.created && (
-                  <span className="text-xs text-muted-foreground flex-shrink-0">
-                    {formatUtils.formatDate(new Date(run.created))}
-                  </span>
-                )}
-              </div>
-              <div className="text-xs text-muted-foreground">{run.id}</div>
-            </div>
-          </div>
-          {
-            <Button
-              variant={'outline'}
-              size="sm"
-              onClick={handleSwitchToDraft}
-              loading={isLoading}
-              onKeyboardShortcut={handleSwitchToDraft}
-              keyboardShortcut="Esc"
-              className="shrink-0"
-              data-testId="exit-run-button"
-            >
-              {t('Edit Flow')}
-            </Button>
-          }
+      <div className="absolute top-[8px]  left-[12px] rounded-md bg-builder-background z-50">
+        <Tooltip>
+         <TooltipTrigger asChild>
+         <div className={cn('flex items-center gap-1 textsm select-none', flowRunUtils.getStatusContainerClassName(variant))}>
+          <Icon className="w-4 h-4" />
+           {getStatusText({status: run.status, timeout: timeoutSeconds ?? -1, memoryLimit: memoryLimit ?? -1})}
         </div>
+         </TooltipTrigger>
+         <TooltipContent>
+          <div className="flex flex-col gap-1 text-sm cursor-default">
+            {
+              run.startTime && (
+                <div className='flex flex-col gap-0.5 select-none'>
+                  <span className='text-accent/70 text-xs'>{t('Started At')}</span>
+                  <span>{formatUtils.formatDateWithTime(new Date(run.startTime),true)}</span>
+                  </div>
+              )
+            }
+            {
+              run.finishTime && run.startTime && 
+              <div className='flex flex-col gap-0.5 select-none'>
+                <span className='text-accent/70 text-xs'>{t('Took')}</span>
+                <span>{formatUtils.formatDuration(
+                  run.startTime && run.finishTime
+                    ? new Date(run.finishTime).getTime() -
+                        new Date(run.startTime).getTime()
+                    : undefined,
+                  false,
+                )}</span>
+              </div>
+            }
+            <div  className="flex items-center gap-2 cursor-pointer justify-between">   <CopyButton withoutTooltip={true}  variant="ghost" className='p-0 hover:bg-transparent font-normal !text-background flex items-center gap-1 justify-between !p-0'   textToCopy={run.id} >
+              {t('Copy Run ID')}
+            </CopyButton>  </div>
+           
+
+
+
+          </div>
+          
+         </TooltipContent>
+        </Tooltip>
+        
+      
       </div>
     );
   },
 );
 
-RunDetailsBar.displayName = 'RunDetailsBar';
-export { RunDetailsBar };
+RunStatus.displayName = 'RunDetailsBar';
+export { RunStatus as RunDetailsBar };
