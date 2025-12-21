@@ -16,9 +16,9 @@ import {
 
 import { useStepSettingsContext } from '../step-settings/step-settings-context';
 
-import { AutoPropertiesFormComponent } from './auto-properties-form';
 import { DynamicPropertiesErrorBoundary } from './dynamic-piece-properties-error-boundary';
 import { DynamicPropertiesContext } from './dynamic-properties-context';
+import { GenericPropertiesFormComponent } from './generic-properties-form';
 type DynamicPropertiesProps = {
   refreshers: string[];
   propertyName: string;
@@ -179,13 +179,13 @@ const DynamicPropertiesImplementation = React.memo(
           <SkeletonList numberOfItems={3} className="h-7"></SkeletonList>
         )}
         {!isPending && propertyMap && (
-          <AutoPropertiesFormComponent
+          <GenericPropertiesFormComponent
             prefixValue={`settings.input.${props.propertyName}`}
             props={propertyMap}
             useMentionTextInput={true}
             disabled={props.disabled}
             allowDynamicValues={true}
-          ></AutoPropertiesFormComponent>
+          ></GenericPropertiesFormComponent>
         )}
       </>
     );

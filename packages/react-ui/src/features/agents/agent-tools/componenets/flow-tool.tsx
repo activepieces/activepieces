@@ -10,15 +10,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { AgentFlowTool as AgentFlowToolType } from '@activepieces/shared';
+import { AgentFlowTool } from '@activepieces/shared';
 
 type AgentFlowToolProps = {
   disabled?: boolean;
-  tool: AgentFlowToolType;
-  removeTool: (toolIds: string[]) => Promise<void>;
+  tool: AgentFlowTool;
+  removeTool: (toolname: string) => void;
 };
 
-export const AgentFlowTool = ({
+export const AgentFlowToolComponent = ({
   disabled,
   tool,
   removeTool,
@@ -64,7 +64,7 @@ export const AgentFlowTool = ({
               <ConfirmationDeleteDialog
                 title={`${t('Delete')} ${tool.flowId}`}
                 message={t('Are you sure you want to delete this tool?')}
-                mutationFn={async () => await removeTool([tool.toolName])}
+                mutationFn={async () => removeTool(tool.toolName)}
                 entityName={t('Tool')}
               >
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
