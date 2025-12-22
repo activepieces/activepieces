@@ -28,11 +28,11 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const providerId = context.propsValue.provider;
+    const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
 
     const model = await createAIModel({
-      providerId,
+      provider: provider as AIProviderName,
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
@@ -49,8 +49,8 @@ export const summarizeText = createAction({
       maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: 1,
       providerOptions: {
-        [providerId]: {
-          ...(providerId === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
+        [provider]: {
+          ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
         }
       }
     });

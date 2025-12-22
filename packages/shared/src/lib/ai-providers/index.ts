@@ -114,7 +114,7 @@ export enum AIProviderName {
     GOOGLE = 'google',
     ACTIVEPIECES = 'activepieces',
     CLOUDFLARE_GATEWAY = 'cloudflare-gateway',
-    OPENAI_COMPATIBLE = 'openai-compatible',
+    CUSTOM = 'custom',
 }
 
 const ProviderConfigUnion = DiscriminatedUnion('provider', [
@@ -156,7 +156,7 @@ const ProviderConfigUnion = DiscriminatedUnion('provider', [
     }),
     Type.Object({
         displayName: Type.String({ minLength: 1 }),
-        provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
+        provider: Type.Literal(AIProviderName.CUSTOM),
         config: OpenAICompatibleProviderConfig,
         auth: OpenAICompatibleProviderAuthConfig,
     }),
