@@ -3,7 +3,7 @@ import {
     ListProjectRequestForPlatformQueryParams,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { platformAdminOnly, publicPlatformAccess } from '@activepieces/server-shared'
+import { platformAdminOnly, projectAccess, ProjectResourceType, publicPlatformAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -18,9 +18,9 @@ import {
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    ServicePrincipal,
+    ServicePrincipalV2,
     TeamProjectsLimit,
-    UserPrincipal,
+    UserPrincipalV2,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -76,7 +76,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = await isPlatformAdmin(request.principal, project.platformId)
+        const ownThePlatform = await isPlatformAdmin(request.principal as ServicePrincipalV2 | UserPrincipalV2, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -112,7 +112,7 @@ async function getUserId(principal: PrincipalV2): Promise<string> {
     return principal.id
 }
 
-async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, platformId: string): Promise<boolean> {
+async function isPlatformAdmin(principal: ServicePrincipalV2 | UserPrincipalV2, platformId: string): Promise<boolean> {
     if (principal.platform.id !== platformId) {
         return false
     }
@@ -170,9 +170,9 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string)
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
-        permission: Permission.WRITE_PROJECT,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT, {
+            type: ProjectResourceType.PARAM,
+        }),
     },
     schema: {
         tags: ['projects'],
