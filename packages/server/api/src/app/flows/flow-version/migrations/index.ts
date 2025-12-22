@@ -27,7 +27,7 @@ const migrations: Migration[] = [
     moveAgentsToFlowVerion,
     cleanUpAgentTools,
     migrateV9AiPieces,
-    migrateV10AiPiecesProviderId
+    migrateV10AiPiecesProviderId,
 ] as const
 
 export const flowMigrations = {
