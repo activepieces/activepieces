@@ -310,10 +310,14 @@ import { AddLastActiveToUser1765325909187 } from './migration/postgres/176532590
 import { AddStepsExecutedAndAICreditsToFlowRun1765461560795 } from './migration/postgres/1765461560795-AddStepsExecutedAndAICreditsToFlowRun'
 import { ChangeTeamsToPersonalInCommunity1765709274266 } from './migration/postgres/1765709274266-ChangeTeamsToPersonalInCommunity'
 import { AddMinutesSavedToFlowForAnalytics1765732721451 } from './migration/postgres/1765732721451-AddMinutesSavedToFlowForAnalytics'
+import { AddDisplayNameToAiProviders1765757655723 } from './migration/postgres/1765757655723-add-display-name-to-ai-providers'
 import { AddTemplateStatus1765894492098 } from './migration/postgres/1765894492098-AddTemplateStatus'
 import { MigrateOldTemplatesToNewSchema1765993826655 } from './migration/postgres/1765993826655-MigrateOldTemplatesToNewSchema'
 import { DropLegacyTables1766015156683 } from './migration/postgres/1766015156683-DropLegacyTables'
 import { RecreateMcpToolTable1766072572000 } from './migration/postgres/1766072572000-RecreateMcpToolTable'
+import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/postgres/1766094015801-removeOpenRounterKeysFromPlatformPlan'
+import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
+import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1766375959255-PlatformIdAndProviderUnique'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -639,11 +643,15 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddStepsExecutedAndAICreditsToFlowRun1765461560795,
         ChangeTeamsToPersonalInCommunity1765709274266,
         AddMinutesSavedToFlowForAnalytics1765732721451,
+        AddDisplayNameToAiProviders1765757655723,
         CreateTemplateTable1764777773932,
         AddTemplateStatus1765894492098,
         MigrateOldTemplatesToNewSchema1765993826655,
+        RemoveOpenRounterKeysFromPlatformPlan1766094015801,
+        AddAuthConfigInAiProviders1766328841463,
         DropLegacyTables1766015156683,
         RecreateMcpToolTable1766072572000,
+        PlatformIdAndProviderUnique1766375959255,
     ]
     return migrations
 }

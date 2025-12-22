@@ -92,6 +92,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.AI_CREDITS_ENABLED,
+                value: !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY)),
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.SHOW_POWERED_BY_IN_FORM,
                 value: true,
                 created,
@@ -279,6 +285,9 @@ export const flagService = {
         return flags
     },
 
+    aiCreditsEnabled(): boolean {
+        return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
+    },
 }
 
 
