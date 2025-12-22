@@ -19,7 +19,6 @@ import {
     PieceType,
     PlatformId,
     PrivatePiecePackage,
-    ProjectId,
     PublicPiecePackage,
     SuggestionType,
 } from '@activepieces/shared'
@@ -82,7 +81,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 }
             })
         },
-        async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
+        async get({ platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 platformId,
@@ -98,7 +97,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             })
             const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
                 piece,
-                projectId,
                 platformId,
             })
             if (isFiltered) {
@@ -121,13 +119,13 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             }
             return pieceMap
         },
-        async getOrThrow({ projectId, version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
-            const piece = await this.get({ projectId, version, name, platformId })
+        async getOrThrow({ version, name, platformId, locale }: GetOrThrowParams): Promise<PieceMetadataModel> {
+            const piece = await this.get({ version, name, platformId })
             if (isNil(piece)) {
                 throw new ActivepiecesError({
                     code: ErrorCode.ENTITY_NOT_FOUND,
                     params: {
-                        message: `piece_metadata_not_found projectId=${projectId} pieceName=${name}`,
+                        message: `piece_metadata_not_found pieceName=${name}`,
                     },
                 })
             }
@@ -155,7 +153,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 created: existingMetadata.created,
             })
         },
-        async resolveExactVersion({ name, version, projectId, platformId }: GetExactPieceVersionParams): Promise<string> {
+        async resolveExactVersion({ name, version, platformId }: GetExactPieceVersionParams): Promise<string> {
             const isExactVersion = EXACT_VERSION_REGEX.test(version)
 
             if (isExactVersion) {
@@ -163,7 +161,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             }
 
             const pieceMetadata = await this.getOrThrow({
-                projectId,
                 name,
                 version,
                 platformId,
@@ -219,14 +216,12 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
 
 export const getPiecePackageWithoutArchive = async (
     log: FastifyBaseLogger,
-    projectId: string | undefined,
     platformId: PlatformId | undefined,
     pkg: Omit<PublicPiecePackage, 'directoryPath' | 'pieceType' | 'packageType'> | Omit<PrivatePiecePackage, 'archiveId' | 'archive' | 'pieceType' | 'packageType'>,
 ): Promise<PiecePackage> => {
     const pieceMetadata = await pieceMetadataService(log).getOrThrow({
         name: pkg.pieceName,
         version: pkg.pieceVersion,
-        projectId,
         platformId,
     })
     switch (pieceMetadata.packageType) {
@@ -420,7 +415,6 @@ function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchem
 
 type ListParams = {
     release: string
-    projectId?: string
     platformId?: string
     includeHidden: boolean
     edition: ApEdition
@@ -438,7 +432,6 @@ type GetOrThrowParams = {
     name: string
     version?: string
     entityManager?: EntityManager
-    projectId?: string
     platformId?: string
     locale?: LocalesEnum
 }
@@ -468,7 +461,6 @@ type UpdateUsage = {
 type GetExactPieceVersionParams = {
     name: string
     version: string
-    projectId: ProjectId
     platformId: PlatformId
 }
 

@@ -23,7 +23,6 @@ export const pieceListUtils = {
             pieces: userBasedPieces,
             includeHidden: params.includeHidden,
             platformId: params.platformId,
-            projectId: params.projectId,
         })
     },
 }
@@ -33,7 +32,6 @@ export type FilterPiecesParams = {
     platformId?: PlatformId
     searchQuery?: string
     categories?: PieceCategory[]
-    projectId?: string
     sortBy?: PieceSortBy
     orderBy?: PieceOrderBy
     pieces: PieceMetadataSchema[]

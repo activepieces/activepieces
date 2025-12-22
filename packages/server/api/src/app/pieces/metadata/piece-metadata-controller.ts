@@ -59,11 +59,9 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const release = query.release ?? latestRelease
         const edition = query.edition ?? ApEdition.COMMUNITY
         const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
-        const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER || req.principal.type === PrincipalType.SERVICE ? undefined : req.principal.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             release,
             includeHidden: query.includeHidden ?? false,
-            projectId,
             platformId,
             edition,
             includeTags,
@@ -91,10 +89,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
             const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
             return pieceMetadataService(req.log).getOrThrow({
-                projectId,
                 platformId,
                 name: `${decodeScope}/${decodedName}`,
                 version,
@@ -110,10 +106,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const { name } = req.params
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.projectId
             const platformId = req.principal.type === PrincipalType.UNKNOWN || req.principal.type === PrincipalType.WORKER ? undefined : req.principal.platform.id
             return pieceMetadataService(req.log).getOrThrow({
-                projectId,
                 platformId,
                 name: decodedName,
                 version,
@@ -155,7 +149,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 input: req.body.input,
                 sampleData,
                 searchValue: req.body.searchValue,
-                piece: await getPiecePackageWithoutArchive(req.log, projectId, platform.id, req.body),
+                piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
             })
             return result
         },

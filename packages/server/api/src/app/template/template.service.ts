@@ -1,13 +1,15 @@
 import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateStatus, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ArrayOverlap, Equal, ILike, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { templateValidator } from './template-validator'
 import { TemplateEntity } from './template.entity'
 
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
-export const templateService = () => ({
+export const templateService = (log: FastifyBaseLogger) => ({
     async getOneOrThrow({ id }: GetParams): Promise<Template> {
         const template = await templateRepo().findOneBy({ id })
         if (isNil(template)) {
@@ -27,6 +29,12 @@ export const templateService = () => ({
         const newTags = tags ?? []
         const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
         const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
+
+        await templateValidator.validate({ 
+            template: params, 
+            platformId, 
+            log,
+        })
 
         switch (type) {
             case TemplateType.OFFICIAL:
@@ -58,7 +66,7 @@ export const templateService = () => ({
 
     async update({ id, params }: UpdateParams): Promise<Template> {
         const { name, summary, description, tags, blogUrl, metadata, categories, status } = params
-        const template = await templateService().getOneOrThrow({ id })
+        const template = await this.getOneOrThrow({ id })
 
         const newTags = tags ?? []
         const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
