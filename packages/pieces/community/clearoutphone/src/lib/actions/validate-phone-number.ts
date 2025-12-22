@@ -2,11 +2,12 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { clearoutphoneAuth } from '../common/auth';
 
-export const findPhoneNumberCarrier = createAction({
+export const validatePhoneNumber = createAction({
   auth: clearoutphoneAuth,
-  name: 'findPhoneNumberCarrier',
-  displayName: 'Find Phone Number Carrier',
-  description: 'Find the carrier of a phone number using ClearoutPhone API',
+  name: 'validatePhoneNumber',
+  displayName: 'Validate Phone Number',
+  description:
+    'Validate a phone number and retrieve comprehensive information using ClearoutPhone API',
   props: {
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
@@ -44,20 +45,27 @@ export const findPhoneNumberCarrier = createAction({
 
     const result = response.body as any;
 
-    if (result.status === 'success' && result.data?.carrier) {
+    if (result.status === 'success' && result.data) {
       return {
-        carrier: result.data.carrier,
+        isValid: result.data.status === 'valid',
+        status: result.data.status,
         lineType: result.data.line_type,
+        carrier: result.data.carrier,
         location: result.data.location,
         countryName: result.data.country_name,
+        countryTimezone: result.data.country_timezone,
+        countryUtcOffset: result.data.country_utcoffset,
+        countryDstObservedHours: result.data.country_dstobservedhrs,
         countryCode: result.data.country_code,
-        status: result.data.status,
+        internationalFormat: result.data.international_format,
+        localFormat: result.data.local_format,
+        e164Format: result.data.e164_format,
+        canBeInternationallyDialled: result.data.can_be_internationally_dialled,
+        validatedOn: result.data.validated_on,
+        timeTaken: result.data.time_taken,
       };
     }
 
-    return {
-      carrier: null,
-      response: result,
-    };
+    return result;
   },
 });
