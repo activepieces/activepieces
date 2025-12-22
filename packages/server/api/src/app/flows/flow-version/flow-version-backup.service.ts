@@ -1,10 +1,7 @@
 import { 
-    ActivepiecesError, 
-    ErrorCode, 
     FileCompression, 
     FileType, 
     FlowVersion, 
-    isNil,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { fileService } from '../../file/file.service'
@@ -37,8 +34,8 @@ export const flowVersionBackupService = {
     async get(params: GetBackupVersionParams): Promise<FlowVersion | null> {
         const { flowVersion, schemaVersion } = params
         const backupFileId = flowVersion.backupFiles?.[schemaVersion]
-        if(!backupFileId) {
-           return null;
+        if (!backupFileId) {
+            return null
         }
         
         const fileData = await fileService(log).getDataOrThrow({

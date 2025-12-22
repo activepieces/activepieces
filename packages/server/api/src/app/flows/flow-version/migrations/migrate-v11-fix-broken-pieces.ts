@@ -3,8 +3,8 @@ import {
     flowStructureUtil,
     FlowVersion,
 } from '@activepieces/shared'
+import { flowVersionBackupService } from '../flow-version-backup.service'
 import { Migration } from '.'
-import { flowVersionBackupService } from '../flow-version-backup.service';
 
 
 export const migrateV11FixBrokenPieces: Migration = {
@@ -14,7 +14,7 @@ export const migrateV11FixBrokenPieces: Migration = {
             flowVersion,
             schemaVersion: '10',
         })
-        if(!backedUpFlowVersion) {
+        if (!backedUpFlowVersion) {
             return {
                 ...flowVersion,
                 schemaVersion: '12',

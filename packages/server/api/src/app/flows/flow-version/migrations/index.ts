@@ -2,6 +2,7 @@ import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepiece
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateV10AiPiecesProviderId } from './migrate-v10-ai-pieces-provider-id'
+import { migrateV11FixBrokenPieces } from './migrate-v11-fix-broken-pieces'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
@@ -10,7 +11,6 @@ import { migratePropertySettingsV6 } from './migrate-v6-property-settings'
 import { moveAgentsToFlowVerion } from './migrate-v7-agents-to-flow-version'
 import { cleanUpAgentTools } from './migrate-v8-agent-tools'
 import { migrateV9AiPieces } from './migrate-v9-ai-pieces'
-import { migrateV11FixBrokenPieces } from './migrate-v11-fix-broken-pieces'
 
 export type Migration = {
     targetSchemaVersion: string | undefined
