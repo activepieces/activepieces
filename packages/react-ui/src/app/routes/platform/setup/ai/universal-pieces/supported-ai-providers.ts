@@ -58,7 +58,7 @@ It is strongly recommended that you add your credit card information to your Ope
 4. For each provider you are using, include your keys in the Provider Keys tab.`,
   },
   {
-    provider: AIProviderName.OPENAI_COMPATIBLE,
+    provider: AIProviderName.CUSTOM,
     name: 'OpenAI Compatible',
     logoUrl: 'https://cdn.activepieces.com/pieces/openai-compatible.png',
     markdown: `Follow these instructions to get your OpenAI Compatible API Key:

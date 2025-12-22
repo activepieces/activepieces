@@ -152,7 +152,7 @@ export const UpsertAIProviderDialog = ({
                   className="space-y-3"
                   hidden={
                     currentProviderDef.provider !==
-                    AIProviderName.OPENAI_COMPATIBLE
+                    AIProviderName.CUSTOM
                   }
                 >
                   <FormLabel>{t('Display Name')}</FormLabel>
@@ -239,9 +239,9 @@ const createFormSchema = (provider: AIProviderName, editMode: boolean) => {
         : CloudflareGatewayProviderAuthConfig,
     });
   }
-  if (provider === AIProviderName.OPENAI_COMPATIBLE) {
+  if (provider === AIProviderName.CUSTOM) {
     return Type.Object({
-      provider: Type.Literal(AIProviderName.OPENAI_COMPATIBLE),
+      provider: Type.Literal(AIProviderName.CUSTOM),
       config: OpenAICompatibleProviderConfig,
       auth: editMode
         ? Type.Optional(OpenAICompatibleProviderAuthConfig)

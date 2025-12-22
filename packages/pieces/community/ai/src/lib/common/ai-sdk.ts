@@ -80,7 +80,7 @@ export async function createAIModel({
             })
             return provider.chatModel(modelId)
         }
-        case AIProviderName.OPENAI_COMPATIBLE: {
+        case AIProviderName.CUSTOM: {
             const { apiKeyHeader, baseUrl } = config as OpenAICompatibleProviderConfig
 
             const provider = createOpenAICompatible({ 
