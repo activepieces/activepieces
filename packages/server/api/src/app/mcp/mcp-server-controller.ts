@@ -114,8 +114,13 @@ const GetMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: projectAccess(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
