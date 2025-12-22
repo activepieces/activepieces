@@ -4,7 +4,7 @@ import { PieceCategory } from '@activepieces/shared';
 import { verifyEmail } from './lib/actions/verify-email';
 
 export const millionverifier = createPiece({
-  displayName: 'Millionverifier',
+  displayName: 'MillionVerifier',
   auth: millionVerifierAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/millionverifier.png',
@@ -14,4 +14,3 @@ export const millionverifier = createPiece({
   actions: [verifyEmail],
   triggers: [],
 });
-  
