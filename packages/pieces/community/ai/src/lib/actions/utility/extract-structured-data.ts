@@ -4,6 +4,7 @@ import { generateText, tool, jsonSchema, ModelMessage, UserModelMessage } from '
 import mime from 'mime-types';
 import Ajv from 'ajv';
 import { aiProps } from '../../common/props';
+import { AIProviderName } from '@activepieces/shared';
 
 export const extractStructuredData = createAction({
 	name: 'extractStructuredData',
@@ -124,7 +125,7 @@ export const extractStructuredData = createAction({
 		}),
 	},
 	async run(context) {
-		const providerId = context.propsValue.provider;
+		const provider = context.propsValue.provider;
 		const modelId = context.propsValue.model;
 		const text = context.propsValue.text;
 		const files = (context.propsValue.files as Array<{ file: ApFile }>) ?? [];
@@ -137,10 +138,13 @@ export const extractStructuredData = createAction({
 		}
 
 		const model = await createAIModel({
-			providerId,
+			provider: provider as AIProviderName,
 			modelId,
 			engineToken: context.server.token,
 			apiUrl: context.server.apiUrl,
+			projectId: context.project.id,
+			flowId: context.flows.current.id,
+			runId: context.run.id,
 		});
 
 		let schemaDefinition: any;

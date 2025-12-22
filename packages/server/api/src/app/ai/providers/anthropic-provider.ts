@@ -1,15 +1,15 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, AnthropicProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, AnthropicProviderAuthConfig, AnthropicProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
-export const anthropicProvider: AIProviderStrategy<AnthropicProviderConfig> = {
+export const anthropicProvider: AIProviderStrategy<AnthropicProviderAuthConfig, AnthropicProviderConfig> = {
     name: 'Anthropic',
-    async listModels(config: AnthropicProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(authConfig: AnthropicProviderAuthConfig, _config: AnthropicProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: AnthropicModel[] }>({
             url: 'https://api.anthropic.com/v1/models',
             method: HttpMethod.GET,
             headers: {
-                'x-api-key': config.apiKey,
+                'x-api-key': authConfig.apiKey,
                 'Content-Type': 'application/json',
                 'anthropic-version': '2023-06-01',
             },
