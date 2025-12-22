@@ -11,6 +11,7 @@ import {
   isNil,
   AgentTool,
   TASK_COMPLETION_TOOL_NAME,
+  AIProviderName,
 } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { z, ZodObject } from 'zod';
@@ -81,11 +82,11 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, model: modelId, provider: providerId } = context.propsValue;
+    const { prompt, maxSteps, model: modelId, provider } = context.propsValue;
 
     const model = await createAIModel({
       modelId,
-      providerId,
+      provider: provider as AIProviderName,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
     });
