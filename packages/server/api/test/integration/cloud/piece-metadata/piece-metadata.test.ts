@@ -111,7 +111,7 @@ describe('Piece Metadata API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -245,7 +245,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -474,7 +474,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -537,7 +537,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -600,7 +600,7 @@ describe('Piece Metadata API', () => {
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

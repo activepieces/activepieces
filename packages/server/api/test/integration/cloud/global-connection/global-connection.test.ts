@@ -59,7 +59,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -115,7 +115,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -166,7 +166,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -208,7 +208,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -239,7 +239,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -274,7 +274,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -336,7 +336,7 @@ describe('GlobalConnection API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -369,7 +369,7 @@ describe('GlobalConnection API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -406,7 +406,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -478,7 +478,7 @@ describe('GlobalConnection API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -512,7 +512,7 @@ describe('GlobalConnection API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -552,7 +552,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

@@ -40,7 +40,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             const requestBody: UpdatePlatformRequestBody = {
@@ -100,7 +100,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             const formData = new FormData()
@@ -147,7 +147,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -190,7 +190,7 @@ describe('Platform API', () => {
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -232,7 +232,6 @@ describe('Platform API', () => {
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner1.id,
-                projectId: mockProject1.id,
                 platform: {
                     id: mockPlatform1.id,
                 },
@@ -273,7 +272,6 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: firstAccount.mockOwner.id,
-                projectId: firstAccount.mockProject.id,
                 platform: { id: firstAccount.mockPlatform.id },
             })
             // act
@@ -302,7 +300,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             // act
@@ -334,7 +332,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -371,7 +369,6 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: firstAccount.mockOwner.id,
-                projectId: firstAccount.mockProject.id,
                 platform: { id: firstAccount.mockPlatform.id },
             })
             // act
@@ -395,7 +392,7 @@ describe('Platform API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
             // act
@@ -423,7 +420,7 @@ describe('Platform API', () => {
         const testToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockUser.id,
-            projectId: mockProject.id,
+            
             platform: { id: mockPlatform.id },
         })
         // act

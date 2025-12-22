@@ -75,7 +75,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockOwner2.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform2.id,
                 },
@@ -110,7 +110,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -180,7 +180,7 @@ describe('Enterprise User API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -212,7 +212,7 @@ describe('Enterprise User API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

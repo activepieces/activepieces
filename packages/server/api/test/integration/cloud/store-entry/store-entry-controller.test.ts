@@ -61,7 +61,6 @@ describe('Store-entries API', () => {
         userToken = await generateMockToken({
             type: PrincipalType.USER,
             id: mockUser.id,
-            projectId,
             platform: {
                 id: mockPlatform.id,
             },
@@ -70,7 +69,6 @@ describe('Store-entries API', () => {
         serviceToken = await generateMockToken({
             type: PrincipalType.SERVICE,
             id: apId(),
-            projectId,
             platform: {
                 id: mockPlatform.id,
             },

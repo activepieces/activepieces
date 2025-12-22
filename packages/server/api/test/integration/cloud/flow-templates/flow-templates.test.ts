@@ -41,7 +41,6 @@ describe('Templates', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -91,7 +90,6 @@ describe('Templates', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -140,7 +138,6 @@ describe('Templates', () => {
             const testToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 
@@ -164,7 +161,6 @@ describe('Templates', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
                 platform: { id: mockPlatform.id },
             })
 

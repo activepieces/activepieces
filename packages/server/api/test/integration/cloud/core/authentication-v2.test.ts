@@ -69,7 +69,7 @@ describe('authenticateOrThrow', () => {
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -83,7 +83,7 @@ describe('authenticateOrThrow', () => {
                 expect.objectContaining({
                     id: mockOwner.id,
                     type: PrincipalType.USER,
-                    projectId: mockProject.id,
+                    
                     platform: {
                         id: mockPlatform.id,
                     },
@@ -111,7 +111,7 @@ describe('authenticateOrThrow', () => {
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

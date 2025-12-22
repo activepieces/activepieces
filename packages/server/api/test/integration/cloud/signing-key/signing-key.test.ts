@@ -35,7 +35,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -86,7 +86,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -123,7 +123,7 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -170,7 +170,6 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                projectId: mockProjectOne.id,
                 platform: {
                     id: mockPlatformOne.id,
                 },
@@ -210,7 +209,6 @@ describe('Signing Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectTwo.id,
                 platform: {
                     id: mockPlatformOne.id,
                 },

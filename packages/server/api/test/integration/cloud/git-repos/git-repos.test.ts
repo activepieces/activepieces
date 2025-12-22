@@ -58,7 +58,7 @@ describe('Git API', () => {
 
             const token = await generateMockToken({
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -96,7 +96,7 @@ describe('Git API', () => {
             }
             const token = await generateMockToken({
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 type: PrincipalType.USER,
                 platform: {
                     id: mockProject.platformId,
@@ -139,7 +139,7 @@ describe('Git API', () => {
 
             const token = await generateMockToken({
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 type: PrincipalType.USER,
                 platform: {
                     id: mockProject.platformId,
@@ -175,7 +175,7 @@ describe('Git API', () => {
 
             const token = await generateMockToken({
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 type: PrincipalType.USER,
                 platform: {
                     id: mockProject.platformId,
@@ -261,7 +261,7 @@ describe('Git API', () => {
 
             const token = await generateMockToken({
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 type: PrincipalType.USER,
                 platform: {
                     id: mockProject.platformId,
@@ -300,7 +300,7 @@ describe('Git API', () => {
 
             const token = await generateMockToken({
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 type: PrincipalType.USER,
                 platform: {
                     id: mockProject.platformId,

@@ -28,11 +28,11 @@ describe('Custom Domain API', () => {
     describe('Add Custom Domain API', () => {
         it('should create a new custom domain', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -70,7 +70,7 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -100,7 +100,6 @@ describe('Custom Domain API', () => {
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -158,7 +157,6 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -196,7 +194,6 @@ describe('Custom Domain API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: nonOwnerUser.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 

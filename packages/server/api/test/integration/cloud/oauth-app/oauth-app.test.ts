@@ -34,12 +34,12 @@ afterAll(async () => {
 describe('OAuth App API', () => {
     describe('Upsert OAuth APP API', () => {
         it('new OAuth App', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -77,7 +77,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -112,7 +112,6 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
-                projectId: mockProjectTwo.id,
                 platform: { id: mockPlatformTwo.id },
             })
 
@@ -140,7 +139,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -173,7 +172,6 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
             // act
@@ -213,7 +211,6 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserTwo.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
             // act

@@ -64,7 +64,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -88,7 +88,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -112,7 +112,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -143,7 +143,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -173,7 +173,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -204,7 +204,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -231,7 +231,7 @@ describe('authorizeOrThrow', () => {
             const mockProjectMember = createMockProjectMember({
                 userId: mockOwner.id,
                 platformId: mockPlatform.id,
-                projectId: mockProject.id,
+                
                 projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save(mockProjectMember)
@@ -239,7 +239,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -249,7 +249,7 @@ describe('authorizeOrThrow', () => {
                 authorization: {
                     type: AuthorizationType.PROJECT,
                     allowedPrincipals: [PrincipalType.USER],
-                    projectId: mockProject.id,
+                    
                     permission: Permission.READ_FLOW,
                 },
             }
@@ -264,7 +264,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -296,7 +296,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -306,7 +306,7 @@ describe('authorizeOrThrow', () => {
                 authorization: {
                     type: AuthorizationType.PROJECT,
                     allowedPrincipals: [PrincipalType.SERVICE],
-                    projectId: mockProject.id,
+                    
                     permission: Permission.READ_FLOW,
                 },
             }
@@ -354,7 +354,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -364,7 +364,7 @@ describe('authorizeOrThrow', () => {
                 authorization: {
                     type: AuthorizationType.PROJECT,
                     allowedPrincipals: [PrincipalType.SERVICE], // USER not allowed
-                    projectId: mockProject.id,
+                    
                     permission: Permission.READ_FLOW,
                 },
             }
@@ -466,7 +466,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -521,7 +521,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -553,7 +553,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -595,7 +595,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -618,7 +618,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -658,7 +658,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -773,7 +773,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -787,7 +787,7 @@ describe('authorizeOrThrow', () => {
                         type: ProjectResourceType.QUERY,
                     },
                     permission: Permission.READ_FLOW,
-                    projectId: mockProject.id,
+                    
                 },
             }
 
@@ -809,7 +809,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -844,7 +844,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -871,7 +871,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -885,7 +885,7 @@ describe('authorizeOrThrow', () => {
                         type: ProjectResourceType.BODY,
                     },
                     permission: Permission.READ_FLOW,
-                    projectId: mockProject.id,
+                    
                 },
             }
 
@@ -913,7 +913,7 @@ describe('authorizeOrThrow', () => {
                         type: ProjectResourceType.QUERY,
                     },
                     permission: Permission.READ_FLOW,
-                    projectId: mockProject.id,
+                    
                 },
             }
 
@@ -953,7 +953,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -968,7 +968,7 @@ describe('authorizeOrThrow', () => {
                         paramKey: 'projectId',
                     },
                     permission: Permission.WRITE_FLOW, // VIEWER doesn't have WRITE_FLOW
-                    projectId: mockProject.id,
+                    
                 },
             }
 
@@ -1012,7 +1012,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -1054,7 +1054,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -1108,7 +1108,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

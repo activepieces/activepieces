@@ -32,7 +32,7 @@ describe('API Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -81,7 +81,7 @@ describe('API Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -119,7 +119,6 @@ describe('API Key API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
             // act
