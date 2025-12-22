@@ -6,7 +6,7 @@ import { validatePhoneNumber } from './lib/actions/validate-phone-number';
 import { PieceCategory } from '@activepieces/shared';
 
 export const clearoutphone = createPiece({
-  displayName: 'Clearoutphone',
+  displayName: 'ClearoutPhone',
   auth: clearoutphoneAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/clearoutphone.png',
