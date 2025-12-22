@@ -1,13 +1,13 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { FieldValues, UseFormReturn, useWatch } from 'react-hook-form';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
-import { FlowAction, isNil, FlowTrigger } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { MultiSelectPieceProperty } from '../../../components/custom/multi-select-piece-property';
 
@@ -23,6 +23,11 @@ type SelectPiecePropertyProps = {
   onChange: (value: unknown | undefined) => void;
   showDeselect?: boolean;
   shouldRefreshOnSearch?: boolean;
+  inputPrefix?: string;
+  actionOrTriggerName: string;
+  pieceName: string;
+  pieceVersion: string;
+  form: UseFormReturn<FieldValues, any, undefined>;
 };
 const DynamicDropdownPiecePropertyImplementation = React.memo(
   (props: SelectPiecePropertyProps) => {
@@ -30,7 +35,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       state.flowVersion,
       state.readonly,
     ]);
-    const form = useFormContext<FlowAction | FlowTrigger>();
+
     const isFirstRender = useRef(true);
     const previousValues = useRef<undefined | unknown[]>(undefined);
     const firstDropdownState = useRef<DropdownState<unknown> | undefined>(
@@ -64,28 +69,28 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
     }
 
     /* eslint-disable react-hooks/rules-of-hooks */
-    const refresherValues = newRefreshers.map((refresher) =>
-      useWatch({
-        name: `settings.input.${refresher}` as const,
-        control: form.control,
-      }),
-    );
+    const refresherValues = newRefreshers.map((refresher) => {
+      return useWatch({
+        name: isNil(props.inputPrefix)
+          ? `${refresher}`
+          : `${props.inputPrefix}.${refresher}`,
+        control: props.form.control,
+      });
+    });
+
     /* eslint-enable react-hooks/rules-of-hooks */
     const refresh = (term?: string) => {
       const input: Record<string, unknown> = {};
       newRefreshers.forEach((refresher, index) => {
         input[refresher] = refresherValues[index];
       });
-      const { settings } = form.getValues();
-      const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-      const { pieceName, pieceVersion } = settings;
       mutate(
         {
           request: {
-            pieceName,
-            pieceVersion,
+            pieceName: props.pieceName,
+            pieceVersion: props.pieceVersion,
             propertyName: props.propertyName,
-            actionOrTriggerName: actionOrTriggerName,
+            actionOrTriggerName: props.actionOrTriggerName,
             input,
             flowVersionId: flowVersion.id,
             flowId: flowVersion.flowId,
