@@ -1,9 +1,10 @@
-import { engineAccess, publicAccess } from '@activepieces/server-shared'
+import { engineAccess, projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
 import { CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, TodoEnvironment, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { userService } from '../user/user-service'
+import { TodoEntity } from './todo.entity'
 import { todoService } from './todo.service'
 
 const DEFAULT_LIMIT = 10
@@ -102,7 +103,10 @@ const DeleteTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity,
+        }),
     },
 }
 
@@ -126,7 +130,9 @@ const ListTodosRequest = {
         querystring: ListTodosQueryParams,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
 }
 
@@ -135,7 +141,9 @@ const CreateTodoRequest = {
         body: CreateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.ENGINE] as const,
+        security: projectAccess([PrincipalType.SERVICE, PrincipalType.ENGINE], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }
 
@@ -158,7 +166,10 @@ const GetTodoRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE] as const,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity,
+        }),
     },
 }
 
@@ -170,6 +181,9 @@ const UpdateTodoRequest = {
         body: UpdateTodoRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity,
+        }),
     },
 }
