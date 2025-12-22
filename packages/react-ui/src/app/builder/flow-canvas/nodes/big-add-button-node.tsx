@@ -2,6 +2,7 @@ import { DragMoveEvent, useDndMonitor, useDroppable } from '@dnd-kit/core';
 import { Handle, Position } from '@xyflow/react';
 import { Plus } from 'lucide-react';
 import React, { useId, useState } from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { Button } from '@/components/ui/button';
@@ -17,11 +18,14 @@ const ApBigAddButtonCanvasNode = React.memo(
   ({ data, id }: Omit<ApBigAddButtonNode, 'position'>) => {
     const [isIsStepInsideDropzone, setIsStepInsideDropzone] = useState(false);
     const [readonly, activeDraggingStep, isPieceSelectorOpened] =
-      useBuilderStateContext((state) => [
-        state.readonly,
-        state.activeDraggingStep,
-        state.openedPieceSelectorStepNameOrAddButtonId === id,
-      ]);
+      useBuilderStateContext(
+        (state) => [
+          state.readonly,
+          state.activeDraggingStep,
+          state.openedPieceSelectorStepNameOrAddButtonId === id,
+        ],
+        shallow,
+      );
     const draggableId = useId();
     const { setNodeRef } = useDroppable({
       id: draggableId,

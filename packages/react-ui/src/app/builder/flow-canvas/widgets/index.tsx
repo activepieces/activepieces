@@ -1,16 +1,38 @@
 import { ViewportPortal } from '@xyflow/react';
 import React from 'react';
 
+import { shallow } from 'zustand/shallow';
+
 import FlowEndWidget from '@/app/builder/flow-canvas/widgets/flow-end-widget';
-import IncompleteSettingsButton from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
+import IncompleteSettingsButton, {
+  filterValidOrSkippedSteps,
+} from '@/app/builder/flow-canvas/widgets/incomplete-settings-widget';
 import { TestFlowWidget } from '@/app/builder/flow-canvas/widgets/test-flow-widget';
+import { flowStructureUtil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
 import { flowUtilConsts } from '../utils/consts';
 
 const AboveFlowWidgets = React.memo(() => {
-  const [flowVersion, selectStepByName, readonly] = useBuilderStateContext(
-    (state) => [state.flowVersion, state.selectStepByName, state.readonly],
+  const [
+    invalidStepsCount,
+    firstInvalidStepName,
+    isValid,
+    selectStepByName,
+    readonly,
+  ] = useBuilderStateContext(
+    (state) => {
+      const steps = flowStructureUtil.getAllSteps(state.flowVersion.trigger);
+      const invalidSteps = steps.filter(filterValidOrSkippedSteps);
+      return [
+        invalidSteps.length,
+        invalidSteps[0]?.name,
+        state.flowVersion.valid,
+        state.selectStepByName,
+        state.readonly,
+      ];
+    },
+    shallow,
   );
   return (
     <ViewportPortal>
@@ -26,7 +48,9 @@ const AboveFlowWidgets = React.memo(() => {
             <TestFlowWidget></TestFlowWidget>
             {!readonly && (
               <IncompleteSettingsButton
-                flowVersion={flowVersion}
+                isValid={isValid}
+                invalidStepsCount={invalidStepsCount}
+                firstInvalidStepName={firstInvalidStepName}
                 selectStepByName={selectStepByName}
               ></IncompleteSettingsButton>
             )}

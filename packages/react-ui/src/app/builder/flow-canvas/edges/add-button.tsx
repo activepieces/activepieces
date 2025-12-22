@@ -1,6 +1,7 @@
 import { useDndMonitor, useDroppable, DragMoveEvent } from '@dnd-kit/core';
 import { Plus } from 'lucide-react';
 import React, { useState } from 'react';
+import { shallow } from 'zustand/shallow';
 
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { cn } from '@/lib/utils';
@@ -14,11 +15,14 @@ import { ApButtonData } from '../utils/types';
 const ApAddButton = React.memo((props: ApButtonData) => {
   const [isStepInsideDropZone, setIsStepInsideDropzone] = useState(false);
   const [activeDraggingStep, readonly, isPieceSelectorOpen] =
-    useBuilderStateContext((state) => [
-      state.activeDraggingStep,
-      state.readonly,
-      state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
-    ]);
+    useBuilderStateContext(
+      (state) => [
+        state.activeDraggingStep,
+        state.readonly,
+        state.openedPieceSelectorStepNameOrAddButtonId === props.edgeId,
+      ],
+      shallow,
+    );
 
   const { setNodeRef } = useDroppable({
     id: props.edgeId,

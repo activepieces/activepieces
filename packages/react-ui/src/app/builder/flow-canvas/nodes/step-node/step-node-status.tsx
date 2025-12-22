@@ -1,4 +1,5 @@
-import { useMemo } from 'react';
+import { shallow } from 'zustand/shallow';
+
 
 import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
@@ -8,19 +9,18 @@ import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 
 const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
-  const [run, loopIndexes, flowVersion] = useBuilderStateContext((state) => [
-    state.run,
-    state.loopsIndexes,
-    state.flowVersion,
-  ]);
-  const stepStatusInRun = useMemo(() => {
-    return flowCanvasUtils.getStepStatus(
-      stepName,
-      run,
-      loopIndexes,
-      flowVersion,
-    );
-  }, [stepName, run, loopIndexes, flowVersion]);
+  const [run, stepStatusInRun] = useBuilderStateContext(
+    (state) => [
+      state.run,
+      flowCanvasUtils.getStepStatus(
+        stepName,
+        state.run,
+        state.loopsIndexes,
+        state.flowVersion,
+      ),
+    ],
+    shallow,
+  );
   if (!stepStatusInRun) {
     return null;
   }
