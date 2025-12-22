@@ -1,7 +1,6 @@
 import { resolve } from 'node:path'
 import { cwd } from 'node:process'
 import { filePiecesUtils, spawnWithKill } from '@activepieces/server-shared'
-import chalk from 'chalk'
 import { FastifyBaseLogger } from 'fastify'
 
 const baseDistPath = resolve(cwd(), 'dist', 'packages')
@@ -22,36 +21,15 @@ const sharedPiecesPackages = () => {
 }
 
 
-export const devPiecesInstaller = (log: FastifyBaseLogger) => {
-    const utils = filePiecesUtils(log)
-
-    async function installPiecesDependencies(packageNames: string[]): Promise<void> {
-        const deps = new Set<string>()
-
-        for (const packageName of packageNames) {
-            const folderPath = await utils.findSourcePiecePathByPieceName(packageName)
-            if (!folderPath) continue
-
-            const pieceDependencies = await utils.getPieceDependencies(folderPath)
-            if (!pieceDependencies) continue
-
-            Object.keys(pieceDependencies).forEach((key) => deps.add(`${key}@${pieceDependencies[key as keyof typeof pieceDependencies]}`))
-        }
-
-        if (deps.size > 0) {
-            log.info(chalk.yellow(`Installing Pieces Dependencies: ${Array.from(deps).join(' ')}`))
-            await spawnWithKill({ cmd: `bun install ${Array.from(deps).join(' ')} --no-save --silent`, printOutput: true })
-        }
-    }
- 
-    async function linkSharedActivepiecesPackagesToPiece(packageName: string) {
-        const packagePath = await utils.findDistPiecePathByPackageName(packageName)
+export const devPiecesInstaller = (log: FastifyBaseLogger) => ({
+    linkSharedActivepiecesPackagesToPiece: async (packageName: string): Promise<void> => {
+        const packagePath = await filePiecesUtils(log).findDistPiecePathByPackageName(packageName)
         if (!packagePath) {
             log.error({ packageName }, 'Could not find dist path for package')
             return
         }
 
-        const dependencies = await utils.getPieceDependencies(packagePath)
+        const dependencies = await filePiecesUtils(log).getPieceDependencies(packagePath)
 
         const apDependencies = Object.keys(dependencies ?? {}).filter(dep => dep.startsWith('@activepieces/') && packageName !== dep)
 
@@ -70,9 +48,9 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
                 }, 'Error linking dependency to piece (non-fatal)')
             }
         }
-    }
+    },
 
-    async function initSharedPackagesLinks() {
+    initSharedPackagesLinks: async (): Promise<void> => {
         const packages = sharedPiecesPackages()
         for (const [name, pkg] of Object.entries(packages)) {
             try {
@@ -88,17 +66,16 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
                 }, 'Error initializing shared package link (non-fatal)')
             }
         }
-    }
+    },
 
-    async function linkSharedActivepiecesPackagesToEachOther() {
-        await initSharedPackagesLinks()
+    linkSharedActivepiecesPackagesToEachOther: async (): Promise<void> => {
+        await devPiecesInstaller(log).initSharedPackagesLinks()
 
         const packages = sharedPiecesPackages()
         const packageNames = Object.keys(packages)
 
         for (const [packageName, pkg] of Object.entries(packages)) {
-            // Get dependencies for this shared package
-            const dependencies = await utils.getPieceDependencies(pkg.path)
+            const dependencies = await filePiecesUtils(log).getPieceDependencies(pkg.path)
             const apDependencies = Object.keys(dependencies ?? {}).filter(
                 dep => dep.startsWith('@activepieces/') && packageName !== dep && packageNames.includes(dep),
             )
@@ -119,11 +96,5 @@ export const devPiecesInstaller = (log: FastifyBaseLogger) => {
                 }
             }
         }
-    }
-
-    return {
-        installPiecesDependencies,
-        linkSharedActivepiecesPackagesToPiece,
-        linkSharedActivepiecesPackagesToEachOther,
-    }
-}
+    },
+})

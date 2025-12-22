@@ -56,16 +56,16 @@ async function buildPieces(pieceNames: string[], io: Server, log: FastifyBaseLog
 export async function devPiecesBuilder(app: FastifyInstance, io: Server, packages: string[]): Promise<void> {
     const watchers: FSWatcher[] = []
 
-    const pieceInfos: { packageName: string, pieceDirectory: string, packageJsonName: string }[] = []
-    for (const packageName of packages) {
+    const resolvedInfos = await Promise.all(packages.map(async (packageName) => {
         const pieceDirectory = await filePiecesUtils(app.log).findSourcePiecePathByPieceName(packageName)
         if (isNil(pieceDirectory)) {
             app.log.info(chalk.yellow(`Piece directory not found for package: ${packageName}`))
-            continue
+            return null
         }
         const packageJsonName = await filePiecesUtils(app.log).getPackageNameFromFolderPath(pieceDirectory)
-        pieceInfos.push({ packageName, pieceDirectory, packageJsonName })
-    }
+        return { packageName, pieceDirectory, packageJsonName }
+    }))
+    const pieceInfos = resolvedInfos.filter((info) => info !== null)
 
     await buildPieces(pieceInfos.map(p => p.packageName), io, app.log)
 
@@ -100,9 +100,7 @@ export async function devPiecesBuilder(app: FastifyInstance, io: Server, package
         watchers.push(watcher)
     }
 
-    app.addHook('onClose', () => {
-        for (const watcher of watchers) {
-            watcher.close().catch(app.log.error)
-        }
+    app.addHook('onClose', async () => {
+        await Promise.all(watchers.map(watcher => watcher.close().catch(app.log.error)))
     })
 }
