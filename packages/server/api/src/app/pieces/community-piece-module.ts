@@ -1,4 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import { AddPieceRequestBody, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -13,7 +14,9 @@ const communityPiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: [PrincipalType.USER],
+                security: projectAccess([PrincipalType.USER], undefined, {
+                    type: ProjectResourceType.BODY,
+                }),
             },
             schema: {
                 body: AddPieceRequestBody,

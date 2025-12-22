@@ -82,6 +82,10 @@ async function getProjectIdFromRequest(request: FastifyRequest): Promise<string 
         return undefined
     }
     const projectResource = security.authorization.projectResource
+    if (isNil(projectResource)) {
+        return undefined
+    }
+
     switch (projectResource.type) {
         case ProjectResourceType.TABLE:
             return extractProjectIdFromTable(request, projectResource)

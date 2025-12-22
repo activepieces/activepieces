@@ -1,3 +1,4 @@
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
@@ -16,6 +17,7 @@ import {
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { recordSideEffects } from './record-side-effects'
+import { RecordEntity } from './record.entity'
 import { recordService } from './record.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -91,7 +93,9 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: CreateRecordsRequest,
@@ -103,7 +107,10 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: RecordEntity,
+        }),
     },
     schema: {
         params: Type.Object({
@@ -118,8 +125,10 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.TABLE,
+            tableName: RecordEntity,
+        }),
     },
     schema: {
         tags: ['records'],
@@ -138,8 +147,9 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.WRITE_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         tags: ['records'],
@@ -154,8 +164,9 @@ const DeleteRecordRequest = {
 
 const ListRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.USER] as const,
-        permission: Permission.READ_TABLE,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         querystring: ListRecordsRequest,
