@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { apVersionUtil, maybeProjectAccess, projectAccess, ProjectResourceType, publicAccess, publicPlatformAccess } from '@activepieces/server-shared'
+import { apVersionUtil, projectAccess, ProjectResourceType, publicAccess, publicPlatformAccess, unscopedAccess } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -13,6 +13,7 @@ import {
     PieceCategory,
     PieceOptionRequest,
     PrincipalType,
+    PrincipalV2,
     RegistryPiecesRequestQuery,
     SampleDataFileType,
     WorkerJobType,
@@ -36,10 +37,10 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
         return pieceMetadataService(req.log).getVersions({
             name: req.query.name,
-            projectId: req.principal.projectId,
+            projectId: req.query.projectId,
             release: req.query.release,
             edition: req.query.edition ?? ApEdition.COMMUNITY,
-            platformId: req.principal.platform?.id,
+            platformId: getPlatformId(req.principal),
         })
     })
 
@@ -57,8 +58,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const includeTags = query.includeTags ?? false
         const release = query.release ?? latestRelease
         const edition = query.edition ?? ApEdition.COMMUNITY
-        const platformId = req.principal.platform?.id
-        const projectId = req.principal.projectId
+        const platformId = getPlatformId(req.principal)
+        const projectId = req.query.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
             release,
             includeHidden: query.includeHidden ?? false,
@@ -90,8 +91,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.projectId
-            const platformId = req.principal.platform?.id
+            const projectId = req.query.projectId
+            const platformId = getPlatformId(req.principal)
             return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
@@ -109,8 +110,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const { name } = req.params
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
-            const projectId = req.principal.projectId
-            const platformId = req.principal.platform?.id
+            const projectId = req.query.projectId
+            const platformId = getPlatformId(req.principal)
             return pieceMetadataService(req.log).getOrThrow({
                 projectId,
                 platformId,
@@ -125,7 +126,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
             edition: req.query.edition,
-            platformId: req.principal.platform?.id,
+            platformId: getPlatformId(req.principal),
         })
         return pieces
     })
@@ -161,9 +162,13 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
+function getPlatformId(principal: PrincipalV2): string | undefined {
+    return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN ? undefined : principal.platform?.id
+}
+
 const RegistryPiecesRequest = {
     config: {
-        security: maybeProjectAccess(ALL_PRINCIPAL_TYPES),
+        security: publicAccess(),
     },
     schema: {
         querystring: RegistryPiecesRequestQuery,
@@ -172,9 +177,7 @@ const RegistryPiecesRequest = {
 
 const ListPiecesRequest = {
     config: {
-        security: maybeProjectAccess(ALL_PRINCIPAL_TYPES, undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
+        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         querystring: ListPiecesRequestQuery,
@@ -184,23 +187,17 @@ const ListPiecesRequest = {
 }
 const GetPieceParamsRequest = {
     config: {
-        security: maybeProjectAccess(ALL_PRINCIPAL_TYPES, undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
+        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: GetPieceRequestParams,
         querystring: GetPieceRequestQuery,
-
     },
-
 }
 
 const GetPieceParamsWithScopeRequest = {
     config: {
-        security: maybeProjectAccess(ALL_PRINCIPAL_TYPES, undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
+        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: GetPieceRequestWithScopeParams,
@@ -231,9 +228,7 @@ const OptionsPieceRequest = {
 
 const ListVersionsRequest = {
     config: {
-        security: maybeProjectAccess(ALL_PRINCIPAL_TYPES, undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
+        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         querystring: ListVersionRequestQuery,
