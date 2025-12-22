@@ -45,13 +45,7 @@ export const sendTextMessage = createAction({
     }),
   },
   async run(context) {
-    const {
-      to,
-      message,
-      from,
-      date,
-      normalize,
-    } = context.propsValue;
+    const { to, message, from, date, normalize } = context.propsValue;
 
     const params: any = {
       to,
@@ -68,9 +62,9 @@ export const sendTextMessage = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `https://api.smsapi.com/sms.do?${queryParams}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
+      headers: {
+        Authorization: `Bearer ${context.auth.access_token}`,
+        'Content-Type': 'application/json',
       },
     });
 

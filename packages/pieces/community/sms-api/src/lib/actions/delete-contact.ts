@@ -24,9 +24,9 @@ export const deleteContact = createAction({
     const response = await httpClient.sendRequest({
       method: HttpMethod.DELETE,
       url: `https://api.smsapi.com/contacts/${contactId}`,
-      authentication: {
-        type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth.access_token,
+      headers: {
+        Authorization: `Bearer ${context.auth.access_token}`,
+        'Content-Type': 'application/json',
       },
     });
 
