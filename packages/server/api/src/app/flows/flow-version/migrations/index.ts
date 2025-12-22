@@ -10,6 +10,7 @@ import { migratePropertySettingsV6 } from './migrate-v6-property-settings'
 import { moveAgentsToFlowVerion } from './migrate-v7-agents-to-flow-version'
 import { cleanUpAgentTools } from './migrate-v8-agent-tools'
 import { migrateV9AiPieces } from './migrate-v9-ai-pieces'
+import { migrateV11FixBrokenPieces } from './migrate-v11-fix-broken-pieces'
 
 export type Migration = {
     targetSchemaVersion: string | undefined
@@ -28,6 +29,7 @@ const migrations: Migration[] = [
     cleanUpAgentTools,
     migrateV9AiPieces,
     migrateV10AiPiecesProviderId,
+    migrateV11FixBrokenPieces,
 ] as const
 
 export const flowMigrations = {

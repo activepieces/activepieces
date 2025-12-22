@@ -4,12 +4,23 @@ import {
     FlowVersion,
 } from '@activepieces/shared'
 import { Migration } from '.'
+import { flowVersionBackupService } from '../flow-version-backup.service';
 
 
-export const migrateV10AiPiecesProviderId: Migration = {
-    targetSchemaVersion: '10',
+export const migrateV11FixBrokenPieces: Migration = {
+    targetSchemaVersion: '11',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
-        const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
+        const backedUpFlowVersion = await flowVersionBackupService.get({
+            flowVersion,
+            schemaVersion: '10',
+        })
+        if(!backedUpFlowVersion) {
+            return {
+                ...flowVersion,
+                schemaVersion: '12',
+            }
+        }
+        const newVersion = flowStructureUtil.transferFlow(backedUpFlowVersion, (step) => {
             if (step.type !== FlowActionType.PIECE) {
                 return step
             }
@@ -32,7 +43,7 @@ export const migrateV10AiPiecesProviderId: Migration = {
 
         return {
             ...newVersion,
-            schemaVersion: '11',
+            schemaVersion: '12',
         }
     },
 }
