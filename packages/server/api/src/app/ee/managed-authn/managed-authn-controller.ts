@@ -1,6 +1,6 @@
 import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/ee-shared'
+import { publicAccess } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     AuthenticationResponse,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
@@ -32,7 +32,7 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (
 
 const ManagedAuthnRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         body: ManagedAuthnRequestBody,
