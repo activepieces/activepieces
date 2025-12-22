@@ -6,9 +6,10 @@ import {
 } from '@/app/builder/builder-hooks';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import { isNil, FlowTriggerType } from '@activepieces/shared';
+import { isNil, FlowTriggerType, FlowRunStatus } from '@activepieces/shared';
 import { AboveTriggerButton } from '../above-trigger-button';
 import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
+import { toast } from 'sonner';
 
 const TestFlowWidget = () => {
   const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
@@ -32,6 +33,7 @@ const TestFlowWidget = () => {
     flowVersionId: flowVersion.id,
     onUpdateRun: (run) => {
       setRun(run, flowVersion);
+      toast.info(t('Run Queued'))
     },
   });
 

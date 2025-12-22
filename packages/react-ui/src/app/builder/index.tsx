@@ -26,6 +26,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import {
   FlowAction,
   FlowActionType,
+  FlowRunStatus,
   FlowTrigger,
   FlowTriggerType,
   FlowVersionState,
@@ -41,6 +42,8 @@ import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { toast } from 'sonner';
+import { t } from 'i18next';
 
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
@@ -118,6 +121,7 @@ const BuilderPage = () => {
         fetchAndUpdateRun(runId, {
           onSuccess: (run) => {
             setRun(run, flowVersion);
+            showRunStatusToast(run.status);
           },
         });
       }
@@ -128,7 +132,6 @@ const BuilderPage = () => {
     };
   }, [socket.id, run?.id]);
 
-  const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
@@ -147,7 +150,6 @@ const BuilderPage = () => {
 
             <RunStatus
               run={run}
-              isLoading={isSwitchingToDraftPending}
             />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
@@ -247,4 +249,28 @@ function constructContainerKey({
   }-${'skipped-' + !!isSkipped}-${
     hasPieceModelLoaded ? 'loaded' : 'not-loaded'
   }`;
+}
+
+function showRunStatusToast(status: FlowRunStatus) {
+  switch (status) {
+    case FlowRunStatus.RUNNING:
+      toast.info(t('Running')+'...')
+      break;
+    case FlowRunStatus.SUCCEEDED:
+      toast.success(t('Run Succeeded'))
+      break;
+    case FlowRunStatus.FAILED:
+    case FlowRunStatus.INTERNAL_ERROR:
+    case FlowRunStatus.TIMEOUT:
+      toast.error(t('Run Failed'))
+      break;
+    case FlowRunStatus.CANCELED:
+      toast.error(t('Run Cancelled'))
+      break;
+    case FlowRunStatus.PAUSED:
+      toast.info(t('Run Paused'))
+      break;
+    case FlowRunStatus.QUEUED:
+      toast.info(t('Run Queued'))
+  }
 }
