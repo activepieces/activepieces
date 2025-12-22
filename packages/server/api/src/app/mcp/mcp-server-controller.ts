@@ -1,14 +1,13 @@
-import { publicAccess } from '@activepieces/server-shared'
+import { projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
 import { ApId, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { mcpServerService } from './mcp-service'
 
-
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 
-    app.get('/', GetMcpRequest, async (req) => {
+    app.get('/:projectId', GetMcpRequest, async (req) => {
         return mcpServerService(req.log).getPopulatedByProjectId(req.principal.projectId)
     })
 
@@ -73,8 +72,13 @@ const StreamableHttpRequestRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: projectAccess(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
@@ -90,8 +94,13 @@ export const UpdateMcpRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.READ_MCP],
+        security: projectAccess(
+            [PrincipalType.USER],
+            Permission.READ_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],

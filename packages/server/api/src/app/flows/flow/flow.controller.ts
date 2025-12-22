@@ -1,4 +1,5 @@
 import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -34,6 +35,7 @@ import { platformPlanService } from '../../ee/platform/platform-plan/platform-pl
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { eventsHooks } from '../../helper/application-events'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
+import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -276,8 +278,11 @@ const ListFlowsRequestOptions = {
 
 const CountFlowsRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         querystring: CountFlowsRequest,
@@ -286,8 +291,12 @@ const CountFlowsRequestOptions = {
 
 const GetFlowTemplateRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
     },
     schema: {
         tags: ['flows'],
@@ -305,8 +314,12 @@ const GetFlowTemplateRequestOptions = {
 
 const GetFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
     },
     schema: {
         tags: ['flows'],
@@ -324,8 +337,12 @@ const GetFlowRequestOptions = {
 
 const DeleteFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowEntity,
+            }),
     },
     schema: {
         tags: ['flows'],

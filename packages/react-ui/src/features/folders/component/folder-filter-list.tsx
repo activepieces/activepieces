@@ -108,7 +108,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
 
   const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
-    queryFn: flowsApi.count,
+    queryFn: () =>
+      flowsApi.count({ projectId: authenticationSession.getProjectId()! }),
   });
 
   useEffect(() => {
