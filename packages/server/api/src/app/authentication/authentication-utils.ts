@@ -66,7 +66,6 @@ export const authenticationUtils = {
         const token = await accessTokenManager.generateToken({
             id: user.id,
             type: PrincipalType.USER,
-            projectId: project.id,
             platform: {
                 id: params.platformId,
             },
@@ -193,6 +192,8 @@ export const authenticationUtils = {
             return principal.id
         }
         // TODO currently it's same as api service, but it's better to get it from api key service, in case we introduced more admin users
+
+        // @ts-expect-error: projectId should be present, maybe we should append it to request instead of principal
         const project = await projectService.getOneOrThrow(principal.projectId)
         return project.ownerId
     },

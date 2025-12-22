@@ -8,8 +8,8 @@ import {
     FlowVersionTemplate,
     isNil,
     ListTemplatesRequestQuery,
+    Principal,
     PrincipalType,
-    PrincipalV2,
     SERVICE_KEY_SECURITY_OPENAPI,
     TemplateType,
     UpdateTemplateRequestBody,
@@ -104,7 +104,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-async function resolveTemplatesPlatformIdOrThrow(principal: PrincipalV2, type: TemplateType): Promise<string | null> {
+async function resolveTemplatesPlatformIdOrThrow(principal: Principal, type: TemplateType): Promise<string | null> {
     if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || type === TemplateType.OFFICIAL) {
         return null
     }

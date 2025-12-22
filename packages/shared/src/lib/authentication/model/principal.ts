@@ -16,7 +16,6 @@ export type AnnonymousPrincipal = {
 export type ServicePrincipal = {
     id: ApId
     type: PrincipalType.SERVICE
-    projectId: ProjectId
     platform: {
         id: ApId
     }
@@ -25,7 +24,6 @@ export type ServicePrincipal = {
 export type UserPrincipal = {
     id: ApId
     type: PrincipalType.USER
-    projectId: ProjectId
     platform: {
         id: ApId
     }
@@ -41,6 +39,13 @@ export type EnginePrincipal = {
     }
 }
 
+export type MaybeProjectExtra = {
+    projectId?: string
+    platform?: {
+        id: ApId
+    }
+}
+
 
 export type PrincipalForType<T extends PrincipalType> = Extract<Principal, { type: T }>
 
@@ -51,43 +56,4 @@ export type Principal =
     | AnnonymousPrincipal
     | ServicePrincipal
     | UserPrincipal
-    | EnginePrincipal
-
-
-// TODO(@Chaker): This is a temporary v2 types without projectId
-
-export type ServicePrincipalV2 = {
-    id: ApId
-    type: PrincipalType.SERVICE
-    platform: {
-        id: ApId
-    }
-}
-
-export type UserPrincipalV2 = {
-    id: ApId
-    type: PrincipalType.USER
-    platform: {
-        id: ApId
-    }
-    tokenVersion?: string
-}
-
-export type MaybeProjectExtra = {
-    projectId?: string
-    platform?: {
-        id: ApId
-    }
-}
-
-export type PrincipalForTypeV2<T extends PrincipalType> = Extract<PrincipalV2, { type: T }>
-
-export type PrincipalForTypesV2<R extends readonly PrincipalType[]> = PrincipalForTypeV2<R[number]>
-
-
-export type PrincipalV2 =
-    | WorkerPrincipal
-    | AnnonymousPrincipal
-    | ServicePrincipalV2
-    | UserPrincipalV2
     | EnginePrincipal
