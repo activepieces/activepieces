@@ -9,6 +9,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { wait } from '@/lib/utils';
 import {
   FlowAction,
@@ -301,6 +302,7 @@ export const testStepHooks = {
         const response = await flowRunsApi.testStep({
           socket,
           request: {
+            projectId: authenticationSession.getProjectId()!,
             flowVersionId,
             stepName: currentStep.name,
           },

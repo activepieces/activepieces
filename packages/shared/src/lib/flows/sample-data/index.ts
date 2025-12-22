@@ -31,6 +31,7 @@ export const GetSampleDataRequest = Type.Object({
 export type GetSampleDataRequest = Static<typeof GetSampleDataRequest>
 
 export const CreateStepRunRequestBody = Type.Object({
+    projectId: Type.String(),
     flowVersionId: Type.String(),
     stepName: Type.String(),
 })
