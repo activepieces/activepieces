@@ -12,15 +12,10 @@ export const findPhoneNumberIsMobile = createAction({
     phoneNumber: Property.ShortText({
       displayName: 'Phone Number',
       description:
-        'The phone number to validate (e.g., +447766733573 or 7766733573)',
+        'The phone number to validate (e.g., +447766733573 )',
       required: true,
     }),
-    countryCode: Property.ShortText({
-      displayName: 'Country Code',
-      description:
-        'Optional country code (e.g., GB, US). If not provided, will be inferred from the phone number',
-      required: false,
-    }),
+    
   },
   async run({ auth, propsValue }) {
     const headers: Record<string, string> = {
@@ -32,9 +27,7 @@ export const findPhoneNumberIsMobile = createAction({
       number: propsValue.phoneNumber,
     };
 
-    if (propsValue.countryCode) {
-      body.country_code = propsValue.countryCode;
-    }
+    
 
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
