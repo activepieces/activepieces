@@ -9,6 +9,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
+import { shallow } from 'zustand/shallow';
 import { useViewport } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
@@ -34,17 +35,20 @@ const FlowDragLayer = ({
 }) => {
   const viewport = useViewport();
   const [previousViewPort, setPreviousViewPort] = useState(viewport);
-  const [
-    setActiveDraggingStep,
-    applyOperation,
-    flowVersion,
-    activeDraggingStep,
-  ] = useBuilderStateContext((state) => [
-    state.setActiveDraggingStep,
-    state.applyOperation,
-    state.flowVersion,
-    state.activeDraggingStep,
-  ]);
+  const [setActiveDraggingStep, applyOperation, draggedStep] =
+    useBuilderStateContext(
+      (state) => [
+        state.setActiveDraggingStep,
+        state.applyOperation,
+        state.activeDraggingStep
+          ? flowStructureUtil.getStep(
+              state.activeDraggingStep,
+              state.flowVersion.trigger,
+            )
+          : undefined,
+      ],
+      shallow,
+    );
 
   const fixCursorSnapOffset = useCallback(
     (args: Parameters<typeof rectIntersection>[0]) => {
@@ -75,9 +79,7 @@ const FlowDragLayer = ({
     },
     [viewport.x, viewport.y, previousViewPort.x, previousViewPort.y],
   );
-  const draggedStep = activeDraggingStep
-    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
-    : undefined;
+
 
   const handleDragStart = (e: DragStartEvent) => {
     setActiveDraggingStep(e.active.id.toString());

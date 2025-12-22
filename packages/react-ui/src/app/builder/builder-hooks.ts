@@ -67,11 +67,12 @@ export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
 export function useBuilderStateContext<T>(
   selector: (state: BuilderState) => T,
+  equalityFn?: (left: T, right: T) => boolean,
 ): T {
   const store = useContext(BuilderStateContext);
   if (!store)
     throw new Error('Missing BuilderStateContext.Provider in the tree');
-  return useStore(store, selector);
+  return useStore(store, selector, equalityFn);
 }
 
 export enum LeftSideBarType {

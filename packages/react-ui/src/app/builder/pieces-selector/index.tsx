@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
+import { shallow } from 'zustand/shallow';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
@@ -105,7 +106,7 @@ const PieceSelectorContent = ({
     state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
       id === 'trigger',
     state.deselectStep,
-  ]);
+  ], shallow);
   const { searchQuery, setSearchQuery } = usePieceSearchContext();
   const isForReplace =
     operation.type === FlowOperationType.UPDATE_ACTION ||

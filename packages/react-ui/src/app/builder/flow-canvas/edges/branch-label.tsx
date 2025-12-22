@@ -3,6 +3,7 @@ import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { CopyPlus, EllipsisVertical, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { shallow } from 'zustand/shallow';
 
 import {
   FlowActionType,
@@ -38,25 +39,43 @@ const BranchLabel = (props: BaseBranchLabel) => {
     selectedBranchIndex,
     selectStepByName,
     setSelectedBranchIndex,
-    step,
+    stepType,
+    branchType,
+    totalBranches,
     applyOperation,
     readonly,
-  ] = useBuilderStateContext((state) => [
-    state.selectedStep,
-    state.selectedBranchIndex,
-    state.selectStepByName,
-    state.setSelectedBranchIndex,
-    flowStructureUtil.getStep(props.sourceNodeName, state.flowVersion.trigger),
-    state.applyOperation,
-    state.readonly,
-  ]);
+  ] = useBuilderStateContext(
+    (state) => {
+      const step = flowStructureUtil.getStep(
+        props.sourceNodeName,
+        state.flowVersion.trigger,
+      );
+      const branch =
+        step?.type === FlowActionType.ROUTER
+          ? step.settings.branches[props.branchIndex]
+          : undefined;
+      return [
+        state.selectedStep,
+        state.selectedBranchIndex,
+        state.selectStepByName,
+        state.setSelectedBranchIndex,
+        step?.type,
+        branch?.branchType,
+        step?.type === FlowActionType.ROUTER
+          ? step.settings.branches.length
+          : 0,
+        state.applyOperation,
+        state.readonly,
+      ];
+    },
+    shallow,
+  );
 
   const isFallbackBranch =
     props.stepLocationRelativeToParent ===
       StepLocationRelativeToParent.INSIDE_BRANCH &&
-    step?.type === FlowActionType.ROUTER &&
-    step?.settings.branches[props.branchIndex]?.branchType ===
-      BranchExecutionType.FALLBACK;
+    stepType === FlowActionType.ROUTER &&
+    branchType === BranchExecutionType.FALLBACK;
   const isNotInsideRoute =
     props.stepLocationRelativeToParent !==
     StepLocationRelativeToParent.INSIDE_BRANCH;
@@ -69,7 +88,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
   const { fitView } = useReactFlow();
   const [isDropdownMenuOpen, setIsDropdownMenuOpen] = useState(false);
 
-  if (isNil(step) || step.type !== FlowActionType.ROUTER) {
+  if (isNil(stepType) || stepType !== FlowActionType.ROUTER) {
     return <></>;
   }
 
@@ -124,7 +143,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
 
           {!isOtherwiseBranch &&
             !readonly &&
-            step.type === FlowActionType.ROUTER && (
+            stepType === FlowActionType.ROUTER && (
               <DropdownMenu
                 modal={true}
                 open={isDropdownMenuOpen}
@@ -165,7 +184,7 @@ const BranchLabel = (props: BaseBranchLabel) => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    disabled={step.settings.branches.length <= 2}
+                    disabled={totalBranches <= 2}
                     onSelect={(e) => {
                       e.preventDefault();
                       e.stopPropagation();

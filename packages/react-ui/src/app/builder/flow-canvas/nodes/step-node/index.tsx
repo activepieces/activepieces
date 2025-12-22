@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core';
+import { shallow } from 'zustand/shallow';
 import { Handle, NodeProps, Position } from '@xyflow/react';
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
@@ -35,31 +36,48 @@ const ApStepCanvasNode = React.memo(
       isSelected,
       isDragging,
       readonly,
-      flowVersion,
       setSelectedBranchIndex,
       isPieceSelectorOpened,
       setOpenedPieceSelectorStepNameOrAddButtonId,
       isStepValid,
-    ] = useBuilderStateContext((state) => [
-      state.selectStepByName,
-      state.selectedStep === step.name,
-      state.activeDraggingStep === step.name,
-      state.readonly,
-      state.flowVersion,
-      state.setSelectedBranchIndex,
-      state.openedPieceSelectorStepNameOrAddButtonId === step.name,
-      state.setOpenedPieceSelectorStepNameOrAddButtonId,
-      flowStructureUtil.getStep(step.name, state.flowVersion.trigger)?.valid,
-    ]);
+      stepIndex,
+      isSkipped,
+    ] = useBuilderStateContext(
+      (state) => {
+        const stepIndex =
+          flowStructureUtil
+            .getAllSteps(state.flowVersion.trigger)
+            .findIndex((s) => s.name === step.name) + 1;
+        const isSkipped = flowCanvasUtils.isSkipped(
+          step.name,
+          state.flowVersion.trigger,
+        );
+        const isStepValid = flowStructureUtil.getStep(
+          step.name,
+          state.flowVersion.trigger,
+        )?.valid;
+
+        return [
+          state.selectStepByName,
+          state.selectedStep === step.name,
+          state.activeDraggingStep === step.name,
+          state.readonly,
+          state.setSelectedBranchIndex,
+          state.openedPieceSelectorStepNameOrAddButtonId === step.name,
+          state.setOpenedPieceSelectorStepNameOrAddButtonId,
+          isStepValid,
+          stepIndex,
+          isSkipped,
+        ];
+      },
+      shallow,
+    );
+
     const { stepMetadata } = stepsHooks.useStepMetadata({
       step,
     });
-    const stepIndex = useMemo(() => {
-      const steps = flowStructureUtil.getAllSteps(flowVersion.trigger);
-      return steps.findIndex((s) => s.name === step.name) + 1;
-    }, [step, flowVersion]);
     const isTrigger = flowStructureUtil.isTrigger(step.type);
-    const isSkipped = flowCanvasUtils.isSkipped(step.name, flowVersion.trigger);
+
 
     const { attributes, listeners, setNodeRef } = useDraggable({
       id: step.name,
