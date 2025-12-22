@@ -12,7 +12,6 @@ import {
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { repoFactory } from '../core/db/repo-factory'
-import { distributedLock } from '../database/redis-connections'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
@@ -61,8 +60,8 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return formattedProviders
     },
 
-    async listModels(platformId: PlatformId, providerId: string): Promise<AIProviderModel[]> {
-        const { provider, config, auth } = await this.getConfigOrThrow({ platformId, providerId })
+    async listModels(platformId: PlatformId, provider: AIProviderName): Promise<AIProviderModel[]> {
+        const { config, auth } = await this.getConfigOrThrow({ platformId, provider })
 
         const cacheKey = `${provider}-${auth.apiKey}`
         if (modelsCache.has(cacheKey) && !('models' in config)) {
@@ -118,16 +117,16 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             id: providerId,
         })
     },
-    async getConfigOrThrow({ platformId, providerId }: GetOrCreateActivepiecesConfigResponse): Promise<GetProviderConfigResponse> {
+    async getConfigOrThrow({ platformId, provider }: GetOrCreateActivepiecesConfigResponse): Promise<GetProviderConfigResponse> {
         const aiProvider = await aiProviderRepo().findOneBy({
             platformId,
-            id: providerId,
+            provider,
         })
         if (isNil(aiProvider)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: {
-                    entityId: providerId,
+                    entityId: provider,
                     entityType: 'AIProvider',
                 },
             })
@@ -153,13 +152,13 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         if (!doesHaveKeys) {
             return null
         }
-        return this.getConfigOrThrow({ platformId, providerId: aiProvider.id })
+        return this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
     },
 })
 
 type GetOrCreateActivepiecesConfigResponse = {
-    providerId: string
     platformId: PlatformId
+    provider: AIProviderName
 }
 
 async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger): Promise<GetProviderConfigResponse> {

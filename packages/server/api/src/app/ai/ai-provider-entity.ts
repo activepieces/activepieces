@@ -40,7 +40,13 @@ export const AIProviderEntity = new EntitySchema<AIProviderSchema>({
             nullable: false,
         },
     },
-    indices: [],
+    indices: [
+        {
+            name: 'idx_ai_provider_platform_id_provider',
+            columns: ['platformId', 'provider'],
+            unique: true,
+        },
+    ],
     relations: {
         platform: {
             type: 'many-to-one',
