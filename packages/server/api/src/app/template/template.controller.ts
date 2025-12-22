@@ -1,3 +1,4 @@
+import { publicAccess, publicPlatformAccess, unscopedAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -7,8 +8,8 @@ import {
     FlowVersionTemplate,
     isNil,
     ListTemplatesRequestQuery,
-    Principal,
     PrincipalType,
+    PrincipalV2,
     SERVICE_KEY_SECURITY_OPENAPI,
     TemplateType,
     UpdateTemplateRequestBody,
@@ -103,7 +104,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     })
 }
 
-async function resolveTemplatesPlatformIdOrThrow(principal: Principal, type: TemplateType): Promise<string | null> {
+async function resolveTemplatesPlatformIdOrThrow(principal: PrincipalV2, type: TemplateType): Promise<string | null> {
     if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || type === TemplateType.OFFICIAL) {
         return null
     }
@@ -138,7 +139,7 @@ type GetIdParams = Static<typeof GetIdParams>
 
 const GetParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: publicAccess(),
     },
     schema: {
         tags: ['templates'],
@@ -150,7 +151,7 @@ const GetParams = {
 
 const ListTemplatesParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         tags: ['templates'],
@@ -162,7 +163,7 @@ const ListTemplatesParams = {
 
 const DeleteParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Delete a template.',
@@ -174,7 +175,7 @@ const DeleteParams = {
 
 const CreateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Create a template.',
@@ -186,7 +187,7 @@ const CreateParams = {
 
 const UpdateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Update a template.',
@@ -199,7 +200,7 @@ const UpdateParams = {
 
 const IncrementUsageCountParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Increment usage count of a template.',
