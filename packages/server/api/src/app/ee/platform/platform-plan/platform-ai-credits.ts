@@ -1,5 +1,5 @@
 import { AppSystemProp, exceptionHandler } from '@activepieces/server-shared'
-import { AIProviderName, assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/shared'
+import { assertNotNullOrUndefined, isNil, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
 import { flagService } from '../../../flags/flag.service'
@@ -30,7 +30,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     
         const apiKeyHash = 'apiKeyHash' in activepiecesConfigured.auth ? activepiecesConfigured.auth.apiKeyHash : null
         assertNotNullOrUndefined(apiKeyHash, 'apiKeyHash is required')
-        const { data: usage, error } = await tryCatch<OpenRouterGetKeyResponse, Error>(async () => await openRouterGetKey(apiKeyHash))
+        const { data: usage, error } = await tryCatch<OpenRouterGetKeyResponse, Error>(async () => openRouterGetKey(apiKeyHash))
         if (!isNil(error) || isNil(usage)) {
             exceptionHandler.handle(error, log)
             return {

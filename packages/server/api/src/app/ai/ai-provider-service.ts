@@ -135,7 +135,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
             const doesHaveKeys = await doesActivepiecesProviderHasKeys(aiProvider)
             if (!doesHaveKeys) {
-                return await enrichWithKeysIfNeeded(aiProvider, platformId, log)
+                return enrichWithKeysIfNeeded(aiProvider, platformId, log)
             }
         }
         const auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
@@ -153,7 +153,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         if (!doesHaveKeys) {
             return null
         }
-        return await this.getConfigOrThrow({ platformId, providerId: aiProvider.id })
+        return this.getConfigOrThrow({ platformId, providerId: aiProvider.id })
     },
 })
 
