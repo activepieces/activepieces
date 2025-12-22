@@ -138,11 +138,11 @@ export const generateImageAction = createAction({
     }),
   },
   async run(context) {
-    const providerId = context.propsValue.provider;
+    const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
 
     const image = await getGeneratedImage({
-      providerId,
+      provider: provider as AIProviderName,
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
@@ -163,14 +163,14 @@ export const generateImageAction = createAction({
 });
 
 const getGeneratedImage = async ({
-  providerId,
+  provider,
   modelId,
   engineToken,
   apiUrl,
   prompt,
   advancedOptions,
 }: {
-  providerId: string;
+  provider: AIProviderName;
   modelId: string;
   engineToken: string;
   apiUrl: string;
@@ -178,14 +178,14 @@ const getGeneratedImage = async ({
   advancedOptions?: DynamicPropsValue;
 }): Promise<GeneratedFile> => {
   const model = await createAIModel({
-    providerId,
+    provider,
     modelId,
     engineToken,
     apiUrl,
     isImage: true,
   });
 
-  switch (providerId) {
+  switch (provider) {
     case AIProviderName.GOOGLE:
     case AIProviderName.ACTIVEPIECES:
     case AIProviderName.OPENROUTER:
@@ -200,7 +200,7 @@ const getGeneratedImage = async ({
         model,
         prompt,
         providerOptions: {
-          [providerId]: { ...advancedOptions },
+          [provider]: { ...advancedOptions },
         },
       });
       return image

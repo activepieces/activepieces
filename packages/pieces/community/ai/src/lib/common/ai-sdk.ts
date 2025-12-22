@@ -10,7 +10,7 @@ import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AIProviderName, AzureProviderConfig, CloudflareGatewayProviderConfig, GetProviderConfigResponse, OpenAICompatibleProviderConfig } from '@activepieces/shared'
 
 type CreateAIModelParams<IsImage extends boolean = false> = {
-    providerId: string;
+    provider: AIProviderName;
     modelId: string;
     engineToken: string;
     apiUrl: string;
@@ -21,7 +21,7 @@ type CreateAIModelParams<IsImage extends boolean = false> = {
 export function createAIModel(params: CreateAIModelParams<false>): Promise<LanguageModelV2>;
 export function createAIModel(params: CreateAIModelParams<true>): Promise<ImageModel>;
 export async function createAIModel({
-    providerId,
+    provider,
     modelId,
     engineToken,
     apiUrl,
@@ -29,12 +29,11 @@ export async function createAIModel({
     isImage,
 }: CreateAIModelParams<boolean>): Promise<ImageModel | LanguageModelV2> {
     const { body: {
-        provider,
         config,
         auth,
     } } = await httpClient.sendRequest<GetProviderConfigResponse>({
         method: HttpMethod.GET,
-        url: `${apiUrl}v1/ai-providers/${providerId}/config`,
+        url: `${apiUrl}v1/ai-providers/${provider}/config`,
         headers: {
             Authorization: `Bearer ${engineToken}`,
         },
