@@ -18,23 +18,11 @@ export const updateUsersTags = createAction({
       displayName: 'Tags to Add',
       description: 'An array of tags to add to the user',
       required: false,
-      properties: {
-        Tag: Property.ShortText({
-          displayName: 'Tag',
-          required: false,
-        }),
-      },
     }),
     remove: Property.Array({
       displayName: 'Tags to Remove',
       description: 'An array of tags to remove from the user',
       required: false,
-      properties: {
-        Tag: Property.ShortText({
-          displayName: 'Tag',
-          required: false,
-        }),
-      },
     }),
   },
   async run(context) {

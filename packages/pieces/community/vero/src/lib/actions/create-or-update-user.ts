@@ -34,13 +34,13 @@ export const createOrUpdateUser = createAction({
       properties: {
         type: Property.ShortText({
           displayName: 'Channel',
-          description: 'The channel identifier (e.g., device token)',
+          description: 'The channel identifier (e.g., push)',
           required: true,
         }),
         address: Property.ShortText({
           displayName: 'Address',
           description:
-            'The address for the channel (e.g., email, phone number)',
+            'The address for the channel (e.g., UNIQUE_DEVICE_TOKEN)',
           required: true,
         }),
         platform: Property.ShortText({

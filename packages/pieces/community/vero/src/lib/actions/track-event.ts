@@ -29,11 +29,7 @@ export const trackEvent = createAction({
       description: 'Event-specific data and properties',
       required: false,
     }),
-    userData: Property.Object({
-      displayName: 'User Data',
-      description: 'Custom user profile fields (e.g., first_name, last_name)',
-      required: false,
-    }),
+
     extras: Property.Object({
       displayName: 'Extras',
       description:
@@ -42,7 +38,7 @@ export const trackEvent = createAction({
     }),
   },
   async run(context) {
-    const { userId, userEmail, eventName, eventData, userData, extras } =
+    const { userId, userEmail, eventName, eventData, extras } =
       context.propsValue;
 
     const payload: any = {
@@ -57,13 +53,6 @@ export const trackEvent = createAction({
       payload.data = eventData;
     }
 
-    if (userData) {
-      payload.user = {
-        ...payload.user,
-        ...userData,
-      };
-    }
-
     if (extras) {
       payload.extras = extras;
     }
@@ -71,7 +60,7 @@ export const trackEvent = createAction({
     const response = await makeRequest(
       context.auth.secret_text,
       HttpMethod.POST,
-      '/users/track',
+      '/events/track',
       payload
     );
 
