@@ -66,7 +66,7 @@ export const Success = () => {
           iconBg: 'bg-primary/10',
           iconColor: 'text-primary',
           title: t('Success!'),
-          description: t('AI credit payment created successfully'),
+          description: t('AI credits purchased successfully'),
         };
       default:
         return {

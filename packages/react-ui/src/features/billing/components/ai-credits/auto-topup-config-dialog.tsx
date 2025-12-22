@@ -20,21 +20,21 @@ import { billingMutations } from '../../lib/billing-hooks';
 interface AutoTopUpConfigDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  currentThreshold?: number;
-  currentCreditsToAdd?: number;
+  currentThreshold?: number | null;
+  currentCreditsToAdd?: number | null;
   isEditing?: boolean;
 }
 
 export function AutoTopUpConfigDialog({
   isOpen,
   onOpenChange,
-  currentThreshold = 1000,
-  currentCreditsToAdd = 10000,
+  currentThreshold,
+  currentCreditsToAdd,
   isEditing = false,
 }: AutoTopUpConfigDialogProps) {
   const queryClient = useQueryClient();
-  const [threshold, setThreshold] = useState(currentThreshold);
-  const [creditsToAdd, setCreditsToAdd] = useState(currentCreditsToAdd);
+  const [threshold, setThreshold] = useState(currentThreshold ?? 1000);
+  const [creditsToAdd, setCreditsToAdd] = useState(currentCreditsToAdd ?? 10000);
 
   const { mutate: enableAutoTopUp, isPending: isEnabling } =
     billingMutations.useEnableAutoTopUp(queryClient);
