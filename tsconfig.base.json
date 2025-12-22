@@ -338,6 +338,9 @@
       "@activepieces/piece-vero": [
         "packages/pieces/community/vero/src/index.ts"
       ],
+      "@activepieces/piece-clearoutphone": [
+        "packages/pieces/community/clearoutphone/src/index.ts"
+      ],
       "@activepieces/piece-millionverifier": [
         "packages/pieces/community/millionverifier/src/index.ts"
       ]
