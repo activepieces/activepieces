@@ -2,7 +2,6 @@ import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepiece
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateV10AiPiecesProviderId } from './migrate-v10-ai-pieces-provider-id'
-import { migrateV11FixBrokenPieces } from './migrate-v11-fix-broken-pieces'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
@@ -28,8 +27,7 @@ const migrations: Migration[] = [
     moveAgentsToFlowVerion,
     cleanUpAgentTools,
     migrateV9AiPieces,
-    migrateV10AiPiecesProviderId,
-    migrateV11FixBrokenPieces,
+    migrateV10AiPiecesProviderId
 ] as const
 
 export const flowMigrations = {
