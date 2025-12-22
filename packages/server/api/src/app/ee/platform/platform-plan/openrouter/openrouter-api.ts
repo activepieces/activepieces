@@ -57,12 +57,20 @@ export const openRouterApi = {
     async listKeys(request: ListKeysRequest): Promise<ListKeysResponse> {
         const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
 
+        const params = new URLSearchParams()
+
+        if (request.offset !== undefined) {
+            params.set('offset', request.offset.toString())
+        }
+        if (request.include_disabled !== undefined) {
+            params.set('include_disabled', String(request.include_disabled))
+        }
+
         const res = await httpClient.sendRequest<ListKeysResponse>({
-            url: `${OPENROUTER_BASE_URL}/keys`,
+            url: `${OPENROUTER_BASE_URL}/keys?${params.toString()}`,
             method: HttpMethod.GET,
             headers: {
                 Authorization: `Bearer ${apiKey}`,
-                'Content-Type': 'application/json',
             },
         })
 

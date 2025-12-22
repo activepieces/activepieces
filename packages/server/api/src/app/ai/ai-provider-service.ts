@@ -10,14 +10,14 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
-import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
-import { In } from 'typeorm'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
@@ -177,7 +177,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         return auth as ActivePiecesProviderAuthConfig
     },
 
-    async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig}> {
+    async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {
         const aiProviders = await aiProviderRepo().find({
             where: {
                 provider: AIProviderName.ACTIVEPIECES,
@@ -188,7 +188,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         const result: { [platformId: string]: ActivePiecesProviderAuthConfig } = {}
         for (const aiProvider of aiProviders) {
             const hasKeys = await doesActivepiecesProviderHasKeys(aiProvider)
-            if (!hasKeys) continue;
+            if (!hasKeys) continue
 
             result[aiProvider.platformId] = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
         }
@@ -207,7 +207,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
     const limit = platformPlan.includedAiCredits / 1000
     const { key, data } = await openRouterApi.createKey({
         name: `Platform ${platformId}`, 
-        limit
+        limit,
     })
     const rawAuth: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
     const savedAiProvider = await aiProviderRepo().save({

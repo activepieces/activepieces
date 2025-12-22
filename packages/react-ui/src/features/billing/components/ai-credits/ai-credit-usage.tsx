@@ -42,8 +42,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const totalCreditsUsed = usage.totalAiCreditsUsed;
   const creditsRemaining = usage.aiCreditsRemaining;
 
-  const totalLimit = usage.aiCreditsLimit;
-
   const autoTopUpState =
     plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.NOT_ALLOWED;
 

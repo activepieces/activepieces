@@ -1,14 +1,13 @@
 import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema, ListAICreditsPaymentsRequestParams } from '@activepieces/ee-shared'
-import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, AiCreditsAutoTopUpState, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformAiCreditsPayment, PlatformAiCreditsPaymentStatus, PlatformAiCreditsPaymentType, PlatformPlan, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
+import { aiProviderService } from '../../../ai/ai-provider-service'
 import { repoFactory } from '../../../core/db/repo-factory'
-import { distributedLock } from '../../../database/redis-connections'
+import { flagService } from '../../../flags/flag.service'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import Paginator from '../../../helper/pagination/paginator'
-import { system } from '../../../helper/system/system'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
@@ -16,8 +15,6 @@ import { openRouterApi } from './openrouter/openrouter-api'
 import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
-import { flagService } from '../../../flags/flag.service'
-import { aiProviderService } from '../../../ai/ai-provider-service'
 
 const platformAiCreditsPaymentRepo = repoFactory(PlatformAiCreditsPaymentEntity)
 
@@ -248,6 +245,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async resetPlanIncludedCredits(): Promise<void> {
         const keys: Awaited<ReturnType<typeof openRouterApi.listKeys>>['data'] = []
         let offset = 0
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const { data } = await openRouterApi.listKeys({ offset })
             if (data.length === 0) break
@@ -259,7 +257,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs()
 
         const platformIds = Object.keys(configs)
-        if (platformIds.length === 0) return;
+        if (platformIds.length === 0) return
 
         const plans = await platformPlanRepo().find({
             where: { platformId: In(platformIds) },
@@ -293,6 +291,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async autoTopUpPlans(): Promise<void> {
         const keys: Awaited<ReturnType<typeof openRouterApi.listKeys>>['data'] = []
         let offset = 0
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             const { data } = await openRouterApi.listKeys({ offset })
             if (data.length === 0) break
@@ -307,7 +306,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             },
         })
         const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs(
-            plans.map(p => p.platformId)
+            plans.map(p => p.platformId),
         )
 
         for (const plan of plans) {
@@ -356,12 +355,6 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         })
     },
 })
-
-
-type ProvisionKeyResponse = {
-    key: string
-    hash: string
-}
 
 type APIKeyUsage = {
     limit: number
