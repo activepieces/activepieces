@@ -331,6 +331,9 @@
       ],
       "@activepieces/piece-neverbounce": [
         "packages/pieces/community/neverbounce/src/index.ts"
+      ],
+      "@activepieces/piece-vero": [
+        "packages/pieces/community/vero/src/index.ts"
       ]
     },
     "resolveJsonModule": true
