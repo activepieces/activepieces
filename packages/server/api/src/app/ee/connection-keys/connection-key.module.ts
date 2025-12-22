@@ -5,7 +5,7 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { publicAccess } from '@activepieces/server-shared'
+import { projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
 import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -90,7 +90,13 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 querystring: ListConnectionKeysRequest,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                security: projectAccess(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    undefined,
+                    {
+                        type: ProjectResourceType.QUERY,
+                    },
+                ),
             },
         },
         async (
@@ -111,7 +117,13 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 body: UpsertSigningKeyConnection,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                security: projectAccess(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    undefined,
+                    {
+                        type: ProjectResourceType.BODY,
+                    },
+                ),
             },
         },
         async (
