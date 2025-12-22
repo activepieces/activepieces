@@ -212,10 +212,9 @@ export const UpsertProviderConfigForm = ({
         </>
       )}
 
-      {[
-        AIProviderName.CUSTOM,
-        AIProviderName.CLOUDFLARE_GATEWAY,
-      ].includes(provider) && (
+      {[AIProviderName.CUSTOM, AIProviderName.CLOUDFLARE_GATEWAY].includes(
+        provider,
+      ) && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-base">{t('Models Configuration')}</Label>
