@@ -245,8 +245,11 @@ async function assertThatFlowIsNotBeingUsed(
 
 const CreateFlowRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_FLOW, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         tags: ['flows'],
@@ -262,8 +265,11 @@ const CreateFlowRequestOptions = {
 
 const ListFlowsRequestOptions = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         tags: ['flows'],
