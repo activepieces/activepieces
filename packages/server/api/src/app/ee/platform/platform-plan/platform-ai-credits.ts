@@ -19,8 +19,16 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
                 limitRemaining: 0,
             }
         }
-        const config = await aiProviderService(log).getConfigOrThrow(platformId, AIProviderName.ACTIVEPIECES)
-        const apiKeyHash = 'apiKeyHash' in config.auth ? config.auth.apiKeyHash : null
+        const activepiecesConfigured = await aiProviderService(log).getActivepiecesProviderIfEnriched(platformId)
+        if (!activepiecesConfigured) {
+            return {
+                usageMonthly: 0,
+                limitMonthly: 0,
+                limitRemaining: 0,
+            }
+        }
+    
+        const apiKeyHash = 'apiKeyHash' in activepiecesConfigured.auth ? activepiecesConfigured.auth.apiKeyHash : null
         assertNotNullOrUndefined(apiKeyHash, 'apiKeyHash is required')
         const { data: usage, error } = await tryCatch<OpenRouterGetKeyResponse, Error>(async () => await openRouterGetKey(apiKeyHash))
         if (!isNil(error) || isNil(usage)) {
