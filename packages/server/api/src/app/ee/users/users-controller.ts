@@ -1,4 +1,5 @@
-import { assertNotNullOrUndefined, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { assertNotNullOrUndefined, GetCurrentUserRequestQuery, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
@@ -37,8 +38,11 @@ const GetCurrentUserRequest = {
         response: {
             [StatusCodes.OK]: UserWithMetaInformationAndProject,
         },
+        querystring: GetCurrentUserRequestQuery,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
 }
