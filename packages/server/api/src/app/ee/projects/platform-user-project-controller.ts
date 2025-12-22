@@ -1,3 +1,4 @@
+import { projectAccess, ProjectResourceType, publicPlatformAccess } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     ListProjectRequestForUserQueryParams,
@@ -69,12 +70,16 @@ async function getPlatformsForUser(identityId: string, platformId: string) {
 
 const GetProjectRequestForUser = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            undefined, {
+                type: ProjectResourceType.PARAM,
+            }),
     },
 }
 const ListProjectRequestForUser = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: publicPlatformAccess([PrincipalType.USER]),
     },
     schema: {
         response: {
@@ -86,7 +91,7 @@ const ListProjectRequestForUser = {
 
 const ListProjectsForPlatforms = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: publicPlatformAccess([PrincipalType.USER]),
     },
     schema: {
         response: {

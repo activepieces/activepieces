@@ -60,8 +60,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', {
         config: {
-            allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-            permission: Permission.UPDATE_FLOW_STATUS,
+            security: projectAccess(
+                [PrincipalType.USER, PrincipalType.SERVICE], 
+                Permission.UPDATE_FLOW_STATUS, {
+                    type: ProjectResourceType.TABLE,
+                    tableName: FlowEntity,
+                }),
         },
         schema: {
             tags: ['flows'],
