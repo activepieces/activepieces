@@ -28,6 +28,7 @@ import { DynamicPropertiesProvider } from '../piece-properties/dynamic-propertie
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
+import { AgentSettings } from './agent-settings';
 import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
@@ -121,6 +122,10 @@ const StepSettingsContainer = () => {
       modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
 
+  const runAgentStep =
+    modifiedStep.settings.pieceName === '@activepieces/piece-ai' &&
+    modifiedStep.settings.actionName === 'run_agent';
+
   useEffect(() => {
     //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
     form.trigger();
@@ -183,6 +188,16 @@ const StepSettingsContainer = () => {
                     <CodeSettings readonly={readonly}></CodeSettings>
                   )}
                   {modifiedStep.type === FlowActionType.PIECE &&
+                    runAgentStep &&
+                    modifiedStep && (
+                      <AgentSettings
+                        step={modifiedStep}
+                        flowId={flowVersion.flowId}
+                        readonly={readonly}
+                      />
+                    )}
+                  {modifiedStep.type === FlowActionType.PIECE &&
+                    !runAgentStep &&
                     modifiedStep && (
                       <PieceSettings
                         step={modifiedStep}

@@ -334,6 +334,9 @@
       ],
       "@activepieces/piece-mailercheck": [
         "packages/pieces/community/mailercheck/src/index.ts"
+      ],
+      "@activepieces/piece-vero": [
+        "packages/pieces/community/vero/src/index.ts"
       ]
     },
     "resolveJsonModule": true

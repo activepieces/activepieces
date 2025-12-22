@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
 import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
+import { AIProviderName } from '@activepieces/shared';
 
 export const classifyText = createAction({
   name: 'classifyText',
@@ -23,11 +24,11 @@ export const classifyText = createAction({
   async run(context) {
     const categories = (context.propsValue.categories as string[]) ?? [];
 
-    const providerId = context.propsValue.provider;
+    const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
 
     const model = await createAIModel({
-      providerId,
+      provider: provider as AIProviderName,
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,

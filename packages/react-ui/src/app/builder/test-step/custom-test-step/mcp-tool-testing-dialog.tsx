@@ -19,7 +19,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { FlowTrigger, McpPropertyType } from '@activepieces/shared';
 
-import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+import { GenericPropertiesFormComponent } from '../../piece-properties/generic-properties-form';
 import { testStepHooks } from '../utils/test-step-hooks';
 
 type McpToolTestingDialogProps = {
@@ -155,7 +155,7 @@ function McpToolTestingDialog({
                             key={fieldName}
                             className="grid space-y-2 px-0.5"
                           >
-                            <AutoPropertiesFormComponent
+                            <GenericPropertiesFormComponent
                               props={{ [fieldName]: fieldProps }}
                               allowDynamicValues={false}
                               prefixValue=""
