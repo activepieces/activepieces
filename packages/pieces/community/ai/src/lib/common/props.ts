@@ -22,7 +22,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProvider
                 disabled: false,
                 options: supportedProviders.map(supportedProvider => ({
                     label: supportedProvider.name,
-                    value: supportedProvider.id,
+                    value: supportedProvider.provider,
                 })).filter(provider => allowedProviders ? allowedProviders.includes(provider.value as AIProviderName) : true),
             };
         },

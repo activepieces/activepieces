@@ -164,7 +164,7 @@ export const UpsertProviderConfigForm = ({
         </>
       )}
 
-      {provider === AIProviderName.OPENAI_COMPATIBLE && (
+      {provider === AIProviderName.CUSTOM && (
         <>
           <FormField
             control={form.control}
@@ -213,7 +213,7 @@ export const UpsertProviderConfigForm = ({
       )}
 
       {[
-        AIProviderName.OPENAI_COMPATIBLE,
+        AIProviderName.CUSTOM,
         AIProviderName.CLOUDFLARE_GATEWAY,
       ].includes(provider) && (
         <div className="space-y-4">

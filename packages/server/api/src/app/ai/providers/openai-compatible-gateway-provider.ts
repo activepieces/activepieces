@@ -3,7 +3,7 @@ import { AIProviderStrategy } from './ai-provider'
 
 export const openAICompatibleProvider: AIProviderStrategy<OpenAICompatibleProviderAuthConfig, OpenAICompatibleProviderConfig> = {
     name: 'OpenAI Compatible',
-    async listModels(authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(_authConfig: OpenAICompatibleProviderAuthConfig, config: OpenAICompatibleProviderConfig): Promise<AIProviderModel[]> {
         return config.models.map(m => ({
             id: m.modelId,
             name: m.modelName,

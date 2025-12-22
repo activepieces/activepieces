@@ -1,4 +1,4 @@
-import { AIProviderModel, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
+import { AIProviderModel, AIProviderName, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'
@@ -8,13 +8,13 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
         const platformId = request.principal.platform.id
         return aiProviderService(app.log).listProviders(platformId)
     })
-    app.get('/:id/config', GetAIProviderConfig, async (request) => {
+    app.get('/:provider/config', GetAIProviderConfig, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).getConfigOrThrow({ platformId, providerId: request.params.id })
+        return aiProviderService(app.log).getConfigOrThrow({ platformId, provider: request.params.provider })
     })
-    app.get('/:id/models', ListModels, async (request) => {
+    app.get('/:provider/models', ListModels, async (request) => {
         const platformId = request.principal.platform.id
-        return aiProviderService(app.log).listModels(platformId, request.params.id)
+        return aiProviderService(app.log).listModels(platformId, request.params.provider)
     })
     app.post('/', CreateAIProvider, async (request) => {
         const platformId = request.principal.platform.id
@@ -43,18 +43,18 @@ const GetAIProviderConfig = {
     },
     schema: {
         params: Type.Object({
-            id: Type.String(),
+            provider: Type.Enum(AIProviderName),
         }),
     },
 }
 
 const ListModels = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        allowedPrincipals: [PrincipalType.ENGINE] as const,
     },
     schema: {
         params: Type.Object({
-            id: Type.String(),
+            provider: Type.Enum(AIProviderName),
         }),
         response: {
             [StatusCodes.OK]: Type.Array(AIProviderModel),
