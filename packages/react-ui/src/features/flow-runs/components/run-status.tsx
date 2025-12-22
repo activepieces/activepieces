@@ -10,14 +10,12 @@ import {
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../lib/flow-run-utils';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { cn, formatUtils } from '@/lib/utils';
 import { Tooltip, TooltipTrigger,TooltipContent } from '@/components/ui/tooltip';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
 
 type RunStatusProps = {
   run: FlowRun | null;
-  isLoading: boolean;
 };
 
 function getStatusText(
@@ -55,10 +53,10 @@ function getStatusText(
 }
 
 const RunStatus = React.memo(
-  ({ run, isLoading }: RunStatusProps) => {
+  ({ run }: RunStatusProps) => {
     const { variant, Icon  } = run
       ? flowRunUtils.getStatusIcon(run.status)
-      : { variant: 'default' as const, Icon: isLoading ? LoadingSpinner : QuestionMarkIcon };
+      : { variant: 'default' as const, Icon: QuestionMarkIcon  };
 
     const { data: timeoutSeconds } = flagsHooks.useFlag<number>(
       ApFlagId.FLOW_RUN_TIME_SECONDS,
