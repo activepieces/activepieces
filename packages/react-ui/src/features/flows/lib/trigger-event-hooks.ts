@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SeekPage, TriggerEventWithPayload } from '@activepieces/shared';
 
 import { triggerEventsApi } from './trigger-events-api';
+import { authenticationSession } from '@/lib/authentication-session';
 
 export const triggerEventHooks = {
   usePollResults: (flowVersionId: string, flowId: string) => {
@@ -12,6 +13,7 @@ export const triggerEventHooks = {
       queryKey: ['triggerEvents', flowVersionId],
       queryFn: () =>
         triggerEventsApi.list({
+          projectId: authenticationSession.getProjectId()!,
           flowId: flowId,
           limit: 5,
           cursor: undefined,
