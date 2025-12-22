@@ -4,7 +4,6 @@ import { EntitySchema } from 'typeorm'
 export enum AuthorizationType {
     PLATFORM = 'PLATFORM',
     PROJECT = 'PROJECT',
-    MAYBE_PROJECT = 'MAYBE_PROJECT', // used to allow UNKNOWN and WORKER principals access to a route. adds the projectId to the request for other principals 
     UNSCOPED = 'UNSCOPED',
     NONE = 'NONE',
 }
@@ -63,13 +62,6 @@ export type ProjectAuthorization = {
 export type UnscopedAuthorization = {
     type: AuthorizationType.UNSCOPED
     allowedPrincipals: readonly PrincipalType[]
-}
-
-export type MaybeProjectAuthorization = {
-    type: AuthorizationType.MAYBE_PROJECT
-    allowedPrincipals: readonly PrincipalType[]
-    projectResource?: ProjectResource
-    permission?: Permission
 }
 
 export type NoneAuthorization = {
