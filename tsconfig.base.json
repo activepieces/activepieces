@@ -331,6 +331,9 @@
       ],
       "@activepieces/piece-neverbounce": [
         "packages/pieces/community/neverbounce/src/index.ts"
+      ],
+      "@activepieces/piece-digital-pilot": [
+        "packages/pieces/community/digital-pilot/src/index.ts"
       ]
     },
     "resolveJsonModule": true
