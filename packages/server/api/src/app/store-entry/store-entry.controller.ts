@@ -1,3 +1,4 @@
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import {
     DeleteStoreEntryRequest,
     GetStoreEntryRequest,
@@ -39,7 +40,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
     },
     )
 
-    fastify.delete( '/', DeleteStoreRequest, async (request) => {
+    fastify.delete('/', DeleteStoreRequest, async (request) => {
         return storeEntryService.delete({
             projectId: request.principal.projectId,
             key: request.query.key,
@@ -50,7 +51,9 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const CreateRequest =  {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
     schema: {
         body: PutStoreEntryRequest,
@@ -59,7 +62,9 @@ const CreateRequest =  {
 
 const GetRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         querystring: GetStoreEntryRequest,
@@ -69,7 +74,9 @@ const GetRequest = {
 
 const DeleteStoreRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+            type: ProjectResourceType.QUERY,
+        }),
     },
     schema: {
         querystring: DeleteStoreEntryRequest,

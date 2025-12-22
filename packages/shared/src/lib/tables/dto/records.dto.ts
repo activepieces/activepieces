@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { Cursor } from '../../common/seek-page'
 
 export const CreateRecordsRequest = Type.Object({
+    projectId: Type.Optional(Type.String()),
     records: Type.Array(Type.Array(Type.Object({
         fieldId: Type.String(),
         value: Type.String(),
@@ -42,6 +43,7 @@ export const Filter = Type.Object({
 export type Filter = Static<typeof Filter>
 
 export const ListRecordsRequest = Type.Object({
+    projectId: Type.Optional(Type.String()),
     tableId: Type.String(),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
@@ -52,6 +54,7 @@ export type ListRecordsRequest = Omit<Static<typeof ListRecordsRequest>, 'cursor
 
 export const DeleteRecordsRequest = Type.Object({
     ids: Type.Array(Type.String()),
+    projectId: Type.Optional(Type.String()),
 })
 
 export type DeleteRecordsRequest = Static<typeof DeleteRecordsRequest>

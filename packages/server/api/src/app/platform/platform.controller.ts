@@ -33,9 +33,7 @@ import { platformRepo, platformService } from './platform.service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/:id', UpdatePlatformRequest, async (req, res) => {
-        await platformToEditMustBeOwnedByCurrentUser.call(app, req, res)
-
+    app.post('/:id', UpdatePlatformRequest, async (req, _res) => {
         const assets = [req.body.logoIcon, req.body.fullLogo, req.body.favIcon]
         const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/webp', 'image/avif', 'image/apng']
 

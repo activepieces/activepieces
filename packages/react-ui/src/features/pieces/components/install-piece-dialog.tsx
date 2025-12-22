@@ -37,6 +37,7 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   AddPieceRequestBody,
   ApFlagId,
@@ -189,7 +190,10 @@ const InstallPieceDialog = ({
           <form
             className="flex flex-col gap-4"
             onSubmit={form.handleSubmit((data) =>
-              mutate(data as AddPieceRequestBody),
+              mutate({
+                projectId: authenticationSession.getProjectId()!,
+                ...data,
+              } as AddPieceRequestBody),
             )}
           >
             <FormField
