@@ -128,7 +128,7 @@ describe('Project Member API', () => {
                 },
             })
 
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
         it('should fail to update project role when user is admin of another project', async () => {
@@ -193,7 +193,7 @@ describe('Project Member API', () => {
                     authorization: `Bearer ${testToken}`,
                 },
             })
-            expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
+            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
     })
 
