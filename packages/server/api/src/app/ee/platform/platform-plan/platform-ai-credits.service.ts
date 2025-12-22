@@ -69,18 +69,20 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async getUsage(platformId: string): Promise<APIKeyUsage> {
         if (!this.isEnabled()) {
             return {
-                usageMonthly: 0,
-                limitMonthly: 0,
-                limitRemaining: 0,
+               usage: 0,
+               limit: 0,
+               usageMonthly: 0,
+               usageRemaining: 0,
             }
         }
 
         const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         if (isNil(platformPlan.openRouterApiKey) || isNil(platformPlan.openRouterApiKeyHash)) {
             return {
+                usage: 0,
+                limit: 0,
                 usageMonthly: 0,
-                limitMonthly: platformPlan.includedAiCredits,
-                limitRemaining: platformPlan.includedAiCredits,
+                usageRemaining: 0,
             }
         }
 
@@ -88,8 +90,9 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
         return {
             usageMonthly: usage.usage_monthly * CREDIT_PER_DOLLAR,
-            limitMonthly: usage.limit! * CREDIT_PER_DOLLAR,
-            limitRemaining: usage.limit_remaining! * CREDIT_PER_DOLLAR,
+            usageRemaining: usage.limit_remaining! * CREDIT_PER_DOLLAR,
+            usage: usage.usage * CREDIT_PER_DOLLAR,
+            limit: usage.limit! * CREDIT_PER_DOLLAR,
         }
     },
 
@@ -377,7 +380,8 @@ type ProvisionKeyResponse = {
 }
 
 type APIKeyUsage = {
+    limit: number
+    usage: number
     usageMonthly: number
-    limitMonthly: number
-    limitRemaining: number
+    usageRemaining: number
 }

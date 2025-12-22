@@ -1,6 +1,6 @@
 import { isCloudPlanButNotEnterprise, OPEN_SOURCE_PLAN, PRICE_ID_MAP, PRICE_NAMES, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
 import { apDayjs, AppSystemProp, getPlatformPlanNameKey } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, UserWithMetaInformation } from '@activepieces/shared'
+import { ActivepiecesError, AiCreditsAutoTopUpState, ApEdition, ApEnvironment, apId, ErrorCode, FlowStatus, isNil, PlatformPlan, PlatformPlanLimits, PlatformPlanWithOnlyLimits, PlatformUsage, PlatformUsageMetric, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
@@ -104,7 +104,10 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         const aiCreditsUsage = await platformAiCreditsService(log).getUsage(platformId)
         return {
             activeFlows: activeFlowsCount,
-            aiCredits: aiCreditsUsage.usageMonthly,
+            aiCreditsLimit: aiCreditsUsage.limit,
+            aiCreditsRemaining: aiCreditsUsage.usageRemaining,
+            totalAiCreditsUsed: aiCreditsUsage.usage,
+            totalAiCreditsUsedThisMonth: aiCreditsUsage.usageMonthly,
         }
     },
     checkActiveFlowsExceededLimit: async (platformId: string, metric: PlatformUsageMetric): Promise<void> => {
@@ -165,6 +168,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeCustomerId,
         stripeSubscriptionStartDate: defaultStartDate,
         stripeSubscriptionEndDate: defaultEndDate,
+        aiCreditsAutoTopUpState: platformAiCreditsService(log).isEnabled() ? AiCreditsAutoTopUpState.ALLOWED_BUT_OFF : AiCreditsAutoTopUpState.NOT_ALLOWED,
         ...plan,
     }
     const savedPlatformPlan = await platformPlanRepo().save(platformPlan)

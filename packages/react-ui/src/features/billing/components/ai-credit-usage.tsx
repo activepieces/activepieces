@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/tooltip';
 import { ApSubscriptionStatus } from '@activepieces/ee-shared';
 import {
+  AiCreditsAutoTopUpState,
   AiOverageState,
   PlatformBillingInformation,
 } from '@activepieces/shared';
@@ -35,22 +36,22 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const planIncludedCredits = plan.includedAiCredits;
-  const overageLimit = plan.aiCreditsOverageLimit;
-  const totalCreditsUsed = usage.aiCredits;
+  const overageLimit = plan.aiCreditsAutoTopUpThreshold;
+  const totalCreditsUsed = usage.totalAiCreditsUsed;
 
   const hasActiveSubscription =
     plan.stripeSubscriptionStatus === ApSubscriptionStatus.ACTIVE;
   const aiOverrageState =
-    plan.aiCreditsOverageState ?? AiOverageState.NOT_ALLOWED;
+    plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.NOT_ALLOWED;
 
   const overageConfig = useMemo(() => {
-    const isAllowed = aiOverrageState !== AiOverageState.NOT_ALLOWED;
-    const isEnabled = aiOverrageState === AiOverageState.ALLOWED_AND_ON;
+    const isAllowed = aiOverrageState !== AiCreditsAutoTopUpState.NOT_ALLOWED;
+    const isEnabled = aiOverrageState === AiCreditsAutoTopUpState.ALLOWED_AND_ON;
 
     return {
-      allowed: isAllowed,
-      enabled: isEnabled,
-      canToggle: isAllowed,
+      allowed: true,
+      enabled: true,
+      canToggle: true,
     };
   }, [aiOverrageState]);
 

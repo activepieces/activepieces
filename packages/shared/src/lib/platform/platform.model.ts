@@ -16,7 +16,10 @@ export enum PlatformUsageMetric {
 }
 
 export const PlatformUsage = Type.Object({
-    aiCredits: Type.Number(),
+    totalAiCreditsUsed: Type.Number(),
+    totalAiCreditsUsedThisMonth: Type.Number(),
+    aiCreditsRemaining: Type.Number(),
+    aiCreditsLimit: Type.Number(),
     activeFlows: Type.Number(),
 })
 
