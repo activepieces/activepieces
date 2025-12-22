@@ -6,7 +6,7 @@ export const openRouterProvider: AIProviderStrategy<OpenRouterProviderAuthConfig
     name: 'OpenRouter',
     async listModels(_authConfig: OpenRouterProviderAuthConfig, _config: OpenRouterProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: OpenRouterModel[] }>({
-            url: 'https://openrouter.ai/api/v1/models/user',
+            url: 'https://openrouter.ai/api/v1/models',
             method: HttpMethod.GET,
             headers: {
                 'Content-Type': 'application/json',
