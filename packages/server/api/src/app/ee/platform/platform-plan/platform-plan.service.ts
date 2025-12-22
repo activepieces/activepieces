@@ -114,8 +114,6 @@ export const platformPlanService = (log: FastifyBaseLogger) => ({
         if (ApEdition.COMMUNITY === edition) {
             return
         }
-
-  
         const platformPlan = await platformPlanService(system.globalLogger()).getOrCreateForPlatform(platformId)
         const usage = await platformPlanService(log).getUsage(platformId)
         if (!isNil(platformPlan.activeFlowsLimit) && usage.activeFlows >= platformPlan.activeFlowsLimit) {

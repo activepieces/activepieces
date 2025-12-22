@@ -7,7 +7,7 @@ import {
   useIsFocusInsideListMapperModeInput,
 } from '../builder-hooks';
 
-import { AutoPropertiesFormComponent } from './auto-properties-form';
+import { GenericPropertiesFormComponent } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 type BaseArrayPropertyProps = {
@@ -46,7 +46,7 @@ const ArrayPiecePropertyInInlineItemMode = React.memo(
       <div className="w-full" ref={containerRef}>
         {props.arrayProperties ? (
           <div className="p-4 border rounded-md flex flex-col gap-4">
-            <AutoPropertiesFormComponent
+            <GenericPropertiesFormComponent
               prefixValue={inputName}
               props={props.arrayProperties}
               useMentionTextInput={true}

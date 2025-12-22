@@ -16,6 +16,8 @@ import { openRouterApi } from './openrouter/openrouter-api'
 import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
+import { flagService } from '../../../flags/flag.service'
+import { aiProviderService } from '../../../ai/ai-provider-service'
 
 const platformAiCreditsPaymentRepo = repoFactory(PlatformAiCreditsPaymentEntity)
 
@@ -65,7 +67,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     },
 
     isEnabled(): boolean {
-        return !isNil(system.get(AppSystemProp.OPENROUTER_PROVISION_KEY))
+        return flagService.aiCreditsEnabled()
     },
 
     async getUsage(platformId: string): Promise<APIKeyUsage> {
@@ -78,17 +80,21 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             }
         }
 
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (isNil(platformPlan.openRouterApiKey) || isNil(platformPlan.openRouterApiKeyHash)) {
+        const auth = await aiProviderService(log).getActivepiecesProviderIfEnriched(platformId)
+        if (isNil(auth)) {
+            const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+
             return {
                 usage: 0,
-                limit: 0,
+                limit: platformPlan.includedAiCredits,
                 usageMonthly: 0,
                 usageRemaining: 0,
             }
         }
 
-        const { data: usage } = await openRouterApi.getKey({ hash: platformPlan.openRouterApiKeyHash })
+        assertNotNullOrUndefined(auth.apiKeyHash, 'apiKeyHash is required')
+
+        const { data: usage } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
 
         return {
             usageMonthly: usage.usage_monthly * CREDIT_PER_DOLLAR,
@@ -96,42 +102,6 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             usage: usage.usage * CREDIT_PER_DOLLAR,
             limit: usage.limit! * CREDIT_PER_DOLLAR,
         }
-    },
-
-    async provisionKeyIfNeeded(platformId: string): Promise<ProvisionKeyResponse> {
-        const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-
-        const openRouterApiKey = platformPlan.openRouterApiKey
-        const openRouterApiKeyHash = platformPlan.openRouterApiKeyHash
-        if (!isNil(openRouterApiKey) && !isNil(openRouterApiKeyHash)) {
-            return { key: openRouterApiKey, hash: openRouterApiKeyHash }
-        }
-
-        return distributedLock(log).runExclusive({
-            key: `platform_ai_credits_${platformId}`,
-            timeoutInSeconds: 60,
-            fn: async () => {
-                const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-                const openRouterApiKey = platformPlan.openRouterApiKey
-                const openRouterApiKeyHash = platformPlan.openRouterApiKeyHash
-
-                if (!isNil(openRouterApiKey) && !isNil(openRouterApiKeyHash)) {
-                    return { key: openRouterApiKey, hash: openRouterApiKeyHash }
-                }
-
-                const limit = (platformPlan.includedAiCredits / CREDIT_PER_DOLLAR)
-                const { key, data } = await openRouterApi.createKey({ 
-                    name: `Platform ${platformId}`,
-                    limit,
-                })
-                await platformPlanService(log).update({
-                    platformId,
-                    openRouterApiKeyHash: data.hash,
-                    openRouterApiKey: key,
-                })
-                return { key, hash: data.hash }
-            },
-        })
     },
 
     async enableAutoTopUp(platformId: string, request: EnableAICreditsAutoTopUpParamsSchema): Promise<{ stripeCheckoutUrl?: string }> {
@@ -260,11 +230,11 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
         await platformAiCreditsPaymentRepo().save({ id: paymentId, txId, status: PlatformAiCreditsPaymentStatus.PAYMENT_SUCCESS })
 
-        const { hash } = await this.provisionKeyIfNeeded(payment.platformId)
-        const { data: key } = await openRouterApi.getKey({ hash })
+        const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(payment.platformId)
+        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
         await openRouterApi.updateKey({
-            hash,
+            hash: apiKeyHash,
             limit: key.limit! + payment.amount,
         })
 
@@ -286,12 +256,19 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             offset += data.length
         }
 
+        const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs()
+
+        const platformIds = Object.keys(configs)
+        if (platformIds.length === 0) return;
+
         const plans = await platformPlanRepo().find({
-            where: { openRouterApiKeyHash: In(keys.map(k => k.hash)) },
+            where: { platformId: In(platformIds) },
         })
 
         for (const plan of plans) {
-            const key = keys.find(k => k.hash === plan.openRouterApiKeyHash)
+            const { apiKeyHash } = configs[plan.platformId]
+
+            const key = keys.find(k => k.hash === apiKeyHash)
             if (!key) continue
 
             let creditsToAdd: number
@@ -307,7 +284,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             const amount = creditsToAdd / CREDIT_PER_DOLLAR
 
             await openRouterApi.updateKey({
-                hash: key.hash,
+                hash: apiKeyHash,
                 limit: key.limit! + amount,
             })
         }
@@ -325,14 +302,18 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
 
         const plans = await platformPlanRepo().find({
-            where: { 
-                openRouterApiKeyHash: In(keys.map(k => k.hash)), 
+            where: {
                 aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON, 
             },
         })
+        const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs(
+            plans.map(p => p.platformId)
+        )
 
         for (const plan of plans) {
-            const key = keys.find(k => k.hash === plan.openRouterApiKeyHash)
+            const { apiKeyHash } = configs[plan.platformId]
+
+            const key = keys.find(k => k.hash === apiKeyHash)
             if (!key) continue
 
             const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR

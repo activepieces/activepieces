@@ -1,6 +1,6 @@
-import { AIProviderConfig, AIProviderModel } from '@activepieces/shared'
+import { AIProviderAuthConfig, AIProviderConfig, AIProviderModel } from '@activepieces/shared'
 
-export type AIProviderStrategy<T extends AIProviderConfig> = {
+export type AIProviderStrategy<T extends AIProviderAuthConfig, C extends AIProviderConfig> = {
     name: string
-    listModels(config: T): Promise<AIProviderModel[]>
+    listModels(authConfig: T, config: C): Promise<AIProviderModel[]>
 }
