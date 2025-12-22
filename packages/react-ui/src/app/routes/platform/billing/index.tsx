@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { ActiveFlowAddon } from '@/features/billing/components/active-flows-addon';
-import { AICreditUsage } from '@/features/billing/components/ai-credit-usage';
+import { AICreditUsage } from '@/features/billing/components/ai-credits/ai-credit-usage';
 import { FeatureStatus } from '@/features/billing/components/features-status';
 import { LicenseKey } from '@/features/billing/components/license-key';
 import { SubscriptionInfo } from '@/features/billing/components/subscription-info';

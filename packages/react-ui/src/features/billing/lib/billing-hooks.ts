@@ -10,6 +10,9 @@ import {
   SetAiCreditsOverageLimitParams,
   UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
+  CreateAICreditCheckoutSessionParamsSchema,
+  EnableAICreditsAutoTopUpParamsSchema,
+  ListAICreditsPaymentsRequestParams,
 } from '@activepieces/ee-shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
@@ -115,6 +118,87 @@ export const billingMutations = {
         }
         internalErrorToast();
       },
+    });
+  },
+  useCreateAICreditCheckoutSession: (setIsOpen?: (isOpen: boolean) => void) => {
+    return useMutation({
+      mutationFn: async (params: CreateAICreditCheckoutSessionParamsSchema) => {
+        const { stripeCheckoutUrl } =
+          await platformBillingApi.createAICreditCheckoutSession(params);
+        window.open(stripeCheckoutUrl, '_blank');
+      },
+      onSuccess: () => {
+        setIsOpen?.(false);
+      },
+      onError: (error) => {
+        toast.error(t('Starting Checkout Session failed'), {
+          description: t(error.message),
+          duration: 3000,
+        });
+      },
+    });
+  },
+  useEnableAutoTopUp: (queryClient: QueryClient) => {
+    return useMutation({
+      mutationFn: async (params: EnableAICreditsAutoTopUpParamsSchema) => {
+        const { stripeCheckoutUrl } =
+          await platformBillingApi.enableAutoTopUp(params);
+        if (stripeCheckoutUrl) {
+          window.open(stripeCheckoutUrl, '_blank');
+        }
+      },
+      onSuccess: (_, variables) => {
+        queryClient.invalidateQueries({
+          queryKey: ['platform-billing-subscription'],
+        });
+        toast.success(t('Auto top-up enabled successfully'));
+      },
+      onError: (error) => {
+        toast.error(t('Enabling auto top-up failed'));
+        internalErrorToast();
+      },
+    });
+  },
+  useUpdateAutoTopUpConfig: (queryClient: QueryClient) => {
+    return useMutation({
+      mutationFn: async (params: EnableAICreditsAutoTopUpParamsSchema) => {
+        const { stripeCheckoutUrl } =
+          await platformBillingApi.updateAutoTopUpConfig(params);
+         if (stripeCheckoutUrl) {
+          window.open(stripeCheckoutUrl, '_blank');
+        }
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+           queryKey: ['platform-billing-subscription'],
+        });
+        toast.success(t('Auto top-up configuration updated successfully'));
+      },
+      onError: () => {
+         toast.error(t('Updating auto top-up configuration failed'));
+         internalErrorToast();
+      },
+    });
+  },
+  useDisableAutoTopUp: (queryClient: QueryClient) => {
+    return useMutation({
+      mutationFn: () => platformBillingApi.disableAutoTopUp(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({
+           queryKey: ['platform-billing-subscription'],
+        });
+        toast.success(t('Auto top-up disabled successfully'));
+      },
+      onError: () => {
+        toast.error(t('Disabling auto top-up failed'));
+        internalErrorToast();
+      },
+    });
+  },
+  useAICreditPayments: (params: ListAICreditsPaymentsRequestParams) => {
+    return useQuery({
+      queryKey: ['ai-credits-payments', params],
+      queryFn: () => platformBillingApi.listAICreditPayments(params),
     });
   },
 };
