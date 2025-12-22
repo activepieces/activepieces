@@ -8,7 +8,12 @@ import {
   EnableAICreditsAutoTopUpParamsSchema,
   ListAICreditsPaymentsRequestParams,
 } from '@activepieces/ee-shared';
-import { PlatformPlan, PlatformBillingInformation, PlatformAiCreditsPayment, SeekPage } from '@activepieces/shared';
+import {
+  PlatformPlan,
+  PlatformBillingInformation,
+  PlatformAiCreditsPayment,
+  SeekPage,
+} from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
@@ -41,7 +46,9 @@ export const platformBillingApi = {
       params,
     );
   },
-  createAICreditCheckoutSession(params: CreateAICreditCheckoutSessionParamsSchema) {
+  createAICreditCheckoutSession(
+    params: CreateAICreditCheckoutSessionParamsSchema,
+  ) {
     return api.post<{ stripeCheckoutUrl: string }>(
       '/v1/platform-billing/ai-credits/create-checkout-session',
       params,

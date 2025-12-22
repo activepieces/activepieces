@@ -12,8 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
 
 import { billingMutations } from '../../lib/billing-hooks';
 
@@ -36,15 +36,11 @@ export function AutoTopUpConfigDialog({
   const [threshold, setThreshold] = useState(currentThreshold);
   const [creditsToAdd, setCreditsToAdd] = useState(currentCreditsToAdd);
 
-  const {
-    mutate: enableAutoTopUp,
-    isPending: isEnabling,
-  } = billingMutations.useEnableAutoTopUp(queryClient);
+  const { mutate: enableAutoTopUp, isPending: isEnabling } =
+    billingMutations.useEnableAutoTopUp(queryClient);
 
-  const {
-    mutate: updateAutoTopUp,
-    isPending: isUpdating,
-  } = billingMutations.useUpdateAutoTopUpConfig(queryClient);
+  const { mutate: updateAutoTopUp, isPending: isUpdating } =
+    billingMutations.useUpdateAutoTopUpConfig(queryClient);
 
   const isPending = isEnabling || isUpdating;
 
@@ -55,9 +51,9 @@ export function AutoTopUpConfigDialog({
     };
 
     const onSuccess = () => {
-        onOpenChange(false);
-    }
-    
+      onOpenChange(false);
+    };
+
     if (isEditing) {
       updateAutoTopUp(params, { onSuccess });
     } else {
@@ -70,7 +66,9 @@ export function AutoTopUpConfigDialog({
       <DialogContent className="max-w-[480px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? t('Edit Auto Top-up Configuration') : t('Enable Auto Top-up')}
+            {isEditing
+              ? t('Edit Auto Top-up Configuration')
+              : t('Enable Auto Top-up')}
           </DialogTitle>
           <DialogDescription>
             {t('Automatically purchase credits when your balance runs low.')}
@@ -81,10 +79,12 @@ export function AutoTopUpConfigDialog({
           <div className="space-y-6">
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                  <Label>{t('When credits fall below')}</Label>
-                  <span className="text-sm font-medium text-primary">
-                    {t('{threshold} credits', { threshold: threshold.toLocaleString() })}
-                  </span>
+                <Label>{t('When credits fall below')}</Label>
+                <span className="text-sm font-medium text-primary">
+                  {t('{threshold} credits', {
+                    threshold: threshold.toLocaleString(),
+                  })}
+                </span>
               </div>
               <Slider
                 value={[threshold]}
@@ -93,18 +93,20 @@ export function AutoTopUpConfigDialog({
                 max={100000}
                 step={1000}
               />
-               <div className="flex justify-between text-xs text-muted-foreground">
-                   <span>{t('0')}</span>
-                   <span>{t('100,000')}</span>
-                </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{t('0')}</span>
+                <span>{t('100,000')}</span>
+              </div>
             </div>
 
             <div className="space-y-3">
-               <div className="flex justify-between items-center">
-                  <Label>{t('Add this many credits')}</Label>
-                   <span className="text-sm font-medium text-primary">
-                    {t('{creditsToAdd} credits', { creditsToAdd: creditsToAdd.toLocaleString() })}
-                  </span>
+              <div className="flex justify-between items-center">
+                <Label>{t('Add this many credits')}</Label>
+                <span className="text-sm font-medium text-primary">
+                  {t('{creditsToAdd} credits', {
+                    creditsToAdd: creditsToAdd.toLocaleString(),
+                  })}
+                </span>
               </div>
               <Slider
                 value={[creditsToAdd]}
@@ -113,28 +115,28 @@ export function AutoTopUpConfigDialog({
                 max={500000}
                 step={1000}
               />
-               <div className="flex justify-between text-xs text-muted-foreground">
-                   <span>{t('1,000')}</span>
-                   <span>{t('500,000')}</span>
-                </div>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{t('1,000')}</span>
+                <span>{t('500,000')}</span>
+              </div>
             </div>
           </div>
-          
-           <div className="rounded-lg border p-4 bg-primary/5 border-primary/30">
+
+          <div className="rounded-lg border p-4 bg-primary/5 border-primary/30">
             <div className="space-y-3 animate-in fade-in duration-300">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-semibold">
-                    {t('Payment per top-up')}
-                  </span>
-                  <span className="text-2xl font-bold text-primary">
-                    {t('${totalCost}', {
-                      totalCost: ((creditsToAdd / 1000) * 1).toFixed(2),
-                    })}
-                  </span>
-                </div>
-                 <div className="text-xs text-muted-foreground text-right">
-                    {t('$1 per 1000 credits')}
-                </div>
+              <div className="flex justify-between items-baseline">
+                <span className="text-sm font-semibold">
+                  {t('Payment per top-up')}
+                </span>
+                <span className="text-2xl font-bold text-primary">
+                  {t('${totalCost}', {
+                    totalCost: ((creditsToAdd / 1000) * 1).toFixed(2),
+                  })}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground text-right">
+                {t('$1 per 1000 credits')}
+              </div>
             </div>
           </div>
         </div>

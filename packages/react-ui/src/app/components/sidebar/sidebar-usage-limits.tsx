@@ -106,7 +106,10 @@ const SidebarUsageLimits = React.memo(() => {
           <UsageProgress
             name={t('AI Credits')}
             value={Math.floor(platform.usage?.totalAiCreditsUsed ?? 0)}
-            max={Math.max(platform.usage?.aiCreditsLimit ?? 0, platform?.plan.includedAiCredits)}
+            max={Math.max(
+              platform.usage?.aiCreditsLimit ?? 0,
+              platform?.plan.includedAiCredits,
+            )}
           />
           <UsageProgress
             name={t('Active Flows')}

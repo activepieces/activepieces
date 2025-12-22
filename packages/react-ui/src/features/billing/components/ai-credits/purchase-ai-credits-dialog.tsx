@@ -12,7 +12,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Slider } from '@/components/ui/slider';
-import { cn } from '@/lib/utils';
 
 import { billingMutations } from '../../lib/billing-hooks';
 
@@ -28,10 +27,10 @@ export function PurchaseAICreditsDialog({
   const [creditsToAdd, setCreditsToAdd] = useState(10000); // Default to 10k credits
   const COST_PER_1000_CREDITS = 1;
 
-  const {
-    mutate: createCheckoutSession,
-    isPending: isCreatingSession,
-  } = billingMutations.useCreateAICreditCheckoutSession(() => onOpenChange(false));
+  const { mutate: createCheckoutSession, isPending: isCreatingSession } =
+    billingMutations.useCreateAICreditCheckoutSession(() =>
+      onOpenChange(false),
+    );
 
   const totalCost = (creditsToAdd / 1000) * COST_PER_1000_CREDITS;
 
@@ -56,37 +55,37 @@ export function PurchaseAICreditsDialog({
             <div className="flex justify-between text-sm font-medium">
               <span>{t('Credits to add')}</span>
               <span className="text-primary font-semibold">
-                {t('{creditsToAdd} credits', { creditsToAdd: creditsToAdd.toLocaleString() })}
+                {t('{creditsToAdd} credits', {
+                  creditsToAdd: creditsToAdd.toLocaleString(),
+                })}
               </span>
             </div>
             <Slider
-                value={[creditsToAdd]}
-                onValueChange={(v) => setCreditsToAdd(v[0])}
-                min={1000}
-                max={5000000}
-                step={1000}
+              value={[creditsToAdd]}
+              onValueChange={(v) => setCreditsToAdd(v[0])}
+              min={1000}
+              max={5000000}
+              step={1000}
             />
             <div className="flex justify-between text-xs text-muted-foreground">
-               <span>{t('1,000')}</span>
-               <span>{t('5,000,000')}</span>
+              <span>{t('1,000')}</span>
+              <span>{t('5,000,000')}</span>
             </div>
           </div>
 
           <div className="rounded-lg border p-4 bg-primary/5 border-primary/30">
             <div className="space-y-3 animate-in fade-in duration-300">
-                <div className="flex justify-between items-baseline">
-                  <span className="text-sm font-semibold">
-                    {t('Total Cost')}
-                  </span>
-                  <span className="text-2xl font-bold text-primary">
-                    {t('${totalCost}', {
-                      totalCost: totalCost.toFixed(2),
-                    })}
-                  </span>
-                </div>
-                 <div className="text-xs text-muted-foreground text-right">
-                    {t('${cost} per 1000 credits', { cost: COST_PER_1000_CREDITS })}
-                </div>
+              <div className="flex justify-between items-baseline">
+                <span className="text-sm font-semibold">{t('Total Cost')}</span>
+                <span className="text-2xl font-bold text-primary">
+                  {t('${totalCost}', {
+                    totalCost: totalCost.toFixed(2),
+                  })}
+                </span>
+              </div>
+              <div className="text-xs text-muted-foreground text-right">
+                {t('${cost} per 1000 credits', { cost: COST_PER_1000_CREDITS })}
+              </div>
             </div>
           </div>
         </div>
@@ -109,9 +108,7 @@ export function PurchaseAICreditsDialog({
             ) : (
               <Zap className="w-4 h-4" />
             )}
-            {isCreatingSession
-              ? t('Processing...')
-              : t('Purchase Credits')}
+            {isCreatingSession ? t('Processing...') : t('Purchase Credits')}
           </Button>
         </DialogFooter>
       </DialogContent>

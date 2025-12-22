@@ -33,7 +33,7 @@ export const PlatformAiCreditsPaymentEntity = new EntitySchema<PlatformAiCredits
         type: {
             type: String,
             nullable: false,
-        }
+        },
     },
     indices: [],
     relations: {

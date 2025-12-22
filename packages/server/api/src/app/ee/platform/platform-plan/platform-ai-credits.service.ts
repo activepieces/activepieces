@@ -1,21 +1,21 @@
+import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema, ListAICreditsPaymentsRequestParams } from '@activepieces/ee-shared'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, AiCreditsAutoTopUpState, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformAiCreditsPayment, PlatformAiCreditsPaymentStatus, PlatformAiCreditsPaymentType, PlatformPlan, SeekPage } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { distributedLock } from '../../../database/redis-connections'
-import { system } from '../../../helper/system/system'
-import { platformPlanRepo, platformPlanService } from './platform-plan.service'
-import { repoFactory } from '../../../core/db/repo-factory'
-import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
-import { openRouterApi } from './openrouter/openrouter-api'
-import { stripeHelper } from './stripe-helper'
-import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
-import { SystemJobName } from '../../../helper/system-jobs/common'
-import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
 import { In } from 'typeorm'
-import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema, ListAICreditsPaymentsRequestParams } from '@activepieces/ee-shared'
-import { paginationHelper } from '../../../helper/pagination/pagination-utils'
+import { repoFactory } from '../../../core/db/repo-factory'
+import { distributedLock } from '../../../database/redis-connections'
 import { buildPaginator } from '../../../helper/pagination/build-paginator'
+import { paginationHelper } from '../../../helper/pagination/pagination-utils'
 import Paginator from '../../../helper/pagination/paginator'
+import { system } from '../../../helper/system/system'
+import { SystemJobName } from '../../../helper/system-jobs/common'
+import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
+import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
+import { openRouterApi } from './openrouter/openrouter-api'
+import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
+import { platformPlanRepo, platformPlanService } from './platform-plan.service'
+import { stripeHelper } from './stripe-helper'
 
 const platformAiCreditsPaymentRepo = repoFactory(PlatformAiCreditsPaymentEntity)
 
@@ -24,19 +24,21 @@ const CREDIT_PER_DOLLAR = 1000
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
         systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_RENEW, async () => {
-            log.info(`(platformAiCreditsService) Renewing Free AI credits`)
+            log.info('(platformAiCreditsService) Renewing Free AI credits')
             try {
                 await this.resetPlanIncludedCredits()
-            } catch (e) {
-                log.error(e, `(platformAiCreditsService) Renewing Free AI credits failed`)
+            }
+            catch (e) {
+                log.error(e, '(platformAiCreditsService) Renewing Free AI credits failed')
             }
         })
         systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_AUTO_TOPUP, async () => {
-            log.info(`(platformAiCreditsService) Auto Topup AI credits`)
+            log.info('(platformAiCreditsService) Auto Topup AI credits')
             try {
                 await this.autoTopUpPlans()
-            } catch (e) {
-                log.error(e, `(platformAiCreditsService) Auto Topup AI credits failed`)
+            }
+            catch (e) {
+                log.error(e, '(platformAiCreditsService) Auto Topup AI credits failed')
             }
         })
 
@@ -69,10 +71,10 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async getUsage(platformId: string): Promise<APIKeyUsage> {
         if (!this.isEnabled()) {
             return {
-               usage: 0,
-               limit: 0,
-               usageMonthly: 0,
-               usageRemaining: 0,
+                usage: 0,
+                limit: 0,
+                usageMonthly: 0,
+                usageRemaining: 0,
             }
         }
 
@@ -139,8 +141,8 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'auto topup already enabled'
-                }
+                    message: 'auto topup already enabled',
+                },
             })
         }
 
@@ -161,7 +163,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
         const stripeCheckoutUrl = await stripeHelper(log).createNewAICreditAutoTopUpCheckoutSession({
             platformId,
-            customerId: plan.stripeCustomerId
+            customerId: plan.stripeCustomerId,
         })
 
         return { stripeCheckoutUrl }
@@ -190,8 +192,8 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
                 params: {
-                    message: 'auto topup already disabled'
-                }
+                    message: 'auto topup already disabled',
+                },
             })
         }
 
@@ -235,7 +237,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             amountInUsd,
             platformId,
             paymentId: id,
-            customerId
+            customerId,
         })
 
         await platformAiCreditsPaymentRepo().insert({
@@ -285,7 +287,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
 
         const plans = await platformPlanRepo().find({
-            where: { openRouterApiKeyHash: In(keys.map(k => k.hash)) }
+            where: { openRouterApiKeyHash: In(keys.map(k => k.hash)) },
         })
 
         for (const plan of plans) {
@@ -297,7 +299,8 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
             if (creditsUsedLastMonth > plan.includedAiCredits) {
                 creditsToAdd = plan.includedAiCredits
-            } else {
+            }
+            else {
                 creditsToAdd = plan.includedAiCredits - creditsUsedLastMonth
             }
 
@@ -324,8 +327,8 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         const plans = await platformPlanRepo().find({
             where: { 
                 openRouterApiKeyHash: In(keys.map(k => k.hash)), 
-                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON 
-            }
+                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON, 
+            },
         })
 
         for (const plan of plans) {

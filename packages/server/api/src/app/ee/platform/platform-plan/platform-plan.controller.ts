@@ -81,19 +81,19 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     // AI Credits
     fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
-        return await platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
+        return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
     })
     fastify.post('/ai-credits/auto-topup/enable', EnableAICreditsAutoTopUpRequest, async (request) => {
-        return await platformAiCreditsService(request.log).enableAutoTopUp(request.principal.platform.id, request.body)
+        return platformAiCreditsService(request.log).enableAutoTopUp(request.principal.platform.id, request.body)
     })
     fastify.post('/ai-credits/auto-topup/config', EnableAICreditsAutoTopUpRequest, async (request) => {
-        return await platformAiCreditsService(request.log).updateAutoTopUpConfig(request.principal.platform.id, request.body)
+        return platformAiCreditsService(request.log).updateAutoTopUpConfig(request.principal.platform.id, request.body)
     })
     fastify.post('/ai-credits/auto-topup/disable', DisableAICreditsAutoTopUpRequest, async (request) => {
-        return await platformAiCreditsService(request.log).disableAutoTopUp(request.principal.platform.id)
+        return platformAiCreditsService(request.log).disableAutoTopUp(request.principal.platform.id)
     })
     fastify.get('/ai-credits/payments', ListAICreditsPaymentsRequest, async (request) => {
-        return await platformAiCreditsService(request.log).listPayments(request.principal.platform.id, request.query)
+        return platformAiCreditsService(request.log).listPayments(request.principal.platform.id, request.query)
     })
 }
 

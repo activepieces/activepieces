@@ -141,8 +141,9 @@ export const billingMutations = {
   useEnableAutoTopUp: (queryClient: QueryClient) => {
     return useMutation({
       mutationFn: async (params: EnableAICreditsAutoTopUpParamsSchema) => {
-        const { stripeCheckoutUrl } =
-          await platformBillingApi.enableAutoTopUp(params);
+        const { stripeCheckoutUrl } = await platformBillingApi.enableAutoTopUp(
+          params,
+        );
         if (stripeCheckoutUrl) {
           window.open(stripeCheckoutUrl, '_blank');
         }
@@ -164,19 +165,19 @@ export const billingMutations = {
       mutationFn: async (params: EnableAICreditsAutoTopUpParamsSchema) => {
         const { stripeCheckoutUrl } =
           await platformBillingApi.updateAutoTopUpConfig(params);
-         if (stripeCheckoutUrl) {
+        if (stripeCheckoutUrl) {
           window.open(stripeCheckoutUrl, '_blank');
         }
       },
       onSuccess: () => {
         queryClient.invalidateQueries({
-           queryKey: ['platform-billing-subscription'],
+          queryKey: ['platform-billing-subscription'],
         });
         toast.success(t('Auto top-up configuration updated successfully'));
       },
       onError: () => {
-         toast.error(t('Updating auto top-up configuration failed'));
-         internalErrorToast();
+        toast.error(t('Updating auto top-up configuration failed'));
+        internalErrorToast();
       },
     });
   },
@@ -185,7 +186,7 @@ export const billingMutations = {
       mutationFn: () => platformBillingApi.disableAutoTopUp(),
       onSuccess: () => {
         queryClient.invalidateQueries({
-           queryKey: ['platform-billing-subscription'],
+          queryKey: ['platform-billing-subscription'],
         });
         toast.success(t('Auto top-up disabled successfully'));
       },
