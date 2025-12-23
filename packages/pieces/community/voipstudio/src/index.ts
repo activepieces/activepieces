@@ -6,6 +6,13 @@ import { makeACallToLead } from './lib/actions/make-a-call-to-lead';
 import { makeACall } from './lib/actions/make-a-call';
 import { makeAWebcall } from './lib/actions/make-a-webcall';
 import { sendSms } from './lib/actions/send-sms';
+import { callConnected } from './lib/triggers/call-connected';
+import { callEnded } from './lib/triggers/call-ended';
+import { callTracking } from './lib/triggers/call-tracking';
+import { dtmfReceived } from './lib/triggers/dtmf-received';
+import { missedCall } from './lib/triggers/missed-call';
+import { newCallRecording } from './lib/triggers/new-call-recording';
+import { smsReceived } from './lib/triggers/sms-received';
 
 export const voipstudio = createPiece({
   displayName: 'Voipstudio',
@@ -23,5 +30,13 @@ export const voipstudio = createPiece({
     makeAWebcall,
     sendSms
   ],
-  triggers: [],
+  triggers: [
+    callConnected,
+    callEnded,
+    callTracking,
+    dtmfReceived,
+    missedCall,
+    newCallRecording,
+    smsReceived
+  ],
 });
