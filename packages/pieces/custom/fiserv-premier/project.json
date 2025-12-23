@@ -11,7 +11,10 @@
         "outputPath": "dist/packages/pieces/custom/fiserv-premier",
         "main": "packages/pieces/custom/fiserv-premier/src/index.ts",
         "tsConfig": "packages/pieces/custom/fiserv-premier/tsconfig.lib.json",
-        "assets": ["packages/pieces/custom/fiserv-premier/*.md"]
+        "assets": [
+          "packages/pieces/custom/fiserv-premier/*.md",
+          "packages/pieces/custom/fiserv-premier/*.png"
+        ]
       }
     }
   },

@@ -2,6 +2,37 @@
 
 This guide documents the common issues and solutions when building custom pieces for Activepieces.
 
+## Action Naming Convention
+
+### Pattern: `{Resource} - {Operation}`
+
+Actions should follow this pattern for consistency and clarity:
+
+**Format:**
+- **name**: `{resource}_{operation}` (snake_case)
+- **displayName**: `{Resource} - {Operation}` (Title Case with dash separator)
+
+**Examples:**
+- Loan operations: `Loan - Create`, `Loan - Retrieve`, `Loan - Update`, `Loan - Delete`
+- Document operations: `Document - Create`, `Document - Retrieve`, `Document - List`, `Document - Update`
+- Field operations: `Loan - Manage Field Locks`
+
+**Benefits:**
+- Groups related actions together in UI
+- Clear resource identification
+- Consistent user experience
+- Easy to search and filter
+
+**Example Implementation:**
+```typescript
+export const createLoan = createAction({
+  name: 'loan_create',  // snake_case: resource_operation
+  displayName: 'Loan - Create',  // Title Case with dash
+  description: 'Create a new loan in Encompass',
+  // ... rest of action definition
+});
+```
+
 ## Root Cause Issues
 
 ### Issue 1: Version Mismatch Between Container and npm Packages
@@ -74,17 +105,22 @@ Change from `dependencies` to `peerDependencies` with wildcards:
 
 ### 2. Fix Imports
 
-Use the correct import paths for HTTP client:
+Use the correct import paths for HTTP client and **do NOT include file extensions for relative imports**:
 
 **❌ Incorrect:**
 ```typescript
 import { httpClient } from '@activepieces/pieces-framework';
+import { myAction } from './lib/actions/my-action.js';  // NO extensions!
+import { myAction } from './lib/actions/my-action.ts';  // NO extensions!
 ```
 
 **✅ Correct:**
 ```typescript
 import { httpClient } from '@activepieces/pieces-common';
+import { myAction } from './lib/actions/my-action';  // No extension
 ```
+
+**Note:** Do NOT include file extensions (`.js` or `.ts`) in relative imports. TypeScript will compile them correctly to CommonJS `require()` statements without extensions.
 
 ### 3. Auth Property Access
 
@@ -98,14 +134,15 @@ const organizationId = auth.organizationId;
 
 ## Complete Example: Working package.json
 
+**CRITICAL:** Your source `package.json` should point to TypeScript files, but after building with Nx, the published `package.json` will point to compiled JavaScript files.
+
+### Source package.json (before build):
 ```json
 {
-  "name": "@vqnguyen1/piece-gelato",
-  "version": "0.0.3",
-  "description": "Gelato API integration",
-  "main": "src/index.ts",
-  "author": "vqnguyen1",
+  "name": "@vqnguyen1/piece-fiserv-premier",
+  "version": "0.0.10",
   "license": "MIT",
+  "main": "src/index.ts",
   "peerDependencies": {
     "@activepieces/pieces-framework": "*",
     "@activepieces/pieces-common": "*",
@@ -115,25 +152,64 @@ const organizationId = auth.organizationId;
 }
 ```
 
-## Building and Publishing
+### Published package.json (after Nx build):
+```j⚠️ CRITICAL: Pieces Must Be Built with Nx
 
-### Option 1: Manual Build (When Workspace Has Issues)
+Activepieces requires **compiled JavaScript files**, not TypeScript source. Your package must contain `.js`, `.d.ts`, and `.js.map` files. You **MUST** use the Nx build system.
 
-If the Nx workspace has TypeScript compilation errors in framework packages:
+### Building with Nx (Required)
 
 ```bash
-# Navigate to your piece
-cd packages/pieces/custom/your-piece
+# Build with Nx (this compiles TypeScript and transforms package.json)
+bunx nx build pieces-your-piece
 
-# Create dist folder
-rm -rf dist && mkdir -p dist
+# The output will be in: dist/packages/pieces/custom/your-piece/
+# It will contain:
+# - src/index.js (compiled JavaScript)
+# - src/index.d.ts (TypeScript definitions)
+# - src/lib/actions/*.js (compiled actions)
+# - package.json (transformed to point to .js files)
+# - README.md, logo files, etc.
 
-# Copy source files
-cp -r src dist/
-cp package.json README.md dist/
+# Navigate to built output
+cd dist/packages/pieces/custom/your-piece
 
-# Package from dist
-cd dist
+# Verify the files are JavaScript
+ls -la src/  # Should see .js, .d.ts, .js.map files
+
+# Publish
+npm publish --access public
+```
+
+### What Nx Build Does:
+
+1. ✅ Compiles TypeScript (.ts) to JavaScript (.js)
+2. ✅ Generates type definition files (.d.ts)
+3. ✅ Generates source maps (.js.map)
+4. ✅ Transforms package.json to change:
+   - `"main": "src/index.ts"` → `"main": "./src/index.js"`
+   - Adds `"type": "commonjs"`
+   - Adds `"types": "./src/index.d.ts"`
+   - Adds proper `"exports"` field
+   - Adds `"tslib"` dependency
+5. ✅ Converts ES6 imports to CommonJS require() statements
+6. ✅ Copies README, logo, and other assets
+
+### ❌ Do NOT Ship TypeScript Source
+
+Publishing TypeScript source files will fail with module resolution errors:
+```
+Error [ERR_MODULE_NOT_FOUND]: Cannot find module '.../lib/actions/get-party'
+```
+
+Always build with Nx first!
+# Copy compiled files and configs
+cp -r dist/* dist-publish/src/
+cp package.json README.md dist-publish/
+cp -r assets dist-publish/ 2>/dev/null || true  # Copy assets if they exist
+
+# Package from dist-publish
+cd dist-publish
 npm pack
 
 # Publish (optional)

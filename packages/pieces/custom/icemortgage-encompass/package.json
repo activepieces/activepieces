@@ -1,0 +1,12 @@
+{
+  "name": "@vqnguyen1/piece-icemortgage-encompass",
+  "version": "0.0.3",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "peerDependencies": {
+    "@activepieces/pieces-framework": "*",
+    "@activepieces/pieces-common": "*",
+    "@activepieces/shared": "*"
+  },
+  "dependencies": {}
+}

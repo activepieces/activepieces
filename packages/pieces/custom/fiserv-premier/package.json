@@ -1,6 +1,6 @@
 {
   "name": "@vqnguyen1/piece-fiserv-premier",
-  "version": "0.0.2",
+  "version": "0.0.13",
   "license": "MIT",
   "type": "commonjs",
   "main": "./src/index.js",

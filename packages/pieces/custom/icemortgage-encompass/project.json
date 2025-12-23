@@ -1,0 +1,22 @@
+{
+  "name": "pieces-icemortgage-encompass",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/icemortgage-encompass/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/icemortgage-encompass",
+        "main": "packages/pieces/custom/icemortgage-encompass/src/index.ts",
+        "tsConfig": "packages/pieces/custom/icemortgage-encompass/tsconfig.lib.json",
+        "assets": [
+          "packages/pieces/custom/icemortgage-encompass/*.md",
+          "packages/pieces/custom/icemortgage-encompass/*.png"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
