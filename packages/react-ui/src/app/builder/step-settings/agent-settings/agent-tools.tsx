@@ -1,10 +1,9 @@
+import { Accordion } from '@radix-ui/react-accordion';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { ControllerRenderProps } from 'react-hook-form';
 
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
 import { AgentToolType } from '@activepieces/shared';
 
@@ -32,8 +31,7 @@ export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
 }: AgentToolsProps) => {
-  const { showAddFlowDialog, setShowAddFlowDialog, openPieceDialog } =
-    useAgentToolsStore();
+  const { setShowAddFlowDialog, openPieceDialog } = useAgentToolsStore();
 
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
@@ -41,14 +39,8 @@ export const AgentTools = ({
 
   const onToolsUpdate = (tools: AgentTool[]) => agentToolsField.onChange(tools);
 
-  const { pieces } = piecesHooks.usePieces({});
-
   const removeTool = (toolName: string) => {
     onToolsUpdate(tools.filter((tool) => toolName !== tool.toolName));
-  };
-
-  const handleOpenAddPieceDialog = () => {
-    openPieceDialog('pieces-list');
   };
 
   const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
@@ -64,52 +56,55 @@ export const AgentTools = ({
     }, {});
 
   return (
-    <div className="">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-medium">{t('Tools')}</h2>
-
-        <AddToolDropdown
-          disabled={disabled}
-          setShowAddFlowDialog={setShowAddFlowDialog}
-          setShowAddPieceDialog={handleOpenAddPieceDialog}
-          align="end"
-        >
-          <Button variant="ghost" size="icon">
-            <Plus className="size-4" />
-          </Button>
-        </AddToolDropdown>
-      </div>
+    <div>
+      <h2 className="text-sm font-medium">{t('Agent Tools')}</h2>
 
       <div className="mt-2">
         {tools.length > 0 ? (
-          <ScrollArea>
-            <div className="space-y-2">
+          <>
+            <Accordion
+              type="single"
+              collapsible
+              className="border rounded-md overflow-hidden shadow-none"
+            >
               {Object.entries(pieceToToolMap).map(([pieceName, tools]) => (
                 <AgentPieceToolComponent
                   key={pieceName}
                   disabled={disabled}
                   tools={tools}
-                  pieces={pieces || []}
                   removeTool={removeTool}
                 />
               ))}
-              {flowTools.map((tool) => (
+              {flowTools.length > 0 && (
                 <AgentFlowToolComponent
-                  key={tool.flowId}
                   disabled={disabled}
-                  tool={tool}
+                  tools={flowTools}
                   removeTool={removeTool}
                 />
-              ))}
-            </div>
-          </ScrollArea>
+              )}
+            </Accordion>
+            <AddToolDropdown
+              disabled={disabled}
+              setShowAddFlowDialog={setShowAddFlowDialog}
+              setShowAddPieceDialog={() =>
+                openPieceDialog({ defaultPage: 'pieces-list' })
+              }
+              align="center"
+            >
+              <Button variant="accent" className="mt-2">
+                <Plus className="size-4 mr-2" />
+                {t('Add')}
+              </Button>
+            </AddToolDropdown>
+          </>
         ) : (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-border bg-card px-4 py-8 text-center">
-            <div className="flex items-center gap-2">
-              {icons.slice(0, 4).map((icon) => (
+          <div className="flex flex-col items-center justify-center gap-4 rounded-xl border bg-card px-4 py-8 text-center">
+            <div className="flex items-center">
+              {icons.slice(0, 4).map((icon, index) => (
                 <div
                   key={icon}
-                  className="flex size-9 items-center justify-center rounded-full border border-border bg-background"
+                  className="relative flex size-9 items-center justify-center rounded-full border bg-background"
+                  style={{ marginLeft: index === 0 ? 0 : -10 }}
                 >
                   <img
                     src={icon}
@@ -118,6 +113,12 @@ export const AgentTools = ({
                   />
                 </div>
               ))}
+              <div
+                className="relative flex size-9 items-center justify-center rounded-full border text-[10px] bg-background text-foreground font-medium"
+                style={{ marginLeft: -10 }}
+              >
+                <span>+500</span>
+              </div>
             </div>
 
             <p className="text-sm font-medium text-muted-foreground">
@@ -127,12 +128,14 @@ export const AgentTools = ({
             <AddToolDropdown
               disabled={disabled}
               setShowAddFlowDialog={setShowAddFlowDialog}
-              setShowAddPieceDialog={handleOpenAddPieceDialog}
+              setShowAddPieceDialog={() =>
+                openPieceDialog({ defaultPage: 'pieces-list' })
+              }
               align="center"
             >
               <Button variant="accent" className="gap-2">
                 <Plus className="size-4" />
-                {t('Add Tool')}
+                {t('Add')}
               </Button>
             </AddToolDropdown>
           </div>
@@ -140,20 +143,10 @@ export const AgentTools = ({
       </div>
 
       <AgentFlowToolDialog
-        open={showAddFlowDialog}
-        selectedFlows={tools
-          .filter((tool) => tool.type === AgentToolType.FLOW)
-          .map((tool) => tool.flowId!)}
-        onToolsUpdate={(newTools) => {
-          onToolsUpdate(newTools);
-          setShowAddFlowDialog(false);
-        }}
-        onClose={() => {
-          setShowAddFlowDialog(false);
-        }}
+        selectedFlows={flowTools}
+        onToolsUpdate={onToolsUpdate}
         tools={tools}
       />
-
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />
     </div>
   );

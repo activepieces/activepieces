@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { ChevronLeft } from 'lucide-react';
 import { useMemo, useEffect } from 'react';
+import { toast } from 'sonner';
 import { useDebounce } from 'use-debounce';
 
 import { Button } from '@/components/ui/button';
@@ -32,7 +33,14 @@ type AgentToolsDialogProps = {
   onToolsUpdate: (tools: AgentTool[]) => void;
 };
 
-const excludedPieces = ['@activepieces/piece-ai'];
+const excludedPieces = [
+  '@activepieces/piece-ai',
+  '@activepieces/piece-mcp',
+  '@activepieces/piece-openai',
+  '@activepieces/piece-claude',
+  '@activepieces/piece-google-gemini',
+  '@activepieces/piece-grok-xai',
+];
 
 export function AgentPieceDialog({
   tools,
@@ -105,8 +113,10 @@ export function AgentPieceDialog({
         tool.toolName === editingTool.toolName ? newTool : tool,
       );
       onToolsUpdate(updatedTools);
+      toast('Piece tool updated');
     } else {
       onToolsUpdate([...tools, newTool]);
+      toast('Piece tool added');
     }
 
     closePieceDialog();
