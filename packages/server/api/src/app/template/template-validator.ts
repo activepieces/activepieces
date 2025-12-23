@@ -1,4 +1,4 @@
-import { ActivepiecesError, CreateTemplateRequestBody, ErrorCode, FlowOperationRequest, flowOperations, FlowOperationType, flowPieceUtil, FlowVersion, FlowVersionState, FlowVersionTemplate, PlatformId, sanitizeObjectForPostgresql } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, FlowOperationRequest, flowOperations, FlowOperationType, flowPieceUtil, FlowVersion, FlowVersionState, FlowVersionTemplate, PlatformId, sanitizeObjectForPostgresql } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { flowVersionValidationUtil } from '../flows/flow-version/flow-version-validator-util'
 
@@ -17,15 +17,13 @@ function createMinimalFlowVersion(template: FlowVersionTemplate): FlowVersion {
     }
 }
 
-type PreparedTemplate = Omit<CreateTemplateRequestBody, 'flows'> & {
+type PreparedTemplate = {
     flows: FlowVersionTemplate[]
     pieces: string[]
 }
 
 export const templateValidator = {
-    async validateAndPrepare({ template, platformId, log }: ValidateParams): Promise<PreparedTemplate> {
-        const { flows } = template
-        
+    async validateAndPrepare({ flows, platformId, log }: ValidateParams): Promise<PreparedTemplate> {
         if (!flows || flows.length === 0) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -60,7 +58,6 @@ export const templateValidator = {
         const pieces = Array.from(new Set(sanitizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()))
 
         return {
-            ...template,
             flows: sanitizedFlows,
             pieces,
         }
@@ -68,7 +65,7 @@ export const templateValidator = {
 }
 
 type ValidateParams = {
-    template: CreateTemplateRequestBody
+    flows: FlowVersionTemplate[] | undefined
     platformId?: PlatformId
     log: FastifyBaseLogger
 }

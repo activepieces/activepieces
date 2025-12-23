@@ -26,12 +26,14 @@ export const templateService = (log: FastifyBaseLogger) => ({
     },
     async create({ platformId, params }: CreateParams): Promise<Template> {
         const preparedTemplate = await templateValidator.validateAndPrepare({ 
-            template: params, 
+            flows: params.flows, 
             platformId, 
             log,
         })
         
-        const { name, summary, description, tags, blogUrl, metadata, author, categories, type, flows, pieces } = preparedTemplate
+        const { flows, pieces } = preparedTemplate
+        const { name, summary, description, tags, blogUrl, metadata, author, categories, type } = params
+
         const newTags = tags ?? []
 
         switch (type) {
@@ -67,8 +69,19 @@ export const templateService = (log: FastifyBaseLogger) => ({
         const template = await this.getOneOrThrow({ id })
 
         const newTags = tags ?? []
-        const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
-        const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
+        
+        let sanatizedFlows: FlowVersionTemplate[] | undefined = undefined
+        let pieces: string[] | undefined = undefined
+        if (!isNil(params.flows) && params.flows.length > 0) {
+            const preparedTemplate = await templateValidator.validateAndPrepare({ 
+                flows: params.flows, 
+                platformId: undefined, 
+                log,
+            })
+            sanatizedFlows = preparedTemplate.flows
+            pieces = preparedTemplate.pieces
+        }
+        
         switch (template.type) {
             case TemplateType.OFFICIAL:
             case TemplateType.SHARED: {
