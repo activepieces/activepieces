@@ -1,16 +1,15 @@
-import { publicAccess } from '@activepieces/server-shared'
+import { publicAccess, publicPlatformAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
     InvitationStatus,
     InvitationType,
     isNil,
     ListUserInvitationsRequest,
     Permission,
-    Principal,
     PrincipalType,
+    PrincipalV2,
     ProjectRole,
     SeekPage,
     SendUserInvitationRequest,
@@ -125,7 +124,7 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     })
     return projectRole
 }
-async function getProjectIdAndAssertPermission<R extends Principal & { projectId: string }>(
+async function getProjectIdAndAssertPermission<R extends PrincipalV2>(
     app: FastifyInstance,
     request: FastifyRequest,
     reply: FastifyReply,
@@ -139,11 +138,11 @@ async function getProjectIdAndAssertPermission<R extends Principal & { projectId
         await assertPrincipalHasPermissionToProject(app, request, reply, principal, requestQuery.projectId, Permission.READ_INVITATION)
         return requestQuery.projectId
     }
-    return principal.projectId
+    return requestQuery.projectId ?? null
 }
 
 
-async function assertPrincipalHasPermissionToProject<R extends Principal & { platform: { id: string } }>(
+async function assertPrincipalHasPermissionToProject<R extends PrincipalV2 & { platform: { id: string } }>(
     fastify: FastifyInstance,
     request: FastifyRequest, reply: FastifyReply, principal: R,
     projectId: string, permission: Permission): Promise<void> {
@@ -163,9 +162,7 @@ async function assertPrincipalHasPermissionToProject<R extends Principal & { pla
 
 const ListUserInvitationsRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_INVITATION,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['user-invitations'],
@@ -190,8 +187,7 @@ const AcceptUserInvitationRequestParams = {
 
 const DeleteInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['user-invitations'],
@@ -207,8 +203,7 @@ const DeleteInvitationRequestParams = {
 
 const UpsertUserInvitationRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         body: SendUserInvitationRequest,
