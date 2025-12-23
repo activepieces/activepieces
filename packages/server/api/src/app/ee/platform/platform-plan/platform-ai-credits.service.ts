@@ -13,7 +13,8 @@ import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
 import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
-import { stripeHelper } from './stripe-helper'
+import { StripeCheckoutType, stripeHelper } from './stripe-helper'
+import { distributedLock } from '../../../database/redis-connections'
 
 const CREDIT_PER_DOLLAR = 1000
 
@@ -32,10 +33,23 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_AUTO_TOPUP, async ({ apiKeyHash, platformId }) => {
             log.info('(platformAiCreditsService) Auto Topup AI credits')
             try {
-                const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-                const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+                distributedLock(log).runExclusive({
+                    key: `ai_credits_auto_topup_${platformId}`,
+                    timeoutInSeconds: 10,
+                    fn: async () => {
+                        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+                        if (plan.aiCreditsAutoTopUpState !== AiCreditsAutoTopUpState.ALLOWED_AND_ON) {
+                            return
+                        }
+                        if (plan.aiCreditsAutoTopUpHappeningNow) {
+                            return
+                        }
 
-                await this.tryAutoTopUpPlan(plan, key)
+                        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+                        await this.tryAutoTopUpPlan(plan, key)
+                    }
+                })
             }
             catch (e) {
                 log.error(e, '(platformAiCreditsService) Auto Topup AI credits failed')
@@ -176,7 +190,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         return { stripeCheckoutUrl }
     },
 
-    async aiCreditsPaymentSucceeded(platformId: string, amount: number): Promise<void> {
+    async aiCreditsPaymentSucceeded(platformId: string, amount: number, paymentType: StripeCheckoutType): Promise<void> {
         const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
         const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
@@ -184,10 +198,17 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             hash: apiKeyHash,
             limit: key.limit! + amount,
         })
+
+        if (paymentType === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
+            await platformPlanService(log).update({
+                platformId,
+                aiCreditsAutoTopUpHappeningNow: false,
+            })
+        }
     },
 
     async resetPlanIncludedCredits(): Promise<void> {
-        const keys: Awaited<ReturnType<typeof openRouterApi.listKeys>>['data'] = []
+        const keys: OpenRouterApikey[] = []
         let offset = 0
         // eslint-disable-next-line no-constant-condition
         while (true) {
@@ -232,39 +253,11 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    // async autoTopUpPlans(): Promise<void> {
-    //     const keys: Awaited<ReturnType<typeof openRouterApi.listKeys>>['data'] = []
-    //     let offset = 0
-    //     // eslint-disable-next-line no-constant-condition
-    //     while (true) {
-    //         const { data } = await openRouterApi.listKeys({ offset })
-    //         if (data.length === 0) break
-
-    //         keys.push(...data)
-    //         offset += data.length
-    //     }
-
-    //     const plans = await platformPlanRepo().find({
-    //         where: {
-    //             aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON, 
-    //         },
-    //     })
-    //     const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs(
-    //         plans.map(p => p.platformId),
-    //     )
-
-    //     for (const plan of plans) {
-    //         const { apiKeyHash } = configs[plan.platformId]
-
-    //         const key = keys.find(k => k.hash === apiKeyHash)
-    //         if (!key) continue
-
-    //         await this.tryAutoTopUpPlan(plan, key)
-    //     }
-    // },
-
     async tryAutoTopUpPlan(plan: PlatformPlan, key: OpenRouterApikey): Promise<void> {
         if (plan.aiCreditsAutoTopUpState !== AiCreditsAutoTopUpState.ALLOWED_AND_ON) {
+            return
+        }
+        if (plan.aiCreditsAutoTopUpHappeningNow) {
             return
         }
 
@@ -285,6 +278,11 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             customerId: plan.stripeCustomerId,
             paymentMethod: plan.aiCreditsAutoTopUpStripePaymentMethod,
             platformId: plan.platformId,
+        })
+
+        await platformPlanService(log).update({
+            platformId: plan.platformId,
+            aiCreditsAutoTopUpHappeningNow: true,
         })
     },
 })

@@ -65,6 +65,7 @@ export const PlatformPlan = Type.Object({
     aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
     aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
     aiCreditsAutoTopUpStripePaymentMethod: Type.Optional(Type.String()),
+    aiCreditsAutoTopUpHappeningNow: Type.Optional(Type.Boolean()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),

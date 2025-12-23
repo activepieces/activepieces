@@ -27,6 +27,10 @@ export class AddPlatformAiCreditsPaymentTable1766186963979 implements MigrationI
             ADD "aiCreditsAutoTopUpStripePaymentMethod" character varying
         `)
         await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ADD "aiCreditsAutoTopUpHappeningNow" boolean
+        `)
+        await queryRunner.query(`
             ALTER TABLE "platform_ai_credits_payment"
             ADD CONSTRAINT "fk_platform_ai_credits_payment_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
         `)
@@ -47,6 +51,9 @@ export class AddPlatformAiCreditsPaymentTable1766186963979 implements MigrationI
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsAutoTopUpCreditsToAdd"
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsAutoTopUpHappeningNow"
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"

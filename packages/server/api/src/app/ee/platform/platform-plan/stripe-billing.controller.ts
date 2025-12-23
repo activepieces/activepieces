@@ -36,7 +36,8 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         const session = webhook.data.object
                         if (isNil(session.metadata)) {
                             break
-                        }
+                        } 
+
                         if (session.metadata.type === StripeCheckoutType.AI_CREDIT_PAYMENT) {
                             const platformId = session.metadata.platformId as string
                             const intent = await stripe.paymentIntents.retrieve(
@@ -45,7 +46,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             const amountInCents = intent.amount
                             const amountInUsd = amountInCents / 100
 
-                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(platformId, amountInUsd)
+                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(platformId, amountInUsd, StripeCheckoutType.AI_CREDIT_PAYMENT)
                         }
                         if (session.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
                             const setupIntent = await stripe.setupIntents.retrieve(
@@ -54,7 +55,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
                             const paymentMethodId = setupIntent.payment_method as string
                             const platformId = session.metadata.platformId as string
-                            await platformAiCreditsService(request.log).handleAutoTopUpCheckoutSessionCompleted(platformId, paymentMethodId)
+                            await platformAiCreditsService(request.log).handleAutoTopUpCheckoutSessionCompleted(platformId, paymentMethodId, StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP)
                         }
                         break
                     }
@@ -67,7 +68,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                             const platformId = paymentIntent.metadata.platformId as string
                             const amountInCents = paymentIntent.amount
                             const amountInUsd = amountInCents / 100
-                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(platformId, amountInUsd)
+                            await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(platformId, amountInUsd, StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP)
                         }
                         break
                     }
