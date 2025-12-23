@@ -61,6 +61,10 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             nullable: false,
             default: FlowOperationStatus.NONE,
         },
+        timeSavedPerRun: {
+            type: Number,
+            nullable: true,
+        },
     },
     indices: [
         {

@@ -7,7 +7,7 @@ const ApLoopReturnCanvasNode = () => {
   return (
     <>
       <div
-        className="h-[1px] bg-[transparent] pointer-events-none "
+        className="h-px bg-transparent pointer-events-none "
         style={{
           width: flowUtilConsts.AP_NODE_SIZE.LOOP_RETURN_NODE.width,
         }}

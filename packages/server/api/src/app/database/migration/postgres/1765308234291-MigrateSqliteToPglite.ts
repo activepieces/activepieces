@@ -145,19 +145,14 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         const transformedRows = rows.map((row) => this.transformRowForPostgres(row, entity))
 
         // Disable foreign key checks for the migration
-        await queryRunner.query('SET session_replication_role = replica')
+        await queryRunner.query('SET LOCAL session_replication_role = replica')
 
-        try {
-            const BATCH_SIZE = 100
-            const repository = queryRunner.connection.getRepository(entity.target)
+        const BATCH_SIZE = 100
+        const repository = queryRunner.connection.getRepository(entity.target)
             
-            for (let i = 0; i < transformedRows.length; i += BATCH_SIZE) {
-                const batch = transformedRows.slice(i, i + BATCH_SIZE)
-                await repository.upsert(batch, { conflictPaths: ['id'] })
-            }
-        }
-        finally {
-            await queryRunner.query('SET session_replication_role = DEFAULT')
+        for (let i = 0; i < transformedRows.length; i += BATCH_SIZE) {
+            const batch = transformedRows.slice(i, i + BATCH_SIZE)
+            await repository.upsert(batch, { conflictPaths: ['id'] })
         }
 
         log.info(`[MigrateSqliteToPglite] Successfully migrated ${rows.length} rows to ${tableName}`)

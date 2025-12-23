@@ -5,7 +5,7 @@ import {
   SparklesIcon,
   WrenchIcon,
 } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
@@ -54,7 +54,11 @@ const getTabsList = (operationType: FlowOperationType) => {
     },
   ];
 
-  if (operationType === FlowOperationType.ADD_ACTION) {
+  if (
+    [FlowOperationType.ADD_ACTION, FlowOperationType.UPDATE_ACTION].includes(
+      operationType,
+    )
+  ) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
@@ -125,6 +129,9 @@ const PieceSelectorContent = ({
     setSearchQuery('');
     setSelectedPieceMetadataInPieceSelector(null);
   };
+
+  const tabsList = useMemo(() => getTabsList(operation.type), [operation.type]);
+
   return (
     <Popover
       open={isOpen}
@@ -181,9 +188,7 @@ const PieceSelectorContent = ({
                   }
                 }}
               />
-              {!isMobile && (
-                <PieceSelectorTabs tabs={getTabsList(operation.type)} />
-              )}
+              {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
