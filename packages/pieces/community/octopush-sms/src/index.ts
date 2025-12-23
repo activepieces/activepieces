@@ -7,7 +7,7 @@ import { BASE_URL } from './lib/common/client';
 import { PieceCategory } from '@activepieces/shared';
 
 export const octopushSms = createPiece({
-  displayName: 'Octopush-sms',
+  displayName: 'Octopush SMS',
   auth: octopushAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/octopush-sms.png',
