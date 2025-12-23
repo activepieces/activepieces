@@ -344,6 +344,9 @@
       "@activepieces/piece-clearoutphone": [
         "packages/pieces/community/clearoutphone/src/index.ts"
       ],
+      "@activepieces/piece-giftbit": [
+        "packages/pieces/community/giftbit/src/index.ts"
+      ],
       "@activepieces/piece-free-agent": [
         "packages/pieces/community/free-agent/src/index.ts"
       ],
