@@ -73,6 +73,7 @@ export const piecesApi = {
   },
   async install(params: AddPieceRequestBody) {
     const formData = new FormData();
+    formData.set('projectId', params.projectId);
     formData.set('packageType', params.packageType);
     formData.set('pieceName', params.pieceName);
     formData.set('pieceVersion', params.pieceVersion);

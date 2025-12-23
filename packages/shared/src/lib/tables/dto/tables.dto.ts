@@ -3,6 +3,7 @@ import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
 
 export const CreateTableRequest = Type.Object({
+    projectId: Type.String(),
     name: Type.String(),
     externalId: Type.Optional(Type.String()),
 })
