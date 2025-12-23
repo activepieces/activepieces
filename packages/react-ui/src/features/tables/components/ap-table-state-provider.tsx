@@ -72,7 +72,6 @@ export function ApTableStateProvider({
     queryKey: ['fields', tableId],
     queryFn: () =>
       fieldsApi.list({
-        projectId: authenticationSession.getProjectId()!,
         tableId: tableId!,
       }),
     refetchOnWindowFocus: true,

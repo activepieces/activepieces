@@ -28,7 +28,6 @@ export const UpdateFieldRequest = Type.Object({
 })
 
 export const ListFieldsRequestQuery = Type.Object({
-    projectId: Type.Optional(Type.String()),
     tableId: Type.String(),
 })
 
