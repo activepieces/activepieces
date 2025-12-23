@@ -85,6 +85,7 @@ export function ProjectSelectionDialog({
       return;
     }
     loadSyncPlan({
+      projectId,
       type: ProjectReleaseType.PROJECT,
       targetProjectId: data.selectedProject,
     });
@@ -162,6 +163,7 @@ export function ProjectSelectionDialog({
           setOpen={setIsCreateReleaseDialogOpen}
           refetch={onSuccess}
           diffRequest={{
+            projectId,
             targetProjectId: form.getValues('selectedProject'),
             type: ProjectReleaseType.PROJECT,
           }}

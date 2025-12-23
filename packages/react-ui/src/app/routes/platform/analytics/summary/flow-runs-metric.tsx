@@ -20,7 +20,7 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
       title={t('Automation Runs')}
       value={report.totalFlowRuns.toLocaleString()}
       description={t(
-        'Total flow runs completed automatically, showing how many tasks your team automated this month.',
+        'Total flow runs completed automatically, showing how many tasks your team automated in the last 3 months.',
       )}
       subtitle={t('')}
       iconColor="text-amber-600"

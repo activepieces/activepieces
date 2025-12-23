@@ -1,4 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import {
     CreateFolderRequest,
     DeleteFolderRequest,
@@ -13,6 +14,7 @@ import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
 import { eventsHooks } from '../../helper/application-events'
+import { FolderEntity } from './folder.entity'
 import { flowFolderService as folderService } from './folder.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -110,8 +112,11 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_FLOW, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         tags: ['folders'],
@@ -123,8 +128,12 @@ const CreateFolderParams = {
 
 const UpdateFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FolderEntity,
+            }),
     },
     schema: {
         tags: ['folders'],
@@ -139,8 +148,12 @@ const UpdateFolderParams = {
 
 const GetFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FolderEntity,
+            }),
     },
     schema: {
         tags: ['folders'],
@@ -154,8 +167,11 @@ const GetFolderParams = {
 
 const ListFoldersParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_FLOW, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         tags: ['folders'],
@@ -167,8 +183,12 @@ const ListFoldersParams = {
 
 const DeleteFolderParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_FLOW,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_FLOW, {
+                type: ProjectResourceType.TABLE,
+                tableName: FolderEntity,
+            }),
     },
     schema: {
         params: DeleteFolderRequest,

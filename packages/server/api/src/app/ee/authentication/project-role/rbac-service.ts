@@ -38,6 +38,7 @@ export const rbacService = (log: FastifyBaseLogger) => ({
                     principalRoleId: principalRole.id,
                     routePermission: permission,
                 })
+
                 if (!access) {
                     throwPermissionDenied({ principal, projectId, projectRole: principalRole, permission })
                 }

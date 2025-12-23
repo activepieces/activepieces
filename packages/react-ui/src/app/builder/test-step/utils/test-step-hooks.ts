@@ -311,6 +311,7 @@ export const testStepHooks = {
         const response = await flowRunsApi.testStep({
           socket,
           request: {
+            projectId: authenticationSession.getProjectId()!,
             flowVersionId,
             stepName: currentStep.name,
           },
