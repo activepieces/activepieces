@@ -340,6 +340,12 @@
       ],
       "@activepieces/piece-clearoutphone": [
         "packages/pieces/community/clearoutphone/src/index.ts"
+      ],
+      "@activepieces/piece-voipstudio": [
+        "packages/pieces/community/voipstudio/src/index.ts"
+      ],
+      "@activepieces/piece-millionverifier": [
+        "packages/pieces/community/millionverifier/src/index.ts"
       ]
     },
     "resolveJsonModule": true
