@@ -186,14 +186,21 @@ export const BuilderHeader = ({ creditUsage }: { creditUsage?: number }) => {
         </Button>
       )}
       {hasPermissionToAiChat && (
-        <Button
-          variant="ghost"
-          onClick={() => setLeftSidebar(LeftSideBarType.PROMPT_TO_FLOW)}
-          className="gap-2 px-2"
-        >
-          <Sparkles className="w-4 h-4" />
-          {t('AI Chat')}
-        </Button>
+        <>
+          {!!creditUsage && (
+            <div className="px-1 text-sm text-muted-foreground text-nowrap">
+              Credits Used: {creditUsage.toFixed(2)}
+            </div>
+          )}
+          <Button
+            variant="ghost"
+            onClick={() => setLeftSidebar(LeftSideBarType.PROMPT_TO_FLOW)}
+            className="gap-2 px-2"
+            >
+            <Sparkles className="w-4 h-4" />
+            {t('AI Chat')}
+          </Button>
+        </>
       )}
       {hasPermissionToReadRuns && (
         <Button
