@@ -1,5 +1,4 @@
-import { Field } from '@activepieces/shared'
-import {
+import { Field,
     FlowActionType,
     flowStructureUtil,
     FlowVersion,
@@ -15,11 +14,11 @@ const fieldRepo = repoFactory<Field>(FieldEntity)
 const TABLES_PIECE_NAME = '@activepieces/piece-tables'
 const TARGET_ACTIONS = ['tables-create-records', 'tables-update-record']
 
-function collectFieldIdsFromFlow(flowVersion: FlowVersion): Set<string> {
-    const fieldIds = new Set<string>()
+function collectFieldIdsFromFlow(flowVersion: FlowVersion) {
+    const fieldIds: string[] = []
 
     flowStructureUtil.getAllSteps(flowVersion.trigger).forEach((step) => {
-        if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.startsWith('0.1.')) {
+        if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.includes('0.1.')) {
             return
         }
         const actionName = step.settings.actionName as string | undefined
@@ -29,12 +28,21 @@ function collectFieldIdsFromFlow(flowVersion: FlowVersion): Set<string> {
 
         const input = step.settings?.input as Record<string, unknown>
         const values = input?.values as Record<string, unknown> | undefined
-        const fieldsValues = actionName === 'tables-create-records' ? values?.values as Record<string, unknown> | undefined : values
+        const fieldsValues = actionName === 'tables-create-records' ? values?.values as Record<string, unknown>[] | undefined : values
         if (!fieldsValues) {
             return
         }
-        for (const fieldId of Object.keys(fieldsValues)) {
-            fieldIds.add(fieldId)
+        if (Array.isArray(fieldsValues)) {
+            for (const fieldValue of fieldsValues) {
+                for (const [fieldId, _value] of Object.entries(fieldValue)) {
+                    fieldIds.push(fieldId)
+                }
+            }
+        }
+        else {
+            for (const fieldId of Object.keys(fieldsValues)) {
+                fieldIds.push(fieldId)
+            }
         }
     })
 
@@ -46,7 +54,7 @@ export const migrateV11TablesToV2: Migration = {
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const fieldIds = collectFieldIdsFromFlow(flowVersion)
 
-        if (fieldIds.size === 0) {
+        if (fieldIds.length === 0) {
             return {
                 ...flowVersion,
                 schemaVersion: '12',
@@ -57,15 +65,16 @@ export const migrateV11TablesToV2: Migration = {
             where: { id: In([...fieldIds]) },
         })
 
-        const fieldIdToExternalId = new Map<string, string>()
+        const fieldIdToExternalId: Record<string, string> = {}
         for (const field of fields) {
-            fieldIdToExternalId.set(field.id, field.externalId)
+            fieldIdToExternalId[field.id] = field.externalId
         }
 
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => {
-            if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.startsWith('0.1.')) {
+            if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.includes('0.1.')) {
                 return step
             }
+
 
             const actionName = step.settings.actionName as string | undefined
             const input = step.settings?.input as Record<string, unknown>
@@ -80,31 +89,17 @@ export const migrateV11TablesToV2: Migration = {
                     },
                 }
             }
-
-            const newFieldsValue: Record<string, unknown> = {}
-            for (const [fieldId, value] of Object.entries(fieldsValue)) {
-                const externalId = fieldIdToExternalId.get(fieldId)
-                if (externalId) {
-                    newFieldsValue[externalId] = value
-                } else {
-                    // Keep the original key if field not found (might already be externalId)
-                    newFieldsValue[fieldId] = value
-                }
+            let stepSettings = JSON.stringify({
+                ...step.settings,
+                pieceVersion: '0.2.10',
+            })
+            for (const [fieldId, externalId] of Object.entries(fieldIdToExternalId)) {
+                stepSettings = stepSettings.replaceAll(`"${fieldId}"`, `"${externalId}"`)
             }
 
             return {
                 ...step,
-                settings: {
-                    ...step.settings,
-                    pieceVersion: '0.2.10',
-                    input: {
-                        ...input,
-                        values: actionName === 'tables-create-records' ? {
-                            ...values,
-                            values: newFieldsValue,
-                        } : newFieldsValue,
-                    },
-                },
+                settings: JSON.parse(stepSettings),
             }
         })
 
