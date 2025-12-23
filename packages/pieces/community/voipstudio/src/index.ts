@@ -17,7 +17,7 @@ import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { BASE_URL } from './lib/common/client';
 
 export const voipstudio = createPiece({
-  displayName: 'Voipstudio',
+  displayName: 'VoIPstudio',
   auth: voipstudioAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/voipstudio.png',
