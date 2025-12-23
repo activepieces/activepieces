@@ -109,7 +109,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -140,7 +140,7 @@ const GetTablesRequest = {
 
 const DeleteRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -161,7 +161,7 @@ const DeleteRequest = {
 
 const GetTableByIdRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+        security: projectAccess([PrincipalType.USER], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -181,7 +181,7 @@ const GetTableByIdRequest = {
 
 const ExportTableRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+        security: projectAccess([PrincipalType.USER], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),

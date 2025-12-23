@@ -3,7 +3,7 @@ import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
 
 export const CreateTableRequest = Type.Object({
-    projectId: Type.Optional(Type.String()),
+    projectId: Type.String(),
     name: Type.String(),
     externalId: Type.Optional(Type.String()),
 })
@@ -36,7 +36,6 @@ export type UpdateTableRequest = Static<typeof UpdateTableRequest>
 
 
 export const ListTablesRequest = Type.Object({
-    projectId: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
     name: Type.Optional(Type.String({})),

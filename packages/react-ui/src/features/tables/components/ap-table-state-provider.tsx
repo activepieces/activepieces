@@ -12,7 +12,6 @@ import {
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/lib/store/ap-tables-client-state';
-import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
 
@@ -72,7 +71,6 @@ export function ApTableStateProvider({
     queryKey: ['fields', tableId],
     queryFn: () =>
       fieldsApi.list({
-        projectId: authenticationSession.getProjectId()!,
         tableId: tableId!,
       }),
     refetchOnWindowFocus: true,
