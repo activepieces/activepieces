@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
+import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -27,7 +28,6 @@ import { StepNodeLogo } from './step-node-logo';
 import { StepNodeName } from './step-node-name';
 import { ApStepNodeStatus } from './step-node-status';
 import { TriggerWidget } from './trigger-widget';
-import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 
 const ApStepCanvasNode = React.memo(
   ({ data: { step } }: NodeProps & Omit<ApStepNode, 'position'>) => {

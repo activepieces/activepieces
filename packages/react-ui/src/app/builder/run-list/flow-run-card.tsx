@@ -4,9 +4,7 @@ import { t } from 'i18next';
 import { Eye, Repeat } from 'lucide-react';
 import React, { useState } from 'react';
 
-import {
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -53,9 +51,7 @@ const FlowRunCard = React.memo(
     );
     const projectId = authenticationSession.getProjectId();
 
-    const [setRun] = useBuilderStateContext((state) => [
-      state.setRun,
-    ]);
+    const [setRun] = useBuilderStateContext((state) => [state.setRun]);
     const { mutate: viewRun, isPending: isFetchingRun } = useMutation<
       {
         run: FlowRun;

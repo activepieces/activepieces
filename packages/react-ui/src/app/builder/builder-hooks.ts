@@ -74,12 +74,11 @@ export function useBuilderStateContext<T>(
   return useStore(store, selector);
 }
 
-
 export enum RightSideBarType {
   NONE = 'none',
   PIECE_SETTINGS = 'piece-settings',
   VERSIONS = 'versions',
-  RUNS = 'runs'
+  RUNS = 'runs',
 }
 
 export enum ChatDrawerSource {
@@ -279,7 +278,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       selectStepByName: (selectedStep: string) => {
         set((state) => {
-
           const selectedNodes =
             isNil(selectedStep) || selectedStep === 'trigger'
               ? []
@@ -290,7 +288,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             state.flowVersion.trigger.type === FlowTriggerType.EMPTY
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
-
 
           const isEmptyTrigger =
             selectedStep === 'trigger' &&
@@ -584,7 +581,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       askAiButtonProps: null,
       setAskAiButtonProps: (props) => {
         return set((state) => {
-
           let rightSidebar = state.rightSidebar;
           if (props && props.type === FlowOperationType.UPDATE_ACTION) {
             rightSidebar = RightSideBarType.PIECE_SETTINGS;

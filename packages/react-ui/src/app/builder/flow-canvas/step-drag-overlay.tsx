@@ -4,10 +4,7 @@ import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
-import {
-  BUILDER_NAVIGATION_SIDEBAR_ID,
-  flowUtilConsts,
-} from './utils/consts';
+import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
 
 const StepDragOverlay = ({
   step,

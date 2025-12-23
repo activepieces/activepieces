@@ -147,7 +147,7 @@ const FlowVersionDetailsCard = React.memo(
     const showAvatar = !useEmbedding().embedState.isEmbedded;
 
     return (
-      <CardListItem interactive={false} className='px-4'>
+      <CardListItem interactive={false} className="px-4">
         {showAvatar && flowVersion.updatedByUser && (
           <UserAvatar
             size={28}

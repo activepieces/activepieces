@@ -38,9 +38,7 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
           size="3"
           hideTooltip={true}
         ></StepStatusIcon>
-        <div>
-        {text}
-        </div>
+        <div>{text}</div>
       </div>
     </div>
   );
