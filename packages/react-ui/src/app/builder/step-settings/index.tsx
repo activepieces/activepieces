@@ -25,6 +25,7 @@ import {
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
+import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
@@ -35,7 +36,6 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
-import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectHooks.useCurrentProject();
@@ -47,6 +47,7 @@ const StepSettingsContainer = () => {
     flowVersion,
     selectedBranchIndex,
     setSelectedBranchIndex,
+    run
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -55,6 +56,7 @@ const StepSettingsContainer = () => {
     state.flowVersion,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
+    state.run
   ]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -115,6 +117,9 @@ const StepSettingsContainer = () => {
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
+  const showGenerateSampleData = !readonly;
+  const showStepInputOutFromRun = !isNil(run);
+
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
@@ -223,26 +228,28 @@ const StepSettingsContainer = () => {
                 </div>
               </ScrollArea>
             </ResizablePanel>
-       
-              <>
-                <ResizableHandle withHandle={true} />
-                <ResizablePanel defaultSize={45} className="min-h-[130px]">
-                  <ScrollArea className="h-[calc(100%-35px)]  ">
-                    {modifiedStep.type && !readonly && (
-                      <TestStepContainer
-                        type={modifiedStep.type}
-                        flowId={flowVersion.flowId}
-                        flowVersionId={flowVersion.id}
-                        projectId={project?.id}
-                        isSaving={saving}
-                      ></TestStepContainer>
-                    )}
-                    {readonly && (
-                      <FlowStepInputOutput></FlowStepInputOutput>
-                    )}
-                  </ScrollArea>
-                </ResizablePanel>
-              </>
+
+            {
+              (showGenerateSampleData || showStepInputOutFromRun) && (
+                <>
+              <ResizableHandle withHandle={true} />
+              <ResizablePanel defaultSize={45} className="min-h-[130px]">
+                <ScrollArea className="h-[calc(100%-35px)]  ">
+                  {showGenerateSampleData && (
+                    <TestStepContainer
+                      type={modifiedStep.type}
+                      flowId={flowVersion.flowId}
+                      flowVersionId={flowVersion.id}
+                      projectId={project?.id}
+                      isSaving={saving}
+                    ></TestStepContainer>
+                  )}
+                  {showStepInputOutFromRun && <FlowStepInputOutput></FlowStepInputOutput>}
+                </ScrollArea>
+              </ResizablePanel>
+            </>
+              )
+            }
           </ResizablePanelGroup>
         </DynamicPropertiesProvider>
       </form>
