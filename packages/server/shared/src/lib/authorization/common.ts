@@ -20,11 +20,18 @@ export enum RouteKind {
     PUBLIC = 'PUBLIC',
 }
 
+export enum EntitySourceType {
+    PARAM = 'PARAM',
+    QUERY = 'QUERY',
+    BODY = 'BODY',
+}
+
 export type ProjectTableResource = {
     type: ProjectResourceType.TABLE
     tableName: EntitySchema<unknown>
+    entitySourceType?: EntitySourceType // defaults to PARAM
     lookup?: {
-        paramKey: string
+        paramKey: string // defaults to id
         entityField: string
     }
 }

@@ -1,7 +1,8 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, TodoEnvironment, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { FlowEntity } from '../flows/flow/flow.entity'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { userService } from '../user/user-service'
 import { TodoEntity } from './todo.entity'
@@ -12,10 +13,10 @@ const DEFAULT_CURSOR = null
 
 export const todoController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListTodosRequest, async (request) => {
-        const { platformId, projectId, assigneeId, limit, cursor, statusOptions, title } = request.query
+        const { platformId, assigneeId, limit, cursor, statusOptions, title } = request.query
         return todoService(request.log).list({
             platformId,
-            projectId,
+            projectId: request.principal.projectId,
             assigneeId,
             limit: limit ?? DEFAULT_LIMIT,
             cursor: cursor ?? DEFAULT_CURSOR,
@@ -131,7 +132,13 @@ const ListTodosRequest = {
     },
     config: {
         security: securityAccess.project([PrincipalType.USER], undefined, {
-            type: ProjectResourceType.QUERY,
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+            entitySourceType: EntitySourceType.QUERY,
+            lookup: {
+                paramKey: 'flowId',
+                entityField: 'id',
+            },
         }),
     },
 }
@@ -142,7 +149,13 @@ const CreateTodoRequest = {
     },
     config: {
         security: securityAccess.project([PrincipalType.SERVICE, PrincipalType.ENGINE], undefined, {
-            type: ProjectResourceType.BODY,
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'flowId',
+                entityField: 'id',
+            },
         }),
     },
 }

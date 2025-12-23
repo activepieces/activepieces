@@ -1,4 +1,4 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
@@ -16,6 +16,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
+import { TableEntity } from '../table/table.entity'
 import { recordSideEffects } from './record-side-effects'
 import { RecordEntity } from './record.entity'
 import { recordService } from './record.service'
@@ -94,7 +95,13 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 const CreateRequest = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
-            type: ProjectResourceType.BODY,
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
         }),
     },
     schema: {
@@ -148,7 +155,13 @@ const UpdateRequest = {
 const DeleteRecordRequest = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
-            type: ProjectResourceType.BODY,
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
         }),
     },
     schema: {
@@ -165,7 +178,13 @@ const DeleteRecordRequest = {
 const ListRequest = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
-            type: ProjectResourceType.QUERY,
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.QUERY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
         }),
     },
     schema: {

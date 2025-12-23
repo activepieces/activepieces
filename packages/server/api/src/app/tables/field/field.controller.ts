@@ -1,9 +1,10 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { FieldEntity } from './field.entity'
 import { fieldService } from './field.service'
+import { TableEntity } from '../table/table.entity'
 
 export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 
@@ -49,7 +50,13 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 const CreateRequest = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
-            type: ProjectResourceType.BODY,
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
         }),
     },
     schema: {
@@ -91,7 +98,13 @@ const DeleteFieldRequest = {
 const GetFieldsRequest = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
-            type: ProjectResourceType.QUERY,
+            type: ProjectResourceType.TABLE,
+            tableName: TableEntity,
+            entitySourceType: EntitySourceType.QUERY,
+            lookup: {
+                paramKey: 'tableId',
+                entityField: 'id',
+            },
         }),
     },
     schema: {
