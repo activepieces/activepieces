@@ -322,6 +322,9 @@
       ],
       "@activepieces/piece-chatfly": [
         "packages/pieces/community/chatfly/src/index.ts"
+      ],
+      "@activepieces/piece-azure-blob-storage": [
+        "packages/pieces/community/azure-blob-storage/src/index.ts"
       ]
     },
     "resolveJsonModule": true
