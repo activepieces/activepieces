@@ -150,10 +150,7 @@ export const UpsertAIProviderDialog = ({
               render={({ field }) => (
                 <FormItem
                   className="space-y-3"
-                  hidden={
-                    currentProviderDef.provider !==
-                    AIProviderName.CUSTOM
-                  }
+                  hidden={currentProviderDef.provider !== AIProviderName.CUSTOM}
                 >
                   <FormLabel>{t('Display Name')}</FormLabel>
                   <FormControl>

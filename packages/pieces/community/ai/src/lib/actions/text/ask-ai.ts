@@ -166,6 +166,9 @@ export const askAI = createAction({
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
       openaiResponsesModel: true,
     });
 
