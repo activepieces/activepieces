@@ -7,33 +7,38 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
 
-type TestButtonProps = {
+type AboveTriggerButtonProps = {
   onClick: () => void;
   text: string;
   triggerHasNoSampleData?: boolean;
   loading?: boolean;
   showKeyboardShortcut?: boolean;
+  shortCutIsEscape?: boolean;
+  showPrimaryBg?: boolean;
 };
 
-const TestButton = ({
+const AboveTriggerButton = ({
   onClick,
   text,
   triggerHasNoSampleData = false,
   loading = false,
   showKeyboardShortcut = true,
-}: TestButtonProps) => {
+  shortCutIsEscape = false,
+  showPrimaryBg = true,
+}: AboveTriggerButtonProps) => {
   const isMac = /(Mac)/i.test(navigator.userAgent);
 
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
-      if (
+      const isEscapePressed = event.key === 'Escape' && shortCutIsEscape;
+      const ctrlAndDPressed =
         (isMac && event.metaKey && event.key.toLocaleLowerCase() === 'd') ||
-        (!isMac && event.ctrlKey && event.key.toLocaleLowerCase() === 'd')
-      ) {
+        (!isMac && event.ctrlKey && event.key.toLocaleLowerCase() === 'd');
+      if (isEscapePressed || ctrlAndDPressed) {
         event.preventDefault();
         event.stopPropagation();
-
         if (!loading && !triggerHasNoSampleData) {
           onClick();
         }
@@ -53,7 +58,13 @@ const TestButton = ({
         <div className="bg-builder-background">
           <Button
             variant="ghost"
-            className="h-8 bg-primary-100/50! dark:text-primary-foreground  text-primary hover:text-primary disabled:pointer-events-auto hover:border-primary!  border-primary/50 border border-solid rounded-lg animate-fade"
+            className={cn(
+              'h-8 bg-background border-input hover:border-border  border p-2.5 border-solid rounded-lg animate-fade',
+              {
+                'bg-primary-100/50! dark:text-primary-foreground  text-primary hover:text-primary disabled:pointer-events-auto hover:border-primary!  border-primary/50':
+                  showPrimaryBg,
+              },
+            )}
             loading={loading}
             disabled={triggerHasNoSampleData}
             onClick={onClick}
@@ -61,8 +72,15 @@ const TestButton = ({
             <div className="flex justify-center items-center gap-2">
               {text}
               {showKeyboardShortcut && (
-                <span className="text-[10px] bg-primary/13 h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap">
-                  {isMac ? '⌘ + D' : 'Ctrl + D'}
+                <span
+                  className={cn(
+                    'text-[10px] bg-muted h-[20px] flex items-center justify-center px-1 rounded-sm tracking-widest whitespace-nowrap text-muted-foreground',
+                    {
+                      'bg-primary/13 text-primary': showPrimaryBg,
+                    },
+                  )}
+                >
+                  {shortCutIsEscape ? 'Esc' : isMac ? '⌘ + D' : 'Ctrl + D'}
                 </span>
               )}
             </div>
@@ -78,6 +96,6 @@ const TestButton = ({
   );
 };
 
-TestButton.displayName = 'TestButton';
+AboveTriggerButton.displayName = 'AboveTriggerButton';
 
-export { TestButton };
+export { AboveTriggerButton };
