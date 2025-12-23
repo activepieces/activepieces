@@ -81,7 +81,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 }
             })
         },
-        async get({ platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
+        async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
             const originalPieces = await findAllPiecesVersionsSortedByNameAscVersionDesc({
                 platformId,
@@ -97,6 +97,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             })
             const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
                 piece,
+                projectId,
                 platformId,
             })
             if (isFiltered) {
@@ -432,6 +433,7 @@ type GetOrThrowParams = {
     name: string
     version?: string
     entityManager?: EntityManager
+    projectId?: string
     platformId?: string
     locale?: LocalesEnum
 }

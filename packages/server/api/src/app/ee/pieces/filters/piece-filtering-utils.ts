@@ -1,7 +1,8 @@
-import { ApEdition, FilteredPieceBehavior, isNil, Platform } from '@activepieces/shared'
+import { ApEdition, FilteredPieceBehavior, isNil, PiecesFilterType, Platform } from '@activepieces/shared'
 import { system } from '../../../helper/system/system'
 import { PieceMetadataSchema } from '../../../pieces/metadata/piece-metadata-entity'
 import { platformService } from '../../../platform/platform.service'
+import { projectLimitsService } from '../../projects/project-plan/project-plan.service'
 
 export const enterpriseFilteringUtils = {
     async filter(params: FilterParams): Promise<PieceMetadataSchema[]> {
@@ -9,7 +10,7 @@ export const enterpriseFilteringUtils = {
         if (![ApEdition.ENTERPRISE, ApEdition.CLOUD].includes(edition)) {
             return params.pieces
         }
-        const { platformId, includeHidden, pieces } = params
+        const { platformId, includeHidden, pieces, projectId } = params
         if (isNil(platformId) || includeHidden) {
             return pieces
         }
@@ -19,11 +20,15 @@ export const enterpriseFilteringUtils = {
             return pieces
         }
         const platformFilteredPieces = await filterPiecesBasedPlatform(platformWithPlan, pieces)
-        return platformFilteredPieces
+        if (isNil(projectId)) {
+            return platformFilteredPieces
+        }
+        return filterBasedOnProject(projectId, platformFilteredPieces)
     },
-    async isFiltered({ piece, platformId }: IsFilteredParams): Promise<boolean> {
+    async isFiltered({ piece, projectId, platformId }: IsFilteredParams): Promise<boolean> {
         const filteredPieces = await enterpriseFilteringUtils.filter({
             pieces: [piece],
+            projectId,
             platformId,
         })
         return filteredPieces.length === 0
@@ -32,6 +37,7 @@ export const enterpriseFilteringUtils = {
 
 type IsFilteredParams = {
     piece: PieceMetadataSchema
+    projectId: string | undefined
     platformId: string | undefined
 }
 
@@ -39,6 +45,26 @@ type FilterParams = {
     platformId?: string
     includeHidden?: boolean
     pieces: PieceMetadataSchema[]
+    projectId?: string
+}
+
+async function filterBasedOnProject(
+    projectId: string,
+    pieces: PieceMetadataSchema[],
+): Promise<PieceMetadataSchema[]> {
+    const { pieces: allowedPieces, piecesFilterType } = await projectLimitsService(system.globalLogger()).getOrCreateDefaultPlan(projectId)
+
+    const filterPredicate: Record<
+    PiecesFilterType,
+    (p: PieceMetadataSchema) => boolean
+    > = {
+        [PiecesFilterType.NONE]: () => true,
+        [PiecesFilterType.ALLOWED]: (p) =>
+            allowedPieces.includes(p.name),
+    }
+
+    const predicate = filterPredicate[piecesFilterType]
+    return pieces.slice().filter(predicate)
 }
 
 /*
