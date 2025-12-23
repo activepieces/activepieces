@@ -38,6 +38,7 @@ declare module 'fastify' {
                     : PrincipalForTypesV2<Q>
                 : typeof ContextConfig['security'] extends undefined ? Principal : PrincipalV2
         
+
         // TODO(@Chaker): to be used in V2 
         // principal: ContextConfig['security'] extends { authorization: { type: AuthorizationType.ENGINE } }
         // ? PrincipalForType<PrincipalType.ENGINE> :

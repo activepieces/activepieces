@@ -1,4 +1,4 @@
-import { AuthorizationRouteSecurity, AuthorizationType, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationRouteSecurity, AuthorizationType, ProjectResourceType, RouteKind } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -584,6 +584,131 @@ describe('authorizeOrThrow', () => {
         })
     })
 
+    describe('UNSCOPED authorization', () => {
+        it('should allow USER principal when in allowedPrincipals', async () => {
+            
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const principal: Principal = {
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+                projectId: 'PLACEHOLDER',
+            }
+            const security: AuthorizationRouteSecurity = {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+                },
+            }
+
+            await expect(authorizeOrThrow(principal, security, mockLog)).resolves.toBeUndefined()
+        })
+
+        it('should allow SERVICE principal when in allowedPrincipals', async () => {
+            
+            const { mockPlatform, mockApiKey } = await mockAndSaveBasicSetupWithApiKey()
+
+            const principal: Principal = {
+                id: mockApiKey.id,
+                type: PrincipalType.SERVICE,
+                platform: {
+                    id: mockPlatform.id,
+                },
+                projectId: 'PLACEHOLDER',
+            }
+            const security: AuthorizationRouteSecurity = {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+                },
+            }
+
+            await expect(authorizeOrThrow(principal, security, mockLog)).resolves.toBeUndefined()
+        })
+
+        it('should allow UNKNOWN principal when in allowedPrincipals', async () => {
+            
+            const principal: Principal = {
+                id: apId(),
+                type: PrincipalType.UNKNOWN,
+            }
+            const security: AuthorizationRouteSecurity = {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.UNKNOWN],
+                },
+            }
+
+            await expect(authorizeOrThrow(principal, security, mockLog)).resolves.toBeUndefined()
+        })
+
+        it('should reject principal not in allowedPrincipals', async () => {
+            
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
+
+            const principal: Principal = {
+                id: mockOwner.id,
+                type: PrincipalType.USER,
+                platform: {
+                    id: mockPlatform.id,
+                },
+                projectId: 'PLACEHOLDER',
+            }
+            const security: AuthorizationRouteSecurity = {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.ENGINE], // USER not allowed
+                },
+            }
+
+            await expect(authorizeOrThrow(principal, security, mockLog)).rejects.toEqual(
+                new ActivepiecesError({
+                    code: ErrorCode.AUTHORIZATION,
+                    params: {
+                        message: 'principal is not allowed for this route',
+                    },
+                }),
+            )
+        })
+
+        it('should allow multiple principal types', async () => {
+            
+            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+            const enginePrincipal: Principal = {
+                id: apId(),
+                type: PrincipalType.ENGINE,
+                projectId: mockProject.id,
+                platform: {
+                    id: mockPlatform.id,
+                },
+            }
+
+            const workerPrincipal: Principal = {
+                id: apId(),
+                type: PrincipalType.WORKER,
+            }
+
+            const security: AuthorizationRouteSecurity = {
+                kind: RouteKind.AUTHENTICATED,
+                authorization: {
+                    type: AuthorizationType.UNSCOPED,
+                    allowedPrincipals: [PrincipalType.ENGINE, PrincipalType.WORKER],
+                },
+            }
+
+            await expect(authorizeOrThrow(enginePrincipal, security, mockLog)).resolves.toBeUndefined()
+            await expect(authorizeOrThrow(workerPrincipal, security, mockLog)).resolves.toBeUndefined()
+        })
+    })
+    
     describe('RBAC permission checks', () => {
         it('should reject user without required permission', async () => {
             
