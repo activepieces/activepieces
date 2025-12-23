@@ -5,7 +5,7 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -27,7 +27,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                security: publicAccess(),
+                security: securityAccess.public(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -53,7 +53,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                security: publicAccess(),
+                security: securityAccess.public(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -72,7 +72,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                security: publicAccess(),
+                security: securityAccess.public(),
             },
             schema: {
                 body: UpsertConnectionFromToken,
@@ -90,7 +90,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 querystring: ListConnectionKeysRequest,
             },
             config: {
-                security: projectAccess(
+                security: securityAccess.project(
                     [PrincipalType.USER, PrincipalType.SERVICE],
                     undefined,
                     {
@@ -117,7 +117,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 body: UpsertSigningKeyConnection,
             },
             config: {
-                security: projectAccess(
+                security: securityAccess.project(
                     [PrincipalType.USER, PrincipalType.SERVICE],
                     undefined,
                     {

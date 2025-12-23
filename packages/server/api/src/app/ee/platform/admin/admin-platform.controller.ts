@@ -1,5 +1,5 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
-import { AppSystemProp, publicAccess } from '@activepieces/server-shared'
+import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
 import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
@@ -74,7 +74,7 @@ const ConfigureDedicatedWorkersRequest = {
         }),
     },
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
 }
 
@@ -84,7 +84,7 @@ const AdminRetryRunsRequest = {
         body: AdminRetryRunsRequestBody,
     },
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
 }
 
@@ -93,7 +93,7 @@ const ApplyLicenseKeyByEmailRequest = {
         body: ApplyLicenseKeyByEmailRequestBody,
     },
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
 }
 
@@ -137,6 +137,6 @@ const CreatePieceRequest = {
         }),
     },
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
 }

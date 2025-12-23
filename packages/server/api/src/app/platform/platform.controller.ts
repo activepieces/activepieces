@@ -1,4 +1,4 @@
-import { platformAdminOnly, publicAccess, publicPlatformAccess, WorkerSystemProp } from '@activepieces/server-shared'
+import { securityAccess, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApEdition,
@@ -164,7 +164,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
 
 const UpdatePlatformRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: UpdatePlatformRequestBody,
@@ -180,7 +180,7 @@ const UpdatePlatformRequest = {
 
 const GetPlatformRequest = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['platforms'],
@@ -197,7 +197,7 @@ const GetPlatformRequest = {
 
 const DeletePlatformRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({
@@ -208,7 +208,7 @@ const DeletePlatformRequest = {
 
 const GetAssetRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         params: Type.Object({

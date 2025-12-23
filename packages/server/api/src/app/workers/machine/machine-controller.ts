@@ -1,4 +1,4 @@
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { PrincipalType, WebsocketServerEvent, WorkerMachineHealthcheckRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { websocketService } from '../../core/websockets.service'
@@ -29,6 +29,6 @@ export const workerMachineController: FastifyPluginAsyncTypebox = async (app) =>
 
 const ListWorkersParams = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }

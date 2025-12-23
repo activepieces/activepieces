@@ -1,4 +1,4 @@
-import { EntitySourceType, projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CreateTodoActivityRequestBody, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { TodoEntity } from '../todo.entity'
@@ -36,7 +36,7 @@ const ListTodoCommentsRequest = {
         querystring: ListTodoActivitiesQueryParams,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TodoEntity,
             entitySourceType: EntitySourceType.QUERY,
@@ -54,7 +54,7 @@ const CreateTodoCommentRequest = {
         body: CreateTodoActivityRequestBody,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TodoEntity,
             entitySourceType: EntitySourceType.BODY,

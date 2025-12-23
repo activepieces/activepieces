@@ -1,4 +1,4 @@
-import { engineAccess, MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, SubmitPayloadsRequest, workerAccess } from '@activepieces/server-shared'
+import { MigrateJobsRequest, rejectedPromiseHandler, SavePayloadRequest, securityAccess, SubmitPayloadsRequest } from '@activepieces/server-shared'
 import { ExecutionType, FileType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
@@ -30,7 +30,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
    
     app.post('/save-payloads', {
         config: {
-            security: workerAccess(),
+            security: securityAccess.worker(),
         },
         schema: {
             body: SavePayloadRequest,
@@ -60,7 +60,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/migrate-job', {
         config: {
-            security: workerAccess(),
+            security: securityAccess.worker(),
         },
         schema: {
             body: MigrateJobsRequest,
@@ -71,7 +71,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
     
     app.post('/submit-payloads', {
         config: {
-            security: workerAccess(),
+            security: securityAccess.worker(),
         },
         schema: {
             body: SubmitPayloadsRequest,
@@ -134,7 +134,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetFileRequestParams = {
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
     schema: {
         params: Type.Object({

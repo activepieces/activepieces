@@ -1,5 +1,5 @@
 
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ListTriggerEventsRequest,
     PrincipalType,
@@ -44,7 +44,7 @@ const ListTriggerEventsRequestParams = {
         querystring: ListTriggerEventsRequest,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.QUERY,
         }),
     },
@@ -55,7 +55,7 @@ const SaveTriggerEventRequestParams = {
         body: SaveTriggerEventRequest,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },

@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     apId,
     ApId,
@@ -110,7 +110,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertGlobalConnectionRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],
@@ -124,7 +124,7 @@ const UpsertGlobalConnectionRequest = {
 
 const UpdateGlobalConnectionRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],
@@ -138,7 +138,7 @@ const UpdateGlobalConnectionRequest = {
 
 const ListGlobalConnectionsRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],
@@ -152,7 +152,7 @@ const ListGlobalConnectionsRequest = {
 
 const DeleteGlobalConnectionRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['global-connections'],

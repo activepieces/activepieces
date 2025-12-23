@@ -1,4 +1,4 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectResourceType, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationRouteSecurity, AuthorizationType, RouteKind } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -64,7 +64,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -88,7 +88,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -112,7 +112,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -143,7 +143,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -173,7 +173,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -204,7 +204,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -239,7 +239,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -258,13 +258,13 @@ describe('authorizeOrThrow', () => {
         })
 
         it('should reject when projectId is nil', async () => {
-            
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -296,7 +296,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -322,7 +322,6 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockApiKey.id,
                 type: PrincipalType.SERVICE,
-                projectId: otherProject.id,
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -354,7 +353,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -466,7 +465,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -521,7 +520,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -553,7 +552,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -595,7 +594,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -618,7 +617,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -658,7 +657,7 @@ describe('authorizeOrThrow', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: 'PLACEHOLDER',
+                
             }
             const security: AuthorizationRouteSecurity = {
                 kind: RouteKind.AUTHENTICATED,
@@ -736,7 +735,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -778,7 +777,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -832,7 +831,7 @@ describe('authorizeOrThrow', () => {
             const principal: Principal = {
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

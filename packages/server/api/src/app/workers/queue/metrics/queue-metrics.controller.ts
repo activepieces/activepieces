@@ -1,4 +1,4 @@
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { PrincipalType, QueueMetricsResponse, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -10,7 +10,7 @@ export const queueMetricsController: FastifyPluginAsyncTypebox = async (app) => 
 
 const GetMetrics = {
     config: {
-        security: platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER]),
     },
     schema: {
         tags: ['queue-metrics'],

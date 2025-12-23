@@ -1,4 +1,4 @@
-import { platformAdminOnly, publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -13,7 +13,7 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                security: publicAccess(),
+                security: securityAccess.public(),
             },
         },
         async (_request, reply) => {
@@ -32,7 +32,7 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetSystemHealthChecks = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     response: {
         200: {

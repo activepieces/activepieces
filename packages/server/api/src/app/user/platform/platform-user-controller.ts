@@ -1,4 +1,4 @@
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ApId,
     assertNotNullOrUndefined,
@@ -70,7 +70,7 @@ const ListUsersRequest = {
         [StatusCodes.OK]: SeekPage(UserWithMetaInformation),
     },
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -88,7 +88,7 @@ const UpdateUserRequest = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
@@ -99,6 +99,6 @@ const DeleteUserRequest = {
         }),
     },
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }

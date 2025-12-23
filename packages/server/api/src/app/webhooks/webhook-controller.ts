@@ -1,5 +1,5 @@
 
-import { publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
@@ -159,7 +159,7 @@ export const webhookController: FastifyPluginAsyncTypebox = async (app) => {
 
 const WEBHOOK_PARAMS = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
         rawBody: true,
     },
     schema: {

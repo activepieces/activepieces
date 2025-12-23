@@ -1,4 +1,4 @@
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, ListTagsRequest, PrincipalType, SeekPage, SetPieceTagsRequest, Tag, UpsertTagRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -41,7 +41,7 @@ const tagsController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const UpsertTagParams = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: UpsertTagRequest,
@@ -53,7 +53,7 @@ const UpsertTagParams = {
 
 const setPiecesTagsParams = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         body: SetPieceTagsRequest,
@@ -65,7 +65,7 @@ const setPiecesTagsParams = {
 
 const ListTagsParams = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         querystring: ListTagsRequest,

@@ -1,5 +1,5 @@
 import { ApplicationEventName, ManagedAuthnRequestBody } from '@activepieces/ee-shared'
-import { publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     AuthenticationResponse,
 } from '@activepieces/shared'
@@ -32,7 +32,7 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (
 
 const ManagedAuthnRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         body: ManagedAuthnRequestBody,

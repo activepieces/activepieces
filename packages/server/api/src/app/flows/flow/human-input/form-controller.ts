@@ -1,4 +1,4 @@
-import { publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ApId,
     USE_DRAFT_QUERY_PARAM_NAME,
@@ -14,7 +14,7 @@ export const formController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetFormRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         description: 'Get a form by flow id',

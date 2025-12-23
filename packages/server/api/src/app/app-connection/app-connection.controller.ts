@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ApId,
     AppConnectionOwners,
@@ -142,7 +142,7 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertAppConnectionRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_APP_CONNECTION,
             {
@@ -163,7 +163,7 @@ const UpsertAppConnectionRequest = {
 
 const UpdateConnectionValueRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_APP_CONNECTION,
             {
@@ -185,7 +185,7 @@ const UpdateConnectionValueRequest = {
 
 const ReplaceAppConnectionsRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_APP_CONNECTION,
             {
@@ -207,7 +207,7 @@ const ReplaceAppConnectionsRequest = {
 
 const ListAppConnectionsRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_APP_CONNECTION,
             {
@@ -227,7 +227,7 @@ const ListAppConnectionsRequest = {
 }
 const ListAppConnectionOwnersRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_APP_CONNECTION,
             {
@@ -248,7 +248,7 @@ const ListAppConnectionOwnersRequest = {
 
 const DeleteAppConnectionRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_APP_CONNECTION,
             {

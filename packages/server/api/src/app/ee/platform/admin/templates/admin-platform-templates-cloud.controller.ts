@@ -1,4 +1,4 @@
-import { publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { ActivepiecesError, ApFlagId, CreateTemplateRequestBody, ErrorCode, TemplateType, UpdateTemplateRequestBody, UpdateTemplatesCategoriesFlagRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
@@ -60,7 +60,7 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
 
 const UpdateTemplatesCategoriesFlagRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         body: UpdateTemplatesCategoriesFlagRequestBody,
@@ -69,7 +69,7 @@ const UpdateTemplatesCategoriesFlagRequest = {
 
 const CreateTemplateRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         body: CreateTemplateRequestBody,
@@ -78,7 +78,7 @@ const CreateTemplateRequest = {
 
 const UpdateTemplateRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         params: Type.Object({
@@ -90,7 +90,7 @@ const UpdateTemplateRequest = {
 
 const DeleteTemplateRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         params: Type.Object({

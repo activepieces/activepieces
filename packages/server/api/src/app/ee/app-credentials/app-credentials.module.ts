@@ -4,7 +4,7 @@ import {
     ListAppCredentialsRequest,
     UpsertAppCredentialRequest,
 } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -76,7 +76,7 @@ function censorClientSecret(
 
 const ListCredsRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         querystring: ListAppCredentialsRequest,
@@ -88,7 +88,7 @@ const UpsertAppCredentialRequestOptions = {
         body: UpsertAppCredentialRequest,
     },
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER],
             undefined,
             {
@@ -100,7 +100,7 @@ const UpsertAppCredentialRequestOptions = {
 
 const DeleteAppCredentialRequestOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER],
             undefined,
             {

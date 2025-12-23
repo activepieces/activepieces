@@ -3,7 +3,7 @@ import {
     GitRepoWithoutSensitiveData,
     PushGitRepoRequest,
 } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { Permission, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginCallbackTypebox,
@@ -64,7 +64,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
 
 const DeleteRepoRequestSchema = {
     config: {
-        security: projectAccess([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
             type: ProjectResourceType.TABLE,
             tableName: GitRepoEntity,
         }),
@@ -83,7 +83,7 @@ const DeleteRepoRequestSchema = {
 
 const PushRepoRequestSchema = {
     config: {
-        security: projectAccess([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
+        security: securityAccess.project([PrincipalType.USER], Permission.WRITE_PROJECT_RELEASE, {
             type: ProjectResourceType.TABLE,
             tableName: GitRepoEntity,
         }),
@@ -103,7 +103,7 @@ const PushRepoRequestSchema = {
 
 const ConfigureRepoRequestSchema = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT_RELEASE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT_RELEASE, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -119,7 +119,7 @@ const ConfigureRepoRequestSchema = {
 
 const ListRepoRequestSchema = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_PROJECT_RELEASE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.READ_PROJECT_RELEASE, {
             type: ProjectResourceType.QUERY,
         }),
     },

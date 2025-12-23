@@ -1,4 +1,4 @@
-import { publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ApEdition,
     SERVICE_KEY_SECURITY_OPENAPI,
@@ -37,7 +37,7 @@ type ListFlowTemplatesRequestQuery = Static<typeof ListFlowTemplatesRequestQuery
 
 const ListFlowTemplatesParams = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         tags: ['templates'],

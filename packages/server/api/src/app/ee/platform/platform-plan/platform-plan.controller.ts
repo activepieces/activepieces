@@ -1,5 +1,5 @@
 import { CreateCheckoutSessionParamsSchema, SetAiCreditsOverageLimitParamsSchema, STANDARD_CLOUD_PLAN, ToggleAiCreditsOverageEnabledParamsSchema, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { ActivepiecesError, AiOverageState, assertNotNullOrUndefined, ErrorCode, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -33,7 +33,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.post('/portal', {
         config: {
-            security: platformAdminOnly([PrincipalType.USER]),
+            security: securityAccess.platformAdminOnly([PrincipalType.USER]),
         },
     }, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
@@ -180,7 +180,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
 const InfoRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
@@ -192,7 +192,7 @@ const SetAiCreditsOverageLimitRequest = {
         body: SetAiCreditsOverageLimitParamsSchema,
     },
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -201,7 +201,7 @@ const EnableAiCreditsOverageRequest = {
         body: ToggleAiCreditsOverageEnabledParamsSchema,
     },
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -210,7 +210,7 @@ const UpdateActiveFlowsAddonRequest = {
         body: UpdateActiveFlowsAddonParamsSchema,
     },
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -219,6 +219,6 @@ const CreateCheckoutSessionRequest = {
         body: CreateCheckoutSessionParamsSchema,
     },
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }

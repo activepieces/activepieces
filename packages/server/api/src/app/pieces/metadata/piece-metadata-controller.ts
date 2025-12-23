@@ -1,5 +1,5 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { apVersionUtil, projectAccess, ProjectResourceType, publicAccess, publicPlatformAccess, unscopedAccess } from '@activepieces/server-shared'
+import { apVersionUtil, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
@@ -168,7 +168,7 @@ function getPlatformId(principal: Principal): string | undefined {
 
 const RegistryPiecesRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         querystring: RegistryPiecesRequestQuery,
@@ -177,7 +177,7 @@ const RegistryPiecesRequest = {
 
 const ListPiecesRequest = {
     config: {
-        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         querystring: ListPiecesRequestQuery,
@@ -187,7 +187,7 @@ const ListPiecesRequest = {
 }
 const GetPieceParamsRequest = {
     config: {
-        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: GetPieceRequestParams,
@@ -197,7 +197,7 @@ const GetPieceParamsRequest = {
 
 const GetPieceParamsWithScopeRequest = {
     config: {
-        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: GetPieceRequestWithScopeParams,
@@ -207,7 +207,7 @@ const GetPieceParamsWithScopeRequest = {
 
 const ListCategoriesRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         querystring: ListPiecesRequestQuery,
@@ -219,7 +219,7 @@ const OptionsPieceRequest = {
         body: PieceOptionRequest,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -228,7 +228,7 @@ const OptionsPieceRequest = {
 
 const ListVersionsRequest = {
     config: {
-        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         querystring: ListVersionRequestQuery,
@@ -237,6 +237,6 @@ const ListVersionsRequest = {
 
 const SyncPiecesRequest = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }

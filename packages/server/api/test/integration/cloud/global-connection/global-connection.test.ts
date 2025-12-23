@@ -59,7 +59,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -115,7 +115,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -166,7 +166,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -203,12 +203,12 @@ describe('GlobalConnection API', () => {
     describe('List GlobalConnections endpoint', () => {
         it('Succeeds if user is platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
+            const { mockPlatform, mockOwner } = await setupWithGlobalConnections()
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -228,7 +228,7 @@ describe('GlobalConnection API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await setupWithGlobalConnections()
+            const { mockPlatform } = await setupWithGlobalConnections()
 
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -239,7 +239,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -274,7 +274,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -336,7 +336,7 @@ describe('GlobalConnection API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -369,7 +369,7 @@ describe('GlobalConnection API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -406,7 +406,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -478,7 +478,7 @@ describe('GlobalConnection API', () => {
             const mockOwnerToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -512,7 +512,7 @@ describe('GlobalConnection API', () => {
             const mockUserToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -552,7 +552,7 @@ describe('GlobalConnection API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },

@@ -1,5 +1,5 @@
-import { engineAccess, publicPlatformAccess } from '@activepieces/server-shared'
-import { AIProviderModel, AIProviderName, UpdateAIProviderRequest, CreateAIProviderRequest, PrincipalType } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
+import { AIProviderModel, AIProviderName, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { aiProviderService } from './ai-provider-service'
@@ -34,13 +34,13 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAIProviders = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.ENGINE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.ENGINE]),
     },
 }
 
 const GetAIProviderConfig = {
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
     schema: {
         params: Type.Object({
@@ -51,7 +51,7 @@ const GetAIProviderConfig = {
 
 const ListModels = {
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
     schema: {
         params: Type.Object({
@@ -65,7 +65,7 @@ const ListModels = {
 
 const CreateAIProvider = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         body: CreateAIProviderRequest,
@@ -74,7 +74,7 @@ const CreateAIProvider = {
 
 const UpdateAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({
@@ -86,7 +86,7 @@ const UpdateAIProvider = {
 
 const DeleteAIProvider = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({

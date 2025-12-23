@@ -1,5 +1,5 @@
 import { GitPushOperationType } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { ApId, CreateTableRequest, CreateTableWebhookRequest, ExportTableResponse, ListTablesRequest, Permission, PrincipalType, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, Table, UpdateTableRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -109,7 +109,7 @@ export const tablesController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -123,7 +123,7 @@ const CreateRequest = {
 
 const GetTablesRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
             type: ProjectResourceType.QUERY,
         }),
     },
@@ -140,7 +140,7 @@ const GetTablesRequest = {
 
 const DeleteRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -161,7 +161,7 @@ const DeleteRequest = {
 
 const GetTableByIdRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER], Permission.READ_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -181,7 +181,7 @@ const GetTableByIdRequest = {
 
 const ExportTableRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER], Permission.READ_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -201,7 +201,7 @@ const ExportTableRequest = {
 
 const CreateTableWebhook = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -219,7 +219,7 @@ const CreateTableWebhook = {
 
 const DeleteTableWebhook = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -237,7 +237,7 @@ const DeleteTableWebhook = {
 
 const UpdateRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),
@@ -255,7 +255,7 @@ const UpdateRequest = {
 
 const ClearTableRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: TableEntity,
         }),

@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { ExportRequestBody, PrincipalType, Solution, SolutionRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -26,7 +26,7 @@ export const solutionsController: FastifyPluginAsyncTypebox = async (fastify) =>
 
 const ExportRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -40,7 +40,7 @@ const ExportRequest = {
 
 const ImportRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },

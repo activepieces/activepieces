@@ -1,5 +1,5 @@
 import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -60,7 +60,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/:id', {
         config: {
-            security: projectAccess(
+            security: securityAccess.project(
                 [PrincipalType.USER, PrincipalType.SERVICE], 
                 Permission.UPDATE_FLOW_STATUS, {
                     type: ProjectResourceType.TABLE,
@@ -249,7 +249,7 @@ async function assertThatFlowIsNotBeingUsed(
 
 const CreateFlowRequestOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.BODY,
@@ -269,7 +269,7 @@ const CreateFlowRequestOptions = {
 
 const ListFlowsRequestOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_FLOW, {
                 type: ProjectResourceType.QUERY,
@@ -288,7 +288,7 @@ const ListFlowsRequestOptions = {
 
 const CountFlowsRequestOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_FLOW, {
                 type: ProjectResourceType.QUERY,
@@ -301,7 +301,7 @@ const CountFlowsRequestOptions = {
 
 const GetFlowTemplateRequestOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_FLOW, {
                 type: ProjectResourceType.TABLE,
@@ -324,7 +324,7 @@ const GetFlowTemplateRequestOptions = {
 
 const GetFlowRequestOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_FLOW, {
                 type: ProjectResourceType.TABLE,
@@ -347,7 +347,7 @@ const GetFlowRequestOptions = {
 
 const DeleteFlowRequestOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,

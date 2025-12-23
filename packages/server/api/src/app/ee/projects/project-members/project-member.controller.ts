@@ -4,7 +4,7 @@ import {
     ProjectMemberWithUser,
     UpdateProjectMemberRoleRequestBody,
 } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     Permission,
     PrincipalType,
@@ -63,7 +63,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
 const GetCurrentProjectMemberRoleRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER],
             undefined,
             {
@@ -78,7 +78,7 @@ const GetCurrentProjectMemberRoleRequest = {
 
 const UpdateProjectMemberRoleRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_PROJECT_MEMBER,
             {
@@ -100,7 +100,7 @@ const UpdateProjectMemberRoleRequest = {
 
 const ListProjectMembersRequestQueryOptions = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_PROJECT_MEMBER,
             {
@@ -120,7 +120,7 @@ const ListProjectMembersRequestQueryOptions = {
 
 const DeleteProjectMemberRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_PROJECT_MEMBER,
             {
