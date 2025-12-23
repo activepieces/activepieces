@@ -4,7 +4,7 @@ import { Eye, EyeIcon, Pencil } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
-  LeftSideBarType,
+  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
@@ -114,10 +114,10 @@ const FlowVersionDetailsCard = React.memo(
   }: FlowVersionDetailsCardProps) => {
     const { checkAccess } = useAuthorization();
     const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-    const [setBuilderVersion, setLeftSidebar, setReadonly] =
+    const [setBuilderVersion, setRightSidebar, setReadonly] =
       useBuilderStateContext((state) => [
         state.setVersion,
-        state.setLeftSidebar,
+        state.setRightSidebar,
         state.setReadOnly,
       ]);
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
@@ -135,7 +135,7 @@ const FlowVersionDetailsCard = React.memo(
       flowHooks.useOverWriteDraftWithVersion({
         onSuccess: (populatedFlowVersion) => {
           setBuilderVersion(populatedFlowVersion.version);
-          setLeftSidebar(LeftSideBarType.NONE);
+          setRightSidebar(RightSideBarType.NONE);
         },
       });
 
@@ -147,7 +147,7 @@ const FlowVersionDetailsCard = React.memo(
     const showAvatar = !useEmbedding().embedState.isEmbedded;
 
     return (
-      <CardListItem interactive={false}>
+      <CardListItem interactive={false} className="px-4">
         {showAvatar && flowVersion.updatedByUser && (
           <UserAvatar
             size={28}
@@ -167,7 +167,7 @@ const FlowVersionDetailsCard = React.memo(
             {t('Version')} {flowVersionNumber}
           </p>
         </div>
-        <div className="flex-grow"></div>
+        <div className="grow"></div>
         <div className="flex font-medium gap-2 justify-center items-center">
           {selected && (
             <Tooltip>

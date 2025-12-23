@@ -55,6 +55,7 @@ export type StepMetadata = PieceStepMetadata | PrimitiveStepMetadata;
 
 export type StepMetadataWithActionOrTriggerOrAgentDisplayName = StepMetadata & {
   actionOrTriggerOrAgentDisplayName: string;
+  actionOrTriggerOrAgentDescription: string;
 };
 
 export type PieceSelectorOperation =
@@ -81,11 +82,6 @@ export type PieceSelectorOperation =
       type: FlowOperationType.UPDATE_ACTION;
       stepName: string;
     };
-
-export type AskAiButtonOperations = Exclude<
-  PieceSelectorOperation,
-  { type: FlowOperationType.UPDATE_TRIGGER }
->;
 
 export type PieceSelectorPieceItem =
   | {

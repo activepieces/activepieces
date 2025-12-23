@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -32,8 +31,11 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
-        const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type)
+        const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type ?? TemplateType.OFFICIAL)
         if (isNil(platformId)) {
+            if (edition === ApEdition.CLOUD) {
+                return templateService().list({ platformId: null, requestQuery: request.query })
+            }
             return communityTemplates.get(request.query)
         }
         return templateService().list({ platformId, requestQuery: request.query })
@@ -102,14 +104,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 async function resolveTemplatesPlatformIdOrThrow(principal: Principal, type: TemplateType): Promise<string | null> {
-    if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
-        return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-    }
-
-    if (type === TemplateType.OFFICIAL) {
-        if (edition === ApEdition.CLOUD) {
-            return system.getOrThrow(AppSystemProp.CLOUD_PLATFORM_ID)
-        }
+    if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || type === TemplateType.OFFICIAL) {
         return null
     }
 

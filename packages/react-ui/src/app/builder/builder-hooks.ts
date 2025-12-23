@@ -42,7 +42,6 @@ import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { pieceSelectorUtils } from '../../features/pieces/lib/piece-selector-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 import {
-  AskAiButtonOperations,
   PieceSelectorItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
@@ -74,16 +73,11 @@ export function useBuilderStateContext<T>(
   return useStore(store, selector);
 }
 
-export enum LeftSideBarType {
-  RUNS = 'runs',
-  RUN_DETAILS = 'run-details',
-  NONE = 'none',
-}
-
 export enum RightSideBarType {
   NONE = 'none',
   PIECE_SETTINGS = 'piece-settings',
   VERSIONS = 'versions',
+  RUNS = 'runs',
 }
 
 export enum ChatDrawerSource {
@@ -100,7 +94,6 @@ export type BuilderState = {
   inputSampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
   run: FlowRun | null;
-  leftSidebar: LeftSideBarType;
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
   activeDraggingStep: string | null;
@@ -120,7 +113,6 @@ export type BuilderState = {
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
   setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
-  setLeftSidebar: (leftSidebar: LeftSideBarType) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   applyOperation: (
     operation: FlowOperationRequest,
@@ -155,8 +147,6 @@ export type BuilderState = {
       operation: FlowOperationRequest,
     ) => void,
   ) => void;
-  askAiButtonProps: AskAiButtonOperations | null;
-  setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
   selectedNodes: string[];
   setSelectedNodes: (nodes: string[]) => void;
   panningMode: 'grab' | 'pan';
@@ -184,9 +174,6 @@ export type BuilderState = {
   setSelectedPieceMetadataInPieceSelector: (
     metadata: StepMetadataWithSuggestions | null,
   ) => void;
-  /**Need this to re-render the piece settings form on replace step or updating agent */
-  lastRerenderPieceSettingsTimeStamp: number | null;
-  setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -236,9 +223,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       inputSampleData: initialState.inputSampleData,
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
-      leftSidebar: initialState.run
-        ? LeftSideBarType.RUN_DETAILS
-        : LeftSideBarType.NONE,
       readonly: initialState.readonly,
       run: initialState.run,
       saving: false,
@@ -291,9 +275,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       selectStepByName: (selectedStep: string) => {
         set((state) => {
-          if (selectedStep === state.selectedStep) {
-            return state;
-          }
           const selectedNodes =
             isNil(selectedStep) || selectedStep === 'trigger'
               ? []
@@ -305,10 +286,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               ? RightSideBarType.NONE
               : RightSideBarType.PIECE_SETTINGS;
 
-          const leftSidebar = !isNil(state.run)
-            ? LeftSideBarType.RUN_DETAILS
-            : LeftSideBarType.NONE;
-
           const isEmptyTrigger =
             selectedStep === 'trigger' &&
             state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
@@ -319,9 +296,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               : null,
             selectedStep,
             rightSidebar,
-            leftSidebar,
             selectedBranchIndex: null,
-            askAiButtonProps: null,
             selectedNodes,
             chatDrawerOpenSource: null,
           };
@@ -369,21 +344,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           run: null,
           readonly: !userHasPermissionToEditFlow,
           loopsIndexes: {},
-          leftSidebar: LeftSideBarType.NONE,
           selectedBranchIndex: null,
         }),
       exitStepSettings: () =>
         set((state) => ({
           rightSidebar: RightSideBarType.NONE,
-          leftSidebar: state.leftSidebar,
           selectedStep: null,
           selectedBranchIndex: null,
-          askAiButtonProps: null,
         })),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
-      setLeftSidebar: (leftSidebar: LeftSideBarType) =>
-        set({ leftSidebar, askAiButtonProps: null }),
       setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
         set((state) => {
           const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(
@@ -401,7 +371,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             ),
             run,
             flowVersion,
-            leftSidebar: LeftSideBarType.RUN_DETAILS,
             rightSidebar: initiallySelectedStep
               ? RightSideBarType.PIECE_SETTINGS
               : RightSideBarType.NONE,
@@ -571,7 +540,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           readonly:
             state.flow.publishedVersionId !== flowVersion.id &&
             flowVersion.state === FlowVersionState.LOCKED,
-          leftSidebar: LeftSideBarType.NONE,
           rightSidebar:
             initiallySelectedStep && !isEmptyTriggerInitiallySelected
               ? RightSideBarType.PIECE_SETTINGS
@@ -605,33 +573,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             (l) => l !== listener,
           ),
         })),
-      askAiButtonProps: null,
-      setAskAiButtonProps: (props) => {
-        return set((state) => {
-          const leftSidebar = state.leftSidebar;
-
-          let rightSidebar = state.rightSidebar;
-          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
-            rightSidebar = RightSideBarType.PIECE_SETTINGS;
-          } else if (props) {
-            rightSidebar = RightSideBarType.NONE;
-          }
-
-          let selectedStep = state.selectedStep;
-          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
-            selectedStep = props.stepName;
-          } else if (props) {
-            selectedStep = null;
-          }
-
-          return {
-            askAiButtonProps: props,
-            leftSidebar,
-            rightSidebar,
-            selectedStep,
-          };
-        });
-      },
       selectedNodes: [],
       setSelectedNodes: (nodes) => {
         return set(() => ({
@@ -699,9 +640,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               request: defaultValues,
             });
             selectStepByName('trigger');
-            set(() => ({
-              lastRerenderPieceSettingsTimeStamp: Date.now(),
-            }));
             break;
           }
           case FlowOperationType.ADD_ACTION: {
@@ -752,9 +690,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
                 valid: defaultValues.valid,
               },
             });
-            set(() => ({
-              lastRerenderPieceSettingsTimeStamp: Date.now(),
-            }));
             break;
           }
         }
@@ -786,12 +721,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
               : state.rightSidebar,
           };
         });
-      },
-      lastRerenderPieceSettingsTimeStamp: null,
-      setLastRerenderPieceSettingsTimeStamp: (timestamp: number) => {
-        return set(() => ({
-          lastRerenderPieceSettingsTimeStamp: timestamp,
-        }));
       },
     };
   });

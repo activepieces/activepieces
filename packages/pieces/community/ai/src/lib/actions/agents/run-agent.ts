@@ -5,19 +5,20 @@ import {
 } from '@activepieces/pieces-framework';
 import {
   AgentOutputField,
-  AgentOutputFieldType,
   AgentPieceProps,
   AgentTaskStatus,
   isNil,
   AgentTool,
   TASK_COMPLETION_TOOL_NAME,
+  AIProviderName,
 } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
-import { z, ZodObject } from 'zod';
+import { z } from 'zod';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
 import { inspect } from 'util';
+import { agentUtils } from './utils';
 
 export const runAgent = createAction({
   name: 'run_agent',
@@ -48,8 +49,8 @@ export const runAgent = createAction({
           displayName: 'Piece Metadata',
           required: false,
         }),
-        flowId: Property.ShortText({
-          displayName: 'Flow Id',
+        flowExternalId: Property.ShortText({
+          displayName: 'Flow External Id',
           required: false,
         }),
       },
@@ -81,13 +82,16 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, model: modelId, provider: providerId } = context.propsValue;
+    const { prompt, maxSteps, model: modelId, provider } = context.propsValue;
 
     const model = await createAIModel({
       modelId,
-      providerId,
+      provider: provider as AIProviderName,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
     });
 
     const outputBuilder = agentOutputBuilder(prompt);
@@ -99,6 +103,15 @@ export const runAgent = createAction({
       tools: agentToolsMetadata,
       model: model,
     });
+
+    const flowsTools = await agentUtils.constructFlowsTools({
+      agentToolsMetadata,
+      fetchFlows: context.flows.list,
+      publicUrl: context.server.publicUrl,
+      token: context.server.token
+    })
+
+
     const stream = streamText({
       model: model,
       prompt: `
@@ -118,7 +131,7 @@ Help the user finish their goal quickly and accurately.
         `.trim(),
       stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
       tools: {
-        ...agentTools,
+        ...{...agentTools, ...flowsTools},
         [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
           description:
             "This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user's task, or if you are unable to continue. Once you call this tool, you should not take any further actions.",
@@ -132,7 +145,7 @@ Help the user finish their goal quickly and accurately.
               ? {
                   output: z
                     .object(
-                      structuredOutputSchema(
+                      agentUtils.structuredOutputSchema(
                         context.propsValue
                           .structuredOutput as AgentOutputField[]
                       )?.shape ?? {}
@@ -178,7 +191,7 @@ Help the user finish their goal quickly and accurately.
           break;
         }
         case 'tool-call': {
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
             continue;
           }
           outputBuilder.startToolCall({
@@ -190,7 +203,7 @@ Help the user finish their goal quickly and accurately.
           break;
         }
         case 'tool-result': {
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
             continue;
           }
           outputBuilder.finishToolCall({
@@ -216,30 +229,3 @@ Help the user finish their goal quickly and accurately.
     return outputBuilder.build();
   },
 });
-
-const isTaskCompletionToolCall = (toolName: string) =>
-  toolName === TASK_COMPLETION_TOOL_NAME;
-
-function structuredOutputSchema(
-  outputFields: AgentOutputField[]
-): ZodObject | undefined {
-  const shape: Record<string, z.ZodType> = {};
-
-  for (const field of outputFields) {
-    switch (field.type) {
-      case AgentOutputFieldType.TEXT:
-        shape[field.displayName] = z.string();
-        break;
-      case AgentOutputFieldType.NUMBER:
-        shape[field.displayName] = z.number();
-        break;
-      case AgentOutputFieldType.BOOLEAN:
-        shape[field.displayName] = z.boolean();
-        break;
-      default:
-        shape[field.displayName] = z.any();
-    }
-  }
-
-  return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
-}

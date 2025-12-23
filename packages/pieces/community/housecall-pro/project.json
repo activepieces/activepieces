@@ -5,7 +5,9 @@
   "projectType": "library",
   "release": {
     "version": {
-      "manifestRootsToUpdate": ["dist/{projectRoot}"],
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ],
       "currentVersionResolver": "git-tag",
       "fallbackCurrentVersionResolver": "disk"
     }
@@ -13,9 +15,14 @@
   "tags": [],
   "targets": {
     "build": {
-      "dependsOn": ["prebuild", "^build"],
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ],
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/housecall-pro",
         "tsConfig": "packages/pieces/community/housecall-pro/tsconfig.lib.json",
@@ -30,11 +37,14 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       }
     },
     "prebuild": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "executor": "nx:run-commands",
       "options": {
         "cwd": "packages/pieces/community/housecall-pro",

@@ -26,7 +26,7 @@ const BuilderFlowStatusSection = React.memo(() => {
           <FlowStatusToggle flow={flow}></FlowStatusToggle>
         )}
       </div>
-      <EditFlowOrViewDraftButton />
+      <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
       <PublishButton />
     </>
   );

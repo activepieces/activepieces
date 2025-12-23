@@ -3,10 +3,13 @@ import { t } from 'i18next';
 const FlowEndWidget = () => {
   return (
     <div
-      className="px-2.5 py-1.5 bg-accent text-foreground/70 rounded-full animate-fade"
+      className=" text-center w-[41px] bg-builder-background text-foreground/70 rounded-md animate-fade -ml-[20px]"
       key={'flow-end-button'}
+      id="flow-end-button"
     >
-      {t('End')}
+      <div className="w-full text-center text-sm h-full bg-border/80 p-1 rounded-md">
+        {t('End')}
+      </div>
     </div>
   );
 };

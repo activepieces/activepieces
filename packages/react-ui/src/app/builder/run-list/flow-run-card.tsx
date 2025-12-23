@@ -4,10 +4,7 @@ import { t } from 'i18next';
 import { Eye, Repeat } from 'lucide-react';
 import React, { useState } from 'react';
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -54,10 +51,7 @@ const FlowRunCard = React.memo(
     );
     const projectId = authenticationSession.getProjectId();
 
-    const [setLeftSidebar, setRun] = useBuilderStateContext((state) => [
-      state.setLeftSidebar,
-      state.setRun,
-    ]);
+    const [setRun] = useBuilderStateContext((state) => [state.setRun]);
     const { mutate: viewRun, isPending: isFetchingRun } = useMutation<
       {
         run: FlowRun;
@@ -78,7 +72,6 @@ const FlowRunCard = React.memo(
       },
       onSuccess: ({ run, populatedFlow }) => {
         setRun(run, populatedFlow.version);
-        setLeftSidebar(LeftSideBarType.RUN_DETAILS);
         refetchRuns();
       },
     });
@@ -115,7 +108,6 @@ const FlowRunCard = React.memo(
       onSuccess: ({ populatedFlow, run }) => {
         refetchRuns();
         setRun(run, populatedFlow.version);
-        setLeftSidebar(LeftSideBarType.RUN_DETAILS);
       },
     });
 
@@ -158,7 +150,10 @@ const FlowRunCard = React.memo(
         </div>
         <div className="grid gap-2">
           <div className="text-sm font-medium leading-none flex gap-2 items-center">
-            {formatUtils.formatDate(new Date(run.created ?? new Date()))}{' '}
+            {formatUtils.formatDateWithTime(
+              new Date(run.created ?? new Date()),
+              true,
+            )}{' '}
             {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
           </div>
           {isFlowRunStateTerminal({

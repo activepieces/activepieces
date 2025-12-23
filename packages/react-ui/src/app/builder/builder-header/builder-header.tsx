@@ -10,7 +10,6 @@ import {
 } from 'react-router-dom';
 
 import {
-  LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
@@ -63,14 +62,12 @@ export const BuilderHeader = () => {
   const [
     flow,
     flowVersion,
-    setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
-    state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
@@ -108,7 +105,7 @@ export const BuilderHeader = () => {
             <BreadcrumbItem>
               <BreadcrumbLink
                 onClick={goToFlowsPage}
-                className="cursor-pointer"
+                className="cursor-pointer text-base"
               >
                 {getProjectName(project)}
               </BreadcrumbLink>
@@ -119,7 +116,7 @@ export const BuilderHeader = () => {
         {!embedState.hideFlowNameInBuilder && (
           <BreadcrumbItem>
             <BreadcrumbPage>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 text-base">
                 <EditableText
                   className="hover:cursor-text"
                   value={flowVersion.displayName}
@@ -186,7 +183,7 @@ export const BuilderHeader = () => {
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"
-          onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+          onClick={() => setRightSidebar(RightSideBarType.RUNS)}
           className="gap-2 px-2"
         >
           <Logs className="w-4 h-4" />

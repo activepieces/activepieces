@@ -16,7 +16,8 @@ import {
 } from '@activepieces/ee-shared'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
-import { AiOverageState,
+import {
+    AiOverageState,
     AIProvider,
     AIProviderName,
     apId,
@@ -63,6 +64,7 @@ import { AiOverageState,
     Table,
     TeamProjectsLimit,
     Template,
+    TemplateStatus,
     TemplateType,
     User,
     UserIdentity,
@@ -151,6 +153,7 @@ export const createMockTemplate = (
         usageCount: template?.usageCount ?? 0,
         author: template?.author ?? faker.person.fullName(),
         categories: template?.categories ?? [],
+        status: template?.status ?? TemplateStatus.PUBLISHED,
     }
 }
 
@@ -646,7 +649,7 @@ export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Par
     const mockUserIdentity = createMockUserIdentity({
         verified: true,
         ...userIdentity,
-    })  
+    })
     await databaseConnection().getRepository('user_identity').save(mockUserIdentity)
     const mockUser = createMockUser({
         ...user,
@@ -677,7 +680,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
         ownerId: mockOwner.id,
         filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
-    
+
     await databaseConnection().getRepository('platform').save(mockPlatform)
     const hasPlanTable = databaseConnection().hasMetadata(PlatformPlanEntity)
     if (hasPlanTable) {
@@ -775,10 +778,12 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         platformId: aiProvider?.platformId ?? apId(),
         provider: aiProvider?.provider ?? faker.helpers.enumValue(AIProviderName),
         displayName: aiProvider?.displayName ?? faker.lorem.word(),
-        config: await encryptUtils.encryptObject({
-            apiKey: aiProvider?.config?.apiKey ?? process.env.OPENAI_API_KEY ?? faker.string.uuid(),
+        auth: await encryptUtils.encryptObject({
+            apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
+        config: {},
     }
+    
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
