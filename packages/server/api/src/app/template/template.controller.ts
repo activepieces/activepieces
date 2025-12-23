@@ -20,6 +20,7 @@ import { StatusCodes } from 'http-status-codes'
 import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
+import { cloudTemplates } from './cloud-flow-template.service'
 import { communityTemplates } from './community-flow-template.service'
 import { templateService } from './template.service'
 
@@ -32,13 +33,24 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListTemplatesParams, async (request) => {
         const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type ?? TemplateType.OFFICIAL)
-        if (isNil(platformId)) {
-            if (edition === ApEdition.CLOUD) {
-                return templateService().list({ platformId: null, requestQuery: request.query })
-            }
-            return communityTemplates.get(request.query)
-        }
+        // todo(Rupal): we have dedicated endpoints, see below
+        // if (isNil(platformId)) {
+        //     if (edition === ApEdition.CLOUD) {
+        //         return templateService().list({ platformId: null, requestQuery: request.query })
+        //     }
+        //     return communityTemplates.get(request.query)
+        // }
         return templateService().list({ platformId, requestQuery: request.query })
+    })
+
+    // Custom
+    app.get('/cloud', ListTemplatesParams, async (request) => {
+        return cloudTemplates.get(request.query)
+    })
+
+    // Custom
+    app.get('/community', ListTemplatesParams, async (request) => {
+        return communityTemplates.get(request.query)
     })
 
     app.post('/', {

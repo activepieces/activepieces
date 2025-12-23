@@ -21,10 +21,10 @@ export const templatesApi = {
     return api.get<SeekPage<Template>>(`/v1/templates`, request);
   },
   listCommunity(request: ListTemplatesRequestQuery) {
-    return api.get<SeekPage<Template>>(`/v1/flow-templates/community`, request);
+    return api.get<SeekPage<Template>>(`/v1/templates/community`, request);
   },
   listCloud(request: ListTemplatesRequestQuery) {
-    return api.get<SeekPage<Template>>(`/v1/flow-templates/cloud`, request);
+    return api.get<SeekPage<Template>>(`/v1/templates/cloud`, request);
   },
   delete(templateId: string) {
     return api.delete<void>(`/v1/templates/${templateId}`);

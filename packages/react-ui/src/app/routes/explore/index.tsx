@@ -52,12 +52,6 @@ export const ExplorePage = () => {
   return (
     <div>
       <ProjectDashboardPageHeader title={t('Explore Templates')} />
-      {/*<DashboardPageHeader
-        title={t('Explore Templates & AI')}
-        description={t(
-          'Browse and use pre-built flow templates or quickly create one using AI',
-        )}
-      />*/}
       <div>
         <div className="mb-4">
           <CreateFlowWithAI />

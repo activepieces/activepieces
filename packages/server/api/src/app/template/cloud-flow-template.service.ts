@@ -1,3 +1,4 @@
+// Custom
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     isNil,
@@ -10,7 +11,7 @@ import { system } from '../helper/system/system'
 
 export const cloudTemplates = {
     get: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
-        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
+        const templateSource = system.get(AppSystemProp.CLOUD_TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {
             return paginationHelper.createPage([], null)
         }
@@ -22,7 +23,11 @@ export const cloudTemplates = {
                 'Content-Type': 'application/json',
             },
         })
-        const templates = await response.json() as Promise<SeekPage<Template>>
+        if (response.status !== 200) {
+            system.globalLogger().error('Unable to fetch cloud templates')
+            return paginationHelper.createPage([], null)
+        }
+        const templates = await response.json() as SeekPage<Template>
         return templates
     },
 }

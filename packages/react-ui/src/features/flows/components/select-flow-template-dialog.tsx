@@ -24,7 +24,6 @@ import { TemplateCard } from '@/features/templates/components/template-card';
 import { TemplateDetailsView } from '@/features/templates/components/template-details-view';
 import { useTemplates } from '@/features/templates/hooks/templates-hook';
 import { Template, TemplateType } from '@activepieces/shared';
-import { TemplateTabs } from './template-tabs';
 
 const SelectFlowTemplateDialog = ({
   children,
@@ -40,7 +39,6 @@ const SelectFlowTemplateDialog = ({
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null,
   );
-  const [activeTab, setActiveTab] = useState<string>('MY_TEMPLATE');
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
@@ -53,10 +51,10 @@ const SelectFlowTemplateDialog = ({
 
   return (
     <Dialog onOpenChange={unselectTemplate}>
-      <DialogTrigger>{children}</DialogTrigger>
+      <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className=" lg:min-w-[850px] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex min-h-9 flex-row justify-start gap-2 items-center h-full">
+          <DialogTitle className="flex min-h-9 flex-row items-center justify-start gap-2 items-center h-full">
             {selectedTemplate && (
               <Button variant="ghost" size="sm" onClick={unselectTemplate}>
                 <ArrowLeft className="w-4 h-4" />
@@ -66,24 +64,21 @@ const SelectFlowTemplateDialog = ({
             {t('Browse Templates')}
           </DialogTitle>
         </DialogHeader>
-        <TemplateTabs
-          activeTab={activeTab}
-          selectActiveTab={(id) => setActiveTab(id)}
-        />
-        <div className="p-1 ">
-          <InputWithIcon
-            icon={<Search className="w-4 h-4" />}
-            type="text"
-            value={search}
-            onChange={handleSearchChange}
-            placeholder={t('Search templates')}
-            className="mb-4"
-          />
-        </div>
         <Carousel setApi={(api) => (carousel.current = api)}>
           <CarouselContent className="min-h-[300px] h-[70vh] max-h-[820px] ">
             <CarouselItem key="templates">
               <div>
+                <div className="p-1 ">
+                  <InputWithIcon
+                    icon={<Search className="w-4 h-4" />}
+                    type="text"
+                    value={search}
+                    onChange={handleSearchChange}
+                    placeholder={t('Search templates')}
+                    className="mb-4"
+                  />
+                </div>
+
                 <DialogDescription>
                   {isLoading ? (
                     <div className="min-h-[300px] h-[70vh] max-h-[680px]  o flex justify-center items-center">

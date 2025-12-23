@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { useState } from 'react';
 
-import { ListTemplatesRequestQuery, Template } from '@activepieces/shared';
+import { ListTemplatesRequestQuery } from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 

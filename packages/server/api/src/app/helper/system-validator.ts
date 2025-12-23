@@ -165,6 +165,7 @@ const systemPropValidators: {
     [AppSystemProp.ZERO_SERVICE_URL]: urlValidator,
     [AppSystemProp.ZERO_PUBLIC_URL]: urlValidator,
     [AppSystemProp.PROMPTX_OPENAI_KEY]: stringValidator,
+    [AppSystemProp.CLOUD_TEMPLATES_SOURCE_URL]: stringValidator,
 
     // Tables
     [AppSystemProp.MAX_RECORDS_PER_TABLE]: numberValidator,
