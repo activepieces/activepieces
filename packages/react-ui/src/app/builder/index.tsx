@@ -6,7 +6,6 @@ import {
   RightSideBarType,
   useBuilderStateContext,
   useShowBuilderIsSavingWarningBeforeLeaving,
-  useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
@@ -26,7 +25,6 @@ import { platformHooks } from '@/hooks/platform-hooks';
 import {
   FlowAction,
   FlowActionType,
-  FlowRunStatus,
   FlowTrigger,
   FlowTriggerType,
   FlowVersionState,
@@ -42,15 +40,10 @@ import { FlowCanvas } from './flow-canvas';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
-import { toast } from 'sonner';
-import { t } from 'i18next';
-
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
 
-const useAnimateSidebar = (
-  sidebarValue: RightSideBarType,
-) => {
+const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
   const handleRef = useRef<ImperativePanelHandle>(null);
   const sidebarClosed = sidebarValue === RightSideBarType.NONE;
   useEffect(() => {
@@ -121,7 +114,6 @@ const BuilderPage = () => {
         fetchAndUpdateRun(runId, {
           onSuccess: (run) => {
             setRun(run, flowVersion);
-            showRunStatusToast(run.status);
           },
         });
       }
@@ -141,16 +133,13 @@ const BuilderPage = () => {
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
-
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
 
-            <RunStatus
-              run={run}
-            />
+            <RunStatus run={run} />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
@@ -249,28 +238,4 @@ function constructContainerKey({
   }-${'skipped-' + !!isSkipped}-${
     hasPieceModelLoaded ? 'loaded' : 'not-loaded'
   }`;
-}
-
-function showRunStatusToast(status: FlowRunStatus) {
-  switch (status) {
-    case FlowRunStatus.RUNNING:
-      toast.info(t('Running')+'...')
-      break;
-    case FlowRunStatus.SUCCEEDED:
-      toast.success(t('Run Succeeded'))
-      break;
-    case FlowRunStatus.FAILED:
-    case FlowRunStatus.INTERNAL_ERROR:
-    case FlowRunStatus.TIMEOUT:
-      toast.error(t('Run Failed'))
-      break;
-    case FlowRunStatus.CANCELED:
-      toast.error(t('Run Cancelled'))
-      break;
-    case FlowRunStatus.PAUSED:
-      toast.info(t('Run Paused'))
-      break;
-    case FlowRunStatus.QUEUED:
-      toast.info(t('Run Queued'))
-  }
 }
