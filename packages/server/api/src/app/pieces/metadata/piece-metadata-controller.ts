@@ -12,8 +12,8 @@ import {
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
+    Principal,
     PrincipalType,
-    PrincipalV2,
     RegistryPiecesRequestQuery,
     SampleDataFileType,
     WorkerJobType,
@@ -162,7 +162,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
 }
 
-function getPlatformId(principal: PrincipalV2): string | undefined {
+function getPlatformId(principal: Principal): string | undefined {
     return principal.type === PrincipalType.WORKER || principal.type === PrincipalType.UNKNOWN ? undefined : principal.platform?.id
 }
 

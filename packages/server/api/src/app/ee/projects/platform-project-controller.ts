@@ -12,15 +12,15 @@ import {
     Permission,
     PiecesFilterType,
     PlatformRole,
+    Principal,
     PrincipalType,
-    PrincipalV2,
     ProjectType,
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    ServicePrincipalV2,
+    ServicePrincipal,
     TeamProjectsLimit,
-    UserPrincipalV2,
+    UserPrincipal,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -76,7 +76,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = await isPlatformAdmin(request.principal as ServicePrincipalV2 | UserPrincipalV2, project.platformId)
+        const ownThePlatform = await isPlatformAdmin(request.principal as ServicePrincipal | UserPrincipal, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -104,7 +104,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     })
 }
 
-async function getUserId(principal: PrincipalV2): Promise<string> {
+async function getUserId(principal: Principal): Promise<string> {
     if (principal.type === PrincipalType.SERVICE) {
         const platform = await platformService.getOneOrThrow(principal.platform.id)
         return platform.ownerId
@@ -112,7 +112,7 @@ async function getUserId(principal: PrincipalV2): Promise<string> {
     return principal.id
 }
 
-async function isPlatformAdmin(principal: ServicePrincipalV2 | UserPrincipalV2, platformId: string): Promise<boolean> {
+async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, platformId: string): Promise<boolean> {
     if (principal.platform.id !== platformId) {
         return false
     }
@@ -172,6 +172,7 @@ const UpdateProjectRequest = {
     config: {
         security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT, {
             type: ProjectResourceType.PARAM,
+            paramKey: 'id',
         }),
     },
     schema: {

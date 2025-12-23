@@ -17,6 +17,7 @@ export const authenticationSession = {
       ApStorage.setInstanceToSessionStorage();
     }
     ApStorage.getInstance().setItem(tokenKey, response.token);
+    ApStorage.getInstance().setItem('projectId', response.projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isJwtExpired(token: string): boolean {
@@ -38,12 +39,18 @@ export const authenticationSession = {
   },
 
   getProjectId(): string | null {
+    // projectId is no longer in the token, but we still need to support it for backwards compatibility, in case where projectId is not stored in the local storage but the token is
     const token = this.getToken();
     if (isNil(token)) {
       return null;
     }
     const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.projectId;
+    // @ts-expect-error: projectId doesn't exist in token anymore
+    return (
+      decodedJwt.projectId ??
+      ApStorage.getInstance().getItem('projectId') ??
+      null
+    );
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
@@ -83,7 +90,7 @@ export const authenticationSession = {
       return;
     }
     const result = await authenticationApi.switchProject({ projectId });
-    ApStorage.getInstance().setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem('projectId', result.projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {

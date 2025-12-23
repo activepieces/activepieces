@@ -8,8 +8,8 @@ import {
     isNil,
     ListUserInvitationsRequest,
     Permission,
+    Principal,
     PrincipalType,
-    PrincipalV2,
     ProjectRole,
     SeekPage,
     SendUserInvitationRequest,
@@ -124,7 +124,7 @@ const getProjectRoleAndAssertIfFound = async (platformId: string, request: SendU
     })
     return projectRole
 }
-async function getProjectIdAndAssertPermission<R extends PrincipalV2>(
+async function getProjectIdAndAssertPermission<R extends Principal>(
     app: FastifyInstance,
     request: FastifyRequest,
     reply: FastifyReply,
@@ -142,7 +142,7 @@ async function getProjectIdAndAssertPermission<R extends PrincipalV2>(
 }
 
 
-async function assertPrincipalHasPermissionToProject<R extends PrincipalV2 & { platform: { id: string } }>(
+async function assertPrincipalHasPermissionToProject<R extends Principal & { platform: { id: string } }>(
     fastify: FastifyInstance,
     request: FastifyRequest, reply: FastifyReply, principal: R,
     projectId: string, permission: Permission): Promise<void> {
@@ -156,7 +156,7 @@ async function assertPrincipalHasPermissionToProject<R extends PrincipalV2 & { p
         })
     }
     await platformMustHaveFeatureEnabled((platform) => platform.plan.projectRolesEnabled).call(fastify, request, reply)
-    await assertRoleHasPermission(request.principal, permission, request.log)
+    await assertRoleHasPermission(request.principal, projectId, permission, request.log)
 }
 
 

@@ -12,6 +12,7 @@ import {
   ApTableStore,
   createApTableStore,
 } from '@/features/tables/lib/store/ap-tables-client-state';
+import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Field, Table, PopulatedRecord, isNil } from '@activepieces/shared';
 

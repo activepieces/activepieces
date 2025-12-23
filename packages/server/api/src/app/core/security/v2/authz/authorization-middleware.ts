@@ -7,21 +7,16 @@ import { projectIdExtractor } from './projectIdExtractor'
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const security = request.routeOptions.config?.security
-    // Todo(@chaker): remove this once we remove v1 authn
-    if (isNil(security)) {
-        return
-    }
     const securityAccessRequest = await convertToSecurityAccessRequest(request)
     await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
     
     if (security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
         // @ts-expect-error: explicit override for Fastify typing assignment
-        request.projectId = securityAccessRequest.authorization.projectId
+        request.principal.projectId = securityAccessRequest.authorization.projectId
     }
-    
 }
 
-async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<AuthorizationRouteSecurity> {
+export async function convertToSecurityAccessRequest(request: FastifyRequest): Promise<AuthorizationRouteSecurity> {
     const security = request.routeOptions.config?.security
     if (isNil(security) || security.kind === RouteKind.PUBLIC) {
         return {

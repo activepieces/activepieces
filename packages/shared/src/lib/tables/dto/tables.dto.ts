@@ -36,6 +36,7 @@ export type UpdateTableRequest = Static<typeof UpdateTableRequest>
 
 
 export const ListTablesRequest = Type.Object({
+    projectId: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
     name: Type.Optional(Type.String({})),

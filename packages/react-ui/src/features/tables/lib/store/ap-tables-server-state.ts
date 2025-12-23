@@ -1,3 +1,4 @@
+import { authenticationSession } from '@/lib/authentication-session';
 import { PromiseQueue } from '@/lib/promise-queue';
 import {
   CreateFieldRequest,
@@ -24,6 +25,7 @@ export const createServerState = (
   const clonedTable: Table = JSON.parse(JSON.stringify(_table));
   const clonedFields: Field[] = JSON.parse(JSON.stringify(_fields));
   let clonedRecords: PopulatedRecord[] = JSON.parse(JSON.stringify(_records));
+  const projectId = authenticationSession.getProjectId() ?? '';
 
   function addPromiseToQueue(promise: () => Promise<void>) {
     queue.add(async () => {
@@ -50,13 +52,14 @@ export const createServerState = (
     },
     createField: (field: CreateFieldRequest) => {
       addPromiseToQueue(async () => {
-        const serverField = await fieldsApi.create(field);
+        const serverField = await fieldsApi.create({ ...field, projectId });
         clonedFields.push(serverField);
       });
     },
     createRecord: (record: ClientRecordData) => {
       addPromiseToQueue(async () => {
         const createdRecords = await recordsApi.create({
+          projectId,
           tableId: clonedTable.id,
           records: [
             record.values.map((value) => ({
