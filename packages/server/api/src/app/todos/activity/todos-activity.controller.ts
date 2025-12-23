@@ -1,5 +1,7 @@
+import { EntitySourceType, projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import { CreateTodoActivityRequestBody, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { TodoEntity } from '../todo.entity'
 import { todoActivitiesService as todoActivityService } from './todos-activity.service'
 
 const DEFAULT_LIMIT = 10
@@ -34,7 +36,15 @@ const ListTodoCommentsRequest = {
         querystring: ListTodoActivitiesQueryParams,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity,
+            entitySourceType: EntitySourceType.QUERY,
+            lookup: {
+                paramKey: 'todoId',
+                entityField: 'id',
+            },
+        }),
     },
 }
 
@@ -44,6 +54,14 @@ const CreateTodoCommentRequest = {
         body: CreateTodoActivityRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: TodoEntity,
+            entitySourceType: EntitySourceType.BODY,
+            lookup: {
+                paramKey: 'todoId',
+                entityField: 'id',
+            },
+        }),
     },
 }
