@@ -1,6 +1,6 @@
 {
-  "name": "@activepieces/piece-ai",
-  "version": "0.0.5",
+  "name": "@activepieces/piece-voipstudio",
+  "version": "0.0.1",
   "type": "commonjs",
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
