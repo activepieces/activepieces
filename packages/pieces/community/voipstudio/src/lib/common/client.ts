@@ -1,6 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 
-const BASE_URL = `https://l7api.com/v1.2/voipstudio`;
+export const BASE_URL = `https://l7api.com/v1.2/voipstudio`;
 
 export async function makeRequest<T>(
   auth_token: string,

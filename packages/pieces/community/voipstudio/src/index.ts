@@ -13,6 +13,8 @@ import { dtmfReceived } from './lib/triggers/dtmf-received';
 import { missedCall } from './lib/triggers/missed-call';
 import { newCallRecording } from './lib/triggers/new-call-recording';
 import { smsReceived } from './lib/triggers/sms-received';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { BASE_URL } from './lib/common/client';
 
 export const voipstudio = createPiece({
   displayName: 'Voipstudio',
@@ -28,7 +30,14 @@ export const voipstudio = createPiece({
     makeACallToLead,
     makeACall,
     makeAWebcall,
-    sendSms
+    sendSms,
+    createCustomApiCallAction({
+      auth: voipstudioAuth,
+      baseUrl: () => BASE_URL,
+      authMapping: async (auth) => ({
+        'X-Auth-Token': auth.secret_text,
+      }),
+    }),
   ],
   triggers: [
     callConnected,
@@ -37,6 +46,6 @@ export const voipstudio = createPiece({
     dtmfReceived,
     missedCall,
     newCallRecording,
-    smsReceived
+    smsReceived,
   ],
 });
