@@ -25,9 +25,11 @@ import {
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
+import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
+import { AgentSettings } from './agent-settings';
 import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
@@ -46,6 +48,7 @@ const StepSettingsContainer = () => {
     flowVersion,
     selectedBranchIndex,
     setSelectedBranchIndex,
+    run,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -54,6 +57,7 @@ const StepSettingsContainer = () => {
     state.flowVersion,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
+    state.run,
   ]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -114,12 +118,19 @@ const StepSettingsContainer = () => {
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
+  const showGenerateSampleData = !readonly;
+  const showStepInputOutFromRun = !isNil(run);
+
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
     [FlowActionType.CODE, FlowActionType.PIECE].includes(
       modifiedStep.type as FlowActionType,
     ) && !isNil(stepMetadata);
+
+  const runAgentStep =
+    modifiedStep.settings.pieceName === '@activepieces/piece-ai' &&
+    modifiedStep.settings.actionName === 'run_agent';
 
   useEffect(() => {
     //RHF doesn't automatically trigger validation when the form is rendered, so we need to trigger it manually
@@ -183,6 +194,16 @@ const StepSettingsContainer = () => {
                     <CodeSettings readonly={readonly}></CodeSettings>
                   )}
                   {modifiedStep.type === FlowActionType.PIECE &&
+                    runAgentStep &&
+                    modifiedStep && (
+                      <AgentSettings
+                        step={modifiedStep}
+                        flowId={flowVersion.flowId}
+                        readonly={readonly}
+                      />
+                    )}
+                  {modifiedStep.type === FlowActionType.PIECE &&
+                    !runAgentStep &&
                     modifiedStep && (
                       <PieceSettings
                         step={modifiedStep}
@@ -222,12 +243,13 @@ const StepSettingsContainer = () => {
                 </div>
               </ScrollArea>
             </ResizablePanel>
-            {!readonly && (
+
+            {(showGenerateSampleData || showStepInputOutFromRun) && (
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel defaultSize={45} className="min-h-[130px]">
-                  <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
-                    {modifiedStep.type && (
+                  <ScrollArea className="h-[calc(100%-35px)]  ">
+                    {showGenerateSampleData && (
                       <TestStepContainer
                         type={modifiedStep.type}
                         flowId={flowVersion.flowId}
@@ -235,6 +257,9 @@ const StepSettingsContainer = () => {
                         projectId={project?.id}
                         isSaving={saving}
                       ></TestStepContainer>
+                    )}
+                    {showStepInputOutFromRun && (
+                      <FlowStepInputOutput></FlowStepInputOutput>
                     )}
                   </ScrollArea>
                 </ResizablePanel>

@@ -11,7 +11,7 @@ import {
   PieceTriggerSettings,
 } from '@activepieces/shared';
 
-import { AutoPropertiesFormComponent } from '../../piece-properties/auto-properties-form';
+import { GenericPropertiesFormComponent } from '../../piece-properties/generic-properties-form';
 import { useStepSettingsContext } from '../step-settings-context';
 
 import { ConnectionSelect } from './connection-select';
@@ -76,9 +76,15 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
   return (
     <div className="flex flex-col gap-4 w-full">
       {!pieceModel && (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="w-full h-8" />
+            <div className="space-y-2" key={index}>
+              <div className="flex justify-between items-center">
+                <Skeleton className="w-40 h-4" />
+                <Skeleton className="size-8" />
+              </div>
+              <Skeleton className="w-full h-12" />
+            </div>
           ))}
         </div>
       )}
@@ -93,7 +99,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
             ></ConnectionSelect>
           )}
           {selectedAction && (
-            <AutoPropertiesFormComponent
+            <GenericPropertiesFormComponent
               key={selectedAction.name}
               prefixValue={'settings.input'}
               props={actionPropsWithoutAuth}
@@ -101,10 +107,10 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               disabled={props.readonly}
               useMentionTextInput={true}
               markdownVariables={markdownVariables}
-            ></AutoPropertiesFormComponent>
+            ></GenericPropertiesFormComponent>
           )}
           {selectedTrigger && (
-            <AutoPropertiesFormComponent
+            <GenericPropertiesFormComponent
               key={selectedTrigger.name}
               prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
@@ -112,7 +118,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
               allowDynamicValues={true}
               disabled={props.readonly}
               markdownVariables={markdownVariables}
-            ></AutoPropertiesFormComponent>
+            ></GenericPropertiesFormComponent>
           )}
         </>
       )}
