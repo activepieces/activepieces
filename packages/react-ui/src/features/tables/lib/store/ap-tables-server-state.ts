@@ -96,6 +96,7 @@ export const createServerState = (
           (index) => clonedRecords[parseInt(index)].id,
         );
         await recordsApi.delete({
+          tableId: clonedTable.id,
           ids: recordIds,
         });
 

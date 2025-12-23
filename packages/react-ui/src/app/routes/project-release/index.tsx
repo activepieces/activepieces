@@ -30,6 +30,7 @@ import {
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import {
   ProjectRelease,
   ProjectReleaseType,
@@ -133,6 +134,7 @@ const ProjectReleasesPage = () => {
                   variant="ghost"
                   className="size-8 p-0"
                   request={{
+                    projectId: authenticationSession.getProjectId()!,
                     type: ProjectReleaseType.ROLLBACK,
                     projectReleaseId: row.original.id,
                   }}
@@ -188,7 +190,10 @@ const ProjectReleasesPage = () => {
                           variant="ghost"
                           onSuccess={refetch}
                           className="w-full justify-start"
-                          request={{ type: ProjectReleaseType.GIT }}
+                          request={{
+                            type: ProjectReleaseType.GIT,
+                            projectId: authenticationSession.getProjectId()!,
+                          }}
                         >
                           <div className="flex flex-row gap-2 items-center">
                             <GitBranch className="size-4" />

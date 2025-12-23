@@ -14,7 +14,7 @@ const queryKeys = (searchParams: URLSearchParams, projectId: string) => {
 };
 export const tableHooks = {
   useTables: (limit?: number) => {
-    const projectId = authenticationSession.getProjectId();
+    const projectId = authenticationSession.getProjectId() ?? '';
     const [searchParams] = useSearchParams();
     return useQuery({
       queryKey: ['tables', searchParams.toString(), projectId],
@@ -37,7 +37,7 @@ export const tableHooks = {
     const [searchParams] = useSearchParams();
     return useMutation({
       mutationFn: async (data: { name: string }) => {
-        const table = await tablesApi.create({ name: data.name });
+        const table = await tablesApi.create({ projectId, name: data.name });
         const field = await fieldsApi.create({
           name: 'Name',
           type: FieldType.TEXT,

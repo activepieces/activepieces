@@ -1,3 +1,4 @@
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import { FlowVersionMetadata, ListFlowVersionRequest, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -5,6 +6,7 @@ import {
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { flowVersionService } from '../flow-version/flow-version.service'
+import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
@@ -27,7 +29,14 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) 
 
 const ListVersionParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: projectAccess([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.TABLE,
+            tableName: FlowEntity,
+            lookup: {
+                paramKey: 'flowId',
+                entityField: 'id',
+            },
+        }),
     },
     schema: {
         params: Type.Object({

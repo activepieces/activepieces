@@ -49,8 +49,6 @@ export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
     // TODO: We have to use the enum when we finalize the plan names
     plan: Type.Optional(Type.String()),
-    openRouterApiKeyHash: Type.Optional(Type.String()),
-    openRouterApiKey: Type.Optional(Type.String()),
     platformId: Type.String(),
     includedAiCredits: Type.Number(),
     aiCreditsOverageLimit: Type.Optional(Type.Number()),

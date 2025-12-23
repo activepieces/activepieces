@@ -3,7 +3,7 @@ import {
     ListProjectRequestForPlatformQueryParams,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { publicPlatformAccess } from '@activepieces/server-shared'
+import { platformAdminOnly, projectAccess, ProjectResourceType, publicPlatformAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -18,16 +18,15 @@ import {
     ProjectWithLimits,
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
-    ServicePrincipal,
+    ServicePrincipalV2,
     TeamProjectsLimit,
-    UserPrincipal,
+    UserPrincipalV2,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
-import { platformMustBeOwnedByCurrentUser } from '../authentication/ee-authorization'
 import { platformProjectService } from './platform-project-service'
 import { projectLimitsService } from './project-plan/project-plan.service'
 
@@ -60,9 +59,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
         await reply.status(StatusCodes.CREATED).send(projectWithUsage)
     })
 
-    app.get('/', ListProjectRequestForPlatform, async (request, reply) => {
-        await platformMustBeOwnedByCurrentUser.call(app, request, reply)
-
+    app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {
         const userId = await getUserId(request.principal)
         return platformProjectService(request.log).getAllForPlatform({
             platformId: request.principal.platform.id,
@@ -79,7 +76,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
         const haveTokenForTheProject = request.principal.projectId === project.id
-        const ownThePlatform = await isPlatformAdmin(request.principal, project.platformId)
+        const ownThePlatform = await isPlatformAdmin(request.principal as ServicePrincipalV2 | UserPrincipalV2, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,
@@ -97,10 +94,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
     })
 
     app.delete('/:id', DeleteProjectRequest, async (req, res) => {
-        await platformMustBeOwnedByCurrentUser.call(app, req, res)
-        assertProjectToDeleteIsNotPrincipalProject(req.principal, req.params.id)
         await assertProjectToDeleteIsNotPersonalProject(req.params.id)
-
         await platformProjectService(req.log).hardDelete({
             id: req.params.id,
             platformId: req.principal.platform.id,
@@ -118,7 +112,7 @@ async function getUserId(principal: PrincipalV2): Promise<string> {
     return principal.id
 }
 
-async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, platformId: string): Promise<boolean> {
+async function isPlatformAdmin(principal: ServicePrincipalV2 | UserPrincipalV2, platformId: string): Promise<boolean> {
     if (principal.platform.id !== platformId) {
         return false
     }
@@ -131,16 +125,6 @@ async function isPlatformAdmin(principal: ServicePrincipal | UserPrincipal, plat
     return user.platformRole === PlatformRole.ADMIN
 }
 
-const assertProjectToDeleteIsNotPrincipalProject = (principal: ServicePrincipal | UserPrincipal, projectId: string): void => {
-    if (principal.projectId === projectId) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'ACTIVE_PROJECT',
-            },
-        })
-    }
-}
 
 async function assertProjectToDeleteIsNotPersonalProject(projectId: string): Promise<void> {
     const project = await projectService.getOneOrThrow(projectId)
@@ -186,9 +170,9 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string)
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
-        permission: Permission.WRITE_PROJECT,
+        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT, {
+            type: ProjectResourceType.PARAM,
+        }),
     },
     schema: {
         tags: ['projects'],
@@ -219,7 +203,7 @@ const CreateProjectRequest = {
 
 const ListProjectRequestForPlatform = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         response: {
@@ -233,8 +217,7 @@ const ListProjectRequestForPlatform = {
 
 const DeleteProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         params: Type.Object({
