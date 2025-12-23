@@ -55,7 +55,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
                             const paymentMethodId = setupIntent.payment_method as string
                             const platformId = session.metadata.platformId as string
-                            await platformAiCreditsService(request.log).handleAutoTopUpCheckoutSessionCompleted(platformId, paymentMethodId, StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP)
+                            await platformAiCreditsService(request.log).handleAutoTopUpCheckoutSessionCompleted(platformId, paymentMethodId)
                         }
                         break
                     }
