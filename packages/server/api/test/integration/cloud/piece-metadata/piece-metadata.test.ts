@@ -120,7 +120,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces/@activepieces/a',
+                url: `/v1/pieces/@activepieces/a?projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -255,7 +255,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -484,7 +484,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -547,7 +547,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -610,7 +610,7 @@ describe('Piece Metadata API', () => {
             // act
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/pieces?release=1.1.1',
+                url: `/v1/pieces?release=1.1.1&projectId=${mockProject.id}`,
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

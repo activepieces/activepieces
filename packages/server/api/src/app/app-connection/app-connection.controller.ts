@@ -1,4 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import {
     ApId,
     AppConnectionOwners,
@@ -22,6 +23,7 @@ import { StatusCodes } from 'http-status-codes'
 import { eventsHooks } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
+import { AppConnectionEntity } from './app-connection.entity'
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
@@ -140,8 +142,13 @@ const DEFAULT_PAGE_SIZE = 10
 
 const UpsertAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
@@ -156,8 +163,14 @@ const UpsertAppConnectionRequest = {
 
 const UpdateConnectionValueRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AppConnectionEntity,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
@@ -172,8 +185,14 @@ const UpdateConnectionValueRequest = {
 
 const ReplaceAppConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AppConnectionEntity,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
@@ -188,8 +207,13 @@ const ReplaceAppConnectionsRequest = {
 
 const ListAppConnectionsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_APP_CONNECTION,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_APP_CONNECTION,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
@@ -203,8 +227,13 @@ const ListAppConnectionsRequest = {
 }
 const ListAppConnectionOwnersRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.READ_APP_CONNECTION,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.READ_APP_CONNECTION,
+            {
+                type: ProjectResourceType.QUERY,
+            },
+        ),
     },
     schema: {
         querystring: ListAppConnectionOwnersRequestQuery,
@@ -219,8 +248,14 @@ const ListAppConnectionOwnersRequest = {
 
 const DeleteAppConnectionRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_APP_CONNECTION,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            Permission.WRITE_APP_CONNECTION,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AppConnectionEntity,
+            },
+        ),
     },
     schema: {
         tags: ['app-connections'],
