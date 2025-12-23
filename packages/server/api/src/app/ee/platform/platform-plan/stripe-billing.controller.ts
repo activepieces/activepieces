@@ -41,7 +41,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         if (session.metadata.type === StripeCheckoutType.AI_CREDIT_PAYMENT) {
                             const platformId = session.metadata.platformId as string
                             const intent = await stripe.paymentIntents.retrieve(
-                                session.payment_intent as string
+                                session.payment_intent as string,
                             )
                             const amountInCents = intent.amount
                             const amountInUsd = amountInCents / 100

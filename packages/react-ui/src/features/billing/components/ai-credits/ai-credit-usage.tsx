@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Sparkles, Info, Settings, Plus, Receipt } from 'lucide-react';
+import { Sparkles, Info, Settings, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
