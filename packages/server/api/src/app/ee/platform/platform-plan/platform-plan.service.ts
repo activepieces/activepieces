@@ -23,7 +23,6 @@ type UpdatePlatformBillingParams = {
 const edition = system.getEdition()
 const stripeSecretKey = system.get(AppSystemProp.STRIPE_SECRET_KEY)
 
-export const AI_CREDIT_PRICE_ID = getPriceIdFor(PRICE_NAMES.AI_CREDITS)
 export const ACTIVE_FLOW_PRICE_ID = getPriceIdFor(PRICE_NAMES.ACTIVE_FLOWS)
 
 export const platformPlanService = (log: FastifyBaseLogger) => ({

@@ -1,5 +1,5 @@
-import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema, ListAICreditsPaymentsRequestParams } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiCreditsAutoTopUpState, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformAiCreditsPayment, PlatformAiCreditsPaymentStatus, PlatformAiCreditsPaymentType, PlatformPlan, SeekPage } from '@activepieces/shared'
+import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, AiCreditsAutoTopUpState, apId, assertNotNullOrUndefined, ErrorCode, isNil, PlatformPlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -11,12 +11,9 @@ import Paginator from '../../../helper/pagination/paginator'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
-import { openRouterApi } from './openrouter/openrouter-api'
-import { PlatformAiCreditsPaymentEntity } from './platform-ai-credits-payment.entity'
+import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
 import { platformPlanRepo, platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
-
-const platformAiCreditsPaymentRepo = repoFactory(PlatformAiCreditsPaymentEntity)
 
 const CREDIT_PER_DOLLAR = 1000
 
@@ -29,15 +26,20 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             }
             catch (e) {
                 log.error(e, '(platformAiCreditsService) Renewing Free AI credits failed')
+                throw e
             }
         })
-        systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_AUTO_TOPUP, async () => {
+        systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_AUTO_TOPUP, async ({ apiKeyHash, platformId }) => {
             log.info('(platformAiCreditsService) Auto Topup AI credits')
             try {
-                await this.autoTopUpPlans()
+                const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+                const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+                await this.tryAutoTopUpPlan(plan, key)
             }
             catch (e) {
                 log.error(e, '(platformAiCreditsService) Auto Topup AI credits failed')
+                throw e
             }
         })
 
@@ -49,16 +51,6 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             schedule: {
                 type: 'repeated',
                 cron: '0 12 L * *', // last day of every month
-            },
-        })
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.AI_CREDIT_AUTO_TOPUP,
-                data: {},
-            },
-            schedule: {
-                type: 'repeated',
-                cron: '0 */6 * * *', // every 6 hours
             },
         })
     },
@@ -135,7 +127,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
         return { stripeCheckoutUrl }
     },
-    
+
     async handleAutoTopUpCheckoutSessionCompleted(platformId: string, paymentMethodId: string): Promise<void> {
         await platformPlanService(log).update({
             platformId,
@@ -170,76 +162,28 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async listPayments(platformId: string, params: ListAICreditsPaymentsRequestParams): Promise<SeekPage<PlatformAiCreditsPayment>> {
-        const decodedCursor = paginationHelper.decodeCursor(params.cursor)
-        const paginator = buildPaginator({
-            entity: PlatformAiCreditsPaymentEntity,
-            alias: 'ac',
-            query: {
-                limit: params.limit ?? Paginator.NO_LIMIT,
-                afterCursor: decodedCursor.nextCursor,
-                beforeCursor: decodedCursor.previousCursor,
-            },
-        })
-
-        const queryBuilder = platformAiCreditsPaymentRepo()
-            .createQueryBuilder('ac')
-            .where('ac."platformId" = :platformId', { platformId })
-            .orderBy('ac."created"', 'DESC')
-
-        const result = await paginator.paginate(queryBuilder)
-
-        return paginationHelper.createPage(result.data, result.cursor)
-    },
-
     async initializeStripeAiCreditsPayment(platformId: string, { aiCredits }: CreateAICreditCheckoutSessionParamsSchema): Promise<{ stripeCheckoutUrl: string }> {
         const { stripeCustomerId: customerId } = await platformPlanService(log).getOrCreateForPlatform(platformId)
         assertNotNullOrUndefined(customerId, 'Stripe customer id is not set')
 
         const amountInUsd = aiCredits / CREDIT_PER_DOLLAR
 
-        const id = apId()
-
         const stripeCheckoutUrl = await stripeHelper(log).createNewAICreditPaymentCheckoutSession({
             amountInUsd,
             platformId,
-            paymentId: id,
             customerId,
         })
-
-        await platformAiCreditsPaymentRepo().insert({
-            id,
-            platformId,
-            aiCredits,
-            amount: amountInUsd,
-            type: PlatformAiCreditsPaymentType.MANUAL,
-            status: PlatformAiCreditsPaymentStatus.PAYMENT_PENDING,
-        })
-
         return { stripeCheckoutUrl }
     },
 
-    async aiCreditsPaymentSucceeded(paymentId: string, txId: string): Promise<void> {
-        const payment = await platformAiCreditsPaymentRepo().findOneOrFail({ where: { id: paymentId } })
-        if (payment.status === PlatformAiCreditsPaymentStatus.DONE) {
-            return
-        }
-
-        await platformAiCreditsPaymentRepo().save({ id: paymentId, txId, status: PlatformAiCreditsPaymentStatus.PAYMENT_SUCCESS })
-
-        const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(payment.platformId)
+    async aiCreditsPaymentSucceeded(platformId: string, amount: number): Promise<void> {
+        const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
         const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
         await openRouterApi.updateKey({
             hash: apiKeyHash,
-            limit: key.limit! + payment.amount,
+            limit: key.limit! + amount,
         })
-
-        await platformAiCreditsPaymentRepo().save({ id: paymentId, status: PlatformAiCreditsPaymentStatus.DONE })
-    },
-
-    async aiCreditsPaymentFailed(paymentId: string): Promise<void> {
-        await platformAiCreditsPaymentRepo().save({ id: paymentId, status: PlatformAiCreditsPaymentStatus.PAYMENT_FAILED })
     },
 
     async resetPlanIncludedCredits(): Promise<void> {
@@ -288,43 +232,44 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async autoTopUpPlans(): Promise<void> {
-        const keys: Awaited<ReturnType<typeof openRouterApi.listKeys>>['data'] = []
-        let offset = 0
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const { data } = await openRouterApi.listKeys({ offset })
-            if (data.length === 0) break
+    // async autoTopUpPlans(): Promise<void> {
+    //     const keys: Awaited<ReturnType<typeof openRouterApi.listKeys>>['data'] = []
+    //     let offset = 0
+    //     // eslint-disable-next-line no-constant-condition
+    //     while (true) {
+    //         const { data } = await openRouterApi.listKeys({ offset })
+    //         if (data.length === 0) break
 
-            keys.push(...data)
-            offset += data.length
-        }
+    //         keys.push(...data)
+    //         offset += data.length
+    //     }
 
-        const plans = await platformPlanRepo().find({
-            where: {
-                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON, 
-            },
-        })
-        const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs(
-            plans.map(p => p.platformId),
-        )
+    //     const plans = await platformPlanRepo().find({
+    //         where: {
+    //             aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON, 
+    //         },
+    //     })
+    //     const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs(
+    //         plans.map(p => p.platformId),
+    //     )
 
-        for (const plan of plans) {
-            const { apiKeyHash } = configs[plan.platformId]
+    //     for (const plan of plans) {
+    //         const { apiKeyHash } = configs[plan.platformId]
 
-            const key = keys.find(k => k.hash === apiKeyHash)
-            if (!key) continue
+    //         const key = keys.find(k => k.hash === apiKeyHash)
+    //         if (!key) continue
 
-            const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
+    //         await this.tryAutoTopUpPlan(plan, key)
+    //     }
+    // },
 
-            if (creditsRemaining <= plan.aiCreditsAutoTopUpThreshold!) {
-                await this.autoTopUpPlan(plan)
-            }
-        }
-    },
-
-    async autoTopUpPlan(plan: PlatformPlan): Promise<void> {
+    async tryAutoTopUpPlan(plan: PlatformPlan, key: OpenRouterApikey): Promise<void> {
         if (plan.aiCreditsAutoTopUpState !== AiCreditsAutoTopUpState.ALLOWED_AND_ON) {
+            return
+        }
+
+        const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
+        if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold!) {
             return
         }
 
@@ -335,23 +280,11 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
         const amountInUsd = plan.aiCreditsAutoTopUpCreditsToAdd / CREDIT_PER_DOLLAR
 
-        const id = apId()
-        const txId = await stripeHelper(log).createNewAICreditAutoTopUpPaymentIntent({
+        await stripeHelper(log).createNewAICreditAutoTopUpPaymentIntent({
             amountInUsd,
-            paymentId: id,
             customerId: plan.stripeCustomerId,
             paymentMethod: plan.aiCreditsAutoTopUpStripePaymentMethod,
             platformId: plan.platformId,
-        })
-        
-        await platformAiCreditsPaymentRepo().insert({
-            id,
-            platformId: plan.platformId,
-            aiCredits: plan.aiCreditsAutoTopUpCreditsToAdd,
-            amount: amountInUsd,
-            txId,
-            type: PlatformAiCreditsPaymentType.AUTO_TOPUP,
-            status: PlatformAiCreditsPaymentStatus.PAYMENT_PENDING,
         })
     },
 })

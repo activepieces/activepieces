@@ -1,4 +1,4 @@
-import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema, ListAICreditsPaymentsRequestParams, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
+import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
 import { assertNotNullOrUndefined, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -92,9 +92,6 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.post('/ai-credits/auto-topup/disable', DisableAICreditsAutoTopUpRequest, async (request) => {
         return platformAiCreditsService(request.log).disableAutoTopUp(request.principal.platform.id)
     })
-    fastify.get('/ai-credits/payments', ListAICreditsPaymentsRequest, async (request) => {
-        return platformAiCreditsService(request.log).listPayments(request.principal.platform.id, request.query)
-    })
 }
 
 const InfoRequest = {
@@ -152,15 +149,6 @@ const EnableAICreditsAutoTopUpRequest = {
 
 const DisableAICreditsAutoTopUpRequest = {
     schema: {},
-    config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-    },
-}
-
-const ListAICreditsPaymentsRequest = {
-    schema: {
-        querystring: ListAICreditsPaymentsRequestParams,
-    },
     config: {
         allowedPrincipals: [PrincipalType.USER] as const,
     },

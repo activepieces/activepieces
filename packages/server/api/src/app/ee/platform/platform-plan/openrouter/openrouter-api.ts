@@ -87,7 +87,7 @@ type CreateKeyRequest = {
 }
 type CreateKeyResponse = {
     key: string
-    data: Apikey
+    data: OpenRouterApikey
 }
 
 type UpdateKeyRequest = {
@@ -99,14 +99,14 @@ type UpdateKeyRequest = {
     expires_at?: Date
 }
 type UpdateKeyResponse = {
-    data: Apikey
+    data: OpenRouterApikey
 }
 
 type GetKeyRequest = {
     hash: string
 }
 type GetKeyResponse = {
-    data: Apikey
+    data: OpenRouterApikey
 }
 
 type ListKeysRequest = {
@@ -114,12 +114,12 @@ type ListKeysRequest = {
     include_disabled?: 'true' | 'false' // default false
 }
 type ListKeysResponse = {
-    data: Apikey[]
+    data: OpenRouterApikey[]
 }
 
 type LimitReset = 'daily' | 'weekly' | 'monthly'
 
-type Apikey = {
+export type OpenRouterApikey = {
     hash: string
     name: string
     label: string

@@ -3,7 +3,7 @@ import { ApEdition, assertNotNullOrUndefined, isNil, UserWithMetaInformation } f
 import { FastifyBaseLogger } from 'fastify'
 import Stripe from 'stripe'
 import { system } from '../../../helper/system/system'
-import { ACTIVE_FLOW_PRICE_ID, AI_CREDIT_PRICE_ID, platformPlanService } from './platform-plan.service'
+import { ACTIVE_FLOW_PRICE_ID, platformPlanService } from './platform-plan.service'
 
 export const stripeWebhookSecret = system.get(AppSystemProp.STRIPE_WEBHOOK_SECRET)!
 const frontendUrl = system.get(WorkerSystemProp.FRONTEND_URL)
@@ -68,7 +68,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { customerId, platformId, amountInUsd, paymentId, paymentMethod } = params
+        const { customerId, platformId, amountInUsd, paymentMethod } = params
 
         const amountInCents = amountInUsd * 100
 
@@ -81,7 +81,6 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             confirm: true,
             metadata: {
                 platformId,
-                paymentId,
                 type: StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP,
             },
         })
@@ -92,7 +91,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
-        const { customerId, platformId, paymentId, amountInUsd } = params
+        const { customerId, platformId, amountInUsd } = params
 
         const amountInCents = amountInUsd * 100
 
@@ -106,12 +105,11 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                     },
                     unit_amount: amountInCents,
                 },
-                quantity: 1,    
+                quantity: 1,
             }],
             mode: 'payment',
             metadata: {
                 platformId,
-                paymentId,
                 type: StripeCheckoutType.AI_CREDIT_PAYMENT,
             },
             allow_promotion_codes: true,
@@ -214,7 +212,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         const defaultCancelDate = undefined
 
         const relevantSubscriptionItem = subscription.items.data.find(
-            item => [AI_CREDIT_PRICE_ID, ACTIVE_FLOW_PRICE_ID].includes(item.price.id),
+            item => [ACTIVE_FLOW_PRICE_ID].includes(item.price.id),
         )
 
         if (isNil(relevantSubscriptionItem)) {
@@ -276,9 +274,7 @@ async function updateSubscriptionSchedule(params: UpdateSubscriptionSchedulePara
         quantity: !isNil(item.quantity) ? item.quantity : undefined,
     }))
     
-    const nextPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = [
-        { price: AI_CREDIT_PRICE_ID },
-    ]
+    const nextPhaseItems: Stripe.SubscriptionScheduleUpdateParams.Phase.Item[] = []
     if (extraActiveFlows > 0) {
         nextPhaseItems.push({
             price: ACTIVE_FLOW_PRICE_ID, quantity: extraActiveFlows,
@@ -326,7 +322,6 @@ async function createSubscriptionSchedule(params: CreateSubscriptionSchedulePara
 
 type CreateAICreditPaymentParams = {
     platformId: string
-    paymentId: string
     customerId: string
     amountInUsd: number
 }
@@ -374,7 +369,6 @@ type CreateAICreditAutoTopUpCheckoutSessionParams = {
 
 type CreateAICreditAutoTopUpPaymentIntentParams = {
     platformId: string
-    paymentId: string
     customerId: string
     amountInUsd: number
     paymentMethod: string

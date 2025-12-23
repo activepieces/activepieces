@@ -27,6 +27,11 @@ type UpdateFlowStatusDurableSystemJobData =  {
     preUpdateDone: boolean
 }
 
+type AiCreditAutoTopUpSystemJobData = {
+    apiKeyHash: string
+    platformId: string
+}
+
 type SystemJobDataMap = {
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
@@ -36,7 +41,7 @@ type SystemJobDataMap = {
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
     [SystemJobName.AI_CREDIT_RENEW]: Record<string, never>
-    [SystemJobName.AI_CREDIT_AUTO_TOPUP]: Record<string, never>
+    [SystemJobName.AI_CREDIT_AUTO_TOPUP]: AiCreditAutoTopUpSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

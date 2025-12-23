@@ -17,7 +17,6 @@ import { OtpEntity } from '../ee/authentication/otp/otp-entity'
 import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
 import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
 import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
-import { PlatformAiCreditsPaymentEntity } from '../ee/platform/platform-plan/platform-ai-credits-payment.entity'
 import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
 import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
 import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.entity'
@@ -107,7 +106,6 @@ function getEntities(): EntitySchema<unknown>[] {
         ConnectionKeyEntity,
         AppCredentialEntity,
         PlatformPlanEntity,
-        PlatformAiCreditsPaymentEntity,
     ]
 }
 

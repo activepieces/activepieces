@@ -18,6 +18,10 @@ import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
+import { aiCreditsUpdatesQueue } from '../ee/platform/platform-plan/queue/ai-credits-updates-queue'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { SystemJobName } from '../helper/system-jobs/common'
+import dayjs from 'dayjs'
 
 const aiProviderRepo = repoFactory<AIProviderSchema>(AIProviderEntity)
 
@@ -131,13 +135,30 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+
+        let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
+
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
-            const doesHaveKeys = await doesActivepiecesProviderHasKeys(aiProvider)
+            const doesHaveKeys = !isNil(auth) && !isNil(auth.apiKey) && auth.apiKey !== ''
             if (!doesHaveKeys) {
-                return enrichWithKeysIfNeeded(aiProvider, platformId, log)
+                const { auth: activePiecesAuth } = await enrichWithKeysIfNeeded(aiProvider, platformId, log)
+
+                auth = activePiecesAuth
             }
+
+            await systemJobsSchedule(log).upsertJob({
+                job: {
+                    name: SystemJobName.AI_CREDIT_AUTO_TOPUP,
+                    data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: dayjs(),
+                },
+            })
         }
-        const auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
+        
+        
         return { provider: aiProvider.provider, auth, config: aiProvider.config }
     },
     async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {

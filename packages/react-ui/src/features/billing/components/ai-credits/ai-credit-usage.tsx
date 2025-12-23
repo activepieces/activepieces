@@ -20,7 +20,6 @@ import {
 
 import { billingMutations } from '../../lib/billing-hooks';
 
-import { AICreditsPaymentHistoryDialog } from './ai-credits-payment-history-dialog';
 import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
 import { PurchaseAICreditsDialog } from './purchase-ai-credits-dialog';
 
@@ -35,8 +34,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
   const [isAutoTopUpDialogOpen, setIsAutoTopUpDialogOpen] = useState(false);
   const [isAutoTopUpEditing, setIsAutoTopUpEditing] = useState(false);
-  const [isPaymentHistoryDialogOpen, setIsPaymentHistoryDialogOpen] =
-    useState(false);
 
   const planIncludedCredits = plan.includedAiCredits;
   const totalCreditsUsed = usage.totalAiCreditsUsed;
@@ -84,15 +81,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
           </div>
           <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
-              size="sm"
-              className="gap-2 text-muted-foreground"
-              onClick={() => setIsPaymentHistoryDialogOpen(true)}
-            >
-              <Receipt className="w-4 h-4" />
-              {t('History')}
-            </Button>
-            <Button
               variant="default"
               className="gap-2"
               onClick={() => setIsPurchaseDialogOpen(true)}
@@ -105,9 +93,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
       </CardHeader>
 
       <CardContent className="p-6 space-y-8">
-        {/* Usage Stats */}
         <div className="space-y-6">
-          {/* Wallet Balance */}
           <div className="p-4 rounded-lg border bg-primary/5 space-y-2">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
@@ -128,7 +114,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </div>
           </div>
 
-          {/* Monthly Included Credits */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <span className="font-medium">
@@ -167,7 +152,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
 
         <Separator />
 
-        {/* Actions */}
         <div className="space-y-6">
           {isAutoTopUpAllowed && (
             <div className="flex items-center justify-between">
@@ -226,11 +210,6 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
           isEditing={isAutoTopUpEditing}
           currentThreshold={plan.aiCreditsAutoTopUpThreshold}
           currentCreditsToAdd={plan.aiCreditsAutoTopUpCreditsToAdd}
-        />
-
-        <AICreditsPaymentHistoryDialog
-          isOpen={isPaymentHistoryDialogOpen}
-          onOpenChange={setIsPaymentHistoryDialogOpen}
         />
       </CardContent>
     </Card>

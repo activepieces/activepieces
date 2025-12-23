@@ -5,20 +5,6 @@ export class AddPlatformAiCreditsPaymentTable1766186963979 implements MigrationI
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
-            CREATE TABLE "platform_ai_credits_payment" (
-                "id" character varying(21) NOT NULL,
-                "created" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-                "updated" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-                "platformId" character varying(21) NOT NULL,
-                "amount" double precision NOT NULL,
-                "aiCredits" double precision NOT NULL,
-                "txId" character varying,
-                "status" character varying NOT NULL,
-                "type" character varying NOT NULL,
-                CONSTRAINT "PK_7b57d5d0d7eb5c45cb900684308" PRIMARY KEY ("id")
-            )
-        `)
-        await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsOverageLimit"
         `)
         await queryRunner.query(`
@@ -69,9 +55,6 @@ export class AddPlatformAiCreditsPaymentTable1766186963979 implements MigrationI
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ADD "aiCreditsOverageLimit" integer
-        `)
-        await queryRunner.query(`
-            DROP TABLE "platform_ai_credits_payment"
         `)
     }
 

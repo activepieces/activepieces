@@ -58,13 +58,6 @@ export const EnableAICreditsAutoTopUpParamsSchema = Type.Object({
 })
 export type EnableAICreditsAutoTopUpParamsSchema = Static<typeof EnableAICreditsAutoTopUpParamsSchema>
 
-export const ListAICreditsPaymentsRequestParams = Type.Object({
-    cursor: Type.Optional(Type.String()),
-    limit: Type.Optional(Type.Number()),
-})
-export type ListAICreditsPaymentsRequestParams = Static<typeof ListAICreditsPaymentsRequestParams>
-
-
 export enum PRICE_NAMES {
     AI_CREDITS = 'ai-credit',
     ACTIVE_FLOWS = 'active-flow',

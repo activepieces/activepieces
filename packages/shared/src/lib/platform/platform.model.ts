@@ -166,24 +166,3 @@ export const PlatformBillingInformation = Type.Object({
 })
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
 
-export enum PlatformAiCreditsPaymentStatus {
-    PAYMENT_PENDING = 'payment-pending',
-    PAYMENT_SUCCESS = 'payment-success',
-    PAYMENT_FAILED = 'payment-failed',
-    DONE = 'done',
-}
-export enum PlatformAiCreditsPaymentType {
-    AUTO_TOPUP = 'auto-topup',
-    MANUAL = 'manual',
-}
-export const PlatformAiCreditsPayment = Type.Object({
-    ...BaseModelSchema,
-    platformId: Type.String(),
-    amount: Type.Number(),
-    aiCredits: Type.Number(),
-    txId: Type.Optional(Type.String()),
-    status: Type.Enum(PlatformAiCreditsPaymentStatus),
-    type: Type.Enum(PlatformAiCreditsPaymentType),
-})
-export type PlatformAiCreditsPayment = Static<typeof PlatformAiCreditsPayment>
-
