@@ -83,7 +83,6 @@ export type PieceSelectorOperation =
       stepName: string;
     };
 
-
 export type PieceSelectorPieceItem =
   | {
       actionOrTrigger: TriggerBase;

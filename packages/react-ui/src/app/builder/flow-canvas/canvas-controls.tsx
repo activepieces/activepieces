@@ -61,7 +61,6 @@ const calculateViewportDelta = (
       : 0,
 });
 
-
 const CanvasControls = ({
   canvasWidth,
   canvasHeight,
@@ -203,7 +202,7 @@ const CanvasControls = ({
             <Hand className="w-4 h-4" />
           </Button>
         </CanvasButtonWrapper>
-        <CanvasButtonWrapper tooltip={t('Pan mode')}>
+        <CanvasButtonWrapper tooltip={t('Select mode')}>
           <Button
             variant={!isInGrabMode ? 'default' : 'ghost'}
             size="icon"
