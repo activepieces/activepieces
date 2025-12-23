@@ -10,7 +10,6 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -62,18 +61,6 @@ const calculateViewportDelta = (
       : 0,
 });
 
-const PanningModeIndicator = ({ toggled }: { toggled: boolean }) => {
-  return (
-    <div
-      className={cn(
-        'absolute transition-all bg-primary/15 w-full h-full top-0 left-0',
-        {
-          'opacity-0': !toggled,
-        },
-      )}
-    ></div>
-  );
-};
 
 const CanvasControls = ({
   canvasWidth,
