@@ -1,7 +1,9 @@
 import React from 'react';
+import { UseFormReturn } from 'react-hook-form';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
   isNil,
@@ -9,9 +11,10 @@ import {
   PieceActionSettings,
   PieceTrigger,
   PieceTriggerSettings,
+  PropertyExecutionType,
 } from '@activepieces/shared';
 
-import { GenericPropertiesFormComponent } from '../../piece-properties/generic-properties-form';
+import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
 import { useStepSettingsContext } from '../step-settings-context';
 
 import { ConnectionSelect } from './connection-select';
@@ -30,7 +33,8 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const { pieceModel } = useStepSettingsContext();
+  const { pieceModel, selectedStep, updateFormSchema } =
+    useStepSettingsContext();
 
   const actionName = (props.step.settings as PieceActionSettings).actionName;
   const selectedAction = actionName
@@ -69,6 +73,24 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     webhookTimeoutSeconds: webhookTimeoutSeconds?.toString() ?? '',
   };
 
+  const updatePropertySettingsSchema = (
+    schema: PiecePropertyMap,
+    propertyName: string,
+    form: UseFormReturn,
+  ) => {
+    if (!props.readonly) {
+      // previously the schema didn't have this property, so we need to set it
+      // we can't always set it to MANUAL, because some sub properties might be dynamic and have the same name as the dynamic property
+      // which will override the sub property exectuion type
+      if (!selectedStep.settings?.propertySettings?.[propertyName]) {
+        form.setValue(
+          `settings.propertySettings.${propertyName}.type`,
+          PropertyExecutionType.MANUAL as unknown,
+        );
+      }
+      form.setValue(`settings.propertySettings.${propertyName}.schema`, schema);
+    }
+  };
   const showAuthForAction =
     !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
   const showAuthForTrigger =
@@ -99,26 +121,42 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
             ></ConnectionSelect>
           )}
           {selectedAction && (
-            <GenericPropertiesFormComponent
+            <GenericPropertiesForm
               key={selectedAction.name}
               prefixValue={'settings.input'}
               props={actionPropsWithoutAuth}
-              allowDynamicValues={true}
+              propertySettings={selectedStep.settings.propertySettings}
               disabled={props.readonly}
               useMentionTextInput={true}
               markdownVariables={markdownVariables}
-            ></GenericPropertiesFormComponent>
+              dynamicPropsInfo={{
+                pieceName: pieceModel.name,
+                pieceVersion: pieceModel.version,
+                actionOrTriggerName: selectedAction.name,
+                placedInside: 'stepSettings',
+                updateFormSchema,
+                updatePropertySettingsSchema,
+              }}
+            ></GenericPropertiesForm>
           )}
           {selectedTrigger && (
-            <GenericPropertiesFormComponent
+            <GenericPropertiesForm
+              dynamicPropsInfo={{
+                pieceName: pieceModel.name,
+                pieceVersion: pieceModel.version,
+                actionOrTriggerName: selectedTrigger.name,
+                placedInside: 'stepSettings',
+                updateFormSchema,
+                updatePropertySettingsSchema,
+              }}
               key={selectedTrigger.name}
               prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
               useMentionTextInput={false}
-              allowDynamicValues={true}
+              propertySettings={selectedStep.settings.propertySettings}
               disabled={props.readonly}
               markdownVariables={markdownVariables}
-            ></GenericPropertiesFormComponent>
+            ></GenericPropertiesForm>
           )}
         </>
       )}

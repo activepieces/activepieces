@@ -21,11 +21,11 @@ import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { AgentTool } from '@activepieces/shared';
 
-import { useAgentToolsStore } from '../store';
+import { PieceActionsList } from '../../../../features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
+import { PiecesList } from '../../../../features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
+import { useAgentToolsStore } from '../../../../features/agents/agent-tools/store';
 
-import { PieceActionsList } from './dialog-pages/piece-actions-list';
-import { PiecesList } from './dialog-pages/pieces-list';
-import { PredefinedInputsForm } from './dialog-pages/predefined-inputs-form';
+import { PredefinedInputsForm } from './predefined-inputs-form';
 
 type AgentToolsDialogProps = {
   tools: AgentTool[];
