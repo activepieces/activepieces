@@ -7,7 +7,7 @@ import { machineService } from './machine-service'
 export const workerMachineController: FastifyPluginAsyncTypebox = async (app) => {
 
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.FETCH_WORKER_SETTINGS, (socket) => {
-        return async (request: WorkerMachineHealthcheckRequest, _principal, callback?: (data: unknown) => void) => {
+        return async (request: WorkerMachineHealthcheckRequest, _principal, _projectId, callback?: (data: unknown) => void) => {
             const response = await machineService(app.log).onConnection(request, socket.handshake.auth?.platformIdForDedicatedWorker)
             callback?.(response)
         }

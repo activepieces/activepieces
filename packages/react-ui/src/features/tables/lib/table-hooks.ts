@@ -40,13 +40,11 @@ export const tableHooks = {
       mutationFn: async (data: { name: string }) => {
         const table = await tablesApi.create({ projectId, name: data.name });
         const field = await fieldsApi.create({
-          projectId,
           name: 'Name',
           type: FieldType.TEXT,
           tableId: table.id,
         });
         await recordsApi.create({
-          projectId,
           records: [
             ...Array.from({ length: 1 }, (_) => [
               {

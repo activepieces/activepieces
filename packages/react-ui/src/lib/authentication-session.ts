@@ -45,12 +45,10 @@ export const authenticationSession = {
       return null;
     }
     const decodedJwt = getDecodedJwt(token);
-    // @ts-expect-error: projectId doesn't exist in token anymore
-    return (
-      decodedJwt.projectId ??
-      ApStorage.getInstance().getItem('projectId') ??
-      null
-    );
+    if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
+      return decodedJwt.projectId ?? null;
+    }
+    return ApStorage.getInstance().getItem('projectId') ?? null;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
