@@ -1,3 +1,4 @@
+import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
 import { CreateStepRunRequestBody, GetSampleDataRequest, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { flowService } from '../flow/flow.service'
@@ -32,7 +33,11 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const GetSampleDataRequestParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            undefined, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         tags: ['sample-data'],
@@ -43,7 +48,11 @@ const GetSampleDataRequestParams = {
 
 const TestSampleDataRequestBody = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: projectAccess(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            undefined, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         tags: ['sample-data'],

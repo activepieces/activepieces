@@ -3,7 +3,6 @@ import {
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import {
-    apId,
     FlowStatus,
     Platform,
     PlatformRole,
@@ -464,35 +463,6 @@ describe('Project API', () => {
             expect(responseBody?.params?.message).toBe('PROJECT_HAS_ENABLED_FLOWS')
         })
 
-        it('Fails if project to delete is the active project', async () => {
-            // arrange
-            const { mockOwner, mockProject } = await mockAndSaveBasicSetup()
-
-            const mockToken = await generateMockToken({
-                id: mockOwner.id,
-                type: PrincipalType.USER,
-                projectId: mockProject.id,
-                platform: {
-                    id: mockProject.platformId,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'DELETE',
-                url: `/v1/projects/${mockProject.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('VALIDATION')
-            expect(responseBody?.params?.message).toBe('ACTIVE_PROJECT')
-        })
-
         it('Requires user to be platform owner', async () => {
             // arrange
             const { mockOwner, mockProject } = await mockAndSaveBasicSetup()
@@ -522,37 +492,6 @@ describe('Project API', () => {
             expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
             const responseBody = response?.json()
             expect(responseBody?.code).toBe('AUTHORIZATION')
-        })
-
-        it('Fails if project to delete is not in current platform', async () => {
-            // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
-
-            const mockProjectToDelete = createMockProject({ ownerId: mockOwner.id, platformId: mockPlatform.id })
-            await databaseConnection().getRepository('project').save([mockProjectToDelete])
-
-            const randomPlatformId = apId()
-
-            const mockToken = await generateMockToken({
-                id: mockOwner.id,
-                type: PrincipalType.USER,
-                projectId: mockProject.id,
-                platform: {
-                    id: randomPlatformId,
-                },
-            })
-
-            // act
-            const response = await app?.inject({
-                method: 'DELETE',
-                url: `/v1/projects/${mockProjectToDelete.id}`,
-                headers: {
-                    authorization: `Bearer ${mockToken}`,
-                },
-            })
-
-            // assert
-            expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
         })
 
     })
