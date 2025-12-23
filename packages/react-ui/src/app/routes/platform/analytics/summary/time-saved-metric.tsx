@@ -29,7 +29,7 @@ export const TimeSavedMetric = ({
       title={t('Time Saved')}
       value={formatUtils.formatToHoursAndMinutes(minutesSaved)}
       description={t(
-        'Estimated hours saved through automation. Each automated task saves valuable employee time that can be redirected to high-impact work.',
+        'Estimated hours saved through automation in the last 3 months. Each automated task saves valuable employee time that can be redirected to high-impact work.',
       )}
       subtitle={t('Equivalent to {days} workdays saved', {
         days: equivalentWorkdays.toLocaleString(),
