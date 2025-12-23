@@ -13,6 +13,9 @@ type CreateAIModelParams<IsImage extends boolean = false> = {
     provider: AIProviderName;
     modelId: string;
     engineToken: string;
+    projectId: string;
+    flowId: string;
+    runId: string;
     apiUrl: string;
     openaiResponsesModel?: boolean;
     isImage?: IsImage;
@@ -24,6 +27,9 @@ export async function createAIModel({
     provider,
     modelId,
     engineToken,
+    projectId,
+    flowId,
+    runId,
     apiUrl,
     openaiResponsesModel = false,
     isImage,
@@ -74,7 +80,12 @@ export async function createAIModel({
                 name: 'cloudflare',
                 baseURL: `https://gateway.ai.cloudflare.com/v1/${accountId}/${gatewayId}/compat`,
                 headers: {
-                    'cf-aig-authorization': `Bearer ${auth.apiKey}`
+                    'cf-aig-authorization': `Bearer ${auth.apiKey}`,
+                    'cf-aig-metadata': JSON.stringify({
+                        projectId,
+                        flowId,
+                        runId,
+                    })
                 }
             })
             return provider.chatModel(modelId)
