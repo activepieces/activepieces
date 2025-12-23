@@ -34,7 +34,9 @@ export function AutoTopUpConfigDialog({
 }: AutoTopUpConfigDialogProps) {
   const queryClient = useQueryClient();
   const [threshold, setThreshold] = useState(currentThreshold ?? 1000);
-  const [creditsToAdd, setCreditsToAdd] = useState(currentCreditsToAdd ?? 10000);
+  const [creditsToAdd, setCreditsToAdd] = useState(
+    currentCreditsToAdd ?? 10000,
+  );
 
   const { mutate: enableAutoTopUp, isPending: isEnabling } =
     billingMutations.useEnableAutoTopUp(queryClient);
