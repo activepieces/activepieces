@@ -9,24 +9,11 @@ import { freeAgentNewUserTrigger } from './lib/triggers/new-user';
 import { freeAgentNewTaskTrigger } from './lib/triggers/new-task';
 
 export const freeAgentAuth = PieceAuth.OAuth2({
-  description: 'Connect your FreeAgent account using OAuth 2.0',
+  description: 'Connect your FreeAgent account',
   authUrl: 'https://api.freeagent.com/v2/approve_app',
   tokenUrl: 'https://api.freeagent.com/v2/token_endpoint',
   required: true,
-  scope: [
-    'read_invoices',
-    'write_invoices',
-    'read_contacts',
-    'write_contacts',
-    'read_projects',
-    'write_projects',
-    'read_tasks',
-    'write_tasks',
-    'read_time_entries',
-    'write_time_entries',
-    'read_users',
-    'read_company'
-  ],
+  scope: [],
   validate: async (auth) => {
     try {
       await httpClient.sendRequest({
