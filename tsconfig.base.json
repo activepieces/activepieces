@@ -343,6 +343,9 @@
       ],
       "@activepieces/piece-giftbit": [
         "packages/pieces/community/giftbit/src/index.ts"
+      ],
+      "@activepieces/piece-millionverifier": [
+        "packages/pieces/community/millionverifier/src/index.ts"
       ]
     },
     "resolveJsonModule": true

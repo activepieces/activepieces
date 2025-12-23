@@ -89,6 +89,9 @@ export const runAgent = createAction({
       provider: provider as AIProviderName,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
     });
 
     const outputBuilder = agentOutputBuilder(prompt);

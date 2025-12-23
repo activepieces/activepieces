@@ -147,6 +147,9 @@ export const generateImageAction = createAction({
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
       prompt: context.propsValue.prompt,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
       advancedOptions: context.propsValue.advancedOptions,
     });
 
@@ -168,6 +171,9 @@ const getGeneratedImage = async ({
   engineToken,
   apiUrl,
   prompt,
+  projectId,
+  flowId,
+  runId,
   advancedOptions,
 }: {
   provider: AIProviderName;
@@ -175,6 +181,9 @@ const getGeneratedImage = async ({
   engineToken: string;
   apiUrl: string;
   prompt: string;
+  projectId: string;
+  flowId: string;
+  runId: string;
   advancedOptions?: DynamicPropsValue;
 }): Promise<GeneratedFile> => {
   const model = await createAIModel({
@@ -182,6 +191,9 @@ const getGeneratedImage = async ({
     modelId,
     engineToken,
     apiUrl,
+    projectId,
+    flowId,
+    runId,
     isImage: true,
   });
 
