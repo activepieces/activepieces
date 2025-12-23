@@ -17,7 +17,7 @@ export const qwilr = createPiece({
   auth: qwilrAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/qwilr.png",
-  authors: [],
+  authors: ["onyedikachi-david"],
   categories: [PieceCategory.SALES_AND_CRM, PieceCategory.CONTENT_AND_FILES],
   actions: [
     createPageAction,
