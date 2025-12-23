@@ -1,4 +1,4 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectResourceType, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationRouteSecurity, AuthorizationType, RouteKind } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,

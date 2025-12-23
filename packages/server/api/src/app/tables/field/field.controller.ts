@@ -2,9 +2,9 @@ import { EntitySourceType, ProjectResourceType, securityAccess } from '@activepi
 import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { TableEntity } from '../table/table.entity'
 import { FieldEntity } from './field.entity'
 import { fieldService } from './field.service'
-import { TableEntity } from '../table/table.entity'
 
 export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 
