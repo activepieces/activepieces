@@ -364,6 +364,9 @@
       ],
       "@activepieces/piece-millionverifier": [
         "packages/pieces/community/millionverifier/src/index.ts"
+      ],
+      "@activepieces/piece-octopush-sms": [
+        "packages/pieces/community/octopush-sms/src/index.ts"
       ]
     },
     "resolveJsonModule": true
