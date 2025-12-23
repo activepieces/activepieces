@@ -1,15 +1,16 @@
 import { t } from 'i18next';
 import {
-  Check,
+  CircleAlert,
   CircleCheck,
   CircleX,
-  PauseCircleIcon,
+  LucideIcon,
   PauseIcon,
   Play,
   Timer,
   X,
 } from 'lucide-react';
 
+import { cn } from '@/lib/utils';
 import {
   FlowActionType,
   FlowRun,
@@ -24,7 +25,6 @@ import {
   StepOutput,
   StepOutputStatus,
 } from '@activepieces/shared';
-import { cn } from '@/lib/utils';
 
 export const flowRunUtils = {
   findLastStepWithStatus,
@@ -54,11 +54,7 @@ export const flowRunUtils = {
   },
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
-    Icon:
-      | typeof Timer
-      | typeof CircleCheck
-      | typeof PauseCircleIcon
-      | typeof CircleX;
+    Icon: LucideIcon;
     text: string;
   } {
     switch (stepOutput) {
@@ -78,29 +74,29 @@ export const flowRunUtils = {
       case StepOutputStatus.SUCCEEDED:
         return {
           variant: 'success',
-          Icon: Check,
+          Icon: CircleCheck,
           text: t('Succeeded'),
         };
       case StepOutputStatus.FAILED:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleAlert,
           text: t('Failed'),
         };
     }
   },
   getStatusContainerClassName(variant: 'default' | 'success' | 'error') {
-    return cn('text-xs px-2 py-1  border rounded-md leading-none',{
+    return cn('text-xs px-2 py-1  border rounded-md leading-none', {
       'text-green-800 bg-green-50 border-green-200 dark:text-green-200 dark:bg-green-900 dark:border-green-800':
         variant === 'success',
-      'text-red-800 bg-red-50  border-red-200 dark:text-red-200 dark:bg-red-900 dark:border-red-800': variant === 'error',
-      'bg-background  border-border text-foreground':
-        variant === 'default',
-    })
+      'text-red-800 bg-red-50  border-red-200 dark:text-red-200 dark:bg-red-900 dark:border-red-800':
+        variant === 'error',
+      'bg-background  border-border text-foreground': variant === 'default',
+    });
   },
   getStatusIcon(status: FlowRunStatus): {
     variant: 'default' | 'success' | 'error';
-    Icon: typeof Timer | typeof Check | typeof PauseIcon | typeof X;
+    Icon: LucideIcon;
   } {
     switch (status) {
       case FlowRunStatus.QUEUED:
@@ -116,7 +112,7 @@ export const flowRunUtils = {
       case FlowRunStatus.SUCCEEDED:
         return {
           variant: 'success',
-          Icon: Check,
+          Icon: CircleCheck,
         };
       case FlowRunStatus.FAILED:
         return {
@@ -131,27 +127,27 @@ export const flowRunUtils = {
       case FlowRunStatus.CANCELED:
         return {
           variant: 'default',
-          Icon: X,
+          Icon: CircleX,
         };
       case FlowRunStatus.MEMORY_LIMIT_EXCEEDED:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleAlert,
         };
       case FlowRunStatus.QUOTA_EXCEEDED:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleAlert,
         };
       case FlowRunStatus.INTERNAL_ERROR:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleAlert,
         };
       case FlowRunStatus.TIMEOUT:
         return {
           variant: 'error',
-          Icon: X,
+          Icon: CircleAlert,
         };
     }
   },
