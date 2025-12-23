@@ -5,6 +5,7 @@ import { katanaAuth } from './lib/common/auth';
 import { BASE_URL } from './lib/common/constants';
 import { createCustomer } from './lib/actions/create-customer';
 import { createSalesOrder } from './lib/actions/create-sales-order';
+import { findCustomer } from './lib/actions/find-customer';
 
 export const katana = createPiece({
   displayName: 'Katana',
@@ -14,10 +15,11 @@ export const katana = createPiece({
   description:
     'Katana is a cloud-based manufacturing ERP software for inventory, production, and order management.',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [],
+  authors: ["onyedikachi-david"],
   actions: [
     createCustomer,
     createSalesOrder,
+    findCustomer,
     createCustomApiCallAction({
       auth: katanaAuth,
       baseUrl: () => BASE_URL,
