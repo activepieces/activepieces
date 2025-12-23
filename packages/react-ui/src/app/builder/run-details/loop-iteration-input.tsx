@@ -102,7 +102,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
             />
           </TooltipTrigger>
           <TooltipContent side="left">
-            {t('View outputs of child steps for this iteration')}
+            {t('Show child steps output on round ({iteration}/{totalIterations})',{iteration: currentIndex + 1, totalIterations})}
           </TooltipContent>
         </Tooltip>
         <LoopIterationInputButton
