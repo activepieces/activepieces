@@ -344,6 +344,9 @@
       "@activepieces/piece-clearoutphone": [
         "packages/pieces/community/clearoutphone/src/index.ts"
       ],
+      "@activepieces/piece-free-agent": [
+        "packages/pieces/community/free-agent/src/index.ts"
+      ],
       "@activepieces/piece-lemon-squeezy": [
         "packages/pieces/community/lemon-squeezy/src/index.ts"
       ],
