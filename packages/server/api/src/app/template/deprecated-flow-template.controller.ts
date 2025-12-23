@@ -21,7 +21,7 @@ export const deprecatedFlowTemplateController: FastifyPluginAsyncTypebox = async
                 type: TemplateType.OFFICIAL,
             } })
         }
-        return communityTemplates.get({
+        return communityTemplates.list({
             ...request.query,
             type: TemplateType.OFFICIAL,
         })

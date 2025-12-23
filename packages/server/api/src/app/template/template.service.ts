@@ -25,16 +25,14 @@ export const templateService = (log: FastifyBaseLogger) => ({
         return template
     },
     async create({ platformId, params }: CreateParams): Promise<Template> {
-        const { name, summary, description, tags, blogUrl, metadata, author, categories, type } = params
-        const newTags = tags ?? []
-        const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
-        const pieces = sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()
-
-        await templateValidator.validate({ 
+        const preparedTemplate = await templateValidator.validateAndPrepare({ 
             template: params, 
             platformId, 
             log,
         })
+        
+        const { name, summary, description, tags, blogUrl, metadata, author, categories, type, flows, pieces } = preparedTemplate
+        const newTags = tags ?? []
 
         switch (type) {
             case TemplateType.OFFICIAL:
@@ -53,13 +51,13 @@ export const templateService = (log: FastifyBaseLogger) => ({
                     usageCount: 0,
                     categories,
                     pieces,
-                    flows: sanatizedFlows,
+                    flows,
                     status: TemplateStatus.PUBLISHED,
                 }
                 return templateRepo().save(newTemplate)
             }
             case TemplateType.CUSTOM: {
-                return platformTemplateService().create({ platformId, name, summary, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows: sanatizedFlows })
+                return platformTemplateService().create({ platformId, name, summary, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows })
             }
         }
     },
