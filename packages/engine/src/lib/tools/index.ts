@@ -310,7 +310,6 @@ async function loadOptions(propertyName: string, operation: ExecuteToolOperation
     return options.options
 }
 
-
 type ConstructToolParams = {
     engineConstants: EngineConstants
     tools: AgentTool[]

@@ -25,6 +25,7 @@ import {
 import { formUtils } from '../../../features/pieces/lib/form-utils';
 import { ActionErrorHandlingForm } from '../piece-properties/action-error-handling';
 import { DynamicPropertiesProvider } from '../piece-properties/dynamic-properties-context';
+import { FlowStepInputOutput } from '../run-details/flow-step-input-output';
 import { SidebarHeader } from '../sidebar-header';
 import { TestStepContainer } from '../test-step';
 
@@ -47,6 +48,7 @@ const StepSettingsContainer = () => {
     flowVersion,
     selectedBranchIndex,
     setSelectedBranchIndex,
+    run,
   ] = useBuilderStateContext((state) => [
     state.readonly,
     state.exitStepSettings,
@@ -55,6 +57,7 @@ const StepSettingsContainer = () => {
     state.flowVersion,
     state.selectedBranchIndex,
     state.setSelectedBranchIndex,
+    state.run,
   ]);
 
   const { stepMetadata } = stepsHooks.useStepMetadata({
@@ -115,6 +118,9 @@ const StepSettingsContainer = () => {
 
   const sidebarHeaderContainerRef = useRef<HTMLDivElement>(null);
   const modifiedStep = form.getValues();
+  const showGenerateSampleData = !readonly;
+  const showStepInputOutFromRun = !isNil(run);
+
   const [isEditingStepOrBranchName, setIsEditingStepOrBranchName] =
     useState(false);
   const showActionErrorHandlingForm =
@@ -237,12 +243,13 @@ const StepSettingsContainer = () => {
                 </div>
               </ScrollArea>
             </ResizablePanel>
-            {!readonly && (
+
+            {(showGenerateSampleData || showStepInputOutFromRun) && (
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel defaultSize={45} className="min-h-[130px]">
-                  <ScrollArea className="h-[calc(100%-35px)] p-4 pb-10 ">
-                    {modifiedStep.type && (
+                  <ScrollArea className="h-[calc(100%-35px)]  ">
+                    {showGenerateSampleData && (
                       <TestStepContainer
                         type={modifiedStep.type}
                         flowId={flowVersion.flowId}
@@ -250,6 +257,9 @@ const StepSettingsContainer = () => {
                         projectId={project?.id}
                         isSaving={saving}
                       ></TestStepContainer>
+                    )}
+                    {showStepInputOutFromRun && (
+                      <FlowStepInputOutput></FlowStepInputOutput>
                     )}
                   </ScrollArea>
                 </ResizablePanel>
