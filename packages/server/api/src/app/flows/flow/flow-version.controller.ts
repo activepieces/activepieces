@@ -16,7 +16,7 @@ export const flowVersionController: FastifyPluginAsyncTypebox = async (fastify) 
     fastify.get('/:flowId/versions', ListVersionParams, async (request) => {
         const flow = await flowService(request.log).getOneOrThrow({
             id: request.params.flowId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         return flowVersionService(request.log).list({
             flowId: flow.id,

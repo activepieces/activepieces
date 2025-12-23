@@ -137,7 +137,8 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         '/options',
         OptionsPieceRequest,
         async (req) => {
-            const { projectId, platform } = req.principal
+            const projectId = req.projectId
+            const platform = req.principal.platform
             const flow = await flowService(req.log).getOnePopulatedOrThrow({
                 projectId,
                 id: req.body.flowId,

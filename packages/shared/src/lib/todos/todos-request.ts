@@ -33,7 +33,6 @@ export type UpdateTodoRequestBody = Static<typeof UpdateTodoRequestBody>
 
 
 export const CreateTodoRequestBody = Type.Object({
-    projectId: ApId,
     title: Type.String(),
     description: Type.String(),
     statusOptions: StatusOptionsSchema,
@@ -53,7 +52,6 @@ export type ResolveTodoRequestQuery = Static<typeof ResolveTodoRequestQuery>
 
 
 export const ListTodoActivitiesQueryParams = Type.Object({
-    projectId: ApId,
     todoId: ApId,
     type: Type.Optional(Type.String()),
     cursor: Type.Optional(Type.String()),
@@ -63,7 +61,6 @@ export const ListTodoActivitiesQueryParams = Type.Object({
 export type ListTodoActivitiesQueryParams = Static<typeof ListTodoActivitiesQueryParams>
 
 export const CreateTodoActivityRequestBody = Type.Object({
-    projectId: ApId,
     todoId: ApId,
     content: Type.String(),
 })

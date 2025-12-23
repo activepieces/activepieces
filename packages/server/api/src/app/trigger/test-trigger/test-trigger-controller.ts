@@ -5,29 +5,27 @@ import { testTriggerService } from '../../trigger/test-trigger/test-trigger-serv
 
 export const testTriggerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', TestTriggerRequest, async (req) => {
-        const { projectId } = req.principal
         const { flowId, flowVersionId, testStrategy } = req.body
 
         const logWithContext = req.log.child({
             flowId,
             flowVersionId,
-            projectId,
+            projectId: req.projectId,
             testStrategy,
         })
         return testTriggerService(logWithContext).test({
             flowId,
             flowVersionId,
-            projectId,
+            projectId: req.projectId,
             testStrategy,
         })
     })
     app.delete('/', CancelTestTriggerRequest, async (req) => {
-        const { projectId } = req.principal
         const { flowId } = req.body
 
         return testTriggerService(req.log).cancel({
             flowId,
-            projectId,
+            projectId: req.projectId,
         })
     })
 }

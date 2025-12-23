@@ -8,20 +8,20 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 
     app.get('/:projectId', GetMcpRequest, async (req) => {
-        return mcpServerService(req.log).getPopulatedByProjectId(req.principal.projectId)
+        return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
     })
 
     app.post('/', UpdateMcpRequest, async (req) => {
         const { status } = req.body
         return mcpServerService(req.log).update({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             status,
         })
     })
 
     app.post('/rotate', RotateTokenRequest, async (req) => {
         return mcpServerService(req.log).rotateToken({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
         })
     })
 

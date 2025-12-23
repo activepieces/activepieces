@@ -25,7 +25,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
     app.get('/role', GetCurrentProjectMemberRoleRequest, async (request) => {
         return  projectMemberService(request.log).getRole({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             userId: request.principal.id,
         })
     })
@@ -33,7 +33,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
     app.get('/', ListProjectMembersRequestQueryOptions, async (request) => {
         return projectMemberService(request.log).list({
             platformId: request.principal.platform.id,  
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             projectRoleId: request.query.projectRoleId ?? undefined,
@@ -46,7 +46,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
         return projectMemberService(req.log).update({
             id: req.params.id,
             role: req.body.role,
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             platformId: req.principal.platform.id,
         })
     })
@@ -54,7 +54,7 @@ export const projectMemberController: FastifyPluginAsyncTypebox = async (
 
     app.delete('/:id', DeleteProjectMemberRequest, async (request, reply) => {
         await projectMemberService(request.log).delete(
-            request.principal.projectId,
+            request.projectId,
             request.params.id,
         )
         await reply.status(StatusCodes.NO_CONTENT).send()

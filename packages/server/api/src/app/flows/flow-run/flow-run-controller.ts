@@ -50,7 +50,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         GetRequest,
         async (request, reply) => {
             const flowRun = await flowRunService(request.log).getOnePopulatedOrThrow({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 id: request.params.id,
             })
             await reply.send(flowRun)
@@ -112,7 +112,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/cancel', BulkCancelFlowRequest, async (req) => {
         return flowRunService(req.log).cancel({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             platformId: req.principal.platform.id,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
@@ -125,7 +125,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/retry', BulkRetryFlowRequest, async (req) => {
         return flowRunService(req.log).bulkRetry({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
             strategy: req.body.strategy,
@@ -139,7 +139,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/archive', ArchiveFlowRunRequest, async (req) => {
         return flowRunService(req.log).bulkArchive({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
             status: req.body.status,

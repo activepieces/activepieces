@@ -44,7 +44,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
     app.post('/', CreateFlowRequestOptions, async (request, reply) => {
         const newFlow = await flowService(request.log).create({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             request: request.body,
         })
 
@@ -88,11 +88,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromPrincipal(request.principal)
-        await assertUserHasPermissionToFlow(request.principal, request.principal.projectId, request.body.type, request.log)
+        await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
 
         const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
@@ -108,7 +108,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             userId: request.principal.type === PrincipalType.SERVICE ? null : userId,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             operation: cleanOperation(request.body),
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
@@ -123,7 +123,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/', ListFlowsRequestOptions, async (request) => {
         return flowService(request.log).list({
-            projectIds: [request.principal.projectId],
+            projectIds: [request.projectId],
             folderId: request.query.folderId,
             cursorRequest: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,
@@ -139,14 +139,14 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/count', CountFlowsRequestOptions, async (request) => {
         return flowService(request.log).count({
             folderId: request.query.folderId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     })
 
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             versionId: undefined,
         })
     })
@@ -154,7 +154,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetFlowRequestOptions, async (request) => {
         return flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             versionId: request.query.versionId,
         })
     })
@@ -162,19 +162,19 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.delete('/:id', DeleteFlowRequestOptions, async (request, reply) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         await gitRepoService(request.log).onDeleted({
             type: GitPushOperationType.DELETE_FLOW,
             externalId: flow.externalId,
             userId: request.principal.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             platformId: request.principal.platform.id,
             log: request.log,
         })
         await flowService(request.log).delete({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.FLOW_DELETED,

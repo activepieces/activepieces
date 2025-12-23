@@ -9,14 +9,12 @@ const StaticDropdownData = Type.Object({
 })
 
 export const CreateFieldRequest = Type.Union([Type.Object({
-    projectId: Type.Optional(Type.String()),
     name: Type.String(),
     type: Type.Literal(FieldType.STATIC_DROPDOWN),
     tableId: Type.String(),
     data: StaticDropdownData,
     externalId: Type.Optional(Type.String()),
 }), Type.Object({
-    projectId: Type.Optional(Type.String()),
     name: Type.String(),
     type: Type.Union([Type.Literal(FieldType.TEXT), Type.Literal(FieldType.NUMBER), Type.Literal(FieldType.DATE)]),
     tableId: Type.String(),

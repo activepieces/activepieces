@@ -9,14 +9,14 @@ import { fieldService } from './field.service'
 export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post('/', CreateRequest, async (request, reply) => {
-        const response = await fieldService.create({ request: request.body, projectId: request.principal.projectId })
+        const response = await fieldService.create({ request: request.body, projectId: request.projectId })
         await reply.status(StatusCodes.CREATED).send(response)
     },
     )
 
     fastify.get('/', GetFieldsRequest, async (request) => {
         return fieldService.getAll({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             tableId: request.query.tableId,
         })
     },
@@ -25,7 +25,7 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.get('/:id', GetFieldByIdRequest, (request) => {
         return fieldService.getById({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     },
     )
@@ -33,7 +33,7 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.delete('/:id', DeleteFieldRequest, async (request) => {
         return fieldService.delete({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     },
     )
@@ -41,7 +41,7 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.post('/:id', UpdateRequest, async (request) => {
         return fieldService.update({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             request: request.body,
         })
     },

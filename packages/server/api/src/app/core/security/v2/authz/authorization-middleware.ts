@@ -12,7 +12,7 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     
     if (security.kind === RouteKind.AUTHENTICATED && security.authorization.type === AuthorizationType.PROJECT) {
         // @ts-expect-error: explicit override for Fastify typing assignment
-        request.principal.projectId = securityAccessRequest.authorization.projectId
+        request.projectId = securityAccessRequest.authorization.projectId
     }
 }
 

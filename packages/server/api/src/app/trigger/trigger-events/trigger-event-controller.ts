@@ -16,7 +16,7 @@ export const triggerEventController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.post('/', SaveTriggerEventRequestParams, async (request) => {
         return triggerEventService(request.log).saveEvent({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             flowId: request.body.flowId,
             payload: request.body.mockData,
         })
@@ -25,11 +25,11 @@ export const triggerEventController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.get('/', ListTriggerEventsRequestParams, async (request) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.query.flowId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
 
         return triggerEventService(request.log).list({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             flow,
             cursor: request.query.cursor ?? null,
             limit: request.query.limit ?? DEFAULT_PAGE_SIZE,

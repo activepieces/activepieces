@@ -44,7 +44,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
         UpsertAppCredentialRequestOptions,
         async (request) => {
             return appCredentialService.upsert({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 request: request.body,
             })
         },
@@ -54,7 +54,7 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/:id', DeleteAppCredentialRequestOptions, async (request, reply) => {
             await appCredentialService.delete({
                 id: request.params.id,
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
             })
 
             return reply.status(StatusCodes.OK).send()

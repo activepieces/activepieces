@@ -29,7 +29,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
         const appConnection = await appConnectionService(request.log).upsert({
             platformId: request.principal.platform.id,
-            projectIds: [request.principal.projectId],
+            projectIds: [request.projectId],
             type: request.body.type,
             externalId: request.body.externalId,
             value: request.body.value,
@@ -55,7 +55,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         const appConnection = await appConnectionService(request.log).update({
             id: request.params.id,
             platformId: request.principal.platform.id,
-            projectIds: [request.principal.projectId],
+            projectIds: [request.projectId],
             scope: AppConnectionScope.PROJECT,
             request: {
                 displayName: request.body.displayName,
@@ -75,7 +75,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             status,
             scope,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             cursorRequest: cursor ?? null,
             limit: limit ?? DEFAULT_PAGE_SIZE,
             externalIds: undefined,
@@ -90,7 +90,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
     )
     app.get('/owners', ListAppConnectionOwnersRequest, async (request): Promise<SeekPage<AppConnectionOwners>> => {
         const owners = await appConnectionService(request.log).getOwners({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             platformId: request.principal.platform.id,
         })
         return {
@@ -106,7 +106,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         await appConnectionService(request.log).replace({
             sourceAppConnectionId,
             targetAppConnectionId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             platformId: request.principal.platform.id,
             userId: request.principal.id,
         })
@@ -117,7 +117,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
         const connection = await appConnectionService(request.log).getOneOrThrowWithoutValue({
             id: request.params.id,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
@@ -129,7 +129,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             id: request.params.id,
             platformId: request.principal.platform.id,
             scope: AppConnectionScope.PROJECT,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })

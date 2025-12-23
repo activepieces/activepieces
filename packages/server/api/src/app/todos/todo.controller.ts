@@ -16,7 +16,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
         const { platformId, assigneeId, limit, cursor, statusOptions, title } = request.query
         return todoService(request.log).list({
             platformId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             assigneeId,
             limit: limit ?? DEFAULT_LIMIT,
             cursor: cursor ?? DEFAULT_CURSOR,
@@ -30,7 +30,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
         return todoService(request.log).getOnePopulatedOrThrow({
             id,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     })
 
@@ -46,7 +46,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             environment: environment ?? TodoEnvironment.PRODUCTION,
             resolveUrl,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     })
 
@@ -61,7 +61,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
             statusOptions,
             assigneeId,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             isTest,
             socket: app.io,
         })
@@ -91,7 +91,7 @@ export const todoController: FastifyPluginAsyncTypebox = async (app) => {
         return todoService(request.log).delete({
             id,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
     })
 }

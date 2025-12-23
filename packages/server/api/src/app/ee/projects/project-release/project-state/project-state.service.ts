@@ -64,6 +64,7 @@ export const projectStateService = (log: FastifyBaseLogger) => ({
                         request: {
                             name: operation.tableState.name,
                             externalId: operation.tableState.externalId,
+                            projectId,
                         },
                     })
 

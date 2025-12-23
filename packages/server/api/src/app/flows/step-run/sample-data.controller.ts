@@ -9,7 +9,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
 
     fastify.post('/test-step', TestSampleDataRequestBody, async (request) => {
         return flowRunService(request.log).test({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             flowVersionId: request.body.flowVersionId,
             stepNameToTest: request.body.stepName,
         })
@@ -18,11 +18,11 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
     fastify.get('/', GetSampleDataRequestParams, async (request) => {
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.query.flowId,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             versionId: request.query.flowVersionId,
         })
         const sampleData = await sampleDataService(request.log).getOrReturnEmpty({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             flowVersion: flow.version,
             stepName: request.query.stepName,
             type: request.query.type,

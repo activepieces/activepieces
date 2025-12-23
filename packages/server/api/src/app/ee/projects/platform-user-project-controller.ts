@@ -22,7 +22,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
 ) => {
 
     fastify.get('/:id', GetProjectRequestForUser, async (request) => {
-        return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.principal.projectId)
+        return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
     })
 
     fastify.get('/', ListProjectRequestForUser, async (request) => {

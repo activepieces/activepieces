@@ -8,7 +8,7 @@ export const solutionsController: FastifyPluginAsyncTypebox = async (fastify) =>
     fastify.post('/export', ExportRequest, async (request) => {
         const { name, description } = request.body
         return solutionService(fastify.log).export({
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             name,
             description,
         })
@@ -17,7 +17,7 @@ export const solutionsController: FastifyPluginAsyncTypebox = async (fastify) =>
     fastify.post('/import', ImportRequest, async (request) => {
         return solutionService(fastify.log).import({
             solution: request.body as Solution,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             platformId: request.principal.platform.id,
         })
     })

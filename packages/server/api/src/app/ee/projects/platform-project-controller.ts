@@ -75,7 +75,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
     app.post('/:id', UpdateProjectRequest, async (request) => {
         const project = await projectService.getOneOrThrow(request.params.id)
-        const haveTokenForTheProject = request.principal.projectId === project.id
+        const haveTokenForTheProject = request.projectId === project.id
         const ownThePlatform = await isPlatformAdmin(request.principal as ServicePrincipal | UserPrincipal, project.platformId)
         if (!haveTokenForTheProject && !ownThePlatform) {
             throw new ActivepiecesError({

@@ -14,7 +14,7 @@ export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) 
             }),
         },
     }, async (request) => {
-        return projectService.getOneOrThrow(request.principal.projectId)
+        return projectService.getOneOrThrow(request.projectId)
     })
 
     fastify.get('/', {

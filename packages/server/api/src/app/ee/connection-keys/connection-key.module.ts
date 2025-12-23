@@ -103,7 +103,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             request,
         ) => {
             return connectionKeyService(request.log).list(
-                request.principal.projectId,
+                request.projectId,
                 request.query.cursor ?? null,
                 request.query.limit ?? DEFAULT_LIMIT_SIZE,
             )
@@ -130,7 +130,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
             request,
         ) => {
             return connectionKeyService(request.log).upsert({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 request: request.body,
             })
         },

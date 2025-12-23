@@ -53,7 +53,7 @@ export const gitRepoController: FastifyPluginCallbackTypebox = (
     app.delete('/:id', DeleteRepoRequestSchema, async (request, reply) => {
         await gitRepoService(request.log).delete({
             id: request.params.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
         })
         await reply.status(StatusCodes.NO_CONTENT).send()
     })

@@ -12,7 +12,7 @@ export const todoActivityController: FastifyPluginAsyncTypebox = async (app) => 
         return todoActivityService(request.log).list({
             todoId: request.query.todoId,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             limit: request.query.limit ?? DEFAULT_LIMIT,
             cursor: request.query.cursor ?? DEFAULT_CURSOR,
         })
@@ -23,7 +23,7 @@ export const todoActivityController: FastifyPluginAsyncTypebox = async (app) => 
         return todoActivityService(request.log).create({
             content,
             platformId: request.principal.platform.id,
-            projectId: request.principal.projectId,
+            projectId: request.projectId,
             userId: request.principal.id,
             todoId: request.body.todoId,
             socket: app.io,

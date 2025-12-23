@@ -39,13 +39,6 @@ export type EnginePrincipal = {
     }
 }
 
-export type MaybeProjectExtra = {
-    projectId?: string
-    platform?: {
-        id: ApId
-    }
-}
-
 
 export type PrincipalForType<T extends PrincipalType> = Extract<Principal, { type: T }>
 
