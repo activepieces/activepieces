@@ -15,23 +15,15 @@ import { flowRunUtils } from '../../../features/flow-runs/lib/flow-run-utils';
 import { useBuilderStateContext } from '../builder-hooks';
 
 const LoopIterationInput = ({ stepName }: { stepName: string }) => {
-  const [
-    setLoopIndex,
-    currentIndex,
-    run,
-    flowVersion,
-    loopsIndexes,
-    selectedStep,
-    currentStep,
-  ] = useBuilderStateContext((state) => [
-    state.setLoopIndex,
-    state.loopsIndexes[stepName] ?? 0,
-    state.run,
-    state.flowVersion,
-    state.loopsIndexes,
-    state.selectedStep,
-    flowStructureUtil.getStep(stepName, state.flowVersion.trigger),
-  ]);
+  const [setLoopIndex, currentIndex, run, flowVersion, loopsIndexes, stepType] =
+    useBuilderStateContext((state) => [
+      state.setLoopIndex,
+      state.loopsIndexes[stepName] ?? 0,
+      state.run,
+      state.flowVersion,
+      state.loopsIndexes,
+      flowStructureUtil.getStep(stepName, state.flowVersion.trigger)?.type,
+    ]);
   const stepOutput = useMemo(() => {
     return run && run.steps
       ? flowRunUtils.extractStepOutput(
@@ -58,12 +50,8 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     );
     setLoopIndex(stepName, parsedValue - 1);
   }
-  const isChildSelected =
-    selectedStep && currentStep && currentStep.name !== selectedStep
-      ? flowStructureUtil.isChildOf(currentStep, selectedStep)
-      : false;
 
-  if (!isChildSelected || isNil(run)) {
+  if (isNil(run) || stepType !== FlowActionType.LOOP_ON_ITEMS) {
     return <></>;
   }
 

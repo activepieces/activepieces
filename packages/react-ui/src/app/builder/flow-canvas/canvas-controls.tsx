@@ -1,22 +1,15 @@
 import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import {
-  Fullscreen,
-  Hand,
-  Minus,
-  MousePointer,
-  Plus,
-  RotateCw,
-} from 'lucide-react';
+import { Fullscreen, Hand, Minus, MousePointer, Plus } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -24,7 +17,6 @@ import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
 const verticalPaddingOnFitView = 100;
-const duration = 500;
 // Calculate the node's position in relation to the canvas
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
@@ -69,19 +61,6 @@ const calculateViewportDelta = (
       : 0,
 });
 
-const PanningModeIndicator = ({ toggled }: { toggled: boolean }) => {
-  return (
-    <div
-      className={cn(
-        'absolute transition-all bg-primary/15 w-full h-full top-0 left-0',
-        {
-          'opacity-0': !toggled,
-        },
-      )}
-    ></div>
-  );
-};
-
 const CanvasControls = ({
   canvasWidth,
   canvasHeight,
@@ -93,30 +72,19 @@ const CanvasControls = ({
   hasCanvasBeenInitialised: boolean;
   selectedStep: string | null;
 }) => {
-  const {
-    zoomIn,
-    zoomOut,
-    zoomTo,
-    setViewport,
-    getNodes,
-    getNode,
-    getViewport,
-  } = useReactFlow();
+  const { zoomIn, zoomOut, setViewport, getNodes, getNode, getViewport } =
+    useReactFlow();
   const handleZoomIn = useCallback(() => {
     zoomIn({
-      duration,
+      duration: 0,
     });
   }, [zoomIn]);
 
   const handleZoomOut = useCallback(() => {
     zoomOut({
-      duration,
+      duration: 0,
     });
   }, [zoomOut]);
-
-  const handleZoomReset = useCallback(() => {
-    zoomTo(1, { duration });
-  }, [zoomTo]);
 
   const handleFitToView = useCallback(
     (isInitialRenderCall: boolean) => {
@@ -140,7 +108,7 @@ const CanvasControls = ({
           zoom: zoomRatio,
         },
         {
-          duration: isInitialRenderCall ? 0 : duration,
+          duration: isInitialRenderCall ? 0 : 500,
         },
       );
     },
@@ -198,90 +166,69 @@ const CanvasControls = ({
     (spacePressed || panningMode === 'grab') && !shiftPressed;
 
   return (
-    <>
-      <div className="bg-accent absolute left-[10px] bottom-[60px] z-50 flex flex-col gap-2 shadow-md">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => {
-                if (!spacePressed) {
-                  setPanningMode('pan');
-                }
-              }}
-              className="relative focus:outline-0"
-            >
-              <PanningModeIndicator toggled={!isInGrabMode} />
-              <MousePointer className="size-5"></MousePointer>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('Select Mode')}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => {
-                if (!spacePressed) {
-                  setPanningMode('grab');
-                }
-              }}
-              className="relative focus:outline-0"
-            >
-              <PanningModeIndicator toggled={isInGrabMode} />
-
-              <Hand className="size-5"></Hand>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">{t('Move Mode')}</TooltipContent>
-        </Tooltip>
+    <div
+      id="canvas-controls"
+      className="z-50 absolute bottom-2 left-0 flex items-center justify-center w-full pointer-events-none "
+    >
+      <div className="bg-background gap-2 flex items-center shadow-2xl justify-center border border-sidebar-border p-1.5 rounded-lg pointer-events-auto">
+        <CanvasButtonWrapper tooltip={t('Zoom in')}>
+          <Button variant="ghost" size="icon" onClick={handleZoomIn}>
+            <Plus className="w-4 h-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Zoom out')}>
+          <Button variant="ghost" size="icon" onClick={handleZoomOut}>
+            <Minus className="w-4 h-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Fit to view')}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleFitToView(false)}
+          >
+            <Fullscreen className="w-4 h-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <div>
+          <Separator orientation="vertical" className="h-5"></Separator>
+        </div>
+        <CanvasButtonWrapper tooltip={t('Grab mode')}>
+          <Button
+            variant={isInGrabMode ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => setPanningMode('grab')}
+          >
+            <Hand className="w-4 h-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Select mode')}>
+          <Button
+            variant={!isInGrabMode ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => setPanningMode('pan')}
+          >
+            <MousePointer className="w-4 h-4" />
+          </Button>
+        </CanvasButtonWrapper>
       </div>
-      <div className="bg-accent absolute left-[10px] bottom-[10px] z-50 flex flex-row shadow-md">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="accent" size="sm" onClick={handleZoomReset}>
-              <RotateCw className="size-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Reset Zoom')}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="accent" size="sm" onClick={handleZoomIn}>
-              <Plus className="size-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Zoom In')}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="accent" size="sm" onClick={handleZoomOut}>
-              <Minus className="size-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Zoom Out')}</TooltipContent>
-        </Tooltip>
-
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="accent"
-              size="sm"
-              onClick={() => handleFitToView(false)}
-            >
-              <Fullscreen className="size-5" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="top">{t('Fit to View')}</TooltipContent>
-        </Tooltip>
-      </div>
-    </>
+    </div>
   );
 };
 
 export { CanvasControls };
+
+const CanvasButtonWrapper = ({
+  children,
+  tooltip,
+}: {
+  children: React.ReactNode;
+  tooltip: string;
+}) => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  );
+};

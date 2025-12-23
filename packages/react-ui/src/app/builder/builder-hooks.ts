@@ -42,7 +42,6 @@ import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { pieceSelectorUtils } from '../../features/pieces/lib/piece-selector-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 import {
-  AskAiButtonOperations,
   PieceSelectorItem,
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
@@ -148,8 +147,6 @@ export type BuilderState = {
       operation: FlowOperationRequest,
     ) => void,
   ) => void;
-  askAiButtonProps: AskAiButtonOperations | null;
-  setAskAiButtonProps: (props: AskAiButtonOperations | null) => void;
   selectedNodes: string[];
   setSelectedNodes: (nodes: string[]) => void;
   panningMode: 'grab' | 'pan';
@@ -300,7 +297,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             selectedStep,
             rightSidebar,
             selectedBranchIndex: null,
-            askAiButtonProps: null,
             selectedNodes,
             chatDrawerOpenSource: null,
           };
@@ -355,7 +351,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           rightSidebar: RightSideBarType.NONE,
           selectedStep: null,
           selectedBranchIndex: null,
-          askAiButtonProps: null,
         })),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
@@ -578,30 +573,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
             (l) => l !== listener,
           ),
         })),
-      askAiButtonProps: null,
-      setAskAiButtonProps: (props) => {
-        return set((state) => {
-          let rightSidebar = state.rightSidebar;
-          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
-            rightSidebar = RightSideBarType.PIECE_SETTINGS;
-          } else if (props) {
-            rightSidebar = RightSideBarType.NONE;
-          }
-
-          let selectedStep = state.selectedStep;
-          if (props && props.type === FlowOperationType.UPDATE_ACTION) {
-            selectedStep = props.stepName;
-          } else if (props) {
-            selectedStep = null;
-          }
-
-          return {
-            askAiButtonProps: props,
-            rightSidebar,
-            selectedStep,
-          };
-        });
-      },
       selectedNodes: [],
       setSelectedNodes: (nodes) => {
         return set(() => ({
