@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CancelTestTriggerRequestBody, PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { testTriggerService } from '../../trigger/test-trigger/test-trigger-service'
@@ -37,7 +37,7 @@ const TestTriggerRequest = {
         body: TestTriggerRequestBody,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -48,7 +48,7 @@ const CancelTestTriggerRequest = {
         body: CancelTestTriggerRequestBody,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },

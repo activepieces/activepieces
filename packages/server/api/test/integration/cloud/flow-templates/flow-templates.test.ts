@@ -35,7 +35,7 @@ describe('Templates', () => {
     describe('List Templates', () => {
         it('should list platform templates only', async () => {
             // arrange
-            const { mockPlatform, mockUser, mockProject, mockPlatformTemplate } =
+            const { mockPlatform, mockUser, mockPlatformTemplate } =
                 await createMockPlatformTemplate({ platformId: apId(), plan: { manageTemplatesEnabled: true } })
 
             const testToken = await generateMockToken({
@@ -79,7 +79,7 @@ describe('Templates', () => {
     describe('Create Template', () => {
         it('should create a flow template', async () => {
             // arrange
-            const { mockPlatform, mockOwner, mockProject } = await mockAndSaveBasicSetup({
+            const { mockPlatform, mockOwner } = await mockAndSaveBasicSetup({
                 platform: {
                 },
                 plan: {
@@ -133,7 +133,7 @@ describe('Templates', () => {
     describe('Delete Template', () => {
         it('should not be able delete platform template as member', async () => {
             // arrange
-            const { mockUser, mockPlatform, mockProject, mockPlatformTemplate } =
+            const { mockUser, mockPlatform, mockPlatformTemplate } =
                 await createMockPlatformTemplate({ platformId: apId() })
             const testToken = await generateMockToken({
                 id: mockUser.id,
@@ -155,7 +155,7 @@ describe('Templates', () => {
 
         it('should be able delete platform template as owner', async () => {
             // arrange
-            const { mockPlatform, mockOwner, mockProject, mockPlatformTemplate } =
+            const { mockPlatform, mockOwner, mockPlatformTemplate } =
                 await createMockPlatformTemplate({ platformId: apId() })
 
             const testToken = await generateMockToken({

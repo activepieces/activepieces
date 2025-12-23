@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { ApId, CreateProjectReleaseRequestBody, DiffReleaseRequest, ListProjectReleasesRequest, PrincipalType, ProjectRelease, SeekPage, SERVICE_KEY_SECURITY_OPENAPI } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -54,7 +54,7 @@ export const projectReleaseController: FastifyPluginAsyncTypebox = async (app) =
 
 const GetProjectReleaseRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER],
             undefined,
             {
@@ -72,7 +72,7 @@ const GetProjectReleaseRequest = {
 
 const ListProjectReleasesRequestParams = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER],
             undefined,
             {
@@ -90,7 +90,7 @@ const ListProjectReleasesRequestParams = {
 
 const DiffProjectReleaseRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER],
             undefined,
             {
@@ -105,7 +105,7 @@ const DiffProjectReleaseRequest = {
 
 const CreateProjectReleaseRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             undefined,
             {

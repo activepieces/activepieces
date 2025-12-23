@@ -1,4 +1,4 @@
-import { publicAccess, publicPlatformAccess, unscopedAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -139,7 +139,7 @@ type GetIdParams = Static<typeof GetIdParams>
 
 const GetParams = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         tags: ['templates'],
@@ -151,7 +151,7 @@ const GetParams = {
 
 const ListTemplatesParams = {
     config: {
-        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         tags: ['templates'],
@@ -163,7 +163,7 @@ const ListTemplatesParams = {
 
 const DeleteParams = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Delete a template.',
@@ -175,7 +175,7 @@ const DeleteParams = {
 
 const CreateParams = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Create a template.',
@@ -187,7 +187,7 @@ const CreateParams = {
 
 const UpdateParams = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Update a template.',
@@ -200,7 +200,7 @@ const UpdateParams = {
 
 const IncrementUsageCountParams = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Increment usage count of a template.',

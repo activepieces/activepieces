@@ -1,4 +1,4 @@
-import { AppSystemProp, engineAccess, publicAccess } from '@activepieces/server-shared'
+import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -86,7 +86,7 @@ async function getFileByToken(token: string, log: FastifyBaseLogger): Promise<Om
 
 const SignedFileRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         querystring: Type.Object({
@@ -97,7 +97,7 @@ const SignedFileRequest = {
 
 const UpsertStepFileRequest = {
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
     schema: {
         body: StepFileUpsertRequest,

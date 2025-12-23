@@ -1,4 +1,4 @@
-import { engineAccess, projectAccess, ProjectResourceType, publicAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CreateTodoRequestBody, ListTodoAssigneesRequestQuery, ListTodosQueryParams, PrincipalType, ResolveTodoRequestQuery, SeekPage, TodoEnvironment, UpdateTodoRequestBody, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -103,7 +103,7 @@ const DeleteTodoRequest = {
         }),
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TodoEntity,
         }),
@@ -119,7 +119,7 @@ const ListTodoAssigneesRequest = {
         },
     },
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
 
 }
@@ -130,7 +130,7 @@ const ListTodosRequest = {
         querystring: ListTodosQueryParams,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.QUERY,
         }),
     },
@@ -141,7 +141,7 @@ const CreateTodoRequest = {
         body: CreateTodoRequestBody,
     },
     config: {
-        security: projectAccess([PrincipalType.SERVICE, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.SERVICE, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -155,7 +155,7 @@ const RequestResolveTodoRequest = {
         querystring: ResolveTodoRequestQuery,
     },
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
 }
 
@@ -166,7 +166,7 @@ const GetTodoRequest = {
         }),
     },
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TodoEntity,
         }),
@@ -181,7 +181,7 @@ const UpdateTodoRequest = {
         body: UpdateTodoRequestBody,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: TodoEntity,
         }),

@@ -63,8 +63,8 @@ describe('authenticateOrThrow', () => {
 
     describe('Access Token Authentication', () => {
         it('should authenticate with valid access token', async () => {
-            
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const mockPrincipal: Principal = {
                 id: mockOwner.id,
@@ -106,7 +106,7 @@ describe('authenticateOrThrow', () => {
         })
 
         it('should throw SESSION_EXPIRED error for expired access token', async () => {
-            const { mockOwner, mockPlatform, mockProject, mockUserIdentity } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform, mockUserIdentity } = await mockAndSaveBasicSetup()
 
             const mockPrincipal: Principal = {
                 id: mockOwner.id,

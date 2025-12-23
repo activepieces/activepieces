@@ -2,7 +2,7 @@ import {
     AddDomainRequest,
     ListCustomDomainsRequest,
 } from '@activepieces/ee-shared'
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, PrincipalType } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -32,7 +32,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                 body: AddDomainRequest,
             },
             config: {
-                security: platformAdminOnly([PrincipalType.USER]),
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
         },
         async (request, reply) => {
@@ -65,7 +65,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                 querystring: ListCustomDomainsRequest,
             },
             config: {
-                security: platformAdminOnly([PrincipalType.USER]),
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
         },
         async (request) => {
@@ -86,7 +86,7 @@ const customDomainController: FastifyPluginAsyncTypebox = async (app) => {
                 params: GetOneRequest,
             },
             config: {
-                security: platformAdminOnly([PrincipalType.USER]),
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
         },
         async (request) => {

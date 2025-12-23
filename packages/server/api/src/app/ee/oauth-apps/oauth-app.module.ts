@@ -3,7 +3,7 @@ import {
     OAuthApp,
     UpsertOAuth2AppRequest,
 } from '@activepieces/ee-shared'
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -22,7 +22,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                security: platformAdminOnly([PrincipalType.USER]),
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
             schema: {
                 querystring: ListOAuth2AppRequest,
@@ -45,7 +45,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                security: platformAdminOnly([PrincipalType.USER]),
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
             schema: {
                 body: UpsertOAuth2AppRequest,
@@ -65,7 +65,7 @@ const oauthAppController: FastifyPluginAsyncTypebox = async (app) => {
         '/:id',
         {
             config: {
-                security: platformAdminOnly([PrincipalType.USER]),
+                security: securityAccess.platformAdminOnly([PrincipalType.USER]),
             },
             schema: {
                 params: GetIdParams,

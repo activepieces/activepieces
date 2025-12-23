@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     CreateFolderRequest,
     DeleteFolderRequest,
@@ -112,7 +112,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateFolderParams = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.BODY,
@@ -128,7 +128,7 @@ const CreateFolderParams = {
 
 const UpdateFolderParams = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,
@@ -148,7 +148,7 @@ const UpdateFolderParams = {
 
 const GetFolderParams = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_FLOW, {
                 type: ProjectResourceType.TABLE,
@@ -167,7 +167,7 @@ const GetFolderParams = {
 
 const ListFoldersParams = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_FLOW, {
                 type: ProjectResourceType.QUERY,
@@ -183,7 +183,7 @@ const ListFoldersParams = {
 
 const DeleteFolderParams = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,

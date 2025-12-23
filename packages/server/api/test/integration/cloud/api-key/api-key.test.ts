@@ -27,12 +27,12 @@ afterAll(async () => {
 describe('API Key API', () => {
     describe('Create API Key API', () => {
         it('should create a new API Key', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
-                
+
                 platform: { id: mockPlatform.id },
             })
 
@@ -65,7 +65,7 @@ describe('API Key API', () => {
 
     describe('Delete API Key endpoint', () => {
         it('Fail if non owner', async () => {
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -100,7 +100,7 @@ describe('API Key API', () => {
     describe('List API Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
             const { mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
 
 

@@ -1,5 +1,5 @@
 import { CreateOtpRequestBody } from '@activepieces/ee-shared'
-import { publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformUtils } from '../../../platform/platform.utils'
@@ -19,7 +19,7 @@ export const otpController: FastifyPluginAsyncTypebox = async (app) => {
 
 const CreateOtpRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         body: CreateOtpRequestBody,

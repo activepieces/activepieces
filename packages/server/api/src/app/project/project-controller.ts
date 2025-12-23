@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType, publicPlatformAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -8,7 +8,7 @@ import { projectService } from './project-service'
 export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.get('/:id', {
         config: {
-            security: projectAccess([PrincipalType.USER], undefined, {
+            security: securityAccess.project([PrincipalType.USER], undefined, {
                 type: ProjectResourceType.PARAM,
                 paramKey: 'id',
             }),
@@ -19,7 +19,7 @@ export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) 
 
     fastify.get('/', {
         config: {
-            security: publicPlatformAccess([PrincipalType.USER]),
+            security: securityAccess.publicPlatform([PrincipalType.USER]),
         },
     }, async (request) => {
         return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
@@ -38,7 +38,7 @@ export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const UpdateProjectRequest = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['projects'],

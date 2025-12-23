@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     CreateRecordsRequest,
     DeleteRecordsRequest,
@@ -93,7 +93,7 @@ export const recordController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const CreateRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -107,7 +107,7 @@ const CreateRequest = {
 
 const GetRecordByIdRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),
@@ -125,7 +125,7 @@ const GetRecordByIdRequest = {
 
 const UpdateRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.TABLE,
             tableName: RecordEntity,
         }),
@@ -147,7 +147,7 @@ const UpdateRequest = {
 
 const DeleteRecordRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.WRITE_TABLE, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -164,7 +164,7 @@ const DeleteRecordRequest = {
 
 const ListRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], Permission.READ_TABLE, {
             type: ProjectResourceType.QUERY,
         }),
     },

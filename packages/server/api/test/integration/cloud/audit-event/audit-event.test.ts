@@ -95,7 +95,7 @@ describe('Audit Event API', () => {
 
         it('should return forbidden if the user is not the owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser } = await mockBasicUser({
                 user: {

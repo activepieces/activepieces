@@ -14,61 +14,63 @@ type RouteAccessRequest = {
     
 export type FastifyRouteSecurity = RouteAccessRequest | PublicRoute
 
+export const securityAccess = {
 
-export function platformAdminOnly(allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) {
-    return {
-        kind: RouteKind.AUTHENTICATED,
-        authorization: {
-            type: AuthorizationType.PLATFORM,
-            allowedPrincipals,
-            adminOnly: true,
-        },
-    } as const
-}
-
-export function publicPlatformAccess(allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) {
-    return {
-        kind: RouteKind.AUTHENTICATED,
-        authorization: {
-            type: AuthorizationType.PLATFORM,
-            allowedPrincipals,
-            adminOnly: false,
-        },
-    } as const
-}
-
-export function publicAccess() {
-    return {
-        kind: RouteKind.PUBLIC,
-    } as const
-}
-
-export function projectAccess(allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.SERVICE | PrincipalType.ENGINE)[], permission: Permission | undefined, projectResource: ProjectResource) {
-    return {
-        kind: RouteKind.AUTHENTICATED,
-        authorization: {
-            type: AuthorizationType.PROJECT,
-            allowedPrincipals,
-            permission,
-            projectResource,
-        },
-    } as const
-}
-
-export function unscopedAccess<T extends readonly PrincipalType[]>(allowedPrincipals: T) {
-    return {
-        kind: RouteKind.AUTHENTICATED,
-        authorization: {
-            type: AuthorizationType.UNSCOPED,
-            allowedPrincipals,
-        },
-    } as const
-}
-
-export function engineAccess() {
-    return unscopedAccess<[PrincipalType.ENGINE]>([PrincipalType.ENGINE])
-}
-
-export function workerAccess() {
-    return unscopedAccess<[PrincipalType.WORKER]>([PrincipalType.WORKER])
+    platformAdminOnly: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) => {
+        return {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PLATFORM,
+                allowedPrincipals,
+                adminOnly: true,
+            },
+        } as const
+    },
+    
+    publicPlatform: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.ENGINE | PrincipalType.SERVICE)[]) => {
+        return {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PLATFORM,
+                allowedPrincipals,
+                adminOnly: false,
+            },
+        } as const
+    },
+    
+    public: () => {
+        return {
+            kind: RouteKind.PUBLIC,
+        } as const
+    },
+    
+    project: (allowedPrincipals: readonly (PrincipalType.USER | PrincipalType.SERVICE | PrincipalType.ENGINE)[], permission: Permission | undefined, projectResource: ProjectResource) => {
+        return {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.PROJECT,
+                allowedPrincipals,
+                permission,
+                projectResource,
+            },
+        } as const
+    },
+    
+    unscoped: <T extends readonly PrincipalType[]>(allowedPrincipals: T) => {
+        return {
+            kind: RouteKind.AUTHENTICATED,
+            authorization: {
+                type: AuthorizationType.UNSCOPED,
+                allowedPrincipals,
+            },
+        } as const
+    },
+    
+    engine: () => {
+        return securityAccess.unscoped([PrincipalType.ENGINE])
+    },
+    
+    worker: () => {
+        return securityAccess.unscoped([PrincipalType.WORKER])
+    },
 }

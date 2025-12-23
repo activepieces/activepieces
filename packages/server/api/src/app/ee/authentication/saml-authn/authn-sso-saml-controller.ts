@@ -1,5 +1,5 @@
 import { ApplicationEventName } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, publicAccess } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -53,7 +53,7 @@ async function getSamlConfigOrThrow(req: FastifyRequest): Promise<{ saml: SAMLAu
 
 const AcsRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         body: Type.Record(Type.String(), Type.Unknown()),
@@ -63,6 +63,6 @@ const AcsRequest = {
 
 const LoginRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
 }

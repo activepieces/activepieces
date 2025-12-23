@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CreateFieldRequest, Field, ListFieldsRequestQuery, PrincipalType, UpdateFieldRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -48,7 +48,7 @@ export const fieldController: FastifyPluginAsyncTypebox = async (fastify) => {
 }
 const CreateRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -62,7 +62,7 @@ const CreateRequest = {
 
 const GetFieldByIdRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),
@@ -76,7 +76,7 @@ const GetFieldByIdRequest = {
 
 const DeleteFieldRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),
@@ -90,7 +90,7 @@ const DeleteFieldRequest = {
 
 const GetFieldsRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.QUERY,
         }),
     },
@@ -101,7 +101,7 @@ const GetFieldsRequest = {
 
 const UpdateRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.TABLE,
             tableName: FieldEntity,
         }),

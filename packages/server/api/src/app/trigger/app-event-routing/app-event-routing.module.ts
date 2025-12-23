@@ -4,8 +4,8 @@ import { slack } from '@activepieces/piece-slack'
 import { square } from '@activepieces/piece-square'
 import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
-    publicAccess,
     rejectedPromiseHandler,
+    securityAccess,
 } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -55,7 +55,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
         {
             config: {
                 rawBody: true,
-                security: publicAccess(),
+                security: securityAccess.public(),
             },
         },
         async (

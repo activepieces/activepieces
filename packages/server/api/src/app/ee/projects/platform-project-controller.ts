@@ -3,7 +3,7 @@ import {
     ListProjectRequestForPlatformQueryParams,
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
-import { platformAdminOnly, projectAccess, ProjectResourceType, publicPlatformAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
@@ -170,7 +170,7 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string)
 
 const UpdateProjectRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT, {
             type: ProjectResourceType.PARAM,
             paramKey: 'id',
         }),
@@ -190,7 +190,7 @@ const UpdateProjectRequest = {
 
 const CreateProjectRequest = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['projects'],
@@ -204,7 +204,7 @@ const CreateProjectRequest = {
 
 const ListProjectRequestForPlatform = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         response: {
@@ -218,7 +218,7 @@ const ListProjectRequestForPlatform = {
 
 const DeleteProjectRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         params: Type.Object({

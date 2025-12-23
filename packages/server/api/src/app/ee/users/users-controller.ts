@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { assertNotNullOrUndefined, GetCurrentUserRequestQuery, PrincipalType, UserWithMetaInformationAndProject } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -41,7 +41,7 @@ const GetCurrentUserRequest = {
         querystring: GetCurrentUserRequestQuery,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.QUERY,
         }),
     },

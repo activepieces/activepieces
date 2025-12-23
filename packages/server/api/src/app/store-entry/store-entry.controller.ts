@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     DeleteStoreEntryRequest,
     GetStoreEntryRequest,
@@ -51,7 +51,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const CreateRequest =  {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },
@@ -62,7 +62,7 @@ const CreateRequest =  {
 
 const GetRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.QUERY,
         }),
     },
@@ -74,7 +74,7 @@ const GetRequest = {
 
 const DeleteStoreRequest = {
     config: {
-        security: projectAccess([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
+        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
             type: ProjectResourceType.QUERY,
         }),
     },

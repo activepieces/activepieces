@@ -1,4 +1,4 @@
-import { engineAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { projectService } from './project-service'
 
@@ -13,6 +13,6 @@ export const projectWorkerController: FastifyPluginAsyncTypebox = async (
 
 const GetWorkerProjectRequest = {
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
 }

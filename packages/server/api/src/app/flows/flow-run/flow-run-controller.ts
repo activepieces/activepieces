@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType, unscopedAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -157,7 +157,7 @@ const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['pauseMetadata', 'steps']
 
 const ListRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_RUN, {
                 type: ProjectResourceType.QUERY,
@@ -176,7 +176,7 @@ const ListRequest = {
 
 const GetRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.READ_RUN, {
                 type: ProjectResourceType.TABLE,
@@ -198,7 +198,7 @@ const GetRequest = {
 
 const ResumeFlowRunRequest = {
     config: {
-        security: unscopedAccess(ALL_PRINCIPAL_TYPES),
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: Type.Object({
@@ -210,7 +210,7 @@ const ResumeFlowRunRequest = {
 
 const RetryFlowRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_RUN, {
                 type: ProjectResourceType.TABLE,
@@ -227,7 +227,7 @@ const RetryFlowRequest = {
 
 const BulkCancelFlowRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_RUN, {
                 type: ProjectResourceType.BODY,
@@ -243,7 +243,7 @@ const BulkCancelFlowRequest = {
 
 const ArchiveFlowRunRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_RUN, {
                 type: ProjectResourceType.BODY,
@@ -256,7 +256,7 @@ const ArchiveFlowRunRequest = {
 
 const BulkRetryFlowRequest = {
     config: {
-        security: projectAccess(
+        security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE], 
             Permission.WRITE_RUN, {
                 type: ProjectResourceType.BODY,

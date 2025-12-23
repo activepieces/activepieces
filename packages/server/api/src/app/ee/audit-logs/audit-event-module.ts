@@ -1,5 +1,5 @@
 import { ListAuditEventsRequest } from '@activepieces/ee-shared'
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
@@ -29,7 +29,7 @@ const auditEventController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAuditEventsRequestEndpoint = {
     config: {
-        security: platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.SERVICE, PrincipalType.USER]),
     },
     schema: {
         querystring: ListAuditEventsRequest,

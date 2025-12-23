@@ -1,5 +1,5 @@
 import { AI_CREDITS_USAGE_THRESHOLD, ApSubscriptionStatus, STANDARD_CLOUD_PLAN } from '@activepieces/ee-shared'
-import { AppSystemProp, exceptionHandler, publicAccess } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, securityAccess } from '@activepieces/server-shared'
 import { AiOverageState, isNil, PlanName } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
@@ -101,7 +101,7 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
 
 const WebhookRequest = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
         rawBody: true,
     },
 }

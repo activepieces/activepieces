@@ -203,7 +203,7 @@ describe('GlobalConnection API', () => {
     describe('List GlobalConnections endpoint', () => {
         it('Succeeds if user is platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject, mockOwner } = await setupWithGlobalConnections()
+            const { mockPlatform, mockOwner } = await setupWithGlobalConnections()
 
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
@@ -228,7 +228,7 @@ describe('GlobalConnection API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await setupWithGlobalConnections()
+            const { mockPlatform } = await setupWithGlobalConnections()
 
             const { mockUser } = await mockBasicUser({
                 user: {

@@ -1,4 +1,4 @@
-import { projectAccess, ProjectResourceType } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CreateTodoActivityRequestBody, ListTodoActivitiesQueryParams, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { todoActivitiesService as todoActivityService } from './todos-activity.service'
@@ -35,7 +35,7 @@ const ListTodoCommentsRequest = {
         querystring: ListTodoActivitiesQueryParams,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.QUERY,
         }),
     },
@@ -47,7 +47,7 @@ const CreateTodoCommentRequest = {
         body: CreateTodoActivityRequestBody,
     },
     config: {
-        security: projectAccess([PrincipalType.USER], undefined, {
+        security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
     },

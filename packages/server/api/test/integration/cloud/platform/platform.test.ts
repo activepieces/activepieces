@@ -30,7 +30,7 @@ describe('Platform API', () => {
     describe('update platform endpoint', () => {
         it('patches a platform by id', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
                 },
@@ -90,7 +90,7 @@ describe('Platform API', () => {
         }),
 
         it('updates the platform logo icons', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 plan: {
                     embeddingEnabled: false,
                 },
@@ -135,7 +135,7 @@ describe('Platform API', () => {
 
         it('fails if user is not owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -172,7 +172,7 @@ describe('Platform API', () => {
     describe('get platform endpoint', () => {
         it('Always Returns non-sensitive information for platform', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup({
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup({
                 platform: {
                     federatedAuthProviders: {
                         google: {
@@ -226,7 +226,7 @@ describe('Platform API', () => {
 
 
         it('Fails if user is not a platform member', async () => {
-            const { mockOwner: mockOwner1, mockPlatform: mockPlatform1, mockProject: mockProject1 } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockOwner1, mockPlatform: mockPlatform1 } = await mockAndSaveBasicSetup()
             const { mockPlatform: mockPlatform2 } = await mockAndSaveBasicSetup()
 
             const mockToken = await generateMockToken({
@@ -292,7 +292,7 @@ describe('Platform API', () => {
         }),
         it('fails if platform is not eligible for deletion', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
                     plan: PlanName.ENTERPRISE,
                 },
@@ -317,7 +317,7 @@ describe('Platform API', () => {
         }),
         it('fails if user is not owner', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup( {
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup( {
                 plan: {
                     plan: PlanName.STANDARD,
                 },
@@ -388,7 +388,7 @@ describe('Platform API', () => {
     describe('get platform endpoint', () => {
         it('fails if user is not part of the platform', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
@@ -409,7 +409,7 @@ describe('Platform API', () => {
     }),
     it('succeeds if user is part of the platform and is not admin', async () => {
         // arrange
-        const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+        const { mockPlatform } = await mockAndSaveBasicSetup()
         const { mockUser } = await mockBasicUser({
             user: {
                 platformId: mockPlatform.id,

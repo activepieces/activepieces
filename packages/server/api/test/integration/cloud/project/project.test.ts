@@ -42,7 +42,7 @@ afterAll(async () => {
 describe('Project API', () => {
     describe('Create Project', () => {
         it('it should create project by user', async () => {
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
@@ -549,7 +549,7 @@ describe('Project API', () => {
 
         it('Platform operator cannot update platform settings', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
             
             const { mockUser: operatorUser } = await mockBasicUser({
                 user: {

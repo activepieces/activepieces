@@ -30,7 +30,7 @@ describe('Signing Key API', () => {
     describe('Add Signing Key API', () => {
         it('Creates new Signing Key', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await setupEnabledPlatform()
+            const { mockOwner, mockPlatform } = await setupEnabledPlatform()
 
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
@@ -67,7 +67,7 @@ describe('Signing Key API', () => {
 
         it('Fails if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await setupEnabledPlatform()
+            const { mockPlatform } = await setupEnabledPlatform()
             const { mockUser } = await mockBasicUser({
                 user: {
                     platformId: mockPlatform.id,
@@ -110,7 +110,7 @@ describe('Signing Key API', () => {
     describe('Get Signing Key endpoint', () => {
         it('Finds a Signing Key by id', async () => {
             // arrange
-            const { mockOwner, mockPlatform, mockProject } = await setupEnabledPlatform()
+            const { mockOwner, mockPlatform } = await setupEnabledPlatform()
             
             const mockSigningKey = createMockSigningKey({
                 platformId: mockPlatform.id,
@@ -150,7 +150,7 @@ describe('Signing Key API', () => {
     describe('Delete Signing Key endpoint', () => {
         it('Fail if non owner', async () => {
             // arrange
-            const { mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await setupEnabledPlatform()
+            const { mockPlatform: mockPlatformOne } = await setupEnabledPlatform()
 
             const { mockUser: nonOwnerUser } = await mockBasicUser({
                 user: {
@@ -191,7 +191,7 @@ describe('Signing Key API', () => {
 
     describe('List Signing Keys endpoint', () => {
         it('Filters Signing Keys by platform', async () => {
-            const { mockPlatform: mockPlatformTwo, mockProject: mockProjectTwo } = await setupEnabledPlatform()
+            const { mockPlatform: mockPlatformTwo } = await setupEnabledPlatform()
             const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await setupEnabledPlatform()
 
             const mockSigningKeyOne = createMockSigningKey({

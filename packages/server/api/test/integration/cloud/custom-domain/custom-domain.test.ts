@@ -58,7 +58,7 @@ describe('Custom Domain API', () => {
 
         it('should fail if user is not platform owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser: nonOwnerUser } = await mockBasicUser({
                 user: {
@@ -94,7 +94,7 @@ describe('Custom Domain API', () => {
     describe('List Custom Domain API', () => {
         it('should list custom domains', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
             const {  mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup()
 
             const testToken1 = await generateMockToken({
@@ -153,7 +153,7 @@ describe('Custom Domain API', () => {
     describe('Delete Custom Domain API', () => {
         it('should delete a custom domain', async () => {
             // arrange
-            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne, mockProject: mockProjectOne } = await mockAndSaveBasicSetup()
+            const { mockOwner: mockUserOne, mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
@@ -182,7 +182,7 @@ describe('Custom Domain API', () => {
         })
 
         it('should fail to delete a custom domain if user is not platform owner', async () => {
-            const { mockPlatform: mockPlatformOne, mockProject: mockProjectOne   } = await mockAndSaveBasicSetup()
+            const { mockPlatform: mockPlatformOne } = await mockAndSaveBasicSetup()
 
             const { mockUser: nonOwnerUser } = await mockBasicUser({
                 user: {

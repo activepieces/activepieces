@@ -2,7 +2,7 @@ import {
     ApiKeyResponseWithoutValue,
     ApiKeyResponseWithValue,
     CreateApiKeyRequest } from '@activepieces/ee-shared'
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { ApId, assertNotNullOrUndefined, PrincipalType, SeekPage } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -51,7 +51,7 @@ export const apiKeyController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         response: {
@@ -62,7 +62,7 @@ const ListRequest = {
 
 const CreateRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: CreateApiKeyRequest,
@@ -74,7 +74,7 @@ const CreateRequest = {
 
 const DeleteRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({

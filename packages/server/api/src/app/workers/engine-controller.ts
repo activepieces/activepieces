@@ -1,5 +1,5 @@
 
-import { engineAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {  FlowVersion, GetFlowVersionForWorkerRequest, ListFlowsRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -44,7 +44,7 @@ export const flowEngineWorker: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetAllFlowsByProjectParams = {
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
     schema: {
         querystring: Type.Omit(ListFlowsRequest, ['projectId']),
@@ -53,7 +53,7 @@ const GetAllFlowsByProjectParams = {
 
 const GetLockedVersionRequest = {
     config: {
-        security: engineAccess(),
+        security: securityAccess.engine(),
     },
     schema: {
         querystring: GetFlowVersionForWorkerRequest,

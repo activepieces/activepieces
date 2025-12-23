@@ -1,5 +1,5 @@
 import { AddSigningKeyRequestBody, ApplicationEventName } from '@activepieces/ee-shared'
-import { platformAdminOnly } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ApId,
@@ -72,12 +72,12 @@ export const signingKeyController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListSigningKeysRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 const AddSigningKeyRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: AddSigningKeyRequestBody,
@@ -86,7 +86,7 @@ const AddSigningKeyRequest = {
 
 const GetSigningKeyRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({
@@ -97,7 +97,7 @@ const GetSigningKeyRequest = {
 
 const DeleteSigningKeyRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({

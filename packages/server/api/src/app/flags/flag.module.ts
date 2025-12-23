@@ -1,4 +1,4 @@
-import { publicAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { flagService } from './flag.service'
@@ -13,7 +13,7 @@ export const flagController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                security: publicAccess(),
+                security: securityAccess.public(),
             },
             logLevel: 'silent',
         },

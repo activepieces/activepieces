@@ -1,4 +1,4 @@
-import { AuthorizationRouteSecurity, AuthorizationType, ProjectResourceType, RouteKind } from '@activepieces/server-shared'
+import { AuthorizationRouteSecurity, AuthorizationType, RouteKind } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -231,7 +231,7 @@ describe('authorizeOrThrow', () => {
             const mockProjectMember = createMockProjectMember({
                 userId: mockOwner.id,
                 platformId: mockPlatform.id,
-                
+                projectId: mockProject.id,
                 projectRoleId: projectRole.id,
             })
             await databaseConnection().getRepository('project_member').save(mockProjectMember)
@@ -258,8 +258,8 @@ describe('authorizeOrThrow', () => {
         })
 
         it('should reject when projectId is nil', async () => {
-            
-            const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+
+            const { mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
 
             const principal: Principal = {
                 id: mockOwner.id,

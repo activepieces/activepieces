@@ -1,5 +1,5 @@
 import { ApplicationEventName, ProjectMemberWithUser } from '@activepieces/ee-shared'
-import { platformAdminOnly, publicPlatformAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -85,7 +85,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetProjectRoleRequest = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         params: Type.Object({
@@ -96,7 +96,7 @@ const GetProjectRoleRequest = {
 
 const ListProjectRolesRequest = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         response: {
@@ -107,7 +107,7 @@ const ListProjectRolesRequest = {
 
 const CreateProjectRoleRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         body: CreateProjectRoleRequestBody,
@@ -119,7 +119,7 @@ const CreateProjectRoleRequest = {
 
 const UpdateProjectRoleRequest = {
     config: {   
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         body: UpdateProjectRoleRequestBody,
@@ -134,7 +134,7 @@ const UpdateProjectRoleRequest = {
 
 const DeleteProjectRoleRequest = {
     config: {
-        security: platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         params: Type.Object({
@@ -148,7 +148,7 @@ const DeleteProjectRoleRequest = {
 
 const ListProjectMembersForProjectRoleRequest = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['project-members'],

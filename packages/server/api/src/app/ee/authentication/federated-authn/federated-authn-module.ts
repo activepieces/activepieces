@@ -1,7 +1,7 @@
 import {
     ApplicationEventName,
 } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, publicAccess } from '@activepieces/server-shared'
+import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
 import {
     ClaimTokenRequest,
     ThirdPartyAuthnProviderEnum,
@@ -52,7 +52,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
 
 const LoginRequestSchema = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         querystring: Type.Object({
@@ -63,7 +63,7 @@ const LoginRequestSchema = {
 
 const ClaimTokenRequestSchema = {
     config: {
-        security: publicAccess(),
+        security: securityAccess.public(),
     },
     schema: {
         body: ClaimTokenRequest,

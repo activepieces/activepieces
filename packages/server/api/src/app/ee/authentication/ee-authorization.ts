@@ -84,7 +84,8 @@ export const projectMustBeTeamType: onRequestAsyncHookHandler =
         if (request.principal.type !== PrincipalType.USER && request.principal.type !== PrincipalType.SERVICE) {
             return
         }
-        const projectId = request.principal.type === PrincipalType.USER ? request.principal.projectId : requestUtils.extractProjectId(request)
+        const projectId = requestUtils.extractProjectId(request)
+
         if (isNil(projectId)) {
             throw new ActivepiecesError({
                 code: ErrorCode.AUTHORIZATION,

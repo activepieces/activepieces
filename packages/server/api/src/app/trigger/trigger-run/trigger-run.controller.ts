@@ -1,4 +1,4 @@
-import { publicPlatformAccess, triggerRunStats } from '@activepieces/server-shared'
+import { securityAccess, triggerRunStats } from '@activepieces/server-shared'
 import { PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { redisConnections } from '../../database/redis-connections'
@@ -12,6 +12,6 @@ export const triggerRunController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetStatusReportSchema = {
     config: {
-        security: publicPlatformAccess([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }
