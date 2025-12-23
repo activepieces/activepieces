@@ -1,20 +1,18 @@
 import { t } from 'i18next';
-import { Plus } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 
 export const CreateMcpFlowButton = () => {
   const { mutate: createMcpFlow, isPending } = flowHooks.useCreateMcpFlow();
 
   return (
-    <div
+    <Button
       onClick={() => createMcpFlow()}
-      className="border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg border-dashed border-muted-foreground/50"
+      variant="outline"
+      className="mr-auto"
     >
-      <Plus className="w-[40px] h-[40px] text-muted-foreground" />
-      <div className="mt-2 text-center text-md">
-        {isPending ? t('Creating...') : t('Create New Flow')}
-      </div>
-    </div>
+      {isPending ? t('Creating...') : t('New MCP Flow')}
+    </Button>
   );
 };
