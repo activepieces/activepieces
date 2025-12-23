@@ -1,6 +1,11 @@
 import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { voipstudioAuth } from './lib/common/auth';
 import { PieceCategory } from '@activepieces/shared';
+import { createContact } from './lib/actions/create-contact';
+import { makeACallToLead } from './lib/actions/make-a-call-to-lead';
+import { makeACall } from './lib/actions/make-a-call';
+import { makeAWebcall } from './lib/actions/make-a-webcall';
+import { sendSms } from './lib/actions/send-sms';
 
 export const voipstudio = createPiece({
   displayName: 'Voipstudio',
@@ -11,6 +16,12 @@ export const voipstudio = createPiece({
   description:
     'VoIPstudio is a complete business phone system and scalable call center',
   authors: ['sanket-a11y'],
-  actions: [],
+  actions: [
+    createContact,
+    makeACallToLead,
+    makeACall,
+    makeAWebcall,
+    sendSms
+  ],
   triggers: [],
 });

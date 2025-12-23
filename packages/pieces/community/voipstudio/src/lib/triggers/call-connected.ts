@@ -20,6 +20,9 @@ export const callConnected = createTrigger({
 5. Enter any name for the new Webhook to identify
 6. Select events to listen for. Select **Call Connected** event
 7. Enter the following URL in the webhook configuration
+	\`\`\`text
+			{{webhookUrl}}
+			\`\`\`
       `,
     }),
   },
