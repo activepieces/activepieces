@@ -370,6 +370,9 @@
       ],
       "@activepieces/piece-octopush-sms": [
         "packages/pieces/community/octopush-sms/src/index.ts"
+      ],
+      "@activepieces/piece-quaderno": [
+        "packages/pieces/community/quaderno/src/index.ts"
       ]
     },
     "resolveJsonModule": true
