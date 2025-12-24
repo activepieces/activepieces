@@ -383,11 +383,14 @@ function canReuseWorkers(): boolean {
     if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
         return true
     }
+    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
+    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
+        return true
+    }
     if (workerMachine.isDedicatedWorker()) {
         return true
     }
-    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
-    return trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)
+    return false
 }
 
 function shouldRecreateWorker(workerGeneration: number): boolean {
