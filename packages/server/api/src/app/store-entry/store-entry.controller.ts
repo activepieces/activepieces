@@ -19,7 +19,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
             return
         }
         const response = await storeEntryService.upsert({
-            projectId: request.projectId,
+            projectId: request.principal.projectId,
             request: request.body,
         })
         await reply.status(StatusCodes.OK).send(response)
@@ -28,7 +28,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
 
     fastify.get('/', GetRequest, async (request, reply) => {
         const value = await storeEntryService.getOne({
-            projectId: request.projectId,
+            projectId: request.principal.projectId,
             key: request.query.key,
         })
 
@@ -42,7 +42,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
 
     fastify.delete('/', DeleteStoreRequest, async (request) => {
         return storeEntryService.delete({
-            projectId: request.projectId,
+            projectId: request.principal.projectId,
             key: request.query.key,
         })
     },
@@ -51,9 +51,7 @@ export const storeEntryController: FastifyPluginAsyncTypebox = async (fastify) =
 
 const CreateRequest =  {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
-            type: ProjectResourceType.BODY,
-        }),
+        security: securityAccess.engine(),
     },
     schema: {
         body: PutStoreEntryRequest,
@@ -62,9 +60,7 @@ const CreateRequest =  {
 
 const GetRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
+        security: securityAccess.engine(),
     },
     schema: {
         querystring: GetStoreEntryRequest,
@@ -74,9 +70,7 @@ const GetRequest = {
 
 const DeleteStoreRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER, PrincipalType.ENGINE], undefined, {
-            type: ProjectResourceType.QUERY,
-        }),
+        security: securityAccess.engine(),
     },
     schema: {
         querystring: DeleteStoreEntryRequest,

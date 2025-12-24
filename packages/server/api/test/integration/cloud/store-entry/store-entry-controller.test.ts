@@ -82,18 +82,6 @@ describe('Store-entries API', () => {
             expect(response?.statusCode).toBe(200)
         })
 
-        it('should handle token type userToken correctly and return 200', async () => {
-            const key = 'new_key_2'
-            const response = await makePostRequest(userToken, key, 'random_value_0', projectId)
-            expect(response?.statusCode).toBe(200)
-        })
-
-        it('should handle token type serviceToken correctly and return 401', async () => {
-            const key = 'new_key_3'
-            const response = await makePostRequest(serviceToken, key, 'random_value_0')
-            expect(response?.statusCode).toBe(403)
-        })
-
         it('should save and update the value', async () => {
             const key = 'new_key_1'
 
