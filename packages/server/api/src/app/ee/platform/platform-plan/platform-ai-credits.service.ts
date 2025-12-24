@@ -1,51 +1,32 @@
 import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiCreditsAutoTopUpState, assertNotNullOrUndefined, ErrorCode, isNil } from '@activepieces/shared'
+import { ActivepiecesError, AiCreditsAutoTopUpState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformPlan } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { In } from 'typeorm'
 import { aiProviderService } from '../../../ai/ai-provider-service'
 import { redisConnections } from '../../../database/redis-connections'
 import { flagService } from '../../../flags/flag.service'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
-import { systemJobsSchedule } from '../../../helper/system-jobs/system-job'
-import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
-import { platformPlanRepo, platformPlanService } from './platform-plan.service'
+import { openRouterApi } from './openrouter/openrouter-api'
+import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
+import dayjs from 'dayjs'
 
 const CREDIT_PER_DOLLAR = 1000
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
-        systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_RENEW, async () => {
-            log.info('(platformAiCreditsService) Renewing Free AI credits')
+        systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_UPDATE_CHECK, async ({ apiKeyHash, platformId }) => {
+            log.info('(platformAiCreditsService) AI credit update check')
             try {
-                await this.resetPlanIncludedCredits()
-            }
-            catch (e) {
-                log.error(e, '(platformAiCreditsService) Renewing Free AI credits failed')
-                throw e
-            }
-        })
-        systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_AUTO_TOPUP, async ({ apiKeyHash, platformId }) => {
-            log.info('(platformAiCreditsService) Auto Topup AI credits')
-            try {
-                await this.tryAutoTopUpPlan(platformId, apiKeyHash)   
-            }
-            catch (e) {
-                log.error(e, '(platformAiCreditsService) Auto Topup AI credits failed')
-                throw e
-            }
-        })
+                const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-        await systemJobsSchedule(log).upsertJob({
-            job: {
-                name: SystemJobName.AI_CREDIT_RENEW,
-                data: {},
-            },
-            schedule: {
-                type: 'repeated',
-                cron: '0 12 L * *', // last day of every month
-            },
+                await this.tryResetPlanIncludedCredits(plan, apiKeyHash)
+                await this.tryAutoTopUpPlan(plan, apiKeyHash)   
+            }
+            catch (e) {
+                log.error(e, '(platformAiCreditsService) AI credit update check failed')
+                throw e
+            }
         })
     },
 
@@ -186,55 +167,22 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async resetPlanIncludedCredits(): Promise<void> {
-        const keys: OpenRouterApikey[] = []
-        let offset = 0
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-            const { data } = await openRouterApi.listKeys({ offset })
-            if (data.length === 0) break
-
-            keys.push(...data)
-            offset += data.length
+    async tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string): Promise<void> {
+        if (dayjs().diff(plan.lastFreeAiCreditsRenewalDate, 'month') < 1) {
+            return
         }
 
-        const configs = await aiProviderService(log).getAllActivePiecesProvidersConfigs()
+        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 
-        const platformIds = Object.keys(configs)
-        if (platformIds.length === 0) return
+        const amount = plan.includedAiCredits / CREDIT_PER_DOLLAR
 
-        const plans = await platformPlanRepo().find({
-            where: { platformId: In(platformIds) },
+        await openRouterApi.updateKey({
+            hash: apiKeyHash,
+            limit: key.limit! + amount,
         })
-
-        for (const plan of plans) {
-            const { apiKeyHash } = configs[plan.platformId]
-
-            const key = keys.find(k => k.hash === apiKeyHash)
-            if (!key) continue
-
-            let creditsToAdd: number
-            const creditsUsedLastMonth = key.usage_monthly * CREDIT_PER_DOLLAR
-
-            if (creditsUsedLastMonth > plan.includedAiCredits) {
-                creditsToAdd = plan.includedAiCredits
-            }
-            else {
-                creditsToAdd = plan.includedAiCredits - creditsUsedLastMonth
-            }
-
-            const amount = creditsToAdd / CREDIT_PER_DOLLAR
-
-            await openRouterApi.updateKey({
-                hash: apiKeyHash,
-                limit: key.limit! + amount,
-            })
-        }
     },
 
-    async tryAutoTopUpPlan(platformId: string, apiKeyHash: string): Promise<void> {
-        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-
+    async tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string): Promise<void> {
         if (plan.aiCreditsAutoTopUpState !== AiCreditsAutoTopUpState.ALLOWED_AND_ON) {
             return
         }

@@ -60,6 +60,7 @@ export const PlatformPlan = Type.Object({
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
     includedAiCredits: Type.Number(),
+    lastFreeAiCreditsRenewalDate: Type.Optional(Type.Date()),
 
     aiCreditsAutoTopUpState: Type.Optional(Type.Enum(AiCreditsAutoTopUpState)),
     aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),

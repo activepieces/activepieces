@@ -147,7 +147,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
 
             await systemJobsSchedule(log).upsertJob({
                 job: {
-                    name: SystemJobName.AI_CREDIT_AUTO_TOPUP,
+                    name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
                     data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
                 },
                 schedule: {
@@ -237,6 +237,10 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         displayName: 'Activepieces',
         config: {},
         auth: await encryptUtils.encryptObject(rawAuth),
+    })
+    await platformPlanService(log).update({
+        platformId,
+        lastFreeAiCreditsRenewalDate: new Date(),
     })
     return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config }
 }

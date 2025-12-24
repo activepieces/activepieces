@@ -25,6 +25,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Number,
             nullable: true,
         },
+        lastFreeAiCreditsRenewalDate: {
+            type: Date,
+            nullable: true
+        },
         aiCreditsAutoTopUpThreshold: {
             type: Number,
             nullable: true,
