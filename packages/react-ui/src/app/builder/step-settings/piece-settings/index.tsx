@@ -11,7 +11,6 @@ import {
   PieceActionSettings,
   PieceTrigger,
   PieceTriggerSettings,
-  PropertyExecutionType,
 } from '@activepieces/shared';
 
 import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
@@ -33,7 +32,7 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const { pieceModel, selectedStep, updateFormSchema } =
+  const { pieceModel, selectedStep, updateFormSchema,updatePropertySettingsSchema } =
     useStepSettingsContext();
 
   const actionName = (props.step.settings as PieceActionSettings).actionName;
@@ -73,24 +72,7 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     webhookTimeoutSeconds: webhookTimeoutSeconds?.toString() ?? '',
   };
 
-  const updatePropertySettingsSchema = (
-    schema: PiecePropertyMap,
-    propertyName: string,
-    form: UseFormReturn,
-  ) => {
-    if (!props.readonly) {
-      // previously the schema didn't have this property, so we need to set it
-      // we can't always set it to MANUAL, because some sub properties might be dynamic and have the same name as the dynamic property
-      // which will override the sub property exectuion type
-      if (!selectedStep.settings?.propertySettings?.[propertyName]) {
-        form.setValue(
-          `settings.propertySettings.${propertyName}.type`,
-          PropertyExecutionType.MANUAL as unknown,
-        );
-      }
-      form.setValue(`settings.propertySettings.${propertyName}.schema`, schema);
-    }
-  };
+
   const showAuthForAction =
     !isNil(selectedAction) && (selectedAction.requireAuth ?? true);
   const showAuthForTrigger =
