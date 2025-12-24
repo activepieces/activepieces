@@ -7,12 +7,13 @@ import { Button } from '@/components/ui/button';
 import type { AgentPieceTool, AgentTool } from '@activepieces/shared';
 import { AgentToolType } from '@activepieces/shared';
 
-import { AddToolDropdown } from './add-agent-tool-dropwdown';
-import { AgentFlowToolComponent } from './componenets/flow-tool';
-import { AgentPieceToolComponent } from './componenets/piece-tool';
-import { AgentFlowToolDialog } from './flow-tool-dialog';
+import { AddToolDropdown } from '../../../../features/agents/agent-tools/add-agent-tool-dropwdown';
+import { AgentFlowToolComponent } from '../../../../features/agents/agent-tools/componenets/flow-tool';
+import { AgentPieceToolComponent } from '../../../../features/agents/agent-tools/componenets/piece-tool';
+import { AgentFlowToolDialog } from '../../../../features/agents/agent-tools/flow-tool-dialog';
+import { useAgentToolsStore } from '../../../../features/agents/agent-tools/store';
+
 import { AgentPieceDialog } from './piece-tool-dialog';
-import { useAgentToolsStore } from './store';
 
 const icons = [
   'https://cdn.activepieces.com/pieces/youtube.png',
