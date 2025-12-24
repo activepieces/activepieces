@@ -78,12 +78,14 @@ export const TemplateCard = ({
       key={template.id}
       className="rounded-lg border border-solid border-dividers overflow-hidden"
     >
-      <div className="flex items-center gap-2 p-4">
-        <PieceIconList
-          trigger={template.flows![0].trigger}
-          maxNumberOfIconsToShow={2}
-        />
-      </div>
+      {template.flows![0]?.trigger && (
+        <div className="flex items-center gap-2 p-4">
+          <PieceIconList
+            trigger={template.flows![0]?.trigger}
+              maxNumberOfIconsToShow={2}
+            />
+          </div>
+      )}
       <div className="text-sm font-medium px-4 min-h-16">{template.name}</div>
       <div className="py-2 px-4 gap-1 flex items-center">
         <Button

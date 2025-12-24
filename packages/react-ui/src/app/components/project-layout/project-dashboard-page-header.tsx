@@ -33,10 +33,12 @@ export const ProjectDashboardPageHeader = ({
   title,
   children,
   description,
+  showPrivateProjectBadge = false,
 }: {
   title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
+  showPrivateProjectBadge?: boolean;
 }) => {
   const { project } = projectHooks.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();

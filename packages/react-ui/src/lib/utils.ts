@@ -1,14 +1,22 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import { extractColors } from 'extract-colors';
 import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
-import { useEffect, useRef, useState, RefObject } from 'react';
+import { useEffect, useRef, useState, RefObject, useMemo } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-import { LocalesEnum, Permission } from '@activepieces/shared';
+import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import {
+  LocalesEnum,
+  Permission,
+  FlowTrigger,
+  flowStructureUtil,
+} from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
+import { StepMetadata } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -401,4 +409,111 @@ export const routesThatRequireProjectId = {
   settings: '/settings',
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
+};
+
+const gradientCache = new Map<string, string>();
+
+export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
+  const [gradient, setGradient] = useState<string>('');
+
+  const steps = useMemo(
+    () => (trigger ? flowStructureUtil.getAllSteps(trigger) : []),
+    [trigger],
+  );
+  
+  const stepsMetadataResults = stepsHooks.useStepsMetadata(steps);
+  
+  const stepsMetadata: StepMetadata[] = useMemo(
+    () =>
+      stepsMetadataResults
+        .map((data) => data.data)
+        .filter((data) => !!data) as StepMetadata[],
+    [JSON.stringify(stepsMetadataResults.map((r) => r.dataUpdatedAt))],
+  );
+
+  const uniqueMetadata: StepMetadata[] = useMemo(
+    () =>
+      stepsMetadata.filter(
+        (item, index, self) =>
+          self.findIndex(
+            (secondItem) => item.displayName === secondItem.displayName,
+          ) === index,
+      ),
+    [stepsMetadata.map((m) => m.displayName).join(',')],
+  );
+
+  const cacheKey = useMemo(
+    () => uniqueMetadata.map((m) => m.logoUrl).join(','),
+    [uniqueMetadata],
+  );
+
+  useEffect(() => {
+    if (gradientCache.has(cacheKey)) {
+      setGradient(gradientCache.get(cacheKey)!);
+      return;
+    }
+
+    const extractColorsFromPieces = async () => {
+      if (uniqueMetadata.length === 0) {
+        setGradient('');
+        gradientCache.set(cacheKey, '');
+        return;
+      }
+
+      try {
+        const allColors: string[] = [];
+
+        const logosToProcess = uniqueMetadata
+          .slice(0, 4)
+          .filter((metadata) => metadata.logoUrl);
+
+        for (const metadata of logosToProcess) {
+          try {
+            const colors = await extractColors(metadata.logoUrl, {
+              crossOrigin: 'anonymous',
+              pixels: 10000,
+              distance: 0.2,
+            });
+
+            const topColors = colors
+              .sort((a, b) => b.area - a.area)
+              .slice(0, 2)
+              .map((color) => color.hex);
+
+            allColors.push(...topColors);
+          } catch (error) {
+            console.error(
+              `Failed to extract colors from ${metadata.displayName}:`,
+              error,
+            );
+          }
+        }
+
+        let resultGradient = '';
+        if (allColors.length > 0) {
+          const uniqueColors = Array.from(new Set(allColors)).slice(0, 4);
+
+          if (uniqueColors.length === 1) {
+            resultGradient = `linear-gradient(135deg, ${uniqueColors[0]}15, ${uniqueColors[0]}30)`;
+          } else {
+            const gradientColors = uniqueColors
+              .map((color) => `${color}20`)
+              .join(', ');
+            resultGradient = `linear-gradient(135deg, ${gradientColors})`;
+          }
+        }
+
+        setGradient(resultGradient);
+        gradientCache.set(cacheKey, resultGradient);
+      } catch (error) {
+        console.error('Failed to extract colors:', error);
+        setGradient('');
+        gradientCache.set(cacheKey, '');
+      }
+    };
+
+    extractColorsFromPieces();
+  }, [cacheKey, uniqueMetadata]);
+
+  return gradient;
 };
