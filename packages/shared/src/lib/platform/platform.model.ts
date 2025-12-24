@@ -16,7 +16,10 @@ export enum PlatformUsageMetric {
 }
 
 export const PlatformUsage = Type.Object({
-    aiCredits: Type.Number(),
+    totalAiCreditsUsed: Type.Number(),
+    totalAiCreditsUsedThisMonth: Type.Number(),
+    aiCreditsRemaining: Type.Number(),
+    aiCreditsLimit: Type.Number(),
     activeFlows: Type.Number(),
 })
 
@@ -45,14 +48,23 @@ export enum TeamProjectsLimit {
     UNLIMITED = 'UNLIMITED',
 }
 
+export enum AiCreditsAutoTopUpState {
+    NOT_ALLOWED = 'not_allowed',
+    ALLOWED_BUT_OFF = 'allowed_but_off',
+    ALLOWED_AND_ON = 'allowed_and_on',
+}
+
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
     // TODO: We have to use the enum when we finalize the plan names
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
     includedAiCredits: Type.Number(),
-    aiCreditsOverageLimit: Type.Optional(Type.Number()),
-    aiCreditsOverageState: Type.Optional(Type.String()),
+    lastFreeAiCreditsRenewalDate: Type.Optional(Type.String()),
+
+    aiCreditsAutoTopUpState: Type.Optional(Type.Enum(AiCreditsAutoTopUpState)),
+    aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
+    aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
@@ -153,3 +165,4 @@ export const PlatformBillingInformation = Type.Object({
     cancelAt: Type.Optional(Type.Number()),
 })
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
+

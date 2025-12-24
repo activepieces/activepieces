@@ -4,6 +4,8 @@ import {
   SetAiCreditsOverageLimitParams,
   UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
+  CreateAICreditCheckoutSessionParamsSchema,
+  EnableAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/ee-shared';
 import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
 
@@ -36,6 +38,32 @@ export const platformBillingApi = {
     return api.post<PlatformPlan>(
       '/v1/platform-billing/update-ai-overage-state',
       params,
+    );
+  },
+  createAICreditCheckoutSession(
+    params: CreateAICreditCheckoutSessionParamsSchema,
+  ) {
+    return api.post<{ stripeCheckoutUrl: string }>(
+      '/v1/platform-billing/ai-credits/create-checkout-session',
+      params,
+    );
+  },
+  enableAutoTopUp(params: EnableAICreditsAutoTopUpParamsSchema) {
+    return api.post<{ stripeCheckoutUrl?: string }>(
+      '/v1/platform-billing/ai-credits/auto-topup/enable',
+      params,
+    );
+  },
+  updateAutoTopUpConfig(params: EnableAICreditsAutoTopUpParamsSchema) {
+    return api.post<{ stripeCheckoutUrl?: string }>(
+      '/v1/platform-billing/ai-credits/auto-topup/config',
+      params,
+    );
+  },
+  disableAutoTopUp() {
+    return api.post<void>(
+      '/v1/platform-billing/ai-credits/auto-topup/disable',
+      {},
     );
   },
 };
