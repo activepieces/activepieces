@@ -1265,5 +1265,6 @@
   "Activation failed, invalid license key": "A ativação falhou, chave de licença inválida",
   "Invalid Access": "Acesso Inválido",
   "Either the project does not exist or you do not have access to it.": "Ou o projeto não existe ou você não tem acesso a ele.",
-  "Yesterday": ""
+  "Yesterday": "ontem",
+  "Show child steps output on round ({iteration}/{totalIterations})": "Mostrar a saída dos passos filhos em volta ({iteration}/{totalIterations})"
 }
