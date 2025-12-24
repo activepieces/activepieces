@@ -26,7 +26,6 @@ export const refillRenewWebhookJobs = (log: FastifyBaseLogger) => ({
                 const pieceMetadata = await pieceMetadataService(log).get({
                     name: triggerSource.pieceName,
                     version: triggerSource.pieceVersion,
-                    projectId: triggerSource.projectId,
                     platformId: await projectService.getPlatformId(triggerSource.projectId),
                 })
                 const pieceTrigger = pieceMetadata?.triggers?.[triggerSource.triggerName]
