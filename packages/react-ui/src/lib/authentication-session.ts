@@ -46,7 +46,10 @@ export const authenticationSession = {
     }
     const decodedJwt = getDecodedJwt(token);
     if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
-      return decodedJwt.projectId ?? null;
+      const projectId = decodedJwt.projectId;
+      if (!isNil(projectId)) {
+        return projectId;
+      }
     }
     return ApStorage.getInstance().getItem('projectId') ?? null;
   },
