@@ -124,10 +124,11 @@ export function AgentMcpDialog({
   const onSubmit = (data: McpToolFormData) => {
     let auth;
     switch (data.authType) {
-      case McpAuthType.NONE:
+      case McpAuthType.NONE: {
         auth = { type: McpAuthType.NONE };
         break;
-      case McpAuthType.OAUTH2:
+      }
+      case McpAuthType.OAUTH2: {
         auth = {
           type: McpAuthType.OAUTH2,
           authorizationUrl: data.authorizationUrl,
@@ -141,7 +142,8 @@ export function AgentMcpDialog({
             : [],
         };
         break;
-      case McpAuthType.HEADERS:
+      }
+      case McpAuthType.HEADERS: {
         const headersObj: Record<string, string> = {};
         data.headers?.forEach(({ key, value }) => {
           if (key && value) {
@@ -153,8 +155,10 @@ export function AgentMcpDialog({
           headers: headersObj,
         };
         break;
-      default:
+      }
+      default: {
         auth = { type: McpAuthType.NONE };
+      }
     }
 
     const mcpTool: AgentMcpTool = {
