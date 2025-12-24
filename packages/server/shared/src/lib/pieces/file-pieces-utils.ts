@@ -114,7 +114,7 @@ const loadPieceFromFolder = async (
         pieceVersion,
     })
     const originalMetadata = piece.metadata()
-    const loadTranslations = environmentVariables.getEnvironment(AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES) === 'true'
+    const loadTranslations = environmentVariables.getBooleanEnvironment(AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES)
     const i18n = loadTranslations ? await pieceTranslation.initializeI18n(folderPath) : undefined
     const metadata: PieceMetadata = {
         ...originalMetadata,

@@ -142,6 +142,10 @@ export const environmentVariables = {
         const value = environmentVariables.getEnvironment(prop)
         return value ? parseInt(value) : undefined
     },
+    getBooleanEnvironment: (prop: WorkerSystemProp | AppSystemProp): boolean | undefined => {
+        const value = environmentVariables.getEnvironment(prop)
+        return value ? value === 'true' : undefined
+    },
     getEnvironment: (prop: WorkerSystemProp | AppSystemProp): string | undefined => {
         const environmnetVariables = environmentMigrations.migrate()
         return environmnetVariables['AP_' + prop]
