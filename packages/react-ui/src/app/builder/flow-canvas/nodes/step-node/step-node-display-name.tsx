@@ -1,5 +1,6 @@
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
 import { cn } from '@/lib/utils';
+
 import { StepNodeRunDurationAndPieceName } from './step-node-run-duration-and-piece-name';
 
 const StepNodeDisplayName = ({
@@ -28,7 +29,10 @@ const StepNodeDisplayName = ({
           </div>
         </TextWithTooltip>
       </div>
-    <StepNodeRunDurationAndPieceName stepName={stepName} pieceDisplayName={pieceDisplayName} />
+      <StepNodeRunDurationAndPieceName
+        stepName={stepName}
+        pieceDisplayName={pieceDisplayName}
+      />
     </div>
   );
 };

@@ -251,7 +251,7 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={showStepInputOutFromRun? 65 : 45}
+                  defaultSize={showStepInputOutFromRun ? 65 : 45}
                   className="min-h-[130px]"
                 >
                   <ScrollArea className="h-[calc(100%-35px)]  ">

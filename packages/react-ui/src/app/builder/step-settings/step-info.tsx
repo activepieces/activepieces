@@ -1,4 +1,10 @@
-import { ChevronLeftIcon, ChevronRight, ChevronRightIcon, Info } from 'lucide-react';
+import { t } from 'i18next';
+import {
+  ChevronLeftIcon,
+  ChevronRight,
+  ChevronRightIcon,
+  Info,
+} from 'lucide-react';
 import React from 'react';
 
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
@@ -22,7 +28,6 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
-import { t } from 'i18next';
 
 type StepInfoProps = {
   step: FlowAction | FlowTrigger;
@@ -121,34 +126,33 @@ const PreviousOrNextButton = ({ isNext }: { isNext: boolean }) => {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-      <Button
-      variant="ghost"
-      disabled={(!isNext && !previousStep) || (isNext && !nextStep)}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (isNext && nextStep) {
-          setSelectedStep(nextStep.name);
-        } else if (!isNext && previousStep) {
-          setSelectedStep(previousStep.name);
-        }
-      }}
-      size="icon"
-      className="size-7"
-    >
-      {isNext ? (
-        <ChevronRightIcon className="size-4"></ChevronRightIcon>
-      ) : (
-        <ChevronLeftIcon className="size-4"></ChevronLeftIcon>
-      )}
-    </Button>
+        <Button
+          variant="ghost"
+          disabled={(!isNext && !previousStep) || (isNext && !nextStep)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (isNext && nextStep) {
+              setSelectedStep(nextStep.name);
+            } else if (!isNext && previousStep) {
+              setSelectedStep(previousStep.name);
+            }
+          }}
+          size="icon"
+          className="size-7"
+        >
+          {isNext ? (
+            <ChevronRightIcon className="size-4"></ChevronRightIcon>
+          ) : (
+            <ChevronLeftIcon className="size-4"></ChevronLeftIcon>
+          )}
+        </Button>
       </TooltipTrigger>
-     {
-      !isDisabled && ( <TooltipContent side="bottom">
-        {isNext ? t('Next step') : t('Previous step')}
-      </TooltipContent>)
-     }
+      {!isDisabled && (
+        <TooltipContent side="bottom">
+          {isNext ? t('Next step') : t('Previous step')}
+        </TooltipContent>
+      )}
     </Tooltip>
-
   );
 };
