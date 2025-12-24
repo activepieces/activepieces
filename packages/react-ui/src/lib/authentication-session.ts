@@ -81,6 +81,7 @@ export const authenticationSession = {
       platformId,
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem('projectId', result.projectId);
     window.location.href = '/';
   },
   async switchToProject(projectId: string) {
