@@ -42,10 +42,6 @@
     "e2e": {
       "cache": true
     },
-    "prebuild": {
-      "cache": true,
-      "inputs": ["{projectRoot}/package.json"]
-    },
     "@nx/esbuild:esbuild": {
       "cache": true,
       "dependsOn": ["^build"],

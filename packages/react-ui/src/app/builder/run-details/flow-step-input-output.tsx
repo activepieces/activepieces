@@ -93,7 +93,7 @@ export const FlowStepInputOutput = () => {
           </span>
         </div>
 
-        <Tabs defaultValue={isAgent ? 'timeline' : 'input'} className="w-full">
+        <Tabs defaultValue={isAgent ? 'timeline' : 'output'} className="w-full">
           <TabsList className={`w-full grid ${gridCols}`}>
             <TabsTrigger value="input">{t('Input')}</TabsTrigger>
             {isAgent && (
