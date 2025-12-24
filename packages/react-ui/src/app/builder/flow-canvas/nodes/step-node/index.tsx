@@ -146,6 +146,7 @@ const ApStepCanvasNode = React.memo(
                   stepIndex={stepIndex}
                   isSkipped={isSkipped}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
+                  stepName={step.name}
                 />
                 {!readonly && <StepNodeChevron />}
               </div>

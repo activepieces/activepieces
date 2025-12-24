@@ -183,7 +183,7 @@ const StepSettingsContainer = () => {
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel
-              defaultSize={!isNil(run) ? 35 : 55}
+              defaultSize={showStepInputOutFromRun ? 35 : 55}
               className="min-h-[80px]"
             >
               <ScrollArea className="h-full">
@@ -251,7 +251,7 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={!isNil(run) ? 65 : 45}
+                  defaultSize={showStepInputOutFromRun? 65 : 45}
                   className="min-h-[130px]"
                 >
                   <ScrollArea className="h-[calc(100%-35px)]  ">
