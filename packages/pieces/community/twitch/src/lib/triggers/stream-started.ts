@@ -44,7 +44,25 @@ export const streamStarted = createTrigger({
   displayName: 'Streamer(s) Go Live',
   description: 'Triggers when a stream from a list of streamers has started',
   props: props,
-  sampleData: {},
+  sampleData: {
+    "id": "316465520862",
+    "user_id": "230609655",
+    "user_login": "carnyjared",
+    "user_name": "CarnyJared",
+    "game_id": "125264560",
+    "game_name": "Clone Hero",
+    "type": "live",
+    "title": "🚨CLONE HERO LEADERBOARD PTB🚨",
+    "viewer_count": 163,
+    "started_at": "2025-12-24T04:58:37Z",
+    "language": "en",
+    "thumbnail_url": "https://static-cdn.jtvnw.net/previews-ttv/live_user_carnyjared-{width}x{height}.jpg",
+    "tag_ids": [],
+    "tags": [
+      "English"
+    ],
+    "is_mature": false
+  },
   type: TriggerStrategy.POLLING,
 
   async test(context) {
