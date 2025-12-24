@@ -25,7 +25,7 @@ export const quadernoAuth = PieceAuth.CustomAuth({
         auth.account_name,
         auth.api_key,
         HttpMethod.GET,
-        '/items?limit=1'
+        '/items'
       );
       return {
         valid: true,

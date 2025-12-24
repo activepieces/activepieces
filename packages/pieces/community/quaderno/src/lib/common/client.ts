@@ -1,5 +1,4 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
-import { url } from 'inspector';
 
 export async function makeRequest(
   account_name: string,
@@ -9,14 +8,14 @@ export async function makeRequest(
   body?: unknown
 ) {
   //`https://${account_name}.sandbox-quadernoapp.com/api/${path}`
-  //`https://${account_name}.quadernoapp.com/api/${path}`
+  //`https://${account_name}.quadernoapp.com/api${path}`
   try {
-    console.log(`https://${account_name}.sandbox-quadernoapp.com/api/${path}`)
+    console.log(`https://${account_name}.sandbox-quadernoapp.com/api${path}`);
     const response = await httpClient.sendRequest({
       method,
-      url: `https://${account_name}.sandbox-quadernoapp.com/api/${path}`,
+      url: `https://${account_name}.sandbox-quadernoapp.com/api${path}`,
       headers: {
-        'API-Key': `${api_key}`,
+        Authorization: `Basic ${api_key}`,
         'Content-Type': 'application/json',
       },
       body,
