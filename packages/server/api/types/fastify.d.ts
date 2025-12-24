@@ -31,9 +31,7 @@ declare module 'fastify' {
     > {
         principal:
         ContextConfig['security'] extends { authorization: { allowedPrincipals: infer Q extends readonly PrincipalType[] } }
-            ? ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } }
-                ? PrincipalForTypes<Q> 
-                : PrincipalForTypes<Q>
+            ? PrincipalForTypes<Q>
             : typeof ContextConfig['security'] extends undefined ? Principal : Principal
         
         projectId: ContextConfig['security'] extends { authorization: { type: AuthorizationType.PROJECT } } ? string : undefined
