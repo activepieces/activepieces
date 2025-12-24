@@ -66,7 +66,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
         return session.url!
     },
     async createNewAICreditAutoTopUpInvoice(
-        params: CreateAICreditAutoTopUpPaymentIntentParams
+        params: CreateAICreditAutoTopUpPaymentIntentParams,
     ): Promise<void> {
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
@@ -91,7 +91,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             amount: amountInCents,
             currency: 'usd',
             invoice: invoice.id,
-            description: `AI Credits Auto Top-Up`,
+            description: 'AI Credits Auto Top-Up',
             metadata: {
                 platformId,
                 type: StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP,
@@ -152,7 +152,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                         type: StripeCheckoutType.AI_CREDIT_PAYMENT,
                     },
                     description: 'AI Credits Purchase',
-                }
+                },
             },
             allow_promotion_codes: true,
             customer: customerId,
