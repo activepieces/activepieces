@@ -6,12 +6,10 @@ import {
   CreateSubscriptionParams,
   CreateAICreditCheckoutSessionParamsSchema,
   EnableAICreditsAutoTopUpParamsSchema,
-  ListAICreditsPaymentsRequestParams,
 } from '@activepieces/ee-shared';
 import {
   PlatformPlan,
   PlatformBillingInformation,
-  PlatformAiCreditsPayment,
   SeekPage,
 } from '@activepieces/shared';
 
@@ -70,12 +68,6 @@ export const platformBillingApi = {
     return api.post<void>(
       '/v1/platform-billing/ai-credits/auto-topup/disable',
       {},
-    );
-  },
-  listAICreditPayments(params: ListAICreditsPaymentsRequestParams) {
-    return api.get<SeekPage<PlatformAiCreditsPayment>>(
-      '/v1/platform-billing/ai-credits/payments',
-      params,
     );
   },
 };

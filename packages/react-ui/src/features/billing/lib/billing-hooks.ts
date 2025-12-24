@@ -12,7 +12,6 @@ import {
   CreateSubscriptionParams,
   CreateAICreditCheckoutSessionParamsSchema,
   EnableAICreditsAutoTopUpParamsSchema,
-  ListAICreditsPaymentsRequestParams,
 } from '@activepieces/ee-shared';
 import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
@@ -194,12 +193,6 @@ export const billingMutations = {
         toast.error(t('Disabling auto top-up failed'));
         internalErrorToast();
       },
-    });
-  },
-  useAICreditPayments: (params: ListAICreditsPaymentsRequestParams) => {
-    return useQuery({
-      queryKey: ['ai-credits-payments', params],
-      queryFn: () => platformBillingApi.listAICreditPayments(params),
     });
   },
 };
