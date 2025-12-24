@@ -13,8 +13,12 @@ import { ColorPicker } from '@/components/ui/color-picker';
 import { FormControl } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { PieceProperty, PropertyType } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import {
+  PieceProperty,
+  PiecePropertyMap,
+  PropertyType,
+} from '@activepieces/pieces-framework';
+import { isNil, PropertySettings } from '@activepieces/shared';
 
 import { ArrayPieceProperty } from './array-property';
 import { AutoFormFieldWrapper } from './auto-form-field-wrapper';
@@ -24,23 +28,6 @@ import { DictionaryProperty } from './dictionary-property';
 import { DynamicDropdownPieceProperty } from './dynamic-dropdown-piece-property';
 import { DynamicProperties } from './dynamic-piece-property';
 import { TextInputWithMentions } from './text-input-with-mentions';
-
-export type SelectGenericFormComponentForPropertyParams = {
-  field: ControllerRenderProps<Record<string, any>, string>;
-  propertyName: string;
-  inputName: string;
-  property: PieceProperty;
-  allowDynamicValues: boolean;
-  markdownVariables: Record<string, string>;
-  useMentionTextInput: boolean;
-  disabled: boolean;
-  dynamicInputModeToggled: boolean;
-  inputPrefix?: string;
-  actionOrTriggerName: string;
-  pieceName: string;
-  pieceVersion: string;
-  form: UseFormReturn<FieldValues, any, undefined>;
-};
 
 export const selectGenericFormComponentForProperty = ({
   field,
@@ -52,11 +39,9 @@ export const selectGenericFormComponentForProperty = ({
   useMentionTextInput,
   disabled,
   dynamicInputModeToggled,
-  actionOrTriggerName,
   form,
-  pieceName,
-  pieceVersion,
-  inputPrefix,
+  dynamicPropsInfo,
+  propertySettings,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -206,21 +191,25 @@ export const selectGenericFormComponentForProperty = ({
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
         >
-          <DynamicDropdownPieceProperty
-            refreshers={property.refreshers}
-            value={field.value}
-            actionOrTriggerName={actionOrTriggerName}
-            pieceName={pieceName}
-            pieceVersion={pieceVersion}
-            form={form}
-            inputPrefix={inputPrefix}
-            onChange={field.onChange}
-            disabled={disabled}
-            propertyName={propertyName}
-            multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
-            showDeselect={!property.required}
-            shouldRefreshOnSearch={property.refreshOnSearch ?? false}
-          ></DynamicDropdownPieceProperty>
+          {isNil(dynamicPropsInfo) ? (
+            <div>Error: dynamicPropsInfo is required</div>
+          ) : (
+            <DynamicDropdownPieceProperty
+              refreshers={property.refreshers}
+              value={field.value}
+              actionOrTriggerName={dynamicPropsInfo.actionOrTriggerName}
+              pieceName={dynamicPropsInfo.pieceName}
+              pieceVersion={dynamicPropsInfo.pieceVersion}
+              form={form}
+              placedInside={dynamicPropsInfo.placedInside}
+              onChange={field.onChange}
+              disabled={disabled}
+              propertyName={propertyName}
+              multiple={property.type === PropertyType.MULTI_SELECT_DROPDOWN}
+              showDeselect={!property.required}
+              shouldRefreshOnSearch={property.refreshOnSearch ?? false}
+            ></DynamicDropdownPieceProperty>
+          )}
         </AutoFormFieldWrapper>
       );
     case PropertyType.DATE_TIME:
@@ -259,12 +248,23 @@ export const selectGenericFormComponentForProperty = ({
         </AutoFormFieldWrapper>
       );
     case PropertyType.DYNAMIC:
-      return (
+      return dynamicPropsInfo ? (
         <DynamicProperties
           refreshers={property.refreshers}
           propertyName={propertyName}
           disabled={disabled}
+          pieceName={dynamicPropsInfo.pieceName}
+          pieceVersion={dynamicPropsInfo.pieceVersion}
+          actionOrTriggerName={dynamicPropsInfo.actionOrTriggerName}
+          placedInside={dynamicPropsInfo.placedInside}
+          propertySettings={propertySettings}
+          updateFormSchema={dynamicPropsInfo.updateFormSchema}
+          updatePropertySettingsSchema={
+            dynamicPropsInfo.updatePropertySettingsSchema
+          }
         ></DynamicProperties>
+      ) : (
+        <div>Error: dynamicPropsInfo is required</div>
       );
     case PropertyType.CUSTOM_AUTH:
     case PropertyType.BASIC_AUTH:
@@ -295,4 +295,43 @@ export const selectGenericFormComponentForProperty = ({
         </AutoFormFieldWrapper>
       );
   }
+};
+
+export type SelectGenericFormComponentForPropertyParams = {
+  field: ControllerRenderProps<Record<string, any>, string>;
+  propertyName: string;
+  inputName: string;
+  property: PieceProperty;
+  allowDynamicValues: boolean;
+  markdownVariables: Record<string, string>;
+  useMentionTextInput: boolean;
+  disabled: boolean;
+  dynamicInputModeToggled: boolean;
+  form: UseFormReturn<FieldValues, any, undefined>;
+  propertySettings: Record<string, PropertySettings> | null;
+  dynamicPropsInfo:
+    | ({
+        pieceName: string;
+        pieceVersion: string;
+        actionOrTriggerName: string;
+      } & (
+        | {
+            placedInside: 'stepSettings';
+            updateFormSchema: (
+              key: string,
+              newFieldSchema: PiecePropertyMap,
+            ) => void;
+            updatePropertySettingsSchema: (
+              schema: PiecePropertyMap,
+              propertyName: string,
+              form: UseFormReturn,
+            ) => void;
+          }
+        | {
+            placedInside: 'predefinedAgentInputs';
+            updateFormSchema: null;
+            updatePropertySettingsSchema: null;
+          }
+      ))
+    | null;
 };

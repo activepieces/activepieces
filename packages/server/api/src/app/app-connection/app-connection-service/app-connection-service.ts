@@ -63,7 +63,6 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
         const { projectIds, externalId, value, displayName, pieceName, ownerId, platformId, scope, type, status, metadata } = params
         const pieceVersion = params.pieceVersion ?? ( await pieceMetadataService(log).getOrThrow({
             name: pieceName,
-            projectId: projectIds[0],
             platformId,
         })).version
         validatePieceVersion(pieceVersion)
@@ -399,7 +398,6 @@ const validateConnectionValue = async (
     switch (value.type) {
         case AppConnectionType.PLATFORM_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
-                projectId,
                 pieceName,
                 platformId,
                 props: value.props,
@@ -422,7 +420,6 @@ const validateConnectionValue = async (
         }
         case AppConnectionType.CLOUD_OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
-                projectId,
                 pieceName,
                 platformId,
                 props: value.props,
@@ -444,7 +441,6 @@ const validateConnectionValue = async (
         }
         case AppConnectionType.OAUTH2: {
             const tokenUrl = await oauth2Util(log).getOAuth2TokenUrl({
-                projectId,
                 pieceName,
                 platformId,
                 props: value.props,
@@ -503,13 +499,12 @@ const engineValidateAuth = async (
 
     const pieceMetadata = await pieceMetadataService(log).getOrThrow({
         name: pieceName,
-        projectId,
         version: undefined,
         platformId,
     })
 
     const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperValidateAuthResult>>({
-        piece: await getPiecePackageWithoutArchive(log, projectId, platformId, {
+        piece: await getPiecePackageWithoutArchive(log, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
         }),

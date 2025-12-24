@@ -4,11 +4,7 @@ import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
-import {
-  BUILDER_NAVIGATION_SIDEBAR_ID,
-  flowUtilConsts,
-  LEFT_SIDEBAR_ID,
-} from './utils/consts';
+import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
 
 const StepDragOverlay = ({
   step,
@@ -17,11 +13,7 @@ const StepDragOverlay = ({
   step: FlowAction | FlowTrigger;
   cursorPosition: { x: number; y: number };
 }) => {
-  //the overlay position is relatiive to the whole screen so when items that squeeze the canvas from the left are rendered, we need to adjust the position
-  //so we need to get the width of the left sidebar and the navigation bar and subtract them from the cursor position
   const { open } = useSidebar();
-  const builderLeftSidebar = document.getElementById(LEFT_SIDEBAR_ID);
-  const builderLeftSidebarWidth = builderLeftSidebar?.clientWidth ?? 0;
   const builderNavigationBar = document.getElementById(
     BUILDER_NAVIGATION_SIDEBAR_ID,
   );
@@ -31,7 +23,6 @@ const StepDragOverlay = ({
   const left = `${
     cursorPosition.x -
     flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
-    builderLeftSidebarWidth -
     builderNavigationBarWidth
   }px`;
   const top = `${

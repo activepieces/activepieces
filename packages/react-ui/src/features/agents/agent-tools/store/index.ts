@@ -27,10 +27,15 @@ interface AgentToolsState {
   setSelectedAction: (action: ActionBase | null) => void;
   setPredefinedInputs: (inputs: Record<string, unknown>) => void;
 
-  openPieceDialog: (
-    defaultPage?: SelectedDialogPage,
-    tool?: AgentPieceTool,
-  ) => void;
+  openPieceDialog: ({
+    defaultPage,
+    tool,
+    piece,
+  }: {
+    defaultPage?: SelectedDialogPage;
+    tool?: AgentPieceTool;
+    piece?: PieceStepMetadataWithSuggestions;
+  }) => void;
   handlePieceSelect: (piece: PieceStepMetadataWithSuggestions) => void;
   handleActionSelect: (action: ActionBase) => void;
   goBackToPiecesList: () => void;
@@ -65,19 +70,26 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
     }
   },
 
-  setShowAddFlowDialog: (show) => set({ showAddFlowDialog: show }),
+  setShowAddFlowDialog: (show) => {
+    set({ showAddFlowDialog: show });
+    if (!show) {
+      get().resetDialogState();
+    }
+  },
+
   setSelectedPage: (page) => set({ selectedPage: page }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedPiece: (piece) => set({ selectedPiece: piece }),
   setSelectedAction: (action) => set({ selectedAction: action }),
   setPredefinedInputs: (inputs) => set({ predefinedInputs: inputs }),
 
-  openPieceDialog: (defaultPage = 'pieces-list', tool) => {
+  openPieceDialog: ({ defaultPage = 'pieces-list', tool, piece }) => {
     set({
       showAddPieceDialog: true,
       selectedPage: defaultPage,
       editingTool: tool || null,
       predefinedInputs: tool?.pieceMetadata.predefinedInput,
+      selectedPiece: piece,
     });
   },
 
