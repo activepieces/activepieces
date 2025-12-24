@@ -10,7 +10,6 @@ import {
 import {
   PlatformPlan,
   PlatformBillingInformation,
-  SeekPage,
 } from '@activepieces/shared';
 
 export const platformBillingApi = {

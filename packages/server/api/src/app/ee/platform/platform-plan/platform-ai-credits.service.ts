@@ -1,15 +1,15 @@
 import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
 import { ActivepiecesError, AiCreditsAutoTopUpState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformPlan } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
-import { redisConnections } from '../../../database/redis-connections'
+import { distributedLock, redisConnections } from '../../../database/redis-connections'
 import { flagService } from '../../../flags/flag.service'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { openRouterApi } from './openrouter/openrouter-api'
 import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
-import dayjs from 'dayjs'
 
 const CREDIT_PER_DOLLAR = 1000
 
@@ -18,10 +18,16 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         systemJobHandlers.registerJobHandler(SystemJobName.AI_CREDIT_UPDATE_CHECK, async ({ apiKeyHash, platformId }) => {
             log.info('(platformAiCreditsService) AI credit update check')
             try {
-                const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+                await distributedLock(log).runExclusive({
+                    key: `ai_credits_update_${platformId}`,
+                    timeoutInSeconds: 10,
+                    fn: async () => {
+                        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-                await this.tryResetPlanIncludedCredits(plan, apiKeyHash)
-                await this.tryAutoTopUpPlan(plan, apiKeyHash)   
+                        await this.tryResetPlanIncludedCredits(plan, apiKeyHash)
+                        await this.tryAutoTopUpPlan(plan, apiKeyHash)   
+                    },
+                })
             }
             catch (e) {
                 log.error(e, '(platformAiCreditsService) AI credit update check failed')
@@ -179,6 +185,11 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         await openRouterApi.updateKey({
             hash: apiKeyHash,
             limit: key.limit! + amount,
+        })
+
+        await platformPlanService(log).update({
+            platformId: plan.platformId,
+            lastFreeAiCreditsRenewalDate: new Date().toISOString(),
         })
     },
 

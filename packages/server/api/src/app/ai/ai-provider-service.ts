@@ -240,7 +240,7 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
     })
     await platformPlanService(log).update({
         platformId,
-        lastFreeAiCreditsRenewalDate: new Date(),
+        lastFreeAiCreditsRenewalDate: new Date().toISOString(),
     })
     return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config }
 }
