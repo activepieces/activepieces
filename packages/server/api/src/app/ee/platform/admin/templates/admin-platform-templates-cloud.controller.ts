@@ -26,14 +26,14 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
                 },
             })
         }
-        return templateService().create({
+        return templateService(app.log).create({
             platformId: undefined,
             params: request.body,
         })
     })
 
     app.post('/:id', UpdateTemplateRequest, async (request) => {
-        const template = await templateService().getOneOrThrow({ id: request.params.id })
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
         
         if (template.type !== TemplateType.OFFICIAL) {
             throw new ActivepiecesError({
@@ -41,11 +41,11 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
                 params: { message: 'Only official templates are supported to being updated' },
             })
         }
-        return templateService().update({ id: template.id, params: request.body })
+        return templateService(app.log).update({ id: template.id, params: request.body })
     })
 
     app.delete('/:id', DeleteTemplateRequest, async (request) => {
-        const template = await templateService().getOneOrThrow({ id: request.params.id })
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
         
         if (template.type !== TemplateType.OFFICIAL) {
             throw new ActivepiecesError({
@@ -54,7 +54,7 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
             })
         }
 
-        return templateService().delete({ id: request.params.id })
+        return templateService(app.log).delete({ id: request.params.id })
     })
 }
 

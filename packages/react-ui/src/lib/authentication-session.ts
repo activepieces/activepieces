@@ -46,7 +46,10 @@ export const authenticationSession = {
     }
     const decodedJwt = getDecodedJwt(token);
     if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
-      return decodedJwt.projectId ?? null;
+      const projectId = decodedJwt.projectId;
+      if (!isNil(projectId)) {
+        return projectId;
+      }
     }
     return ApStorage.getInstance().getItem('projectId') ?? null;
   },
@@ -81,6 +84,7 @@ export const authenticationSession = {
       platformId,
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem('projectId', result.projectId);
     window.location.href = '/';
   },
   async switchToProject(projectId: string) {
@@ -88,6 +92,7 @@ export const authenticationSession = {
       return;
     }
     const result = await authenticationApi.switchProject({ projectId });
+    ApStorage.getInstance().setItem(tokenKey, result.token);
     ApStorage.getInstance().setItem('projectId', result.projectId);
     window.dispatchEvent(new Event('storage'));
   },

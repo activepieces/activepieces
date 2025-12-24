@@ -128,12 +128,12 @@ function getToolMetadata({
       };
     }
     case AgentToolType.FLOW: {
-      assertNotNullOrUndefined(tool.flowId, 'Flow ID is required');
+      assertNotNullOrUndefined(tool.externalFlowId, 'Flow ID is required');
       return {
         ...baseTool,
         toolCallType: ToolCallType.FLOW,
-        displayName: 'Unknown',
-        flowId: tool.flowId,
+        displayName: tool.toolName,
+        externalFlowId: tool.externalFlowId
       };
     }
   }
