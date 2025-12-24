@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { ApFlagId, assertNotNullOrUndefined } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 
 import { projectMembersApi } from './project-members-api';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 export const projectMembersHooks = {
   useProjectMembers: () => {
-    const { data } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_PROJECT_MEMBERS)
+    const { data } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_PROJECT_MEMBERS);
     const query = useQuery<ProjectMemberWithUser[]>({
       queryKey: ['project-members', authenticationSession.getProjectId()],
       queryFn: async () => {

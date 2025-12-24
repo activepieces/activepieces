@@ -91,7 +91,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
 
             const decodeScope = decodeURIComponent(scope)
             const decodedName = decodeURIComponent(name)
-            const projectId = req.query.projectId
             const platformId = getPlatformId(req.principal)
             return pieceMetadataService(req.log).getOrThrow({
                 platformId,
@@ -109,7 +108,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
             const { name } = req.params
             const { version } = req.query
             const decodedName = decodeURIComponent(name)
-            const projectId = req.query.projectId
             const platformId = getPlatformId(req.principal)
             return pieceMetadataService(req.log).getOrThrow({
                 platformId,
