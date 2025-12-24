@@ -20,8 +20,6 @@ afterAll(async () => {
 
 describe('Store-entries API', () => {
     let engineToken: string
-    let userToken: string
-    let serviceToken: string
     let mockUser: User
     let projectId: string
 
@@ -53,22 +51,6 @@ describe('Store-entries API', () => {
             type: PrincipalType.ENGINE,
             id: apId(),
             projectId,
-            platform: {
-                id: mockPlatform.id,
-            },
-        })
-
-        userToken = await generateMockToken({
-            type: PrincipalType.USER,
-            id: mockUser.id,
-            platform: {
-                id: mockPlatform.id,
-            },
-        })
-
-        serviceToken = await generateMockToken({
-            type: PrincipalType.SERVICE,
-            id: apId(),
             platform: {
                 id: mockPlatform.id,
             },

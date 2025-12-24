@@ -1,8 +1,7 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     DeleteStoreEntryRequest,
     GetStoreEntryRequest,
-    PrincipalType,
     PutStoreEntryRequest,
     STORE_VALUE_MAX_SIZE,
 } from '@activepieces/shared'
