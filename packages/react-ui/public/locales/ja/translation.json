@@ -1265,5 +1265,6 @@
   "Activation failed, invalid license key": "アクティベーションに失敗しました。無効なライセンスキーです。",
   "Invalid Access": "不正なアクセス",
   "Either the project does not exist or you do not have access to it.": "プロジェクトが存在しないか、アクセスできません。",
-  "Yesterday": ""
+  "Yesterday": "昨日",
+  "Show child steps output on round ({iteration}/{totalIterations})": "ラウンドに子ステップの出力を表示する ({iteration}/{totalIterations})"
 }
