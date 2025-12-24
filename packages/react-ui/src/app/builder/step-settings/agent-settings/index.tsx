@@ -24,7 +24,8 @@ type AgentSettingsProps = {
 };
 
 export const AgentSettings = (props: AgentSettingsProps) => {
-  const { pieceModel,updateFormSchema,updatePropertySettingsSchema } = useStepSettingsContext();
+  const { pieceModel, updateFormSchema, updatePropertySettingsSchema } =
+    useStepSettingsContext();
   const form = useFormContext();
 
   if (isNil(pieceModel)) {

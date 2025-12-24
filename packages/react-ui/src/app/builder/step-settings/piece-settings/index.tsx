@@ -1,9 +1,7 @@
 import React from 'react';
-import { UseFormReturn } from 'react-hook-form';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { PiecePropertyMap } from '@activepieces/pieces-framework';
 import {
   ApFlagId,
   isNil,
@@ -32,8 +30,12 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const { pieceModel, selectedStep, updateFormSchema,updatePropertySettingsSchema } =
-    useStepSettingsContext();
+  const {
+    pieceModel,
+    selectedStep,
+    updateFormSchema,
+    updatePropertySettingsSchema,
+  } = useStepSettingsContext();
 
   const actionName = (props.step.settings as PieceActionSettings).actionName;
   const selectedAction = actionName
@@ -71,7 +73,6 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
     pausedFlowTimeoutDays: pausedFlowTimeoutDays?.toString() ?? '',
     webhookTimeoutSeconds: webhookTimeoutSeconds?.toString() ?? '',
   };
-
 
   const showAuthForAction =
     !isNil(selectedAction) && (selectedAction.requireAuth ?? true);

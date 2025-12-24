@@ -7,16 +7,21 @@ import {
   useRef,
   useState,
 } from 'react';
+import { UseFormReturn } from 'react-hook-form';
 
 import {
   PieceMetadataModel,
   PiecePropertyMap,
   piecePropertiesUtils,
 } from '@activepieces/pieces-framework';
-import { FlowAction, setAtPath, FlowTrigger, PropertyExecutionType } from '@activepieces/shared';
+import {
+  FlowAction,
+  setAtPath,
+  FlowTrigger,
+  PropertyExecutionType,
+} from '@activepieces/shared';
 
 import { formUtils } from '../../../features/pieces/lib/form-utils';
-import { UseFormReturn } from 'react-hook-form';
 const numberReplacement = 'anyOf[0]items';
 const stringReplacement = 'properties.';
 const createUpdatedSchemaKey = (propertyKey: string) => {
@@ -96,16 +101,16 @@ export const StepSettingsProvider = ({
     propertyName: string,
     form: UseFormReturn,
   ) => {
-      // previously step settings schema didn't have this property, so we need to set it
-      // we can't always set it to MANUAL, because some sub properties might be dynamic and have the same name as the dynamic (parent) property i.e values property in insert row (Google Sheets)
-      // which will override the sub property exectuion type
-      if (!selectedStep.settings?.propertySettings?.[propertyName]) {
-        form.setValue(
-          `settings.propertySettings.${propertyName}.type`,
-          PropertyExecutionType.MANUAL,
-        );
-      }
-      form.setValue(`settings.propertySettings.${propertyName}.schema`, schema);
+    // previously step settings schema didn't have this property, so we need to set it
+    // we can't always set it to MANUAL, because some sub properties might be dynamic and have the same name as the dynamic (parent) property i.e values property in insert row (Google Sheets)
+    // which will override the sub property exectuion type
+    if (!selectedStep.settings?.propertySettings?.[propertyName]) {
+      form.setValue(
+        `settings.propertySettings.${propertyName}.type`,
+        PropertyExecutionType.MANUAL,
+      );
+    }
+    form.setValue(`settings.propertySettings.${propertyName}.schema`, schema);
   };
   return (
     <StepSettingsContext.Provider
@@ -114,7 +119,7 @@ export const StepSettingsProvider = ({
         pieceModel,
         formSchema,
         updateFormSchema,
-        updatePropertySettingsSchema
+        updatePropertySettingsSchema,
       }}
     >
       {children}
