@@ -1265,5 +1265,6 @@
   "Activation failed, invalid license key": "Activering mislukt, ongeldige licentiesleutel",
   "Invalid Access": "Ongeldige toegang",
   "Either the project does not exist or you do not have access to it.": "Het project bestaat niet of je hebt er geen toegang toe.",
-  "Yesterday": ""
+  "Yesterday": "gisteren",
+  "Show child steps output on round ({iteration}/{totalIterations})": "Toon de uitvoer van onderliggende stappen op ronde ({iteration}/{totalIterations})"
 }
