@@ -93,7 +93,7 @@ export const PredefinedInputsForm = ({
         <div className="flex items-start border-b gap-3 p-4">
           <div className="flex size-11 shrink-0 items-center justify-center rounded-sm border bg-background">
             <img
-              className="size-8 rounded-full"
+              className="size-8 object-contain"
               src={piece.logoUrl}
               alt={piece.displayName}
             />
