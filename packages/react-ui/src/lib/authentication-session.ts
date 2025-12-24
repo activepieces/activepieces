@@ -44,6 +44,10 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
+    const storedProjectId = ApStorage.getInstance().getItem('projectId');
+    if (!isNil(storedProjectId)) {
+      return storedProjectId;
+    }
     const decodedJwt = getDecodedJwt(token);
     if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
       const projectId = decodedJwt.projectId;
@@ -51,7 +55,7 @@ export const authenticationSession = {
         return projectId;
       }
     }
-    return ApStorage.getInstance().getItem('projectId') ?? null;
+    return null;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
