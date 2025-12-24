@@ -1265,5 +1265,6 @@
   "Activation failed, invalid license key": "Falló la activación, clave de licencia no válida",
   "Invalid Access": "Acceso no válido",
   "Either the project does not exist or you do not have access to it.": "O el proyecto no existe o no tienes acceso a él.",
-  "Yesterday": ""
+  "Yesterday": "Ayer",
+  "Show child steps output on round ({iteration}/{totalIterations})": "Mostrar salida de pasos secundarios en ronda ({iteration}/{totalIterations})"
 }
