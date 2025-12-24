@@ -52,7 +52,7 @@ export function AgentPieceDialog({
     searchQuery,
     selectedPiece,
     selectedAction,
-    editingTool,
+    editingPieceTool: editingTool,
     setSearchQuery,
     handlePieceSelect,
     handleActionSelect,

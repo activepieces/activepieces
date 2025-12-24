@@ -60,21 +60,24 @@ export const AgentPieceToolComponent = ({
       className="border-b last:border-0"
     >
       <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-accent transition-all">
-        <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
-            {pieceMetadata.logoUrl ? (
-              <img
-                src={pieceMetadata.logoUrl}
-                alt={pieceMetadata.displayName}
-                className="h-5 w-5 object-contain"
-              />
-            ) : (
-              <Puzzle className="h-5 w-5 text-muted-foreground" />
-            )}
+        <div className="flex w-full items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+              {pieceMetadata.logoUrl ? (
+                <img
+                  src={pieceMetadata.logoUrl}
+                  alt={pieceMetadata.displayName}
+                  className="h-5 w-5 object-contain"
+                />
+              ) : (
+                <Puzzle className="h-5 w-5 text-muted-foreground" />
+              )}
+            </div>
+
+            <span className="text-sm font-medium">
+              {pieceMetadata.displayName}
+            </span>
           </div>
-          <span className="text-sm font-medium">
-            {pieceMetadata.displayName}
-          </span>
         </div>
       </AccordionTrigger>
       <AccordionContent className="px-4 py-2">
@@ -113,7 +116,7 @@ export const AgentPieceToolComponent = ({
                       <X className="h-3 w-3" />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent>Remove tool</TooltipContent>
+                  <TooltipContent>{t('Remove tool')}</TooltipContent>
                 </Tooltip>
               </div>
             </div>
