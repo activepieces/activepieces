@@ -9,10 +9,11 @@ import { AgentToolType } from '@activepieces/shared';
 
 import { AddToolDropdown } from './add-agent-tool-dropwdown';
 import { AgentFlowToolComponent } from './componenets/flow-tool';
+import { AgentMcpToolComponent } from './componenets/mcp-tool';
 import { AgentPieceToolComponent } from './componenets/piece-tool';
 import { AgentFlowToolDialog } from './flow-tool-dialog';
+import { AgentMcpDialog } from './mcp-tool-dialog';
 import { AgentPieceDialog } from './piece-tool-dialog';
-import { useAgentToolsStore } from './store';
 
 const icons = [
   'https://cdn.activepieces.com/pieces/youtube.png',
@@ -30,8 +31,6 @@ export const AgentTools = ({
   disabled,
   toolsField: agentToolsField,
 }: AgentToolsProps) => {
-  const { setShowAddFlowDialog, openPieceDialog } = useAgentToolsStore();
-
   const tools = Array.isArray(agentToolsField.value)
     ? (agentToolsField.value as AgentTool[])
     : [];
@@ -43,6 +42,7 @@ export const AgentTools = ({
   };
 
   const flowTools = tools.filter((tool) => tool.type === AgentToolType.FLOW);
+  const mcpTools = tools.filter((tool) => tool.type === AgentToolType.MCP);
   const pieceToToolMap = tools
     .filter((tool) => tool.type === AgentToolType.PIECE)
     .reduce<Record<string, AgentPieceTool[]>>((acc, tool) => {
@@ -81,16 +81,16 @@ export const AgentTools = ({
                   removeTool={removeTool}
                 />
               )}
+              {mcpTools.length > 0 && (
+                <AgentMcpToolComponent
+                  disabled={disabled}
+                  tools={mcpTools}
+                  removeTool={removeTool}
+                />
+              )}
             </Accordion>
-            <AddToolDropdown
-              disabled={disabled}
-              setShowAddFlowDialog={setShowAddFlowDialog}
-              setShowAddPieceDialog={() =>
-                openPieceDialog({ defaultPage: 'pieces-list' })
-              }
-              align="center"
-            >
-              <Button variant="accent" className="mt-2">
+            <AddToolDropdown disabled={disabled} align="start">
+              <Button variant="outline" className="mt-2">
                 <Plus className="size-4 mr-2" />
                 {t('Add')}
               </Button>
@@ -121,18 +121,11 @@ export const AgentTools = ({
             </div>
 
             <p className="text-sm font-medium text-muted-foreground">
-              {t('Your agent have no tools yet !')}
+              {t('Connect apps, flows, MCPs and more.')}
             </p>
 
-            <AddToolDropdown
-              disabled={disabled}
-              setShowAddFlowDialog={setShowAddFlowDialog}
-              setShowAddPieceDialog={() =>
-                openPieceDialog({ defaultPage: 'pieces-list' })
-              }
-              align="center"
-            >
-              <Button variant="accent" className="gap-2">
+            <AddToolDropdown disabled={disabled} align="center">
+              <Button variant="outline" className="gap-2">
                 <Plus className="size-4" />
                 {t('Add')}
               </Button>
@@ -141,12 +134,9 @@ export const AgentTools = ({
         )}
       </div>
 
-      <AgentFlowToolDialog
-        selectedFlows={flowTools}
-        onToolsUpdate={onToolsUpdate}
-        tools={tools}
-      />
+      <AgentFlowToolDialog onToolsUpdate={onToolsUpdate} tools={tools} />
       <AgentPieceDialog tools={tools} onToolsUpdate={onToolsUpdate} />
+      <AgentMcpDialog tools={tools} onToolsUpdate={onToolsUpdate} />
     </div>
   );
 };

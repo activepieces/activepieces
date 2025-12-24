@@ -32,6 +32,7 @@ export enum ExecutionToolStatus {
 export enum ToolCallType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
+    MCP = 'MCP',
 }
 
 export const AgentOutputField = Type.Object({

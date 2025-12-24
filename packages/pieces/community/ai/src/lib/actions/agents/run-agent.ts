@@ -2,6 +2,7 @@ import {
   createAction,
   Property,
   PieceAuth,
+  ArraySubProps,
 } from '@activepieces/pieces-framework';
 import {
   AgentOutputField,
@@ -20,6 +21,42 @@ import { aiProps } from '../../common/props';
 import { inspect } from 'util';
 import { agentUtils } from './utils';
 
+const agentToolArrayItems: ArraySubProps<boolean> = {
+  type: Property.ShortText({
+    displayName: 'Tool Type',
+    required: true,
+  }),
+
+  toolName: Property.ShortText({
+    displayName: 'Tool Name',
+    required: true,
+  }),
+
+  pieceMetadata: Property.Json({
+    displayName: 'Piece Metadata',
+    required: false,
+  }),
+
+  externalFlowId: Property.ShortText({
+    displayName: 'Flow External ID',
+    required: false,
+  }),
+
+  serverUrl: Property.ShortText({
+    displayName: 'MCP Server URL',
+    required: false,
+  }),
+  protocol: Property.ShortText({
+    displayName: 'Protocol',
+    required: false,
+  }),
+  auth: Property.Json({
+    displayName: 'Auth Configuration',
+    required: false,
+  }),
+}
+
+
 export const runAgent = createAction({
   name: 'run_agent',
   displayName: 'Run Agent',
@@ -36,24 +73,7 @@ export const runAgent = createAction({
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',
       required: false,
-      properties: {
-        type: Property.ShortText({
-          displayName: 'Tool Type',
-          required: true,
-        }),
-        toolName: Property.ShortText({
-          displayName: 'Tool Name',
-          required: true,
-        }),
-        pieceMetadata: Property.Json({
-          displayName: 'Piece Metadata',
-          required: false,
-        }),
-        flowExternalId: Property.ShortText({
-          displayName: 'Flow External Id',
-          required: false,
-        }),
-      },
+      properties: agentToolArrayItems,
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
