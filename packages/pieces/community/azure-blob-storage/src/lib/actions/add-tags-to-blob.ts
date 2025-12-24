@@ -7,7 +7,7 @@ export const addTagsToBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'addTagsToBlob',
   displayName: 'Add Tags to Blob',
-  description: 'Add Tags to the Blob at the specified location',
+  description: 'Adds Tags to the Blob at the specified location',
   props: {
     container: containerProp,
     blobName: Property.ShortText({

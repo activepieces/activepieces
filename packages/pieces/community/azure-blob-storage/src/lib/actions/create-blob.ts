@@ -7,7 +7,7 @@ export const createBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'createBlob',
   displayName: 'Create Blob',
-  description: 'Create a new Blob in the specified location',
+  description: 'Creates a new Blob in the specified location',
   props: {
       container: containerProp,
       blobName: Property.ShortText({

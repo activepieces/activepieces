@@ -7,7 +7,7 @@ export const findBlobs = createAction({
   auth: azureBlobStorageAuth,
   name: 'findBlobs',
   displayName: 'Find Blobs',
-  description: 'Find Blobs based on their tags',
+  description: 'Finds Blobs based on their tags',
   props: {
     container: containerProp,
     tags: Property.Object({

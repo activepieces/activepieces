@@ -7,7 +7,7 @@ export const deleteContainer = createAction({
   auth: azureBlobStorageAuth,
   name: 'deleteContainer',
   displayName: 'Delete Container',
-  description: 'Delete a container',
+  description: 'Deletes an existing container',
   props: {
     container: containerProp,
   },

@@ -7,7 +7,7 @@ export const deleteBlob = createAction({
   auth: azureBlobStorageAuth,
   name: 'deleteBlob',
   displayName: 'Delete Blob',
-  description: 'Delete the Blob at the specified location',
+  description: 'Deletes the Blob at the specified location',
   props: {
       container: containerProp,
       blobName: Property.ShortText({
@@ -24,6 +24,9 @@ export const deleteBlob = createAction({
       const containerClient = blobServiceClient.getContainerClient(container);
       const blockBlobClient = containerClient.getBlockBlobClient(blobName);
 
-      return await blockBlobClient.deleteIfExists();
-    },
+      const {_response,...rest} =  await blockBlobClient.deleteIfExists();
+
+      return rest;
+
+    }
 });
