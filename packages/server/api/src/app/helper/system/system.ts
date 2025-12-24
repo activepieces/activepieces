@@ -34,6 +34,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
     [WorkerSystemProp.WORKER_CONCURRENCY]: '10',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
+    [AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES]: 'false',
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
