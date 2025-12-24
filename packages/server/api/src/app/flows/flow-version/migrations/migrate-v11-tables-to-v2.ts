@@ -1,7 +1,9 @@
-import { Field,
+import {
+    Field,
     FlowActionType,
     flowStructureUtil,
     FlowVersion,
+    isNil,
     Step,
 } from '@activepieces/shared'
 import { In } from 'typeorm'
@@ -53,14 +55,6 @@ export const migrateV11TablesToV2: Migration = {
     targetSchemaVersion: '11',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const fieldIds = collectFieldIdsFromFlow(flowVersion)
-
-        if (fieldIds.length === 0) {
-            return {
-                ...flowVersion,
-                schemaVersion: '12',
-            }
-        }
-
         const fields = await fieldRepo().find({
             where: { id: In([...fieldIds]) },
         })
@@ -71,16 +65,15 @@ export const migrateV11TablesToV2: Migration = {
         }
 
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step: Step) => {
-            if (step.type !== FlowActionType.PIECE || step.settings.pieceName !== TABLES_PIECE_NAME || !step.settings.pieceVersion.includes('0.1.')) {
+            if (!isTablesStep(step)) {
                 return step
             }
-
-
             const actionName = step.settings.actionName as string | undefined
+            const justUpgradePiece = !isOldTablesStep(step) || isNil(actionName) || !TARGET_ACTIONS.includes(actionName as string)
             const input = step.settings?.input as Record<string, unknown>
             const values = input?.values as Record<string, unknown> | undefined
             const fieldsValue = actionName === 'tables-create-records' ? values?.values as Record<string, unknown> | undefined : values
-            if (!actionName || !TARGET_ACTIONS.includes(actionName) || !fieldsValue) {
+            if (justUpgradePiece || !fieldsValue) {
                 return {
                     ...step,
                     settings: {
@@ -110,3 +103,11 @@ export const migrateV11TablesToV2: Migration = {
     },
 }
 
+
+function isTablesStep(step: Step): boolean {
+    return step.type === FlowActionType.PIECE && step.settings.pieceName === TABLES_PIECE_NAME && (step.settings.pieceVersion.includes('0.1.') || step.settings.pieceVersion.includes('0.2.'))
+}
+
+function isOldTablesStep(step: Step): boolean {
+    return isTablesStep(step) && step.settings.pieceVersion.includes('0.1.')
+}
