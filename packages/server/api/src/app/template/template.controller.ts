@@ -31,18 +31,18 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         if (request.query.type === TemplateType.OFFICIAL) {
             return communityTemplates.get(request.params.id)
         }
-        return templateService().getOneOrThrow({ id: request.params.id })
+        return templateService(app.log).getOneOrThrow({ id: request.params.id })
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
         const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type ?? TemplateType.OFFICIAL)
         if (isNil(platformId)) {
             if (edition === ApEdition.CLOUD) {
-                return templateService().list({ platformId: null, requestQuery: request.query })
+                return templateService(app.log).list({ platformId: null, requestQuery: request.query })
             }
             return communityTemplates.list(request.query)
         }
-        return templateService().list({ platformId, requestQuery: request.query })
+        return templateService(app.log).list({ platformId, requestQuery: request.query })
     })
 
     app.post('/', {
@@ -79,28 +79,28 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
         }
-        const result = await templateService().create({ platformId, params: request.body })
+        const result = await templateService(app.log).create({ platformId, params: request.body })
         return reply.status(StatusCodes.CREATED).send(result)
     })
 
     app.post('/:id', UpdateParams, async (request, reply) => {
-        const result = await templateService().update({ id: request.params.id, params: request.body })
+        const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
     })
 
     app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => { 
-        await templateService().incrementUsageCount({ id: request.params.id })
+        await templateService(app.log).incrementUsageCount({ id: request.params.id })
         return reply.status(StatusCodes.OK).send()
     })
 
     app.delete('/:id', DeleteParams, async (request, reply) => {
-        const template = await templateService().getOneOrThrow({ id: request.params.id })
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
         if (template.type === TemplateType.CUSTOM) {
             await platformMustBeOwnedByCurrentUser.call(app, request, reply)
         }
 
-        await templateService().delete({
+        await templateService(app.log).delete({
             id: request.params.id,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()

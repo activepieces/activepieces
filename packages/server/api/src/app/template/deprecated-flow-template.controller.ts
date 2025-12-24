@@ -16,7 +16,7 @@ const edition = system.getEdition()
 export const deprecatedFlowTemplateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListFlowTemplatesParams, async (request) => {
         if (edition === ApEdition.CLOUD) {
-            return templateService().list({ platformId: null, requestQuery: {
+            return templateService(app.log).list({ platformId: null, requestQuery: {
                 ...request.query,
                 type: TemplateType.OFFICIAL,
             } })

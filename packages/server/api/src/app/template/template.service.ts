@@ -1,13 +1,15 @@
-import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, flowPieceUtil, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, sanitizeObjectForPostgresql, SeekPage, spreadIfDefined, Template, TemplateStatus, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, SeekPage, spreadIfDefined, Template, TemplateStatus, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ArrayOverlap, Equal, ILike, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
+import { templateValidator } from './template-validator'
 import { TemplateEntity } from './template.entity'
 
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
-export const templateService = () => ({
+export const templateService = (log: FastifyBaseLogger) => ({
     async getOneOrThrow({ id }: GetParams): Promise<Template> {
         const template = await templateRepo().findOneBy({ id })
         if (isNil(template)) {
@@ -23,10 +25,16 @@ export const templateService = () => ({
         return template
     },
     async create({ platformId, params }: CreateParams): Promise<Template> {
+        const preparedTemplate = await templateValidator.validateAndPrepare({ 
+            flows: params.flows, 
+            platformId, 
+            log,
+        })
+        
+        const { flows, pieces } = preparedTemplate
         const { name, summary, description, tags, blogUrl, metadata, author, categories, type } = params
+
         const newTags = tags ?? []
-        const sanatizedFlows: FlowVersionTemplate[] = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? []
-        const pieces = Array.from(new Set(sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat()))
 
         switch (type) {
             case TemplateType.OFFICIAL:
@@ -45,24 +53,35 @@ export const templateService = () => ({
                     usageCount: 0,
                     categories,
                     pieces,
-                    flows: sanatizedFlows,
+                    flows,
                     status: TemplateStatus.PUBLISHED,
                 }
                 return templateRepo().save(newTemplate)
             }
             case TemplateType.CUSTOM: {
-                return platformTemplateService().create({ platformId, name, summary, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows: sanatizedFlows })
+                return platformTemplateService().create({ platformId, name, summary, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows })
             }
         }
     },
 
     async update({ id, params }: UpdateParams): Promise<Template> {
         const { name, summary, description, tags, blogUrl, metadata, categories, status } = params
-        const template = await templateService().getOneOrThrow({ id })
+        const template = await this.getOneOrThrow({ id })
 
         const newTags = tags ?? []
-        const sanatizedFlows: FlowVersionTemplate[] | undefined = params.flows?.map((flow) => sanitizeObjectForPostgresql(flow)) ?? undefined
-        const pieces = sanatizedFlows ? Array.from(new Set(sanatizedFlows.map((flow) => flowPieceUtil.getUsedPieces(flow.trigger)).flat())) : undefined
+        
+        let sanatizedFlows: FlowVersionTemplate[] | undefined = undefined
+        let pieces: string[] | undefined = undefined
+        if (!isNil(params.flows) && params.flows.length > 0) {
+            const preparedTemplate = await templateValidator.validateAndPrepare({ 
+                flows: params.flows, 
+                platformId: undefined, 
+                log,
+            })
+            sanatizedFlows = preparedTemplate.flows
+            pieces = preparedTemplate.pieces
+        }
+        
         switch (template.type) {
             case TemplateType.OFFICIAL:
             case TemplateType.SHARED: {
