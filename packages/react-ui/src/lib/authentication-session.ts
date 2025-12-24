@@ -92,6 +92,7 @@ export const authenticationSession = {
       return;
     }
     const result = await authenticationApi.switchProject({ projectId });
+    ApStorage.getInstance().setItem(tokenKey, result.token);
     ApStorage.getInstance().setItem('projectId', result.projectId);
     window.dispatchEvent(new Event('storage'));
   },
