@@ -18,7 +18,12 @@ import {
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { ApSubscriptionStatus } from '@activepieces/ee-shared';
-import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
+import {
+  AiCreditsAutoTopUpState,
+  ApEdition,
+  ApFlagId,
+  isNil,
+} from '@activepieces/shared';
 
 export default function Billing() {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
@@ -75,7 +80,9 @@ const BillingPageDetails = () => {
         description={t('Manage billing, usage and limits')}
       >
         <div className="flex items-center gap-2">
-          {isSubscriptionActive && (
+          {(isSubscriptionActive ||
+            platformPlanInfo?.plan.aiCreditsAutoTopUpState ===
+              AiCreditsAutoTopUpState.ALLOWED_AND_ON) && (
             <Button variant="outline" onClick={() => redirectToPortalSession()}>
               {t('Access Billing Portal')}
             </Button>

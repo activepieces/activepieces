@@ -24,10 +24,6 @@ export class AddPlatformAiCreditsPaymentTable1766186963979 implements MigrationI
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan"
-            ADD "aiCreditsAutoTopUpStripePaymentMethod" character varying
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_plan"
             ADD "lastFreeAiCreditsRenewalDate" timestamp with time zone
         `)
     }
@@ -35,9 +31,6 @@ export class AddPlatformAiCreditsPaymentTable1766186963979 implements MigrationI
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "lastFreeAiCreditsRenewalDate"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsAutoTopUpStripePaymentMethod"
         `)
         await queryRunner.query(`
             ALTER TABLE "platform_plan" DROP COLUMN "aiCreditsAutoTopUpState"

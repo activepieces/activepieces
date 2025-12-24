@@ -59,14 +59,14 @@ export const stripeBillingController: FastifyPluginAsyncTypebox = async (fastify
                         }
                         break
                     }
-                    case 'payment_intent.succeeded': {
-                        const paymentIntent = webhook.data.object
-                        if (isNil(paymentIntent.metadata)) {
+                    case 'invoice.paid': {
+                        const invoice = webhook.data.object
+                        if (isNil(invoice.metadata)) {
                             break
                         }
-                        if (paymentIntent.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
-                            const platformId = paymentIntent.metadata.platformId as string
-                            const amountInCents = paymentIntent.amount
+                        if (invoice.metadata.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
+                            const platformId = invoice.metadata.platformId as string
+                            const amountInCents = invoice.amount_paid
                             const amountInUsd = amountInCents / 100
                             await platformAiCreditsService(request.log).aiCreditsPaymentSucceeded(platformId, amountInUsd, StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP)
                         }

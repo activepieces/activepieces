@@ -24,7 +24,7 @@ export function PurchaseAICreditsDialog({
   isOpen,
   onOpenChange,
 }: PurchaseAICreditsDialogProps) {
-  const [creditsToAdd, setCreditsToAdd] = useState(10000); // Default to 10k credits
+  const [creditsToAdd, setCreditsToAdd] = useState(1000); // Default to 1k credits
   const COST_PER_1000_CREDITS = 1;
 
   const { mutate: createCheckoutSession, isPending: isCreatingSession } =
@@ -64,12 +64,12 @@ export function PurchaseAICreditsDialog({
               value={[creditsToAdd]}
               onValueChange={(v) => setCreditsToAdd(v[0])}
               min={1000}
-              max={5000000}
+              max={500000}
               step={1000}
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{t('1,000')}</span>
-              <span>{t('5,000,000')}</span>
+              <span>{t('500,000')}</span>
             </div>
           </div>
 

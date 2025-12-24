@@ -58,34 +58,66 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 platformId,
                 type: StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP,
             },
+
             success_url: `${frontendUrl}/platform/setup/billing/success?action=ai-credit-auto-topup`,
             cancel_url: `${frontendUrl}/platform/setup/billing/error`,
         })
 
         return session.url!
     },
-    async createNewAICreditAutoTopUpPaymentIntent(params: CreateAICreditAutoTopUpPaymentIntentParams): Promise<string> {
+    async createNewAICreditAutoTopUpInvoice(
+        params: CreateAICreditAutoTopUpPaymentIntentParams
+    ): Promise<void> {
         const stripe = this.getStripe()
         assertNotNullOrUndefined(stripe, 'Stripe is not configured')
 
         const { customerId, platformId, amountInUsd, paymentMethod } = params
-
         const amountInCents = amountInUsd * 100
 
-        const paymentIntent = await stripe.paymentIntents.create({
+        const invoice = await stripe.invoices.create({
+            customer: customerId,
+            collection_method: 'charge_automatically',
+            auto_advance: true,
+            description: 'AI Credits Auto Top-Up',
+            metadata: {
+                platformId,
+                type: StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP,
+            },
+        })
+        assertNotNullOrUndefined(invoice.id, 'Invoice ID is undefined')
+
+        await stripe.invoiceItems.create({
+            customer: customerId,
             amount: amountInCents,
             currency: 'usd',
-            customer: customerId,
-            payment_method: paymentMethod,
-            off_session: true,
-            confirm: true,
+            invoice: invoice.id,
+            description: `AI Credits Auto Top-Up`,
             metadata: {
                 platformId,
                 type: StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP,
             },
         })
 
-        return paymentIntent.id
+        const finalized = await stripe.invoices.finalizeInvoice(invoice.id)
+        assertNotNullOrUndefined(finalized.id, 'Finalized invoice ID is undefined')
+
+        await stripe.invoices.pay(finalized.id, {
+            off_session: true,
+            payment_method: paymentMethod,
+        })
+    },
+    async attachPaymentMethodToCustomer(paymentMethodId: string, customerId: string): Promise<void> {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        await stripe.paymentMethods.attach(paymentMethodId, { customer: customerId })
+    },
+    async getPaymentMethod(customerId: string): Promise<string | null> {
+        const stripe = this.getStripe()
+        assertNotNullOrUndefined(stripe, 'Stripe is not configured')
+
+        const methods = await stripe.paymentMethods.list({ customer: customerId })
+        return methods.data[0]?.id ?? null
     },
     async createNewAICreditPaymentCheckoutSession(params: CreateAICreditPaymentParams): Promise<string> {
         const stripe = this.getStripe()
@@ -101,7 +133,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: 'AI Credits Top-up',
+                        name: 'AI Credits Direct Purchase',
                     },
                     unit_amount: amountInCents,
                 },
@@ -111,6 +143,16 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
             metadata: {
                 platformId,
                 type: StripeCheckoutType.AI_CREDIT_PAYMENT,
+            },
+            invoice_creation: {
+                enabled: true,
+                invoice_data: {
+                    metadata: {
+                        platformId,
+                        type: StripeCheckoutType.AI_CREDIT_PAYMENT,
+                    },
+                    description: 'AI Credits Purchase',
+                }
             },
             allow_promotion_codes: true,
             customer: customerId,

@@ -92,7 +92,10 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             aiCreditsAutoTopUpThreshold: request.minThreshold,
         })
 
-        if (!isNil(plan.aiCreditsAutoTopUpStripePaymentMethod)) {
+        assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
+
+        const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
+        if (!isNil(paymentMethod)) {
             await platformPlanService(log).update({
                 platformId,
                 aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON,
@@ -100,7 +103,6 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             return {}
         }
 
-        assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
         const stripeCheckoutUrl = await stripeHelper(log).createNewAICreditAutoTopUpCheckoutSession({
             platformId,
             customerId: plan.stripeCustomerId,
@@ -112,9 +114,13 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async handleAutoTopUpCheckoutSessionCompleted(platformId: string, paymentMethodId: string): Promise<void> {
         await platformPlanService(log).update({
             platformId,
-            aiCreditsAutoTopUpStripePaymentMethod: paymentMethodId,
             aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON,
         })
+
+        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
+        assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
+
+        await stripeHelper(log).attachPaymentMethodToCustomer(paymentMethodId, plan.stripeCustomerId)
     },
 
     async updateAutoTopUpConfig(platformId: string, request: EnableAICreditsAutoTopUpParamsSchema): Promise<void> {
@@ -214,16 +220,19 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
 
         assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
-        assertNotNullOrUndefined(plan.aiCreditsAutoTopUpStripePaymentMethod, 'Auto Topup Stripe payment method is not set')
         assertNotNullOrUndefined(plan.aiCreditsAutoTopUpCreditsToAdd, 'Auto Topup Credits To add is not set')
         assertNotNullOrUndefined(plan.aiCreditsAutoTopUpThreshold, 'Auto Topup Threashold is not set')
 
+        const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
+
+        assertNotNullOrUndefined(paymentMethod, 'Auto Topup Stripe payment method is not set')
+
         const amountInUsd = plan.aiCreditsAutoTopUpCreditsToAdd / CREDIT_PER_DOLLAR
 
-        await stripeHelper(log).createNewAICreditAutoTopUpPaymentIntent({
+        await stripeHelper(log).createNewAICreditAutoTopUpInvoice({
             amountInUsd,
             customerId: plan.stripeCustomerId,
-            paymentMethod: plan.aiCreditsAutoTopUpStripePaymentMethod,
+            paymentMethod,
             platformId: plan.platformId,
         })
     },

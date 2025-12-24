@@ -37,10 +37,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        aiCreditsAutoTopUpStripePaymentMethod: {
-            type: String,
-            nullable: true,
-        },
         stripeSubscriptionStartDate: {
             type: Number,
             nullable: true,
