@@ -4,7 +4,6 @@
   "rcVersion": "0.74.3-rc.0",
   "scripts": {
     "prepare": "husky install",
-    "prebuild": "node tools/scripts/install-bun.js",
     "serve:frontend": "nx serve react-ui",
     "serve:backend": "nx serve server-api",
     "serve:engine": "nx serve engine",

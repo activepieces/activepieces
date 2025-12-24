@@ -1,0 +1,1241 @@
+openapi: 3.0.0
+info:
+  title: Sweep Service
+  description: |
+    A sweep account is a financial tool that automatically moves excess funds from a primary lead account (like a checking account) into secondary sweep accounts that earn interest or can be used to reduce debt. It works by setting a balance limit on the primary lead account, and if the balance goes above the limit, the excess is "swept" into secondary sweep accounts. Conversely, if the primary lead account balance falls below a set minimum, funds can be swept back in from the secondary sweep accounts. This service allows to add and maintain sweep accounts.
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: /
+paths:
+  /sweeps:
+    put:
+      tags:
+      - Update Sweep
+      summary: Updates a sweep record
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          "The message header request aggregate contains common information for all request messages"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SweepModRqType"
+            examples:
+              SweepModRq_Nickname_Only:
+                $ref: "#/components/examples/SweepModRq_Nickname_Only"
+              SweepModRq_SweepBalance:
+                $ref: "#/components/examples/SweepModRq_LeadBalance"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepModRsType"
+              examples:
+                SweepModRs_Success:
+                  $ref: "#/components/examples/SweepModRs_Success"
+        "400":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepModRsType"
+              examples:
+                SweepModRs_Error400:
+                  $ref: "#/components/examples/SweepModRs_Error400"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepModRsType"
+    post:
+      tags:
+      - Add Sweep
+      summary: Adds a new sweep record
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          "The message header request aggregate contains common information for all request messages"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SweepAddRqType"
+            examples:
+              SweepAddRq_FromFunding_ToLead:
+                $ref: "#/components/examples/SweepAddRq_FromFunding_ToLead"
+              SweepAddRq_FromLead_ToFunding:
+                $ref: "#/components/examples/SweepAddRq_FromLead_ToFunding"
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepAddRsType"
+              examples:
+                SweepAddRs_Success:
+                  $ref: "#/components/examples/SweepAddRs_Success"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepAddRsType"
+              examples:
+                SweepAddRs_Error_400:
+                  $ref: "#/components/examples/SweepAddRs_Error_400"
+        default:
+          description: Unexpected Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepAddRsType"
+  /sweeps/secured:
+    put:
+      tags:
+      - Delete Sweep
+      summary: Deletes a sweep record
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          "The message header request aggregate contains common information for all request messages"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SweepDelRqType"
+            examples:
+              SweepDelete:
+                $ref: "#/components/examples/SweepDelete"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepDelRsType"
+              examples:
+                SweepDeleteRs_Success:
+                  $ref: "#/components/examples/SweepDeleteRs_Success"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepDelRsType"
+              examples:
+                SweepDeleteRs_Error_404:
+                  $ref: "#/components/examples/SweepDeleteRs_Error_404"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepDelRsType"
+    post:
+      tags:
+      - Get Sweep
+      summary: Retrieves sweep record information
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          "The message header request aggregate contains common information for all request messages"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SweepInqRqType"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepInqRsType"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepInqRsType"
+  /sweeps/secured/list:
+    post:
+      tags:
+      - Get Sweep List
+      summary: Retrieves a list of sweeps using nickname or account
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          "The message header request aggregate contains common information for all request messages"
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SweepListInqRqType"
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepListInqRsType"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SweepListInqRsType"
+components:
+  schemas:
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: "Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number."
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Indicates Multi-System environment is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System environment this identifies the Service Provider (account processor).
+        Context:
+          $ref: "#/components/schemas/Context"
+      example: "{ \"TrnId\": \"622182\", \"OrganizationId\": \"PRMOrg10\", \"VendorId\": \"112233\", \"Context\":{ \"Channel\": \"WEB\" } }"
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: "Name of the client application that is used to send the service request, such as Architect, Commercial Center and others."
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: "Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12."
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: "Client terminal sequence number. type: string"
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: "#/components/schemas/CountryCodeSourceType"
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: "Type of a phone. Valid values are: - 'EvePhone' - 'DayPhone' - 'EveFax' - 'DayFax' - 'Home' - 'Work' - 'Mobile' - 'Fax' - 'Pager' - 'Modem' - 'Other'"
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: "#/components/schemas/CountryCodeSourceType"
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: "#/components/schemas/TellerTrnDataType"
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: "#/components/schemas/TrnConductorDataType"
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    SweepAddRqType:
+      title: SweepAddRq
+      required:
+      - SweepInfo
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: "#/components/schemas/OvrdExceptionDataType"
+        SweepInfo:
+          $ref: "#/components/schemas/SweepInfoType"
+    SweepAddRsType:
+      title: SweepAddRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        SweepStatusRec:
+          $ref: "#/components/schemas/SweepStatusRecType"
+    SweepInqRqType:
+      title: SweeepInqRqType
+      required:
+      - SweepSel
+      type: object
+      properties:
+        SweepSel:
+          $ref: "#/components/schemas/SweepSelType"
+    SweepInqRsType:
+      title: SweeepInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        SweepRec:
+          $ref: "#/components/schemas/SweepRecType"
+    SweepListInqRqType:
+      title: SweeepListInqRqType
+      required:
+      - SweepListSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: "#/components/schemas/RecCtrlInType"
+        SweepListSel:
+          $ref: "#/components/schemas/SweepListSelType"
+    SweepListInqRsType:
+      title: SweeepListInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        RecCtrlOut:
+          $ref: "#/components/schemas/RecCtrlOutType"
+        SweepListRec:
+          type: array
+          items:
+            $ref: "#/components/schemas/SweepListRecType"
+    SweepModRqType:
+      title: SweepModRqType
+      required:
+      - SweepKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: "#/components/schemas/OvrdExceptionDataType"
+        SweepKeys:
+          $ref: "#/components/schemas/SweepKeysType"
+        SweepInfo:
+          $ref: "#/components/schemas/SweepInfoModType"
+    SweepInfoModType:
+      type: object
+      properties:
+        Nickname:
+          type: string
+          description: Sweep Nickname.
+        SweepFrom:
+          title: SweepFromAcctDetailType
+          type: array
+          items:
+            $ref: "#/components/schemas/SweepAcctDetailFromType"
+        SweepTo:
+          title: SweepToAcctDetailType
+          type: array
+          items:
+            $ref: "#/components/schemas/SweepAcctDetailToType"
+    SweepModRsType:
+      title: SweepModRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        SweepStatusRec:
+          $ref: "#/components/schemas/SweepStatusRecType"
+    SweepDelRqType:
+      title: SweepDelRqType
+      required:
+      - SweepKeys
+      type: object
+      properties:
+        OverrideAutoAckInd:
+          type: boolean
+        OvrdExceptionData:
+          $ref: "#/components/schemas/OvrdExceptionDataType"
+        SweepKeys:
+          $ref: "#/components/schemas/SweepKeysType"
+    SweepDelRsType:
+      title: SweepDelRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        SweepStatusRec:
+          $ref: "#/components/schemas/SweepStatusRecType"
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+      description: Record Control Out
+    SweepSelType:
+      title: SweepSelType
+      type: object
+      properties:
+        SweepKeys:
+          $ref: "#/components/schemas/SweepKeysType"
+    SweepListSelType:
+      title: SweepListSelType
+      type: object
+      properties:
+        Nickname:
+          type: string
+          description: Sweep Nickname
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+    SweepInfoType:
+      type: object
+      properties:
+        Nickname:
+          type: string
+          description: Sweep Nickname.
+        SweepIdent:
+          type: string
+          description: Sweep Identification. This Identifier is provided during the add request to identify the sweep record. This is not a required field.
+        SweepFrequencyType:
+          type: string
+          description: Sweep Frequency Type. It indicates whether the sweep verifies account balances daily or on a specified frequency or cycle (Client Defined)) in order to perform the fund transfer.
+          enum:
+          - ClientDefined
+          - Daily
+        LeadAcctKeys:
+          $ref: "#/components/schemas/LeadAcctKeysType"
+        SweepFrom:
+          title: SweepFromAcctDetailType
+          type: array
+          items:
+            $ref: "#/components/schemas/SweepAcctDetailFromType"
+        SweepTo:
+          title: SweepToAcctDetailType
+          type: array
+          items:
+            $ref: "#/components/schemas/SweepAcctDetailToType"
+    SweepFromBalType:
+      type: string
+      description: "Sweep From Balance Type. This balance applies to the lead account and possible values are: Avail, Ledger, Analysis and TotalDebits."
+    SweepAcctDetailFromType:
+      title: SweepAcctDetailFromType
+      type: object
+      properties:
+        Priority:
+          type: string
+          description: Priority
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+        BalType:
+          $ref: "#/components/schemas/SweepFromBalType"
+        BalanceToMaintain:
+          type: number
+          description: "Minimum balance to maintain on the lead account. When the balance of the lead account is below this threshold, a sweep transfer transaction is initiated."
+        TargetBalance:
+          type: number
+          description: "Target Balance. When the lead account falls below the \"Minimum Balance\", the sweep transfer transaction brings the lead account balance to the \"Target Balance\". When the \"Increment Amount\" and \"Target Balance\" are zeroes, the lead account balance is brought to the minimum balance."
+        TransferOption:
+          type: string
+          description: "Indicates processing options in the event that the sweep account does not have sufficient funds. Possible processing options are: NoBalanceLimit, PositiveBalance, MinimumBalance, NoBalanceLimitNoFee."
+        IncrementAmt:
+          type: number
+          description: "Increment Amount. The default whole dollar amount used for automatic sweep tranfer transaction.  When the \"Increment Amount\" and \"Target Balance\" are zeroes, the lead account balance is brought to the minimum balance."
+        FeePlan:
+          maxLength: 80
+          type: string
+          description: Identifies a group of fees related to a pricing plan. Generally this plan describe processing options for the fees.
+        NoticeOption:
+          type: string
+          description: "Indicates whether the system notifies the customer. Valid values are: NoNotice and GenerateNotice."
+        SweepFrequency:
+          $ref: "#/components/schemas/SweepFrequencyType"
+        FundingMinimumBalance:
+          type: number
+          description: Sweep from account minimum balance. The sweep from account will not transfer funds to the lead account when the balance is below this amount.
+    SweepToBalType:
+      type: string
+      description: "Sweep Balance Type. This balance applies to the lead account and possible values are: Avail, Ledger and TotalCredits."
+    SweepAcctDetailToType:
+      title: SweepAcctDetailToType
+      type: object
+      properties:
+        Priority:
+          type: string
+          description: Priority
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+        BalType:
+          $ref: "#/components/schemas/SweepToBalType"
+        BalanceToMaintain:
+          type: number
+          description: "Maximum balance to maintain on the lead account. When the balance of the lead account exceeds this threshold, the lead account sweeps funds to the sweep to account."
+        IncrementAmt:
+          type: number
+          description: "Increment Amount. The default whole dollar amount used for automatic sweep tranfer transaction.  When the \"Increment Amount\" and \"Target Balance\" are zeroes, the lead account balance is brought to the minimum balance."
+        FeePlan:
+          maxLength: 80
+          type: string
+          description: Identifies a group of fees related to a pricing plan. Generally this plan describe processing options for the fees.
+        NoticeOption:
+          type: string
+          description: "Indicates whether the system notifies the customer. Valid values are: NoNotice and GenerateNotice."
+        SweepFrequency:
+          $ref: "#/components/schemas/SweepFrequencyType"
+        FundingMaximumBalance:
+          type: number
+          description: Sweep to account maximum balance. The sweep to account will accept funds from the lead account up to this balance amount.
+    LeadAcctKeysType:
+      title: LeadAcctKeysType
+      allOf:
+      - $ref: "#/components/schemas/AcctKeysType"
+      - type: object
+    SweepStatusType:
+      title: SweepStatusCode
+      type: object
+      properties:
+        SweepStatusCode:
+          type: string
+          description: Sweep Status Code
+          enum:
+          - Valid
+          - Deleted
+        EffDt:
+          type: string
+          format: date-time
+    SweepFrequencyType:
+      title: SweepFrequencyType
+      allOf:
+      - $ref: "#/components/schemas/RecurRuleType"
+      - type: object
+        properties:
+          IsDayDelay:
+            type: boolean
+            description: Day Delay indicator. Value of true indicates that sweep transfers occurs on a day delay basis. Value of false indicates that transfer occurs daily.
+          NextSweepDt:
+            type: string
+            description: Next Sweep Date.
+            format: date
+    SweepRecType:
+      title: SweepRecType
+      type: object
+      properties:
+        SweepKeys:
+          $ref: "#/components/schemas/SweepKeysType"
+        SweepInfo:
+          $ref: "#/components/schemas/SweepInfoType"
+        SweepStatus:
+          $ref: "#/components/schemas/SweepStatusType"
+    SweepListRecType:
+      title: SweepListRecType
+      type: object
+      properties:
+        SweepKeys:
+          $ref: "#/components/schemas/SweepKeysType"
+        SweepListInfo:
+          $ref: "#/components/schemas/SweepListInfoType"
+        SweepStatus:
+          $ref: "#/components/schemas/SweepStatusType"
+    SweepListInfoType:
+      title: SweepListInfoType
+      type: object
+      properties:
+        Nickname:
+          type: string
+          description: Sweep Nickname
+        UpDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Date of the last sweep record update.
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    SweepKeysType:
+      title: SweepKeysType
+      type: object
+      properties:
+        SvcIdent:
+          $ref: "#/components/schemas/SvcIdentType"
+        SweepId:
+          $ref: "#/components/schemas/IdentifierType"
+    RecurRuleType:
+      title: RecurRuleType
+      type: object
+      properties:
+        RecurType:
+          type: string
+          description: "Recurrence Type. Values supported are Monthly, Quarterly, SemiYearly, Yearly, Weekly, Biweekly, BiMonthly, TwiceMonthly, Cycle ."
+        RecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Recurrence Type Enumeration Description.
+        RecurInterval:
+          type: integer
+          description: "Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provide, assume default value of '1', i.e. every day, every week, every month, or every year. If Cycle Number of the designated cycle."
+          format: int64
+        DayOfMonth:
+          $ref: "#/components/schemas/DayOfMonthType"
+    DayOfMonthType:
+      title: DayOfMonthType
+      type: integer
+      example: 1
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 26
+      - 27
+      - 28
+      - 29
+      - 30
+      - 31
+    IdentifierType:
+      type: string
+      description: Identifier of the object
+    AcctKeysType:
+      title: AcctKeysType
+      type: object
+      properties:
+        SvcIdent:
+          $ref: "#/components/schemas/SvcIdentType"
+        AcctId:
+          maxLength: 36
+          type: string
+          description: Account Identifier. Uniquely identifies an account held at a financial institution.
+        SubAcctId:
+          maxLength: 36
+          type: string
+          description: Sub Account Identifier.
+        AcctType:
+          maxLength: 80
+          type: string
+          description: "Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc."
+        FIIdentType:
+          type: array
+          description: Financial Institution Identification Type.
+          items:
+            maxLength: 80
+            type: string
+        FIIdent:
+          maxLength: 34
+          type: array
+          description: Financial Institution Identification.
+          items:
+            maxLength: 34
+            type: string
+        BranchIdent:
+          maxLength: 22
+          type: array
+          description: Branch Identification. Other identification used as part of the Branch object key.
+          items:
+            maxLength: 22
+            type: string
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: "#/components/schemas/SeverityType"
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: "Authorization level required to override, such as Teller and Supervisor."
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: "#/components/schemas/SubjectElementType"
+        ContentHTML:
+          type: string
+          description: "Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures."
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: "#/components/schemas/AdditionalStatusType"
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: "Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. "
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: "Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden."
+        Value:
+          maxLength: 256
+          type: string
+          description: "Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data."
+      description: Information about the subject element.
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: "#/components/schemas/SeverityType"
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: "#/components/schemas/SubjectElementType"
+    SweepStatusRecType:
+      title: SweepStatusRecType
+      required:
+      - SweepKeys
+      - SweepStatus
+      type: object
+      properties:
+        SweepKeys:
+          $ref: "#/components/schemas/SweepKeysType"
+        SweepStatus:
+          $ref: "#/components/schemas/SweepStatusType"
+      description: "Sweep Status Record. Used in responses to return results from an add, modify or delete operation on the object."
+    OvrdElementType:
+      title: OvrdElementType
+      allOf:
+      - $ref: "#/components/schemas/SubjectElementType"
+      - type: object
+    OverrideExceptionType:
+      title: OverrideExceptionType
+      type: object
+      properties:
+        SubjectRole:
+          type: string
+          description: Subject Role.
+        SubjectIdent:
+          maxLength: 36
+          type: string
+          description: Subject Identifier.
+        OvrdExceptionCode:
+          maxLength: 40
+          type: string
+          description: Overrride Exception Code.Identifies an exception code that is to be overridden. This would be the ServerStatusCode from the Status response.
+        OvrdElement:
+          $ref: "#/components/schemas/OvrdElementType"
+    OvrdExceptionDataType:
+      title: OvrdExceptionDataType
+      type: object
+      properties:
+        OverrideException:
+          type: array
+          description: Override Exception.
+          items:
+            $ref: "#/components/schemas/OverrideExceptionType"
+  examples:
+    SweepDelete:
+      value:
+        OverrideAutoAckInd: true
+        SweepKeys:
+          SweepId: 99
+    SweepDeleteRs_Success:
+      value:
+        Status:
+          StatusCode: 0
+          StatusDesc: Success
+          Severity: Info
+          SvcProviderName: Provider
+        SweepStatusRec:
+          SweepKeys:
+            SweepId: 99
+          SweepStatus:
+            SweepStatusCode: Deleted
+            EffDt: 2025-08-20T19:30:59.925Z
+    SweepDeleteRs_Error_404:
+      value:
+        Status:
+          StatusCode: 1121
+          StatusDesc: Record Not Found
+          Severity: Error
+          SvcProviderName: Provider
+          SvcProviderCode: xxxx
+          ServerStatusDesc: Relationship Number Not on File
+    SweepModRs_Success:
+      value:
+        Status:
+          StatusCode: 0
+          StatusDesc: Success
+          Severity: Info
+          SvcProviderName: Provider
+        SweepStatusRec:
+          SweepKeys:
+            SweepId: 99
+          SweepStatus:
+            SweepStatusCode: Valid
+            EffDt: 2025-08-20T19:30:59.925Z
+    SweepModRs_Error400:
+      value:
+        Status:
+          StatusCode: 1090
+          StatusDesc: Invalid Value
+          Severity: Error
+          SvcProviderName: Provider
+          SvcProviderCode: XXXX
+          ServerStatusDesc: Invalid Amount
+    SweepAddRs_Error_400:
+      value:
+        Status:
+          StatusCode: 1090
+          StatusDesc: Invalid Value
+          Severity: Error
+          SvcProviderName: Provider
+          SvcProviderCode: XXXX
+          ServerStatusDesc: Demand Deposit Account is already defined as a lead or operating account in another sweep relationship
+    SweepAddRs_Success:
+      value:
+        Status:
+          StatusCode: 0
+          StatusDesc: Success
+          Severity: Info
+          SvcProviderName: Provider
+        SweepStatusRec:
+          SweepKeys:
+            SweepId: 99
+          SweepStatus:
+            SweepStatusCode: Valid
+            EffDt: 2025-08-20T19:30:59.925Z
+    SweepAddRq_FromFunding_ToLead:
+      summary: "Funds transfer Daily from Sweep From account to Lead account, when lead account balance falls below 500.00."
+      value:
+        OvrdAutoAckInd: true
+        SweepInfo:
+          Nickname: DailySweep
+          SweepIdent: 99
+          SweepFrequencyType: Daily
+          LeadAcctKeys:
+            AcctId: 4007
+            AcctType: DDA
+          SweepFrom:
+          - Priority: 1
+            AcctKeys:
+              AcctId: 10099
+              AcctType: SDA
+            BalType: Avail
+            BalanceToMaintain: 500.0
+            TransferOption: PositiveBalance
+            IncrementAmt: 100.0
+            FeePlan: 4
+            NoticeOption: NoNotice
+            SweepFrequency:
+              IsDayDelay: false
+            FundingMinimumBalance: 100.0
+    SweepInq:
+      value:
+        SweepSel:
+          SweepKeys:
+            SweepId: 99
+    SweepListInq:
+      value:
+        SweepSel:
+          SweepKeys:
+            SweepId: 99
+    SweepModRq_Nickname_Only:
+      value:
+        OvrdAutoAckInd: true
+        SweepKeys:
+          SweepId: 99
+        SweepInfo:
+          Nickname: MyFirstSweep
+    SweepModRq_LeadBalance:
+      value:
+        OvrdAutoAckInd: true
+        SweepKeys:
+          SweepId: 99
+        SweepInfo:
+          SweepFrom:
+            AcctKeys:
+              AcctId: 4009
+              AcctType: DDA
+            BalanceToMaintain: 250.0
+    SweepAddRq_FromLead_ToFunding:
+      summary: "Funds transfer Monthly from Lead Account to Sweep To Account, when Lead account balance exceeds 5000.00."
+      value:
+        OvrdAutoAckInd: true
+        SweepInfo:
+          Nickname: CollegeSav
+          SweepIdent: 99
+          SweepFrequencyType: ClientDefined
+          LeadAcctKeys:
+            AcctId: 4009
+            AcctType: DDA
+          SweepTo:
+          - Priority: 1
+            SweepToAcctKeys:
+              AcctId: 100008821
+              AcctType: SDA
+            BalType: Avail
+            BalanceToMaintain: 5500.0
+            IncrementAmt: 1000.0
+            NoticeOption: GenerateNotice
+            SweepFrequency:
+              RecurType: Monthly
+              RecurInterval: 1
+              DayOfMonth: 1
+              NextSweepDt: 2025-08-15
+            FundingMaximumBalance: 50000.0

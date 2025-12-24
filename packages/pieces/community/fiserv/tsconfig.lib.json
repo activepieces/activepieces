@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "outDir": "./dist-publish/src",
+    "declaration": true,
+    "types": ["node"],
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "node_modules",
+    "dist",
+    "dist-publish"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ]
+}

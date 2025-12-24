@@ -1,0 +1,22 @@
+{
+  "name": "pieces-fiserv",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/fiserv/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/fiserv",
+        "main": "packages/pieces/community/fiserv/src/index.ts",
+        "tsConfig": "packages/pieces/community/fiserv/tsconfig.lib.json",
+        "assets": [
+          "packages/pieces/community/fiserv/*.md",
+          "packages/pieces/community/fiserv/*.png"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

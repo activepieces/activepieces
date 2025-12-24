@@ -1,0 +1,921 @@
+---
+openapi: 3.0.0
+info:
+  title: Catalog Service
+  description: The catalog service supports managing various catalogs needed for transaction posting.
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: https://swaggerhub.onefiserv.net/virts/Bank_Sol_Org/CatalogService/11.0.0
+  description: SwaggerHub API Auto Mocking
+paths:
+  /roles/{code}:
+    get:
+      tags:
+      - Get User Role Details
+      summary: Retrieves detailed description of an user role
+      description: This operation retrieves details of an user role such as role description and corresponding override capabilities also known as role exceptions .
+      operationId: getRoleCode
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: code
+        in: path
+        description: User role code.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleCodeInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleCodeInqRsType'
+  /roles:
+    get:
+      tags:
+      - Get User Roles
+      summary: Retrieves a List of Roles
+      description: Retrieves a list of available user roles.
+      operationId: getUserRoles
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: pageLimit
+        in: query
+        description: The number of records to be returned. Used for both "page base and cursor base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+        example: "10"
+      - name: pageOffset
+        in: query
+        description: The starting point in the result set. Required for "page base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+        example: "1"
+      - name: cursor
+        in: query
+        description: Pointer to next record. Used by "cursor base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: "133442222"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleInqRsType'
+  /exceptions:
+    get:
+      tags:
+      - Get Exceptions
+      summary: Retrieves Exceptions
+      description: Retrieves exceptions. Exceptions are rules you can apply to a single transaction to prevent it from posting unless the user who submitted the transaction is granted override authorization.
+      operationId: getExceptions
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: pageLimit
+        in: query
+        description: The number of records to be returned. Used for both "page base and cursor base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+        example: "10"
+      - name: pageOffset
+        in: query
+        description: The starting point in the result set. Required for "page base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+        example: "1"
+      - name: cursor
+        in: query
+        description: Pointer to next record. Used by "cursor base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: "133442222"
+      - name: code
+        in: query
+        description: Exception code.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxLength: 80
+          type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExceptionInqRsType'
+  /fees/{feeIdent}:
+    get:
+      tags:
+      - Get Transaction Fee Detail
+      summary: Retrieves Transaction Fee Detail
+      description: Retrieves transaction fee details. Only flat fees details can be retrieved by using this operation.
+      operationId: getTrasactionFee
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: feeIdent
+        in: path
+        description: Fee identifier
+        required: true
+        style: simple
+        explode: false
+        schema:
+          maxLength: 80
+          type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FeeInqRsType'
+  /transactionCodes:
+    get:
+      tags:
+      - Get Transaction Codes
+      summary: Retrieves Transaction Codes
+      description: Retrieves transaction codes available for the posting of financial transactions.
+      operationId: getTrasactionCodes
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: pageLimit
+        in: query
+        description: The number of records to be returned. Used for both "page base and cursor base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+        example: "10"
+      - name: pageOffset
+        in: query
+        description: The starting point in the result set. Required for "page base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          minimum: 1
+          type: integer
+        example: "1"
+      - name: cursor
+        in: query
+        description: Pointer to next record. Used by "cursor base pagination".
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+        example: "133442222"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionCodeInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionCodeInqRsType'
+components:
+  schemas:
+    RoleInfoType:
+      title: RoleInfoType
+      required:
+      - code
+      - description
+      type: object
+      properties:
+        code:
+          type: string
+          description: User role.
+        description:
+          maxLength: 200
+          type: string
+          description: Role description.
+    RoleInqRsType:
+      title: RoleInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        page:
+          type: integer
+          description: Current page number. Used for "page base pagination".
+        totalPages:
+          type: integer
+          description: Total number of pages. Used for "page base pagination".
+        cursor:
+          type: string
+          description: Pointer to next record. Used by "cursor base pagination".
+        roles:
+          type: array
+          description: Roles.
+          items:
+            $ref: '#/components/schemas/RoleInfoType'
+    ExceptionRuleInfoType:
+      title: ExceptionRuleInfoType
+      required:
+      - code
+      - description
+      type: object
+      properties:
+        code:
+          maxLength: 80
+          type: string
+          description: Exception code.
+        description:
+          maxLength: 200
+          type: string
+          description: Exception description.
+        isSystem:
+          type: boolean
+          description: Indicates whether the exception is a system exception or a restriction.
+        severity:
+          maxLength: 80
+          type: string
+          description: '''Describes the severity of the exception. Valid values are: Override, Warning and Error.'''
+        entities:
+          type: array
+          description: '''Describes type of entities where the exception applies. Valid values are: Party, Porfolio, Account.'''
+          items:
+            maxLength: 80
+            type: string
+    RoleExceptionRuleType:
+      title: RoleExceptionRuleType
+      allOf:
+      - $ref: '#/components/schemas/ExceptionRuleInfoType'
+      - type: object
+        properties:
+          isRoleOverride:
+            type: boolean
+            description: Indicates wheter the exception can be overriden by the user role.
+    RoleType:
+      title: RoleType
+      allOf:
+      - $ref: '#/components/schemas/RoleInfoType'
+      - type: object
+        properties:
+          roleExceptions:
+            type: array
+            description: Roles exceptions.
+            items:
+              $ref: '#/components/schemas/RoleExceptionRuleType'
+    RoleCodeInqRsType:
+      title: RoleCodeInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleType'
+          - description: Role.
+    ExceptionInqRsType:
+      title: ExceptionInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        page:
+          type: integer
+          description: Current page number. Used for "page base pagination".
+          format: int64
+        totalPages:
+          type: integer
+          description: Total number of pages. Used for "page base pagination".
+          format: int64
+        cursor:
+          type: string
+          description: Pointer to next record. Used by "cursor base pagination".
+        exceptions:
+          type: array
+          description: Exceptions.
+          items:
+            $ref: '#/components/schemas/ExceptionRuleType'
+    ExceptionRuleType:
+      title: ExceptionRuleType
+      allOf:
+      - $ref: '#/components/schemas/ExceptionRuleInfoType'
+      - type: object
+        properties:
+          severity:
+            type: string
+            description: Severity.
+            enum:
+            - Error
+            - Warning
+            - Info
+          rolesIncluded:
+            type: array
+            description: Roles included.
+            items:
+              type: string
+          rolesExcluded:
+            type: array
+            description: Roles excluded.
+            items:
+              type: string
+          transactionCodesIncluded:
+            type: array
+            description: Transaction codes Included.
+            items:
+              maxLength: 15
+              type: string
+          transactionCodesExcluded:
+            type: array
+            description: Transaction codes excluded.
+            items:
+              maxLength: 15
+              type: string
+    FeeInqRsType:
+      title: FeeInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        fee:
+          $ref: '#/components/schemas/FeeType'
+    FeeType:
+      title: FeeType
+      type: object
+      properties:
+        ident:
+          maxLength: 80
+          type: string
+          description: Fee identifier.
+        amount:
+          type: number
+          description: Amount.
+        description:
+          maxLength: 200
+          type: string
+          description: Description.
+    TransactionCodeType:
+      title: TransactionCodeType
+      required:
+      - code
+      - description
+      type: object
+      properties:
+        code:
+          maxLength: 15
+          type: string
+          description: Transaction code.
+        description:
+          maxLength: 200
+          type: string
+          description: Description.
+        tags:
+          type: object
+          additionalProperties: true
+          description: Contains additional information about transaction code.
+        networks:
+          type: array
+          description: |-
+            Networks where this transaction code applies. Valid values may be:
+              - CORE
+              - ACH
+              - ACTIMIZE
+              - AFT
+              - FEDWIRE
+              - SEPA
+              - SWIFT
+              - CHECK
+              - EFT
+              - P2P
+              - RTP
+              - MANUALWIRE
+              - FAIM
+          items:
+            type: string
+        entryDefinitions:
+          type: array
+          description: Transaction code entries.
+          items:
+            $ref: '#/components/schemas/CodeEntryType'
+    TransactionCodeInqRsType:
+      title: TransactionCodeInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        page:
+          type: integer
+          description: Current page number. Used for "page base pagination".
+        totalPages:
+          type: integer
+          description: Total number of pages. Used for "page base pagination".
+        cursor:
+          type: string
+          description: Pointer to next record. Used for  "Cursor base pagination". This value is used as the cursor for next record retrieval.
+        transactionCodes:
+          type: array
+          description: Transaction Codes.
+          items:
+            $ref: '#/components/schemas/TransactionCodeType'
+    CodeEntryType:
+      title: CodeEntryType
+      required:
+      - isDebit
+      type: object
+      properties:
+        entryName:
+          maxLength: 200
+          type: string
+          description: Entry name.
+        isDebit:
+          type: boolean
+          description: Is a debit entry .
+        isGLEntry:
+          type: boolean
+          description: Is a general ledger entry .
+        glAccountNumber:
+          type: string
+          description: General ledger account number.
+        accountNumber:
+          type: string
+          description: Account number.
+        currencyCode:
+          maxLength: 4
+          type: string
+          description: Currency code.
+        description:
+          maxLength: 200
+          type: string
+          description: Description.
+        isGLDetail:
+          type: boolean
+          description: Is a general ledger entry detail.
+        isReversalGLDetail:
+          type: boolean
+          description: Is reversal general ledger entry detail.
+        feeIndent:
+          maxLength: 80
+          type: string
+          description: Fee identifier.
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number.
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Indicates Multi-System environment is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System environment this identifies the Service Provider (account processor).
+        Context:
+          $ref: '#/components/schemas/Context'
+      example: '{ "TrnId": "622182", "OrganizationId": "PRMOrg10", "VendorId": "112233", "Context":{ "Channel": "WEB" } }'
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: Name of the client application that is used to send the service request, such as Architect, Commercial Center and others.
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12.
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: 'Client terminal sequence number. type: string'
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: 'Type of a phone. Valid values are: - ''EvePhone'' - ''DayPhone'' - ''EveFax'' - ''DayFax'' - ''Home'' - ''Work'' - ''Mobile'' - ''Fax'' - ''Pager'' - ''Modem'' - ''Other'''
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: '#/components/schemas/TellerTrnDataType'
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: '#/components/schemas/TrnConductorDataType'
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Authorization level required to override, such as Teller and Supervisor.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+        ContentHTML:
+          type: string
+          description: 'Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures.'
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: '#/components/schemas/AdditionalStatusType'
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: 'Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. '
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden.
+        Value:
+          maxLength: 256
+          type: string
+          description: Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data.
+      description: Information about the subject element.
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'

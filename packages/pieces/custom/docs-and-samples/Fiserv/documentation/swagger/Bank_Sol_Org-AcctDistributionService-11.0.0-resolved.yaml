@@ -1,0 +1,1415 @@
+openapi: 3.0.0
+info:
+  title: Account Distribution Service
+  description: The Account Distribution service supports operations to manage instructions to distribute an amount for a partial or a full redemption of a certificate of deposit (including retirement accounts). The distribution may be paid by check or may be transferred to either an internal or external account. The service offers options to waive penalties associated with the distribution of the funds.
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: /
+paths:
+  /accountDistribution/secured:
+    put:
+      tags:
+      - Delete Account Distribution Instruction
+      summary: Delete Account Distribution Instruction
+      description: This service operation deletes an account distribution instruction.
+      operationId: DeleteAccountDistribution
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcctDistributionDelRqType"
+            examples:
+              AcctDistributionDelRq:
+                $ref: "#/components/examples/AcctDistributionDelRq"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionDelRsType"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionDelRsType"
+    post:
+      tags:
+      - Get Account Distribution Instruction
+      summary: Get Account Distribution Instruction
+      description: This service operation retrieves details of specific account distribution instruction.
+      operationId: GetAccountDistribution
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcctDistributionInqRqType"
+            examples:
+              AcctDistributionInqRq:
+                $ref: "#/components/examples/AcctDistributionInqRq"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionInqRsType"
+              examples:
+                SIG_DistributionInq_InternalTransfer:
+                  $ref: "#/components/examples/DistributionInqRs_Internal_Transfer"
+                SIG_DistributionInqRs_External_Transfer:
+                  $ref: "#/components/examples/DistributionInqRs_External_Transfer"
+                SIG_DistributionInqRs_Check:
+                  $ref: "#/components/examples/DistributionInqRs_Check"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionInqRsType"
+  /accountDistributionList/secured:
+    post:
+      tags:
+      - Get Account Distribution Instruction List
+      summary: Get Account Distribution Instruction List
+      description: This service operation retrieves account distribution instructions related to an certificate of deposit account.
+      operationId: GetAccountDistributionList
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcctDistributionListInqRqType"
+            examples:
+              DistributionListInqRq:
+                $ref: "#/components/examples/DistributionListInqRq"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionListInqRsType"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionListInqRsType"
+  /accountDistribution:
+    put:
+      tags:
+      - Update Account Distribution Instructions
+      summary: Update Account Distribution Instructions
+      description: This service operation updates an account distribution instruction.
+      operationId: UpdateAccountDistribution
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcctDistributionModRqType"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionModRsType"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionModRsType"
+    post:
+      tags:
+      - Add Account Distribution Instructions
+      summary: Add Account Distribution Instructions
+      description: This service operation adds an account distribution instruction
+      operationId: AddAccountDistribution
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcctDistributionAddRqType"
+            examples:
+              SIG_AddDistribution_Check_Mod_D3199:
+                $ref: "#/components/examples/AddDistribution_Check_OneUp"
+              SIG_AddDistribution_Check:
+                $ref: "#/components/examples/AddDistribution_Check"
+              SIG_AddDistribution_Internal_Transfer:
+                $ref: "#/components/examples/AddDistribution_Internal_Transfer"
+              SIG_AddDistribution_External_Transfer:
+                $ref: "#/components/examples/AddDistribution_External_Transfer"
+              SIG_AddDistribution_External_Transfer_Mod_D3199:
+                $ref: "#/components/examples/AddDistribution_External_Transfer_OneUp"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionAddRsType"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionAddRsType"
+  /accountDistributionTransactions/secured:
+    post:
+      tags:
+      - Get Account Distribution Transactions
+      summary: Get Account Distribution Transactions
+      description: This service operation retrieves details of specific account distribution transactions.
+      operationId: GetAccountDistributionTransactions
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: |
+          The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: "#/components/schemas/EFXHeader"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AcctDistributionTrnInqRqType"
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionTrnInqRsType"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AcctDistributionTrnInqRsType"
+components:
+  schemas:
+    AcctDistributionTrnInqRqType:
+      title: AccountDistributionTrnInqRqType
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: "#/components/schemas/RecCtrlInType"
+        AcctDistributionTrnSel:
+          $ref: "#/components/schemas/AcctDistributionTrnSel"
+    AcctDistributionTrnSel:
+      required:
+      - AcctKeys
+      type: object
+      properties:
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+        EffDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Effective Date. Effective date of when the fund distribution on account will occur.
+          example: 2025-04-20T01:01:01.000-05:00
+    AcctDistributionTrnInqRsType:
+      title: AccountDistributionTrnInqRsType
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        RecCtrlOut:
+          $ref: "#/components/schemas/RecCtrlOutType"
+        AcctDistributionTrnRec:
+          type: array
+          items:
+            $ref: "#/components/schemas/AcctDistributionTrnRecType"
+    AcctDistributionListInqRqType:
+      title: AccountDistributionListInqRqType
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: "#/components/schemas/RecCtrlInType"
+        AcctDistributionListSel:
+          $ref: "#/components/schemas/AcctDistributionListSel"
+    AcctDistributionTrnRecType:
+      title: AcctDistributionListRecType
+      type: object
+      properties:
+        AcctDistributionKeys:
+          $ref: "#/components/schemas/AcctDistributionKeysType"
+        AcctDistributionTrnInfo:
+          $ref: "#/components/schemas/AcctDistributionListInfoType"
+        AcctDistributionTrnStatus:
+          $ref: "#/components/schemas/AcctDistributionTrnStatusType"
+    AcctDistributionListInqRsType:
+      title: AccountDistributionListInqRsType
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        RecCtrlOut:
+          $ref: "#/components/schemas/RecCtrlOutType"
+        AcctDistributionListRec:
+          type: array
+          items:
+            $ref: "#/components/schemas/AcctDistributionListRecType"
+    AcctDistributionListSel:
+      type: object
+      properties:
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+    AcctDistributionListRecType:
+      title: AcctDistributionListRecType
+      type: object
+      properties:
+        AcctDistributionKeys:
+          $ref: "#/components/schemas/AcctDistributionKeysType"
+        AcctDistributionListInfo:
+          $ref: "#/components/schemas/AcctDistributionListInfoType"
+        AcctDistributionStatus:
+          $ref: "#/components/schemas/AcctDistributionStatusType"
+    AcctDistributionAddRqType:
+      title: AccountDistributionAddRqType
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: "#/components/schemas/OvrdExceptionDataType"
+        AcctDistributionInfo:
+          $ref: "#/components/schemas/AcctDistributionInfoType"
+    AcctDistributionAddRsType:
+      title: AccountDistributionAddRsType
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        AcctDistributionStatusRec:
+          $ref: "#/components/schemas/AcctDistributionStatusRecType"
+    AcctDistributionDelRqType:
+      title: AccountDistributionDelRqType
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: "#/components/schemas/OvrdExceptionDataType"
+        AcctDistributionKeys:
+          $ref: "#/components/schemas/AcctDistributionKeysType"
+    AcctDistributionDelRsType:
+      title: AccountDistributionDelRsType
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        AcctDistributionStatusRec:
+          $ref: "#/components/schemas/AcctDistributionStatusRecType"
+    AcctDistributionStatusRecType:
+      title: AccountDistributionStatusRecType
+      type: object
+      properties:
+        AcctDistributionKeys:
+          $ref: "#/components/schemas/AcctDistributionKeysType"
+        AcctDistributionStatus:
+          $ref: "#/components/schemas/AcctDistributionStatusType"
+    AcctDistributionModRqType:
+      title: AccountDistributionModRqType
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: "#/components/schemas/OvrdExceptionDataType"
+        AcctDistributionKeys:
+          $ref: "#/components/schemas/AcctDistributionKeysType"
+        AcctDistributionInfo:
+          $ref: "#/components/schemas/AcctDistributionInfoType"
+    AcctDistributionModRsType:
+      title: AccountDistributionModRsType
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        AcctDistributionStatusRec:
+          $ref: "#/components/schemas/AcctDistributionStatusRecType"
+    AcctDistributionInqRqType:
+      title: AccountDistributionInqRqType
+      type: object
+      properties:
+        AcctDistributionSel:
+          $ref: "#/components/schemas/AcctDistributionSelType"
+    AcctDistributionKeysType:
+      title: AccountDistributionKeysType
+      type: object
+      properties:
+        AcctDistributionId:
+          type: string
+          description: Account Distribution Identifier. Identifier of the AcctDistribution object.
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+        AcctDistributionIdent:
+          type: string
+          description: Account Distribution Identifier.
+    AcctDistributionTrnStatusType:
+      title: AcctDistributionTrnStatusType
+      required:
+      - AcctDistributionTrnStatusCode
+      type: object
+      properties:
+        AcctDistributionStatusCode:
+          maxLength: 80
+          type: string
+          description: Account Status Code.
+          example: Valid
+          enum:
+          - Valid
+          - Delete
+        EffDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Effective Date. The date that an associated action resulting in a change of state or status of an object took effect.
+          example: 2025-04-20T01:01:01.000-05:00
+    AcctDistributionSelType:
+      type: object
+      properties:
+        AcctDistributionKeys:
+          $ref: "#/components/schemas/AcctDistributionKeysType"
+    AcctKeysType:
+      title: AcctKeysType
+      type: object
+      properties:
+        SvcIdent:
+          $ref: "#/components/schemas/SvcIdentType"
+        AcctId:
+          maxLength: 36
+          type: string
+          description: Account Identifier. Uniquely identifies an account held at a financial institution.
+        SubAcctId:
+          maxLength: 36
+          type: string
+          description: Sub Account Identifier.
+        AcctType:
+          maxLength: 80
+          type: string
+          description: "Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc."
+        FIIdentType:
+          type: array
+          description: Financial Institution Identification Type.
+          items:
+            maxLength: 80
+            type: string
+        FIIdent:
+          maxLength: 34
+          type: array
+          description: Financial Institution Identification.
+          items:
+            maxLength: 34
+            type: string
+        BranchIdent:
+          maxLength: 22
+          type: array
+          description: Branch Identification. Other identification used as part of the Branch object key.
+          items:
+            maxLength: 22
+            type: string
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider which indicates the location of the Service Provider that gave the error.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: 'Next record pointer included in the response only if additional  records are available. '
+      description: Record Control Out
+    AcctDistributionInqRsType:
+      title: AccountDistributionInqRsType
+      type: object
+      properties:
+        Status:
+          $ref: "#/components/schemas/StatusType"
+        AcctDistributionRec:
+          $ref: "#/components/schemas/AcctDistributionRecType"
+    AcctDistributionRecType:
+      title: AcctDistributionRecType
+      type: object
+      properties:
+        AcctDistributionKeys:
+          $ref: "#/components/schemas/AcctDistributionKeysType"
+        AcctDistributionInfo:
+          $ref: "#/components/schemas/AcctDistributionInfoType"
+        AcctDistributionStatus:
+          $ref: "#/components/schemas/AcctDistributionStatusType"
+    AcctDistributionListInfoType:
+      title: AcctDistributionListInfoType
+      type: object
+      properties:
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+        EffDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Effective Date. Effective date of when the fund distribution on account will occur.
+          example: 2025-04-20T01:01:01.000-05:00
+        CurAmt:
+          $ref: "#/components/schemas/CurAmtType"
+        DistributionMethod:
+          maxLength: 80
+          type: string
+          description: "Account Distribution Type. Use this field to specify whether the distribution is done via Transfer to Account or a check. Examples: TransferToAcct, Check, ACHXfer."
+          example: Check
+        DistributionMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Distribution Method Enumeration Description.
+          example: Check
+        PenaltyWaiveOption:
+          maxLength: 80
+          type: string
+          description: "Penalty wiave option. Valid values * Waive - the penalty amount is waived infull, * None - the penalty amount is not waived, * PenaltyCannotExceedInterest - the penalty amount will not exceed the interest amount."
+          enum:
+          - Waive
+          - PenaltyCannotExceedInterest
+          - None
+        TransferToAcctKeys:
+          $ref: "#/components/schemas/TransferToAcctKeysType"
+        PayToNameId:
+          maxLength: 150
+          type: string
+          description: Pay-To Name Identifier. Used to uniquely the payee (person to whom the check is made payable). This field is used when the Distribution Method is "Check".
+          example: CU937210AG
+        PayToNameChk:
+          maxLength: 130
+          type: string
+          description: Pay-To Name is the name that apears on the check. This field is used when the Distribution Method is "Check".
+          example: Rupert Wagner
+        PayToOtherName:
+          $ref: "#/components/schemas/PayToOtherNameType"
+        ChkSpecialinstructions:
+          maxLength: 80
+          type: string
+          description: Check Special Instructions. This field is used when the Distribution Method is "Check".
+          example: Do not mail
+        ChkMemoDesc:
+          maxLength: 40
+          type: string
+          description: Check Memo Description. This field is used when the Distribution Method is "Check".
+          example: Additional Income-June
+        ChkRemitterCode:
+          maxLength: 80
+          type: string
+          description: Check Remitter Code. This field is used when the Distribution Method is "Check".
+          example: "21"
+        CreatedBy:
+          maxLength: 80
+          type: string
+          description: Identifier of a user who created the distribution instruction.
+          example: WagnerPZ
+        CreatedDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Created Date.
+          example: 2025-09-20T01:01:01.000-05:00
+        PostedDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Posted Date.
+          example: 2025-09-20T01:01:01.000-05:00
+        MaintBy:
+          maxLength: 80
+          type: string
+          description: Identifier of a user who maintained the distribution instruction.
+          example: PHarralson
+        MaintDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Maintenance Date.
+          example: 2025-09-20T01:01:01.000-05:00
+    PayToOtherNameType:
+      type: object
+      properties:
+        FullName:
+          maxLength: 130
+          type: string
+          description: Full Name Line.
+          example: Raymond A. Smith
+        Addr1:
+          maxLength: 64
+          type: string
+          description: Address Line 1.
+          example: 401 Freedom Ave
+        Addr2:
+          maxLength: 64
+          type: string
+          description: Address Line 2.
+          example: "Apt #22"
+        Addr3:
+          maxLength: 64
+          type: string
+          description: Address Line 3.
+          example: Lake Mary
+        Addr4:
+          maxLength: 64
+          type: string
+          description: Address Line 4.
+          example: "FL, 32746"
+        Addr5:
+          maxLength: 64
+          type: string
+          description: Address Line 5.
+          example: United States of America
+    AcctDistributionInfoType:
+      title: AcctDistributionInfoType
+      type: object
+      properties:
+        AcctKeys:
+          $ref: "#/components/schemas/AcctKeysType"
+        EffDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Effective Date. Effective date of the Account Distribution of funds.
+          example: 2025-09-20T01:01:01.000-05:00
+        CurAmt:
+          $ref: "#/components/schemas/CurAmtType"
+        DistributionMethod:
+          maxLength: 80
+          type: string
+          description: "Account Distribution Type. Use this field to specify whether the distribution is done via Transfer to Account or a check. Examples: TransferToAcct, Check and ACHXfer."
+          example: ACHXfer
+        DistributionMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Distribution Method Enumeration Description.
+          example: ACH Transfer
+        PenaltyWaiveOption:
+          maxLength: 80
+          type: string
+          description: "Penalty wiave option. Valid values * Waive - the penalty amount is waived in full, * None - the penalty amount is not waived, * PenaltyCannotExceedInterest - the penalty amount will not exceed the interest amount."
+          example: Waive
+          enum:
+          - Waive
+          - PenaltyCannotExceedInterest
+          - None
+        TransferToAcctKeys:
+          $ref: "#/components/schemas/TransferToAcctKeysType"
+        PayToNameId:
+          maxLength: 150
+          type: string
+          description: Pay-To Name Identifier. Used to uniquely the payee (person to whom the check is made payable). This field is used when the Distribution Method is "Check".
+          example: CU937210AG
+        PayToNameChk:
+          maxLength: 130
+          type: string
+          description: Pay-To Name is the name that apears on the check. This field is used when the Distribution Method is "Check".
+          example: Rupert Wagner
+        PayToOtherName:
+          $ref: "#/components/schemas/PayToOtherNameType"
+        ChkSpecialinstructions:
+          maxLength: 80
+          type: string
+          description: Check Special Instructions. This field is used when the Distribution Method is "Check".
+          example: Mail to Seasonal Address
+        ChkMemoDesc:
+          maxLength: 40
+          type: string
+          description: Check Memo Description. This field is used when the Distribution Method is "Check".
+          example: Additional Income-June
+        ChkRemitterCode:
+          maxLength: 80
+          type: string
+          description: Check Remitter Code. This field is used when the Distribution Method is "Check".
+          example: "21"
+        CreatedBy:
+          maxLength: 80
+          type: string
+          description: Identifier of a user who created the distribution instruction.
+          example: WagnerPZ
+        CreatedDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Created Date.
+          example: 2025-04-20T01:01:01.000-05:00
+        MaintBy:
+          maxLength: 80
+          type: string
+          description: Identifier of a user who mainted the distribution instruction.
+          example: Johanson
+        MaintDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Maintenance Date.
+          example: 2025-04-23T01:01:01.000-05:00
+    AcctDistributionStatusType:
+      title: AcctDistributionStatusType
+      required:
+      - AcctDistributionStatusCode
+      type: object
+      properties:
+        AcctDistributionStatusCode:
+          maxLength: 80
+          type: string
+          description: Account Status Code.
+          example: Valid
+          enum:
+          - Valid
+          - Delete
+        EffDt:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Effective Date. The date that an associated action resulting in a change of state or status of an object took effect.
+          example: 2025-04-20T01:01:01.000-05:00
+    TransferToAcctKeysType:
+      title: TransferToAcctKeys
+      allOf:
+      - $ref: "#/components/schemas/AcctKeysType"
+      - type: object
+        properties:
+          AcctHolderName:
+            type: string
+            description: Account holder name needed for ACH transfers.
+            example: Mr. Gaylord Smith
+          ACHNoticeInd:
+            type: boolean
+            description: ACH Notice Indicator.
+            example: false
+          TrnCode:
+            maxLength: 80
+            type: string
+            description: Credit transaction code posted to the account.
+            example: "9"
+    CurAmtType:
+      title: CurAmtType
+      type: object
+      properties:
+        Amt:
+          type: number
+          description: Amount.
+          example: 200.33
+        CurCode:
+          $ref: "#/components/schemas/CurCodeType"
+    CurCodeTypeType:
+      title: CurCodeTypeType
+      type: string
+      enum:
+      - ISO4217-Alpha
+      - ISO4217-Numeric
+    CurCodeType:
+      title: CurCodeType
+      required:
+      - CurCodeValue
+      type: object
+      properties:
+        CurCodeType:
+          $ref: "#/components/schemas/CurCodeTypeType"
+        CurCodeTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Currency Code Type Enumeration Description.
+        CurCodeValue:
+          maxLength: 80
+          type: string
+          description: Currency Code Value. Indicates the Currency Code Value within the CurCodeType table specified.
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: "Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number."
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Indicates Multi-System environment is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System environment this identifies the Service Provider (account processor).
+        Context:
+          $ref: "#/components/schemas/Context"
+      example: "{ \"TrnId\": \"622182\", \"OrganizationId\": \"PRMOrg10\", \"VendorId\": \"112233\", \"Context\":{ \"Channel\": \"WEB\" } }"
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: "Name of the client application that is used to send the service request, such as Architect, Commercial Center and others."
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\\.[0-9]{3})?((-|\\+)[0-9]{2}:[0-9]{2})?)?)?"
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: "Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12."
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: "Client terminal sequence number. type: string"
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: "#/components/schemas/CountryCodeSourceType"
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: "Type of a phone. Valid values are: - 'EvePhone' - 'DayPhone' - 'EveFax' - 'DayFax' - 'Home' - 'Work' - 'Mobile' - 'Fax' - 'Pager' - 'Modem' - 'Other'"
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: "#/components/schemas/CountryCodeSourceType"
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: "#/components/schemas/TellerTrnDataType"
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: "#/components/schemas/TrnConductorDataType"
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    OvrdExceptionDataType:
+      title: OvrdExceptionDataType
+      type: object
+      properties:
+        OverrideException:
+          type: array
+          description: List of the exceptions that can be overridden.
+          items:
+            $ref: "#/components/schemas/OverrideExceptionType"
+      description: Details of the exceptions that can be manually acknowledged by the client.
+    OverrideExceptionType:
+      title: OverrideExceptionType
+      type: object
+      properties:
+        SubjectRole:
+          type: string
+          description: Role of the subject who is overriding the exception.
+        SubjectIdent:
+          maxLength: 36
+          type: string
+          description: Subject identification value to identify the subject who  is overriding the exception.
+        OvrdExceptionCode:
+          maxLength: 40
+          type: string
+          description: Override exception code to be overridden. This can be the  ServerStatusCode from the Message Status section.
+        OvrdElement:
+          $ref: "#/components/schemas/OvrdElementType"
+    OvrdElementType:
+      title: OvrdElementType
+      type: object
+      description: Information about the elements that corresponds to the override exception code.
+      allOf:
+      - $ref: "#/components/schemas/SubjectElementType"
+      - type: object
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: "Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. "
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: "Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden."
+        Value:
+          maxLength: 256
+          type: string
+          description: "Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data."
+      description: Information about the subject element.
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: "#/components/schemas/SeverityType"
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: "#/components/schemas/SubjectElementType"
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: "#/components/schemas/SeverityType"
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: "Authorization level required to override, such as Teller and Supervisor."
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: "#/components/schemas/SubjectElementType"
+        ContentHTML:
+          type: string
+          description: "Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures."
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: "#/components/schemas/AdditionalStatusType"
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+  examples:
+    AddDistribution_Internal_Transfer:
+      value:
+        AcctDistributionInfo:
+          AcctKeys:
+            AcctId: 7000189
+            AcctType: CDA
+          EffDt: 2025-07-20
+          CurAmt:
+            Amt: 500.33
+          DistributionMethod: TransferToAcct
+          PenaltyWaiveOption: Waive
+          TransferToAcctKeys:
+            AcctId: 400892
+            AcctType: DDA
+    DistributionInqRs_Internal_Transfer:
+      value:
+        Status:
+          StatusCode: 0
+          StatusDesc: Success
+          Severity: Info
+          SvcProviderName: Provider
+        AcctDistributionRec:
+          AcctDistributionKeys:
+            AcctKeys:
+              AcctId: 7000189
+              AcctType: CDA
+            AcctDistributionIdent: 2025-09-01
+          AcctDistributionInfo:
+            EffDt: 2025-09-01
+            CurAmt:
+              Amt: 9000
+              CurCode:
+                CurCodeType: ISO4217-Alpha
+                CurCodeValue: USD
+            DistributionMethod: TransferToAcct
+            PenaltyWaiveOption: Waive
+            TransferToAcctKeys:
+              AcctId: 400892
+              AcctType: DDA
+            CreatedDt: 2025-04-20T01:01:01.000-05:00
+            MaintBy: BJohanson
+            MaintDt: 2025-04-23T01:01:01.000-05:00
+          AcctDistributionStatus:
+            AcctDistributionStatusCode: Valid
+            EffDt: 2025-04-20T01:01:01.000-05:00
+    DistributionInqRs_Check:
+      value:
+        Status:
+          StatusCode: 0
+          StatusDesc: Success
+          Severity: Info
+          SvcProviderName: Provider
+        AcctDistributionRec:
+          AcctDistributionKeys:
+            AcctKeys:
+              AcctId: 70090001
+              AcctType: CDA
+            AcctDistributionIdent: 2025-11-01
+          AcctDistributionInfo:
+            EffDt: 2025-11-01
+            CurAmt:
+              Amt: 25000
+              CurCode:
+                CurCodeType: ISO4217-Alpha
+                CurCodeValue: USD
+            DistributionMethod: Check
+            PenaltyWaiveOption: PenaltyCannotExceedInterest
+            PayToNameId: CU93778991
+            ChkSpecialinstructions: Hold at Branch
+            CreatedDt: 2025-04-20T01:01:01.000-05:00
+            MaintBy: VJSmith
+            MaintDt: 2025-04-23T01:01:01.000-05:00
+          AcctDistributionStatus:
+            AcctDistributionStatusCode: Valid
+            EffDt: 2025-04-20T01:01:01.000-05:00
+    DistributionInqRs_External_Transfer:
+      value:
+        Status:
+          StatusCode: 0
+          StatusDesc: Success
+          Severity: Info
+          SvcProviderName: Provider
+        AcctDistributionRec:
+          AcctDistributionKeys:
+            AcctKeys:
+              AcctId: 7000189
+              AcctType: CDA
+            AcctDistributionIdent: 2025-10-01
+          AcctDistributionInfo:
+            EffDt: 2025-10-01
+            CurAmt:
+              Amt: 11000
+              CurCode:
+                CurCodeType: ISO4217-Alpha
+                CurCodeValue: USD
+            DistributionMethod: ACHXfer
+            PenaltyWaiveOption: None
+            TransferToAcctKeys:
+              AcctId: 400892
+              AcctType: DDA
+              FIIdentType:
+              - RoutingNum
+              FIIdent:
+              - 743829759
+              AcctHolderName: Mr. Gaylord Smith
+              ACHNoticeInd: false
+            CreatedDt: 2025-04-20T01:01:01.000-05:00
+            MaintBy: CHarrelson
+            MaintDt: 2025-04-23T01:01:01.000-05:00
+          AcctDistributionStatus:
+            AcctDistributionStatusCode: Valid
+            EffDt: 2025-04-20T01:01:01.000-05:00
+    AddDistribution_External_Transfer:
+      value:
+        AcctDistributionInfo:
+          AcctKeys:
+            AcctId: 811
+            AcctType: CDA
+          EffDt: 2025-06-20
+          CurAmt:
+            Amt: 2000
+          DistributionMethod: ACHXfer
+          PenaltyWaiveOption: None
+          TransferToAcctKeys:
+            AcctId: 8920029
+            AcctType: SDA
+            FIIdentType:
+            - RoutingNum
+            FIIdent:
+            - 743829759
+            AcctHolderName: Mr. Gaylord Smith
+            ACHNoticeInd: false
+    AddDistribution_External_Transfer_OneUp:
+      value:
+        AcctDistributionInfo:
+          AcctKeys:
+            AcctId: 911
+            AcctType: CDA
+          EffDt: 2025-06-20
+          CurAmt:
+            Amt: 23000
+          DistributionMethod: ACHXfer
+          TransferToAcctKeys:
+            AcctId: 8920029
+            AcctType: SDA
+            FIIdentType:
+            - RoutingNum
+            FIIdent:
+            - 743829759
+            AcctHolderName: Mr. Gaylord Smith
+            ACHNoticeInd: false
+            TrnCode: 54
+    AddDistribution_Check:
+      value:
+        AcctDistributionInfo:
+          AcctKeys:
+            AcctId: 81191
+            AcctType: CDA
+          EffDt: 2025-06-29
+          DistributionMethod: Check
+          PenaltyWaiveOption: PenaltyCannotExceedInterest
+          PayToNameId: CU937210AG
+          ChkSpecialinstructions: Mail to Seasonal Address
+    DistributionListInqRq:
+      value:
+        RecCtrlIn:
+          MaxRecLimit: 5
+        AcctDistributionListSel:
+          AcctKeys:
+            AcctId: 392000
+            AcctType: CDA
+    AcctDistributionInqRq:
+      value:
+        AcctDistributionSel:
+          AcctDistributionKeys:
+            AcctKeys:
+              AcctId: 392000
+              AcctType: CDA
+            AcctDistributionIdent: 2025-07-01
+    AcctDistributionDelRq:
+      value:
+        AcctDistributionKeys:
+          AcctKeys:
+            AcctId: 392000
+            AcctType: CDA
+          AcctDistributionIdent: 2025-07-01
+    AddDistribution_Check_OneUp:
+      value:
+        AcctDistributionInfo:
+          AcctKeys:
+            AcctId: 811
+            AcctType: CDA
+          EffDt: 2025-06-20
+          CurAmt:
+            Amt: 5000
+          DistributionMethod: Check
+          PenaltyWaiveOption: PenaltyCannotExceedInterest
+          PayToOtherName:
+            FullName: Raymond A. Smith
+            Addr1: 401 Freedom Ave
+            Addr2: Apt
+            Addr3: Lake Mary
+            Addr4: "FL, 32746"
+            Addr5: United States of America
+            ChkSpecialinstructions: Mail to Po Box
+            ChkMemoDesc: Additional Income-June
+            ChkRemitterCode: 21

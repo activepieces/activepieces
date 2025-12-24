@@ -1,0 +1,4430 @@
+---
+openapi: 3.0.0
+info:
+  title: Disclosure Service
+  description: The Disclosure service supports methods managing electronic signing of disclosure agreements (also known as term and conditions agreements).
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: /
+paths:
+  /disclosures/{disclosureID}:
+    get:
+      tags:
+      - Get Disclosure
+      summary: Disclosure Inquiry by Disclosure ID
+      description: This method retrieves customer acceptance of terms and conditions or disclosure by using the Disclosure ID.
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: disclosureID
+        in: path
+        description: id of an item in disclosures (DiscRec)
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: partyId
+        in: query
+        description: Party Identifier.
+        required: true
+        style: form
+        explode: true
+        schema:
+          maxLength: 36
+          type: string
+      - name: $select
+        in: query
+        description: The $select system query option requests that the service return only the properties explicitly requested by the client. The service MUST return the specified content, and MAY choose to return additional information.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureInqRsType'
+  /disclosures:
+    put:
+      tags:
+      - Update Disclosure
+      summary: Disclosure Mod
+      description: This method modifies customer acceptance of terms and conditions or disclosure.
+      operationId: disclosureMod
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisclosureModRqType'
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureModRsType'
+        default:
+          description: See HTTP Status Code Standards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureModRsType'
+    post:
+      tags:
+      - Add Disclosure
+      summary: Disclosure Add
+      description: This method adds customer acceptance of terms and conditions or disclosure.
+      operationId: disclosureAdd
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisclosureAddRqType'
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureAddRsType'
+        default:
+          description: See HTTP Status Code Standards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureAddRsType'
+  /disclosures/secured:
+    post:
+      tags:
+      - Get Disclosure
+      summary: Disclosure Inquiry Secured
+      description: This service operation retrieves customer acceptance of terms and conditions or disclosure.
+      operationId: getDisclosuresSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DisclosureInqRqType'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DisclosureInqRsType'
+components:
+  schemas:
+    AddrFormatTypeType:
+      title: AddrFormatTypeType
+      type: string
+      enum:
+      - Label
+      - Parsed
+    AddrTypeType:
+      title: AddrTypeType
+      type: string
+      enum:
+      - Primary
+      - PrimaryPending
+      - Secondary
+      - Seasonal
+      - Previous
+      - Physical
+    APYRecurTypeType:
+      title: APYRecurTypeType
+      type: string
+      enum:
+      - IntPmtFrequency
+      - Monthly
+      - Quarterly
+      - SemiYearly
+      - Yearly
+      - Weekly
+      - BiWeekly
+      - Maturity
+    CurCodeTypeType:
+      title: CurCodeTypeType
+      type: string
+      enum:
+      - ISO4217-Alpha
+      - ISO4217-Numeric
+    DayOfMonthType:
+      title: DayOfMonthType
+      type: integer
+      example: 1
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 26
+      - 27
+      - 28
+      - 29
+      - 30
+      - 31
+    DayOfWeekType:
+      title: DayOfWeekType
+      type: string
+      enum:
+      - Monday
+      - Tuesday
+      - Wednesday
+      - Thursday
+      - Friday
+      - Saturday
+      - Sunday
+    DisclosureStatusCodeType:
+      title: DisclosureStatusCodeType
+      type: string
+      enum:
+      - Valid
+      - Deleted
+    EarlyPayoffTierTypeType:
+      title: EarlyPayoffTierTypeType
+      type: string
+      enum:
+      - Months
+      - PmtsPaid
+    EarningMethodType:
+      title: EarningMethodType
+      type: string
+      enum:
+      - StraightLine
+      - SameAsInterest
+      - Rule78th
+      - Actuarial
+      - Accrual
+      - Amortize
+      - Cash
+      - None
+      - NotUsed
+      - Discounted
+    FeeBillingOptionType:
+      title: FeeBillingOptionType
+      type: string
+      enum:
+      - Bill
+      - CompoundToBal
+    FeeCalcOptionType:
+      title: FeeCalcOptionType
+      type: string
+      enum:
+      - FlatFee
+      - None
+      - NoAssess
+      - PctNoteAmt
+      - PctPrincipalBal
+      - PctAvgBal
+      - PctAvailBal
+      - PctIntDue
+      - PctPrincipalDue
+      - PctAllPmtPastDue
+      - PctPrincipalIntPmtPastDue
+      - PctPrincipalIntEscrowPmtPastDue
+      - PctAdvanceAmt
+      - PctUnusedAvailBal
+      - PctUnusedLimit
+      - UnusedLimit360
+      - UnusedLimit365
+      - CalcProgram
+      - PctNoteAmtPlusIns
+      - PctPrincNoteAmt
+      - PctSchedAmt
+      - PctPrincipalIntOldestPmtPastDue
+      - PctPrincipalIntEscrowOldestPmtPastDue
+      - PctPrincipalIntEscrowRecentPmtPastDue
+      - AddOnRule78
+      - PctPrincipalPmtFreq
+      - PctPrincipalBalOldestPmtPastDue
+      - PctPrincipalBalRecontPmtPastDue
+      - PctPrincipalIntRecentPmtPastDue
+      - PctMaxCredit365
+      - PctAvgPrincipalBal365
+      - PctAvgAvailBal365
+      - PctMaxCredit360
+      - PctAvgPrincipalBal360
+      - FlatFeeBalGT0
+      - FlatFeeAvgBalGT0
+      - PctAvgAvailBal360-Current
+      - PctAvgAvailBal365-Original
+      - PctAvgAvailBal360-Original
+      - BalanceinExcess365
+      - BalanceTotal365
+      - BalanceinExcess360
+      - BalanceTotal360
+      - PctBalanceinExcess
+      - PctBalanceTotal
+      - FlatFeeBalanceinExcess
+      - SBARecoupment
+      - SBACurtailment
+    HandlingCodeOptionType:
+      title: HandlingCodeOptionType
+      type: string
+      enum:
+      - StatementsNoticesChecks
+      - Statements
+      - StatementsNotices
+      - StatementsChecks
+      - Notices
+      - NoticesChecks
+      - Checks
+      - DoNotPrint
+      - UsePortfolio
+      - UseDefault
+    MarginTypeType:
+      title: MarginTypeType
+      type: string
+      enum:
+      - Variance
+      - Factor
+    MaturityIntRecurTypeType:
+      title: MaturityIntRecurTypeType
+      type: string
+      enum:
+      - Daily
+      - Maturity
+    PartyIdentTypeType:
+      title: PartyIdentTypeType
+      type: string
+      enum:
+      - TaxIdent
+      - IBId
+      - Name
+      - MemberNum
+      - OrgNum
+      - PersonNum
+    PassbkTrnTypeType:
+      title: PassbkTrnTypeType
+      type: string
+      enum:
+      - Debit
+      - Credit
+      - Interest
+    RateChangeRecurTypeType:
+      title: RateChangeRecurTypeType
+      type: string
+      enum:
+      - Daily
+      - Maturity
+      - BiWeekly
+      - Monthly
+      - BiMonthly
+      - TwiceMonthly
+      - Renewal
+      - SemiMonthly
+      - Weekly
+      - Yearly
+      - SemiYearly
+      - Quarterly
+      - InterestCycle
+      - DepositRateChg
+      - None
+      - Debit
+      - Stmt
+      - StmtDebit
+    RegDDAPYCodeType:
+      title: RegDDAPYCodeType
+      type: string
+      enum:
+      - GreaterThan
+      - LessOrEqualTo
+      - None
+    RelationshipRoleType:
+      title: RelationshipRoleType
+      type: string
+      enum:
+      - Officer
+      - SecondOfficer
+      - ThirdOfficer
+      - FourthOfficer
+      - ReferralOfficer
+    RetentionOptionType:
+      title: RetentionOptionType
+      type: string
+      enum:
+      - None
+      - DoNotRetain
+      - Retain
+    RoundingOptionType:
+      title: RoundingOptionType
+      type: string
+      enum:
+      - RoundUp
+      - RoundDown
+      - RoundNearest
+      - None
+      - NoOverride
+    SortCriterionTypeType:
+      title: SortCriterionTypeType
+      type: string
+      enum:
+      - TrnNum
+      - ChkNum
+      - TrnIdent
+      - TrnCode
+      - PostedDt
+      - EffDt
+      - TrnAmt
+      - TrnDesc
+      - DisclosureIdent
+      - DateTime
+    SortOrderType:
+      title: SortOrderType
+      type: string
+      enum:
+      - Ascending
+      - Descending
+    TaxIdentTypeType:
+      title: TaxIdentTypeType
+      type: string
+      enum:
+      - None
+      - SSN
+      - EIN
+      - Foreign
+      - ITIN
+      - ATIN
+      - Other
+    TermUnitsType:
+      title: TermUnitsType
+      type: string
+      enum:
+      - Days
+      - Weeks
+      - Months
+      - Years
+      - Indefinite
+    TranHistoryOptionType:
+      title: TranHistoryOptionType
+      type: string
+      enum:
+      - None
+      - DoNotRetain
+      - Retain
+    UnitsType:
+      title: UnitsType
+      type: string
+      enum:
+      - Days
+      - Months
+    UpdateContactCodeType:
+      title: UpdateContactCodeType
+      type: string
+      enum:
+      - Party
+      - Account
+      - All
+      - None
+    VarianceFactorTypeType:
+      title: VarianceFactorTypeType
+      type: string
+      enum:
+      - None
+      - Variance
+      - Factor
+      - Factor+Variance
+      - VarianceXFactor
+    WithholdingTypeType:
+      title: WithholdingTypeType
+      type: string
+      enum:
+      - FederalTax
+      - StateTax
+    AccessLevelDataType:
+      title: AccessLevelDataType
+      type: object
+      properties:
+        AccessLevelType:
+          maxLength: 80
+          type: string
+          description: Access Level Type.
+        AccessLevelCode:
+          maxLength: 80
+          type: string
+          description: Access Level Code.
+    RecurRuleType:
+      title: RecurRuleType
+      type: object
+      properties:
+        RecurType:
+          type: string
+          description: Recurrence Type. Indicates the pattern of recurrence.
+        RecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Recurrence Type Enumeration Description.
+        RecurInterval:
+          type: integer
+          description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle.'
+          format: int64
+        RecurInstance:
+          type: integer
+          description: Recurrent Instance. Numeric value representing the instance of the days(s) of the week of recurrence, i.e. Second Wednesday of the month, First Monday of the year. DayOfWeek must also be provided.
+          format: int64
+        DayOfWeek:
+          $ref: '#/components/schemas/DayOfWeekType'
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        SecondDayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+        RecurStartDate:
+          type: string
+          description: Recurrence Start Date.
+          format: date
+        Occurrences:
+          type: integer
+          description: Occurrences.
+          format: int64
+        RecurEndDate:
+          type: string
+          description: Recurrence End Date.
+          format: date
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        AdjDays:
+          type: integer
+          description: Adjustment Days. Indicates the number of days to adjust a value (review a rate or perform interest accrual) after an event occurs (see AdjDaysBasis).
+          format: int64
+        AdjDaysBasis:
+          type: string
+          description: 'Adjustment Days Basis. Used in combination with Adjustment Days (AdjDays). It indicates a basis for an adjustment such as: Due Date (DueDt), Statement Date (StmtDt).'
+    AccrualFrequencyType:
+      title: AccrualFrequencyType
+      allOf:
+      - $ref: '#/components/schemas/RecurRuleType'
+      - type: object
+    CurCodeType:
+      title: CurCodeType
+      required:
+      - CurCodeValue
+      type: object
+      properties:
+        CurCodeType:
+          $ref: '#/components/schemas/CurCodeTypeType'
+        CurCodeTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Currency Code Type Enumeration Description.
+        CurCodeValue:
+          maxLength: 80
+          type: string
+          description: Currency Code Value. Indicates the Currency Code Value within the CurCodeType table specified.
+    CurAmtType:
+      title: CurAmtType
+      type: object
+      properties:
+        Amt:
+          type: number
+          description: Amount.
+        CurCode:
+          $ref: '#/components/schemas/CurCodeType'
+    AcctBalType:
+      title: AcctBalType
+      required:
+      - BalType
+      - CurAmt
+      type: object
+      properties:
+        BalType:
+          type: string
+          description: Balance Type.
+        BalTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Balance Type Enumeration Description.
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        Desc:
+          maxLength: 100
+          type: string
+          description: Description.
+    BaseKeysType:
+      title: BaseKeysType
+      type: string
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider which indicates the location of the Service Provider that gave the error.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    CardIdentType:
+      title: CardIdentType
+      type: object
+      properties:
+        CardIdentType:
+          type: string
+          description: 'Card Identification Type. Valid values include: PORT.'
+        CardIdentValue:
+          maxLength: 36
+          type: string
+          description: Card Identification Value.
+    CardKeysType:
+      title: CardKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          ISOCode:
+            maxLength: 80
+            type: string
+            description: ISO Card Code. Some systems like Precision instead of ISO Number they use a code to refer to the ISO Number of the card.
+          CardNum:
+            maxLength: 32
+            type: string
+            description: Card Number. This number does not include the ISO component of the card identification.
+          CardId:
+            maxLength: 36
+            type: string
+            description: Card Identifier. Uniquely identifies a card held at a financial institution (this is the card number as it appears on the card).
+          CardSeqNum:
+            maxLength: 3
+            type: string
+            description: Card Sequence Number. Typically refers to the member number (if applicable).
+          CardIdent:
+            $ref: '#/components/schemas/CardIdentType'
+    AcctIdentType:
+      title: AcctIdentType
+      type: object
+      properties:
+        AcctIdentType:
+          type: string
+          description: 'Account Identification Type. Valid values include: AcctNum, AliasAcct, PORT, etc.'
+        AcctIdentValue:
+          maxLength: 36
+          type: string
+          description: Account Identification Value. Contains the value of the Account Identifier.
+    AcctKeysType:
+      title: AcctKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          AcctId:
+            maxLength: 36
+            type: string
+            description: Account Identifier. Uniquely identifies an account held at a financial institution.
+          SubAcctId:
+            maxLength: 36
+            type: string
+            description: Sub Account Identifier.
+          AcctType:
+            type: string
+            description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+          CardKeys:
+            type: array
+            description: Card Keys.  Contains data that describes the key of the Card record.
+            items:
+              $ref: '#/components/schemas/CardKeysType'
+          AcctIdent:
+            type: array
+            description: Account Identification. Other account identification used as part of the Account object key in addition to the Account Identifier (AcctId).
+            items:
+              $ref: '#/components/schemas/AcctIdentType'
+          CurCode:
+            type: array
+            description: Currency Code.
+            items:
+              $ref: '#/components/schemas/CurCodeType'
+          FIIdentType:
+            type: array
+            description: Financial Institution Identification Type.
+            items:
+              type: object
+          FIIdent:
+            maxLength: 34
+            type: array
+            description: Financial Institution Identification.
+            items:
+              maxLength: 34
+              type: string
+          BranchIdent:
+            maxLength: 22
+            type: array
+            description: Branch Identification. Other identification used as part of the Branch object key.
+            items:
+              maxLength: 22
+              type: string
+    AcctPrefType:
+      title: AcctPrefType
+      type: object
+      properties:
+        Language:
+          maxLength: 17
+          type: string
+          description: Language. The value of Language follows the definition of language identifiers in ISO-639-1
+        LanguageEnumDesc:
+          maxLength: 80
+          type: string
+          description: Language Enumeration Description.
+        CurCode:
+          $ref: '#/components/schemas/CurCodeType'
+      description: '[FSV]Account Preferences.'
+    InitialAmountType:
+      title: InitialAmountType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    BalanceAtClosingAmtType:
+      title: BalanceAtClosingAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    TermType:
+      title: TermType
+      required:
+      - TermUnits
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        TermUnits:
+          $ref: '#/components/schemas/TermUnitsType'
+        TermUnitsEnumDesc:
+          maxLength: 80
+          type: string
+          description: Term Units Enumeration Description.
+    FeeCollectedAmtType:
+      title: FeeCollectedAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    RefDataType:
+      title: RefDataType
+      required:
+      - RefType
+      type: object
+      properties:
+        RefType:
+          type: string
+          description: Reference Type. Type of reference information used.
+        RefTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Reference Type Enumeration Description.
+        RefIdent:
+          maxLength: 36
+          type: string
+          description: Reference Identifier.  In combination with the reference type identifies the reference data.
+        RefDesc:
+          maxLength: 1024
+          type: string
+          description: Reference Description.
+    DateDataType:
+      title: DateDataType
+      type: object
+      properties:
+        DateType:
+          type: string
+          description: Date Type. Indicates the type of date contained in the Date Value.
+        DateTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Date Type Enumeration Description.
+        DateValue:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Date Value. Contains the value of the date.
+          format: date-time
+        RefData:
+          type: array
+          description: Reference Data.
+          items:
+            $ref: '#/components/schemas/RefDataType'
+    RelationshipMgrType:
+      title: RelationshipMgrType
+      required:
+      - RelationshipMgrIdent
+      type: object
+      properties:
+        RelationshipMgrIdent:
+          maxLength: 36
+          type: string
+          description: Relationship Manager Identifier. Identifies officer/employee of financial institution.
+        RelationshipMgrIdentEnumDesc:
+          maxLength: 80
+          type: string
+          description: Relationship Manager Identifier Enumeration Description.
+        RelationshipRole:
+          $ref: '#/components/schemas/RelationshipRoleType'
+        RelationshipRoleEnumDesc:
+          maxLength: 80
+          type: string
+          description: Relationship Role Enumeration Description.
+    AddtlTitlesType:
+      title: AddtlTitlesType
+      type: object
+      properties:
+        AcctTitleType:
+          maxLength: 80
+          type: string
+          description: Account Title Type.
+        AcctTitle:
+          maxLength: 255
+          type: string
+          description: Account Title.Title on account typically identifies ownership or responsibility for account and manner in which ownership/responsibility is assigned.
+        AcctTitleOption:
+          maxLength: 80
+          type: string
+          description: Account Title Option. Indicates printing options for the Account Title.
+        DBAInd:
+          type: boolean
+          description: Doing Business As Indicator. Adds prefix DBA to the title when selected.
+        AcctTitleOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Title Option Enumeration Description.
+    ClientDefinedDataType:
+      title: ClientDefinedDataType
+      required:
+      - DataIdent
+      type: object
+      properties:
+        DataClassType:
+          type: string
+          description: Data Class Type. Application the data belongs, this is client defined value.
+        DataClassTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Application Enumeration Descipton.
+        DataIdent:
+          maxLength: 36
+          type: string
+          description: Data Identification. Identification of the client defined data item.
+        DataIdentEnumDesc:
+          maxLength: 80
+          type: string
+          description: Data Identifier Enumeration Description.
+        DataType:
+          type: string
+          description: Data Type. Indicates the type of client defined data.
+        DataTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Data Type Enumeration Description.
+        Value:
+          maxLength: 256
+          type: string
+          description: Value string representation of the EFX data value of the element in error. This field is intended to provide a human readable visual hint as to the value in error. It should not be provided for fields that cannot be represented as a string (i.e., binary data).
+        DataLength:
+          type: integer
+          description: Data Length. The length of the client defined data.
+          format: int64
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        Desc:
+          maxLength: 100
+          type: string
+          description: Description.
+        RequiredFlag:
+          type: boolean
+          description: Required Flag.Indicates if the a data value is required for the client defined data.
+        SearchFlag:
+          type: boolean
+          description: Search Flag. Indicates if the data can be searched.
+        GroupNum:
+          maxLength: 20
+          type: string
+          description: Group Number. Indicates if the data belongs in a group.
+        RestrictedInd:
+          type: boolean
+          description: Restricted Indicator. Indicates whether the account information is restricted for view by the requester.
+        RestrictedDesc:
+          maxLength: 80
+          type: string
+          description: Restricted Description. Description of the reason for the account to be restricted.
+    StmtTimeFrameType:
+      title: StmtTimeFrameType
+      allOf:
+      - $ref: '#/components/schemas/RecurRuleType'
+      - type: object
+        properties:
+          AlternateStmtInd:
+            type: boolean
+            description: Alternate Statement Indicator. If the information of the statement time frame refers to the alternate statement cycle  the value is set to true.
+          AlternateStmtOption:
+            type: string
+            description: Alternate Statement Option.
+    StmtDisclosureDataType:
+      title: StmtDisclosureDataType
+      type: object
+      properties:
+        StmtDisclosureType:
+          maxLength: 80
+          type: string
+          description: Statement Disclosure Type.
+        StmtDisclosureTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Statement Disclosure Type Enumeration Description.
+        StmtDisclosureInd:
+          type: boolean
+          description: Statement Disclosure Indicator.
+    StmtOptionsType:
+      title: StmtOptionsType
+      type: object
+      properties:
+        StmtOptionType:
+          type: string
+          description: Statement Option Type.
+        StmtOptionValue:
+          type: string
+          description: Statement Option Value.
+    AcctStmtDataType:
+      title: AcctStmtDataType
+      type: object
+      properties:
+        StmtTimeFrame:
+          type: array
+          description: Statement Time Frame.
+          items:
+            $ref: '#/components/schemas/StmtTimeFrameType'
+        NextStmtDt:
+          type: string
+          description: Next Statement Date.
+          format: date
+        LastStmtDt:
+          type: string
+          description: Last Statement Date.
+          format: date
+        StmtPrepCode:
+          maxLength: 80
+          type: string
+          description: Statement Preparation Code.
+        StmtPrepCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Statement Preparation Enum Description.
+        CombinedStmtIdent:
+          maxLength: 36
+          type: string
+          description: Combined Statement Identification.
+        UseSharedAcctForCombinedStmt:
+          type: boolean
+          description: Use Shared Account for Combined Statement. For Credit Unions indicates whether the primary statement lead account should be set to the tax owner share account. In DNA the Combined Statement Ident is the primary statement lead account.
+        CombinedStmtCode:
+          type: string
+          description: Combined Statement Code. Primary and Secondary.
+        CombinedStmtCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Combined Statement Code Enum Description.
+        AdditionalStmtCount:
+          type: integer
+          description: Additional Statement Count.
+          format: int64
+        SpecialStmtCode:
+          type: string
+          description: 'Special Statement Code. Used to indicate a special statement drop. Valid values: FinalStmt, Transcript, None.'
+        SpecialStmtCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Special Statement Code Enumeration Description.
+        StmtFormat:
+          maxLength: 80
+          type: string
+          description: Statement Format.  Identifies statement detail and balance options, daily summary and other values.
+        StmtFormatEnumDesc:
+          maxLength: 80
+          type: string
+          description: Statement Format Enumeration Description.
+        AnalysisStmtFormat:
+          maxLength: 80
+          type: string
+          description: Analysis Statement Format. Code that indicates the analysis statement format for this account
+        AnalysisStmtFormatEnumDesc:
+          maxLength: 80
+          type: string
+          description: Analysis Statement Format Enumeration Description.
+        StmtTruncationOption:
+          maxLength: 80
+          type: string
+          description: Statement Truncation Option.  Statement Truncation Option indicates whether physical items are enclosed with an account statement.
+        StmtTruncationOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Statement Truncation Option Enumeration Description.
+        MailCode:
+          maxLength: 80
+          type: string
+          description: Mail Code. Code use to sort statements.
+        MailCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Mail Code Enumeration Description.
+        StmtRemarks:
+          maxLength: 50
+          type: string
+          description: Statement Remarks. User-defined text to appear on a user-defined statement.
+        NoActivityStmtOption:
+          maxLength: 80
+          type: string
+          description: No Activity Statement Option. Indicates whether to prepare a “no activity” statement if the account has had no activity since the previous statement. Activity is defined as debit, credit, interest, and/or service charge transactions.
+        NoActivityStmtOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: No Activity Stmt Option Enumeration Description.
+        PrintRegEStmt:
+          maxLength: 80
+          type: string
+          description: Regulation DD APY Code. Code that identifies whether Regulation DD disclosures are required for this account, and if so, which APY calculation is to be used to determine the APY for periodic statements. The code compares the statement cycle to the interest cycle.
+        PrintRegEStmtEnumDesc:
+          maxLength: 80
+          type: string
+          description: Print Reg E Statement Enumeration Description.
+        RegDDAPYCode:
+          $ref: '#/components/schemas/RegDDAPYCodeType'
+        RegDDAPYCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Regulation DD APY Code Enumeration Description.
+        StmtDisclosureData:
+          $ref: '#/components/schemas/StmtDisclosureDataType'
+        StmtGroup:
+          maxLength: 80
+          type: string
+          description: Statement Group.
+        StmtOptions:
+          type: array
+          description: Statement  Options.
+          items:
+            $ref: '#/components/schemas/StmtOptionsType'
+    NoticeDataType:
+      title: NoticeDataType
+      type: object
+      properties:
+        NoticeType:
+          type: string
+          description: Account Notice Type.
+        NoticeTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Notice Type Enumeration Description.
+        NoticeOption:
+          type: string
+          description: Notice Option.
+        NoticeOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Notice Option Enumeration Description.
+        HandlingCode:
+          maxLength: 80
+          type: string
+          description: Handling Code .Indicates special handling of notification and statement forms.
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        NoticeRemarks:
+          maxLength: 50
+          type: string
+          description: Notice Remarks. User-defined text to appear on a user-defined notice.
+        GenLastUpDtInd:
+          type: boolean
+          description: Generated Last Update Indicator.
+    LowCurAmtType:
+      title: LowCurAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    HighCurAmtType:
+      title: HighCurAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    RateMatrixTierType:
+      title: RateMatrixTierType
+      type: object
+      properties:
+        Tier:
+          maxLength: 32
+          type: string
+          description: Tier.
+        LowCurAmt:
+          $ref: '#/components/schemas/LowCurAmtType'
+        HighCurAmt:
+          $ref: '#/components/schemas/HighCurAmtType'
+        Term:
+          $ref: '#/components/schemas/TermType'
+        Rate:
+          type: number
+          description: Rate.
+        RateIndex:
+          type: integer
+          description: Rate Index. Identifies a rate value.
+          format: int64
+        RateIndexEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Index Enumeration Description.
+        MarginType:
+          $ref: '#/components/schemas/MarginTypeType'
+        MarginTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Margin Type Enumeration Description.
+        Margin:
+          type: number
+          description: Margin. Percentage applied to BasedOnValue to calculate interest rate. For example, the BasedOnValue is the Prime rate, a percentage is added to/subtracted from the prime rate.
+        IntAPY:
+          type: number
+          description: Interest APY.
+        LowIntAPY:
+          type: number
+          description: Low Interest APY.
+        HighIntAPY:
+          type: number
+          description: High Interest APY.
+        IntAPR:
+          type: number
+          description: Interest APR.
+    CapFrequencyType:
+      title: CapFrequencyType
+      allOf:
+      - $ref: '#/components/schemas/RecurRuleType'
+      - type: object
+    BalCutOffDataType:
+      title: BalCutOffDataType
+      type: object
+      properties:
+        BalCutOffType:
+          type: string
+          description: Balance CutOff Balance Type.  The Balance Cutoff Type indicates the account balance that is compared with the Balance CutOff Amount.
+        BalCutOffTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Balance CutOff Balance Type Enumeration Description.
+        BalCutOffAmt:
+          type: number
+          description: Balance CutOff Amount. The Balance Cutoff Amount indicates the balance an account must attain on its interest cycle date to be paid interest for the period.
+    SplitRateDataType:
+      title: SplitRateDataType
+      type: object
+      properties:
+        SplitAmt:
+          type: integer
+          description: Split Amount. Is the principal balance cutoff where the loan's interest rate changes.
+          format: int64
+        OverRate:
+          type: number
+          description: Over Rate. Interest rate that is applied to the principal balance portion that exceeds the split amount.
+        UnderRate:
+          type: number
+          description: Under Rate. Interest rate that is applied to the principal balance portion below or equal to the split amount.
+    IntRateDataType:
+      title: IntRateDataType
+      type: object
+      properties:
+        RateMatrixTier:
+          type: array
+          description: Rate Matrix Tier. Identifies one or more rates applicable to the product. Each occurrence (tier) contains a rate applicable to the product. A tier rate is based on balance, term of account, both, or neither. When the tier is based on neither balance or term, there is typically only one tier, therefore one rate, for the product.
+          items:
+            $ref: '#/components/schemas/RateMatrixTierType'
+        BasedOnCode:
+          maxLength: 80
+          type: string
+          description: |-
+            Based On Code.Source of interest rate which can be used alone or with additional factors that, when combined, calculate an interest rate.
+            .
+        BasedOnCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Based On Code Enumeration Description.
+        BasedOnValue:
+          type: number
+          description: |-
+            Based On Value. The value of the BasedOnCode at the time of the request. For example; BasedOnCode is Prime, this is the value of the Prime rate at the time the request is made
+            .
+        AccrualFrequency:
+          $ref: '#/components/schemas/AccrualFrequencyType'
+        APYRecurType:
+          $ref: '#/components/schemas/APYRecurTypeType'
+        AccrualMethod:
+          type: string
+          description: 'Accrual Method. For example: Daily, Simple, Continuous.'
+        AccrualMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Accrual Method Enumeration Description.
+        AccrualCode:
+          maxLength: 80
+          type: string
+          description: Accrual Code. Indicates additional instructions related to the method of accrual interest on the account.
+        AccrualCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Accrual Code Enumeration Description.
+        AccrualOnBalance:
+          type: string
+          description: Accrual On Balance. Identifies the type of amount used for calculate interest.
+        AccrualOnBalanceEnumDesc:
+          maxLength: 80
+          type: string
+          description: Accrual On Balance Enumeration Description.
+        DailyAccrual:
+          type: string
+          description: 'Daily Accrual. Indicates how ''daily'' is determined when interest is accrued on a daily basis. Valid values: Standard360, Actual365, Actual366.'
+        DailyAccrualEnumDesc:
+          maxLength: 80
+          type: string
+          description: Daily Accrual Daily Accrual.
+        DailyAccrualFactor:
+          type: number
+          description: Daily Accrual Factor.
+        MinimumInterest:
+          type: number
+          description: Minimum Interest. For Loan Products this is the minimum amount that must be repaid to the account before a payoff may occurr.
+        CapFrequency:
+          $ref: '#/components/schemas/CapFrequencyType'
+        CompoundInd:
+          type: boolean
+          description: Compounding Indicator.
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+          format: date-time
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        TierType:
+          type: string
+          description: Tier Types. Indicates if the tier uses whole tier balance, split tier balance or dynamic tier balance methods.
+        TierTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tier Types Enumeration Description.
+        TierAmtType:
+          type: string
+          description: Tier Amount Type.Identifies the type of amount used in the tier.
+        TierAmtTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tier Amount Type Enumeration Description
+        BalCutOffData:
+          $ref: '#/components/schemas/BalCutOffDataType'
+        SplitRateData:
+          $ref: '#/components/schemas/SplitRateDataType'
+        IntRateCalcOption:
+          type: string
+          description: Interest Rate Calculation Option. Indicates whether the interest rate should be calculated at the time of the first disbursement or when the loan account is opened.
+    MaturityIntCalcDataType:
+      title: MaturityIntCalcDataType
+      type: object
+      properties:
+        MaturityIntRateType:
+          type: string
+          description: Maturity Interest Rate Type. Indicates the type of rate to use to accrue interest after maturity.
+        MaturityIntRateTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Maturity Interest Rate Type Enumeration Description.
+        MaturityIntRate:
+          type: number
+          description: Maturity Interest Rate. Value of the Interest Rate that applies after maturity.
+        MaturityIntRecurType:
+          $ref: '#/components/schemas/MaturityIntRecurTypeType'
+        MaturityIntRecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Maturity Interest Recurrency Type. Indicates the length of time the calculation of after maturity interest must be performed.
+        MaturityIntInterval:
+          type: integer
+          description: 'Maturity Interest Calculation Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences.'
+          format: int64
+    PromotionalRateType:
+      title: PromotionalRateType
+      type: object
+      properties:
+        PromotionalRateInd:
+          type: boolean
+          description: Promotional Rate Indicator. Provides information on whether the promotional rate is active or not.
+        StartDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Start Date.
+          format: date-time
+        EndDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: End Date.
+          format: date-time
+        PromoDays:
+          type: integer
+          description: Number of Days of the Promotional Rate.
+          format: int64
+        MarginType:
+          $ref: '#/components/schemas/MarginTypeType'
+        MarginTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Margin Type Enumeration Description.
+        Margin:
+          type: number
+          description: Margin. Percentage applied to BasedOnValue to calculate interest rate. For example, the BasedOnValue is the Prime rate, a percentage is added to/subtracted from the prime rate.
+    StepRateType:
+      title: StepRateType
+      type: object
+      properties:
+        Step:
+          maxLength: 3
+          type: string
+          description: Step.
+        Rate:
+          type: number
+          description: Rate.
+    PendingRateType:
+      title: PendingRateType
+      type: object
+      properties:
+        BasedOnValue:
+          type: number
+          description: |-
+            Based On Value. The value of the BasedOnCode at the time of the request. For example; BasedOnCode is Prime, this is the value of the Prime rate at the time the request is made
+            .
+        Rate:
+          type: number
+          description: Rate.
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+          format: date-time
+    RateChangeRangeMaxMinType:
+      title: RateChangeRangeMaxMinType
+      type: object
+      properties:
+        RateChangeRange:
+          type: string
+          description: Change Range Maximum and Minimum. Used for systems that define min and maxium up and down rate changes.
+        MinRateChange:
+          type: number
+          description: Minimum Range Change. Minimum amount that the interest rate must change per review period before a rate change is allowed.
+        MaxRateChange:
+          type: number
+          description: Maximum Rate Change. Maximum amount that the interest rate can change per review period.
+    RateChangeDataType:
+      title: RateChangeDataType
+      type: object
+      properties:
+        ReviewPlanIdent:
+          maxLength: 36
+          type: string
+          description: Rate Change Identifier.
+        RateChangeControl:
+          type: string
+          description: 'Interest Rate Change Control. Used to indicate the type of interest rate for example: Fixed, Index, IndexReview, StepReview, etc.'
+        RateChangeControlEnumDesc:
+          maxLength: 80
+          type: string
+          description: Interest Change Control Enumeration Description.
+        RateCalcMethod:
+          type: string
+          description: Rate Calculation Method. Code that indicates how the system calculates the interest rate when the rate changes with Index at Review.
+        RateCalcMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Calculation Method Enumeration Description.
+        RatePricingMethod:
+          type: string
+          description: Rate Pricing Method. Indicates whether accounts within this product type use a step table, term/balance table, term/balance/variance matrix, balance/rate table or it uses an interest plan to determine initial rate and rate at renewal.
+        RatePricingMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Method Enumeration Description.
+        RatePricingTable:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Table. Table used when calculating the rate using a step table, term/balance table, term/balance/variance matrix or a balance/rate table.
+        RatePricingTableEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Table Enumeration Description.
+        StepRate:
+          type: array
+          description: Step Rate Table. Contains the collection of step rates.
+          items:
+            $ref: '#/components/schemas/StepRateType'
+        RateChangeNbr:
+          type: integer
+          description: Number of Rate Changes per term.
+          format: int64
+        RateChangeIntervalOption:
+          type: string
+          description: Number of Rate Changes Interval Option. Indicates if the number of rate changes applies to the first term only, to each term or is limited to what is specified in the Step Rate Table.
+        BasedOnCode:
+          maxLength: 80
+          type: string
+          description: |-
+            Based On Code.Source of interest rate which can be used alone or with additional factors that, when combined, calculate an interest rate.
+            .
+        BasedOnCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Based On Code Enumeration Description.
+        BasedOnValue:
+          type: number
+          description: |-
+            Based On Value. The value of the BasedOnCode at the time of the request. For example; BasedOnCode is Prime, this is the value of the Prime rate at the time the request is made
+            .
+        VarianceFactorType:
+          $ref: '#/components/schemas/VarianceFactorTypeType'
+        VarianceFactorTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Variance Factor Type Enumeration Description
+        RateFactor:
+          type: number
+          description: Rate Factor. Whole percentage of the related index rate used to calculate rate changes
+        RateVariance:
+          type: number
+          description: Rate Variance. Percentage that the interest rate varies from its related index rate
+        PendingRate:
+          type: array
+          description: Pending Rate.
+          items:
+            $ref: '#/components/schemas/PendingRateType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        IncreaseOnlyInd:
+          type: boolean
+          description: Rate Increase Only Indicator.
+        UseFloorCeilingRateInd:
+          type: boolean
+          description: Use Floor Ceiling Rate Indicator.
+        FloorRate:
+          type: number
+          description: Floor Rate. The numeric value associated with the chosen Accounting Method is the Accounting Value.
+        CeilingRate:
+          type: number
+          description: Ceiling Rate.
+        MinRateChange:
+          type: number
+          description: Minimum Range Change. Minimum amount that the interest rate must change per review period before a rate change is allowed.
+        MaxRateChange:
+          type: number
+          description: Maximum Rate Change. Maximum amount that the interest rate can change per review period.
+        RateChangeRangeMaxMin:
+          type: array
+          description: Change Range Maximum and Minimum. Used for systems that define min and maxium up and down rate changes.
+          items:
+            $ref: '#/components/schemas/RateChangeRangeMaxMinType'
+        MinRateDecreaseLife:
+          type: number
+          description: Minimum Rate Decrease Life. Minimum amount that the interest rate may decrease over the life of the account (a loan for example).
+        MaxRateIncreaseLife:
+          type: number
+          description: Maximum Rate Increase Life. The maximum percent the interest rate may decrease over the life of the account (a loan for example).
+        RoundingOption:
+          $ref: '#/components/schemas/RoundingOptionType'
+        RoundingOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rounding Option Enumeration Description.
+        RoundingFactor:
+          type: number
+          description: Rounding Factor. Used with the RoundingOption to establish the rounding percentage.
+        RateCarryOverOption:
+          type: string
+          description: Carry Over Option. Indicates the method used to handle the interest rate excess or shortage carryover from previous rate review periods.
+        RateCarryOverOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Carry Over Option Enumeration Description.
+        RateCarryOver:
+          type: number
+          description: Rate Carry Over. Amount of interest rate excess or shortage that is carried over from previous rate review periods. This field may contain a positive or negative value, which is cumulative for the life of the loan. The carryover amount is actually recalculated each time the rate changes, but because the previous carryover amount is used in a formula to determine the new absolute rate, the effect is cumulative
+        FixedRateConversionDt:
+          type: string
+          description: |-
+            Fixed Rate Conversion Date.Date on which the customer may convert this
+            loan to a fixed Rate.
+          format: date
+        FixedRateLeadDays:
+          type: integer
+          description: Fixed Rate Lead Days. Number of days prior to the fixed rate conversion date to notify the customer that the loan may be converted to a fixed rate.
+          format: int64
+        RateChangeRecurType:
+          $ref: '#/components/schemas/RateChangeRecurTypeType'
+        RateChangeRecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Change Recurrence Type Enumeration Description.
+        RecurInterval:
+          type: integer
+          description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle.'
+          format: int64
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        LeadDaysOption:
+          type: string
+          description: Lead Days Option.
+        RecurStartDate:
+          type: string
+          description: Recurrence Start Date.
+          format: date
+        Occurrences:
+          type: integer
+          description: Occurrences.
+          format: int64
+        RecurEndDate:
+          type: string
+          description: Recurrence End Date.
+          format: date
+        NextRateChangeDt:
+          type: string
+          description: Next Rate Change Date. Date the next rate adjustment is to performed (by the system).
+          format: date
+        LastRateChangeDt:
+          type: string
+          description: Last Rate Change Date. Date the next rate adjustment was last performed (by the system).
+          format: date
+        PriorRate:
+          type: number
+          description: Prior Rate.
+        TeaserRateInd:
+          type: boolean
+          description: Teaser Rate Indicator. Indicator that identifies whether the loan has a teaser interest rate
+        TeaserRateExpDt:
+          type: string
+          description: Teaser Rate Expiration Date.
+          format: date
+        NoticeDtlOption:
+          maxLength: 80
+          type: string
+          description: Notice Detail Option.
+        NoticeDtlOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Notice Detail Option Enumeration Description.
+    TotalInPeriodType:
+      title: TotalInPeriodType
+      required:
+      - Units
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        Units:
+          $ref: '#/components/schemas/UnitsType'
+        UnitsEnumDesc:
+          maxLength: 80
+          type: string
+          description: Units Enumeration Description.
+    InPeriodType:
+      title: InPeriodType
+      required:
+      - Units
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        Units:
+          $ref: '#/components/schemas/UnitsType'
+        UnitsEnumDesc:
+          maxLength: 80
+          type: string
+          description: Units Enumeration Description.
+    AcctPeriodDataType:
+      title: AcctPeriodDataType
+      required:
+      - AcctAmtType
+      type: object
+      properties:
+        AcctAmtType:
+          type: string
+          description: Account Amount Type.
+        AmtSeqId:
+          maxLength: 10
+          type: string
+          description: Amount Sequence Identifier. Used to sequence multiple occurrences of the same Account Amount Type. For example if multiple AcctAmtType = “Fee” this element would sequence the Fee. E.g. Fee1, Fee2, etc.
+        AcctAmtTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Amount Type Enumeration Description.
+        AcctPeriodType:
+          type: string
+          description: Account Period Type. Indicates the time period for example CTD- Cycle to Date, LTD- Life to Day, PriorMonth, etc.
+        AcctPeriodTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Period Type Enumeration Description.
+        TotalInPeriod:
+          $ref: '#/components/schemas/TotalInPeriodType'
+        InPeriod:
+          $ref: '#/components/schemas/InPeriodType'
+        LastOccurInd:
+          type: boolean
+          description: Last Occurrence Indicator.
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        Amt:
+          type: number
+          description: Amount.
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        Rate:
+          type: number
+          description: Rate.
+        LastOccuranceDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Last Occurrence Date.
+          format: date-time
+        FirstOccuranceDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: First Occurrence Date.
+          format: date-time
+    TranCounterType:
+      title: TranCounterType
+      required:
+      - TranCounterType
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        TranCounterType:
+          type: string
+          description: Transaction Counter Type. Used for Regulation D transaction counter.
+    LocatorType:
+      title: LocatorType
+      type: string
+    LabelAddrType:
+      title: LabelAddrType
+      type: object
+      properties:
+        Addr1:
+          maxLength: 64
+          type: string
+          description: Address Line 1.
+        Addr2:
+          maxLength: 64
+          type: string
+          description: Address Line 2.
+        Addr3:
+          maxLength: 64
+          type: string
+          description: Address Line 3.
+        Addr4:
+          maxLength: 64
+          type: string
+          description: Address Line 4.
+        Addr5:
+          maxLength: 64
+          type: string
+          description: Address Line 5.
+        Addr6:
+          maxLength: 64
+          type: string
+          description: Address Line 6.
+    AddrDefinedDataType:
+      title: AddrDefinedDataType
+      required:
+      - DataIdent
+      type: object
+      properties:
+        DataIdent:
+          maxLength: 36
+          type: string
+          description: Data Identification. Identification of the client defined data item.
+        Value:
+          maxLength: 256
+          type: string
+          description: Value string representation of the EFX data value of the element in error. This field is intended to provide a human readable visual hint as to the value in error. It should not be provided for fields that cannot be represented as a string (i.e., binary data).
+    CountryCodeType:
+      title: CountryCodeType
+      required:
+      - CountryCodeValue
+      type: object
+      properties:
+        CountryCodeSource:
+          type: string
+          description: Country Code Source. Used with CountryCodeValue to indicate the Country Code Source table.
+        CountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country Code Value. Indicates the Country Code Value within the CountryCodeSource table specified.
+        CountryCodeValueEnumDesc:
+          maxLength: 80
+          type: string
+          description: Country Code Value Enumeration Description.
+    StartDayMonthType:
+      title: StartDayMonthType
+      type: object
+      properties:
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+    DurationType:
+      title: DurationType
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        Unit:
+          type: string
+          description: Unit.
+        UnitEnumDesc:
+          maxLength: 80
+          type: string
+          description: Unit Enumeration Description.
+    TimeFrameType:
+      title: TimeFrameType
+      type: object
+      properties:
+        StartDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Start Date.
+          format: date-time
+        StartDayMonth:
+          $ref: '#/components/schemas/StartDayMonthType'
+        EndDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: End Date.
+          format: date-time
+        EndDayMonth:
+          $ref: '#/components/schemas/StartDayMonthType'
+        Duration:
+          $ref: '#/components/schemas/DurationType'
+        RecurRule:
+          type: array
+          description: Recurrence Rule.
+          items:
+            $ref: '#/components/schemas/RecurRuleType'
+    PhoneNumType:
+      title: PhoneNumType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - required:
+        - PhoneType
+        type: object
+        properties:
+          PhoneType:
+            type: string
+            description: Phone Type.
+          PhoneTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Phone Type Enumeration Description.
+          PhoneIdent:
+            type: integer
+            description: Phone Identifier. Use when you have more than one occurrence of a phone type  (for example 5 Mobile phones). This element serializes the phones.
+            format: int64
+          Phone:
+            type: string
+            description: Phone.
+          PhoneExchange:
+            maxLength: 80
+            type: string
+            description: Phone Exchange.
+          PreferredPhone:
+            type: boolean
+            description: Preferred Phone.
+          DoNotContactInd:
+            type: boolean
+            description: Do Not Contact Indicator.
+          PhoneDesc:
+            maxLength: 30
+            type: string
+            description: Phone Description.
+          CountryCode:
+            $ref: '#/components/schemas/CountryCodeType'
+          UpDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Update Date.
+            format: date-time
+    PostAddrType:
+      title: PostAddrType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - required:
+        - AddrType
+        type: object
+        properties:
+          OpenDt:
+            type: string
+            description: Open Date.
+            format: date
+          RelationshipMgr:
+            type: array
+            description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+            items:
+              $ref: '#/components/schemas/RelationshipMgrType'
+          OriginatingBranch:
+            maxLength: 32
+            type: string
+            description: Originating Branch. Branch first originated the relationship with party or created the account.
+          OriginatingBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Originating Branch Enumeration Description.
+          PreferredBranch:
+            maxLength: 32
+            type: string
+            description: Preferred Branch. The branch preferred by the customer to conduct business.
+          PreferredBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Preferred Branch Enumeration Description.
+          ResponsibleBranch:
+            maxLength: 32
+            type: string
+            description: Responsible Branch. Branch responsible for the relationship.
+          ResponsibleBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Responsible Branch Enumeration Description.
+          NameIdent:
+            maxLength: 36
+            type: array
+            description: Name Identifier.
+            items:
+              maxLength: 36
+              type: string
+          AddressIdent:
+            maxLength: 36
+            type: string
+            description: Address Identification. Used as pointer to a reference of an address. Other identification used as part of the Address object key.
+          AddrUse:
+            type: string
+            description: Address Use. Indicates the use of the address for example Business or Home, Statement, Check, Government, etc.
+          AddrUseEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Use  Enumeration Description.
+          AddrFormatType:
+            $ref: '#/components/schemas/AddrFormatTypeType'
+          AddrFormatTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Format Type Enumeration Description.
+          Addr1:
+            maxLength: 64
+            type: string
+            description: Address Line 1.
+          Addr2:
+            maxLength: 64
+            type: string
+            description: Address Line 2.
+          Addr3:
+            maxLength: 64
+            type: string
+            description: Address Line 3.
+          Addr4:
+            maxLength: 64
+            type: string
+            description: Address Line 4.
+          Addr5:
+            maxLength: 64
+            type: string
+            description: Address Line 5.
+          Addr6:
+            maxLength: 64
+            type: string
+            description: Address Line 6.
+          ApartmentNum:
+            maxLength: 15
+            type: string
+            description: Apartment Number.
+          ApartmentNumType:
+            type: string
+            description: Apartment Number Type. This is an identifier of the type of number provided in the Apartment Number field.
+          HouseNum:
+            maxLength: 15
+            type: string
+            description: House Number.
+          HouseName:
+            maxLength: 64
+            type: string
+            description: House Name.
+          Street:
+            maxLength: 64
+            type: string
+            description: Street.
+          District:
+            maxLength: 32
+            type: string
+            description: District.
+          MilitaryRegion:
+            type: string
+            description: Military Region. Identifier that replaces State and City for military addresses
+          LabelAddr:
+            $ref: '#/components/schemas/LabelAddrType'
+          AddrDefinedData:
+            type: array
+            description: Address Defined Data.
+            items:
+              $ref: '#/components/schemas/AddrDefinedDataType'
+          City:
+            maxLength: 32
+            type: string
+            description: City.
+          County:
+            maxLength: 32
+            type: string
+            description: County.
+          StateProv:
+            maxLength: 80
+            type: string
+            description: State/Province. ISO 3166-2:US codes.
+          StateProvEnumDesc:
+            maxLength: 80
+            type: string
+            description: State Province Enumeration Description.
+          PostalCode:
+            maxLength: 11
+            type: string
+            description: Postal Code. ZipCode in the US.
+          Country:
+            maxLength: 64
+            type: string
+            description: County.
+          CountryCode:
+            $ref: '#/components/schemas/CountryCodeType'
+          POBox:
+            maxLength: 16
+            type: string
+            description: PO Box.
+          AddrType:
+            $ref: '#/components/schemas/AddrTypeType'
+          AddrTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Type Enumeration Description.
+          AddrLocation:
+            maxLength: 255
+            type: string
+            description: Address Location. Indicates if the address location is a Business or Home.
+          AddrLocationEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Location Enumeration Description.
+          TimeFrame:
+            $ref: '#/components/schemas/TimeFrameType'
+          ExpDt:
+            type: string
+            description: Expiration Date.
+            format: date
+          Retention:
+            type: boolean
+            description: Retention. Indicates whether the records are to be retained or deleted based on Service Provider criteria.
+          RevertToPartyAddr:
+            type: boolean
+            description: Revert to Party Address. Indicates for account alternate addresses if the address must be reverted to the Party name and address.
+          MoveInDt:
+            type: string
+            description: Move In Date.
+            format: date
+          ContactMethod:
+            type: string
+            description: Contact Method.
+          UpDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Update Date.
+            format: date-time
+          Comment:
+            maxLength: 300
+            type: string
+            description: Comment. A comment entered in history.
+          CensusTract:
+            maxLength: 20
+            type: string
+            description: Census Track. Contains the census tract number assigned to the address.
+          CensusBlock:
+            maxLength: 20
+            type: string
+            description: Census Block. Contains the census block group designation for the block where the address is within a census tract.
+          ForeignFlag:
+            type: boolean
+            description: Foreign Flag. Indicator that tells if an item (an address for example) is foreign or not.
+          HandlingCode:
+            maxLength: 80
+            type: string
+            description: Handling Code .Indicates special handling of notification and statement forms.
+          HandlingCodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Handling Code Enumeration Description.
+          HandlingCodeOption:
+            $ref: '#/components/schemas/HandlingCodeOptionType'
+          HandlingCodeOptionEnumDesc:
+            maxLength: 80
+            type: string
+            description: Handling Code Option Enumeration Description.
+          MSACode:
+            type: integer
+            description: MSA Code. MSAs are defined by the U.S. Office of Management and Budget (OMB), and used by the U.S. Census Bureau and other federal government agencies for statistical purposes
+            format: int64
+          MSACodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: MSA Code Enumeration Description.
+          MaintDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Maintenance Date.
+            format: date-time
+          MaintBy:
+            maxLength: 80
+            type: string
+            description: Maintained By.
+          MaintByEnumDesc:
+            maxLength: 80
+            type: string
+            description: Maintained By Enumeration Description.
+          AddrInUseInd:
+            type: boolean
+            description: Address In Use.
+          PhoneNum:
+            type: array
+            description: Phone Number.
+            items:
+              $ref: '#/components/schemas/PhoneNumType'
+          IncAddrFormat:
+            type: boolean
+    TaxDataType:
+      title: TaxDataType
+      type: object
+      properties:
+        Org:
+          maxLength: 36
+          type: string
+          description: Organization.
+        TaxType:
+          type: string
+          description: Tax Type.
+        TaxTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tax Type Enumeration Description.
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+        Rate:
+          type: number
+          description: Rate.
+        WaiveTaxInd:
+          type: boolean
+          description: Waive Tax Indicator.
+    TaxWithheldDataType:
+      title: TaxWithheldDataType
+      required:
+      - TaxData
+      - TaxYear
+      type: object
+      properties:
+        TaxYear:
+          type: integer
+          description: Tax Year.
+          format: int64
+        TaxData:
+          type: array
+          description: Tax Data.
+          items:
+            $ref: '#/components/schemas/TaxDataType'
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+    USATaxIdCertType:
+      title: USATaxIdCertType
+      type: object
+      properties:
+        USATaxIdCertCode:
+          type: string
+          description: USA Tax Identification Certification Code.Certification Code for a tax identification number.
+        USATaxIdCertCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: USA Tax Identification Certification Code Enumeration Description.
+        USATaxIdCertDate:
+          type: string
+          description: USA Tax Identification Certification Date.The date that the party signed the certification form OR the date that the government issued a non-certification.
+          format: date
+    WithholdingDataType:
+      title: WithholdingDataType
+      type: object
+      properties:
+        WithholdingType:
+          $ref: '#/components/schemas/WithholdingTypeType'
+        WithholdingTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Withholding  Type Enumeration Description.
+        WithholdingPercent:
+          type: number
+          description: Withholding Percent. Rate used to withhold distributed funds.
+        WithholdingCode:
+          maxLength: 80
+          type: string
+          description: Distribution Withholding Code. Used for automatic distribution of interest and contains instructions about how to withhold interest.
+        WithholdingCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Withholding Code Enumeration Description.
+    ReportAmtType:
+      title: ReportAmtType
+      type: object
+      properties:
+        ReportAmtType:
+          type: string
+          description: Report Amount Type.
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+    IntReporting1099DataType:
+      title: IntReporting1099DataType
+      type: object
+      properties:
+        IRSReportOption:
+          type: string
+          description: 'IRS Report Option. Indicates the people must be included in the report: Primary, Secondary and Both.'
+        DischargeEventCode:
+          type: string
+          description: Discharge Event Code. Indicates why the debt was discharged. This field is only available when the Report 1099-C or Report Combined 1099-CA.
+        EventDt:
+          type: string
+          description: Event Date.
+          format: date
+        LiabilityInd:
+          type: boolean
+          description: Liability Indicator.
+        ReportAmt:
+          type: array
+          description: Report Amount.
+          items:
+            $ref: '#/components/schemas/ReportAmtType'
+        AcquisitionDt:
+          type: string
+          description: Acquisition Date.
+          format: date
+        DebtDesc:
+          maxLength: 100
+          type: string
+          description: Debt Description.
+        PropertyDesc:
+          maxLength: 100
+          type: string
+          description: Property Description.
+    PrePayMaxAmtType:
+      title: PrePayMaxAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    FeeTierType:
+      title: FeeTierType
+      type: object
+      properties:
+        Tier:
+          maxLength: 32
+          type: string
+          description: Tier.
+        LowCurAmt:
+          $ref: '#/components/schemas/LowCurAmtType'
+        HighCurAmt:
+          $ref: '#/components/schemas/HighCurAmtType'
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+        BalPercent:
+          type: number
+          description: Balance Percent.
+    MinCurAmtType:
+      title: MinCurAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    MaxCurAmtType:
+      title: MaxCurAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    FeeEarningDataType:
+      title: FeeEarningDataType
+      type: object
+      properties:
+        EarningMethod:
+          $ref: '#/components/schemas/EarningMethodType'
+        EarningMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Earning Method Enumeration Description
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+          format: date-time
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        Term:
+          $ref: '#/components/schemas/TermType'
+        Rate:
+          type: number
+          description: Rate.
+        FinancialChargeInd:
+          type: boolean
+          description: Financial Charge Indicator.Used to indicate that the amount is a finance charge.
+    EarlyPayoffTierDataType:
+      title: EarlyPayoffTierDataType
+      required:
+      - TierIntervalCount
+      type: object
+      properties:
+        TierIdent:
+          maxLength: 36
+          type: string
+          description: Tier Identification.
+        TierIntervalCount:
+          type: integer
+          description: 'Tier Interval Count.  If   ''Months’: Number of months. Should be an integer.'
+          format: int64
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+        BalPercent:
+          type: number
+          description: Balance Percent.
+    EarlyPayoffTableType:
+      title: EarlyPayoffTableType
+      type: object
+      properties:
+        EarlyPayoffTierType:
+          $ref: '#/components/schemas/EarlyPayoffTierTypeType'
+        EarlyPayoffTierNum:
+          type: integer
+          description: Early Payoff Table Tier Number. Indicates the number of tiers in the table.
+          format: int64
+        EarlyPayoffTierData:
+          type: array
+          description: Early Payoff Tier Data.
+          items:
+            $ref: '#/components/schemas/EarlyPayoffTierDataType'
+    FeeWaiverType:
+      title: FeeWaiverType
+      type: object
+      properties:
+        WaiverReasonCode:
+          maxLength: 80
+          type: string
+          description: '[FSVR]Waiver Reason Code. Code that provides the reason the waive of the fee took place.'
+        WaiverReason:
+          maxLength: 40
+          type: string
+          description: Waiver Reason.
+        WaiverCode:
+          maxLength: 80
+          type: string
+          description: Waiver Code.
+        WaiverCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Waiver Code Enumeration Description.
+    FaceValueAmtType:
+      title: FaceValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    FeeType:
+      title: FeeType
+      required:
+      - FeeType
+      type: object
+      properties:
+        FeeIdent:
+          maxLength: 36
+          type: string
+          description: Fee Identification.
+        ChargeFeeInd:
+          type: boolean
+          description: Charge Fee Indicator.  When adding a new loan in the system, a 'false' in this field indicates the system will not use the fee for charges.
+        OvrdFeeDefaultsInd:
+          type: boolean
+          description: Override Fee Defaults Indicator.  If the fee uses OvrdFeeDefaultInd set to 'true", then loan account level feel definitions are used.
+        FeePlan:
+          maxLength: 80
+          type: string
+          description: Fee Plan. A fee plan makes reference to a predefined set to values used to calculate fees.
+        Desc:
+          maxLength: 100
+          type: string
+          description: Description.
+        FeeType:
+          type: string
+          description: Fee Type.
+        FeeTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Fee Type Enumeration Description.
+        FeeOption:
+          type: string
+          description: Fee Option. Processing option or method used for the fee type.
+        FeeOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Fee Option Enumeration Description.
+        FeePriorityOption:
+          type: string
+          description: Fee Priority Option. Processing option used for the fee type.
+        FeeCalcOption:
+          $ref: '#/components/schemas/FeeCalcOptionType'
+        FeeCalcOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Fee Calculation Option Enumeration Description.
+        FeeCalcBal:
+          maxLength: 80
+          type: string
+          description: Fee Calculation Balance. Indicates the on what balance to calculate the fee.
+        FeeCalcBalEnumDesc:
+          maxLength: 80
+          type: string
+          description: Fee Calculation Balance Enumeration Description.
+        FeeAggregationOption:
+          type: string
+          description: Fee Aggregation Option. Indicates how the fee amount is applied in the loan account.
+        FeeAggregationOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Fee Aggregation Option Enumeration Description.
+        PrePayMaxAmt:
+          $ref: '#/components/schemas/PrePayMaxAmtType'
+        PrePayBalPercent:
+          type: number
+          description: Pre Payment Balance Percent. Prepayment above this amount are subject to prepay fee.
+        FeeBillingOption:
+          $ref: '#/components/schemas/FeeBillingOptionType'
+        FeeBillingOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Fee Billing Option Enumeration Description.
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+        BalPercent:
+          type: number
+          description: Balance Percent.
+        FeeTier:
+          type: array
+          description: Fee Tier.
+          items:
+            $ref: '#/components/schemas/FeeTierType'
+        FeeCalcProgram:
+          maxLength: 36
+          type: string
+          description: Fee Calculation Program.
+        MinCurAmt:
+          $ref: '#/components/schemas/MinCurAmtType'
+        MaxCurAmt:
+          $ref: '#/components/schemas/MaxCurAmtType'
+        DailyAccrual:
+          type: string
+          description: 'Daily Accrual. Indicates how ''daily'' is determined when interest is accrued on a daily basis. Valid values: Standard360, Actual365, Actual366.'
+        DailyAccrualEnumDesc:
+          maxLength: 80
+          type: string
+          description: Daily Accrual Daily Accrual.
+        NoticeCode:
+          maxLength: 80
+          type: string
+          description: Notice Code. Identifies the user defined notification.
+        NoticeCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Notice Code Enumeration Description.
+        NextFeeDt:
+          type: string
+          description: Next Fee Date.
+          format: date
+        LastFeeDt:
+          type: string
+          description: Last Fee Date.
+          format: date
+        TimeFrame:
+          $ref: '#/components/schemas/TimeFrameType'
+        FeeEarningData:
+          $ref: '#/components/schemas/FeeEarningDataType'
+        EarlyPayoffInd:
+          type: boolean
+          description: Early Payoff Table Indicator. Indicator that identifies whether to use an early payoff fee table to determine the fee amount when paying off a loan.
+        EarlyPayoffMonthOption:
+          maxLength: 80
+          type: string
+          description: Early Payoff Month Option.Indicates which time period the payoff charge is effective.
+        EarlyPayoffMonths:
+          type: integer
+          description: Early Payoff Months. Number of months a payoff fee can be assessed.
+          format: int64
+        EarlyPayoffTable:
+          $ref: '#/components/schemas/EarlyPayoffTableType'
+        RefData:
+          $ref: '#/components/schemas/RefDataType'
+        WaiveFeeInd:
+          type: boolean
+          description: Waived Fee Indicator.
+        FeeWaiver:
+          $ref: '#/components/schemas/FeeWaiverType'
+        Company:
+          maxLength: 60
+          type: string
+          description: Company. Name of the insurance company.
+        FaceValueAmt:
+          $ref: '#/components/schemas/FaceValueAmtType'
+        ReportingOptionCode:
+          maxLength: 80
+          type: string
+          description: Reporting Option Code.
+        FeeCollectedAmt:
+          $ref: '#/components/schemas/FeeCollectedAmtType'
+    LoanAmtType:
+      title: LoanAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CreditRiskType:
+      title: CreditRiskType
+      required:
+      - RiskCategory
+      type: object
+      properties:
+        SeqNum:
+          type: integer
+          description: Sequence Number.
+          format: int64
+        RiskCategory:
+          type: string
+          description: Risk Category. Indicates the credit Risk category for party.
+        RiskCategoryEnumDesc:
+          maxLength: 80
+          type: string
+          description: Risk Category Enumeration Description.
+        InternalScore:
+          maxLength: 80
+          type: string
+          description: Internal Score. Score generated by Financial Institution.
+        InternalScoreEnumDesc:
+          maxLength: 80
+          type: string
+          description: Internal Score Enumeration Description.
+        ScoreGeneratedDt:
+          type: string
+          description: Score Generated Date. Date when internal score was generated.
+          format: date
+        LoanAmt:
+          $ref: '#/components/schemas/LoanAmtType'
+        LoanPct:
+          type: number
+          description: Loan Percentage.Percent of the loan rated.
+        CreditReportType:
+          maxLength: 80
+          type: string
+          description: Credit Report Type. Identifies the type of credit report.
+        CreditReportStatus:
+          maxLength: 80
+          type: string
+          description: Credit Report Status.
+        CreditReportOutcome:
+          maxLength: 80
+          type: string
+          description: Credit Report Outcome. Also known as comment code.
+    RelationshipPricingAcctDataType:
+      title: RelationshipPricingAcctDataType
+      type: object
+      properties:
+        RelationshipPricingRateOpt:
+          maxLength: 80
+          type: string
+          description: Relationship Pricing Rate Option. Provides information about conditions of the account needed to pay the relationship pricing rate.
+    SweepAcctKeysType:
+      title: SweepAcctKeysType
+      allOf:
+      - $ref: '#/components/schemas/AcctKeysType'
+      - type: object
+    MasterAcctKeysType:
+      title: MasterAcctKeysType
+      allOf:
+      - $ref: '#/components/schemas/AcctKeysType'
+      - type: object
+    LinkAcctKeysType:
+      title: LinkAcctKeysType
+      allOf:
+      - $ref: '#/components/schemas/AcctKeysType'
+      - type: object
+    CashMgmtRelDataType:
+      title: CashMgmtRelDataType
+      type: object
+      properties:
+        CashMgmtRelType:
+          type: string
+          description: Cash Management Relationship Type Code. Indicates the relationship of the account within a Cash Management Relationship (CMR) Structure. The account can be a Master Account, Zero Balance Account, a Concentration Account or a Final Investment Account.
+        CashMgmtRelTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Cash Management Relationship Type Code Enumeration Description.
+        NumAcctsInRelationship:
+          maxLength: 15
+          type: string
+          description: Number of Account in the Relationship. The number of accounts involved in a relationship for example Cash Management Relationship structure.
+        ZBAInd:
+          type: boolean
+          description: Zero Balance Account Indicator.
+        SweepAcctKeys:
+          $ref: '#/components/schemas/SweepAcctKeysType'
+        MasterAcctKeys:
+          $ref: '#/components/schemas/MasterAcctKeysType'
+        LinkAcctKeys:
+          $ref: '#/components/schemas/LinkAcctKeysType'
+    ReminderType:
+      title: ReminderType
+      required:
+      - ReminderCategory
+      - ReminderInd
+      type: object
+      properties:
+        ReminderCategory:
+          type: string
+          description: Reminder Category.
+        ReminderCategoryEnumDesc:
+          maxLength: 80
+          type: string
+          description: Reminder Category Enumeration Description.
+        ReminderInd:
+          type: boolean
+          description: Reminder Indicator.
+    AcctMemoDataType:
+      title: AcctMemoDataType
+      type: object
+      properties:
+        AcctMemoIdent:
+          maxLength: 36
+          type: string
+          description: Account Memo Identifier.
+        AcctMemoType:
+          type: string
+          description: Account Memo Type.
+        AcctMemoCode:
+          maxLength: 80
+          type: string
+          description: Account Memo Code.
+        AcctMemoText:
+          maxLength: 255
+          type: string
+          description: Account Memo Text.
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+    RenewalFrequencyType:
+      title: RenewalFrequencyType
+      allOf:
+      - $ref: '#/components/schemas/RecurRuleType'
+      - type: object
+    RenewalDataType:
+      title: RenewalDataType
+      required:
+      - RenewalOption
+      type: object
+      properties:
+        TimesRenewedNum:
+          type: integer
+          description: Number of Times Renewed.
+          format: int64
+        OrigIssueDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Original Issue Date.
+          format: date-time
+        OrigMatDt:
+          type: string
+          description: Original Maturity Date.
+          format: date
+        OrigIssueRate:
+          type: number
+          description: Original Issue  Rate.
+        RenewalOption:
+          type: string
+          description: Renewal Option.
+        NextRenewalDateOption:
+          type: string
+          description: Next Renewal Date Option.
+        GraceDays:
+          type: integer
+          description: Grace Days.Number of days by which a debtor or acceptor of a draft may exceed the due date before being in default.
+          format: int64
+        RenewalTermCode:
+          maxLength: 80
+          type: string
+          description: Renewal Term Code.
+        RenewalOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Renewal Option Enumeration Description.
+        NextEarningDateOption:
+          type: string
+          description: Next Earning Date Option.
+        RenewalFrequency:
+          $ref: '#/components/schemas/RenewalFrequencyType'
+        LastRenewalDt:
+          type: string
+          description: Last Renewal Date.
+          format: date
+        ProdIntRateId:
+          maxLength: 36
+          type: string
+          description: Product Interest Rate Identifier. Rate Index is a pointer to the specification that indicates how the interest rate and interest is calculated.
+        RenewalProductIdent:
+          maxLength: 42
+          type: string
+          description: Renewal Product Identifier. Identifies the processing parameters of the account when is reinvested or renewed.
+        RenewalRate:
+          type: number
+          description: Renewal Rate.
+        RateVariance:
+          type: number
+          description: Rate Variance. Percentage that the interest rate varies from its related index rate
+    PartyKeysType:
+      title: PartyKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          PartyId:
+            maxLength: 36
+            type: string
+            description: Party Identifier. Used to uniquely identify a Party record.
+          PartyIdentType:
+            $ref: '#/components/schemas/PartyIdentTypeType'
+          PartyIdent:
+            maxLength: 60
+            type: string
+            description: Party Identification.
+    AgreementDataType:
+      title: AgreementDataType
+      type: object
+      properties:
+        AgreementType:
+          type: string
+          description: Agreement Type.
+        AgreementIdent:
+          maxLength: 36
+          type: string
+          description: Agreement Identifier.
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+    RewardAcctType:
+      title: RewardAcctType
+      allOf:
+      - $ref: '#/components/schemas/AcctKeysType'
+      - type: object
+    RewardsDataType:
+      title: RewardsDataType
+      type: object
+      properties:
+        RewardType:
+          type: string
+          description: Reward Type.
+        RewardDispositionType:
+          type: string
+          description: Reward Disposition Type. Indicates how the reward is cashed.
+        RewardAcct:
+          $ref: '#/components/schemas/RewardAcctType'
+        PromoPeriods:
+          type: integer
+          description: Promotional Periods. Number of periods in which the reward is paid.
+          format: int64
+    AcctInfoType:
+      title: AcctInfoType
+      type: object
+      properties:
+        Brand:
+          maxLength: 80
+          type: string
+          description: '[FSVR]Brand.'
+        GoodThruDt:
+          type: string
+          description: Good Thru Date. Indicates the processing date of the system.
+          format: date
+        AcctDtlStatus:
+          type: string
+          description: Account Detail Status. Indicates the current status of the account.
+        AcctDtlStatusEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Detail Status Enumeration Description.
+        AcctDtlStatusDt:
+          type: string
+          description: Account Detail Status Date. Indicates the current status date of the account.
+          format: date
+        CurCode:
+          $ref: '#/components/schemas/CurCodeType'
+        AcctPref:
+          $ref: '#/components/schemas/AcctPrefType'
+        AcctApplIdent:
+          maxLength: 36
+          type: string
+          description: Account Application Identification. Identification of the Application submitted to create an account.
+        CampaignIdent:
+          maxLength: 36
+          type: string
+          description: Campaign Identifier. Indicates sales campaign from which correspondence was generated.
+        Ownership:
+          type: string
+          description: '[IFX]Ownership. Valid values: Individual, JointAnd, JointOr.'
+        OwnershipEnumDesc:
+          maxLength: 80
+          type: string
+          description: Ownership Enumeration Description
+        AcctIdent:
+          type: array
+          description: Account Identification. Other account identification used as part of the Account object key in addition to the Account Identifier (AcctId).
+          items:
+            $ref: '#/components/schemas/AcctIdentType'
+        ProductIdent:
+          maxLength: 42
+          type: string
+          description: Product Identifier. Identifies the processing parameters of the account or card.
+        Desc:
+          maxLength: 100
+          type: string
+          description: Description.
+        AlternateProductDesc:
+          maxLength: 100
+          type: string
+          description: Alternate Product Description.
+        AcctType:
+          type: string
+          description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+        AcctSubType:
+          maxLength: 80
+          type: string
+          description: Account Sub Type Value.
+        AcctSubTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Sub Type Value Enum Description.
+        TaxIncentiveType:
+          type: string
+          description: Tax Incentive Type. Indicates if the account is a tax incentive account such as a Health Savings Account.
+        TaxIncentiveTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tax Incentive Type Enumeration Description.
+        PromoCode:
+          maxLength: 80
+          type: string
+          description: Promotional Code.
+        PromoCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: '[FSVR]Promotional Code Enumeration Description.'
+        AcctUse:
+          type: string
+          description: 'Account Use. U.S. Institutions should use this for Regulation D reporting purposes. Valid values include: Business, Retail'
+        AcctUseEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Use Enumeration Description.
+        InitialAmount:
+          $ref: '#/components/schemas/InitialAmountType'
+        OpenDt:
+          type: string
+          description: Open Date.
+          format: date
+        IntAccrualStartDt:
+          type: string
+          description: Interest Accrual Start Date.
+          format: date
+        ClosedDt:
+          type: string
+          description: Close Date. Date the account is closed.
+          format: date
+        ClosedReasonCode:
+          maxLength: 80
+          type: string
+          description: Closed Reason Code.
+        ClosedReasonEnumDesc:
+          maxLength: 80
+          type: string
+          description: Closed Reason Enumeration Description.
+        BalanceAtClosingAmt:
+          $ref: '#/components/schemas/BalanceAtClosingAmtType'
+        Term:
+          $ref: '#/components/schemas/TermType'
+        TermToMaturity:
+          $ref: '#/components/schemas/TermType'
+        MaturityDt:
+          type: string
+          description: Maturity Date.
+          format: date
+        FeeCollectedAmt:
+          $ref: '#/components/schemas/FeeCollectedAmtType'
+        LastContactDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Last Contact Date. Date the FI contacted the customer on regards to this account.
+          format: date-time
+        DateData:
+          type: array
+          description: Date Data. Use to contain dates associated to the object.
+          items:
+            $ref: '#/components/schemas/DateDataType'
+        RelationshipMgr:
+          type: array
+          description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+          items:
+            $ref: '#/components/schemas/RelationshipMgrType'
+        OriginatingBranch:
+          maxLength: 32
+          type: string
+          description: Originating Branch. Branch first originated the relationship with party or created the account.
+        OriginatingBranchEnumDesc:
+          maxLength: 80
+          type: string
+          description: Originating Branch Enumeration Description.
+        PreferredBranch:
+          maxLength: 32
+          type: string
+          description: Preferred Branch. The branch preferred by the customer to conduct business.
+        PreferredBranchEnumDesc:
+          maxLength: 80
+          type: string
+          description: Preferred Branch Enumeration Description.
+        ResponsibleBranch:
+          maxLength: 32
+          type: string
+          description: Responsible Branch. Branch responsible for the relationship.
+        ResponsibleBranchEnumDesc:
+          maxLength: 80
+          type: string
+          description: Responsible Branch Enumeration Description.
+        NicknameOption:
+          type: string
+          description: Nickname Option. Indicates printing options for the account Nickname.
+        NicknameOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Nickname Option Enumeration Description.
+        Nickname:
+          maxLength: 80
+          type: string
+          description: Nickname. Used to allow a customer to assign nicknames to objects.
+        AcctTitleOption:
+          maxLength: 80
+          type: string
+          description: Account Title Option. Indicates printing options for the Account Title.
+        AcctTitleOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Title Option Enumeration Description.
+        AcctTitle:
+          maxLength: 255
+          type: string
+          description: Account Title.Title on account typically identifies ownership or responsibility for account and manner in which ownership/responsibility is assigned.
+        AddtlTitles:
+          type: array
+          description: Additional Account Titles.
+          items:
+            $ref: '#/components/schemas/AddtlTitlesType'
+        HandlingCodeOption:
+          $ref: '#/components/schemas/HandlingCodeOptionType'
+        HandlingCodeOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Handling Code Option Enumeration Description.
+        HandlingCode:
+          maxLength: 80
+          type: string
+          description: Handling Code .Indicates special handling of notification and statement forms.
+        HandlingCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Handling Code Enumeration Description.
+        OEDCode:
+          type: string
+          description: Officer, Employee, DIrector Code. Indicates if the party is an employee of the Bank.
+        OEDCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Officer Employee Director Enumeration Description.
+        EmployeeInd:
+          type: boolean
+          description: Employee Indicator. Indicates that the account holder is employee of the FI.
+        AccountingMethod:
+          type: string
+          description: Accounting Method. The Accounting Method indicates the method by which accounts are integrated into the general ledger.
+        AccountingMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Accounting Method Enumeration Description.
+        AccountingValue:
+          maxLength: 15
+          type: string
+          description: Accounting Value. The numeric value associated with the chosen Accounting Method is the Accounting Value.
+        ClassCode:
+          maxLength: 80
+          type: string
+          description: Class Code. Used to group accounts. The Class Code controls the method of processing and reporting accounts.
+        ClassCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Class Code Enumeration Description.
+        AcctTypeCode:
+          maxLength: 80
+          type: string
+          description: Account Type Code. Classifies the account for selection and totaling purposes.
+        AcctTypeCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Type Enumeration Description.
+        AcctOpenMethod:
+          type: string
+          description: Account Open Method. The method used to open the account.
+        AcctOpenMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Open Method Enumeration Description.
+        ClientDefinedData:
+          type: array
+          description: Client Defined Data.Data whose definition, type and values are defined by the client or user.
+          items:
+            $ref: '#/components/schemas/ClientDefinedDataType'
+        AcctStmtData:
+          $ref: '#/components/schemas/AcctStmtDataType'
+        NoticeHandlingCode:
+          maxLength: 80
+          type: string
+          description: Notice Handling Code. Instructions of how notices are handled at the account level. If instructions are provided at the notice level thi values is not used but the handling code inside of NoticeData.
+        NoticeData:
+          type: array
+          description: Account Notice Data.
+          items:
+            $ref: '#/components/schemas/NoticeDataType'
+        ProdIntRateId:
+          maxLength: 36
+          type: string
+          description: Product Interest Rate Identifier. Rate Index is a pointer to the specification that indicates how the interest rate and interest is calculated.
+        ProdIntRateIdEnumDesc:
+          maxLength: 80
+          type: string
+          description: Product Interest Rate Identifier Enumeration Description.
+        Rate:
+          type: number
+          description: Rate.
+        EffectiveRate:
+          type: number
+          description: Effective Rate. Current Effective rate of the account. The effective annual interest rate is the interest rate that is actually earned or paid on an investment, loan or other financial product due to the result of compounding over a given time period. It is also called the effective interest rate, the effective rate or the annual equivalent rate.
+        IntRateData:
+          $ref: '#/components/schemas/IntRateDataType'
+        MaturityIntCalcData:
+          $ref: '#/components/schemas/MaturityIntCalcDataType'
+        PromotionalRate:
+          $ref: '#/components/schemas/PromotionalRateType'
+        RateChangeData:
+          type: array
+          description: Rate Change Data. Used to indicate how the interest rate is calculated and changed.
+          items:
+            $ref: '#/components/schemas/RateChangeDataType'
+        AcctBal:
+          type: array
+          description: 'Account Balance. Defines balances a financial institution account may carry (ex: ledger, available, collected, etc.).'
+          items:
+            $ref: '#/components/schemas/AcctBalType'
+        AcctPeriodData:
+          type: array
+          description: Account Period Data. Provides a summary of account periodic data such as last interest payment, non sufficient funds, overdraft activity year to date, current month.
+          items:
+            $ref: '#/components/schemas/AcctPeriodDataType'
+        TranCounter:
+          type: array
+          description: Transaction Counter.
+          items:
+            $ref: '#/components/schemas/TranCounterType'
+        AlternateAddrInd:
+          type: boolean
+          description: Alternate Address Indicator. Indicates that the account or party have an active secondary address.
+        FullName:
+          maxLength: 96
+          type: string
+          description: Full Name.
+        PostAddr:
+          type: array
+          description: Postal Address.
+          items:
+            $ref: '#/components/schemas/PostAddrType'
+        AcctPhoneNum:
+          type: array
+          description: Account Phone Number.
+          items:
+            $ref: '#/components/schemas/PhoneNumType'
+        TaxWithheldData:
+          type: array
+          description: Tax Withheld Dta. Provides tax data withheld by the FI for a specific tax year.
+          items:
+            $ref: '#/components/schemas/TaxWithheldDataType'
+        TaxIdentType:
+          $ref: '#/components/schemas/TaxIdentTypeType'
+        TaxIdentTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tax Identification Type Enumeration Description.
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+        TaxIdentApplyDt:
+          type: string
+          description: Tax Identifier Application Date.
+          format: date
+        TaxExempt:
+          type: string
+          description: Tax Exempt. Indicates the party  owner of the account is Tax Exempt.
+        TaxExemptEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tax Exempt Enumeration Description.
+        USATaxIdCert:
+          $ref: '#/components/schemas/USATaxIdCertType'
+        WithholdingOption:
+          type: string
+          description: Withholding Option.Identifies what tax should be withheld for the Party.
+        WithholdingOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Withholding Option Enumeration Description.
+        WithholdingData:
+          type: array
+          description: Withholding Data. Used to describe Withholding Data use to process interest withholding such as withholding percent.
+          items:
+            $ref: '#/components/schemas/WithholdingDataType'
+        IntReportingInd:
+          type: boolean
+          description: Interest Reporting Indicator. Identifies what tax should be reported for the Party.
+        IntReportingCode:
+          type: string
+          description: Interest Reporting Code.
+        IntReportingCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Interest Reporting Code Enumeration Description.
+        IntReporting1099Data:
+          $ref: '#/components/schemas/IntReporting1099DataType'
+        Fee:
+          type: array
+          description: Fee.
+          items:
+            $ref: '#/components/schemas/FeeType'
+        CreditRisk:
+          type: array
+          description: Credit Risk. Contains information about the credit risk of the party.
+          items:
+            $ref: '#/components/schemas/CreditRiskType'
+        RiskRanking:
+          maxLength: 80
+          type: string
+          description: Risk Ranking. Indicates the level of risk assigned to the Party.
+        RiskRankingEnumDesc:
+          maxLength: 80
+          type: string
+          description: Risk Ranking Enumeration Description.
+        TrnRestriction:
+          maxLength: 80
+          type: string
+          description: Transaction Restriction. Indicates a restriction that applies to the account during transaction posting.
+        TrnRestrictionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Transaction Restriction Enumeration Description.
+        TrnRestrictionOvrd:
+          maxLength: 80
+          type: string
+          description: Transaction Restriction Override. Same use as TrnRestriction but this value overrides it.
+        TrnRestrictionOvrdEnumDesc:
+          maxLength: 80
+          type: string
+          description: Transaction Restriction Ovrd Enumeration Description.
+        NoDebitPostInd:
+          type: boolean
+          description: No Debit Post Indicator. Only credit transactions allowed.
+        NoCreditPostInd:
+          type: boolean
+          description: No Credit Post Indicator.
+        MemoPostProcessOptOvrd:
+          type: string
+          description: Memo Post Process Option Override. Indicates whether memo post transactions are posted as summary or detailed transactions.
+        MemoPostProcessOptOvrdEnumDesc:
+          maxLength: 80
+          type: string
+          description: Memo Post Process Option Override Enum Description.
+        ElectronicBankingOpt:
+          type: string
+          description: Electronic Banking Option. Used to indicate services available via Electronic Banking.
+        ElectronicBankingOptEnumDesc:
+          maxLength: 80
+          type: string
+          description: Electronic Banking Option. Used to indicate services available via Electronic Banking.
+        ReportGroupCode:
+          maxLength: 80
+          type: string
+          description: Report Group Code. Indicates a user defined code used to group accounts fro reporting purposes.
+        ReportGroupCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Report Group Code Enumeration Description.
+        DocDistributionOption:
+          maxLength: 80
+          type: string
+          description: Document Distribution Option. Indicates the distribution method when processing statements and notices.
+        DocDistributionOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Document Distribution Option Enumeration Description.
+        NAICS:
+          maxLength: 6
+          type: string
+          description: NAICS. North American Industry Classification System.
+        NAICSEnumDesc:
+          maxLength: 80
+          type: string
+          description: NAICS Enumeration Description.
+        SIC:
+          maxLength: 4
+          type: string
+          description: SIC Code.
+        SICEnumDesc:
+          maxLength: 80
+          type: string
+          description: SIC Code Enum Description.
+        SICSubCode:
+          maxLength: 4
+          type: string
+          description: SIC Sub Code.
+        SICSubCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: SIC Sub Code Enum Description.
+        CostCenter:
+          maxLength: 80
+          type: string
+          description: Cost Center. Cost Center to where activity of this account is reported.
+        CostCenterEnumDesc:
+          maxLength: 80
+          type: string
+          description: Cost Center Enumeration Description.
+        RetentionOption:
+          $ref: '#/components/schemas/RetentionOptionType'
+        RetentionOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Retention Option Enumeration Descripiton.
+        TranHistoryOption:
+          $ref: '#/components/schemas/TranHistoryOptionType'
+        TranHistoryOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Transaction History Option Enumeration Description.
+        RelationshipPricingInd:
+          type: boolean
+          description: Relationship Pricing Indicator.
+        RelationshipPricingAcctData:
+          $ref: '#/components/schemas/RelationshipPricingAcctDataType'
+        SweepBalRelationshipInd:
+          type: boolean
+          description: Sweep Balance Relationship Indicator.
+        CashMgmtRelData:
+          $ref: '#/components/schemas/CashMgmtRelDataType'
+        RestrictedInd:
+          type: boolean
+          description: Restricted Indicator. Indicates whether the account information is restricted for view by the requester.
+        RestrictedDesc:
+          maxLength: 80
+          type: string
+          description: Restricted Description. Description of the reason for the account to be restricted.
+        Reminder:
+          type: array
+          description: Reminder. Use to determine if the account has memo and ticklers linked to the account.
+          items:
+            $ref: '#/components/schemas/ReminderType'
+        AcctMemoData:
+          type: array
+          description: Account Memo Data. This aggregation contains memoranda and warnings defined at the account level and sometimes is of required view when doing account inquiries.
+          items:
+            $ref: '#/components/schemas/AcctMemoDataType'
+        UpdateContactCode:
+          $ref: '#/components/schemas/UpdateContactCodeType'
+        NOWEnabledInd:
+          type: boolean
+          description: NOW Enabled Indicator. Use to determine whether account can be used for NOW Network.
+        RenewalData:
+          $ref: '#/components/schemas/RenewalDataType'
+        AcctMajorType:
+          type: string
+          description: Account Major Type.
+        AcctMajorTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Major Type Enumeration Description.
+        AgreementData:
+          type: array
+          description: Agreement Data.
+          items:
+            $ref: '#/components/schemas/AgreementDataType'
+        IsPassbookInd:
+          type: boolean
+          description: Is Passbook Indicator.
+        IsValidInd:
+          type: boolean
+          description: Is Valid Indicator.
+        IsCheckInd:
+          type: boolean
+          description: Is Check Indicator.
+        CallReportCode:
+          maxLength: 80
+          type: string
+          description: Call Report Code.
+        AccessLevelData:
+          $ref: '#/components/schemas/AccessLevelDataType'
+        RewardsData:
+          type: array
+          description: Rewards Data.
+          items:
+            $ref: '#/components/schemas/RewardsDataType'
+    PmtPostingRestrictionsType:
+      title: PmtPostingRestrictionsType
+      type: object
+      properties:
+        PostingStatus:
+          type: string
+          description: Posting Status. Indicates that account will be booked but will be restricted from posting until reviewed by bank officer. No hold, accept no payment, allow no advance and accept no payment and allow no advance.
+        RestrictionReasonCode:
+          maxLength: 80
+          type: string
+          description: Restriction Reason Code. Code corresponding to the posting restriction reason.
+        RestrictionOvrdInd:
+          type: boolean
+          description: '[FSVR]Posting Payment Restrictions Override Indicator.'
+    AdvPostingRestrictionsType:
+      title: AdvPostingRestrictionsType
+      type: object
+      properties:
+        PostingStatus:
+          type: string
+          description: Posting Status. Indicates that account will be booked but will be restricted from posting until reviewed by bank officer. No hold, accept no payment, allow no advance and accept no payment and allow no advance.
+        RestrictionOvrdInd:
+          type: boolean
+          description: '[FSVR]Posting Payment Restrictions Override Indicator.'
+        RestrictionReasonCode:
+          maxLength: 80
+          type: string
+          description: Restriction Reason Code. Code corresponding to the posting restriction reason.
+        RestrictionReasonCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Posting Restriction Reason Code Enumeration Description.
+        RestrictionPastDueDays:
+          type: integer
+          description: Posting Restriction Past Due Days. Number of days the loan needs be past due for a restriction to be placed on the loan advance transaction.
+          format: int64
+    PmtCompositeAmtType:
+      title: PmtCompositeAmtType
+      required:
+      - CurAmt
+      type: object
+      properties:
+        CompositeCurAmtType:
+          type: string
+          description: Composite Currency Amount Type. Composite Currency Amount Type to apply the transaction amount to.
+        CompositeCurAmtTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Composite Currency Amount Type Enumeration Description.
+        CompositeSeqId:
+          maxLength: 10
+          type: string
+          description: Composite Sequence Identifier. Used to sequence multiple occurrences of the same Composite Currency Amount Type. For example if multiple CompositeCurAmtType = “Fee” this element would sequence the Fee. E.g. Fee1, Fee2, etc.
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+    DuePmtType:
+      title: DuePmtType
+      type: object
+      properties:
+        PmtCompositeAmt:
+          type: array
+          description: |-
+            [FSVR]Payment Composite Amount.
+            [SIG]Payment Composite Amount.
+          items:
+            $ref: '#/components/schemas/PmtCompositeAmtType'
+        DueDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Payment Due Date.
+          format: date-time
+    BillStatusType:
+      title: BillStatusType
+      required:
+      - BillStatusCode
+      type: object
+      properties:
+        BillStatusCode:
+          type: string
+          description: Bill Status code.
+        BillStatusCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Bill Status Code Enumeration Description.
+    NextPmtType:
+      title: NextPmtType
+      type: object
+      properties:
+        PmtCompositeAmt:
+          type: array
+          description: |-
+            [FSVR]Payment Composite Amount.
+            [SIG]Payment Composite Amount.
+          items:
+            $ref: '#/components/schemas/PmtCompositeAmtType'
+        BillStatus:
+          $ref: '#/components/schemas/BillStatusType'
+        PmtDt:
+          type: string
+          description: Payment Date.
+          format: date
+    LastPmtType:
+      title: LastPmtType
+      type: object
+      properties:
+        PmtCompositeAmt:
+          type: array
+          description: |-
+            [FSVR]Payment Composite Amount.
+            [SIG]Payment Composite Amount.
+          items:
+            $ref: '#/components/schemas/PmtCompositeAmtType'
+        PmtDt:
+          type: string
+          description: Payment Date.
+          format: date
+        InterestPaidToDt:
+          type: string
+          description: Interest Paid To Date.
+          format: date
+        PrincipalPaidToDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Principal Paid To Date.
+          format: date-time
+    AcctSummInfoType:
+      title: AcctSummInfoType
+      allOf:
+      - $ref: '#/components/schemas/AcctInfoType'
+      - type: object
+        properties:
+          RetirementPlanIdent:
+            maxLength: 36
+            type: string
+            description: Retirement Plan Identifier.
+          RetirementPlanType:
+            maxLength: 80
+            type: string
+            description: 'Retirement Plan Type. Retirement Plan Type. Indicator that specifies that you are adding an account from one of the following categories:  Individual Retirement Account, Simplified Employee Pension Account, HR-10 Account (Keogh), SIMPLE IRA.'
+          RetirementPlanTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Retirement Plan Enum Description.
+          FRALoanInd:
+            type: boolean
+            description: Fixed Rate Advance Loan Indicator.
+          NonAccrualInd:
+            type: boolean
+            description: Non Accrual Indicator.
+          NonAccrualCode:
+            maxLength: 80
+            type: string
+            description: Non Accrual Code. This value indicates the processing condition of the non-accrual.
+          NonAccrualCodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Non Accrual Code Enumeration Description.
+          ChargeOffInd:
+            type: boolean
+            description: Charge Off Indicator.
+          ChargeOffCode:
+            maxLength: 80
+            type: string
+            description: Charge Off Code.
+          ChargeOffCodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Charge Off Code Enumeration Description.
+          PmtPostingRestrictions:
+            $ref: '#/components/schemas/PmtPostingRestrictionsType'
+          AdvPostingRestrictions:
+            $ref: '#/components/schemas/AdvPostingRestrictionsType'
+          CardType:
+            maxLength: 80
+            type: string
+            description: Card Type. Classification that identifies the type of card.
+          CardTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Card Type Enum Description.
+          IssueDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Issue Date.
+            format: date-time
+          ExpDt:
+            type: string
+            description: Expiration Date.
+            format: date
+          BoxNum:
+            maxLength: 15
+            type: string
+            description: Box Number.
+          DuePmt:
+            $ref: '#/components/schemas/DuePmtType'
+          NextPmt:
+            $ref: '#/components/schemas/NextPmtType'
+          LastPmt:
+            $ref: '#/components/schemas/LastPmtType'
+    AcctRefType:
+      title: AcctRefType
+      required:
+      - AcctKeys
+      type: object
+      properties:
+        AcctKeys:
+          $ref: '#/components/schemas/AcctKeysType'
+        AcctSummInfo:
+          $ref: '#/components/schemas/AcctSummInfoType'
+    SecuredAcctRefType:
+      title: SecuredAcctRefType
+      allOf:
+      - $ref: '#/components/schemas/AcctRefType'
+      - type: object
+    MaxPledgeAmtType:
+      title: MaxPledgeAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    OtherAcctRefType:
+      title: OtherAcctRefType
+      required:
+      - AcctKeys
+      type: object
+      properties:
+        AcctKeys:
+          $ref: '#/components/schemas/AcctKeysType'
+    PendingHoldAmtType:
+      title: PendingHoldAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    AcctHoldInfoType:
+      title: AcctHoldInfoType
+      type: object
+      properties:
+        AcctRef:
+          $ref: '#/components/schemas/AcctRefType'
+        HoldType:
+          type: string
+          description: Hold Type. Identifies the type of hold.
+        HoldTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Hold Type Enum Description.
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+        RelationshipMgr:
+          type: array
+          description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+          items:
+            $ref: '#/components/schemas/RelationshipMgrType'
+        ReportGroupCode:
+          maxLength: 80
+          type: string
+          description: Report Group Code. Indicates a user defined code used to group accounts fro reporting purposes.
+        SecuredAcctRef:
+          $ref: '#/components/schemas/SecuredAcctRefType'
+        MaxPledgeAmt:
+          $ref: '#/components/schemas/MaxPledgeAmtType'
+        HoldReasonCode:
+          maxLength: 80
+          type: string
+          description: Hold Reason Code.
+        HoldReason:
+          maxLength: 80
+          type: array
+          description: Hold Reason. Description of the reason of the hold.
+          items:
+            maxLength: 80
+            type: string
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        ChkNum:
+          maxLength: 22
+          type: string
+          description: Check Number.
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+          format: date-time
+        DelayHoldInd:
+          type: boolean
+          description: Delay Hold Indicator. When the hold is to be applied on today's date, the hold can be applied until the time end of day processing starts, otherwise the hold is immediately applied to the account.
+        Memo:
+          maxLength: 255
+          type: string
+          description: Memo.
+        WaiveFeeInd:
+          type: boolean
+          description: Waived Fee Indicator.
+        AcctHoldOption:
+          type: string
+          description: Account Hold Option. Indicates how the hold amount is determined.
+        AcctHoldOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Account Hold Option Enum Description.
+        AcctHoldIdent:
+          maxLength: 36
+          type: string
+          description: Account Hold Identification. Other identification used as part of the Account Hold object key.
+        OtherAcctRef:
+          $ref: '#/components/schemas/OtherAcctRefType'
+        PendingHoldAmt:
+          $ref: '#/components/schemas/PendingHoldAmtType'
+        PendingHoldDt:
+          type: string
+          description: Pending Hold Date.
+          format: date
+        RestrictedInd:
+          type: boolean
+          description: Restricted Indicator. Indicates whether the account information is restricted for view by the requester.
+        RestrictedDesc:
+          maxLength: 80
+          type: string
+          description: Restricted Description. Description of the reason for the account to be restricted.
+    AcctWarningType:
+      title: AcctWarningType
+      required:
+      - WarningType
+      type: object
+      properties:
+        WarningType:
+          type: string
+          description: Warning Type.
+        WarningCode:
+          maxLength: 80
+          type: string
+          description: Warning Code.
+    BalAmtType:
+      title: BalAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    FeeChargeAllocType:
+      title: FeeChargeAllocType
+      type: object
+      properties:
+        AcctKeys:
+          $ref: '#/components/schemas/AcctKeysType'
+    CompositeCurAmtType:
+      title: CompositeCurAmtType
+      required:
+      - CurAmt
+      type: object
+      properties:
+        CompositeCurAmtIdent:
+          maxLength: 36
+          type: string
+          description: Composite Current Amount Identification.
+        CompositeCurAmtType:
+          type: string
+          description: Composite Currency Amount Type. Composite Currency Amount Type to apply the transaction amount to.
+        CompositeCurAmtTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Composite Currency Amount Type Enumeration Description.
+        CompositeSeqId:
+          maxLength: 10
+          type: string
+          description: Composite Sequence Identifier. Used to sequence multiple occurrences of the same Composite Currency Amount Type. For example if multiple CompositeCurAmtType = “Fee” this element would sequence the Fee. E.g. Fee1, Fee2, etc.
+        CurAmt:
+          $ref: '#/components/schemas/CurAmtType'
+        FeeChargeAlloc:
+          $ref: '#/components/schemas/FeeChargeAllocType'
+        SpecialHandling:
+          type: array
+          description: Special Handling. Used to define any special instructions that should occur for the Transaction Amount.
+          items:
+            type: object
+        Memo:
+          maxLength: 255
+          type: string
+          description: Memo.
+        FinancialChargeInd:
+          type: boolean
+          description: Financial Charge Indicator.Used to indicate that the amount is a finance charge.
+        RefData:
+          $ref: '#/components/schemas/RefDataType'
+    OvrdElementType:
+      title: OvrdElementType
+      allOf:
+      - $ref: '#/components/schemas/SubjectElementType'
+      - type: object
+    OverrideExceptionType:
+      title: OverrideExceptionType
+      type: object
+      properties:
+        SubjectRole:
+          type: string
+          description: Subject Role.
+        SubjectIdent:
+          maxLength: 36
+          type: string
+          description: Subject Identifier.
+        OvrdExceptionCode:
+          maxLength: 40
+          type: string
+          description: Overrride Exception Code.Identifies an exception code that is to be overridden. This would be the ServerStatusCode from the Status response.
+        OvrdElement:
+          $ref: '#/components/schemas/OvrdElementType'
+    OvrdExceptionDataType:
+      title: OvrdExceptionDataType
+      type: object
+      properties:
+        OverrideException:
+          type: array
+          description: Override Exception.
+          items:
+            $ref: '#/components/schemas/OverrideExceptionType'
+    DisclosureInfoType:
+      title: DisclosureInfoType
+      type: object
+      properties:
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+        CardKeys:
+          $ref: '#/components/schemas/CardKeysType'
+        ShortName:
+          maxLength: 40
+          type: string
+          description: Short Name. Short name description  of the party.
+        DisclosureIdent:
+          maxLength: 36
+          type: string
+          description: Disclousure Identification.
+        Version:
+          maxLength: 12
+          type: string
+          description: Version.
+        LongText:
+          type: string
+          description: Long Text.
+        DiscURL:
+          maxLength: 1024
+          type: string
+          description: Disclosure URL.
+        AcceptedBy:
+          maxLength: 80
+          type: string
+          description: Accepted By.
+        AcceptedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Accepted Date.
+          format: date-time
+    DisclosureAddRqType:
+      title: DisclosureAddRqType
+      required:
+      - DisclosureInfo
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        DisclosureInfo:
+          $ref: '#/components/schemas/DisclosureInfoType'
+    DisclosureKeysType:
+      title: DisclosureKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          DisclosureId:
+            maxLength: 36
+            type: string
+            description: Disclosure Identifier.
+          PartyKeys:
+            $ref: '#/components/schemas/PartyKeysType'
+          CardKeys:
+            $ref: '#/components/schemas/CardKeysType'
+          DisclosureIdent:
+            maxLength: 36
+            type: string
+            description: Disclousure Identification.
+    DisclosureStatusType:
+      title: DisclosureStatusType
+      required:
+      - DisclosureStatusCode
+      type: object
+      properties:
+        DisclosureStatusCode:
+          $ref: '#/components/schemas/DisclosureStatusCodeType'
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+          format: date-time
+    TrnAmtType:
+      title: TrnAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    ImmediateCreditAmtType:
+      title: ImmediateCreditAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    ReceiptDtlType:
+      title: ReceiptDtlType
+      type: object
+      properties:
+        CompositeCurAmt:
+          type: array
+          description: Composite Currency Amount.
+          items:
+            $ref: '#/components/schemas/CompositeCurAmtType'
+    PassbkItemDetailType:
+      title: PassbkItemDetailType
+      type: object
+      properties:
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        PostedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Posted Date.
+          format: date-time
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+          format: date-time
+        ReversalInd:
+          type: boolean
+          description: Reversal Indicator. Indicates if the transaction was reversed or corrected.
+        PassbkTrnType:
+          $ref: '#/components/schemas/PassbkTrnTypeType'
+        CompositeCurAmt:
+          type: array
+          description: Composite Currency Amount.
+          items:
+            $ref: '#/components/schemas/CompositeCurAmtType'
+        BalAmt:
+          $ref: '#/components/schemas/BalAmtType'
+        Memo:
+          maxLength: 255
+          type: array
+          description: Memo.
+          items:
+            maxLength: 255
+            type: string
+    ReceiptType:
+      title: ReceiptType
+      type: object
+      properties:
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller Identification.
+        OpenDt:
+          type: string
+          description: Open Date.
+          format: date
+        MaturityDt:
+          type: string
+          description: Maturity Date.
+          format: date
+        Rate:
+          type: number
+          description: Rate.
+        TrnAmt:
+          $ref: '#/components/schemas/TrnAmtType'
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Transaction Identification. Also known as Trace Number or Sequence in some systems.
+        PostedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Posted Date.
+          format: date-time
+        AcctWarning:
+          $ref: '#/components/schemas/AcctWarningType'
+        AcctBal:
+          type: array
+          description: 'Account Balance. Defines balances a financial institution account may carry (ex: ledger, available, collected, etc.).'
+          items:
+            $ref: '#/components/schemas/AcctBalType'
+        ImmediateCreditAmt:
+          $ref: '#/components/schemas/ImmediateCreditAmtType'
+        ReceiptDtl:
+          $ref: '#/components/schemas/ReceiptDtlType'
+        AcctHoldInfo:
+          type: array
+          description: Account Hold Information.
+          items:
+            $ref: '#/components/schemas/AcctHoldInfoType'
+        PassbkItemDetail:
+          type: array
+          description: Passbook Item Detail. Details (e.g. line information) for this passbook item
+          items:
+            $ref: '#/components/schemas/PassbkItemDetailType'
+    DisclosureStatusRecType:
+      title: DisclosureStatusRecType
+      required:
+      - DisclosureKeys
+      - DisclosureStatus
+      type: object
+      properties:
+        SvcIdent:
+          $ref: '#/components/schemas/SvcIdentType'
+        DisclosureKeys:
+          $ref: '#/components/schemas/DisclosureKeysType'
+        DisclosureStatus:
+          $ref: '#/components/schemas/DisclosureStatusType'
+        Receipt:
+          $ref: '#/components/schemas/ReceiptType'
+    DisclosureAddRsType:
+      title: DisclosureAddRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        DisclosureStatusRec:
+          $ref: '#/components/schemas/DisclosureStatusRecType'
+    DisclosureSelType:
+      title: DisclosureSelType
+      type: object
+      properties:
+        DisclosureKeys:
+          $ref: '#/components/schemas/DisclosureKeysType'
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+        CardKeys:
+          $ref: '#/components/schemas/CardKeysType'
+        SortCriterionType:
+          $ref: '#/components/schemas/SortCriterionTypeType'
+        SortOrder:
+          $ref: '#/components/schemas/SortOrderType'
+    DisclosureInqRqType:
+      title: DisclosureInqRqType
+      required:
+      - DisclosureSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        DisclosureSel:
+          $ref: '#/components/schemas/DisclosureSelType'
+    DisclosureRecType:
+      title: DisclosureRecType
+      required:
+      - DisclosureInfo
+      - DisclosureKeys
+      - DisclosureStatus
+      type: object
+      properties:
+        DisclosureKeys:
+          $ref: '#/components/schemas/DisclosureKeysType'
+        DisclosureInfo:
+          $ref: '#/components/schemas/DisclosureInfoType'
+        DisclosureStatus:
+          $ref: '#/components/schemas/DisclosureStatusType'
+    DisclosureInqRsType:
+      title: DisclosureInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        DisclosureRec:
+          type: array
+          description: Disclosure Record
+          items:
+            $ref: '#/components/schemas/DisclosureRecType'
+    DisclosureModRqType:
+      title: DisclosureModRqType
+      required:
+      - DisclosureInfo
+      - DisclosureKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        DisclosureKeys:
+          $ref: '#/components/schemas/DisclosureKeysType'
+        DisclosureInfo:
+          $ref: '#/components/schemas/DisclosureInfoType'
+    DisclosureModRsType:
+      title: DisclosureModRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        DisclosureStatusRec:
+          $ref: '#/components/schemas/DisclosureStatusRecType'
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number.
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Multi-System Service (MSS) feature is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System Service feature (MSS), this identifies the Service Provider (account processor).
+        Context:
+          $ref: '#/components/schemas/Context'
+      example: '{ "TrnId": "622182", "OrganizationId": "PRMOrg10", "VendorId": "112233", "Context":{ "Channel": "WEB" } }'
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: Name of the client application that is used to send the service request, such as Architect, Commercial Center and others.
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12.
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: 'Client terminal sequence number. type: string'
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: 'Type of a phone. Valid values are: - ''EvePhone'' - ''DayPhone'' - ''EveFax'' - ''DayFax'' - ''Home'' - ''Work'' - ''Mobile'' - ''Fax'' - ''Pager'' - ''Modem'' - ''Other'''
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: '#/components/schemas/TellerTrnDataType'
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: '#/components/schemas/TrnConductorDataType'
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: 'Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. '
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden.
+        Value:
+          maxLength: 256
+          type: string
+          description: Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data.
+      description: Information about the subject element.
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Authorization level required to override, such as Teller and Supervisor.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+        ContentHTML:
+          type: string
+          description: 'Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures.'
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: '#/components/schemas/AdditionalStatusType'
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: 'Next record pointer included in the response only if additional  records are available. '
+      description: Record Control Out

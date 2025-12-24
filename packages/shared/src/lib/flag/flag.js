@@ -1,0 +1,58 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ApFlagId = exports.ApEdition = exports.ApEnvironment = void 0;
+var ApEnvironment;
+(function (ApEnvironment) {
+    ApEnvironment["PRODUCTION"] = "prod";
+    ApEnvironment["DEVELOPMENT"] = "dev";
+    ApEnvironment["TESTING"] = "test";
+})(ApEnvironment || (exports.ApEnvironment = ApEnvironment = {}));
+var ApEdition;
+(function (ApEdition) {
+    ApEdition["COMMUNITY"] = "ce";
+    ApEdition["ENTERPRISE"] = "ee";
+    ApEdition["CLOUD"] = "cloud";
+})(ApEdition || (exports.ApEdition = ApEdition = {}));
+var ApFlagId;
+(function (ApFlagId) {
+    ApFlagId["SHOW_POWERED_BY_IN_FORM"] = "SHOW_POWERED_BY_IN_FORM";
+    ApFlagId["CLOUD_AUTH_ENABLED"] = "CLOUD_AUTH_ENABLED";
+    ApFlagId["CAN_CONFIGURE_AI_PROVIDER"] = "CAN_CONFIGURE_AI_PROVIDER";
+    ApFlagId["AGENTS_CONFIGURED"] = "AGENTS_CONFIGURED";
+    ApFlagId["CURRENT_VERSION"] = "CURRENT_VERSION";
+    ApFlagId["EDITION"] = "EDITION";
+    ApFlagId["EMAIL_AUTH_ENABLED"] = "EMAIL_AUTH_ENABLED";
+    ApFlagId["EXECUTION_DATA_RETENTION_DAYS"] = "EXECUTION_DATA_RETENTION_DAYS";
+    ApFlagId["ENVIRONMENT"] = "ENVIRONMENT";
+    ApFlagId["PUBLIC_URL"] = "PUBLIC_URL";
+    ApFlagId["LATEST_VERSION"] = "LATEST_VERSION";
+    ApFlagId["PRIVACY_POLICY_URL"] = "PRIVACY_POLICY_URL";
+    ApFlagId["PIECES_SYNC_MODE"] = "PIECES_SYNC_MODE";
+    ApFlagId["PRIVATE_PIECES_ENABLED"] = "PRIVATE_PIECES_ENABLED";
+    ApFlagId["FLOW_RUN_MEMORY_LIMIT_KB"] = "FLOW_RUN_MEMORY_LIMIT_KB";
+    ApFlagId["FLOW_RUN_TIME_SECONDS"] = "FLOW_RUN_TIME_SECONDS";
+    ApFlagId["SHOW_BILLING"] = "SHOW_BILLING";
+    ApFlagId["SHOW_COMMUNITY"] = "SHOW_COMMUNITY";
+    ApFlagId["SUPPORTED_APP_WEBHOOKS"] = "SUPPORTED_APP_WEBHOOKS";
+    ApFlagId["TELEMETRY_ENABLED"] = "TELEMETRY_ENABLED";
+    ApFlagId["TEMPLATES_PROJECT_ID"] = "TEMPLATES_PROJECT_ID";
+    ApFlagId["TERMS_OF_SERVICE_URL"] = "TERMS_OF_SERVICE_URL";
+    ApFlagId["THEME"] = "THEME";
+    ApFlagId["THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL"] = "THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL";
+    ApFlagId["THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP"] = "THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP";
+    ApFlagId["SAML_AUTH_ACS_URL"] = "SAML_AUTH_ACS_URL";
+    ApFlagId["USER_CREATED"] = "USER_CREATED";
+    ApFlagId["WEBHOOK_URL_PREFIX"] = "WEBHOOK_URL_PREFIX";
+    ApFlagId["ALLOW_NPM_PACKAGES_IN_CODE_STEP"] = "ALLOW_NPM_PACKAGES_IN_CODE_STEP";
+    ApFlagId["PAUSED_FLOW_TIMEOUT_DAYS"] = "PAUSED_FLOW_TIMEOUT_DAYS";
+    ApFlagId["WEBHOOK_TIMEOUT_SECONDS"] = "WEBHOOK_TIMEOUT_SECONDS";
+    ApFlagId["MAX_RECORDS_PER_TABLE"] = "MAX_RECORDS_PER_TABLE";
+    ApFlagId["MAX_FIELDS_PER_TABLE"] = "MAX_FIELDS_PER_TABLE";
+    ApFlagId["MAX_FILE_SIZE_MB"] = "MAX_FILE_SIZE_MB";
+    ApFlagId["MAX_MCPS_PER_PROJECT"] = "MAX_MCPS_PER_PROJECT";
+    ApFlagId["ENABLE_FLOW_ON_PUBLISH"] = "ENABLE_FLOW_ON_PUBLISH";
+    ApFlagId["SHOW_ALERTS"] = "SHOW_ALERTS";
+    ApFlagId["SHOW_PROJECT_MEMBERS"] = "SHOW_PROJECT_MEMBERS";
+    ApFlagId["TEMPLATES_CATEGORIES"] = "TEMPLATES_CATEGORIES";
+})(ApFlagId || (exports.ApFlagId = ApFlagId = {}));
+//# sourceMappingURL=flag.js.map

@@ -1,0 +1,1114 @@
+---
+openapi: 3.0.0
+info:
+  title: Conductor Service
+  description: 'The Conductor service supports operations managing information of people that conducts transactions at the financial institution.  '
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: ESF_APServicesDesign@fiserv.com
+  version: 11.0.0
+servers:
+- url: https://swaggerhub.onefiserv.net/virts/Bank_Sol_Org/ConductorService/11.0.0
+  description: SwaggerHub API Auto Mocking
+paths:
+  /conductors:
+    put:
+      tags:
+      - Update Conductor
+      summary: Modify conductor information
+      description: This service operation modifies Conductor (customer) information.
+      operationId: UpdateConductor
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        description: ConductorModRq
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConductorModRqType'
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorModRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorModRsType'
+    post:
+      tags:
+      - Add Conductor
+      summary: Add a Conductor (customer)
+      description: This service operation adds a Conductor (customer).
+      operationId: addConductor
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConductorAddRqType'
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorAddRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorAddRsType'
+  /conductors/secured:
+    post:
+      tags:
+      - Get Conductor
+      summary: Retrieve Conductor (customer) information
+      description: This service operation retrieves Conductor information.
+      operationId: getConductorInqSecure
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConductorInqRqType'
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorInqRsType'
+  /conductors/secured/list:
+    post:
+      tags:
+      - Get Conductor List
+      summary: Retrieves a list of conductors
+      description: This service operation retrieves a list of conductors based on various search criteria such as name, address, issued identification, social security number, etc.
+      operationId: getConductorListInqSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        description: ConductorListInqRq
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConductorListInqRqType'
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorListInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConductorListInqRsType'
+components:
+  schemas:
+    NameTypeType:
+      title: NameTypeType
+      type: string
+      enum:
+      - Primary
+      - Secondary
+      - Legal
+    ResidenceCountryType:
+      title: ResidenceCountryType
+      allOf:
+      - $ref: '#/components/schemas/CountryCodeType'
+      - type: object
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    ConductorKeysType:
+      title: ConductorKeysType
+      type: object
+      properties:
+        SvcIdent:
+          $ref: '#/components/schemas/SvcIdentType'
+        ConductorId:
+          maxLength: 150
+          type: string
+          description: Conductor Identifier. Used to uniquely identify a Conductor record.
+    TaxIdentTypeType:
+      title: TaxIdentTypeType
+      type: string
+      enum:
+      - None
+      - SSN
+      - EIN
+      - Foreign
+      - ITIN
+      - ATIN
+      - Other
+    LocatorType:
+      title: LocatorType
+      type: string
+    CountryCodeType:
+      title: CountryCodeType
+      required:
+      - CountryCodeValue
+      type: object
+      properties:
+        CountryCodeSource:
+          maxLength: 80
+          type: string
+          description: Country Code Source. Used with CountryCodeValue to indicate the Country Code Source table.
+        CountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country Code Value. Indicates the Country Code Value within the CountryCodeSource table specified.
+        CountryCodeValueEnumDesc:
+          maxLength: 80
+          type: string
+          description: Country Code Value Enumeration Description.
+    PostAddrConductorType:
+      title: PostAddrType
+      required:
+      - AddrType
+      type: object
+      properties:
+        AddressIdent:
+          maxLength: 36
+          type: string
+          description: Address Identification. Used as pointer to a reference of an address. Other identification used as part of the Address object key.
+        Addr1:
+          maxLength: 64
+          type: string
+          description: Address Line 1.
+        Addr2:
+          maxLength: 64
+          type: string
+          description: Address Line 2.
+        Addr3:
+          maxLength: 64
+          type: string
+          description: Address Line 3.
+        Addr4:
+          maxLength: 64
+          type: string
+          description: Address Line 4.
+        City:
+          maxLength: 40
+          type: string
+          description: City.
+        StateProv:
+          maxLength: 80
+          type: string
+          description: State/Province. ISO 3166-2:US codes.
+        StateProvEnumDesc:
+          maxLength: 80
+          type: string
+          description: State Province Enumeration Description.
+        PostalCode:
+          maxLength: 11
+          type: string
+          description: Postal Code. ZipCode in the US.
+        CountryCode:
+          $ref: '#/components/schemas/CountryCodeType'
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+    EmploymentType:
+      title: EmploymentType
+      type: object
+      properties:
+        EmploymentType:
+          maxLength: 80
+          type: string
+          description: 'Employment Type. Work arrangement based on hours worked: FullTime, PartTime, etc.'
+        EmploymentTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Employment Type.
+        EmployerName:
+          maxLength: 40
+          type: string
+          description: Employer Name.
+        Occupation:
+          maxLength: 50
+          type: string
+          description: Occupation.
+        OccupationEnumDesc:
+          maxLength: 80
+          type: string
+          description: Occupation Enumeration Description.
+    GovIssuedIdentType:
+      title: GovIssuedIdentType
+      required:
+      - CountryCode
+      type: object
+      properties:
+        CountryCode:
+          $ref: '#/components/schemas/CountryCodeType'
+        StateProv:
+          maxLength: 80
+          type: string
+          description: State/Province. ISO 3166-2:US codes.
+        StateProvEnumDesc:
+          maxLength: 80
+          type: string
+          description: State Province Enumeration Description.
+    OvrdElementType:
+      title: OvrdElementType
+      allOf:
+      - $ref: '#/components/schemas/SubjectElementType'
+      - type: object
+    OverrideExceptionType:
+      title: OverrideExceptionType
+      type: object
+      properties:
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Subject Role.
+        SubjectIdent:
+          maxLength: 36
+          type: string
+          description: Subject Identifier.
+        OvrdExceptionCode:
+          maxLength: 40
+          type: string
+          description: Overrride Exception Code.Identifies an exception code that is to be overridden. This would be the ServerStatusCode from the Status response.
+        OvrdElement:
+          $ref: '#/components/schemas/OvrdElementType'
+    OvrdExceptionDataType:
+      title: OvrdExceptionDataType
+      type: object
+      properties:
+        OverrideException:
+          type: array
+          description: Override Exception.
+          items:
+            $ref: '#/components/schemas/OverrideExceptionType'
+    MemberDataType:
+      title: MemberDataType
+      type: object
+      properties:
+        MemberGroup:
+          maxLength: 80
+          type: string
+          description: Member Group.
+        MemberNum:
+          maxLength: 36
+          type: string
+          description: Member Number.
+      description: Member Data.
+    TaxDataInfoType:
+      title: TaxDataInfoType
+      type: object
+      properties:
+        TaxIdentType:
+          $ref: '#/components/schemas/TaxIdentTypeType'
+        TaxIdentTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tax Identification Type Enumeration Description.
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+    ConductorInfoType:
+      title: ConductorInfoType
+      type: object
+      properties:
+        MemberData:
+          $ref: '#/components/schemas/MemberDataType'
+        EstablishedDt:
+          type: string
+          description: Established Date.
+          format: date
+        ResidenceCountry:
+          $ref: '#/components/schemas/ResidenceCountryType'
+        TaxDataInfo:
+          $ref: '#/components/schemas/TaxDataInfoType'
+        PostAddr:
+          $ref: '#/components/schemas/PostAddrConductorType'
+        IssuedIdent:
+          type: array
+          description: Issued Identification. Used to include issued identifications. If the  identification is government issued, the GovIssuedIdentaggregate must be included.
+          items:
+            $ref: '#/components/schemas/IssuedIdentType'
+        PersonName:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonNameType'
+        BirthDt:
+          type: string
+          description: Birth Date.
+          format: date
+        Employment:
+          type: array
+          description: Employment.
+          items:
+            $ref: '#/components/schemas/EmploymentType'
+        IsCustomerInd:
+          type: boolean
+          description: Is customer indicator. Used to indicate the conductor is a customer of the financial institution.
+      description: Conductor Information.
+    IssuedIdentType:
+      title: IssuedIdentType
+      required:
+      - IssuedIdentType
+      type: object
+      properties:
+        IssuedIdentType:
+          maxLength: 80
+          type: string
+          description: 'Issued Identification Type. Valid values: DrvrsLicNb, BirthCertificate, HealthCard, Military, AlnRegnNb, IdntyCardNb, VoterRegistration, PsptNb, MplyrIdNb, TaxIdNb,  SclSctyNb, NRAPersonal, NRABusiness, Other.'
+        IssuedIdentTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Issued Identification Type Enumeration Description.
+        IssuedIdentId:
+          maxLength: 36
+          type: string
+          description: Issued Identification Id.
+        IssuedIdentValue:
+          maxLength: 50
+          type: string
+          description: Issued Identification Value. Identification value associated with the identification type.
+        Issuer:
+          maxLength: 32
+          type: string
+          description: Issuer.
+        IssuerEnumDesc:
+          maxLength: 80
+          type: string
+          description: Issuer Enumeration Description.
+        IssuerLocation:
+          maxLength: 80
+          type: string
+          description: Issuer Location.
+        IssuerLocationEnumDesc:
+          maxLength: 80
+          type: string
+          description: Issuer Location Enumeration Description.
+        IssueDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Issue Date.
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        GovIssuedIdent:
+          $ref: '#/components/schemas/GovIssuedIdentType'
+    PersonNameType:
+      title: PersonNameType
+      required:
+      - NameType
+      type: object
+      properties:
+        NameType:
+          $ref: '#/components/schemas/NameTypeType'
+        FullName:
+          maxLength: 130
+          type: string
+          description: Full Name.
+        FamilyName:
+          maxLength: 60
+          type: string
+          description: Family Name.
+        GivenName:
+          maxLength: 60
+          type: string
+          description: Given Name. Person's first name.
+        MiddleName:
+          maxLength: 60
+          type: string
+          description: Middle Name. Person's middle name.
+    ConductorAddRqType:
+      title: ConductorAddRqType
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        ConductorInfo:
+          $ref: '#/components/schemas/ConductorInfoType'
+      description: Conductor Add Request.
+    ConductorSelType:
+      title: ConductorSelType
+      required:
+      - ConductorKeys
+      type: object
+      properties:
+        ConductorKeys:
+          $ref: '#/components/schemas/ConductorKeysType'
+    ConductorInqRqType:
+      title: ConductorInqRqType
+      required:
+      - ConductorSel
+      type: object
+      properties:
+        ConductorSel:
+          $ref: '#/components/schemas/ConductorSelType'
+    PersonNameSelType:
+      title: PersonNameSelType
+      type: object
+      properties:
+        FamilyName:
+          maxLength: 40
+          type: string
+          description: Family Name.
+        GivenName:
+          maxLength: 40
+          type: string
+          description: Given Name. Person's first name.
+        MiddleName:
+          maxLength: 40
+          type: string
+          description: Middle Name. Person's middle name.
+    ConductorListSelType:
+      title: ConductorListSelType
+      type: object
+      properties:
+        PersonNameSel:
+          $ref: '#/components/schemas/PersonNameSelType'
+        Addr1:
+          maxLength: 64
+          type: string
+          description: Address Line 1.
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+        City:
+          maxLength: 40
+          type: string
+          description: City.
+        StateProv:
+          maxLength: 80
+          type: string
+          description: State/Province. ISO 3166-2:US codes.
+        PostalCode:
+          maxLength: 11
+          type: string
+          description: Postal Code. ZipCode in the US.
+        BirthDt:
+          type: string
+          description: Birth Date.
+          format: date
+    ConductorListInqRqType:
+      title: ConductorListInqRqType
+      required:
+      - ConductorListSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        ConductorListSel:
+          $ref: '#/components/schemas/ConductorListSelType'
+    ConductorModRqType:
+      title: ConductorModRqType
+      required:
+      - ConductorKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        ConductorKeys:
+          $ref: '#/components/schemas/ConductorKeysType'
+        ConductorInfo:
+          $ref: '#/components/schemas/ConductorInfoType'
+    ConductorStatusCodeType:
+      title: ConductorStatusCodeType
+      type: string
+      enum:
+      - Valid
+      - Deleted
+    ConductorStatusType:
+      title: ConductorStatusType
+      required:
+      - ConductorStatusCode
+      type: object
+      properties:
+        ConductorStatusCode:
+          $ref: '#/components/schemas/ConductorStatusCodeType'
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+    ConductorStatusRecType:
+      title: ConductorStatusRecType
+      required:
+      - ConductorKeys
+      - ConductorStatus
+      type: object
+      properties:
+        SvcIdent:
+          $ref: '#/components/schemas/SvcIdentType'
+        ConductorKeys:
+          $ref: '#/components/schemas/ConductorKeysType'
+        ConductorStatus:
+          $ref: '#/components/schemas/ConductorStatusType'
+    ConductorAddRsType:
+      title: ConductorAddRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        ConductorStatusRec:
+          $ref: '#/components/schemas/ConductorStatusRecType'
+    ConductorRecType:
+      title: ConductorRecType
+      required:
+      - ConductorKeys
+      - ConductorStatus
+      type: object
+      properties:
+        ConductorKeys:
+          $ref: '#/components/schemas/ConductorKeysType'
+        ConductorInfo:
+          $ref: '#/components/schemas/ConductorInfoType'
+        ConductorStatus:
+          $ref: '#/components/schemas/ConductorStatusType'
+    ConductorInqRsType:
+      title: ConductorInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        ConductorRec:
+          $ref: '#/components/schemas/ConductorRecType'
+    ConductorListInfoType:
+      title: ConductorListInfoType
+      type: object
+      properties:
+        MemberData:
+          $ref: '#/components/schemas/MemberDataType'
+        EstablishedDt:
+          type: string
+          description: Established Date.
+          format: date
+        ResidenceCountry:
+          $ref: '#/components/schemas/ResidenceCountryType'
+        TaxDataInfo:
+          $ref: '#/components/schemas/TaxDataInfoType'
+        PostAddr:
+          $ref: '#/components/schemas/PostAddrConductorType'
+        IssuedIdent:
+          type: array
+          description: Issued Identification. Used to include issued identifications. If the identification is government issued, the GovIssuedIdent aggregate must be included
+          items:
+            $ref: '#/components/schemas/IssuedIdentType'
+        PersonName:
+          type: array
+          items:
+            $ref: '#/components/schemas/PersonNameType'
+        BirthDt:
+          type: string
+          description: Birth Date.
+          format: date
+        Employment:
+          type: array
+          description: Employment.
+          items:
+            $ref: '#/components/schemas/EmploymentType'
+        IsCustomerInd:
+          type: boolean
+          description: Is customer indicator. Used to indicate the conductor is a customer of the financial institution.
+      description: Conductor Information.
+    ConductorListRecType:
+      title: ConductorListRecType
+      required:
+      - ConductorKeys
+      - ConductorStatus
+      type: object
+      properties:
+        ConductorKeys:
+          $ref: '#/components/schemas/ConductorKeysType'
+        ConductorListInfo:
+          $ref: '#/components/schemas/ConductorListInfoType'
+        ConductorStatus:
+          $ref: '#/components/schemas/ConductorStatusType'
+    ConductorListInqRsType:
+      title: ConductorListInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        ConductorListRec:
+          type: array
+          description: Conductor List Record.
+          items:
+            $ref: '#/components/schemas/ConductorListRecType'
+    ConductorModRsType:
+      title: ConductorModRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        ConductorStatusRec:
+          $ref: '#/components/schemas/ConductorStatusRecType'
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number.
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Indicates Multi-System environment is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System environment this identifies the Service Provider (account processor).
+        Context:
+          $ref: '#/components/schemas/Context'
+      example: '{ "TrnId": "622182", "OrganizationId": "PRMOrg10", "VendorId": "112233", "Context":{ "Channel": "WEB" } }'
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: Name of the client application that is used to send the service request, such as Architect, Commercial Center and others.
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12.
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: 'Client terminal sequence number. type: string'
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: 'Type of a phone. Valid values are: - ''EvePhone'' - ''DayPhone'' - ''EveFax'' - ''DayFax'' - ''Home'' - ''Work'' - ''Mobile'' - ''Fax'' - ''Pager'' - ''Modem'' - ''Other'''
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: '#/components/schemas/TellerTrnDataType'
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: '#/components/schemas/TrnConductorDataType'
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: 'Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. '
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden.
+        Value:
+          maxLength: 256
+          type: string
+          description: Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data.
+      description: Information about the subject element.
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Authorization level required to override, such as Teller and Supervisor.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+        ContentHTML:
+          type: string
+          description: 'Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures.'
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: '#/components/schemas/AdditionalStatusType'
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: 'Next record pointer included in the response only if additional  records are available. '
+      description: Record Control Out

@@ -1,0 +1,1861 @@
+---
+openapi: 3.0.0
+info:
+  title: Memo Tickler Service
+  description: The Memo Tickler service supports operations managing memo and ticklers.  A variety of memos and ticklers will advise officers from financial institutions on important messages or actions that need to take place when interacting with the customer or performing a transaction to the customer's account. A memo is a continuous message which does not require any specific action. A tickler is a one-time or recurring message which may require some specific action to be taken.
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: /
+paths:
+  /memotickler:
+    put:
+      tags:
+      - Update Memo Trickler
+      summary: Modifies a Memo Tickler Object
+      description: This service operation adds memos and ticklers for customer’s account and parties.
+      operationId: MemoTicklerModOper
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoTicklerModRqType'
+        required: true
+      responses:
+        "200":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerModRsType'
+        default:
+          description: See HTTP Status Code Standards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerModRsType'
+    post:
+      tags:
+      - Add Memo Trickler
+      summary: Add a Memo Tickler Object
+      description: This service operation adds memos and ticklers for customer’s account and parties.
+      operationId: MemoTicklerAddOper
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoTicklerAddRqType'
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerAddRsType'
+        default:
+          description: See HTTP Status Code Standards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerAddRsType'
+  /memotickler/secured:
+    put:
+      tags:
+      - Delete Memo Trickler
+      summary: Get Memo Trickler Object secured
+      operationId: delMemoTicklerSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoTicklerDelRqType'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerDelRsType'
+        default:
+          description: See HTTP Status Code Standards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerDelRsType'
+      deprecated: false
+    post:
+      tags:
+      - Get Memo Trickler
+      summary: Get Memo Trickler Object secured
+      operationId: getMemoTicklerSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoTicklerInqRqType'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerInqRsType'
+        default:
+          description: See HTTP Status Code Standards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MemoTicklerInqRsType'
+      deprecated: false
+components:
+  schemas:
+    AddrFormatTypeType:
+      title: AddrFormatTypeType
+      type: string
+      enum:
+      - Label
+      - Parsed
+    AddrTypeType:
+      title: AddrTypeType
+      type: string
+      enum:
+      - Primary
+      - PrimaryPending
+      - Secondary
+      - Seasonal
+      - Previous
+      - Physical
+    CurCodeTypeType:
+      title: CurCodeTypeType
+      type: string
+      enum:
+      - ISO4217-Alpha
+      - ISO4217-Numeric
+    DayOfMonthType:
+      title: DayOfMonthType
+      type: integer
+      example: 1
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 26
+      - 27
+      - 28
+      - 29
+      - 30
+      - 31
+    DayOfWeekType:
+      title: DayOfWeekType
+      type: string
+      enum:
+      - Monday
+      - Tuesday
+      - Wednesday
+      - Thursday
+      - Friday
+      - Saturday
+      - Sunday
+    HandlingCodeOptionType:
+      title: HandlingCodeOptionType
+      type: string
+      enum:
+      - StatementsNoticesChecks
+      - Statements
+      - StatementsNotices
+      - StatementsChecks
+      - Notices
+      - NoticesChecks
+      - Checks
+      - DoNotPrint
+      - UsePortfolio
+      - UseDefault
+    MemoTicklerStatusCodeType:
+      title: MemoTicklerStatusCodeType
+      type: string
+      enum:
+      - Valid
+      - Deleted
+    PartyIdentTypeType:
+      title: PartyIdentTypeType
+      type: string
+      enum:
+      - TaxIdent
+      - IBId
+      - Name
+      - MemberNum
+      - OrgNum
+      - PersonNum
+    RelationshipRoleType:
+      title: RelationshipRoleType
+      type: string
+      enum:
+      - Officer
+      - SecondOfficer
+      - ThirdOfficer
+      - FourthOfficer
+      - ReferralOfficer
+    SortOrderType:
+      title: SortOrderType
+      type: string
+      enum:
+      - Ascending
+      - Descending
+    UpdateContactCodeType:
+      title: UpdateContactCodeType
+      type: string
+      enum:
+      - Party
+      - Account
+      - All
+      - None
+    AccessLevelDataType:
+      title: AccessLevelDataType
+      type: object
+      properties:
+        AccessLevelType:
+          maxLength: 80
+          type: string
+          description: Access Level Type.
+        AccessLevelCode:
+          maxLength: 80
+          type: string
+          description: Access Level Code.
+    AcctIdentType:
+      title: AcctIdentType
+      type: object
+      properties:
+        AcctIdentType:
+          type: string
+          description: 'Account Identification Type. Valid values include: AcctNum, AliasAcct, PORT, etc.'
+        AcctIdentValue:
+          maxLength: 36
+          type: string
+          description: Account Identification Value. Contains the value of the Account Identifier.
+    BaseKeysType:
+      title: BaseKeysType
+      type: string
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider which indicates the location of the Service Provider that gave the error.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    CardIdentType:
+      title: CardIdentType
+      type: object
+      properties:
+        CardIdentType:
+          type: string
+          description: 'Card Identification Type. Valid values include: PORT.'
+        CardIdentValue:
+          maxLength: 36
+          type: string
+          description: Card Identification Value.
+    CardKeysType:
+      title: CardKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          ISOCode:
+            maxLength: 80
+            type: string
+            description: ISO Card Code. Some systems like Precision instead of ISO Number they use a code to refer to the ISO Number of the card.
+          CardNum:
+            maxLength: 32
+            type: string
+            description: Card Number. This number does not include the ISO component of the card identification.
+          CardId:
+            maxLength: 36
+            type: string
+            description: Card Identifier. Uniquely identifies a card held at a financial institution (this is the card number as it appears on the card).
+          CardSeqNum:
+            maxLength: 3
+            type: string
+            description: Card Sequence Number. Typically refers to the member number (if applicable).
+          CardIdent:
+            $ref: '#/components/schemas/CardIdentType'
+    CurCodeType:
+      title: CurCodeType
+      required:
+      - CurCodeValue
+      type: object
+      properties:
+        CurCodeType:
+          $ref: '#/components/schemas/CurCodeTypeType'
+        CurCodeTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Currency Code Type Enumeration Description.
+        CurCodeValue:
+          maxLength: 80
+          type: string
+          description: Currency Code Value. Indicates the Currency Code Value within the CurCodeType table specified.
+    PortKeysType:
+      title: PortKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - required:
+        - PortId
+        type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          PortId:
+            maxLength: 36
+            type: string
+            description: Portfolio Identifier.
+    AcctKeysType:
+      title: AcctKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          AcctId:
+            maxLength: 36
+            type: string
+            description: Account Identifier. Uniquely identifies an account held at a financial institution.
+          SubAcctId:
+            maxLength: 36
+            type: string
+            description: Sub Account Identifier.
+          AcctType:
+            type: string
+            description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+          CardKeys:
+            type: array
+            description: Card Keys.  Contains data that describes the key of the Card record.
+            items:
+              $ref: '#/components/schemas/CardKeysType'
+          AcctIdent:
+            type: array
+            description: Account Identification. Other account identification used as part of the Account object key in addition to the Account Identifier (AcctId).
+            items:
+              $ref: '#/components/schemas/AcctIdentType'
+          CurCode:
+            type: array
+            description: Currency Code.
+            items:
+              $ref: '#/components/schemas/CurCodeType'
+          FIIdentType:
+            type: array
+            description: Financial Institution Identification Type.
+            items:
+              type: object
+          FIIdent:
+            maxLength: 34
+            type: array
+            description: Financial Institution Identification.
+            items:
+              maxLength: 34
+              type: string
+          BranchIdent:
+            maxLength: 22
+            type: array
+            description: Branch Identification. Other identification used as part of the Branch object key.
+            items:
+              maxLength: 22
+              type: string
+    AddrDefinedDataType:
+      title: AddrDefinedDataType
+      required:
+      - DataIdent
+      type: object
+      properties:
+        DataIdent:
+          maxLength: 36
+          type: string
+          description: Data Identification. Identification of the client defined data item.
+        Value:
+          maxLength: 256
+          type: string
+          description: Value string representation of the EFX data value of the element in error. This field is intended to provide a human readable visual hint as to the value in error. It should not be provided for fields that cannot be represented as a string (i.e., binary data).
+    LocatorType:
+      title: LocatorType
+      type: string
+    CountryCodeType:
+      title: CountryCodeType
+      required:
+      - CountryCodeValue
+      type: object
+      properties:
+        CountryCodeSource:
+          type: string
+          description: Country Code Source. Used with CountryCodeValue to indicate the Country Code Source table.
+        CountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country Code Value. Indicates the Country Code Value within the CountryCodeSource table specified.
+        CountryCodeValueEnumDesc:
+          maxLength: 80
+          type: string
+          description: Country Code Value Enumeration Description.
+    PhoneNumType:
+      title: PhoneNumType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - required:
+        - PhoneType
+        type: object
+        properties:
+          PhoneType:
+            type: string
+            description: Phone Type.
+          PhoneTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Phone Type Enumeration Description.
+          PhoneIdent:
+            type: integer
+            description: Phone Identifier. Use when you have more than one occurrence of a phone type  (for example 5 Mobile phones). This element serializes the phones.
+            format: int64
+          Phone:
+            type: string
+            description: Phone.
+          PhoneExchange:
+            maxLength: 80
+            type: string
+            description: Phone Exchange.
+          PreferredPhone:
+            type: boolean
+            description: Preferred Phone.
+          DoNotContactInd:
+            type: boolean
+            description: Do Not Contact Indicator.
+          PhoneDesc:
+            maxLength: 30
+            type: string
+            description: Phone Description.
+          CountryCode:
+            $ref: '#/components/schemas/CountryCodeType'
+          UpDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Update Date.
+    RelationshipMgrType:
+      title: RelationshipMgrType
+      required:
+      - RelationshipMgrIdent
+      type: object
+      properties:
+        RelationshipMgrIdent:
+          maxLength: 36
+          type: string
+          description: Relationship Manager Identifier. Identifies officer/employee of financial institution.
+        RelationshipMgrIdentEnumDesc:
+          maxLength: 80
+          type: string
+          description: Relationship Manager Identifier Enumeration Description.
+        RelationshipRole:
+          $ref: '#/components/schemas/RelationshipRoleType'
+        RelationshipRoleEnumDesc:
+          maxLength: 80
+          type: string
+          description: Relationship Role Enumeration Description.
+    LabelAddrType:
+      title: LabelAddrType
+      type: object
+      properties:
+        Addr1:
+          maxLength: 64
+          type: string
+          description: Address Line 1.
+        Addr2:
+          maxLength: 64
+          type: string
+          description: Address Line 2.
+        Addr3:
+          maxLength: 64
+          type: string
+          description: Address Line 3.
+        Addr4:
+          maxLength: 64
+          type: string
+          description: Address Line 4.
+        Addr5:
+          maxLength: 64
+          type: string
+          description: Address Line 5.
+        Addr6:
+          maxLength: 64
+          type: string
+          description: Address Line 6.
+    StartDayMonthType:
+      title: StartDayMonthType
+      type: object
+      properties:
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+    DurationType:
+      title: DurationType
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        Unit:
+          type: string
+          description: Unit.
+        UnitEnumDesc:
+          maxLength: 80
+          type: string
+          description: Unit Enumeration Description.
+    RecurRuleType:
+      title: RecurRuleType
+      type: object
+      properties:
+        RecurType:
+          type: string
+          description: Recurrence Type. Indicates the pattern of recurrence.
+        RecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Recurrence Type Enumeration Description.
+        RecurInterval:
+          type: integer
+          description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle.'
+          format: int64
+        RecurInstance:
+          type: integer
+          description: Recurrent Instance. Numeric value representing the instance of the days(s) of the week of recurrence, i.e. Second Wednesday of the month, First Monday of the year. DayOfWeek must also be provided.
+          format: int64
+        DayOfWeek:
+          $ref: '#/components/schemas/DayOfWeekType'
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        SecondDayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+        RecurStartDate:
+          type: string
+          description: Recurrence Start Date.
+          format: date
+        Occurrences:
+          type: integer
+          description: Occurrences.
+          format: int64
+        RecurEndDate:
+          type: string
+          description: Recurrence End Date.
+          format: date
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        AdjDays:
+          type: integer
+          description: Adjustment Days. Indicates the number of days to adjust a value (review a rate or perform interest accrual) after an event occurs (see AdjDaysBasis).
+          format: int64
+        AdjDaysBasis:
+          type: string
+          description: 'Adjustment Days Basis. Used in combination with Adjustment Days (AdjDays). It indicates a basis for an adjustment such as: Due Date (DueDt), Statement Date (StmtDt).'
+    TimeFrameType:
+      title: TimeFrameType
+      type: object
+      properties:
+        StartDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Start Date.
+        StartDayMonth:
+          $ref: '#/components/schemas/StartDayMonthType'
+        EndDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: End Date.
+        EndDayMonth:
+          $ref: '#/components/schemas/StartDayMonthType'
+        Duration:
+          $ref: '#/components/schemas/DurationType'
+        RecurRule:
+          type: array
+          description: Recurrence Rule.
+          items:
+            $ref: '#/components/schemas/RecurRuleType'
+    PartyRelationshipType:
+      title: PartyRelationshipType
+      type: object
+      properties:
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+        FullName:
+          maxLength: 80
+          type: string
+          description: Full name of the related party.
+        PartyRelData:
+          type: array
+          items:
+             $ref: '#/components/schemas/PartyRelDataType'
+        TaxReportingOwnerInd:
+          type: boolean
+          description: |
+            Tax reporting owner indicator.
+    PartyRelDataType:
+      type: object
+      title: PartyRelData
+      description: Party relationship data.
+      properties:
+        PartyRelOrder:
+          type: string
+          description: Party relationship order indicates the relationship order for JoinTenancy or JoinTenantsInCommon.
+          enum:
+          - First
+          - Second
+          - Third
+          - Fourth
+          - Fifth
+          - Other
+    
+    PostAddrType:
+      title: PostAddrType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - required:
+        - AddrType
+        type: object
+        properties:
+          OpenDt:
+            type: string
+            description: Open Date.
+            format: date
+          RelationshipMgr:
+            type: array
+            description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+            items:
+              $ref: '#/components/schemas/RelationshipMgrType'
+          OriginatingBranch:
+            maxLength: 32
+            type: string
+            description: Originating Branch. Branch first originated the relationship with party or created the account.
+          OriginatingBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Originating Branch Enumeration Description.
+          PreferredBranch:
+            maxLength: 32
+            type: string
+            description: Preferred Branch. The branch preferred by the customer to conduct business.
+          PreferredBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Preferred Branch Enumeration Description.
+          ResponsibleBranch:
+            maxLength: 32
+            type: string
+            description: Responsible Branch. Branch responsible for the relationship.
+          ResponsibleBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Responsible Branch Enumeration Description.
+          NameIdent:
+            maxLength: 36
+            type: array
+            description: Name Identifier.
+            items:
+              maxLength: 36
+              type: string
+          AddressIdent:
+            maxLength: 36
+            type: string
+            description: Address Identification. Used as pointer to a reference of an address. Other identification used as part of the Address object key.
+          AddrUse:
+            type: string
+            description: Address Use. Indicates the use of the address for example Business or Home, Statement, Check, Government, etc.
+          AddrUseEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Use  Enumeration Description.
+          AddrFormatType:
+            $ref: '#/components/schemas/AddrFormatTypeType'
+          AddrFormatTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Format Type Enumeration Description.
+          Addr1:
+            maxLength: 64
+            type: string
+            description: Address Line 1.
+          Addr2:
+            maxLength: 64
+            type: string
+            description: Address Line 2.
+          Addr3:
+            maxLength: 64
+            type: string
+            description: Address Line 3.
+          Addr4:
+            maxLength: 64
+            type: string
+            description: Address Line 4.
+          Addr5:
+            maxLength: 64
+            type: string
+            description: Address Line 5.
+          Addr6:
+            maxLength: 64
+            type: string
+            description: Address Line 6.
+          ApartmentNum:
+            maxLength: 15
+            type: string
+            description: Apartment Number.
+          ApartmentNumType:
+            type: string
+            description: Apartment Number Type. This is an identifier of the type of number provided in the Apartment Number field.
+          HouseNum:
+            maxLength: 15
+            type: string
+            description: House Number.
+          Street:
+            maxLength: 64
+            type: string
+            description: Street.
+          LabelAddr:
+            $ref: '#/components/schemas/LabelAddrType'
+          AddrDefinedData:
+            type: array
+            description: Address Defined Data.
+            items:
+              $ref: '#/components/schemas/AddrDefinedDataType'
+          HouseName:
+            maxLength: 64
+            type: string
+            description: House Name.
+          City:
+            maxLength: 40
+            type: string
+            description: City.
+          County:
+            maxLength: 32
+            type: string
+            description: County.
+          District:
+            maxLength: 32
+            type: string
+            description: District.
+          StateProv:
+            maxLength: 80
+            type: string
+            description: State/Province. ISO 3166-2:US codes.
+          StateProvEnumDesc:
+            maxLength: 80
+            type: string
+            description: State Province Enumeration Description.
+          MilitaryRegion:
+            type: string
+            description: Military Region. Identifier that replaces State and City for military addresses
+          PostalCode:
+            maxLength: 11
+            type: string
+            description: Postal Code. ZipCode in the US.
+          Country:
+            maxLength: 64
+            type: string
+            description: County.
+          CountryCode:
+            $ref: '#/components/schemas/CountryCodeType'
+          POBox:
+            maxLength: 16
+            type: string
+            description: PO Box.
+          AddrType:
+            $ref: '#/components/schemas/AddrTypeType'
+          AddrTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Type Enumeration Description.
+          AddrLocation:
+            maxLength: 255
+            type: string
+            description: Address Location. Indicates if the address location is a Business or Home.
+          AddrLocationEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Location Enumeration Description.
+          TimeFrame:
+            $ref: '#/components/schemas/TimeFrameType'
+          ExpDt:
+            type: string
+            description: Expiration Date.
+            format: date
+          Retention:
+            type: boolean
+            description: Retention. Indicates whether the records are to be retained or deleted based on Service Provider criteria.
+          RevertToPartyAddr:
+            type: boolean
+            description: Revert to Party Address. Indicates for account alternate addresses if the address must be reverted to the Party name and address.
+          MoveInDt:
+            type: string
+            description: Move In Date.
+            format: date
+          ContactMethod:
+            type: string
+            description: Contact Method.
+          UpDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Update Date.
+          Comment:
+            maxLength: 300
+            type: string
+            description: Comment. A comment entered in history.
+          CensusTract:
+            maxLength: 20
+            type: string
+            description: Census Track. Contains the census tract number assigned to the address.
+          CensusBlock:
+            maxLength: 20
+            type: string
+            description: Census Block. Contains the census block group designation for the block where the address is within a census tract.
+          ForeignFlag:
+            type: boolean
+            description: Foreign Flag. Indicator that tells if an item (an address for example) is foreign or not.
+          HandlingCode:
+            maxLength: 80
+            type: string
+            description: Handling Code .Indicates special handling of notification and statement forms.
+          HandlingCodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Handling Code Enumeration Description.
+          HandlingCodeOption:
+            $ref: '#/components/schemas/HandlingCodeOptionType'
+          HandlingCodeOptionEnumDesc:
+            maxLength: 80
+            type: string
+            description: Handling Code Option Enumeration Description.
+          MSACode:
+            type: integer
+            description: MSA Code. MSAs are defined by the U.S. Office of Management and Budget (OMB), and used by the U.S. Census Bureau and other federal government agencies for statistical purposes
+            format: int64
+          MSACodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: MSA Code Enumeration Description.
+          MaintDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Maintenance Date.
+          MaintBy:
+            maxLength: 80
+            type: string
+            description: Maintained By.
+          MaintByEnumDesc:
+            maxLength: 80
+            type: string
+            description: Maintained By Enumeration Description.
+          AddrInUseInd:
+            type: boolean
+            description: Address In Use.
+          PhoneNum:
+            type: array
+            description: Phone Number.
+            items:
+              $ref: '#/components/schemas/PhoneNumType'
+          IncAddrFormat:
+            type: boolean
+    EmailType:
+      title: EmailType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - type: object
+        properties:
+          EmailIdent:
+            maxLength: 36
+            type: string
+            description: Email Identification.
+          EmailType:
+            type: string
+            description: Email Type. Indicates the type of email address.
+          EmailTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Email Type Enumeration Description.
+          EmailAddr:
+            maxLength: 254
+            type: string
+            description: Email Address.
+          PreferredEmail:
+            type: boolean
+            description: Preferred Email.
+    WebAddrType:
+      title: WebAddrType
+      type: object
+      properties:
+        WebAddrIdent:
+          type: integer
+          description: Web Address Identifier. Use when you have more than one occurrence of a web address type. This element serializes the web addresses.
+          format: int64
+        WebAddrType:
+          type: string
+          description: Web Address Type.
+        WebAddrTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Web Address Type Enumeration Description.
+        WebAddrLink:
+          maxLength: 1024
+          type: string
+          description: Web Address Link.
+        PreferredWebAddr:
+          type: boolean
+          description: Preferred Web Address.
+    ContactType:
+      title: ContactType
+      type: object
+      properties:
+        PhoneNum:
+          $ref: '#/components/schemas/PhoneNumType'
+        PostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        Email:
+          $ref: '#/components/schemas/EmailType'
+        WebAddr:
+          $ref: '#/components/schemas/WebAddrType'
+        ContactName:
+          maxLength: 40
+          type: string
+          description: Contact. Contact Name.
+        ContactTitle:
+          maxLength: 32
+          type: string
+          description: Contact Job Title.
+        DoNotSolicitInd:
+          type: boolean
+          description: Do Not Solicit Indicator. Use to determine whether contact information can be used for solicitation.
+    DeliveryInstructionType:
+      title: DeliveryInstructionType
+      type: object
+      properties:
+        DeliveryMethod:
+          type: string
+          description: Delivery Method.
+        DeliveryMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Delivery Method Enumeration Description.
+        DeliveryMedia:
+          maxLength: 80
+          type: string
+          description: Delivery Media.
+        DeliveryMediaEnumDesc:
+          maxLength: 80
+          type: string
+          description: Delivery Media Enumeation Description.
+        DeliveryDestination:
+          type: string
+          description: Delivery Destination.
+        DeliveryDestinationEnumDesc:
+          maxLength: 80
+          type: string
+          description: Delivery Destination Enumeration Description.
+        Contact:
+          type: array
+          description: Contact. This aggregate contains a person's or organization's contact information
+          items:
+            $ref: '#/components/schemas/ContactType'
+    OvrdElementType:
+      title: OvrdElementType
+      allOf:
+      - $ref: '#/components/schemas/SubjectElementType'
+      - type: object
+    OverrideExceptionType:
+      title: OverrideExceptionType
+      type: object
+      properties:
+        SubjectRole:
+          type: string
+          description: Subject Role.
+        SubjectIdent:
+          maxLength: 36
+          type: string
+          description: Subject Identifier.
+        OvrdExceptionCode:
+          maxLength: 40
+          type: string
+          description: Overrride Exception Code.Identifies an exception code that is to be overridden. This would be the ServerStatusCode from the Status response.
+        OvrdElement:
+          $ref: '#/components/schemas/OvrdElementType'
+    OvrdExceptionDataType:
+      title: OvrdExceptionDataType
+      type: object
+      properties:
+        OverrideException:
+          type: array
+          description: Override Exception.
+          items:
+            $ref: '#/components/schemas/OverrideExceptionType'
+    PartyKeysType:
+      title: PartyKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          PartyId:
+            maxLength: 36
+            type: string
+            description: Party Identifier. Used to uniquely identify a Party record.
+          PartyIdentType:
+            $ref: '#/components/schemas/PartyIdentTypeType'
+          PartyIdent:
+            maxLength: 60
+            type: string
+            description: Party Identification.
+    MemoTicklerInfoType:
+      title: MemoTicklerInfoType
+      type: object
+      properties:
+        AcctKeys:
+          $ref: '#/components/schemas/AcctKeysType'
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+        CardKeys:
+          $ref: '#/components/schemas/CardKeysType'
+        PortKeys:
+          $ref: '#/components/schemas/PortKeysType'
+        MemoTicklerType:
+          maxLength: 80
+          type: string
+          description: Memo Tickler Type.
+        MemoTicklerTypeDesc:
+          maxLength: 600
+          type: string
+          description: Memo Tickler Type Description.
+        MemoTicklerSubType:
+          maxLength: 80
+          type: string
+          description: Memo Tickler Sub Type.
+        MemoTicklerSubTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Memo Tickler Sub Type Enumeration Description.
+        MemoTicklerTitle:
+          maxLength: 50
+          type: string
+          description: Memo Tickler Title. A Title or very abreviated description of the Memo Tickler.
+        MemoTicklerUse:
+          type: string
+          description: Memo Tickler Use.
+        CreateDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Create Date.
+        CreatedBy:
+          maxLength: 80
+          type: string
+          description: Created By.
+        CreatedByEnumDesc:
+          maxLength: 80
+          type: string
+          description: Created By Enumeration Description.
+        MemoTicklerText:
+          maxLength: 100
+          type: array
+          description: Memo Tickler Description.
+          items:
+            maxLength: 100
+            type: string
+        MemoTicklerExtendedText:
+          maxLength: 80
+          type: array
+          description: Memo Tickler Extended Description.
+          items:
+            maxLength: 80
+            type: string
+        RelationshipMgr:
+          type: array
+          description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+          items:
+            $ref: '#/components/schemas/RelationshipMgrType'
+        RequiredViewInd:
+          type: boolean
+          description: Required View Indicator.
+        PrivateMemoTicklerInd:
+          type: boolean
+          description: Private Memo Tickler Indicator.
+        ActionRequiredCode:
+          type: string
+          description: Action Required Code. Code that indicates whether the tickler requires the user to take some action.
+        ActionRequiredCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Action Required Code Enumeration Description.
+        DeliveryInstruction:
+          $ref: '#/components/schemas/DeliveryInstructionType'
+        ReportGroupCode:
+          maxLength: 80
+          type: string
+          description: Report Group Code. Indicates a user defined code used to group accounts fro reporting purposes.
+        RecurRule:
+          $ref: '#/components/schemas/RecurRuleType'
+        NextMemoTicklerDt:
+          type: string
+          description: Next Memo Tickler Date.
+          format: date
+        Duration:
+          $ref: '#/components/schemas/DurationType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        UpdateContactCode:
+          $ref: '#/components/schemas/UpdateContactCodeType'
+        MaintBy:
+          maxLength: 80
+          type: string
+          description: Maintained By.
+        MaintByEnumDesc:
+          maxLength: 80
+          type: string
+          description: Maintained By Enumeration Description.
+        MaintDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Maintenance Date.
+        MemoTicklerDtlStatus:
+          type: string
+          description: Memo Tickler Detailed Status.
+        MemoTicklerDtlStatusEnumDesc:
+          maxLength: 80
+          type: string
+          description: Memo Tickler Detailed Status Enum Description.
+        AccessLevelData:
+          $ref: '#/components/schemas/AccessLevelDataType'
+        RestrictedInd:
+          type: boolean
+          description: Restricted Indicator. Indicates whether the account information is restricted for view by the requester.
+        RestrictedDesc:
+          maxLength: 80
+          type: string
+          description: Restricted Description. Description of the reason for the account to be restricted.
+        PartyRelationship:
+          type: array
+          items:
+            $ref: '#/components/schemas/PartyRelationshipType'
+        PostAddr:
+          type: array
+          description: 'Postal Address   '
+          items:
+            $ref: '#/components/schemas/PostAddrType'
+    MemoTicklerAddRqType:
+      title: MemoTicklerAddRqType
+      required:
+      - MemoTicklerInfo
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        MemoTicklerInfo:
+          $ref: '#/components/schemas/MemoTicklerInfoType'
+    MemoTicklerKeysType:
+      title: MemoTicklerKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          MemoTicklerId:
+            maxLength: 36
+            type: string
+            description: Memo Tickler Identifier.
+          AcctKeys:
+            $ref: '#/components/schemas/AcctKeysType'
+          PartyKeys:
+            $ref: '#/components/schemas/PartyKeysType'
+          CardKeys:
+            $ref: '#/components/schemas/CardKeysType'
+          PortKeys:
+            $ref: '#/components/schemas/PortKeysType'
+          MemoTicklerUse:
+            type: string
+            description: Memo Tickler Use.
+          MemoTicklerIdent:
+            maxLength: 36
+            type: string
+            description: Memo Tickler Identification.
+    MemoTicklerSelType:
+      title: MemoTicklerSelType
+      type: object
+      properties:
+        MemoTicklerKeys:
+          type: array
+          description: Memo Tickler Keys. Used to identify the Memo Tickler record.
+          items:
+            $ref: '#/components/schemas/MemoTicklerKeysType'
+        AcctKeys:
+          type: array
+          description: Account Keys.  Contains data that describes the key of the Account record.
+          items:
+            $ref: '#/components/schemas/AcctKeysType'
+        PartyKeys:
+          type: array
+          description: Party Keys.  Contains data that describes the key of the Party record.
+          items:
+            $ref: '#/components/schemas/PartyKeysType'
+        CardKeys:
+          type: array
+          description: Card Keys.  Contains data that describes the key of the Card record.
+          items:
+            $ref: '#/components/schemas/CardKeysType'
+        PortKeys:
+          type: array
+          description: Portfolio Keys.  Contains data that describes the key of the Portfolio record.
+          items:
+            $ref: '#/components/schemas/PortKeysType'
+        MemoTicklerType:
+          maxLength: 80
+          type: array
+          description: Memo Tickler Type.
+          items:
+            maxLength: 80
+            type: string
+        MemoTicklerTitle:
+          maxLength: 50
+          type: array
+          description: Memo Tickler Title. A Title or very abreviated description of the Memo Tickler.
+          items:
+            maxLength: 50
+            type: string
+        MemoTicklerSubType:
+          maxLength: 80
+          type: array
+          description: Memo Tickler Sub Type.
+          items:
+            maxLength: 80
+            type: string
+        MemoTicklerUse:
+          type: array
+          description: Memo Tickler Use.
+          items:
+            type: object
+        CreateDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Create Date.
+        CreatedBy:
+          maxLength: 80
+          type: array
+          description: Created By.
+          items:
+            maxLength: 80
+            type: string
+        RelationshipMgr:
+          type: array
+          description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+          items:
+            $ref: '#/components/schemas/RelationshipMgrType'
+        NextMemoTicklerDt:
+          type: array
+          description: Next Memo Tickler Date.
+          items:
+            type: string
+            format: date
+        SortOrder:
+          type: array
+          description: Sort Order. Indicates if the items need to be arranged in ascending or descending order.
+          items:
+            $ref: '#/components/schemas/SortOrderType'
+    MemoTicklerInqRqType:
+      title: MemoTicklerInqRqType
+      required:
+      - MemoTicklerSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        MemoTicklerSel:
+          $ref: '#/components/schemas/MemoTicklerSelType'
+    MemoTicklerModRqType:
+      title: MemoTicklerModRqType
+      required:
+      - MemoTicklerInfo
+      - MemoTicklerKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        MemoTicklerKeys:
+          $ref: '#/components/schemas/MemoTicklerKeysType'
+        MemoTicklerInfo:
+          $ref: '#/components/schemas/MemoTicklerInfoType'
+    MemoTicklerDelRqType:
+      title: MemoTicklerDelRqType
+      required:
+      - MemoTicklerKeys
+      type: object
+      properties:
+        MemoTicklerKeys:
+          $ref: '#/components/schemas/MemoTicklerKeysType'
+    MemoTicklerStatusType:
+      title: MemoTicklerStatusType
+      required:
+      - MemoTicklerStatusCode
+      type: object
+      properties:
+        MemoTicklerStatusCode:
+          $ref: '#/components/schemas/MemoTicklerStatusCodeType'
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+    MemoTicklerStatusRecType:
+      title: MemoTicklerStatusRecType
+      required:
+      - MemoTicklerKeys
+      - MemoTicklerStatus
+      type: object
+      properties:
+        SvcIdent:
+          $ref: '#/components/schemas/SvcIdentType'
+        MemoTicklerKeys:
+          $ref: '#/components/schemas/MemoTicklerKeysType'
+        MemoTicklerStatus:
+          $ref: '#/components/schemas/MemoTicklerStatusType'
+    MemoTicklerAddRsType:
+      title: MemoTicklerAddRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        MemoTicklerStatusRec:
+          $ref: '#/components/schemas/MemoTicklerStatusRecType'
+    MemoTicklerRecType:
+      title: MemoTicklerRecType
+      required:
+      - MemoTicklerInfo
+      - MemoTicklerKeys
+      - MemoTicklerStatus
+      type: object
+      properties:
+        MemoTicklerKeys:
+          $ref: '#/components/schemas/MemoTicklerKeysType'
+        MemoTicklerInfo:
+          $ref: '#/components/schemas/MemoTicklerInfoType'
+        MemoTicklerStatus:
+          $ref: '#/components/schemas/MemoTicklerStatusType'
+    MemoTicklerInqRsType:
+      title: MemoTicklerInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        MemoTicklerRec:
+          type: array
+          description: Memo Tickler Record.
+          items:
+            $ref: '#/components/schemas/MemoTicklerRecType'
+    MemoTicklerModRsType:
+      title: MemoTicklerModRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        MemoTicklerStatusRec:
+          $ref: '#/components/schemas/MemoTicklerStatusRecType'
+    MemoTicklerDelRsType:
+      title: MemoTicklerDelRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        MemoTicklerStatusRec:
+          $ref: '#/components/schemas/MemoTicklerStatusRecType'
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number.
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Indicates Multi-System environment is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System environment this identifies the Service Provider (account processor).
+        Context:
+          $ref: '#/components/schemas/Context'
+      example: '{ "TrnId": "622182", "OrganizationId": "PRMOrg10", "VendorId": "112233", "Context":{ "Channel": "WEB" } }'
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: Name of the client application that is used to send the service request, such as Architect, Commercial Center and others.
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12.
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: 'Client terminal sequence number. type: string'
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: 'Type of a phone. Valid values are: - ''EvePhone'' - ''DayPhone'' - ''EveFax'' - ''DayFax'' - ''Home'' - ''Work'' - ''Mobile'' - ''Fax'' - ''Pager'' - ''Modem'' - ''Other'''
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: '#/components/schemas/TellerTrnDataType'
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: '#/components/schemas/TrnConductorDataType'
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: 'Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. '
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden.
+        Value:
+          maxLength: 256
+          type: string
+          description: Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data.
+      description: Information about the subject element.
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Authorization level required to override, such as Teller and Supervisor.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+        ContentHTML:
+          type: string
+          description: 'Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures.'
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: '#/components/schemas/AdditionalStatusType'
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: 'Next record pointer included in the response only if additional  records are available. '
+      description: Record Control Out

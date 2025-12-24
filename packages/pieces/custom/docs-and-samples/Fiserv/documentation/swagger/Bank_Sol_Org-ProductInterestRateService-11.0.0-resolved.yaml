@@ -1,0 +1,3544 @@
+---
+openapi: 3.0.0
+info:
+  title: Product Interest Rate Service
+  description: |
+    The Product Interest Rate service supports an inquiry operation to retrieve information about the rate offered by a product.
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: /
+paths:
+  /prodintrate/:
+    get:
+      tags:
+      - Get Product Interest Rate
+      summary: Retrieves a Product Interest Rate Object
+      description: This method retrieves interest rate and APY disclosure information.
+      operationId: ProdIntRateInqOper
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: $limit
+        in: query
+        description: Maximum Record Limit. This is the maximum number of records that the server should add to the result set which is available tosatisfy this request.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        description: Cursor. Next Record Pointer Included in the response only if additional records are available.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxLength: 250
+          type: string
+      - name: acctType
+        in: query
+        description: Account Type.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - CCA
+            - RRA
+            - LEAS
+            - CDA
+            - MLN
+            - CLA
+            - CRD
+            - DDA
+            - EQU
+            - GLA
+            - ILA
+            - AdultCashISA
+            - IRA
+            - RET
+            - EXT
+            - JuniorCashISA
+            - LIP
+            - LOAN
+            - LOC
+            - CLOC
+            - MLA
+            - PBA
+            - PORT
+            - SDA
+            - SDB
+            - MMA
+            - DDL
+      - name: productIdent
+        in: query
+        description: Product Identifier.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 42
+            type: string
+      - name: branchIdent
+        in: query
+        description: Branch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 22
+            type: string
+      - name: amt
+        in: query
+        description: Initial Amount.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: curCodeType
+        in: query
+        description: Currency Code Type.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - ISO4217-Alpha
+            - ISO4217-Numeric
+      - name: curCodeTypeEnumDesc
+        in: query
+        description: Currency Code Type Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: curCodeValue
+        in: query
+        description: Currency Code Value.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: openDt
+        in: query
+        description: Open Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: rate
+        in: query
+        description: Rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: count
+        in: query
+        description: Count.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: prodIntRateId
+        in: query
+        description: Product Interest Rate Identifier.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 36
+            type: string
+      - name: promotionalRateInd
+        in: query
+        description: Promotional Rate Indicator. Provides information on whether the promotional rate is active or not.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: boolean
+      - name: promotionalRate
+        in: query
+        description: Something
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/PromotionalRateType'
+      - name: startDt
+        in: query
+        description: Start Date. Start date when the margin percentage takes effect.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: endDt
+        in: query
+        description: End Date. End date when the margen percentage no longer is used during the rate calculation.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: promoDays
+        in: query
+        description: Duration in Days of the promotional rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: marginType
+        in: query
+        description: 'Margin Type. The valid values are: Variance (margin adds or substract to the rate) and Factor (margin is a multiplier to the rate).'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Variance
+            - Factor
+      - name: marginTypeEnumDesc
+        in: query
+        description: 'Margin Type Enumeration Description. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: margin
+        in: query
+        description: Margin
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: recurType
+        in: query
+        description: 'Recurrence Type. Valid values are limited to: Daily, Monthly, Weekly, Yearly, SemiMonthly.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Daily
+            - Maturity
+            - InterestCycle
+            - Monthly
+            - BiMonthly
+            - Once
+            - SemiMonthly
+            - TwiceMonthly
+            - Weekly
+            - BiWeekly
+            - Yearly
+            - SemiYearly
+            - Cycle
+            - None
+            - PayOff
+            - Anniversary
+            - PmtRecalculation
+            - Quarterly
+            - CycleAndQuarterly
+            - SvcChgCycle
+      - name: recurTypeEnumDesc
+        in: query
+        description: Recurrence Type Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: recurInterval
+        in: query
+        description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: dayOfWeek
+        in: query
+        description: Day Of Week.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+      - name: dayOfMonth
+        in: query
+        description: Day Of Month.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+            - "8"
+            - "9"
+            - "10"
+            - "11"
+            - "12"
+            - "13"
+            - "14"
+            - "15"
+            - "16"
+            - "17"
+            - "18"
+            - "19"
+            - "20"
+            - "21"
+            - "22"
+            - "23"
+            - "24"
+            - "25"
+            - "26"
+            - "27"
+            - "28"
+            - "29"
+            - "30"
+            - "31"
+      - name: month
+        in: query
+        description: Month
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: recurStartDt
+        in: query
+        description: Recurrence Start Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: recurEndDt
+        in: query
+        description: Recurrence End Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: occurrences
+        in: query
+        description: Occurrences
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: leadDays
+        in: query
+        description: Lead Days. Number of days prior the event to do a review.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: adjDays
+        in: query
+        description: Adjustment Days.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: adjDaysBasis
+        in: query
+        description: 'Adjustment Basis. Valid values include: DueDt, EndOfMonth, StmtDt.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - DueDt
+            - EndOfMonth
+            - StmtDt
+      - name: endOfQuarterInd
+        in: query
+        description: End of Quarter Indicator. Indicates to apply the interest payment at the end of the calendar quarter.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: boolean
+      - name: seqNum
+        in: query
+        description: 'Earning Schedule Sequence. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: earningsSchedType
+        in: query
+        description: 'Earning Schedule Type. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Repeating
+            - NonRepeating
+            - NonRepeatingTerm
+      - name: earningsSchedDateCode
+        in: query
+        description: 'Earning Schedule Date Code. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - OpenDate
+            - LastEarning
+            - LastDatePeriod
+      - name: rateChangeControl
+        in: query
+        description: 'Interest Change Control. Used to indicate the type of interest rate for example: Fixed, Index, IndexReview, StepReview, etc.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Fixed
+            - RateIndex
+            - BaseIndexRate
+            - IndexFreq
+            - StepFreq
+            - Renewal
+            - BalanceTableReview
+            - PeriodReview
+            - AtMaturity
+            - Manual
+            - BalanceRateTable
+            - OnSchedule
+            - None
+      - name: rateChangeControlEnumDesc
+        in: query
+        description: Interest Change Control Enumeration Description
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: rateCalcMethod
+        in: query
+        description: Rate Calculation Method. Code that indicates how the system calculates the interest rate when the rate changes with Index at Review.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Comparison
+            - PreviousIndex
+            - VarianceFactor
+      - name: rateCalcMethodEnumDesc
+        in: query
+        description: Rate Calculation Method Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: ratePricingMethod
+        in: query
+        description: Rate Pricing Method. Indicates whether accounts within this product type use the Term/Balance Matrix, a Variance Matrix or it uses an interest plan to determine initial rate and rate at renewal.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Step
+            - TermBalance
+            - TermBalanceVariance
+            - IndexRate
+      - name: ratePricingMethodEnumDesc
+        in: query
+        description: Rate Pricing Method Enumeration Description
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: ratePricingTable
+        in: query
+        description: Rate Pricing Table. Table used when calculating the rate using a step table, term/balance table, term/balance/variance matrix or a balance/rate table.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: ratePricingTableEnumDesc
+        in: query
+        description: Rate Pricing Table Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxLength: 80
+          type: array
+          items:
+            type: string
+      - name: basedOnCode
+        in: query
+        description: Base on Code. An internal index code, Prime, LIBOR, etc.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: basedOnCodeEnumDesc
+        in: query
+        description: Based On Code Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: varianceFactorType
+        in: query
+        description: 'Variance Factor Type. This value is used in combination with the RateVariance and RateFactor and RateCalcMethod to indicate how the system calculates the interest rate. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - None
+            - Variance
+            - Factor
+            - Factor+Variance
+            - VarianceXFactor
+      - name: varianceFactorTypeEnumDesc
+        in: query
+        description: 'Variance Factor Type Enumeration Description. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: rateFactor
+        in: query
+        description: Rate Factor. Whole percentage of the related index rate used to calculate rate changes.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: rateVariance
+        in: query
+        description: Rate Variance. Percentage that the interest rate varies from its related index rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: serviceLevel
+        in: query
+        description: Service Level of the Parties involved. When selecting product rate, the service level of the customers involved can provide some diferenciation in terms of rate to be chosen.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+  /prodintrate/byMaturityDate/{maturityDt}:
+    get:
+      tags:
+      - Get Product Interest Rate by Maturity Date
+      summary: Retrieves a Product Interest Rate Object
+      description: This method retrieves interest rate and APY disclosure information.
+      operationId: ProdIntRateInqOperByMaturityDate
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: maturityDt
+        in: path
+        description: Maturity Date.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: $limit
+        in: query
+        description: Maximum Record Limit. This is the maximum number of records that the server should add to the result set which is available tosatisfy this request.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        description: Cursor. Next Record Pointer Included in the response only if additional records are available.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxLength: 250
+          type: string
+      - name: acctType
+        in: query
+        description: Account Type.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - CCA
+            - RRA
+            - LEAS
+            - CDA
+            - MLN
+            - CLA
+            - CRD
+            - DDA
+            - EQU
+            - GLA
+            - ILA
+            - AdultCashISA
+            - IRA
+            - RET
+            - EXT
+            - JuniorCashISA
+            - LIP
+            - LOAN
+            - LOC
+            - CLOC
+            - MLA
+            - PBA
+            - PORT
+            - SDA
+            - SDB
+            - MMA
+            - DDL
+      - name: productIdent
+        in: query
+        description: Product Identifier.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 42
+            type: string
+      - name: branchIdent
+        in: query
+        description: Branch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 22
+            type: string
+      - name: amt
+        in: query
+        description: Initial Amount.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: curCodeType
+        in: query
+        description: Currency Code Type.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - ISO4217-Alpha
+            - ISO4217-Numeric
+      - name: curCodeTypeEnumDesc
+        in: query
+        description: Currency Code Type Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: curCodeValue
+        in: query
+        description: Currency Code Value.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: openDt
+        in: query
+        description: Open Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: rate
+        in: query
+        description: Rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: count
+        in: query
+        description: Count.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: prodIntRateId
+        in: query
+        description: Product Interest Rate Identifier.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 36
+            type: string
+      - name: promotionalRateInd
+        in: query
+        description: Promotional Rate Indicator. Provides information on whether the promotional rate is active or not.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: boolean
+      - name: startDt
+        in: query
+        description: Start Date. Start date when the margin percentage takes effect.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: endDt
+        in: query
+        description: End Date. End date when the margen percentage no longer is used during the rate calculation.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: promoDays
+        in: query
+        description: Duration in Days of the promotional rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: marginType
+        in: query
+        description: 'Margin Type. The valid values are: Variance (margin adds or substract to the rate) and Factor (margin is a multiplier to the rate).'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Variance
+            - Factor
+      - name: marginTypeEnumDesc
+        in: query
+        description: 'Margin Type Enumeration Description. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: margin
+        in: query
+        description: Margin
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: recurType
+        in: query
+        description: 'Recurrence Type. Valid values are limited to: Daily, Monthly, Weekly, Yearly, SemiMonthly.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Daily
+            - Maturity
+            - InterestCycle
+            - Monthly
+            - BiMonthly
+            - Once
+            - SemiMonthly
+            - TwiceMonthly
+            - Weekly
+            - BiWeekly
+            - Yearly
+            - SemiYearly
+            - Cycle
+            - None
+            - PayOff
+            - Anniversary
+            - PmtRecalculation
+            - Quarterly
+            - CycleAndQuarterly
+            - SvcChgCycle
+      - name: recurTypeEnumDesc
+        in: query
+        description: Recurrence Type Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: recurInterval
+        in: query
+        description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: dayOfWeek
+        in: query
+        description: Day Of Week.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+      - name: dayOfMonth
+        in: query
+        description: Day Of Month.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+            - "8"
+            - "9"
+            - "10"
+            - "11"
+            - "12"
+            - "13"
+            - "14"
+            - "15"
+            - "16"
+            - "17"
+            - "18"
+            - "19"
+            - "20"
+            - "21"
+            - "22"
+            - "23"
+            - "24"
+            - "25"
+            - "26"
+            - "27"
+            - "28"
+            - "29"
+            - "30"
+            - "31"
+      - name: month
+        in: query
+        description: Month
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: recurStartDt
+        in: query
+        description: Recurrence Start Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: recurEndDt
+        in: query
+        description: Recurrence End Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: occurrences
+        in: query
+        description: Occurrences
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: leadDays
+        in: query
+        description: Lead Days. Number of days prior the event to do a review.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: adjDays
+        in: query
+        description: Adjustment Days.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: adjDaysBasis
+        in: query
+        description: 'Adjustment Basis. Valid values include: DueDt, EndOfMonth, StmtDt.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - DueDt
+            - EndOfMonth
+            - StmtDt
+      - name: endOfQuarterInd
+        in: query
+        description: End of Quarter Indicator. Indicates to apply the interest payment at the end of the calendar quarter.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: boolean
+      - name: seqNum
+        in: query
+        description: 'Earning Schedule Sequence. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: earningsSchedType
+        in: query
+        description: 'Earning Schedule Type. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Repeating
+            - NonRepeating
+            - NonRepeatingTerm
+      - name: earningsSchedDateCode
+        in: query
+        description: 'Earning Schedule Date Code. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - OpenDate
+            - LastEarning
+            - LastDatePeriod
+      - name: rateChangeControl
+        in: query
+        description: 'Interest Change Control. Used to indicate the type of interest rate for example: Fixed, Index, IndexReview, StepReview, etc.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Fixed
+            - RateIndex
+            - BaseIndexRate
+            - IndexFreq
+            - StepFreq
+            - Renewal
+            - BalanceTableReview
+            - PeriodReview
+            - AtMaturity
+            - Manual
+            - BalanceRateTable
+            - OnSchedule
+            - None
+      - name: rateChangeControlEnumDesc
+        in: query
+        description: Interest Change Control Enumeration Description
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: rateCalcMethod
+        in: query
+        description: Rate Calculation Method. Code that indicates how the system calculates the interest rate when the rate changes with Index at Review.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Comparison
+            - PreviousIndex
+            - VarianceFactor
+      - name: rateCalcMethodEnumDesc
+        in: query
+        description: Rate Calculation Method Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: ratePricingMethod
+        in: query
+        description: Rate Pricing Method. Indicates whether accounts within this product type use the Term/Balance Matrix, a Variance Matrix or it uses an interest plan to determine initial rate and rate at renewal.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Step
+            - TermBalance
+            - TermBalanceVariance
+            - IndexRate
+      - name: ratePricingMethodEnumDesc
+        in: query
+        description: Rate Pricing Method Enumeration Description
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: ratePricingTable
+        in: query
+        description: Rate Pricing Table. Table used when calculating the rate using a step table, term/balance table, term/balance/variance matrix or a balance/rate table.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: ratePricingTableEnumDesc
+        in: query
+        description: Rate Pricing Table Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxLength: 80
+          type: array
+          items:
+            type: string
+      - name: basedOnCode
+        in: query
+        description: Base on Code. An internal index code, Prime, LIBOR, etc.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: basedOnCodeEnumDesc
+        in: query
+        description: Based On Code Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: varianceFactorType
+        in: query
+        description: 'Variance Factor Type. This value is used in combination with the RateVariance and RateFactor and RateCalcMethod to indicate how the system calculates the interest rate. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - None
+            - Variance
+            - Factor
+            - Factor+Variance
+            - VarianceXFactor
+      - name: varianceFactorTypeEnumDesc
+        in: query
+        description: 'Variance Factor Type Enumeration Description. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: rateFactor
+        in: query
+        description: Rate Factor. Whole percentage of the related index rate used to calculate rate changes.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: rateVariance
+        in: query
+        description: Rate Variance. Percentage that the interest rate varies from its related index rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: serviceLevel
+        in: query
+        description: Service Level of the Parties involved. When selecting product rate, the service level of the customers involved can provide some diferenciation in terms of rate to be chosen.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+  /prodintrate/byTermUnits/{termUnits}:
+    get:
+      tags:
+      - Get Product Interest Rate by Term Units
+      summary: Retrieves a Product Interest Rate Object
+      description: This method retrieves interest rate and APY disclosure information.
+      operationId: ProdIntRateInqOperByTermUnits
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      - name: termUnits
+        in: path
+        description: Term Units.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Days
+            - Weeks
+            - Months
+            - Years
+            - Indefinite
+      - name: $limit
+        in: query
+        description: Maximum Record Limit. This is the maximum number of records that the server should add to the result set which is available tosatisfy this request.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: cursor
+        in: query
+        description: Cursor. Next Record Pointer Included in the response only if additional records are available.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxLength: 250
+          type: string
+      - name: acctType
+        in: query
+        description: Account Type.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - CCA
+            - RRA
+            - LEAS
+            - CDA
+            - MLN
+            - CLA
+            - CRD
+            - DDA
+            - EQU
+            - GLA
+            - ILA
+            - AdultCashISA
+            - IRA
+            - RET
+            - EXT
+            - JuniorCashISA
+            - LIP
+            - LOAN
+            - LOC
+            - CLOC
+            - MLA
+            - PBA
+            - PORT
+            - SDA
+            - SDB
+            - MMA
+            - DDL
+      - name: productIdent
+        in: query
+        description: Product Identifier.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 42
+            type: string
+      - name: branchIdent
+        in: query
+        description: Branch.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 22
+            type: string
+      - name: amt
+        in: query
+        description: Initial Amount.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: curCodeType
+        in: query
+        description: Currency Code Type.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - ISO4217-Alpha
+            - ISO4217-Numeric
+      - name: curCodeTypeEnumDesc
+        in: query
+        description: Currency Code Type Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: curCodeValue
+        in: query
+        description: Currency Code Value.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: openDt
+        in: query
+        description: Open Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: rate
+        in: query
+        description: Rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: count
+        in: query
+        description: Count.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: prodIntRateId
+        in: query
+        description: Product Interest Rate Identifier.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 36
+            type: string
+      - name: promotionalRateInd
+        in: query
+        description: Promotional Rate Indicator. Provides information on whether the promotional rate is active or not.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: boolean
+      - name: startDt
+        in: query
+        description: Start Date. Start date when the margin percentage takes effect.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: endDt
+        in: query
+        description: End Date. End date when the margen percentage no longer is used during the rate calculation.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: promoDays
+        in: query
+        description: Duration in Days of the promotional rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: marginType
+        in: query
+        description: 'Margin Type. The valid values are: Variance (margin adds or substract to the rate) and Factor (margin is a multiplier to the rate).'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Variance
+            - Factor
+      - name: marginTypeEnumDesc
+        in: query
+        description: 'Margin Type Enumeration Description. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: margin
+        in: query
+        description: Margin
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: recurType
+        in: query
+        description: 'Recurrence Type. Valid values are limited to: Daily, Monthly, Weekly, Yearly, SemiMonthly.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Daily
+            - Maturity
+            - InterestCycle
+            - Monthly
+            - BiMonthly
+            - Once
+            - SemiMonthly
+            - TwiceMonthly
+            - Weekly
+            - BiWeekly
+            - Yearly
+            - SemiYearly
+            - Cycle
+            - None
+            - PayOff
+            - Anniversary
+            - PmtRecalculation
+            - Quarterly
+            - CycleAndQuarterly
+            - SvcChgCycle
+      - name: recurTypeEnumDesc
+        in: query
+        description: Recurrence Type Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: recurInterval
+        in: query
+        description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: dayOfWeek
+        in: query
+        description: Day Of Week.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+      - name: dayOfMonth
+        in: query
+        description: Day Of Month.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - "1"
+            - "2"
+            - "3"
+            - "4"
+            - "5"
+            - "6"
+            - "7"
+            - "8"
+            - "9"
+            - "10"
+            - "11"
+            - "12"
+            - "13"
+            - "14"
+            - "15"
+            - "16"
+            - "17"
+            - "18"
+            - "19"
+            - "20"
+            - "21"
+            - "22"
+            - "23"
+            - "24"
+            - "25"
+            - "26"
+            - "27"
+            - "28"
+            - "29"
+            - "30"
+            - "31"
+      - name: month
+        in: query
+        description: Month
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: recurStartDt
+        in: query
+        description: Recurrence Start Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: recurEndDt
+        in: query
+        description: Recurrence End Date.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            format: date
+      - name: occurrences
+        in: query
+        description: Occurrences
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: leadDays
+        in: query
+        description: Lead Days. Number of days prior the event to do a review.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: adjDays
+        in: query
+        description: Adjustment Days.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: adjDaysBasis
+        in: query
+        description: 'Adjustment Basis. Valid values include: DueDt, EndOfMonth, StmtDt.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - DueDt
+            - EndOfMonth
+            - StmtDt
+      - name: endOfQuarterInd
+        in: query
+        description: End of Quarter Indicator. Indicates to apply the interest payment at the end of the calendar quarter.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: boolean
+      - name: seqNum
+        in: query
+        description: 'Earning Schedule Sequence. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: integer
+            format: int64
+      - name: earningsSchedType
+        in: query
+        description: 'Earning Schedule Type. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Repeating
+            - NonRepeating
+            - NonRepeatingTerm
+      - name: earningsSchedDateCode
+        in: query
+        description: 'Earning Schedule Date Code. Used when the interest disposition is defined in multiple schedules. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - OpenDate
+            - LastEarning
+            - LastDatePeriod
+      - name: rateChangeControl
+        in: query
+        description: 'Interest Change Control. Used to indicate the type of interest rate for example: Fixed, Index, IndexReview, StepReview, etc.'
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Fixed
+            - RateIndex
+            - BaseIndexRate
+            - IndexFreq
+            - StepFreq
+            - Renewal
+            - BalanceTableReview
+            - PeriodReview
+            - AtMaturity
+            - Manual
+            - BalanceRateTable
+            - OnSchedule
+            - None
+      - name: rateChangeControlEnumDesc
+        in: query
+        description: Interest Change Control Enumeration Description
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: rateCalcMethod
+        in: query
+        description: Rate Calculation Method. Code that indicates how the system calculates the interest rate when the rate changes with Index at Review.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Comparison
+            - PreviousIndex
+            - VarianceFactor
+      - name: rateCalcMethodEnumDesc
+        in: query
+        description: Rate Calculation Method Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: ratePricingMethod
+        in: query
+        description: Rate Pricing Method. Indicates whether accounts within this product type use the Term/Balance Matrix, a Variance Matrix or it uses an interest plan to determine initial rate and rate at renewal.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Step
+            - TermBalance
+            - TermBalanceVariance
+            - IndexRate
+      - name: ratePricingMethodEnumDesc
+        in: query
+        description: Rate Pricing Method Enumeration Description
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: ratePricingTable
+        in: query
+        description: Rate Pricing Table. Table used when calculating the rate using a step table, term/balance table, term/balance/variance matrix or a balance/rate table.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: ratePricingTableEnumDesc
+        in: query
+        description: Rate Pricing Table Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxLength: 80
+          type: array
+          items:
+            type: string
+      - name: basedOnCode
+        in: query
+        description: Base on Code. An internal index code, Prime, LIBOR, etc.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: basedOnCodeEnumDesc
+        in: query
+        description: Based On Code Enumeration Description.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: varianceFactorType
+        in: query
+        description: 'Variance Factor Type. This value is used in combination with the RateVariance and RateFactor and RateCalcMethod to indicate how the system calculates the interest rate. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - None
+            - Variance
+            - Factor
+            - Factor+Variance
+            - VarianceXFactor
+      - name: varianceFactorTypeEnumDesc
+        in: query
+        description: 'Variance Factor Type Enumeration Description. '
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            maxLength: 80
+            type: string
+      - name: rateFactor
+        in: query
+        description: Rate Factor. Whole percentage of the related index rate used to calculate rate changes.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: rateVariance
+        in: query
+        description: Rate Variance. Percentage that the interest rate varies from its related index rate.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: number
+      - name: serviceLevel
+        in: query
+        description: Service Level of the Parties involved. When selecting product rate, the service level of the customers involved can provide some diferenciation in terms of rate to be chosen.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+  /prodintrate/secured:
+    post:
+      tags:
+      - Get Product Interest Rate
+      summary: Retrieves a Product Interest Rate Object Secured
+      description: This method retrieves interest rate and APY disclosure information.
+      operationId: ProdIntRateInqOperSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProdIntRateInqRqType'
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProdIntRateInqRsType'
+components:
+  schemas:
+    DayOfWeekType:
+      title: DayOfWeekType
+      type: string
+      enum:
+      - Monday
+      - Tuesday
+      - Wednesday
+      - Thursday
+      - Friday
+      - Saturday
+      - Sunday
+    DayOfMonthType:
+      title: DayOfMonthType
+      type: integer
+      example: 1
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 26
+      - 27
+      - 28
+      - 29
+      - 30
+      - 31
+    RecurRuleType:
+      title: RecurRuleType
+      type: object
+      properties:
+        RecurType:
+          type: string
+          description: Recurrence Type. Indicates the pattern of recurrence.
+        RecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Recurrence Type Enumeration Description.
+        RecurInterval:
+          type: integer
+          description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle.'
+          format: int64
+        RecurInstance:
+          type: integer
+          description: Recurrent Instance. Numeric value representing the instance of the days(s) of the week of recurrence, i.e. Second Wednesday of the month, First Monday of the year. DayOfWeek must also be provided.
+          format: int64
+        DayOfWeek:
+          $ref: '#/components/schemas/DayOfWeekType'
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        SecondDayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+        RecurStartDate:
+          type: string
+          description: Recurrence Start Date.
+          format: date
+        Occurrences:
+          type: integer
+          description: Occurrences.
+          format: int64
+        RecurEndDate:
+          type: string
+          description: Recurrence End Date.
+          format: date
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        AdjDays:
+          type: integer
+          description: Adjustment Days. Indicates the number of days to adjust a value (review a rate or perform interest accrual) after an event occurs (see AdjDaysBasis).
+          format: int64
+        AdjDaysBasis:
+          type: string
+          description: 'Adjustment Days Basis. Used in combination with Adjustment Days (AdjDays). It indicates a basis for an adjustment such as: Due Date (DueDt), Statement Date (StmtDt).'
+    AccrualFrequencyType:
+      title: AccrualFrequencyType
+      allOf:
+      - $ref: '#/components/schemas/RecurRuleType'
+      - type: object
+    APYRecurTypeType:
+      title: APYRecurTypeType
+      type: string
+      enum:
+      - IntPmtFrequency
+      - Monthly
+      - Quarterly
+      - SemiYearly
+      - Yearly
+      - Weekly
+      - BiWeekly
+      - Maturity
+    BalCutOffDataType:
+      title: BalCutOffDataType
+      type: object
+      properties:
+        BalCutOffType:
+          type: string
+          description: Balance CutOff Balance Type.  The Balance Cutoff Type indicates the account balance that is compared with the Balance CutOff Amount.
+        BalCutOffTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Balance CutOff Balance Type Enumeration Description.
+        BalCutOffAmt:
+          type: number
+          description: Balance CutOff Amount. The Balance Cutoff Amount indicates the balance an account must attain on its interest cycle date to be paid interest for the period.
+    CapFrequencyType:
+      title: CapFrequencyType
+      allOf:
+      - $ref: '#/components/schemas/RecurRuleType'
+      - type: object
+    CurCodeTypeType:
+      title: CurCodeTypeType
+      type: string
+      enum:
+      - ISO4217-Alpha
+      - ISO4217-Numeric
+    CurCodeType:
+      title: CurCodeType
+      required:
+      - CurCodeValue
+      type: object
+      properties:
+        CurCodeType:
+          $ref: '#/components/schemas/CurCodeTypeType'
+        CurCodeTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Currency Code Type Enumeration Description.
+        CurCodeValue:
+          maxLength: 80
+          type: string
+          description: Currency Code Value. Indicates the Currency Code Value within the CurCodeType table specified.
+    CurAmtType:
+      title: CurAmtType
+      type: object
+      properties:
+        Amt:
+          type: number
+          description: Amount.
+        CurCode:
+          $ref: '#/components/schemas/CurCodeType'
+    HighCurAmtType:
+      title: HighCurAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    InitialAmountType:
+      title: InitialAmountType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    TermUnitsType:
+      title: TermUnitsType
+      type: string
+      enum:
+      - Days
+      - Weeks
+      - Months
+      - Years
+      - Indefinite
+    TermType:
+      title: TermType
+      required:
+      - TermUnits
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        TermUnits:
+          $ref: '#/components/schemas/TermUnitsType'
+        TermUnitsEnumDesc:
+          maxLength: 80
+          type: string
+          description: Term Units Enumeration Description.
+    MarginTypeType:
+      title: MarginTypeType
+      type: string
+      enum:
+      - Variance
+      - Factor
+    PromotionalRateType:
+      title: PromotionalRateType
+      type: object
+      properties:
+        PromotionalRateInd:
+          type: boolean
+          description: Promotional Rate Indicator. Provides information on whether the promotional rate is active or not.
+        StartDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Start Date.
+        EndDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: End Date.
+        PromoDays:
+          type: integer
+          description: Number of Days of the Promotional Rate.
+          format: int64
+        MarginType:
+          $ref: '#/components/schemas/MarginTypeType'
+        MarginTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Margin Type Enumeration Description.
+        Margin:
+          type: number
+          description: Margin. Percentage applied to BasedOnValue to calculate interest rate. For example, the BasedOnValue is the Prime rate, a percentage is added to/subtracted from the prime rate.
+    IntPmtFrequencyType:
+      title: IntPmtFrequencyType
+      allOf:
+      - $ref: '#/components/schemas/RecurRuleType'
+      - type: object
+        properties:
+          EndOfQuarterInd:
+            type: boolean
+            description: End of Quarter Indicator. Indicates to apply the interest payment at the end of the calendar quarter.
+          SeqNum:
+            type: integer
+            description: Sequence Number.
+            format: int64
+          EarningsSchedType:
+            type: string
+            description: Earning Schedule Type. Used when the interest disposition is defined in multiple schedules.
+          EarningsSchedDateCode:
+            type: string
+            description: Earning Schedule Date Code. Used when the interest disposition is defined in multiple schedules.
+          EarningsDt:
+            type: string
+            description: Earnings Date.
+            format: date
+    VarianceFactorTypeType:
+      title: VarianceFactorTypeType
+      type: string
+      enum:
+      - None
+      - Variance
+      - Factor
+      - Factor+Variance
+      - VarianceXFactor
+    RateChangeOvrdType:
+      title: RateChangeOvrdType
+      type: object
+      properties:
+        RateChangeControl:
+          type: string
+          description: 'Interest Rate Change Control. Used to indicate the type of interest rate for example: Fixed, Index, IndexReview, StepReview, etc.'
+        RateChangeControlEnumDesc:
+          maxLength: 80
+          type: string
+          description: Interest Change Control Enumeration Description.
+        RateCalcMethod:
+          type: string
+          description: Rate Calculation Method. Code that indicates how the system calculates the interest rate when the rate changes with Index at Review.
+        RateCalcMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Calculation Method Enumeration Description.
+        RatePricingMethod:
+          type: string
+          description: Rate Pricing Method. Indicates whether accounts within this product type use a step table, term/balance table, term/balance/variance matrix, balance/rate table or it uses an interest plan to determine initial rate and rate at renewal.
+        RatePricingMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Method Enumeration Description.
+        RatePricingTable:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Table. Table used when calculating the rate using a step table, term/balance table, term/balance/variance matrix or a balance/rate table.
+        RatePricingTableEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Table Enumeration Description.
+        BasedOnCode:
+          maxLength: 80
+          type: string
+          description: |-
+            Based On Code.Source of interest rate which can be used alone or with additional factors that, when combined, calculate an interest rate.
+            .
+        BasedOnCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Based On Code Enumeration Description.
+        VarianceFactorType:
+          $ref: '#/components/schemas/VarianceFactorTypeType'
+        VarianceFactorTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Variance Factor Type Enumeration Description
+        RateFactor:
+          type: number
+          description: Rate Factor. Whole percentage of the related index rate used to calculate rate changes
+        RateVariance:
+          type: number
+          description: Rate Variance. Percentage that the interest rate varies from its related index rate
+    ProdIntRateSelType:
+      title: ProdIntRateSelType
+      type: object
+      properties:
+        AcctType:
+          type: array
+          description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+          items:
+            type: string
+        ProductIdent:
+          maxLength: 42
+          type: array
+          description: Product Identifier. Identifies the processing parameters of the account or card.
+          items:
+            maxLength: 42
+            type: string
+        BranchIdent:
+          maxLength: 22
+          type: array
+          description: Branch Identification. Other identification used as part of the Branch object key.
+          items:
+            maxLength: 22
+            type: string
+        InitialAmount:
+          type: array
+          description: Initial Amount. Origination or face amount of the loan account. It can also be the initial deposit or certificate value for time deposits.
+          items:
+            $ref: '#/components/schemas/InitialAmountType'
+        OpenDt:
+          type: array
+          description: Open Date.
+          items:
+            type: string
+            format: date
+        Rate:
+          type: array
+          description: Rate.
+          items:
+            type: number
+        Term:
+          type: array
+          description: Term.
+          items:
+            $ref: '#/components/schemas/TermType'
+        MaturityDt:
+          type: array
+          description: Maturity Date.
+          items:
+            type: string
+            format: date
+        ProdIntRateId:
+          maxLength: 36
+          type: array
+          description: Product Interest Rate Identifier. Rate Index is a pointer to the specification that indicates how the interest rate and interest is calculated.
+          items:
+            maxLength: 36
+            type: string
+        PromotionalRate:
+          type: array
+          description: Promotional Rate. Promotional rate give the customer an increased or decreased interest rate for a pre-defined number of days.
+          items:
+            $ref: '#/components/schemas/PromotionalRateType'
+        IntPmtFrequency:
+          type: array
+          description: Interest Payment Frequency.
+          items:
+            $ref: '#/components/schemas/IntPmtFrequencyType'
+        RateChangeOvrd:
+          type: array
+          description: Rate Change Overrride. Used to indicate how the interest rate is calculated and changed.
+          items:
+            $ref: '#/components/schemas/RateChangeOvrdType'
+        ServiceLevel:
+          maxLength: 80
+          type: array
+          description: Service Level. Indicates the level of service or the type of pricing that the customer should receive
+          items:
+            maxLength: 80
+            type: string
+    ProdIntRateInqRqType:
+      title: ProdIntRateInqRqType
+      required:
+      - ProdIntRateSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        ProdIntRateSel:
+          $ref: '#/components/schemas/ProdIntRateSelType'
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider which indicates the location of the Service Provider that gave the error.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    ProdIntRateKeysType:
+      title: ProdIntRateKeysType
+      type: object
+      properties:
+        SvcIdent:
+          $ref: '#/components/schemas/SvcIdentType'
+        ProductIdent:
+          maxLength: 42
+          type: string
+          description: Product Identifier. Identifies the processing parameters of the account or card.
+        ProdIntRateId:
+          maxLength: 36
+          type: string
+          description: Product Interest Rate Identifier. Rate Index is a pointer to the specification that indicates how the interest rate and interest is calculated.
+    LowCurAmtType:
+      title: LowCurAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    RateMatrixTierType:
+      title: RateMatrixTierType
+      type: object
+      properties:
+        Tier:
+          maxLength: 32
+          type: string
+          description: Tier.
+        LowCurAmt:
+          $ref: '#/components/schemas/LowCurAmtType'
+        HighCurAmt:
+          $ref: '#/components/schemas/HighCurAmtType'
+        Term:
+          $ref: '#/components/schemas/TermType'
+        Rate:
+          type: number
+          description: Rate.
+        RateIndex:
+          type: integer
+          description: Rate Index. Identifies a rate value.
+          format: int64
+        RateIndexEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Index Enumeration Description.
+        MarginType:
+          $ref: '#/components/schemas/MarginTypeType'
+        MarginTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Margin Type Enumeration Description.
+        Margin:
+          type: number
+          description: Margin. Percentage applied to BasedOnValue to calculate interest rate. For example, the BasedOnValue is the Prime rate, a percentage is added to/subtracted from the prime rate.
+        IntAPY:
+          type: number
+          description: Interest APY.
+        LowIntAPY:
+          type: number
+          description: Low Interest APY.
+        HighIntAPY:
+          type: number
+          description: High Interest APY.
+        IntAPR:
+          type: number
+          description: Interest APR.
+    SplitRateDataType:
+      title: SplitRateDataType
+      type: object
+      properties:
+        SplitAmt:
+          type: integer
+          description: Split Amount. Is the principal balance cutoff where the loan's interest rate changes.
+          format: int64
+        OverRate:
+          type: number
+          description: Over Rate. Interest rate that is applied to the principal balance portion that exceeds the split amount.
+        UnderRate:
+          type: number
+          description: Under Rate. Interest rate that is applied to the principal balance portion below or equal to the split amount.
+    IntRateDataType:
+      title: IntRateDataType
+      type: object
+      properties:
+        RateMatrixTier:
+          type: array
+          description: Rate Matrix Tier. Identifies one or more rates applicable to the product. Each occurrence (tier) contains a rate applicable to the product. A tier rate is based on balance, term of account, both, or neither. When the tier is based on neither balance or term, there is typically only one tier, therefore one rate, for the product.
+          items:
+            $ref: '#/components/schemas/RateMatrixTierType'
+        BasedOnCode:
+          maxLength: 80
+          type: string
+          description: |-
+            Based On Code.Source of interest rate which can be used alone or with additional factors that, when combined, calculate an interest rate.
+            .
+        BasedOnCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Based On Code Enumeration Description.
+        BasedOnValue:
+          type: number
+          description: |-
+            Based On Value. The value of the BasedOnCode at the time of the request. For example; BasedOnCode is Prime, this is the value of the Prime rate at the time the request is made
+            .
+        AccrualFrequency:
+          $ref: '#/components/schemas/AccrualFrequencyType'
+        APYRecurType:
+          $ref: '#/components/schemas/APYRecurTypeType'
+        AccrualMethod:
+          type: string
+          description: 'Accrual Method. For example: Daily, Simple, Continuous.'
+        AccrualMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Accrual Method Enumeration Description.
+        AccrualCode:
+          maxLength: 80
+          type: string
+          description: Accrual Code. Indicates additional instructions related to the method of accrual interest on the account.
+        AccrualCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Accrual Code Enumeration Description.
+        AccrualOnBalance:
+          type: string
+          description: Accrual On Balance. Identifies the type of amount used for calculate interest.
+        AccrualOnBalanceEnumDesc:
+          maxLength: 80
+          type: string
+          description: Accrual On Balance Enumeration Description.
+        DailyAccrual:
+          type: string
+          description: 'Daily Accrual. Indicates how ''daily'' is determined when interest is accrued on a daily basis. Valid values: Standard360, Actual365, Actual366.'
+        DailyAccrualEnumDesc:
+          maxLength: 80
+          type: string
+          description: Daily Accrual Daily Accrual.
+        DailyAccrualFactor:
+          type: number
+          description: Daily Accrual Factor.
+        MinimumInterest:
+          type: number
+          description: Minimum Interest. For Loan Products this is the minimum amount that must be repaid to the account before a payoff may occurr.
+        CapFrequency:
+          $ref: '#/components/schemas/CapFrequencyType'
+        CompoundInd:
+          type: boolean
+          description: Compounding Indicator.
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        TierType:
+          type: string
+          description: Tier Types. Indicates if the tier uses whole tier balance, split tier balance or dynamic tier balance methods.
+        TierTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tier Types Enumeration Description.
+        TierAmtType:
+          type: string
+          description: Tier Amount Type.Identifies the type of amount used in the tier.
+        TierAmtTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tier Amount Type Enumeration Description
+        BalCutOffData:
+          $ref: '#/components/schemas/BalCutOffDataType'
+        SplitRateData:
+          $ref: '#/components/schemas/SplitRateDataType'
+        IntRateCalcOption:
+          type: string
+          description: Interest Rate Calculation Option. Indicates whether the interest rate should be calculated at the time of the first disbursement or when the loan account is opened.
+    StepRateType:
+      title: StepRateType
+      type: object
+      properties:
+        Step:
+          maxLength: 3
+          type: string
+          description: Step.
+        Rate:
+          type: number
+          description: Rate.
+    PendingRateType:
+      title: PendingRateType
+      type: object
+      properties:
+        BasedOnValue:
+          type: number
+          description: |-
+            Based On Value. The value of the BasedOnCode at the time of the request. For example; BasedOnCode is Prime, this is the value of the Prime rate at the time the request is made
+            .
+        Rate:
+          type: number
+          description: Rate.
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+    RateChangeRangeMaxMinType:
+      title: RateChangeRangeMaxMinType
+      type: object
+      properties:
+        RateChangeRange:
+          type: string
+          description: Change Range Maximum and Minimum. Used for systems that define min and maxium up and down rate changes.
+        MinRateChange:
+          type: number
+          description: Minimum Range Change. Minimum amount that the interest rate must change per review period before a rate change is allowed.
+        MaxRateChange:
+          type: number
+          description: Maximum Rate Change. Maximum amount that the interest rate can change per review period.
+    RoundingOptionType:
+      title: RoundingOptionType
+      type: string
+      enum:
+      - RoundUp
+      - RoundDown
+      - RoundNearest
+      - None
+      - NoOverride
+    RateChangeRecurTypeType:
+      title: RateChangeRecurTypeType
+      type: string
+      enum:
+      - Daily
+      - Maturity
+      - BiWeekly
+      - Monthly
+      - BiMonthly
+      - TwiceMonthly
+      - Renewal
+      - SemiMonthly
+      - Weekly
+      - Yearly
+      - SemiYearly
+      - Quarterly
+      - InterestCycle
+      - DepositRateChg
+      - None
+      - Debit
+      - Stmt
+      - StmtDebit
+    RateChangeDataType:
+      title: RateChangeDataType
+      type: object
+      properties:
+        ReviewPlanIdent:
+          maxLength: 36
+          type: string
+          description: Rate Change Identifier.
+        RateChangeControl:
+          type: string
+          description: 'Interest Rate Change Control. Used to indicate the type of interest rate for example: Fixed, Index, IndexReview, StepReview, etc.'
+        RateChangeControlEnumDesc:
+          maxLength: 80
+          type: string
+          description: Interest Change Control Enumeration Description.
+        RateCalcMethod:
+          type: string
+          description: Rate Calculation Method. Code that indicates how the system calculates the interest rate when the rate changes with Index at Review.
+        RateCalcMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Calculation Method Enumeration Description.
+        RatePricingMethod:
+          type: string
+          description: Rate Pricing Method. Indicates whether accounts within this product type use a step table, term/balance table, term/balance/variance matrix, balance/rate table or it uses an interest plan to determine initial rate and rate at renewal.
+        RatePricingMethodEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Method Enumeration Description.
+        RatePricingTable:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Table. Table used when calculating the rate using a step table, term/balance table, term/balance/variance matrix or a balance/rate table.
+        RatePricingTableEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Pricing Table Enumeration Description.
+        StepRate:
+          type: array
+          description: Step Rate Table. Contains the collection of step rates.
+          items:
+            $ref: '#/components/schemas/StepRateType'
+        RateChangeNbr:
+          type: integer
+          description: Number of Rate Changes per term.
+          format: int64
+        RateChangeIntervalOption:
+          type: string
+          description: Number of Rate Changes Interval Option. Indicates if the number of rate changes applies to the first term only, to each term or is limited to what is specified in the Step Rate Table.
+        BasedOnCode:
+          maxLength: 80
+          type: string
+          description: |-
+            Based On Code.Source of interest rate which can be used alone or with additional factors that, when combined, calculate an interest rate.
+            .
+        BasedOnCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Based On Code Enumeration Description.
+        BasedOnValue:
+          type: number
+          description: |-
+            Based On Value. The value of the BasedOnCode at the time of the request. For example; BasedOnCode is Prime, this is the value of the Prime rate at the time the request is made
+            .
+        VarianceFactorType:
+          $ref: '#/components/schemas/VarianceFactorTypeType'
+        VarianceFactorTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Variance Factor Type Enumeration Description
+        RateFactor:
+          type: number
+          description: Rate Factor. Whole percentage of the related index rate used to calculate rate changes
+        RateVariance:
+          type: number
+          description: Rate Variance. Percentage that the interest rate varies from its related index rate
+        PendingRate:
+          type: array
+          description: Pending Rate.
+          items:
+            $ref: '#/components/schemas/PendingRateType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        IncreaseOnlyInd:
+          type: boolean
+          description: Rate Increase Only Indicator.
+        UseFloorCeilingRateInd:
+          type: boolean
+          description: Use Floor Ceiling Rate Indicator.
+        FloorRate:
+          type: number
+          description: Floor Rate. The numeric value associated with the chosen Accounting Method is the Accounting Value.
+        CeilingRate:
+          type: number
+          description: Ceiling Rate.
+        MinRateChange:
+          type: number
+          description: Minimum Range Change. Minimum amount that the interest rate must change per review period before a rate change is allowed.
+        MaxRateChange:
+          type: number
+          description: Maximum Rate Change. Maximum amount that the interest rate can change per review period.
+        RateChangeRangeMaxMin:
+          type: array
+          description: Change Range Maximum and Minimum. Used for systems that define min and maxium up and down rate changes.
+          items:
+            $ref: '#/components/schemas/RateChangeRangeMaxMinType'
+        MinRateDecreaseLife:
+          type: number
+          description: Minimum Rate Decrease Life. Minimum amount that the interest rate may decrease over the life of the account (a loan for example).
+        MaxRateIncreaseLife:
+          type: number
+          description: Maximum Rate Increase Life. The maximum percent the interest rate may decrease over the life of the account (a loan for example).
+        RoundingOption:
+          $ref: '#/components/schemas/RoundingOptionType'
+        RoundingOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rounding Option Enumeration Description.
+        RoundingFactor:
+          type: number
+          description: Rounding Factor. Used with the RoundingOption to establish the rounding percentage.
+        RateCarryOverOption:
+          type: string
+          description: Carry Over Option. Indicates the method used to handle the interest rate excess or shortage carryover from previous rate review periods.
+        RateCarryOverOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Carry Over Option Enumeration Description.
+        RateCarryOver:
+          type: number
+          description: Rate Carry Over. Amount of interest rate excess or shortage that is carried over from previous rate review periods. This field may contain a positive or negative value, which is cumulative for the life of the loan. The carryover amount is actually recalculated each time the rate changes, but because the previous carryover amount is used in a formula to determine the new absolute rate, the effect is cumulative
+        FixedRateConversionDt:
+          type: string
+          description: |-
+            Fixed Rate Conversion Date.Date on which the customer may convert this
+            loan to a fixed Rate.
+          format: date
+        FixedRateLeadDays:
+          type: integer
+          description: Fixed Rate Lead Days. Number of days prior to the fixed rate conversion date to notify the customer that the loan may be converted to a fixed rate.
+          format: int64
+        RateChangeRecurType:
+          $ref: '#/components/schemas/RateChangeRecurTypeType'
+        RateChangeRecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Rate Change Recurrence Type Enumeration Description.
+        RecurInterval:
+          type: integer
+          description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle.'
+          format: int64
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        LeadDaysOption:
+          type: string
+          description: Lead Days Option.
+        RecurStartDate:
+          type: string
+          description: Recurrence Start Date.
+          format: date
+        Occurrences:
+          type: integer
+          description: Occurrences.
+          format: int64
+        RecurEndDate:
+          type: string
+          description: Recurrence End Date.
+          format: date
+        NextRateChangeDt:
+          type: string
+          description: Next Rate Change Date. Date the next rate adjustment is to performed (by the system).
+          format: date
+        LastRateChangeDt:
+          type: string
+          description: Last Rate Change Date. Date the next rate adjustment was last performed (by the system).
+          format: date
+        PriorRate:
+          type: number
+          description: Prior Rate.
+        TeaserRateInd:
+          type: boolean
+          description: Teaser Rate Indicator. Indicator that identifies whether the loan has a teaser interest rate
+        TeaserRateExpDt:
+          type: string
+          description: Teaser Rate Expiration Date.
+          format: date
+        NoticeDtlOption:
+          maxLength: 80
+          type: string
+          description: Notice Detail Option.
+        NoticeDtlOptionEnumDesc:
+          maxLength: 80
+          type: string
+          description: Notice Detail Option Enumeration Description.
+    ProdIntRateInfoType:
+      title: ProdIntRateInfoType
+      required:
+      - Desc
+      - ProductIdent
+      type: object
+      properties:
+        ProductIdent:
+          maxLength: 42
+          type: string
+          description: Product Identifier. Identifies the processing parameters of the account or card.
+        Desc:
+          maxLength: 100
+          type: string
+          description: Description.
+        AcctType:
+          type: string
+          description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+        AcctMajorType:
+          type: string
+          description: Account Major Type.
+        MaturityDt:
+          type: string
+          description: Maturity Date.
+          format: date
+        Term:
+          $ref: '#/components/schemas/TermType'
+        Rate:
+          type: number
+          description: Rate.
+        IntAPY:
+          type: number
+          description: Interest APY.
+        IntRateData:
+          type: array
+          description: Interest Rate Data. Use to define Interest Rate processing data.
+          items:
+            $ref: '#/components/schemas/IntRateDataType'
+        PromotionalRate:
+          $ref: '#/components/schemas/PromotionalRateType'
+        IntPmtFrequency:
+          type: array
+          description: Interest Payment Frequency.
+          items:
+            $ref: '#/components/schemas/IntPmtFrequencyType'
+        RateChangeData:
+          $ref: '#/components/schemas/RateChangeDataType'
+    ProdIntRateStatusType:
+      title: ProdIntRateStatusType
+      required:
+      - ProdIntRateStatusCode
+      type: object
+      properties:
+        ProdIntRateStatusCode:
+          maxLength: 80
+          type: string
+          description: Product Interest Rate Status Code.
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+    ProdIntRateRecType:
+      title: ProdIntRateRecType
+      required:
+      - ProdIntRateInfo
+      - ProdIntRateKeys
+      - ProdIntRateStatus
+      type: object
+      properties:
+        ProdIntRateKeys:
+          $ref: '#/components/schemas/ProdIntRateKeysType'
+        ProdIntRateInfo:
+          $ref: '#/components/schemas/ProdIntRateInfoType'
+        ProdIntRateStatus:
+          $ref: '#/components/schemas/ProdIntRateStatusType'
+    ProdIntRateInqRsType:
+      title: ProdIntRateInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        ProdIntRateRec:
+          type: array
+          description: Product Interest Rate Record.
+          items:
+            $ref: '#/components/schemas/ProdIntRateRecType'
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number.
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Multi-System Service (MSS) feature is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System Service feature (MSS), this identifies the Service Provider (account processor).
+        Context:
+          $ref: '#/components/schemas/Context'
+      example: '{ "TrnId": "622182", "OrganizationId": "PRMOrg10", "VendorId": "112233", "Context":{ "Channel": "WEB" } }'
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: Name of the client application that is used to send the service request, such as Architect, Commercial Center and others.
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12.
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: 'Client terminal sequence number. type: string'
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: 'Type of a phone. Valid values are: - ''EvePhone'' - ''DayPhone'' - ''EveFax'' - ''DayFax'' - ''Home'' - ''Work'' - ''Mobile'' - ''Fax'' - ''Pager'' - ''Modem'' - ''Other'''
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: '#/components/schemas/TellerTrnDataType'
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: '#/components/schemas/TrnConductorDataType'
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Authorization level required to override, such as Teller and Supervisor.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+        ContentHTML:
+          type: string
+          description: 'Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures.'
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: '#/components/schemas/AdditionalStatusType'
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: 'Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. '
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden.
+        Value:
+          maxLength: 256
+          type: string
+          description: Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data.
+      description: Information about the subject element.
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: 'Next record pointer included in the response only if additional  records are available. '
+      description: Record Control Out

@@ -1,0 +1,4609 @@
+---
+openapi: 3.0.1
+info:
+  title: Collateral Service
+  description: The Collateral service supports operations managing collateral management.
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: /
+paths:
+  /collateral:
+    put:
+      tags:
+      - Update Collateral
+      summary: Modify collateral record
+      description: This method modifies collateral records.
+      operationId: ModCollateral
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        description: Collateral info
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollateralModRqType'
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralModRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralModRsType'
+    post:
+      tags:
+      - Add Collateral
+      summary: Add collateral record
+      description: This method adds collateral records.
+      operationId: addCollateral
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        description: Collateral info
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollateralAddRqType'
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralAddRsType'
+        default:
+          description: See HTTP Status Code Standards
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralAddRsType'
+  /collateral/secured:
+    put:
+      tags:
+      - Delete Collateral
+      summary: Deletes collateral records secured.
+      description: This method deletes collateral records.
+      operationId: CollateralDelOperSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollateralDelRqType'
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralDelRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralDelRsType'
+    post:
+      tags:
+      - Get Collateral
+      summary: Retrieves collateral records secured.
+      description: This method retrieves collateral records.
+      operationId: CollateralInqSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollateralInqRqType'
+        required: true
+      responses:
+        "200":
+          description: Ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CollateralInqRsType'
+components:
+  schemas:
+    AddrFormatTypeType:
+      title: AddrFormatTypeType
+      type: string
+      enum:
+      - Label
+      - Parsed
+    AddrTypeType:
+      title: AddrTypeType
+      type: string
+      enum:
+      - Primary
+      - PrimaryPending
+      - Secondary
+      - Seasonal
+      - Previous
+      - Physical
+    CollateralStatusCodeType:
+      title: CollateralStatusCodeType
+      type: string
+      enum:
+      - Valid
+      - Deleted
+    CollateralTypeType:
+      title: CollateralTypeType
+      type: string
+      enum:
+      - Commodity
+      - DepositAccount
+      - Other
+      - Property
+      - Investment
+      - OtherProperty
+      - Basic
+      - Inventory
+      - LifeInsurance
+      - Vehicle
+      - ManufacturedHome
+      - Boat
+    CurCodeTypeType:
+      title: CurCodeTypeType
+      type: string
+      enum:
+      - ISO4217-Alpha
+      - ISO4217-Numeric
+    DayOfMonthType:
+      title: DayOfMonthType
+      type: integer
+      example: 1
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      - 8
+      - 9
+      - 10
+      - 11
+      - 12
+      - 13
+      - 14
+      - 15
+      - 16
+      - 17
+      - 18
+      - 19
+      - 20
+      - 21
+      - 22
+      - 23
+      - 24
+      - 25
+      - 26
+      - 27
+      - 28
+      - 29
+      - 30
+      - 31
+    DayOfWeekType:
+      title: DayOfWeekType
+      type: string
+      enum:
+      - Monday
+      - Tuesday
+      - Wednesday
+      - Thursday
+      - Friday
+      - Saturday
+      - Sunday
+    HandlingCodeOptionType:
+      title: HandlingCodeOptionType
+      type: string
+      enum:
+      - StatementsNoticesChecks
+      - Statements
+      - StatementsNotices
+      - StatementsChecks
+      - Notices
+      - NoticesChecks
+      - Checks
+      - DoNotPrint
+      - UsePortfolio
+      - UseDefault
+    InsurancePolicyTypeType:
+      title: InsurancePolicyTypeType
+      type: string
+      enum:
+      - None
+      - Joint
+      - Single
+      - NoneItwasSingle
+      - NoneItwasJoint
+      - SingleItwasJoint
+    NameFormatType:
+      title: NameFormatType
+      type: string
+      enum:
+      - None
+      - NonPersonal
+      - FirstLastSuffix
+      - FirstMiddleInitialLastSuffix
+      - FirstMiddleLastSuffix
+      - PrintedMailingSeasonal
+      - PrintedMailingSeasonalTax
+      - PrintedSeasonalOnly
+      - PrintedAddressOnly
+    NameTypeType:
+      title: NameTypeType
+      type: string
+      enum:
+      - Primary
+      - Secondary
+      - Legal
+    PartyCollateralRelOrderType:
+      title: PartyCollateralRelOrderType
+      type: string
+      enum:
+      - First
+      - Second
+      - Third
+      - Fourth
+      - Fifth
+      - Other
+    PartyIdentTypeType:
+      title: PartyIdentTypeType
+      type: string
+      enum:
+      - TaxIdent
+      - IBId
+      - Name
+      - MemberNum
+      - OrgNum
+      - PersonNum
+    RelationshipRoleType:
+      title: RelationshipRoleType
+      type: string
+      enum:
+      - Officer
+      - SecondOfficer
+      - ThirdOfficer
+      - FourthOfficer
+      - ReferralOfficer
+    RentalDemoCodeType:
+      title: RentalDemoCodeType
+      type: string
+      enum:
+      - ForSale
+      - Rental
+      - Demo
+    TaxIdentTypeType:
+      title: TaxIdentTypeType
+      type: string
+      enum:
+      - None
+      - SSN
+      - EIN
+      - Foreign
+      - ITIN
+      - ATIN
+      - Other
+    TermUnitsType:
+      title: TermUnitsType
+      type: string
+      enum:
+      - Days
+      - Weeks
+      - Months
+      - Years
+      - Indefinite
+      - Unknown
+    AcctIdentType:
+      title: AcctIdentType
+      type: object
+      properties:
+        AcctIdentType:
+          type: string
+          description: 'Account Identification Type. Valid values include: AcctNum, AliasAcct, PORT, etc.'
+        AcctIdentValue:
+          maxLength: 36
+          type: string
+          description: Account Identification Value. Contains the value of the Account Identifier.
+    BaseKeysType:
+      title: BaseKeysType
+      type: object
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider which indicates the location of the Service Provider that gave the error.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    CardIdentType:
+      title: CardIdentType
+      type: object
+      properties:
+        CardIdentType:
+          type: string
+          description: 'Card Identification Type. Valid values include: PORT.'
+        CardIdentValue:
+          maxLength: 36
+          type: string
+          description: Card Identification Value.
+    CardKeysType:
+      title: CardKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          ISOCode:
+            maxLength: 80
+            type: string
+            description: ISO Card Code. Some systems like Precision instead of ISO Number they use a code to refer to the ISO Number of the card.
+          CardNum:
+            maxLength: 32
+            type: string
+            description: Card Number. This number does not include the ISO component of the card identification.
+          CardId:
+            maxLength: 36
+            type: string
+            description: Card Identifier. Uniquely identifies a card held at a financial institution (this is the card number as it appears on the card).
+          CardSeqNum:
+            maxLength: 3
+            type: string
+            description: Card Sequence Number. Typically refers to the member number (if applicable).
+          CardIdent:
+            $ref: '#/components/schemas/CardIdentType'
+    CurCodeType:
+      title: CurCodeType
+      required:
+      - CurCodeValue
+      type: object
+      properties:
+        CurCodeType:
+          $ref: '#/components/schemas/CurCodeTypeType'
+        CurCodeTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Currency Code Type Enumeration Description.
+        CurCodeValue:
+          maxLength: 80
+          type: string
+          description: Currency Code Value. Indicates the Currency Code Value within the CurCodeType table specified.
+    AcctKeysType:
+      title: AcctKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          AcctId:
+            maxLength: 36
+            type: string
+            description: Account Identifier. Uniquely identifies an account held at a financial institution.
+          SubAcctId:
+            maxLength: 36
+            type: string
+            description: Sub Account Identifier.
+          AcctType:
+            type: string
+            description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+          CardKeys:
+            type: array
+            description: Card Keys.  Contains data that describes the key of the Card record.
+            items:
+              $ref: '#/components/schemas/CardKeysType'
+          AcctIdent:
+            type: array
+            description: Account Identification. Other account identification used as part of the Account object key in addition to the Account Identifier (AcctId).
+            items:
+              $ref: '#/components/schemas/AcctIdentType'
+          CurCode:
+            type: array
+            description: Currency Code.
+            items:
+              $ref: '#/components/schemas/CurCodeType'
+          FIIdentType:
+            type: array
+            description: Financial Institution Identification Type.
+            items:
+              type: string
+          FIIdent:
+            maxLength: 34
+            type: array
+            description: Financial Institution Identification.
+            items:
+              maxLength: 34
+              type: string
+          BranchIdent:
+            maxLength: 22
+            type: array
+            description: Branch Identification. Other identification used as part of the Branch object key.
+            items:
+              maxLength: 22
+              type: string
+    AddrDefinedDataType:
+      title: AddrDefinedDataType
+      required:
+      - DataIdent
+      type: object
+      properties:
+        DataIdent:
+          maxLength: 36
+          type: string
+          description: Data Identification. Identification of the client defined data item.
+        Value:
+          maxLength: 256
+          type: string
+          description: Value string representation of the EFX data value of the element in error. This field is intended to provide a human readable visual hint as to the value in error. It should not be provided for fields that cannot be represented as a string (i.e., binary data).
+    CurAmtType:
+      title: CurAmtType
+      type: object
+      properties:
+        Amt:
+          type: number
+          description: Amount.
+        CurCode:
+          $ref: '#/components/schemas/CurCodeType'
+    AppraisedValueAmtType:
+      title: AppraisedValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: string
+    OriginalAppraisalAmtType:
+      title: OriginalAppraisalAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: string
+    LastAppraisalAmtType:
+      title: LastAppraisalAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: string
+    AppraisalFeeAmtType:
+      title: AppraisalFeeAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: string
+    LocatorType:
+      title: LocatorType
+      type: object
+    CountryCodeType:
+      title: CountryCodeType
+      required:
+      - CountryCodeValue
+      type: object
+      properties:
+        CountryCodeSource:
+          type: string
+          description: Country Code Source. Used with CountryCodeValue to indicate the Country Code Source table.
+        CountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country Code Value. Indicates the Country Code Value within the CountryCodeSource table specified.
+        CountryCodeValueEnumDesc:
+          maxLength: 80
+          type: string
+          description: Country Code Value Enumeration Description.
+    PhoneNumType:
+      title: PhoneNumType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - required:
+        - PhoneType
+        type: object
+        properties:
+          PhoneType:
+            type: string
+            description: Phone Type.
+          PhoneTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Phone Type Enumeration Description.
+          PhoneIdent:
+            type: integer
+            description: Phone Identifier. Use when you have more than one occurrence of a phone type  (for example 5 Mobile phones). This element serializes the phones.
+            format: int64
+          Phone:
+            type: string
+            description: Phone.
+          PhoneExchange:
+            maxLength: 80
+            type: string
+            description: Phone Exchange.
+          PreferredPhone:
+            type: boolean
+            description: Preferred Phone.
+          Priority:
+            maxLength: 10
+            type: string
+            description: Priority Code.
+          DoNotContactInd:
+            type: boolean
+            description: Do Not Contact Indicator.
+          PhoneDesc:
+            maxLength: 30
+            type: string
+            description: Phone Description.
+          CountryCode:
+            $ref: '#/components/schemas/CountryCodeType'
+          UpDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Update Date.
+    RelationshipMgrType:
+      title: RelationshipMgrType
+      required:
+      - RelationshipMgrIdent
+      type: object
+      properties:
+        RelationshipMgrIdent:
+          maxLength: 36
+          type: string
+          description: Relationship Manager Identifier. Identifies officer/employee of financial institution.
+        RelationshipMgrIdentEnumDesc:
+          maxLength: 80
+          type: string
+          description: Relationship Manager Identifier Enumeration Description.
+        RelationshipRole:
+          $ref: '#/components/schemas/RelationshipRoleType'
+        RelationshipRoleEnumDesc:
+          maxLength: 80
+          type: string
+          description: Relationship Role Enumeration Description.
+    LabelAddrType:
+      title: LabelAddrType
+      type: object
+      properties:
+        Addr1:
+          maxLength: 64
+          type: string
+          description: Address Line 1.
+        Addr2:
+          maxLength: 64
+          type: string
+          description: Address Line 2.
+        Addr3:
+          maxLength: 64
+          type: string
+          description: Address Line 3.
+        Addr4:
+          maxLength: 64
+          type: string
+          description: Address Line 4.
+        Addr5:
+          maxLength: 64
+          type: string
+          description: Address Line 5.
+        Addr6:
+          maxLength: 64
+          type: string
+          description: Address Line 6.
+    StartDayMonthType:
+      title: StartDayMonthType
+      type: object
+      properties:
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+    DurationType:
+      title: DurationType
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        Unit:
+          type: string
+          description: Unit.
+        UnitEnumDesc:
+          maxLength: 80
+          type: string
+          description: Unit Enumeration Description.
+    RecurRuleType:
+      title: RecurRuleType
+      type: object
+      properties:
+        RecurType:
+          type: string
+          description: Recurrence Type. Indicates the pattern of recurrence.
+        RecurTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Recurrence Type Enumeration Description.
+        RecurInterval:
+          type: integer
+          description: 'Recurrence Interval. Number of units between occurrences. Should be an integer. If  ‘Daily’: Number of days between occurrences. If   ‘Weekly’: Number of weeks between occurrences. If   ''Monthly’: Number of months between occurrences. If   ‘Yearly’: Number of years between occurrences. If not provided, assume default value of 1, i.e. every day, every week, every month, or every year. If ''Cycle'' : Number of the designated cycle.'
+          format: int64
+        RecurInstance:
+          type: integer
+          description: Recurrent Instance. Numeric value representing the instance of the days(s) of the week of recurrence, i.e. Second Wednesday of the month, First Monday of the year. DayOfWeek must also be provided.
+          format: int64
+        DayOfWeek:
+          $ref: '#/components/schemas/DayOfWeekType'
+        DayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        SecondDayOfMonth:
+          $ref: '#/components/schemas/DayOfMonthType'
+        Month:
+          type: integer
+          description: 'Month. Numeric value representing the month of recurrence. Valid values: integers between 1 and 12 inclusive.'
+          format: int64
+        RecurStartDate:
+          type: string
+          description: Recurrence Start Date.
+          format: date
+        Occurrences:
+          type: integer
+          description: Occurrences.
+          format: int64
+        RecurEndDate:
+          type: string
+          description: Recurrence End Date.
+          format: date
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        AdjDays:
+          type: integer
+          description: Adjustment Days. Indicates the number of days to adjust a value (review a rate or perform interest accrual) after an event occurs (see AdjDaysBasis).
+          format: int64
+        AdjDaysBasis:
+          type: string
+          description: 'Adjustment Days Basis. Used in combination with Adjustment Days (AdjDays). It indicates a basis for an adjustment such as: Due Date (DueDt), Statement Date (StmtDt).'
+    TimeFrameType:
+      title: TimeFrameType
+      type: object
+      properties:
+        StartDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Start Date.
+        StartDayMonth:
+          $ref: '#/components/schemas/StartDayMonthType'
+        EndDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: End Date.
+        EndDayMonth:
+          $ref: '#/components/schemas/StartDayMonthType'
+        Duration:
+          $ref: '#/components/schemas/DurationType'
+        RecurRule:
+          type: array
+          description: Recurrence Rule.
+          items:
+            $ref: '#/components/schemas/RecurRuleType'
+    PostAddrType:
+      title: PostAddrType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - required:
+        - AddrType
+        type: object
+        properties:
+          OpenDt:
+            type: string
+            description: Open Date.
+            format: date
+          RelationshipMgr:
+            type: array
+            description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+            items:
+              $ref: '#/components/schemas/RelationshipMgrType'
+          OriginatingBranch:
+            maxLength: 32
+            type: string
+            description: Originating Branch. Branch first originated the relationship with party or created the account.
+          OriginatingBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Originating Branch Enumeration Description.
+          PreferredBranch:
+            maxLength: 32
+            type: string
+            description: Preferred Branch. The branch preferred by the customer to conduct business.
+          PreferredBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Preferred Branch Enumeration Description.
+          ResponsibleBranch:
+            maxLength: 32
+            type: string
+            description: Responsible Branch. Branch responsible for the relationship.
+          ResponsibleBranchEnumDesc:
+            maxLength: 80
+            type: string
+            description: Responsible Branch Enumeration Description.
+          NameIdent:
+            maxLength: 36
+            type: array
+            description: Name Identifier.
+            items:
+              maxLength: 36
+              type: string
+          AddressIdent:
+            maxLength: 36
+            type: string
+            description: Address Identification. Used as pointer to a reference of an address. Other identification used as part of the Address object key.
+          AddrUse:
+            type: string
+            description: Address Use. Indicates the use of the address for example Business or Home, Statement, Check, Government, etc.
+          AddrUseEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Use  Enumeration Description.
+          AddrFormatType:
+            $ref: '#/components/schemas/AddrFormatTypeType'
+          AddrFormatTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Format Type Enumeration Description.
+          FullName1:
+            maxLength: 96
+            type: string
+            description: Full Name Line 1.
+          FullName2:
+            maxLength: 96
+            type: string
+            description: Full Name Line 2.
+          FullName3:
+            maxLength: 96
+            type: string
+            description: Full Name Line 3.
+          Addr1:
+            maxLength: 64
+            type: string
+            description: Address Line 1.
+          Addr2:
+            maxLength: 64
+            type: string
+            description: Address Line 2.
+          Addr3:
+            maxLength: 64
+            type: string
+            description: Address Line 3.
+          Addr4:
+            maxLength: 64
+            type: string
+            description: Address Line 4.
+          Addr5:
+            maxLength: 64
+            type: string
+            description: Address Line 5.
+          Addr6:
+            maxLength: 64
+            type: string
+            description: Address Line 6.
+          ApartmentNum:
+            maxLength: 15
+            type: string
+            description: Apartment Number.
+          ApartmentNumType:
+            type: string
+            description: Apartment Number Type. This is an identifier of the type of number provided in the Apartment Number field.
+          HouseNum:
+            maxLength: 15
+            type: string
+            description: House Number.
+          HouseName:
+            maxLength: 64
+            type: string
+            description: House Name.
+          Street:
+            maxLength: 64
+            type: string
+            description: Street.
+          LabelAddr:
+            $ref: '#/components/schemas/LabelAddrType'
+          AddrDefinedData:
+            type: array
+            description: Address Defined Data.
+            items:
+              $ref: '#/components/schemas/AddrDefinedDataType'
+          City:
+            maxLength: 32
+            type: string
+            description: City.
+          County:
+            maxLength: 32
+            type: string
+            description: County.
+          District:
+            maxLength: 32
+            type: string
+            description: District.
+          StateProv:
+            maxLength: 80
+            type: string
+            description: State/Province. ISO 3166-2:US codes.
+          StateProvEnumDesc:
+            maxLength: 80
+            type: string
+            description: State Province Enumeration Description.
+          MilitaryRegion:
+            type: string
+            description: Military Region. Identifier that replaces State and City for military addresses
+          PostalCode:
+            maxLength: 11
+            type: string
+            description: Postal Code. ZipCode in the US.
+          Country:
+            maxLength: 64
+            type: string
+            description: Country.
+          CountryCode:
+            $ref: '#/components/schemas/CountryCodeType'
+          POBox:
+            maxLength: 16
+            type: string
+            description: PO Box.
+          AddrType:
+            $ref: '#/components/schemas/AddrTypeType'
+          AddrTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Type Enumeration Description.
+          AddrLocation:
+            maxLength: 255
+            type: string
+            description: Address Location. Indicates if the address location is a Business or Home.
+          AddrLocationEnumDesc:
+            maxLength: 80
+            type: string
+            description: Address Location Enumeration Description.
+          TimeFrame:
+            $ref: '#/components/schemas/TimeFrameType'
+          ExpDt:
+            type: string
+            description: Expiration Date.
+            format: date
+          Retention:
+            type: boolean
+            description: Retention. Indicates whether the records are to be retained or deleted based on Service Provider criteria.
+          RevertToPartyAddr:
+            type: boolean
+            description: Revert to Party Address. Indicates for account alternate addresses if the address must be reverted to the Party name and address.
+          MoveInDt:
+            type: string
+            description: Move In Date.
+            format: date
+          ContactMethod:
+            type: string
+            description: Contact Method.
+          UpDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Update Date.
+          Comment:
+            maxLength: 300
+            type: string
+            description: Comment. A comment entered in history.
+          CensusTract:
+            maxLength: 20
+            type: string
+            description: Census Track. Contains the census tract number assigned to the address.
+          CensusBlock:
+            maxLength: 20
+            type: string
+            description: Census Block. Contains the census block group designation for the block where the address is within a census tract.
+          ForeignFlag:
+            type: boolean
+            description: Foreign Flag. Indicator that tells if an item (an address for example) is foreign or not.
+          HandlingCode:
+            maxLength: 80
+            type: string
+            description: Handling Code .Indicates special handling of notification and statement forms.
+          HandlingCodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Handling Code Enumeration Description.
+          HandlingCodeOption:
+            $ref: '#/components/schemas/HandlingCodeOptionType'
+          HandlingCodeOptionEnumDesc:
+            maxLength: 80
+            type: string
+            description: Handling Code Option Enumeration Description.
+          MSACode:
+            type: integer
+            description: MSA Code. MSAs are defined by the U.S. Office of Management and Budget (OMB), and used by the U.S. Census Bureau and other federal government agencies for statistical purposes
+            format: int64
+          MSACodeEnumDesc:
+            maxLength: 80
+            type: string
+            description: MSA Code Enumeration Description.
+          MaintDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Maintenance Date.
+          MaintBy:
+            maxLength: 80
+            type: string
+            description: Maintained By.
+          MaintByEnumDesc:
+            maxLength: 80
+            type: string
+            description: Maintained By Enumeration Description.
+          AddrInUseInd:
+            type: boolean
+            description: Address In Use.
+          PhoneNum:
+            type: array
+            description: Phone Number.
+            items:
+              $ref: '#/components/schemas/PhoneNumType'
+          IncAddrFormat:
+            type: boolean
+    EmailType:
+      title: EmailType
+      allOf:
+      - $ref: '#/components/schemas/LocatorType'
+      - type: object
+        properties:
+          EmailIdent:
+            maxLength: 36
+            type: string
+            description: Email Identification.
+          EmailType:
+            type: string
+            description: Email Type. Indicates the type of email address.
+          EmailTypeEnumDesc:
+            maxLength: 80
+            type: string
+            description: Email Type Enumeration Description.
+          EmailAddr:
+            maxLength: 254
+            type: string
+            description: Email Address.
+          PreferredEmail:
+            type: boolean
+            description: Preferred Email.
+          Priority:
+            maxLength: 10
+            type: string
+            description: Priority Code.
+    WebAddrType:
+      title: WebAddrType
+      type: object
+      properties:
+        WebAddrIdent:
+          type: integer
+          description: Web Address Identifier. Use when you have more than one occurrence of a web address type. This element serializes the web addresses.
+          format: int64
+        WebAddrType:
+          type: string
+          description: Web Address Type.
+        WebAddrTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Web Address Type Enumeration Description.
+        WebAddrLink:
+          maxLength: 1024
+          type: string
+          description: Web Address Link.
+        PreferredWebAddr:
+          type: boolean
+          description: Preferred Web Address.
+    ContactType:
+      title: ContactType
+      type: object
+      properties:
+        PhoneNum:
+          $ref: '#/components/schemas/PhoneNumType'
+        PostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        Email:
+          $ref: '#/components/schemas/EmailType'
+        WebAddr:
+          $ref: '#/components/schemas/WebAddrType'
+        ContactIdent:
+          maxLength: 36
+          type: string
+          description: Contact Identifier. Refers to a customer number if the contact is a customer in the customer file.
+        ContactName:
+          maxLength: 40
+          type: string
+          description: Contact. Contact Name.
+        ContactTitle:
+          maxLength: 32
+          type: string
+          description: Contact Job Title.
+        DoNotSolicitInd:
+          type: boolean
+          description: Do Not Solicit Indicator. Use to determine whether contact information can be used for solicitation.
+    ClientDefinedDataType:
+      title: ClientDefinedDataType
+      required:
+      - DataIdent
+      type: object
+      properties:
+        DataClassType:
+          type: string
+          description: Data Class Type. Application the data belongs, this is client defined value.
+        DataClassTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Application Enumeration Descipton.
+        DataIdent:
+          maxLength: 36
+          type: string
+          description: Data Identification. Identification of the client defined data item.
+        DataIdentEnumDesc:
+          maxLength: 80
+          type: string
+          description: Data Identifier Enumeration Description.
+        DataType:
+          type: string
+          description: Data Type. Indicates the type of client defined data.
+        DataTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Data Type Enumeration Description.
+        Value:
+          maxLength: 256
+          type: string
+          description: Value string representation of the EFX data value of the element in error. This field is intended to provide a human readable visual hint as to the value in error. It should not be provided for fields that cannot be represented as a string (i.e., binary data).
+        DataLength:
+          type: integer
+          description: Data Length. The length of the client defined data.
+          format: int64
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        Desc:
+          maxLength: 200
+          type: string
+          description: Description.
+        RequiredFlag:
+          type: boolean
+          description: Required Flag.Indicates if the a data value is required for the client defined data.
+        SearchFlag:
+          type: boolean
+          description: Search Flag. Indicates if the data can be searched.
+        GroupNum:
+          maxLength: 20
+          type: string
+          description: Group Number. Indicates if the data belongs in a group.
+        RestrictedInd:
+          type: boolean
+          description: Restricted Indicator. Indicates whether the account information is restricted for view by the requester.
+        RestrictedDesc:
+          maxLength: 80
+          type: string
+          description: Restricted Description. Description of the reason for the account to be restricted.
+    CommentDataType:
+      title: CommentDataType
+      type: object
+      properties:
+        CommentIdent:
+          maxLength: 36
+          type: string
+          description: Comment Identifier.
+        CommentDt:
+          type: string
+          description: Comment Date.
+          format: date
+        CommentDesc:
+          maxLength: 240
+          type: string
+          description: Comment Description.
+        PriorityInd:
+          type: boolean
+          description: Priority Indicator.
+        RelationshipMgr:
+          $ref: '#/components/schemas/RelationshipMgrType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+    AppraisalHistoryType:
+      title: AppraisalHistoryType
+      type: object
+      properties:
+        AppraisalIdent:
+          maxLength: 36
+          type: string
+          description: Appraiser Identifier.
+        AppraisedValueAmt:
+          $ref: '#/components/schemas/AppraisedValueAmtType'
+        AppraisedValueDt:
+          type: string
+          description: Appraised Value Date.
+          format: date
+        AppraisalFeeAmt:
+          $ref: '#/components/schemas/AppraisalFeeAmtType'
+        AppraiserName:
+          maxLength: 80
+          type: string
+          description: Appraiser Name.
+        AppraiserIdent:
+          maxLength: 36
+          type: string
+          description: Appraiser Name Identifier.
+        AppraiserPostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        ClientDefinedData:
+          type: array
+          description: Client Defined Data.Data whose definition, type and values are defined by the client or user.
+          items:
+            $ref: '#/components/schemas/ClientDefinedDataType'
+        CommentData:
+          type: array
+          description: Comment Data.
+          items:
+            $ref: '#/components/schemas/CommentDataType'
+        RelationshipMgr:
+          $ref: '#/components/schemas/RelationshipMgrType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+    AppraisalDataType:
+      title: AppraisalDataType
+      type: object
+      properties:
+        AppraisalType:
+          maxLength: 30
+          type: string
+          description: Appraisal Type.
+        AppraisedValueAmt:
+          $ref: '#/components/schemas/AppraisedValueAmtType'
+        AppraisedValueDt:
+          type: string
+          description: Appraised Value Date.
+          format: date
+        OriginalAppraisalAmt:
+          $ref: '#/components/schemas/OriginalAppraisalAmtType'
+        OriginalAppraisalDt:
+          type: string
+          description: Original Appraisal Date.
+          format: date
+        LastAppraisalAmt:
+          $ref: '#/components/schemas/LastAppraisalAmtType'
+        LastAppraisalDt:
+          type: string
+          description: Last Appraisal Date.
+          format: date
+        NextAppraisalDt:
+          type: string
+          description: Next Appraisal Date.
+          format: date
+        AppraisalFeeAmt:
+          $ref: '#/components/schemas/AppraisalFeeAmtType'
+        Contact:
+          $ref: '#/components/schemas/ContactType'
+        AppraisalHistory:
+          type: array
+          description: Appraisal History.
+          items:
+            $ref: '#/components/schemas/AppraisalHistoryType'
+    AvailPledgeAmtType:
+      title: AvailPledgeAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PartyKeysType:
+      title: PartyKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          SvcIdent:
+            $ref: '#/components/schemas/SvcIdentType'
+          PartyId:
+            maxLength: 150
+            type: string
+            description: Party Identifier. Used to uniquely identify a Party record.
+          PartyIdentType:
+            $ref: '#/components/schemas/PartyIdentTypeType'
+          PartyIdent:
+            maxLength: 60
+            type: string
+            description: Party Identification.
+    BeneficiaryDataType:
+      title: BeneficiaryDataType
+      type: object
+      properties:
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+        FullName:
+          maxLength: 96
+          type: string
+          description: Full Name.
+        TaxIdentType:
+          $ref: '#/components/schemas/TaxIdentTypeType'
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+        BirthDt:
+          type: string
+          description: Birth Date.
+          format: date
+        PostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        BeneficiaryLevel:
+          type: string
+          description: Beneficiary Level. Identifies primary from contigent beneficiaries in the account.
+        BeneficiaryLevelEnumDesc:
+          maxLength: 80
+          type: string
+          description: Beneficiary Level Enumration Description.
+        BeneficiaryType:
+          type: string
+          description: Beneficiary Type. Indicates the relationship between the account owner and beneficiary.
+        BeneficiaryTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Beneficiary Type Enumration Description.
+        BeneficiaryDesc:
+          maxLength: 80
+          type: string
+          description: Beneficiary Description.
+        BeneficiaryPercent:
+          type: number
+          description: Beneficiary Percent.
+        BeneficiaryAmt:
+          type: number
+          description: Beneficiary Amount
+    CashValueAmtType:
+      title: CashValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CeilingAmtType:
+      title: CeilingAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    ClientDefinedSearchType:
+      title: ClientDefinedSearchType
+      required:
+      - DataIdent
+      type: object
+      properties:
+        DataIdent:
+          maxLength: 36
+          type: string
+          description: Data Identification. Identification of the client defined data item.
+        Value:
+          maxLength: 256
+          type: string
+          description: Value string representation of the EFX data value of the element in error. This field is intended to provide a human readable visual hint as to the value in error. It should not be provided for fields that cannot be represented as a string (i.e., binary data).
+    OvrdElementType:
+      title: OvrdElementType
+      allOf:
+      - $ref: '#/components/schemas/SubjectElementType'
+      - type: object
+    OverrideExceptionType:
+      title: OverrideExceptionType
+      type: object
+      properties:
+        SubjectRole:
+          type: string
+          description: Subject Role.
+        SubjectIdent:
+          maxLength: 36
+          type: string
+          description: Subject Identifier.
+        OvrdExceptionCode:
+          maxLength: 40
+          type: string
+          description: Overrride Exception Code.Identifies an exception code that is to be overridden. This would be the ServerStatusCode from the Status response.
+        OvrdElement:
+          $ref: '#/components/schemas/OvrdElementType'
+    OvrdExceptionDataType:
+      title: OvrdExceptionDataType
+      type: object
+      properties:
+        OverrideException:
+          type: array
+          description: Override Exception.
+          items:
+            $ref: '#/components/schemas/OverrideExceptionType'
+    MemberDataType:
+      title: MemberDataType
+      type: object
+      properties:
+        MemberGroup:
+          maxLength: 80
+          type: string
+          description: Member Group.
+        MemberNum:
+          maxLength: 36
+          type: string
+          description: Member Number.
+      description: '[IFXR]Member Data.'
+    GovIssuedIdentType:
+      title: GovIssuedIdentType
+      required:
+      - CountryCode
+      type: object
+      properties:
+        CountryCode:
+          $ref: '#/components/schemas/CountryCodeType'
+        StateProv:
+          maxLength: 80
+          type: string
+          description: State/Province. ISO 3166-2:US codes.
+        StateProvEnumDesc:
+          maxLength: 80
+          type: string
+          description: State Province Enumeration Description.
+    IssuedIdentType:
+      title: IssuedIdentType
+      required:
+      - IssuedIdentType
+      type: object
+      properties:
+        IssuedIdentType:
+          type: string
+          description: 'Issued Identification Type. Valid values: DrvrsLicNb, BirthCertificate, HealthCard, Military, AlnRegnNb, IdntyCardNb, VoterRegistration, PsptNb, MplyrIdNb, TaxIdNb,  SclSctyNb, NRAPersonal, NRABusiness, Other.'
+        IssuedIdentTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Issued Identification Type Enumeration Description.
+        IssuedIdentId:
+          maxLength: 36
+          type: string
+          description: Issued Identification Id.
+        IssuedIdentValue:
+          maxLength: 32
+          type: string
+          description: Issued Identification Value. Identification value associated with the identification type.
+        Issuer:
+          maxLength: 32
+          type: string
+          description: Issuer.
+        IssuerEnumDesc:
+          maxLength: 80
+          type: string
+          description: Issuer Enumeration Description.
+        IssuerLocation:
+          maxLength: 80
+          type: string
+          description: Issuer Location.
+        IssuerLocationEnumDesc:
+          maxLength: 80
+          type: string
+          description: Issuer Location Enumeration Description.
+        IssueDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Issue Date.
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        IdentVerifyDt:
+          type: string
+          description: Identification Verification Date.
+          format: date
+        NextIdentVerifyDt:
+          type: string
+          description: Next Identification Verification Date.
+          format: date
+        VerificationDetailText:
+          maxLength: 255
+          type: string
+          description: Verification Detail Text.
+        GovIssuedIdent:
+          $ref: '#/components/schemas/GovIssuedIdentType'
+    SecretDataType:
+      title: SecretDataType
+      required:
+      - SecretIdent
+      type: object
+      properties:
+        SecretIdent:
+          type: string
+          description: Secret Identifier.
+        SecretIdentEnumDesc:
+          maxLength: 80
+          type: string
+          description: Secret Identifier Enumeration Description.
+        SecretValue:
+          maxLength: 80
+          type: string
+          description: Secret Value.
+    PartyListInfoType:
+      title: PartyListInfoType
+      type: object
+      properties:
+        MemberData:
+          $ref: '#/components/schemas/MemberDataType'
+        PartySelType:
+          maxLength: 80
+          type: string
+          description: Party Selection Type.
+        PartyType:
+          type: string
+          description: Party Type.Used to further specify the type of Party.
+        PartyTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Party Type Enumeration Description.
+        Contact:
+          type: array
+          description: Contact. This aggregate contains a person's or organization's contact information
+          items:
+            $ref: '#/components/schemas/ContactType'
+        TaxIdentType:
+          $ref: '#/components/schemas/TaxIdentTypeType'
+        TaxIdentTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tax Identification Type Enumeration Description.
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+        TaxIdentApplyDt:
+          type: string
+          description: Tax Identifier Application Date.
+          format: date
+        IssuedIdent:
+          type: array
+          description: Issued Identification. Used to include issued identifications. If the identification is government issued, the GovIssuedIdent aggregate must be included.
+          items:
+            $ref: '#/components/schemas/IssuedIdentType'
+        OEDCode:
+          type: string
+          description: Officer, Employee, DIrector Code. Indicates if the party is an employee of the Bank.
+        OEDCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Officer Employee Director Enumeration Description.
+        EmployeeInd:
+          type: boolean
+          description: Employee Indicator. Indicates that the account holder is employee of the FI.
+        RestrictedInd:
+          type: boolean
+          description: Restricted Indicator. Indicates whether the account information is restricted for view by the requester.
+        RestrictedDesc:
+          maxLength: 80
+          type: string
+          description: Restricted Description. Description of the reason for the account to be restricted.
+        SecretData:
+          type: array
+          description: Secret Data.
+          items:
+            $ref: '#/components/schemas/SecretDataType'
+        OriginatingBranch:
+          maxLength: 32
+          type: string
+          description: Originating Branch. Branch first originated the relationship with party or created the account.
+        OriginatingBranchEnumDesc:
+          maxLength: 80
+          type: string
+          description: Originating Branch Enumeration Description.
+        ServiceLevel:
+          maxLength: 80
+          type: string
+          description: Service Level. Indicates the level of service or the type of pricing that the customer should receive
+        ServiceLevelEnumDesc:
+          maxLength: 80
+          type: string
+          description: Service Level Enumeration Description.
+        MarketSegment:
+          maxLength: 80
+          type: string
+          description: Party Market Segment.  Value that the institution can can use to enter marketing information for this customer.
+        MarketSegmentEnumDesc:
+          maxLength: 80
+          type: string
+          description: Party Market Segment Enumeration Description.
+        TelebancPswd:
+          maxLength: 255
+          type: string
+          description: Telebanc Password. The Electronic Banking Password is the number used for personal identification when accessing information in Connect3.
+        SocioEconomicCode:
+          maxLength: 10
+          type: string
+          description: Socio Economic Code.
+        SocioEconomicCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Socio Economic Code Enumeration Description.
+      description: '[IFXR]Party Information.'
+    PersonNameType:
+      title: PersonNameType
+      required:
+      - NameType
+      type: object
+      properties:
+        NameType:
+          $ref: '#/components/schemas/NameTypeType'
+        NameTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Name Type Enumeration Description.
+        NameIdent:
+          maxLength: 36
+          type: string
+          description: Name Identifier.
+        FullName:
+          maxLength: 96
+          type: string
+          description: Full Name.
+        FamilyName:
+          maxLength: 40
+          type: string
+          description: Family Name.
+        GivenName:
+          maxLength: 40
+          type: string
+          description: Given Name. Person's first name.
+        MiddleName:
+          maxLength: 40
+          type: string
+          description: Middle Name. Person's middle name.
+        NamePrefix:
+          type: string
+          description: Name Prefix. Identifies a title before a person's name.
+        NameSuffix:
+          type: string
+          description: Name Suffix. For example, “Ms.”, or “Dr.”
+        PreferredName:
+          maxLength: 96
+          type: string
+          description: Preferred Name or Nickname.  For example, person is requesting to be called "Tony" instead of "Anthony".
+        LegalName:
+          maxLength: 96
+          type: string
+          description: Legal Name. Legal Name of the Organization.
+        NameFormat:
+          $ref: '#/components/schemas/NameFormatType'
+        NameFormatEnumDesc:
+          maxLength: 80
+          type: string
+          description: Name Format Enumeration Description.
+        NameInUseInd:
+          type: boolean
+          description: Name In Use Indicator.
+    PersonPartyListInfoType:
+      title: PersonPartyListInfoType
+      allOf:
+      - $ref: '#/components/schemas/PartyListInfoType'
+      - type: object
+        properties:
+          PersonName:
+            $ref: '#/components/schemas/PersonNameType'
+          BirthDt:
+            type: string
+            description: Birth Date.
+            format: date
+    OrgNameType:
+      title: OrgNameType
+      required:
+      - NameType
+      type: object
+      properties:
+        NameType:
+          $ref: '#/components/schemas/NameTypeType'
+        NameTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Name Type Enumeration Description.
+        NameIdent:
+          maxLength: 36
+          type: string
+          description: Name Identifier.
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        PreferredName:
+          maxLength: 96
+          type: string
+          description: Preferred Name or Nickname.  For example, person is requesting to be called "Tony" instead of "Anthony".
+        LegalName:
+          maxLength: 96
+          type: string
+          description: Legal Name. Legal Name of the Organization.
+        NameFormat:
+          $ref: '#/components/schemas/NameFormatType'
+        NameFormatEnumDesc:
+          maxLength: 80
+          type: string
+          description: Name Format Enumeration Description.
+        NameInUseInd:
+          type: boolean
+          description: Name In Use Indicator.
+    OrgPartyListInfoType:
+      title: OrgPartyListInfoType
+      allOf:
+      - $ref: '#/components/schemas/PartyListInfoType'
+      - type: object
+        properties:
+          OrgName:
+            $ref: '#/components/schemas/OrgNameType'
+          RecipientGIIN:
+            maxLength: 19
+            type: string
+            description: RecipientGlobal Intermediary Identification Number. IRS assigns to a Participating Foreign Financial Institution (PFFI) or Registered Deemed Compliant FFI after a financial institution’s FATCA registration is submitted and approved.
+          LegalForm:
+            type: string
+            description: Legal Form. PublicLimitedCompany, PrivateLimitedCompany, SoleTraders, Partnership, LimitedLiabilityPartnership, Club, Society.
+          BeneficialOwnerReqInd:
+            type: boolean
+            description: Beneficial Owner Required Indicator.
+    PartyRefType:
+      title: PartyRefType
+      required:
+      - PartyKeys
+      type: object
+      properties:
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+        PersonPartyListInfo:
+          $ref: '#/components/schemas/PersonPartyListInfoType'
+        OrgPartyListInfo:
+          $ref: '#/components/schemas/OrgPartyListInfoType'
+    CollateralIdentType:
+      title: CollateralIdentType
+      type: object
+      properties:
+        CollateralIdentType:
+          type: string
+          description: 'Collateral Identification Type. Valid values include: PORT'
+        CollateralIdentValue:
+          maxLength: 36
+          type: string
+          description: Collateral Identification Value. Contains the value of the Account Identifier.
+    CollateralKeysType:
+      title: CollateralKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - required:
+        - CollateralId
+        type: object
+        properties:
+          CollateralId:
+            maxLength: 36
+            type: string
+            description: Collateral Identifier. Provide a unique reference to the object.
+          CollateralIdent:
+            type: array
+            description: Collateral Identification. Other collateral identification used as part of the collateral object key.
+            items:
+              $ref: '#/components/schemas/CollateralIdentType'
+    OriginalValueAmtType:
+      title: OriginalValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PricePerUnitAmtType:
+      title: PricePerUnitAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    UnitPriceType:
+      title: UnitPriceType
+      required:
+      - UnitNum
+      type: object
+      properties:
+        UnitNum:
+          type: string
+          description: Number of Units.
+        PricePerUnitAmt:
+          $ref: '#/components/schemas/PricePerUnitAmtType'
+    SalePriceAmtType:
+      title: SalePriceAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CollateralValueAmtType:
+      title: CollateralValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    NetOperatingIncomeAmtType:
+      title: NetOperatingIncomeAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    LienAmtType:
+      title: LienAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CollateralSummInfoType:
+      title: CollateralSummInfoType
+      type: object
+      properties:
+        CollateralType:
+          $ref: '#/components/schemas/CollateralTypeType'
+        CollateralTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Collateral Type Enumeration Description.
+        CollateralCode:
+          maxLength: 80
+          type: string
+          description: Collateral Code. Further classification of the type of collateral.
+        CollateralCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Collateral Code Enum Description.
+        CollateralDesc:
+          maxLength: 254
+          type: string
+          description: Collateral Description.
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        Desc:
+          maxLength: 200
+          type: array
+          description: Description.
+          items:
+            maxLength: 200
+            type: string
+        OriginalValueAmt:
+          $ref: '#/components/schemas/OriginalValueAmtType'
+        OriginalValueDt:
+          type: string
+          description: Original Value Date.
+          format: date
+        UnitPrice:
+          $ref: '#/components/schemas/UnitPriceType'
+        SalePriceAmt:
+          $ref: '#/components/schemas/SalePriceAmtType'
+        CollateralValueAmt:
+          $ref: '#/components/schemas/CollateralValueAmtType'
+        MaxAvailPledgeAmt:
+          $ref: '#/components/schemas/AvailPledgeAmtType'
+        AvailPledgeAmt:
+          $ref: '#/components/schemas/AvailPledgeAmtType'
+        PledgeInd:
+          type: boolean
+          description: Pledge Indicator. Indicates whether the collateral has been pledged to secure a loan.
+        ImpairedInd:
+          type: boolean
+          description: Impaired Indicator. Indicates that the collateral is impaired.
+        TotalLienAmt:
+          $ref: '#/components/schemas/LienAmtType'
+    CollateralRefType:
+      title: CollateralRefType
+      required:
+      - CollateralKeys
+      type: object
+      properties:
+        CollateralKeys:
+          $ref: '#/components/schemas/CollateralKeysType'
+        CollateralSummInfo:
+          $ref: '#/components/schemas/CollateralSummInfoType'
+    PartyCollateralRelInfoType:
+      title: PartyCollateralRelInfoType
+      required:
+      - PartyCollateralRelType
+      - PartyRef
+      type: object
+      properties:
+        PartyRef:
+          $ref: '#/components/schemas/PartyRefType'
+        CollateralRef:
+          $ref: '#/components/schemas/CollateralRefType'
+        PartyCollateralRelType:
+          type: string
+          description: Party Collateral Relationship Type. Describes the relationship between the party and the collateral.
+        PartyCollateralRelTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Party Collateral Relationship Type Enumeration Description.
+        PartyCollateralRelOrder:
+          $ref: '#/components/schemas/PartyCollateralRelOrderType'
+        OwnerPercent:
+          type: number
+          description: Owner Percent.
+        OwnerInd:
+          type: boolean
+          description: Owner Indicator.
+        PrimaryOwnerInd:
+          type: boolean
+          description: Primary Owner Indicator.
+        TaxReportingOwnerInd:
+          type: boolean
+          description: Tax Reporting Owner Indicator.
+        Nickname:
+          maxLength: 80
+          type: string
+          description: Nickname. Used to allow a customer to assign nicknames to objects.
+    PledgedAmtType:
+      title: PledgedAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    ImpairedAmtType:
+      title: ImpairedAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PooledCollateralDataType:
+      title: PooledCollateralDataType
+      type: object
+      properties:
+        PoolCollateralIdent:
+          maxLength: 36
+          type: string
+          description: Release Amount. The amount of the most recent partial release of collateral.
+        PoolShortDesc:
+          maxLength: 30
+          type: string
+          description: Release Date. The date of the most recent partial release of collateral.
+    CollateralSummDataType:
+      title: CollateralSummDataType
+      type: object
+      properties:
+        CollateralIdent:
+          type: array
+          description: Collateral Identification. Other collateral identification used as part of the collateral object key.
+          items:
+            $ref: '#/components/schemas/CollateralIdentType'
+        CollateralType:
+          $ref: '#/components/schemas/CollateralTypeType'
+        CollateralTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Collateral Type Enumeration Description.
+        CollateralSubType:
+          maxLength: 80
+          type: string
+          description: Collateral Sub Type
+        CollateralSubTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Collateral Sub Type Enumeration Description.
+        CollateralCode:
+          maxLength: 80
+          type: string
+          description: Collateral Code. Further classification of the type of collateral.
+        CollateralCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Collateral Code Enum Description.
+        CollateralDesc:
+          maxLength: 254
+          type: string
+          description: Collateral Description.
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        CollateralValueAmt:
+          $ref: '#/components/schemas/CollateralValueAmtType'
+        CollateralValueDt:
+          type: string
+          description: Collateral Value Date. Date the collateral value is determined.
+          format: date
+        TotalCollateralValueAmt:
+          $ref: '#/components/schemas/CollateralValueAmtType'
+        NetOperatingIncomeAmt:
+          $ref: '#/components/schemas/NetOperatingIncomeAmtType'
+        MaxAvailPledgeAmt:
+          $ref: '#/components/schemas/AvailPledgeAmtType'
+        MaxPledgePercent:
+          type: number
+          description: Maximum Available to Pledge Percentage.
+        TotalMaxAvailPledgeAmt:
+          $ref: '#/components/schemas/AvailPledgeAmtType'
+        AvailPledgeAmt:
+          $ref: '#/components/schemas/AvailPledgeAmtType'
+        PledgedAmt:
+          $ref: '#/components/schemas/PledgedAmtType'
+        PledgeInd:
+          type: boolean
+          description: Pledge Indicator. Indicates whether the collateral has been pledged to secure a loan.
+        ImpairedInd:
+          type: boolean
+          description: Impaired Indicator. Indicates that the collateral is impaired.
+        ImpairedAmt:
+          $ref: '#/components/schemas/ImpairedAmtType'
+        PoolInd:
+          type: boolean
+          description: Pool Indicator. Indicates that the collateral item is pooled with other collateral items.
+        PooledCollateralData:
+          $ref: '#/components/schemas/PooledCollateralDataType'
+    MarginAmtType:
+      title: MarginAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    MarginValueAmtType:
+      title: MarginValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PreviousValueAmtType:
+      title: PreviousValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PurchasePriceAmtType:
+      title: PurchasePriceAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    MarketValueAmtType:
+      title: MarketValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    ResidualValueAmtType:
+      title: ResidualValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CollateralValueDataType:
+      title: CollateralValueDataType
+      type: object
+      properties:
+        UnitPrice:
+          $ref: '#/components/schemas/UnitPriceType'
+        CollateralValueType:
+          maxLength: 80
+          type: string
+          description: Collateral Value Type. Indicates how collateral value is determined.
+        CollateralValueSource:
+          maxLength: 100
+          type: string
+          description: Collateral Value Source. Indicates the source of collateral value.
+        ValueUpdateOpt:
+          type: string
+          description: Value Update Option. Indicates if and how collateral value is updated.
+        MarginPercent:
+          type: number
+          description: Margin Percent. Organization policy-assigned percentage used to calculate the value of the collateral that can be used for pledging to an account.
+        MarginAmt:
+          $ref: '#/components/schemas/MarginAmtType'
+        MarginInd:
+          type: boolean
+          description: Margin Indicator.
+        MarginValueAmt:
+          $ref: '#/components/schemas/MarginValueAmtType'
+        DiscountRatePercent:
+          type: number
+          description: Discount Rate Percent. An organization policy discount rate percentage based on the type of collateral.
+        OriginalValueAmt:
+          $ref: '#/components/schemas/OriginalValueAmtType'
+        OriginalValueDt:
+          type: string
+          description: Original Value Date.
+          format: date
+        PreviousValueAmt:
+          $ref: '#/components/schemas/PreviousValueAmtType'
+        PreviousValueDt:
+          type: string
+          description: Previous Value Date.
+          format: date
+        SalePriceAmt:
+          $ref: '#/components/schemas/SalePriceAmtType'
+        SalePriceDt:
+          type: string
+          description: Sale Price Date
+          format: date
+        PurchasePriceAmt:
+          $ref: '#/components/schemas/PurchasePriceAmtType'
+        PurchasePriceDt:
+          type: string
+          description: Purchase Price Date.
+          format: date
+        DisposalCostPercent:
+          type: number
+          description: Disposal Cost Percent. The selling cost as a percentage of the net appraised value and collateral value.
+        MarketValueAmt:
+          $ref: '#/components/schemas/MarketValueAmtType'
+        MarketPricingCode:
+          maxLength: 10
+          type: string
+          description: Market Pricing Code.
+        MarketMarginPercent:
+          type: number
+          description: Market Margin Percent.
+        ResidualValueAmt:
+          $ref: '#/components/schemas/ResidualValueAmtType'
+        TaxValueAmt:
+          $ref: '#/components/schemas/ResidualValueAmtType'
+    SellerDataType:
+      title: SellerDataType
+      type: object
+      properties:
+        SellerType:
+          maxLength: 20
+          type: string
+          description: Seller Type.
+        SellerName:
+          maxLength: 40
+          type: string
+          description: Seller Name.
+        SellerIdent:
+          maxLength: 36
+          type: string
+          description: Seller Identifier.
+        Contact:
+          $ref: '#/components/schemas/ContactType'
+    LastRepriceAmtType:
+      title: LastRepriceAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PriceAmtType:
+      title: PriceAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PriceHistoryType:
+      title: PriceHistoryType
+      type: object
+      properties:
+        PriceHistoryIdent:
+          maxLength: 36
+          type: string
+          description: Price History Identifier.
+        PriceAmt:
+          $ref: '#/components/schemas/PriceAmtType'
+        PriceDt:
+          type: string
+          description: Price Date.
+          format: date
+        PostedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Posted Date.
+        Desc:
+          maxLength: 200
+          type: string
+          description: Description.
+        CommentData:
+          type: array
+          description: Comment Data.
+          items:
+            $ref: '#/components/schemas/CommentDataType'
+    RepriceDataType:
+      title: RepriceDataType
+      type: object
+      properties:
+        RepriceInd:
+          type: boolean
+          description: Reprice Indicator. Value of 'true' (1) means the collateral is subject to repricing changes.
+        RepriceMethod:
+          type: string
+          description: Reprice Method. How collateral price changes are entered into the system.
+        RepriceDesc:
+          maxLength: 60
+          type: string
+          description: Reprice Description.
+        LastRepriceAmt:
+          $ref: '#/components/schemas/LastRepriceAmtType'
+        LastRepriceDt:
+          type: string
+          description: Last Reprice Date.
+          format: date
+        LastRepriceEffDt:
+          type: string
+          description: Last Reprice Effective Date.
+          format: date
+        RepriceDays:
+          type: integer
+          description: Reprice Days. Number of days from the last reprice date until the next scheduled repricing of the collateral.
+          format: int64
+        NextRepriceDt:
+          type: string
+          description: Next Reprice Date.
+          format: date
+        PriceHistory:
+          type: array
+          description: Price History.
+          items:
+            $ref: '#/components/schemas/PriceHistoryType'
+    CombinedLTVCurrentBalAmtType:
+      title: CombinedLTVCurrentBalAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CombinedLTVAvailBalAmtType:
+      title: CombinedLTVAvailBalAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CombinedLTVLienBalAmtType:
+      title: CombinedLTVLienBalAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CollateralLoanToValueDataType:
+      title: CollateralLoanToValueDataType
+      type: object
+      properties:
+        CombinedLTVRatio:
+          type: number
+          description: This is a percentage used to determine if loan amounts exceed the value of an individual collateral.
+        CombinedLTVExceptionRatio:
+          type: number
+          description: Combined LTV Exception Ratio.
+        CombinedLTVMarginRatio:
+          type: number
+          description: Combined LTV Margin Ratio.
+        CombinedLTVCurrentBalAmt:
+          $ref: '#/components/schemas/CombinedLTVCurrentBalAmtType'
+        CombinedLTVAvailBalAmt:
+          $ref: '#/components/schemas/CombinedLTVAvailBalAmtType'
+        CombinedLTVLienBalAmt:
+          $ref: '#/components/schemas/CombinedLTVLienBalAmtType'
+    PolicyAmtType:
+      title: PolicyAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PolicyDeductAmtType:
+      title: PolicyDeductAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CoveragePremiumAmtType:
+      title: CoveragePremiumAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CoverageDeductAmtType:
+      title: CoverageDeductAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    MinimumLimitsAmtType:
+      title: MinimumLimitsAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    OtherCoverageAmtType:
+      title: OtherCoverageAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    TermType:
+      title: TermType
+      required:
+      - TermUnits
+      type: object
+      properties:
+        Count:
+          type: integer
+          description: Count. Sometimes specifies the duration of the time frame base on the units specified.
+          format: int64
+        TermUnits:
+          $ref: '#/components/schemas/TermUnitsType'
+        TermUnitsEnumDesc:
+          maxLength: 80
+          type: string
+          description: Term Units Enumeration Description.
+    VSIPremiumAmtType:
+      title: VSIPremiumAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CoverageDataType:
+      title: CoverageDataType
+      required:
+      - CoverageType
+      type: object
+      properties:
+        CoverageType:
+          type: string
+          description: Coverage Type. Some examples are Homeowners, Fire, Flood, Theft, Collision, Comprehensive.
+        CoverageInd:
+          type: boolean
+          description: Coverage Indicator. Value '1' indicates coverage is in effect for the type of insurance coverage.
+    CollateralInsuranceDataType:
+      title: CollateralInsuranceDataType
+      type: object
+      properties:
+        InsuranceIdent:
+          maxLength: 36
+          type: string
+          description: Insurance Indentifier.
+        InsuranceType:
+          type: string
+          description: Insurance Type.
+        Company:
+          maxLength: 60
+          type: string
+          description: Company. Name of the company.
+        CompanyIdent:
+          maxLength: 60
+          type: string
+          description: Insurance Company Identification.
+        CompanyPostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        AgentName:
+          maxLength: 80
+          type: string
+          description: Agent Name.
+        AgentIdent:
+          maxLength: 36
+          type: string
+          description: Agent Identifier.
+        AgencyName:
+          maxLength: 80
+          type: string
+          description: Agency Name.
+        AgencyIdent:
+          maxLength: 60
+          type: string
+          description: '[FSVR]Agency Identification.'
+        AgencyPostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        PolicyNum:
+          maxLength: 40
+          type: string
+          description: Policy Number.
+        PolicyAmt:
+          $ref: '#/components/schemas/PolicyAmtType'
+        PolicyDeductAmt:
+          $ref: '#/components/schemas/PolicyDeductAmtType'
+        CoveragePremiumAmt:
+          $ref: '#/components/schemas/CoveragePremiumAmtType'
+        CoverageDeductAmt:
+          $ref: '#/components/schemas/CoverageDeductAmtType'
+        MinimumLimitsAmt:
+          $ref: '#/components/schemas/MinimumLimitsAmtType'
+        OtherCoverageAmt:
+          $ref: '#/components/schemas/OtherCoverageAmtType'
+        OtherCoverageDesc:
+          maxLength: 40
+          type: string
+          description: Other Coverage Description.
+        CoverageTerm:
+          $ref: '#/components/schemas/TermType'
+        InsuranceEffDt:
+          type: string
+          description: Insurance Effective Date.
+          format: date
+        InsuranceExpDt:
+          type: string
+          description: Insurance Expiration Date.
+          format: date
+        InsuranceCancelDt:
+          type: string
+          description: Insurance Cancellation Date.
+          format: date
+        VSIPremiumAmt:
+          $ref: '#/components/schemas/VSIPremiumAmtType'
+        VSITerm:
+          $ref: '#/components/schemas/TermType'
+        Contact:
+          $ref: '#/components/schemas/ContactType'
+        LastInsurReviewDt:
+          type: string
+          description: Last Insurance Review Date.
+          format: date
+        NextInsurReviewDt:
+          type: string
+          description: Next Insurance Review Date.
+          format: date
+        CoverageData:
+          type: array
+          description: Coverage Data. Describes the types of insurance coverage in effect for the collateral.
+          items:
+            $ref: '#/components/schemas/CoverageDataType'
+        RelationshipMgr:
+          $ref: '#/components/schemas/RelationshipMgrType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        ClientDefinedData:
+          type: array
+          description: Client Defined Data.Data whose definition, type and values are defined by the client or user.
+          items:
+            $ref: '#/components/schemas/ClientDefinedDataType'
+        CommentData:
+          type: array
+          description: Comment Data.
+          items:
+            $ref: '#/components/schemas/CommentDataType'
+        TitlePolicyOrderNum:
+          maxLength: 10
+          type: string
+          description: Title Policy Order Number.
+        TitlePolicyType:
+          maxLength: 80
+          type: string
+          description: Title Policy Type.
+        EndorsementNum:
+          maxLength: 15
+          type: string
+          description: Endorsement Number
+    FilingHistoryType:
+      title: FilingHistoryType
+      type: object
+      properties:
+        FilingIdent:
+          maxLength: 36
+          type: string
+          description: Collateral Filing Identifier.
+        FilingNum:
+          type: integer
+          description: Collateral Filing Number.
+          format: int64
+        FilingDt:
+          type: string
+          description: Collateral Filing Date.
+          format: date
+        FilingAmendmentType:
+          type: string
+          description: Collateral Filing Amendment Type.
+        ClientDefinedData:
+          type: array
+          description: Client Defined Data.Data whose definition, type and values are defined by the client or user.
+          items:
+            $ref: '#/components/schemas/ClientDefinedDataType'
+        CommentData:
+          type: array
+          description: Comment Data.
+          items:
+            $ref: '#/components/schemas/CommentDataType'
+        RelationshipMgr:
+          $ref: '#/components/schemas/RelationshipMgrType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+    CollateralFilingDataType:
+      title: CollateralFilingDataType
+      type: object
+      properties:
+        FilingType:
+          maxLength: 80
+          type: string
+          description: Collateral Filing Type.
+        FilingDesc:
+          maxLength: 40
+          type: string
+          description: Collateral Filing Description.
+        FilingLevel:
+          maxLength: 80
+          type: string
+          description: 'Collateral Filing Level. Example: State or County filing, as defined by the organization.'
+        FilingDt:
+          type: string
+          description: Collateral Filing Date.
+          format: date
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        ExpLeadDays:
+          type: integer
+          description: Expiration Lead Days.
+          format: int64
+        NextFilingDt:
+          type: string
+          description: Next Filing Date.
+          format: date
+        LastFilingDt:
+          type: string
+          description: Last Filing Date.
+          format: date
+        StateProv:
+          maxLength: 80
+          type: string
+          description: State/Province. ISO 3166-2:US codes.
+        StateProvDoingBusinessIn:
+          maxLength: 80
+          type: string
+          description: State Province in which the company is doing business.
+        County:
+          maxLength: 32
+          type: string
+          description: County.
+        OrigFilingNum:
+          type: integer
+          description: Original Collateral Filing Number.
+          format: int64
+        FilingNum:
+          type: integer
+          description: Collateral Filing Number.
+          format: int64
+        FilingBook:
+          maxLength: 30
+          type: string
+          description: Collateral Filing Book.
+        FilingPage:
+          maxLength: 30
+          type: string
+          description: Collateral Filing Page.
+        Volume:
+          maxLength: 6
+          type: string
+          description: Volume.
+        FilingLastContinuationDt:
+          type: string
+          description: Collateral Filing Last Continuation Date.
+          format: date
+        FilingAmendmentType:
+          type: string
+          description: Collateral Filing Amendment Type.
+        FilingHistory:
+          type: array
+          description: Collateral Filing History.
+          items:
+            $ref: '#/components/schemas/FilingHistoryType'
+    LienHolderDataType:
+      title: LienHolderDataType
+      type: object
+      properties:
+        LienHolderIdent:
+          maxLength: 36
+          type: string
+          description: Lien Holder Identifier.
+        LienHolderName:
+          maxLength: 40
+          type: string
+          description: Lien Holder Name.
+        LienHolderNameIdent:
+          maxLength: 36
+          type: string
+          description: Lien Holder Name Identifier.
+        LienHolderPostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        LienHolderType:
+          type: string
+          description: Lien Holder Type. Describes the type of entity placing the lien.
+        LienSignersNum:
+          maxLength: 10
+          type: string
+          description: Lien Signers Number.
+        LienAcct:
+          maxLength: 20
+          type: string
+          description: Lien Account. The account number which has a lien on it and is associated to the collateral.
+        LienAmt:
+          $ref: '#/components/schemas/LienAmtType'
+        LienAcctDt:
+          type: string
+          description: Lien Account Date. The date of the account which has a lien on it and is associated to the collateral.
+          format: date
+        LienAcctMatDt:
+          type: string
+          description: Lien Maturity Date. The lien account's maturity date.
+          format: date
+        LienExpDt:
+          type: string
+          description: Lien Expiration Date.
+          format: date
+        PmtAmt:
+          type: number
+          description: Monthly payment amount.
+        Contact:
+          $ref: '#/components/schemas/ContactType'
+        LienTransactionPurpose:
+          type: string
+          description: Lien Transaction Purpose.
+        PledgePriority:
+          maxLength: 6
+          type: string
+          description: Pledge Priority.
+        LienPosition:
+          maxLength: 10
+          type: string
+          description: Lien Position.
+        OwnerLiableInd:
+          type: boolean
+          description: Owner Liable Indicator.
+        Trustee:
+          maxLength: 60
+          type: string
+          description: Trustee.
+        MortgageDt:
+          type: string
+          description: Mortgage Date.
+          format: date
+        Reel:
+          maxLength: 30
+          type: string
+          description: Reel.
+        Book:
+          maxLength: 20
+          type: string
+          description: Book.
+        Page:
+          maxLength: 20
+          type: string
+          description: Page.
+        RecordingDt:
+          type: string
+          description: Recording Date.
+          format: date
+        RecordersEntry:
+          maxLength: 40
+          type: string
+          description: Recording Date.
+        Image:
+          maxLength: 30
+          type: string
+          description: Image.
+        LienExclusionOption:
+          maxLength: 10
+          type: string
+          description: Lien Exclusion Option.
+        LienDesc:
+          maxLength: 60
+          type: string
+          description: Lien Description.
+        FDICCertNum:
+          maxLength: 20
+          type: string
+          description: FDIC Certificate Number.
+        FileOrganizationNum:
+          maxLength: 30
+          type: string
+          description: File Organization Number.
+        RelationshipMgr:
+          $ref: '#/components/schemas/RelationshipMgrType'
+        ExpDt:
+          type: string
+          description: Expiration Date.
+          format: date
+        ClientDefinedData:
+          type: array
+          description: Client Defined Data.Data whose definition, type and values are defined by the client or user.
+          items:
+            $ref: '#/components/schemas/ClientDefinedDataType'
+        CommentData:
+          type: array
+          description: Comment Data.
+          items:
+            $ref: '#/components/schemas/CommentDataType'
+    ReleaseAmtType:
+      title: ReleaseAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    LTDReleaseAmtType:
+      title: LTDReleaseAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    PartialReleaseDataType:
+      title: PartialReleaseDataType
+      type: object
+      properties:
+        ReleaseAmt:
+          $ref: '#/components/schemas/ReleaseAmtType'
+        ReleaseDt:
+          type: string
+          description: Release Date. The date of the most recent partial release of collateral.
+          format: date
+        LTDReleaseAmt:
+          $ref: '#/components/schemas/LTDReleaseAmtType'
+    RefDataType:
+      title: RefDataType
+      required:
+      - RefType
+      type: object
+      properties:
+        RefType:
+          type: string
+          description: Reference Type. Type of reference information used.
+        RefTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Reference Type Enumeration Description.
+        RefIdent:
+          maxLength: 36
+          type: string
+          description: Reference Identifier.  In combination with the reference type identifies the reference data.
+        RefDesc:
+          maxLength: 1024
+          type: string
+          description: Reference Description.
+    DateDataType:
+      title: DateDataType
+      type: object
+      properties:
+        DateType:
+          type: string
+          description: Date Type. Indicates the type of date contained in the Date Value.
+        DateTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Date Type Enumeration Description.
+        DateValue:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Date Value. Contains the value of the date.
+        RefData:
+          type: array
+          description: Reference Data.
+          items:
+            $ref: '#/components/schemas/RefDataType'
+    DocumentTrackingType:
+      title: DocumentTrackingType
+      type: object
+      properties:
+        DocumentId:
+          maxLength: 36
+          type: string
+          description: Document Identifier.
+        DocName:
+          maxLength: 255
+          type: string
+          description: Document Name.
+        RequestedInd:
+          type: boolean
+          description: Requested Indicator.
+        RequestedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Requested Date.
+        ReceivedInd:
+          type: boolean
+          description: Received Indicator.
+        ReceivedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Received Date.
+        ReleasedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Released Date. The Release Date is the date that this tracking document was released
+        ReleasedBy:
+          maxLength: 80
+          type: string
+          description: Released By. The Released By field indicates the employee who released this tracking document.
+        SignedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Signed Date.
+        ActionDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Action Date.
+        DateData:
+          type: array
+          description: Date Data. Use to contain dates associated to the object.
+          items:
+            $ref: '#/components/schemas/DateDataType'
+        RefData:
+          type: array
+          description: Reference Data.
+          items:
+            $ref: '#/components/schemas/RefDataType'
+    VehicleDataType:
+      title: VehicleDataType
+      type: object
+      properties:
+        VehicleIdentificationNum:
+          maxLength: 30
+          type: string
+          description: Vehicle Identification Number. Also known as VIN.
+        Make:
+          maxLength: 30
+          type: string
+          description: Make; the type of vehicle.
+        Model:
+          maxLength: 40
+          type: string
+          description: Model, the model of vehicle.
+        ModelYear:
+          type: integer
+          description: Model year.
+          format: int64
+        BodyStyle:
+          maxLength: 30
+          type: string
+          description: Body Style.
+        Color:
+          maxLength: 20
+          type: string
+          description: Color
+        EngineType:
+          maxLength: 30
+          type: string
+          description: Engine Type.
+        VehicleTitleInd:
+          type: boolean
+          description: Vehicle Title Indicator. Indicates the vehicle title is on file.
+        TitleType:
+          maxLength: 80
+          type: string
+          description: Title Type.
+          enum:
+          - Clear
+          - Salvage
+          - Junk
+          - Bonded
+          - Reconstructed
+          - Affidavit
+          - Rebuilt
+          - CertificateOfDestruction
+          - PartsOnly
+          - Lienholder
+          - Export
+          - Import
+          - Other
+        TitleName:
+          maxLength: 50
+          type: string
+          description: Title Name.
+        TitleNum:
+          maxLength: 30
+          type: string
+          description: Title Number.
+        LicensePlate:
+          maxLength: 20
+          type: string
+          description: License Plate.
+        StateProv:
+          maxLength: 80
+          type: string
+          description: State/Province. ISO 3166-2:US codes.
+        StateProvEnumDesc:
+          maxLength: 80
+          type: string
+          description: State Province Enumeration Description.
+        CountryCode:
+          $ref: '#/components/schemas/CountryCodeType'
+        ConditionCode:
+          type: string
+          description: Condition Code.
+        Mileage:
+          type: integer
+          description: Vehicle Mileage.
+          format: int64
+        Hours:
+          type: integer
+          description: Vehicle Usage Hours.
+          format: int64
+        RentalDemoCode:
+          $ref: '#/components/schemas/RentalDemoCodeType'
+        DealerIdent:
+          maxLength: 36
+          type: string
+          description: Dealear Identification.
+        FleetNum:
+          maxLength: 15
+          type: string
+          description: Fleet Number.
+        InvoiceNum:
+          maxLength: 32
+          type: string
+          description: Invoice Number.
+        TrustReceiptNum:
+          maxLength: 30
+          type: string
+          description: Trust Receipt Number.
+        PurchasePriceAmt:
+          $ref: '#/components/schemas/PurchasePriceAmtType'
+    PMIOriginalAmtType:
+      title: PMIOriginalAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    LegalDataType:
+      title: LegalDataType
+      type: object
+      properties:
+        ShortLegalDesc:
+          maxLength: 30
+          type: string
+          description: Short Legal Description.
+        MapNumber:
+          maxLength: 30
+          type: string
+          description: Map Number. Property map number is a series of characters, consisting of digits or letters, that county officials assign to lots of property to help them with identification.
+        Township:
+          maxLength: 30
+          type: string
+          description: Township .
+        Range:
+          maxLength: 30
+          type: string
+          description: Range.
+        Section:
+          maxLength: 30
+          type: string
+          description: Section.
+        LegalDesc:
+          maxLength: 60
+          type: string
+          description: Legal Description.
+        Parcel:
+          maxLength: 60
+          type: string
+          description: Parcel Description.
+        Block:
+          maxLength: 60
+          type: string
+          description: Block Description.
+        Lot:
+          maxLength: 60
+          type: string
+          description: Lot description.
+        Subdivision:
+          maxLength: 60
+          type: string
+          description: Subdivision.
+    DeterminationTaxIdType:
+      title: DeterminationTaxIdType
+      type: object
+      properties:
+        TaxIdentType:
+          $ref: '#/components/schemas/TaxIdentTypeType'
+        TaxIdentTypeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Tax Identification Type Enumeration Description.
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+        TaxIdentVerified:
+          type: boolean
+          description: Tax Identification Verified. Indicates if the Tax Identification was verified.
+        TaxIdentVerifiedDt:
+          type: string
+          description: Tax Identification Verified Date. The date the Tax Identification was verified.
+          format: date
+    FloodDataType:
+      title: FloodDataType
+      type: object
+      properties:
+        DeterminationDt:
+          type: string
+          description: Determination Date.
+          format: date
+        DeterminationCompany:
+          maxLength: 60
+          type: string
+          description: Determination Company.
+        DeterminationCompanyEnumDesc:
+          maxLength: 80
+          type: string
+          description: Determination Company Enumeration Description.
+        DeterminationNumber:
+          maxLength: 30
+          type: string
+          description: Determination Number.
+        DeterminationTaxId:
+          $ref: '#/components/schemas/DeterminationTaxIdType'
+        RedeterminationDt:
+          type: string
+          description: Redetermination Date.
+          format: date
+        CommunityNumber:
+          maxLength: 60
+          type: string
+          description: Community Number.
+        CommunityParticipationStat:
+          type: string
+          description: Community Participation Status. Identifies the standing of the community in the National Flood Insurance Program (NFIP) where the property is located.
+        CommunityParticipationStatEnumDesc:
+          maxLength: 80
+          type: string
+          description: Community Participation Status Enumeration Description.
+        MapNumber:
+          maxLength: 30
+          type: string
+          description: Map Number. Property map number is a series of characters, consisting of digits or letters, that county officials assign to lots of property to help them with identification.
+        MapPanel:
+          maxLength: 30
+          type: string
+          description: Map Panel. Identifies the number of the panel used to identify a property in a Special Flood Hazard Area (SFHA).
+        MapPanelSuffixNumber:
+          maxLength: 30
+          type: string
+          description: Map Panel Suffix Number. Identifies an alphanumeric suffix number of the panel used to identify a property in a Special Flood Hazard Area (SFHA).
+        MapPanelDt:
+          type: string
+          description: Map Panel Date.
+          format: date
+        FloodZone:
+          maxLength: 40
+          type: string
+          description: Flood Zone. The alphanumeric value of the flood zone for a property.
+        FloodZoneEnumDesc:
+          maxLength: 80
+          type: string
+          description: Flood Zone. The alphanumeric value of the flood zone for a property.
+        TrackCompany:
+          maxLength: 80
+          type: string
+          description: Tracking Company. Company that is tracking the specified Zone.
+        FloodTrackingNum:
+          maxLength: 20
+          type: string
+          description: Flood Tracking Number.
+        FloodPartialInd:
+          type: boolean
+          description: Flood Partial Indicator. Code that indicates whether there is flooding on part of the property.
+        CBRADesignationDt:
+          type: string
+          description: Coastal Barrier Resources Area (CBRA) Designation Date.
+          format: date
+        LOMRDt:
+          type: string
+          description: Letter of Map Revision (LOMR) Date.
+          format: date
+        LOMRReceivedInd:
+          type: boolean
+          description: LOMR Received Indicator. Code that indicates whether the organization has received the Letter of Map Amendment (LOMA) or Revision (LOMAR).
+        FloodHazardArea:
+          type: string
+          description: Flood Hazard Area. Identifies if the property is located in a Special Flood Hazard Area (SFHA) as determined by the Federal Emergency Management Agency (FEMA).
+        FloodSvcTypeCode:
+          type: string
+          description: Flood Service Type Code.
+        FloodSvcTypeCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Flood Service Type Code Enum Description.
+    TotalTaxAmtType:
+      title: TotalTaxAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    TaxServiceDataType:
+      title: TaxServiceDataType
+      type: object
+      properties:
+        TaxServiceInd:
+          type: boolean
+          description: Tax Service Indicator.
+        TaxServiceCompany:
+          maxLength: 96
+          type: string
+          description: Service Company Name
+        TaxServiceCompanyIdent:
+          maxLength: 36
+          type: string
+          description: Service Company Name Identifier.
+        ServiceContract:
+          maxLength: 30
+          type: string
+          description: Service Contract.
+        ServiceContractSuffix:
+          maxLength: 30
+          type: string
+          description: Service Contract Suffix.
+        ServiceCancellationDt:
+          type: string
+          description: Service Cancellation Date.
+          format: date
+        TotalTaxAmt:
+          $ref: '#/components/schemas/TotalTaxAmtType'
+        InstallmentNum:
+          type: integer
+          description: Installment Number.
+          format: int64
+        LastUpdateDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Last Update Date.
+    ManufactureHomeDataType:
+      title: ManufactureHomeDataType
+      type: object
+      properties:
+        VehicleIdentificationNum1:
+          maxLength: 30
+          type: string
+          description: Vehicle Identification Number One. Also known as VIN.
+        VehicleIdentificationNum2:
+          maxLength: 30
+          type: string
+          description: Vehicle Identification Number Two. Also known as VIN.
+        VehicleIdentificationNum3:
+          maxLength: 30
+          type: string
+          description: Vehicle Identification Number Three. Also known as VIN.
+        Make:
+          maxLength: 30
+          type: string
+          description: Make; the type of vehicle.
+        Model:
+          maxLength: 40
+          type: string
+          description: Model, the model of vehicle.
+        ModelYear:
+          type: integer
+          description: Model year.
+          format: int64
+        Manufacturer:
+          maxLength: 30
+          type: string
+          description: Manufacturer.
+        ManufactureDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Manufacture Date.
+    PropertyDataType:
+      title: PropertyDataType
+      type: object
+      properties:
+        MarketValueAmt:
+          $ref: '#/components/schemas/MarketValueAmtType'
+        MarketValueDt:
+          type: string
+          description: Market Value Date.
+          format: date
+        MarketPricingCode:
+          maxLength: 10
+          type: string
+          description: Market Pricing Code.
+        MarketMarginPercent:
+          type: number
+          description: Market Margin Percent.
+        PurchasePriceAmt:
+          $ref: '#/components/schemas/PurchasePriceAmtType'
+        PMIOriginalAmt:
+          $ref: '#/components/schemas/PMIOriginalAmtType'
+        PropertyType:
+          type: string
+          description: Property Type. Report whether the loan or application was for manufactured housing, a multifamily dwelling, or a one-to-four-family dwelling other than manufactured housing.
+        PropertyId:
+          maxLength: 36
+          type: string
+          description: Property Identification. Used by financial institution to identify the property.
+        PrimaryResidenceInd:
+          type: boolean
+          description: Primary Residence Indicator.
+        PropertyCertificateNum:
+          maxLength: 30
+          type: string
+          description: Property Certificate Number.
+        PropertyInspectionDt:
+          type: string
+          description: Property Inspection Date.
+          format: date
+        YearBuilt:
+          type: integer
+          description: Year Built.
+          format: int64
+        BuildingStat:
+          type: string
+          description: Building Status.
+        BuiltDt:
+          type: string
+          description: Built Date.
+          format: date
+        CompletionPercent:
+          type: number
+          description: Completion Percent
+        BuildingPermitDt:
+          type: string
+          description: Building Permit Date.
+          format: date
+        SurveyDt:
+          type: string
+          description: Survey Date.
+          format: date
+        CondoSquareFt:
+          type: integer
+          description: Condo Square Footage.
+          format: int64
+        CondoMaintFee:
+          type: number
+          description: Condominium Maintenance Fee.
+        NumberOfUnits:
+          type: integer
+          description: Number of Units.
+          format: int64
+        SquareFt:
+          type: integer
+          description: Square Footage.
+          format: int64
+        TotalAcreage:
+          type: number
+          description: Total Acreage.
+        TillableAcreage:
+          type: number
+          description: Tillable Acreage.
+        LegalData:
+          $ref: '#/components/schemas/LegalDataType'
+        FloodInsurReqdInd:
+          type: boolean
+          description: Flood Insurance Required Indicator.
+        FloodInsurWaiverCode:
+          maxLength: 30
+          type: string
+          description: Flood Insurance Waiver Code.
+        FloodInsurWaiverCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Flood Insurance Waiver Code Enumeration Description.
+        FloodData:
+          $ref: '#/components/schemas/FloodDataType'
+        TaxServiceData:
+          $ref: '#/components/schemas/TaxServiceDataType'
+        ManufactureHomeData:
+          $ref: '#/components/schemas/ManufactureHomeDataType'
+        PropertyCondition:
+          maxLength: 80
+          type: string
+          description: Property Condition.
+    PledgeAmtType:
+      title: PledgeAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    HoldAmtType:
+      title: HoldAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    DepositAcctCollateralDataType:
+      title: DepositAcctCollateralDataType
+      type: object
+      properties:
+        Issuer:
+          maxLength: 32
+          type: string
+          description: Issuer.
+        IssuerIdent:
+          maxLength: 36
+          type: string
+          description: Issuer Name Identifier.
+        IssuerPostalAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        AcctId:
+          maxLength: 36
+          type: string
+          description: Account Identifier. Uniquely identifies an account held at a financial institution.
+        AcctType:
+          type: string
+          description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+        PledgeAmt:
+          $ref: '#/components/schemas/PledgeAmtType'
+        PledgePercent:
+          type: number
+          description: Pledge Percent.
+        HoldInd:
+          type: boolean
+          description: Hold Indicator.
+        HoldAmt:
+          $ref: '#/components/schemas/HoldAmtType'
+        VaryHoldAmtFlag:
+          type: boolean
+          description: Vary Hold Amount Flag. Value of 'true' (1) means the hold amount will vary based on the outstanding balance of the account held as collateral.
+        ExternalInd:
+          type: boolean
+          description: External Indicator. Indicates the account is external to the bank.
+        MaturityDt:
+          type: string
+          description: Maturity Date.
+          format: date
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        RoutingNum:
+          type: integer
+          description: Routing Number. ABA routing number assigned to a FI.
+          format: int64
+        RateDifferential:
+          type: number
+          description: Rate Differential. The difference in interest rate between the deposit account collateral item and the account it secures.
+    OriginalPurchasePriceAmtType:
+      title: OriginalPurchasePriceAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    ParValueAmtType:
+      title: ParValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    MarketSharePriceAmtType:
+      title: MarketSharePriceAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    CommodityDataType:
+      title: CommodityDataType
+      type: object
+      properties:
+        Issuer:
+          maxLength: 32
+          type: string
+          description: Issuer.
+        IssuerIdent:
+          maxLength: 36
+          type: string
+          description: Issuer Name Identifier.
+        NAICS:
+          maxLength: 6
+          type: string
+          description: Naics code
+        IssuerPostalAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        BrokerName:
+          maxLength: 32
+          type: string
+          description: Broker Name.
+        BrokerIdent:
+          maxLength: 36
+          type: string
+          description: Broker Name Identifier.
+        BrokerPostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        CommodityType:
+          type: string
+          description: Commodity Type.
+        CUSIPNum:
+          maxLength: 30
+          type: string
+          description: CUSIP Number. Identifies the commodity.
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        Symbol:
+          maxLength: 20
+          type: string
+          description: Symbol. Symbol of the commodity.
+        CommodityAcctNum:
+          maxLength: 30
+          type: string
+          description: Commodity Account Number.
+        OriginalPurchasePriceAmt:
+          $ref: '#/components/schemas/OriginalPurchasePriceAmtType'
+        ParValueAmt:
+          $ref: '#/components/schemas/ParValueAmtType'
+        IssuedUnits:
+          type: number
+          description: Number of Units.
+          format: int64
+        SharesNum:
+          maxLength: 20
+          type: string
+          description: Shares Number.
+        MarketSharePriceAmt:
+          $ref: '#/components/schemas/MarketSharePriceAmtType'
+        MarketSharePriceDt:
+          type: string
+          description: Market Share Price Date.
+          format: date
+        MarketValueAmt:
+          $ref: '#/components/schemas/MarketValueAmtType'
+        RegUPercent:
+          type: number
+          description: Regulation U Percent. Can be used to calculate the collateral value against which the FI can lend, as set by Federal Reserve.
+        VaultReceipt:
+          maxLength: 30
+          type: string
+          description: Vault Receipt. Identifies the collateral unit(s) held within the vault of the FI.
+        IssuanceDt:
+          type: string
+          description: Issuance Date.
+          format: date
+        MaturityDt:
+          type: string
+          description: Maturity Date.
+          format: date
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        RegisteredInd:
+          type: boolean
+          description: Registered Indicator. Value of 'true' (1) means the commodity is listed with a recognized securities exchange.
+    FaceValueAmtType:
+      title: FaceValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    FromAcctKeysType:
+      title: FromAcctKeysType
+      allOf:
+      - $ref: '#/components/schemas/AcctKeysType'
+      - type: object
+        properties:
+          TrnCode:
+            maxLength: 80
+            type: string
+            description: Transaction Code. The Service Provider Transaction Code posted to the account.
+          ACHTrnCode:
+            maxLength: 80
+            type: string
+            description: ACH Transaction Code.
+          ACHReceivingType:
+            type: string
+            description: ACH Receiving Type.
+          ACHReceivingCompany:
+            maxLength: 30
+            type: string
+            description: ACH Receiving Company. Also known as Individual Name (Account Holder Name). This is the name of the receiver of the transaction.
+          ACHCompanyEntryDesc:
+            maxLength: 30
+            type: string
+            description: ACH Company Entry Description.
+          SameDayInd:
+            type: boolean
+            description: Same Day Indicator.
+          ACHStartDt:
+            type: string
+            description: ACH Start Date.
+            format: date
+    LifeInsuranceDataType:
+      title: LifeInsuranceDataType
+      type: object
+      properties:
+        PolicyNum:
+          maxLength: 40
+          type: string
+          description: Policy Number.
+        InsurancePolicyType:
+          $ref: '#/components/schemas/InsurancePolicyTypeType'
+        Company:
+          maxLength: 60
+          type: string
+          description: Company. Name of the company.
+        CompanyIdent:
+          maxLength: 60
+          type: string
+          description: Insurance Company Identification.
+        CompanyPostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        Insured:
+          maxLength: 60
+          type: string
+          description: Insured. Name of the person whose life is insured.
+        InsuredIdent:
+          maxLength: 36
+          type: string
+          description: Insured Name Identifier.
+        Purchaser:
+          maxLength: 60
+          type: string
+          description: Purchaser. Person or entity paying for the policy. This could be different than the Insured when one person or entity takes out a Life Insurance policy on another person.
+        PurchaserIdent:
+          maxLength: 36
+          type: string
+          description: Purchaser or Owner Identifer.
+        PurchaserPostAddr:
+          type: array
+          description: Insurance Purchaser Postal Address.
+          items:
+            $ref: '#/components/schemas/PostAddrType'
+        BeneficiaryData:
+          type: array
+          description: Beneficiary Data Information. Identifies the Beneficiary Party and beneficiary relationships to the the Account.
+          items:
+            $ref: '#/components/schemas/BeneficiaryDataType'
+        Desc:
+          maxLength: 200
+          type: string
+          description: Description.
+        FaceValueAmt:
+          $ref: '#/components/schemas/FaceValueAmtType'
+        CashValueAmt:
+          $ref: '#/components/schemas/CashValueAmtType'
+        InsuranceEffDt:
+          type: string
+          description: Insurance Effective Date.
+          format: date
+        InsuranceAssignmentDt:
+          type: string
+          description: Insurance Assignment Date.
+          format: date
+        InsuranceExpDt:
+          type: string
+          description: Insurance Expiration Date.
+          format: date
+        FromAcctKeys:
+          $ref: '#/components/schemas/FromAcctKeysType'
+    NetAppraisedValueAmtType:
+      title: NetAppraisedValueAmtType
+      allOf:
+      - $ref: '#/components/schemas/CurAmtType'
+      - type: object
+    InventoryDataType:
+      title: InventoryDataType
+      type: object
+      properties:
+        Desc:
+          maxLength: 200
+          type: string
+          description: Description.
+        CalculationMethod:
+          type: string
+          description: Calculation Method. Identifies which amount or calculation will be used for example when determining a loan’s maximum credit on a Commercial loan.
+        CeilingAmt:
+          $ref: '#/components/schemas/CeilingAmtType'
+        NetAppraisedValueAmt:
+          $ref: '#/components/schemas/NetAppraisedValueAmtType'
+        MaxCreditPercent:
+          type: number
+          description: Maximum Credit Percent. The percentage subtracted from the Market Price to calculate the Collateral Value on a Commercial loan.
+    OtherCollateralDataType:
+      title: OtherCollateralDataType
+      type: object
+      properties:
+        OtherCollateralType:
+          maxLength: 80
+          type: string
+          description: Other Collateral Type.
+        Desc:
+          maxLength: 200
+          type: string
+          description: Description.
+        OwnerName:
+          maxLength: 30
+          type: string
+          description: Owner Name. owner's name for this collateral
+        OwnerNameIdent:
+          maxLength: 36
+          type: string
+          description: Owner Name Identifier.
+        Company:
+          maxLength: 60
+          type: string
+          description: Company. Name of the company.
+        CompanyIdent:
+          maxLength: 60
+          type: string
+          description: Insurance Company Identification.
+        InsuranceExpDt:
+          type: string
+          description: Insurance Expiration Date.
+          format: date
+        InvoiceNum:
+          maxLength: 32
+          type: string
+          description: Invoice Number.
+        Mileage:
+          type: integer
+          description: Vehicle Mileage.
+          format: int64
+        Hours:
+          type: integer
+          description: Vehicle Usage Hours.
+          format: int64
+        HullNum:
+          maxLength: 30
+          type: string
+          description: Hull Identification Number assigned to the boat.
+        VehicleIdentificationNum:
+          maxLength: 30
+          type: string
+          description: Vehicle Identification Number. Also known as VIN.
+        Manufacturer:
+          maxLength: 30
+          type: string
+          description: Manufacturer.
+        EngineType:
+          maxLength: 30
+          type: string
+          description: Engine Type.
+        YearBuilt:
+          type: integer
+          description: Year Built.
+          format: int64
+        Make:
+          maxLength: 30
+          type: string
+          description: Make; the type of vehicle.
+        Model:
+          maxLength: 40
+          type: string
+          description: Model, the model of vehicle.
+        ModelYear:
+          type: integer
+          description: Model year.
+          format: int64
+        TrustReceiptNum:
+          maxLength: 30
+          type: string
+          description: Trust Receipt Number.
+        BodyStyle:
+          maxLength: 30
+          type: string
+          description: Body Style.
+        Color:
+          maxLength: 20
+          type: string
+          description: Color
+        VehicleTitleInd:
+          type: boolean
+          description: Vehicle Title Indicator. Indicates the vehicle title is on file.
+        TitleName:
+          maxLength: 50
+          type: string
+          description: Title Name.
+        TitleNum:
+          maxLength: 30
+          type: string
+          description: Title Number.
+        LicensePlate:
+          maxLength: 20
+          type: string
+          description: License Plate.
+        IssuanceDt:
+          type: string
+          description: Issuance Date.
+          format: date
+        StateProv:
+          maxLength: 80
+          type: string
+          description: State/Province. ISO 3166-2:US codes.
+        StateProvEnumDesc:
+          maxLength: 80
+          type: string
+          description: State Province Enumeration Description.
+        CountryCode:
+          $ref: '#/components/schemas/CountryCodeType'
+        ConditionCode:
+          type: string
+          description: Condition Code.
+        RentalDemoCode:
+          $ref: '#/components/schemas/RentalDemoCodeType'
+        DealerIdent:
+          maxLength: 36
+          type: string
+          description: Dealear Identification.
+        FleetNum:
+          maxLength: 15
+          type: string
+          description: Fleet Number.
+        PurchasePriceAmt:
+          $ref: '#/components/schemas/PurchasePriceAmtType'
+        MarketValueAmt:
+          $ref: '#/components/schemas/MarketValueAmtType'
+        MarketValueDt:
+          type: string
+          description: Market Value Date.
+          format: date
+        MarketPricingCode:
+          maxLength: 10
+          type: string
+          description: Market Pricing Code.
+        MarketMarginPercent:
+          type: number
+          description: Market Margin Percent.
+        PMIOriginalAmt:
+          $ref: '#/components/schemas/PMIOriginalAmtType'
+        PropertyType:
+          type: string
+          description: Property Type. Report whether the loan or application was for manufactured housing, a multifamily dwelling, or a one-to-four-family dwelling other than manufactured housing.
+        PropertyId:
+          maxLength: 36
+          type: string
+          description: Property Identification. Used by financial institution to identify the property.
+        PrimaryResidenceInd:
+          type: boolean
+          description: Primary Residence Indicator.
+        PropertyCertificateNum:
+          maxLength: 30
+          type: string
+          description: Property Certificate Number.
+        PropertyInspectionDt:
+          type: string
+          description: Property Inspection Date.
+          format: date
+        BuildingStat:
+          type: string
+          description: Building Status.
+        BuiltDt:
+          type: string
+          description: Built Date.
+          format: date
+        CompletionPercent:
+          type: number
+          description: Completion Percent
+        BuildingPermitDt:
+          type: string
+          description: Building Permit Date.
+          format: date
+        SurveyDt:
+          type: string
+          description: Survey Date.
+          format: date
+        CondoSquareFt:
+          type: integer
+          description: Condo Square Footage.
+          format: int64
+        CondoMaintFee:
+          type: number
+          description: Condominium Maintenance Fee.
+        NumberOfUnits:
+          type: integer
+          description: Number of Units.
+          format: int64
+        SquareFt:
+          type: integer
+          description: Square Footage.
+          format: int64
+        TotalAcreage:
+          type: number
+          description: Total Acreage.
+        TillableAcreage:
+          type: number
+          description: Tillable Acreage.
+        LegalData:
+          $ref: '#/components/schemas/LegalDataType'
+        FloodInsurReqdInd:
+          type: boolean
+          description: Flood Insurance Required Indicator.
+        FloodInsurWaiverCode:
+          maxLength: 30
+          type: string
+          description: Flood Insurance Waiver Code.
+        FloodInsurWaiverCodeEnumDesc:
+          maxLength: 80
+          type: string
+          description: Flood Insurance Waiver Code Enumeration Description.
+        FloodData:
+          $ref: '#/components/schemas/FloodDataType'
+        TaxServiceData:
+          $ref: '#/components/schemas/TaxServiceDataType'
+        ManufactureHomeData:
+          $ref: '#/components/schemas/ManufactureHomeDataType'
+        PropertyCondition:
+          maxLength: 80
+          type: string
+          description: Property Condition.
+        Issuer:
+          maxLength: 32
+          type: string
+          description: Issuer.
+        IssuerIdent:
+          maxLength: 36
+          type: string
+          description: Issuer Name Identifier.
+        IssuerPostalAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        BrokerName:
+          maxLength: 32
+          type: string
+          description: Broker Name.
+        BrokerIdent:
+          maxLength: 36
+          type: string
+          description: Broker Name Identifier.
+        BrokerPostAddr:
+          $ref: '#/components/schemas/PostAddrType'
+        CommodityType:
+          type: string
+          description: Commodity Type.
+        CUSIPNum:
+          maxLength: 30
+          type: string
+          description: CUSIP Number. Identifies the commodity.
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        Symbol:
+          maxLength: 20
+          type: string
+          description: Symbol. Symbol of the commodity.
+        CommodityAcctNum:
+          maxLength: 30
+          type: string
+          description: Commodity Account Number.
+        OriginalPurchasePriceAmt:
+          $ref: '#/components/schemas/OriginalPurchasePriceAmtType'
+        ParValueAmt:
+          $ref: '#/components/schemas/ParValueAmtType'
+        SharesNum:
+          maxLength: 20
+          type: string
+          description: Shares Number.
+        MarketSharePriceAmt:
+          $ref: '#/components/schemas/MarketSharePriceAmtType'
+        MarketSharePriceDt:
+          type: string
+          description: Market Share Price Date.
+          format: date
+        RegUPercent:
+          type: number
+          description: Regulation U Percent. Can be used to calculate the collateral value against which the FI can lend, as set by Federal Reserve.
+        VaultReceipt:
+          maxLength: 30
+          type: string
+          description: Vault Receipt. Identifies the collateral unit(s) held within the vault of the FI.
+        MaturityDt:
+          type: string
+          description: Maturity Date.
+          format: date
+        LeadDays:
+          type: integer
+          description: Lead Days. Number of days prior to a specified date.
+          format: int64
+        RegisteredInd:
+          type: boolean
+          description: Registered Indicator. Value of 'true' (1) means the commodity is listed with a recognized securities exchange.
+    CollateralInfoType:
+      title: CollateralInfoType
+      allOf:
+      - $ref: '#/components/schemas/CollateralSummDataType'
+      - type: object
+        properties:
+          CollateralSpecCode:
+            maxLength: 80
+            type: string
+            description: Collateral Specification Code. For Premier use only.
+          PropertyTypeCode:
+            maxLength: 80
+            type: string
+            description: Property Type Code. User defined classification of the the property.
+          CollateralDetailStatus:
+            type: string
+            description: Collateral Detail Status. Indicates the current status of the collateral.
+          CollateralDetailStatusDt:
+            type: string
+            description: Collateral Detail Status Date. Indicates the date of the current status of the collateral.
+            format: date
+          CollateralLocation:
+            maxLength: 80
+            type: string
+            description: Collateral Location. Used to identify the place (such as a branch of the organization) at which the collateral is located.
+          PostAddr:
+            type: array
+            description: Postal Address.
+            items:
+              $ref: '#/components/schemas/PostAddrType'
+          Desc:
+            maxLength: 200
+            type: array
+            description: Description.
+            items:
+              maxLength: 200
+              type: string
+          CollateralValueData:
+            $ref: '#/components/schemas/CollateralValueDataType'
+          DepreciationMonths:
+            type: integer
+            description: Depreciation Months.
+            format: int64
+          SellerData:
+            $ref: '#/components/schemas/SellerDataType'
+          AppraisalData:
+            $ref: '#/components/schemas/AppraisalDataType'
+          RepriceData:
+            $ref: '#/components/schemas/RepriceDataType'
+          CalculationMethod:
+            type: string
+            description: Calculation Method. Identifies which amount or calculation will be used for example when determining a loan’s maximum credit on a Commercial loan.
+          CollateralLoanToValueData:
+            $ref: '#/components/schemas/CollateralLoanToValueDataType'
+          CollateralInsuranceData:
+            type: array
+            description: Collateral Insurance Data.
+            items:
+              $ref: '#/components/schemas/CollateralInsuranceDataType'
+          CollateralExceptionCode:
+            maxLength: 80
+            type: string
+            description: Collateral Exception Code. Collateral item has an exception and follow-up action is required.
+          LastReviewDt:
+            type: string
+            description: Last Review Date. Date the collateral was last reviewed.
+            format: date
+          NextReviewDt:
+            type: string
+            description: Next Review Date. Next date the collateral will be reviewed.
+            format: date
+          LastUpdateDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Last Update Date.
+          LastAssessmentDt:
+            type: string
+            description: Last Assessment Date.
+            format: date
+          LastAuditDt:
+            type: string
+            description: Last Audit Date.
+            format: date
+          CreateDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Create Date.
+          MaintDt:
+            pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+            type: string
+            description: Maintenance Date.
+          ControlAgreementDt:
+            type: string
+            description: Control Agreement Date. Typically used for Deposit Account or Securities types of collateral.
+            format: date
+          Identification:
+            maxLength: 60
+            type: string
+            description: Identification. Typically used for Real Estate or Commercial Inventory/Equipment types of collateral.
+          CollateralFilingData:
+            type: array
+            description: Collateral Filing Data. Types of formal filings initiated by the organization about the collateral item.
+            items:
+              $ref: '#/components/schemas/CollateralFilingDataType'
+          Contact:
+            $ref: '#/components/schemas/ContactType'
+          OEDCode:
+            type: string
+            description: Officer, Employee, DIrector Code. Indicates if the party is an employee of the Bank.
+          RelationshipMgr:
+            type: array
+            description: Relationship Manager. Stores information about the FI officers that have management responsibility of the Party, the Account or the Card.
+            items:
+              $ref: '#/components/schemas/RelationshipMgrType'
+          OriginatingBranch:
+            maxLength: 32
+            type: string
+            description: Originating Branch. Branch first originated the relationship with party or created the account.
+          ResponsibleBranch:
+            maxLength: 32
+            type: string
+            description: Responsible Branch. Branch responsible for the relationship.
+          TotalLienAmt:
+            $ref: '#/components/schemas/LienAmtType'
+          LienHolderData:
+            type: array
+            description: Lien Holder Data. Information about a lien on the collateral.
+            items:
+              $ref: '#/components/schemas/LienHolderDataType'
+          PartialReleaseData:
+            $ref: '#/components/schemas/PartialReleaseDataType'
+          UnderwritingRatio:
+            type: array
+            description: Underwriting Ratio. Determines the underwriting criteria of the collateral.
+            items:
+              type: number
+          Retention:
+            type: boolean
+            description: Retention. Indicates whether the records are to be retained or deleted based on Service Provider criteria.
+          ReportGroupCode:
+            maxLength: 80
+            type: string
+            description: Report Group Code. Indicates a user defined code used to group accounts fro reporting purposes.
+          LoanReason:
+            maxLength: 30
+            type: string
+            description: Loan Reason.
+          Memo:
+            maxLength: 255
+            type: string
+            description: Memo.
+          ActivityType:
+            type: string
+            description: Activity Type. The type of activity executed on the collateral itself or the pledge of collateral to an entity.
+          DateData:
+            type: array
+            description: Date Data. Use to contain dates associated to the object.
+            items:
+              $ref: '#/components/schemas/DateDataType'
+          RestrictedInd:
+            type: boolean
+            description: Restricted Indicator. Indicates whether the account information is restricted for view by the requester.
+          RestrictedDesc:
+            maxLength: 80
+            type: string
+            description: Restricted Description. Description of the reason for the account to be restricted.
+          ClientDefinedData:
+            type: array
+            description: Client Defined Data.Data whose definition, type and values are defined by the client or user.
+            items:
+              $ref: '#/components/schemas/ClientDefinedDataType'
+          OccupancyType:
+            maxLength: 30
+            type: string
+            description: Occupancy Type. Also known as Owner Occupied Code.
+          OccupancyStatusDt:
+            type: string
+            description: Occupancy Status Date.
+            format: date
+          OwnershipDt:
+            type: string
+            description: Ownership Date.
+            format: date
+          CommentData:
+            type: array
+            description: Comment Data.
+            items:
+              $ref: '#/components/schemas/CommentDataType'
+          DocumentTracking:
+            type: array
+            description: Document Tracking.
+            items:
+              $ref: '#/components/schemas/DocumentTrackingType'
+          VehicleData:
+            $ref: '#/components/schemas/VehicleDataType'
+          PropertyData:
+            $ref: '#/components/schemas/PropertyDataType'
+          DepositAcctCollateralData:
+            $ref: '#/components/schemas/DepositAcctCollateralDataType'
+          CommodityData:
+            $ref: '#/components/schemas/CommodityDataType'
+          LifeInsuranceData:
+            $ref: '#/components/schemas/LifeInsuranceDataType'
+          InventoryData:
+            $ref: '#/components/schemas/InventoryDataType'
+          OtherCollateralData:
+            $ref: '#/components/schemas/OtherCollateralDataType'
+    CollateralAddRqType:
+      title: CollateralAddRqType
+      required:
+      - CollateralInfo
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        PartyCollateralRelInfo:
+          type: array
+          description: Party Collateral Relationship Information. Identifies the parties and their relationships to the collateral item.
+          items:
+            $ref: '#/components/schemas/PartyCollateralRelInfoType'
+        CollateralInfo:
+          $ref: '#/components/schemas/CollateralInfoType'
+    CollateralStatusType:
+      title: CollateralStatusType
+      required:
+      - CollateralStatusCode
+      type: object
+      properties:
+        CollateralStatusCode:
+          $ref: '#/components/schemas/CollateralStatusCodeType'
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+    CollateralStatusRecType:
+      title: CollateralStatusRecType
+      required:
+      - CollateralKeys
+      - CollateralStatus
+      type: object
+      properties:
+        SvcIdent:
+          $ref: '#/components/schemas/SvcIdentType'
+        CollateralKeys:
+          $ref: '#/components/schemas/CollateralKeysType'
+        CollateralStatus:
+          $ref: '#/components/schemas/CollateralStatusType'
+    CollateralAddRsType:
+      title: CollateralAddRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        CollateralStatusRec:
+          $ref: '#/components/schemas/CollateralStatusRecType'
+    CollateralDelRqType:
+      title: CollateralDelRqType
+      required:
+      - CollateralKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        CollateralKeys:
+          $ref: '#/components/schemas/CollateralKeysType'
+    CollateralDelRsType:
+      title: CollateralDelRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        CollateralStatusRec:
+          $ref: '#/components/schemas/CollateralStatusRecType'
+    PersonNameSelType:
+      title: PersonNameSelType
+      type: object
+      properties:
+        FamilyName:
+          maxLength: 40
+          type: string
+          description: Family Name.
+        GivenName:
+          maxLength: 40
+          type: string
+          description: Given Name. Person's first name.
+        MiddleName:
+          maxLength: 40
+          type: string
+          description: Middle Name. Person's middle name.
+    CollateralSelType:
+      title: CollateralSelType
+      type: object
+      properties:
+        CollateralKeys:
+          $ref: '#/components/schemas/CollateralKeysType'
+        PartyKeys:
+          $ref: '#/components/schemas/PartyKeysType'
+        Name:
+          maxLength: 80
+          type: string
+          description: Name.
+        PersonNameSel:
+          $ref: '#/components/schemas/PersonNameSelType'
+        SoundexNameInd:
+          type: boolean
+          description: Soundex Name Indicator. Indicates whether to search for soundex values for the name.
+        NameSearchCode:
+          type: string
+          description: Name Search Code.
+        IssuedIdentValue:
+          maxLength: 32
+          type: string
+          description: Issued Identification Value. Identification value associated with the identification type.
+        IssuedIdentType:
+          type: string
+          description: 'Issued Identification Type. Valid values: DrvrsLicNb, BirthCertificate, HealthCard, Military, AlnRegnNb, IdntyCardNb, VoterRegistration, PsptNb, MplyrIdNb, TaxIdNb,  SclSctyNb, NRAPersonal, NRABusiness, Other.'
+        ClientDefinedSearch:
+          $ref: '#/components/schemas/ClientDefinedSearchType'
+        TaxIdent:
+          maxLength: 12
+          type: string
+          description: Tax Identification.
+        Phone:
+          type: string
+          description: Phone.
+        EmailAddr:
+          maxLength: 254
+          type: string
+          description: Email Address.
+        AcctId:
+          maxLength: 36
+          type: string
+          description: Account Identifier. Uniquely identifies an account held at a financial institution.
+        AcctType:
+          type: string
+          description: Account Type. Classifies the type of product with which an account is associated. This element is required when adding a new account and by using this value we can identify if the account is a savings, a checking, a time deposit, loan account, etc.
+        Desc:
+          maxLength: 200
+          type: string
+          description: Description.
+        Street:
+          maxLength: 64
+          type: string
+          description: Street.
+        AddrLine:
+          maxLength: 64
+          type: string
+          description: Address Line .
+        AddrId:
+          maxLength: 36
+          type: string
+          description: Address Identifier.
+    CollateralInqRqType:
+      title: CollateralInqRqType
+      required:
+      - CollateralSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        CollateralSel:
+          $ref: '#/components/schemas/CollateralSelType'
+    CollateralRecType:
+      title: CollateralRecType
+      required:
+      - CollateralInfo
+      - CollateralKeys
+      - CollateralStatus
+      type: object
+      properties:
+        CollateralKeys:
+          $ref: '#/components/schemas/CollateralKeysType'
+        CollateralInfo:
+          $ref: '#/components/schemas/CollateralInfoType'
+        CollateralStatus:
+          $ref: '#/components/schemas/CollateralStatusType'
+      description: '[FSVR]Collateral Record.'
+    CollateralInqRsType:
+      title: CollateralInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        CollateralRec:
+          type: array
+          description: Collateral Record.
+          items:
+            $ref: '#/components/schemas/CollateralRecType'
+    CollateralModRqType:
+      title: CollateralModRqType
+      required:
+      - CollateralInfo
+      - CollateralKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        CollateralKeys:
+          $ref: '#/components/schemas/CollateralKeysType'
+        CollateralInfo:
+          type: array
+          description: Collateral Information.
+          items:
+            $ref: '#/components/schemas/CollateralInfoType'
+    CollateralModRsType:
+      title: CollateralModRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        CollateralStatusRec:
+          $ref: '#/components/schemas/CollateralStatusRecType'
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: 'Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. '
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden.
+        Value:
+          maxLength: 256
+          type: string
+          description: Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data.
+      description: Information about the subject element.
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Authorization level required to override, such as Teller and Supervisor.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+        ContentHTML:
+          type: string
+          description: 'Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures.'
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: '#/components/schemas/AdditionalStatusType'
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: 'Next record pointer included in the response only if additional  records are available. '
+      description: Record Control Out
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number.
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Indicates Multi-System environment is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System environment this identifies the Service Provider (account processor).
+        Context:
+          $ref: '#/components/schemas/Context'
+      example: '{ "TrnId": "622182", "OrganizationId": "PRMOrg10", "VendorId": "112233", "Context":{ "Channel": "WEB" } }'
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: Name of the client application that is used to send the service request, such as Architect, Commercial Center and others.
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12.
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: 'Client terminal sequence number. type: string'
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: 'Type of a phone. Valid values are: - ''EvePhone'' - ''DayPhone'' - ''EveFax'' - ''DayFax'' - ''Home'' - ''Work'' - ''Mobile'' - ''Fax'' - ''Pager'' - ''Modem'' - ''Other'''
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: '#/components/schemas/TellerTrnDataType'
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: '#/components/schemas/TrnConductorDataType'
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.

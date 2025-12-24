@@ -1,0 +1,1492 @@
+---
+openapi: 3.0.0
+info:
+  title: DocumentService
+  description: The DocumentService contains operations related to Document Image Management.
+  contact:
+    name: ESF_APServicesDesignTeam
+    email: DL-NA-ESF_APServicesDesignTeam@fiserv.com
+  version: 11.0.0
+servers:
+- url: /
+tags:
+- name: Document Service
+  description: The DocumentService contains operations related to Document Image Management.
+paths:
+  /document:
+    put:
+      tags:
+      - Update Document
+      summary: Update Document
+      operationId: updateDocument
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentModRqType'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentModRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentModRsType'
+      deprecated: false
+    post:
+      tags:
+      - Add Document
+      summary: Add Document.
+      operationId: createDocument
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentAddRqType'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentAddRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentAddRsType'
+      deprecated: false
+  /document/secured:
+    put:
+      tags:
+      - Delete Document
+      summary: Delete Document.
+      operationId: deleteDocumentSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentDelRqType'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDelRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDelRsType'
+      deprecated: false
+    post:
+      tags:
+      - Get Document
+      summary: Get Document.
+      operationId: DocumentInqOperSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentInqRqType'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentInqRsType'
+      deprecated: false
+  /document/list/secured:
+    post:
+      tags:
+      - Get Document List
+      summary: Get Document List.
+      operationId: DocumentListInqOperSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentListInqRqType'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentListInqRsType'
+      deprecated: false
+  /document/config/secured:
+    post:
+      tags:
+      - Get Document Configuration
+      summary: Get Document Configuration.
+      operationId: getDocumentConfigSecured
+      parameters:
+      - name: EFXHeader
+        in: header
+        description: The message header request aggregate contains common information for all request messages
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/EFXHeader'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentConfigInqRqType'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentConfigInqRsType'
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentConfigInqRsType'
+      deprecated: false
+components:
+  schemas:
+    BinaryType:
+      title: BinaryType
+      required:
+      - BinData
+      type: object
+      properties:
+        ContentType:
+          type: string
+          description: Content Type.
+        BinLength:
+          type: integer
+          description: Binary Length.
+          format: int64
+        BinData:
+          type: string
+          description: Binary Data.
+          format: string
+    AndorOrType:
+      title: AndorOrType
+      type: string
+      enum:
+      - AND
+      - OR
+      - None
+    DocumentStatusCodeType:
+      title: DocumentStatusCodeType
+      type: string
+      enum:
+      - Valid
+      - Deleted
+    BaseKeysType:
+      title: BaseKeysType
+      type: string
+    DocPropertiesType:
+      title: DocPropertiesType
+      required:
+      - IncDocPropertyInd
+      type: object
+      properties:
+        DocPropertyType:
+          maxLength: 80
+          type: string
+          description: Document Property Type. Specifies the type of document property.
+        IncDocPropertyInd:
+          type: boolean
+          description: Include Document Property Indicator. A true value indicates that the property must be provided in the response.
+      description: '[FSVR]Properties Returned.'
+    DocSelCriteriaType:
+      title: DocSelCriteriaType
+      required:
+      - DocSelType
+      - DocSelValue
+      type: object
+      properties:
+        DocSelType:
+          type: string
+          description: Document Selection Type.
+        DocSelValue:
+          maxLength: 255
+          type: string
+          description: Document Selection Value.
+    OvrdElementType:
+      title: OvrdElementType
+      allOf:
+      - $ref: '#/components/schemas/SubjectElementType'
+      - type: object
+    OverrideExceptionType:
+      title: OverrideExceptionType
+      type: object
+      properties:
+        SubjectRole:
+          type: string
+          description: Subject Role.
+        SubjectIdent:
+          maxLength: 36
+          type: string
+          description: Subject Identifier.
+        OvrdExceptionCode:
+          maxLength: 40
+          type: string
+          description: Overrride Exception Code.Identifies an exception code that is to be overridden. This would be the ServerStatusCode from the Status response.
+        OvrdElement:
+          $ref: '#/components/schemas/OvrdElementType'
+    OvrdExceptionDataType:
+      title: OvrdExceptionDataType
+      type: object
+      properties:
+        OverrideException:
+          type: array
+          description: Override Exception.
+          items:
+            $ref: '#/components/schemas/OverrideExceptionType'
+    KeywordDataType:
+      title: KeywordDataType
+      type: object
+      properties:
+        Keyword:
+          maxLength: 255
+          type: string
+          description: Keyword. Refers to the Keyword Name.
+        KeywordValue:
+          maxLength: 255
+          type: string
+          description: Keywords Value.
+        KeywordId:
+          maxLength: 36
+          type: string
+          description: Keyword Identifier. Specifies the ID on the OnBase Keyword
+        KeywordGroup:
+          maxLength: 80
+          type: string
+          description: Keyword Group. If the Keyword is part of a Keyword Group, this will be the ID of the OnBase Keyword Type Group that this keyword belongs to.  This node will be present if Details are requested, Group=”0” in request and the keyword belongs to Keyword Group.
+        KeywordGroupName:
+          maxLength: 80
+          type: string
+          description: Keyword Group Name. Specifies the name of the OnBase Keyword Type Group that this keyword belongs to.
+        KeywordInstance:
+          maxLength: 80
+          type: string
+          description: Keyword Instance. If the KeywordType is part of a Multi-instance Keyword Group, this will be the instance ID of that group of keyword.  This node will be present if Details are requested, Group=”0” in request and the keyword belongs to Keyword Group.
+        SearchFlag:
+          type: boolean
+          description: Search Flag. Indicates if the data can be searched.
+      description: '[FSVR]Keyword Data.'
+    SearchableKeywordType:
+      title: SearchableKeywordType
+      type: object
+      properties:
+        Keyword:
+          maxLength: 255
+          type: string
+          description: Keyword. Refers to the Keyword Name.
+        SearchFlag:
+          type: boolean
+          description: Search Flag. Indicates if the data can be searched.
+    DocumentBasicType:
+      title: DocumentBasicType
+      type: object
+      properties:
+        DocName:
+          maxLength: 255
+          type: string
+          description: Document Name.
+        CreatedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Created Date.
+        RevisionDt:
+          type: string
+          description: Revision Date.
+          format: date
+        RevisionId:
+          type: integer
+          description: Revision Identifier.
+          format: int64
+        MaxRevisionId:
+          type: integer
+          description: Maximum Revision Identifier.
+          format: int64
+        OriginalStoredDt:
+          type: string
+          description: Document Original Stored Date.
+          format: date
+        RevisedBy:
+          maxLength: 80
+          type: string
+          description: Revised By.
+        DiskGroup:
+          type: integer
+          description: Disk Group.
+          format: int64
+        DocGroupType:
+          type: integer
+          description: Document Group Type.
+          format: int64
+        DocGroupTypeName:
+          maxLength: 255
+          type: string
+          description: Document Group Type Name.
+        DocType:
+          type: integer
+          description: Document Type.
+          format: int64
+        DocTypeName:
+          maxLength: 255
+          type: string
+          description: Document Type Name.
+        KeywordData:
+          type: array
+          description: Keywords Data.
+          items:
+            $ref: '#/components/schemas/KeywordDataType'
+        SearchableKeyword:
+          type: array
+          description: Searchable Keyword. Searchable keyword name of a keyword on that document.
+          items:
+            $ref: '#/components/schemas/SearchableKeywordType'
+        BatchNum:
+          maxLength: 40
+          type: string
+          description: Batch Number.
+        TotalPageNum:
+          type: integer
+          description: Total Page Number.
+          format: int64
+      description: '[FSVR]Document Information.'
+    PageValueType:
+      title: PageValueType
+      allOf:
+      - $ref: '#/components/schemas/BinaryType'
+      - type: object
+    PageDataType:
+      title: PageDataType
+      type: object
+      properties:
+        PageNum:
+          type: integer
+          description: Page Number.
+          format: int64
+        PageFormat:
+          type: string
+          description: |-
+            Page Format. Valid values are:
+              * TXT
+              * PDF
+              * DOC
+              * TIFF
+              * JPG
+              * BMP
+              * PNG
+              * DIB
+              * GIT
+              * Default
+        View:
+          maxLength: 80
+          type: string
+          description: 'Page View. Valid values are: * Front * Back * FrontBack'
+        PageValue:
+          $ref: '#/components/schemas/PageValueType'
+      description: '[FSVR]Page.'
+    DocumentInfoType:
+      title: DocumentInfoType
+      allOf:
+      - $ref: '#/components/schemas/DocumentBasicType'
+      - type: object
+        properties:
+          PageData:
+            type: array
+            description: Page Data.
+            items:
+              $ref: '#/components/schemas/PageDataType'
+    DocumentAddRqType:
+      title: DocumentAddRqType
+      required:
+      - DocumentInfo
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        DocumentInfo:
+          $ref: '#/components/schemas/DocumentInfoType'
+      description: '[IFXRDocument Add Request. Adds a document object.'
+    SvcIdentType:
+      title: SvcIdentType
+      type: object
+      properties:
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: Service Provider Name is a globally unique identifier for a service provider which indicates the location of the Service Provider that gave the error.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: Service Number.
+        SvcName:
+          maxLength: 32
+          type: string
+          description: Service Name.
+    DocumentKeysType:
+      title: DocumentKeysType
+      allOf:
+      - required:
+        - DocumentId
+        type: object
+        properties:
+          DocumentId:
+            maxLength: 36
+            type: string
+            description: Document Identifier.
+    DocumentStatusType:
+      title: DocumentStatusType
+      required:
+      - DocumentStatusCode
+      type: object
+      properties:
+        DocumentStatusCode:
+          $ref: '#/components/schemas/DocumentStatusCodeType'
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+          format: date-time
+    DocumentStatusRecType:
+      title: DocumentStatusRecType
+      required:
+      - DocumentKeys
+      - DocumentStatus
+      type: object
+      properties:
+        SvcIdent:
+          $ref: '#/components/schemas/SvcIdentType'
+        DocumentKeys:
+          $ref: '#/components/schemas/DocumentKeysType'
+        DocumentStatus:
+          $ref: '#/components/schemas/DocumentStatusType'
+    DocumentAddRsType:
+      title: DocumentAddRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        DocumentStatusRec:
+          $ref: '#/components/schemas/DocumentStatusRecType'
+    DocumentDelRqType:
+      title: DocumentDelRqType
+      required:
+      - DocumentKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        DocumentKeys:
+          $ref: '#/components/schemas/DocumentKeysType'
+    DocumentDelRsType:
+      title: DocumentDelRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        DocumentStatusRec:
+          $ref: '#/components/schemas/DocumentStatusRecType'
+    DtRangeType:
+      title: DtRangeType
+      type: object
+      properties:
+        StartDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Start Date.
+        EndDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: End Date.
+    KeywordSelType:
+      title: KeywordSelType
+      required:
+      - Keyword
+      - KeywordValue
+      - Operand
+      type: object
+      properties:
+        Keyword:
+          maxLength: 255
+          type: string
+          description: Keyword. Refers to the Keyword Name.
+        KeywordValue:
+          maxLength: 255
+          type: string
+          description: Keywords Value.
+        Operand:
+          type: string
+          description: Operand.
+        AndorOr:
+          $ref: '#/components/schemas/AndorOrType'
+      description: Keyword Selection.
+    KeywordsRequestedType:
+      title: KeywordsRequestedType
+      type: object
+      properties:
+        Keyword:
+          maxLength: 255
+          type: string
+          description: Keyword name to search the document, for example, Account Number, Check Number, etc.
+      description: Keywords Requested.
+    PageRequestedType:
+      title: PageRequestedType
+      type: object
+      properties:
+        PageNum:
+          type: integer
+          description: Page Number.
+          format: int64
+        PageFormat:
+          type: string
+          description: |-
+            Page Format. Valid values are:
+              * TXT
+              * PDF
+              * DOC
+              * TIFF
+              * JPG
+              * BMP
+              * PNG
+              * DIB
+              * GIT
+              * Default
+        View:
+          maxLength: 80
+          type: string
+          description: 'Page View. Valid values are: * Front * Back * FrontBack'
+      description: Page Requested.
+    PageNumRangeType:
+      title: PageNumRangeType
+      required:
+      - StartPageNum
+      type: object
+      properties:
+        StartPageNum:
+          type: integer
+          description: Start Page Number.
+          format: int64
+        EndPageNum:
+          type: integer
+          description: End Page Number.
+          format: int64
+    MetaDataType:
+      title: MetaDataType
+      required:
+      - Value
+      type: object
+      properties:
+        Value:
+          maxLength: 256
+          type: string
+          description: Value string representation of the EFX data value of the element in error. This field is intended to provide a human readable visual hint as to the value in error. It should not be provided for fields that cannot be represented as a string (i.e., binary data).
+        IncValueInd:
+          type: boolean
+          description: Include Value Indicator.
+    DocumentSelType:
+      title: DocumentSelType
+      type: object
+      properties:
+        DocumentKeys:
+          $ref: '#/components/schemas/DocumentKeysType'
+        DocSelCriteria:
+          type: array
+          description: Document Selection Criteria
+          items:
+            $ref: '#/components/schemas/DocSelCriteriaType'
+        CreatedDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Created Date.
+        DtRange:
+          $ref: '#/components/schemas/DtRangeType'
+        UseXferKeywordInd:
+          type: boolean
+          description: Use Xfer Keyword Indicator. Use middleware transalation for keywords provided in the selection.
+        KeywordSel:
+          type: array
+          description: Keyword Selection.
+          items:
+            $ref: '#/components/schemas/KeywordSelType'
+        DocProperties:
+          type: array
+          description: Document Properties. Specifies the document properties to be provided in the response.
+          items:
+            $ref: '#/components/schemas/DocPropertiesType'
+        KeywordMultireplace:
+          maxLength: 80
+          type: string
+          description: Multireplaceplace. The value "*" retruns all keywords and related values.
+        KeywordsRequested:
+          type: array
+          description: Keywords Requested. Specifies the document keys to be returned by the response.
+          items:
+            $ref: '#/components/schemas/KeywordsRequestedType'
+        PageRequested:
+          type: array
+          description: Page Requested. Specifies how pages are provided in response.
+          items:
+            $ref: '#/components/schemas/PageRequestedType'
+        PageFormat:
+          type: string
+          description: |-
+            Page Format. Valid values are:
+              * TXT
+              * PDF
+              * DOC
+              * TIFF
+              * JPG
+              * BMP
+              * PNG
+              * DIB
+              * GIT
+              * Default
+        PageNumRange:
+          $ref: '#/components/schemas/PageNumRangeType'
+        PageNum:
+          type: integer
+          description: Page Number.
+          format: int64
+        IncAllPagesInd:
+          type: boolean
+          description: Include All Pages Indicator.
+        MetaData:
+          type: array
+          description: Meta Data.
+          items:
+            $ref: '#/components/schemas/MetaDataType'
+    DocumentInqRqType:
+      title: DocumentInqRqType
+      required:
+      - DocumentSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        DocumentSel:
+          $ref: '#/components/schemas/DocumentSelType'
+    DocumentRecType:
+      title: DocumentRecType
+      required:
+      - DocumentInfo
+      - DocumentKeys
+      - DocumentStatus
+      type: object
+      properties:
+        DocumentKeys:
+          $ref: '#/components/schemas/DocumentKeysType'
+        DocumentInfo:
+          $ref: '#/components/schemas/DocumentInfoType'
+        DocumentStatus:
+          $ref: '#/components/schemas/DocumentStatusType'
+    DocumentInqRsType:
+      title: DocumentInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        DocumentRec:
+          type: array
+          description: Document Record.
+          items:
+            $ref: '#/components/schemas/DocumentRecType'
+    DocumentListInfoType:
+      title: DocumentListInfoType
+      description: '[FSVR]Document List Information.'
+      allOf:
+      - $ref: '#/components/schemas/DocumentBasicType'
+      - type: object
+    DocumentListSelType:
+      title: DocumentListSelType
+      type: object
+      properties:
+        DocSelCriteria:
+          $ref: '#/components/schemas/DocSelCriteriaType'
+        DtRange:
+          $ref: '#/components/schemas/DtRangeType'
+        KeywordSel:
+          type: array
+          description: Keyword Selection.
+          items:
+            $ref: '#/components/schemas/KeywordSelType'
+        DocProperties:
+          type: array
+          description: Document Properties. Specifies the document properties to be provided in the response.
+          items:
+            $ref: '#/components/schemas/DocPropertiesType'
+        KeywordsRequested:
+          type: array
+          description: Keywords Requested. Specifies the document keys to be returned by the response.
+          items:
+            $ref: '#/components/schemas/KeywordsRequestedType'
+    DocumentListInqRqType:
+      title: DocumentListInqRqType
+      required:
+      - DocumentListSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        DocumentListSel:
+          $ref: '#/components/schemas/DocumentListSelType'
+    DocumentListRecType:
+      title: DocumentListRecType
+      required:
+      - DocumentKeys
+      - DocumentListInfo
+      - DocumentStatus
+      type: object
+      properties:
+        DocumentKeys:
+          $ref: '#/components/schemas/DocumentKeysType'
+        DocumentListInfo:
+          $ref: '#/components/schemas/DocumentListInfoType'
+        DocumentStatus:
+          $ref: '#/components/schemas/DocumentStatusType'
+    DocumentListInqRsType:
+      title: DocumentListInqRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        DocumentListRec:
+          type: array
+          description: Document List Record.
+          items:
+            $ref: '#/components/schemas/DocumentListRecType'
+    DocumentModRqType:
+      title: DocumentModRqType
+      required:
+      - DocumentInfo
+      - DocumentKeys
+      type: object
+      properties:
+        OvrdAutoAckInd:
+          type: boolean
+          description: Override AutoAcknowledge Indicator. Used when the midleware is in charge of  auto-acknowledgement of exceptions.
+        OvrdExceptionData:
+          $ref: '#/components/schemas/OvrdExceptionDataType'
+        DocumentKeys:
+          $ref: '#/components/schemas/DocumentKeysType'
+        DocumentInfo:
+          type: array
+          description: Document Information.
+          items:
+            $ref: '#/components/schemas/DocumentInfoType'
+    DocumentModRsType:
+      title: DocumentModRsType
+      required:
+      - Status
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        DocumentStatusRec:
+          $ref: '#/components/schemas/DocumentStatusRecType'
+    KeywordGroupTypeType:
+      title: KeywordGroupTypeType
+      type: string
+      description: Keyword Group Type
+      enum:
+      - MultiInstance
+      - SingleInstance
+      - StandAlone
+    KeywordDataTypeType:
+      title: KeywordDataTypeType
+      type: string
+      description: Keyword Data Type
+      enum:
+      - SmallNumeric
+      - LargeNumeric
+      - Currency
+      - AlphaNumericSingleTable
+      - AlphaNumericDualTable
+      - Date
+      - Numeric
+      - Integer
+      - SmallInteger
+      - Char
+      - VariableChar
+    KeywordConfigDataType:
+      title: KeywordConfigDataType
+      type: object
+      properties:
+        Keyword:
+          maxLength: 255
+          type: string
+          description: Keyword. Refers to the Keyword Name.
+        KeywordId:
+          maxLength: 36
+          type: string
+          description: Keyword Identifier. Specifies the ID on the OnBase Keyword
+        KeywordGroup:
+          maxLength: 80
+          type: string
+          description: Keyword Group. If the Keyword is part of a Keyword Group, this will be the ID of the OnBase Keyword Type Group that this keyword belongs to.  This node will be present if Details are requested, Group=”0” in request and the keyword belongs to Keyword Group.
+        MultiInstanceGroupInd:
+          type: boolean
+          description: Multi Instance Group Indicator.
+        KeywordDataType:
+          $ref: '#/components/schemas/KeywordDataTypeType'
+        DataLength:
+          type: integer
+          description: Data Length. The length of the client defined data.
+          format: int64
+    DocumentConfigInqRqType:
+      title: DocumentConfigInqRqType
+      required:
+      - DocumentConfigSel
+      type: object
+      properties:
+        RecCtrlIn:
+          $ref: '#/components/schemas/RecCtrlInType'
+        DocumentListSel:
+          $ref: '#/components/schemas/DocumentConfigSelType'
+    DocumentConfigInqRsType:
+      title: DocumentConfigInqRsType
+      type: object
+      properties:
+        Status:
+          $ref: '#/components/schemas/StatusType'
+        RecCtrlOut:
+          $ref: '#/components/schemas/RecCtrlOutType'
+        DocumentConfigRec:
+          type: array
+          description: Document Configuration Record.
+          items:
+            $ref: '#/components/schemas/DocumentConfigRecType'
+    DocumentConfigRecType:
+      title: DocumentConfigRecType
+      required:
+      - DocumentConfigInfo
+      - DocumentConfigKeys
+      - DocumentConfigStatus
+      type: object
+      properties:
+        DocumentConfigKeys:
+          $ref: '#/components/schemas/DocumentConfigKeysType'
+        DocumentConfigInfo:
+          $ref: '#/components/schemas/DocumentConfigInfoType'
+        DocumentConfigStatus:
+          $ref: '#/components/schemas/DocumentConfigStatusType'
+    DocumentConfigInfoType:
+      title: DocumentConfigInfoType
+      type: object
+      properties:
+        DocType:
+          type: integer
+          description: Document Type.
+          format: int64
+        DocTypeName:
+          maxLength: 255
+          type: string
+          description: Document Type Name.
+        DocGroupType:
+          type: integer
+          description: Document Group Type.
+          format: int64
+        FileType:
+          type: integer
+          description: File Type.
+          format: int64
+        DocGroupTypeName:
+          maxLength: 255
+          type: string
+          description: Document Group Type Name.
+        QueryType:
+          maxLength: 80
+          type: string
+          description: Query Type.
+        QueryTypeName:
+          maxLength: 255
+          type: string
+          description: Query Type Name.
+        KeywordSet:
+          maxLength: 80
+          type: string
+          description: Keyword Set.
+        KeywordSetName:
+          maxLength: 255
+          type: string
+          description: Keyword Set Name.
+        KeywordGroup:
+          maxLength: 80
+          type: string
+          description: Keyword Group. If the Keyword is part of a Keyword Group, this will be the ID of the OnBase Keyword Type Group that this keyword belongs to.  This node will be present if Details are requested, Group=”0” in request and the keyword belongs to Keyword Group.
+        KeywordGroupName:
+          maxLength: 80
+          type: string
+          description: Keyword Group Name. Specifies the name of the OnBase Keyword Type Group that this keyword belongs to.
+        KeywordGroupType:
+          $ref: '#/components/schemas/KeywordGroupTypeType'
+        FileName:
+          maxLength: 255
+          type: string
+          description: File Name.
+        FileExt:
+          maxLength: 255
+          type: string
+          description: File Extension.
+        FileMime:
+          maxLength: 255
+          type: string
+          description: File Mime.
+        FileDisplay:
+          type: integer
+          description: File Display.
+          format: int64
+        KeywordConfigData:
+          type: array
+          description: Keyword Configuration Data.
+          items:
+            $ref: '#/components/schemas/KeywordConfigDataType'
+    DocumentConfigTypeType:
+      title: DocumentConfigTypeType
+      type: string
+      enum:
+      - DocType
+      - DocGroupType
+      - Query
+      - KeywordSet
+      - KeywordGroupType
+      - FileType
+      - DocTypeAndKeywordsSet
+      - ClientDocGroupName
+    DocumentConfigKeysType:
+      title: DocumentConfigKeysType
+      allOf:
+      - $ref: '#/components/schemas/BaseKeysType'
+      - type: object
+        properties:
+          DocumentConfigType:
+            $ref: '#/components/schemas/DocumentConfigTypeType'
+          DocumentConfigIdent:
+            maxLength: 36
+            type: string
+            description: Document Configuration Identification.
+    DocumentConfigSelType:
+      title: DocumentConfigSelType
+      type: object
+      properties:
+        DocumentConfigType:
+          maxLength: 80
+          type: string
+          description: 'Document Configuration Type. Valid values: * DocType * DocGroupType * Query * KeywordGroupType * KeywordSet * FileType * DocTypeAndKeywordSet * ClientDocGroupName'
+        DocumentConfigIdent:
+          type: array
+          items:
+            maxLength: 36
+            type: string
+            description: Document Configuration Identifier
+    DocumentConfigStatusType:
+      title: DocumentConfigStatusType
+      required:
+      - DocumentConfigStatusCode
+      type: object
+      properties:
+        DocumentConfigStatusCode:
+          $ref: '#/components/schemas/DocumentConfigStatusCodeType'
+        EffDt:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Effective Date. The date that an associated action takes effect.
+    DocumentConfigStatusCodeType:
+      title: DocumentConfigStatusCodeType
+      type: string
+      enum:
+      - Valid
+      - Deleted
+    EFXHeader:
+      required:
+      - OrganizationId
+      type: string
+      properties:
+        OrganizationId:
+          maxLength: 36
+          type: string
+          description: Organization identifier is a unique identifier that represents the financial institution or holding company.  This identifier does not necessarily match the organization identifier or bank identifier in the backend system. To ensure uniqueness across all institutions in all parts of the world, use the Dun & Bradstreet number.
+        TrnId:
+          maxLength: 36
+          type: string
+          description: Transaction UUID (Universal Unique Identifier) of the current message.
+        VendorId:
+          maxLength: 255
+          type: string
+          description: 'Unique vendor identification number provided by Fiserv to identify the vendor. '
+        MultiSystemInd:
+          type: boolean
+          description: For internal use only. Indicates Multi-System environment is enabled.
+        SvcNbr:
+          maxLength: 36
+          type: string
+          description: For organizations processing the Multi-System environment this identifies the Service Provider (account processor).
+        Context:
+          $ref: '#/components/schemas/Context'
+      example: '{ "TrnId": "622182", "OrganizationId": "PRMOrg10", "VendorId": "112233", "Context":{ "Channel": "WEB" } }'
+    Context:
+      type: object
+      properties:
+        ClientAppName:
+          maxLength: 40
+          type: string
+          description: Name of the client application that is used to send the service request, such as Architect, Commercial Center and others.
+        Channel:
+          maxLength: 80
+          type: string
+          description: "Name of the channel used by the client application.\n  - 'Online'\n  - 'Phone' \n  - 'Branch'\n  - 'EFT'\n  - 'Teller'\n  "
+        ClientDateTime:
+          pattern: '[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}(:[0-9]{2}(\.[0-9]{3})?((-|\+)[0-9]{2}:[0-9]{2})?)?)?'
+          type: string
+          description: Client date and time as reported by the client application that is making the service request.
+        isOverridden:
+          type: boolean
+          description: Indicates whether previous exception is being overridden by the sender.
+        TrnIdent:
+          maxLength: 36
+          type: string
+          description: Unique identification value of transaction defined by the client.  Also known as Trace Number or Sequence in some systems. When used by a Network defined transaction,  the value of this identifier is typically set to narrow character of 12.
+        ClientTerminalSeqNum:
+          maxLength: 36
+          description: 'Client terminal sequence number. type: string'
+        OriginatorType:
+          type: integer
+          description: "The type of organization that the originator represents. This is usually a coded value representing the industry that the organization operates in. It contains the SIC code. For ISO 8583 (DE18) the element is restricted to narrow character of maximum length of 4.  Originator Type codes that apply to financial institutions are:\n  6010 - Financial institution—bank, savings and loan (S and L), or credit union  \n  6011 - Financial institution—ATM \n  6012 - Financial institution—merchandise sale \n  6999 - Financial institution—home banking"
+          format: int64
+        TerminalIdent:
+          maxLength: 36
+          type: string
+          description: Unique code identifying a terminal at the card acceptor location (such as terminal code or terminal number of ATM). See For ISO 8583 (DE41) the element is restricted to a narrow character with maximum length of 8.
+        TerminalAddr1:
+          maxLength: 64
+          type: string
+          description: Terminal address line 1.
+        TerminalAddr2:
+          maxLength: 64
+          type: string
+          description: Terminal address line 2.
+        TerminalAddr3:
+          maxLength: 64
+          type: string
+          description: Terminal address line 3.
+        TerminalAddr4:
+          maxLength: 64
+          type: string
+          description: Terminal address line 4.
+        TerminalCity:
+          maxLength: 40
+          type: string
+          description: Terminal city name.
+        TerminalCounty:
+          maxLength: 40
+          type: string
+          description: Terminal county name.
+        TerminalStateProv:
+          maxLength: 32
+          type: string
+          description: State province value as per ISO 3166-2:US codes where the terminal is located.
+        TerminalPostalCode:
+          maxLength: 11
+          type: string
+          description: 'Postal Code where the terminal is located. '
+        TerminalCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        TerminalCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value as per the ISO source code set in the TerminalCountryCodeSource field.
+        PhoneType:
+          maxLength: 80
+          type: string
+          description: 'Type of a phone. Valid values are: - ''EvePhone'' - ''DayPhone'' - ''EveFax'' - ''DayFax'' - ''Home'' - ''Work'' - ''Mobile'' - ''Fax'' - ''Pager'' - ''Modem'' - ''Other'''
+        PhoneNum:
+          type: string
+          description: Phone number.
+        PhoneExchange:
+          maxLength: 80
+          type: string
+          description: Phone exchange.
+        TerminalOwnerName:
+          maxLength: 40
+          type: string
+          description: Name of the owner or operator of the terminal.  For ISO 8583 (DE43) the element is restricted to C-15.
+        SystTraceAuditNum:
+          maxLength: 36
+          type: string
+          description: Number assigned by the transaction originator to assist in identifying a transaction uniquely. The trace number remains unchanged for all messages throughout the life of a transaction. This number is not a terminal receipt number. The originating processor increments the trace number by one for each transaction sent to the switch. For ISO 8583 (DE11) the element is restricted to NC-6
+        NetworkIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the interchange network for the transaction. The transaction is applied to the specified network settlement counts and balances. For ISO 8583 (DE62) the element is restricted to NC-6
+        NetworkRefIdent:
+          maxLength: 36
+          type: string
+          description: Document reference supplied by the system retaining the original source document and used to assist in locating that document. The acquirer of a transaction assigns this number. The issuer processor must retain it in the event that a chargeback is submitted for the transaction. For ISO 8583 (DE37) the element is restricted to C-12.
+        AcquirerIdent:
+          maxLength: 36
+          type: string
+          description: Identifier of the acquirer who processes the financial transaction. It is a mandatory element in all authorization and financial messages and does not change throughout the life of a transaction. EPOC considers the acquirer as the terminal owner for reporting purposes. For ISO 8583 (DE32) the element is restricted to C-12
+        AcquirerCountryCodeSource:
+          $ref: '#/components/schemas/CountryCodeSourceType'
+        AcquirerCountryCodeValue:
+          maxLength: 80
+          type: string
+          description: Country code value of Acquirer as per the ISO source code set in the AcquirerCountryCodeSource field.
+        MerchNum:
+          maxLength: 23
+          type: string
+          description: Unique identification number of a merchant.  For ISO 8583 (DE42) the element is restricted to C-15
+        SettlementDate:
+          type: string
+          description: Transaction settlement date. Used by ISO 8583 (DE63).
+          format: date
+        SettlementIdent:
+          maxLength: 36
+          type: string
+          description: Identification of the settlement account in which the transaction will be settled.
+        BusinessApplIdent:
+          maxLength: 80
+          type: string
+          description: |-
+            Identification of the business application. Valid values are:
+              - 'P2P' - Person-to-Person
+              - 'C2B' - Consumer-to-Business
+              - 'A2A' - Account-to-Account
+              - 'B2C' - Business-to-Consumer
+              - 'B2B' - Business-to-Business
+              - 'G2C' - Government-to-Consumer
+              - 'C2G' - Consumer-to-Government
+        BranchIdent:
+          maxLength: 22
+          type: string
+          description: Branch identification number.
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TillIdent:
+          maxLength: 80
+          type: string
+          description: Till identification number.
+        AMPMCode:
+          type: string
+          description: 'Transaction posting code. '
+          enum:
+          - AM
+          - PM
+        ReentryType:
+          type: string
+          description: Type of re-entry.
+          enum:
+          - Manual
+          - Auto
+        GroupIdent:
+          maxLength: 80
+          type: string
+          description: Transaction group identifier.
+        TellerTrnData:
+          $ref: '#/components/schemas/TellerTrnDataType'
+        AdditionalSettings:
+          type: object
+          additionalProperties: true
+          description: Contains additional information required to successfully process the transaction. Required By Cleartouch
+    CountryCodeSourceType:
+      title: CountryCodeSourceType
+      type: string
+      description: |-
+        Country code value as per the ISO source code. Posible values:
+          - 'ISO3166-Numeric'
+          - 'ISO3166-Alpha-3'
+      enum:
+      - ISO3166Numeric
+      - ISO3166Alpha3
+      - ISO3166-Numeric
+      - ISO3166-Alpha-3
+    TellerTrnDataType:
+      title: TellerTrnData
+      type: object
+      properties:
+        TellerIdent:
+          maxLength: 80
+          type: string
+          description: Teller identification number.
+        TrnConductorData:
+          type: array
+          description: 'Contains data elements that identify the conductor of the  transaction at the teller line. '
+          items:
+            $ref: '#/components/schemas/TrnConductorDataType'
+      description: Teller Transaction Data.
+    TrnConductorDataType:
+      title: TrnConductorType
+      type: object
+      properties:
+        TrnConductorIdent:
+          maxLength: 80
+          type: string
+          description: Identifies the person conducting the transaction.
+        NoConductorReason:
+          maxLength: 80
+          type: string
+          description: "No conductor reason is used when a conductor cannot be identified. Valid values are:\n  - 'ArmoredCarSvc '\n  - 'MailDeposit' \n  - 'NightDeposit' \n  - 'ATM' \n  - 'AggregatedTransaction' \n  - 'CourierSvc' "
+      description: Transaction conductor data contains data elements that identify  the conductor of a transaction at the teller line.
+    SubjectElementType:
+      title: SubjectElementType
+      type: object
+      properties:
+        Path:
+          type: string
+          description: 'Path of the element (in XPath absolute notation format) where the error occurred.  If the error occurred at the top-level element, then name of the element is returned in the response. '
+        ServerPath:
+          maxLength: 256
+          type: string
+          description: Server Path is the Service Provider’s identification of the field in their schema, such as an XPath, field ID, or field name that is associated with the ServerStatusCode. If this element is set, it must be returned in the ServerPath element of the OvrdExceptionData aggregate if the exception is being overridden.
+        Value:
+          maxLength: 256
+          type: string
+          description: Human readable information of the EFX data value of the element to  be overridden. This value should not be provided for the fields that  cannot be represented as a string, for example, binary data.
+      description: Information about the subject element.
+    StatusType:
+      title: StatusType
+      required:
+      - Severity
+      - StatusCode
+      - StatusDesc
+      - SvcProviderName
+      type: object
+      properties:
+        Id:
+          type: string
+          description: Status identification number.
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: 'Brief description about the EFX status code. '
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              -  'Cleartouch'
+              -  'DNA'
+              -  'Precision'
+              -  'Premier'
+              -  'Signature'
+              -  'Finxact'
+              -  'NIA'
+              -  'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectRole:
+          maxLength: 80
+          type: string
+          description: Authorization level required to override, such as Teller and Supervisor.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+        ContentHTML:
+          type: string
+          description: 'Response status in HTML format. This parameter returns only in some  cases. #(excluding the core specific information), for example,  in Premier, upon failure an HTML page is provided to support the  maintenance of reported failures.'
+        AdditionalStatus:
+          type: array
+          description: 'Additional statuses of the response message. '
+          items:
+            $ref: '#/components/schemas/AdditionalStatusType'
+      description: 'Details of the API response messages.            '
+    SeverityType:
+      title: SeverityType
+      type: string
+      description: 'Severity type of the EFX status code. '
+      enum:
+      - Error
+      - Warning
+      - Info
+    AdditionalStatusType:
+      title: AdditionalStatusType
+      type: object
+      properties:
+        StatusCode:
+          maxLength: 20
+          type: string
+          description: 'EFX Standard Status code that indicates the result of API response. '
+        StatusDesc:
+          maxLength: 255
+          type: string
+          description: Brief description about the EFX status code.
+        Severity:
+          $ref: '#/components/schemas/SeverityType'
+        SvcProviderName:
+          maxLength: 1024
+          type: string
+          description: |-
+            Name of a service provider. Possible values are:
+              - 'Cleartouch'
+              - 'DNA'
+              - 'Precision'
+              - 'Premier'
+              - 'Signature'
+              - 'Finxact'
+              - 'NIA'
+              - 'Director'
+        ServerStatusCode:
+          maxLength: 20
+          type: string
+          description: 'Server status code of the service provider''s application.  '
+        ServerStatusDesc:
+          maxLength: 255
+          type: string
+          description: Description of the server status code of the service provider's application.
+        OvrdExceptionInd:
+          type: boolean
+          description: Flag that indicates whether the exception can be overridden by resubmitting the request message.
+        SubjectElement:
+          type: array
+          description: Information about the elements that caused the status.
+          items:
+            $ref: '#/components/schemas/SubjectElementType'
+    RecCtrlInType:
+      title: RecCtrlInType
+      type: object
+      properties:
+        MaxRecLimit:
+          type: integer
+          description: Maximum record limit is the maximum number of records  that the server should add to the result set which is available to satisfy this request.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: Used as the pointer to the next record. It is included  in the request to allow the client to fetch more matching records.
+      description: Record Control In
+    RecCtrlOutType:
+      required:
+      - SentRecCount
+      type: object
+      properties:
+        SentRecCount:
+          type: integer
+          description: Sent record count is the number of records matching the selection  criteria that are included in this message.
+          format: int64
+        MatchedRecCount:
+          type: integer
+          description: Matched record count is the total number of records matching the  selection criteria.
+          format: int64
+        RemainRecCount:
+          type: integer
+          description: Remain record count is the total number of records matching the  selection criteria that have not been sent yet.
+          format: int64
+        Cursor:
+          maxLength: 250
+          type: string
+          description: 'Next record pointer included in the response only if additional  records are available. '
+      description: Record Control Out

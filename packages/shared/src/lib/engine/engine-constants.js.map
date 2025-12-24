@@ -1,0 +1,1 @@
+{"version":3,"file":"engine-constants.js","sourceRoot":"","sources":["engine-constants.ts"],"names":[],"mappings":";;;AAAA,wDAAwD;AAE3C,QAAA,gBAAgB,GAAG;IAC5B,MAAM,EAAE,aAAa;IACrB,aAAa,EAAE,qBAAqB;IACpC,gBAAgB,EAAE,+BAAgB,CAAC,MAAM;IACzC,SAAS,EAAE,iBAAiB;IAC5B,gBAAgB,EAAE,wBAAwB;CAC7C,CAAA;AAEY,QAAA,wBAAwB,GAAG;IACpC,wBAAwB;CAC3B,CAAA"}
