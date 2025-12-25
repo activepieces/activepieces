@@ -1,3 +1,4 @@
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -142,7 +143,7 @@ type GetIdParams = Static<typeof GetIdParams>
 
 const GetParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         tags: ['templates'],
@@ -155,7 +156,7 @@ const GetParams = {
 
 const ListTemplatesParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         tags: ['templates'],
@@ -167,7 +168,7 @@ const ListTemplatesParams = {
 
 const DeleteParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Delete a template.',
@@ -179,7 +180,7 @@ const DeleteParams = {
 
 const CreateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Create a template.',
@@ -191,7 +192,7 @@ const CreateParams = {
 
 const UpdateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Update a template.',
@@ -204,7 +205,7 @@ const UpdateParams = {
 
 const IncrementUsageCountParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Increment usage count of a template.',

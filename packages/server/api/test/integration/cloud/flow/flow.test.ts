@@ -68,7 +68,7 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -120,7 +120,7 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -254,7 +254,7 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -334,7 +334,7 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -390,7 +390,6 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({
                 id: mockUser.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
                 },

@@ -323,6 +323,9 @@
       "@activepieces/piece-chatfly": [
         "packages/pieces/community/chatfly/src/index.ts"
       ],
+      "@activepieces/piece-azure-blob-storage": [
+        "packages/pieces/community/azure-blob-storage/src/index.ts"
+      ],
       "@activepieces/piece-metatext": [
         "packages/pieces/community/metatext/src/index.ts"
       ],
