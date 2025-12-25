@@ -1,9 +1,9 @@
 'use client';
 
 import { t } from 'i18next';
-import { BarChart3 } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
+import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -63,7 +63,7 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
           <Skeleton className="h-[300px] w-full" />
         ) : filteredData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
+            <TrendingUp className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
               {t(
                 'No runs recorded yet. Data will appear here once your flows start running.',
@@ -75,7 +75,7 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
           >
-            <BarChart
+            <LineChart
               accessibilityLayer
               data={filteredData}
               margin={{
@@ -113,8 +113,15 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
                   />
                 }
               />
-              <Bar dataKey="runs" fill="var(--color-runs)" radius={4} />
-            </BarChart>
+              <Line
+                dataKey="runs"
+                type="monotone"
+                stroke="var(--color-runs)"
+                strokeWidth={2}
+                dot={filteredData.length === 1 ? { r: 6, fill: 'var(--color-runs)' } : false}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
           </ChartContainer>
         )}
       </CardContent>
