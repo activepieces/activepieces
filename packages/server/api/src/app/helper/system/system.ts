@@ -32,7 +32,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.PIECES_SYNC_MODE]: PieceSyncMode.OFFICIAL_AUTO,
     [AppSystemProp.ENVIRONMENT]: 'prod',
     [AppSystemProp.EXECUTION_MODE]: ExecutionMode.UNSANDBOXED,
-    [WorkerSystemProp.WORKER_CONCURRENCY]: '10',
+    [WorkerSystemProp.WORKER_CONCURRENCY]: '5',
     [AppSystemProp.WEBHOOK_TIMEOUT_SECONDS]: '30',
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
