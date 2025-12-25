@@ -22,6 +22,66 @@ import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
 import fs from 'fs';
 import mime from 'mime-types';
 
+function parseBufferToJson(body: unknown): unknown {
+  const tryParseJson = (text: string): unknown => {
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return text;
+      }
+    }
+    return text;
+  };
+
+  if (Buffer.isBuffer(body)) {
+    try {
+      return tryParseJson(body.toString('utf-8'));
+    } catch {
+      return body;
+    }
+  }
+
+  if (body instanceof ArrayBuffer) {
+    try {
+      return tryParseJson(Buffer.from(body).toString('utf-8'));
+    } catch {
+      return body;
+    }
+  }
+
+  if (typeof body === 'object' && body !== null) {
+    const bufferLike = body as { type?: string; data?: number[] };
+    if (bufferLike.type === 'Buffer' && Array.isArray(bufferLike.data)) {
+      try {
+        return tryParseJson(Buffer.from(bufferLike.data).toString('utf-8'));
+      } catch {
+        return body;
+      }
+    }
+  }
+
+  return body;
+}
+
+function getParsedErrorResponse(error: HttpError) {
+  const errorResponse = error.errorMessage();
+  const parsedBody = parseBufferToJson(errorResponse.response.body);
+  return {
+    response: {
+      status: errorResponse.response.status,
+      body: parsedBody,
+    },
+    request: errorResponse.request,
+  };
+}
+
+function throwParsedError(error: HttpError): never {
+  const parsed = getParsedErrorResponse(error);
+  throw new Error(JSON.stringify(parsed, null, 2));
+}
+
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
 ): string => {
@@ -237,6 +297,12 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
           response_is_binary
         );
       } catch (error) {
+        if (error instanceof HttpError) {
+          if (failsafe) {
+            return getParsedErrorResponse(error);
+          }
+          throwParsedError(error);
+        }
         if (failsafe) {
           return (error as HttpError).errorMessage();
         }

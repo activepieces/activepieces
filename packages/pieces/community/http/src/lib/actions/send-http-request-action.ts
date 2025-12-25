@@ -19,6 +19,66 @@ import { httpMethodDropdown } from '../common/props';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import axios from 'axios';
 
+function parseBufferToJson(body: unknown): unknown {
+  const tryParseJson = (text: string): unknown => {
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {
+        return text;
+      }
+    }
+    return text;
+  };
+
+  if (Buffer.isBuffer(body)) {
+    try {
+      return tryParseJson(body.toString('utf-8'));
+    } catch {
+      return body;
+    }
+  }
+
+  if (body instanceof ArrayBuffer) {
+    try {
+      return tryParseJson(Buffer.from(body).toString('utf-8'));
+    } catch {
+      return body;
+    }
+  }
+
+  if (typeof body === 'object' && body !== null) {
+    const bufferLike = body as { type?: string; data?: number[] };
+    if (bufferLike.type === 'Buffer' && Array.isArray(bufferLike.data)) {
+      try {
+        return tryParseJson(Buffer.from(bufferLike.data).toString('utf-8'));
+      } catch {
+        return body;
+      }
+    }
+  }
+
+  return body;
+}
+
+function getParsedErrorMessage(error: HttpError) {
+  const errorResponse = error.errorMessage();
+  const parsedBody = parseBufferToJson(errorResponse.response.body);
+  return {
+    response: {
+      status: errorResponse.response.status,
+      body: parsedBody,
+    },
+    request: errorResponse.request,
+  };
+}
+
+function throwParsedError(error: HttpError): never {
+  const parsed = getParsedErrorMessage(error);
+  throw new Error(JSON.stringify(parsed, null, 2));
+}
+
 enum AuthType {
   NONE = 'NONE',
   BASIC = AuthenticationType.BASIC,
@@ -382,12 +442,18 @@ export const httpSendRequestAction = createAction({
         attempts++;
 
         if (stopFlow) {
+          if (error instanceof HttpError) {
+            throwParsedError(error);
+          }
           throw error;
         }
 
         switch (failureMode) {
           case 'retry_all': {
             if (attempts < 3) continue;
+            if (error instanceof HttpError) {
+              throwParsedError(error);
+            }
             throw error;
           }
           case 'retry_5xx': {
@@ -396,25 +462,37 @@ export const httpSendRequestAction = createAction({
               (error as HttpError).response.status < 600
             ) {
               if (attempts < 3) continue;
-              throw error; // after 3 tries, throw
+              if (error instanceof HttpError) {
+                throwParsedError(error);
+              }
+              throw error;
             }
-            return (error as HttpError).errorMessage(); //throw error; // non 5xxx error
+            return getParsedErrorMessage(error as HttpError);
           }
 
           case 'continue_all':
-            return (error as HttpError).errorMessage();
+            return getParsedErrorMessage(error as HttpError);
           case 'continue_4xx':
             if (
               (error as HttpError).response?.status >= 400 &&
               (error as HttpError).response?.status < 500
             ) {
-              return (error as HttpError).errorMessage();
+              return getParsedErrorMessage(error as HttpError);
             }
             if (attempts < 3) continue;
+            if (error instanceof HttpError) {
+              throwParsedError(error);
+            }
             throw error;
           case 'continue_none':
+            if (error instanceof HttpError) {
+              throwParsedError(error);
+            }
             throw error;
           default:
+            if (error instanceof HttpError) {
+              throwParsedError(error);
+            }
             throw error;
         }
       }
