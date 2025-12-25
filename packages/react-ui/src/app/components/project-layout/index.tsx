@@ -65,6 +65,13 @@ export function ProjectDashboardLayout({
       icon: LineChart,
       hasPermission: true,
     },
+    {
+      to: '/leaderboard',
+      label: t('Leaderboard'),
+      show: true,
+      icon: LineChart,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =

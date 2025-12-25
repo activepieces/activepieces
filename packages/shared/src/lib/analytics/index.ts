@@ -115,3 +115,27 @@ export const AnalyticsReportRequest = Type.Object({
     toDate: Type.Optional(Type.String()),
 })
 export type AnalyticsReportRequest = Static<typeof AnalyticsReportRequest>
+
+export const LeaderboardCreatorItem = Type.Object({
+    id: Type.String(),
+    email: Type.String(),
+    firstName: Type.Optional(Type.String()),
+    lastName: Type.Optional(Type.String()),
+    flowsCount: Type.Number(),
+    timeSaved: Type.Number(),
+})
+export type LeaderboardCreatorItem = Static<typeof LeaderboardCreatorItem>
+
+export const LeaderboardProjectItem = Type.Object({
+    id: Type.String(),
+    displayName: Type.String(),
+    flowsCount: Type.Number(),
+    timeSaved: Type.Number(),
+})
+export type LeaderboardProjectItem = Static<typeof LeaderboardProjectItem>
+
+export const LeaderboardReport = Type.Object({
+    creators: Type.Array(LeaderboardCreatorItem),
+    projects: Type.Array(LeaderboardProjectItem),
+})
+export type LeaderboardReport = Static<typeof LeaderboardReport>
