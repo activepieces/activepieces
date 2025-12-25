@@ -1,3 +1,4 @@
+import { ErrorCode, isNil } from '@activepieces/shared';
 import {
   DefaultErrorFunction,
   SetErrorFunction,
@@ -10,6 +11,11 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { AuthInitializer } from './authInitializer'; // ← Add this import
+import { EmbeddingFontLoader } from './components/embedding-font-loader';
+import { InitialDataGuard } from './components/initial-data-guard';
+import { ApRouter } from './guards';
+
 import { EmbeddingProvider } from '@/components/embed-provider';
 import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
@@ -18,11 +24,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { api } from '@/lib/api';
-import { ErrorCode, isNil } from '@activepieces/shared';
-
-import { EmbeddingFontLoader } from './components/embedding-font-loader';
-import { InitialDataGuard } from './components/initial-data-guard';
-import { ApRouter } from './guards';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
@@ -50,24 +51,29 @@ export function App() {
   const { i18n } = useTranslation();
   return (
     <QueryClientProvider client={queryClient}>
-      <RefreshAnalyticsProvider>
-        <EmbeddingProvider>
-          <InitialDataGuard>
-            <EmbeddingFontLoader>
-              <TelemetryProvider>
-                <TooltipProvider>
-                  <React.Fragment key={i18n.language}>
-                    <ThemeProvider storageKey="vite-ui-theme">
-                      <ApRouter />
-                      <Toaster position="bottom-right" />
-                    </ThemeProvider>
-                  </React.Fragment>
-                </TooltipProvider>
-              </TelemetryProvider>
-            </EmbeddingFontLoader>
-          </InitialDataGuard>
-        </EmbeddingProvider>
-      </RefreshAnalyticsProvider>
+      <AuthInitializer>
+        {' '}
+        {/* ← Add this wrapper */}
+        <RefreshAnalyticsProvider>
+          <EmbeddingProvider>
+            <InitialDataGuard>
+              <EmbeddingFontLoader>
+                <TelemetryProvider>
+                  <TooltipProvider>
+                    <React.Fragment key={i18n.language}>
+                      <ThemeProvider storageKey="vite-ui-theme">
+                        <ApRouter />
+                        <Toaster position="bottom-right" />
+                      </ThemeProvider>
+                    </React.Fragment>
+                  </TooltipProvider>
+                </TelemetryProvider>
+              </EmbeddingFontLoader>
+            </InitialDataGuard>
+          </EmbeddingProvider>
+        </RefreshAnalyticsProvider>
+      </AuthInitializer>{' '}
+      {/* ← Close the wrapper */}
     </QueryClientProvider>
   );
 }
