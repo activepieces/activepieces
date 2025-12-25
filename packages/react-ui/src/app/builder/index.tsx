@@ -3,11 +3,9 @@ import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import {
-  LeftSideBarType,
   RightSideBarType,
   useBuilderStateContext,
   useShowBuilderIsSavingWarningBeforeLeaving,
-  useSwitchToDraft,
 } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
@@ -20,7 +18,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { RunDetailsBar } from '@/features/flow-runs/components/run-details-bar';
+import { RunStatus } from '@/features/flow-runs/components/run-status';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -39,22 +37,15 @@ import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
-import { LEFT_SIDEBAR_ID } from './flow-canvas/utils/consts';
 import { FlowVersionsList } from './flow-versions';
-import { FlowRunDetails } from './run-details';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
-
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
 
-const useAnimateSidebar = (
-  sidebarValue: LeftSideBarType | RightSideBarType,
-) => {
+const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
   const handleRef = useRef<ImperativePanelHandle>(null);
-  const sidebarClosed = [LeftSideBarType.NONE, RightSideBarType.NONE].includes(
-    sidebarValue,
-  );
+  const sidebarClosed = sidebarValue === RightSideBarType.NONE;
   useEffect(() => {
     const sidebarSize = handleRef.current?.getSize() ?? 0;
     if (sidebarClosed) {
@@ -68,11 +59,10 @@ const useAnimateSidebar = (
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [setRun, flowVersion, leftSidebar, rightSidebar, run, selectedStep] =
+  const [setRun, flowVersion, rightSidebar, run, selectedStep] =
     useBuilderStateContext((state) => [
       state.setRun,
       state.flowVersion,
-      state.leftSidebar,
       state.rightSidebar,
       state.run,
       state.selectedStep,
@@ -100,7 +90,6 @@ const BuilderPage = () => {
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
   const rightHandleRef = useAnimateSidebar(rightSidebar);
-  const leftHandleRef = useAnimateSidebar(leftSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
@@ -135,7 +124,6 @@ const BuilderPage = () => {
     };
   }, [socket.id, run?.id]);
 
-  const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
@@ -145,48 +133,13 @@ const BuilderPage = () => {
         <BuilderHeader />
       </div>
       <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel
-          id="left-sidebar"
-          defaultSize={0}
-          minSize={0}
-          maxSize={39}
-          order={1}
-          ref={leftHandleRef}
-          className={cn('min-w-0 z-20 ', {
-            [minWidthOfSidebar]: leftSidebar !== LeftSideBarType.NONE,
-            [animateResizeClassName]: !isDraggingHandle,
-          })}
-        >
-          <div id={LEFT_SIDEBAR_ID} className="w-full h-full">
-            {leftSidebar === LeftSideBarType.RUNS && <RunsList />}
-            {leftSidebar === LeftSideBarType.RUN_DETAILS && <FlowRunDetails />}
-          </div>
-        </ResizablePanel>
-
-        <ResizableHandle
-          onDragging={setIsDraggingHandle}
-          withHandle={leftSidebar !== LeftSideBarType.NONE}
-          className={
-            leftSidebar === LeftSideBarType.NONE ? 'bg-transparent' : ''
-          }
-        />
-
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
 
-            <RunDetailsBar
-              run={run}
-              isLoading={isSwitchingToDraftPending}
-              exitRun={() => {
-                socket.removeAllListeners(
-                  WebsocketClientEvent.FLOW_RUN_PROGRESS,
-                );
-                switchToDraft();
-              }}
-            />
+            <RunStatus run={run} />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
@@ -244,6 +197,7 @@ const BuilderPage = () => {
                   <StepSettingsContainer />
                 </StepSettingsProvider>
               )}
+            {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}
           </div>
         </ResizablePanel>

@@ -18,7 +18,9 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
 
   if (
     selectedTab !== PieceSelectorTabType.AI_AND_AGENTS ||
-    ![FlowOperationType.ADD_ACTION, FlowOperationType.UPDATE_ACTION].includes(operation.type)
+    ![FlowOperationType.ADD_ACTION, FlowOperationType.UPDATE_ACTION].includes(
+      operation.type,
+    )
   ) {
     return null;
   }

@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
+import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -113,6 +114,7 @@ const ApStepCanvasNode = React.memo(
           isValid={!!isStepValid}
           isSkipped={isSkipped}
         />
+        <LoopIterationInput stepName={step.name} />
         <ApStepNodeStatus stepName={step.name} />
         <StepNodeName stepName={step.name} />
         <div className="px-3 h-full w-full overflow-hidden">
@@ -144,6 +146,7 @@ const ApStepCanvasNode = React.memo(
                   stepIndex={stepIndex}
                   isSkipped={isSkipped}
                   pieceDisplayName={stepMetadata?.displayName ?? ''}
+                  stepName={step.name}
                 />
                 {!readonly && <StepNodeChevron />}
               </div>
