@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   Palette,
   LayoutGrid,
-  LineChart,
   Server,
   Users,
   Bot,
@@ -62,12 +61,6 @@ export function PlatformSidebar() {
     {
       label: t('General'),
       items: [
-        {
-          to: '/platform/analytics',
-          label: t('Overview'),
-          icon: LineChart,
-          locked: !platform.plan.analyticsEnabled,
-        },
         {
           to: '/platform/projects',
           label: t('Projects'),

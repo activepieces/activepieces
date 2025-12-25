@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search, Loader2, Plus } from 'lucide-react';
+import { Compass, Search, Loader2, Plus, LineChart } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -87,7 +87,7 @@ export function ProjectDashboardSidebar() {
   const allProjects = useMemo(() => {
     const projects = projectPages?.pages.flatMap((page) => page.data) ?? [];
     const uniqueProjects = Array.from(
-      new Map(projects.map((project) => [project.id, project])).values(),
+      new Map(projects.map((project) => [project.id, project])).values()
     );
     return uniqueProjects;
   }, [projectPages]);
@@ -109,7 +109,7 @@ export function ProjectDashboardSidebar() {
   const shouldDisableNewProjectButton = useMemo(() => {
     if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
       const teamProjects = allProjects.filter(
-        (project) => project.type === ProjectType.TEAM,
+        (project) => project.type === ProjectType.TEAM
       );
       return teamProjects.length >= 1;
     }
@@ -167,7 +167,17 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const items = [exploreLink].filter(permissionFilter);
+  const impactLink: SidebarItemType = {
+    type: 'link',
+    to: '/impact',
+    label: t('Impact'),
+    icon: LineChart,
+    show: true,
+    hasPermission: true,
+    isSubItem: false,
+  };
+
+  const items = [exploreLink, impactLink].filter(permissionFilter);
 
   const handleProjectSelect = async (projectId: string) => {
     const project = displayProjects?.find((p) => p.id === projectId);
@@ -194,7 +204,7 @@ export function ProjectDashboardSidebar() {
             'cursor-default',
             'flex',
             'flex-col',
-            'overflow-hidden',
+            'overflow-hidden'
           )}
         >
           <SidebarGroup className="cursor-default shrink-0">
@@ -250,14 +260,14 @@ export function ProjectDashboardSidebar() {
                           <TooltipContent className="max-w-[250px]">
                             <p className="text-xs mb-1">
                               {t(
-                                'Upgrade your plan to create additional team projects.',
+                                'Upgrade your plan to create additional team projects.'
                               )}{' '}
                               <button
                                 className="text-xs text-primary underline hover:no-underline"
                                 onClick={() =>
                                   window.open(
                                     'https://www.activepieces.com/pricing',
-                                    '_blank',
+                                    '_blank'
                                   )
                                 }
                               >
@@ -305,7 +315,7 @@ export function ProjectDashboardSidebar() {
                 'flex-1 overflow-y-auto',
                 state === 'collapsed'
                   ? 'flex flex-col items-center scrollbar-none'
-                  : 'scrollbar-hover',
+                  : 'scrollbar-hover'
               )}
               onClick={(e) => e.stopPropagation()}
             >
@@ -313,7 +323,7 @@ export function ProjectDashboardSidebar() {
                 className={cn(
                   state === 'collapsed'
                     ? 'gap-2 flex flex-col items-center'
-                    : '',
+                    : ''
                 )}
               >
                 {displayProjects.map((project) => (
@@ -321,7 +331,7 @@ export function ProjectDashboardSidebar() {
                     key={project.id}
                     project={project}
                     isCurrentProject={location.pathname.includes(
-                      `/projects/${project.id}`,
+                      `/projects/${project.id}`
                     )}
                     handleProjectSelect={handleProjectSelect}
                   />

@@ -16,10 +16,12 @@ import {
   AnalyticsFlowReportItem,
   DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
   isNil,
+  PlatformRole,
 } from '@activepieces/shared';
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
+import { userHooks } from '@/hooks/user-hooks';
 
 type FlowsDetailsProps = {
   flowsDetails?: AnalyticsFlowReportItem[];
@@ -43,6 +45,7 @@ const formatMinutes = (minutes: number) => {
 
 const createColumns = (
   estimatedTimeSavedPerStep: number,
+  isPlatformAdmin: boolean
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -55,7 +58,7 @@ const createColumns = (
         onClick={() =>
           window.open(
             `/projects/${row.original.projectId}/flows/${row.original.flowId}`,
-            '_blank',
+            '_blank'
           )
         }
       >
@@ -96,7 +99,7 @@ const createColumns = (
           <TooltipContent side="top" className="max-w-xs">
             {t(
               'Each completed step saves {minutes} minutes of manual work. You can customize the estimated time saved per step or set a custom value for individual flows.',
-              { minutes: Math.round(estimatedTimeSavedPerStep) },
+              { minutes: Math.round(estimatedTimeSavedPerStep) }
             )}
           </TooltipContent>
         </Tooltip>
@@ -106,6 +109,21 @@ const createColumns = (
       const timeSavedPerRun = row.original.timeSavedPerRun;
       const displayValue = timeSavedPerRun?.value;
       const isEstimated = timeSavedPerRun?.isEstimated;
+
+      if (!isPlatformAdmin) {
+        return (
+          <div className="flex items-center gap-1 text-foreground">
+            {displayValue == null ? (
+              <span>{t('N/A')}</span>
+            ) : (
+              <span>
+                {formatMinutes(Math.round(displayValue ?? 0))}
+                {isEstimated && '~'}
+              </span>
+            )}
+          </div>
+        );
+      }
 
       return (
         <Tooltip>
@@ -160,7 +178,7 @@ const createColumns = (
         {
           runs: runs.toLocaleString(),
           perRun: `${isEstimated ? '~' : ''}${perRunValue}`,
-        },
+        }
       );
       return (
         <Tooltip>
@@ -185,6 +203,8 @@ export function FlowsDetails({
   estimatedTimeSavedPerStep,
 }: FlowsDetailsProps) {
   const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
+  const { data: user } = userHooks.useCurrentUser();
+  const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const flowsDetailsWithOverrides = useMemo(() => {
     if (!flowsDetails) return undefined;
@@ -224,7 +244,10 @@ export function FlowsDetails({
     ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
     : estimatedTimeSavedPerStep;
 
-  const columns = createColumns(resolvedEstimatedTimeSavedPerStep);
+  const columns = createColumns(
+    resolvedEstimatedTimeSavedPerStep,
+    isPlatformAdmin
+  );
 
   return (
     <div className="flex flex-col gap-4 mb-8">
@@ -240,7 +263,7 @@ export function FlowsDetails({
         hidePagination={true}
         emptyStateTextTitle={t('No Runs Yet')}
         emptyStateTextDescription={t(
-          'Start running your flows to see time saved',
+          'Start running your flows to see time saved'
         )}
         emptyStateIcon={
           <Workflow className="h-10 w-10 text-muted-foreground" />
