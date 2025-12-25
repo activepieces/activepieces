@@ -1,27 +1,27 @@
-import { ALL_PRINCIPAL_TYPES, ApId, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ApId, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { mcpServerService } from './mcp-service'
 
-
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 
-    app.get('/', GetMcpRequest, async (req) => {
-        return mcpServerService(req.log).getPopulatedByProjectId(req.principal.projectId)
+    app.get('/:projectId', GetMcpRequest, async (req) => {
+        return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
     })
 
     app.post('/', UpdateMcpRequest, async (req) => {
         const { status } = req.body
         return mcpServerService(req.log).update({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             status,
         })
     })
 
     app.post('/rotate', RotateTokenRequest, async (req) => {
         return mcpServerService(req.log).rotateToken({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
         })
     })
 
@@ -60,7 +60,7 @@ function validateAuthorizationHeader(authHeader: string | undefined, mcp: Popula
 
 const StreamableHttpRequestRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
         skipAuth: true,
     },
     schema: {
@@ -72,8 +72,13 @@ const StreamableHttpRequestRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
@@ -89,8 +94,13 @@ export const UpdateMcpRequest = {
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.READ_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.READ_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
@@ -104,8 +114,13 @@ const GetMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
