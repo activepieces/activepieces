@@ -1,3 +1,6 @@
+import { ApEnvironment } from '@activepieces/shared'
+import { workerMachine } from '../../../utils/machine'
+
 /**
  * Tracks the current "generation" of dev pieces.
  * Incremented after each successful rebuild so workers know when to restart.
@@ -10,5 +13,9 @@ export const devPiecesState = {
     },
     incrementGeneration(): number {
         return ++pieceGeneration
+    },
+    isWorkerGenerationStale(workerGeneration: number): boolean {
+        const isDev = workerMachine.getSettings().ENVIRONMENT === ApEnvironment.DEVELOPMENT
+        return isDev && workerGeneration !== pieceGeneration
     },
 }

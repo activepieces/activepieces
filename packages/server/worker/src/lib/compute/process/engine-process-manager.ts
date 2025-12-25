@@ -74,8 +74,7 @@ export const engineProcessManager = {
             assertNotNullOrUndefined(workerIndex, 'Worker index should not be undefined')
 
             const workerIsDisconnected = isNil(processes[workerIndex]) || !engineSocketServer.isConnected(processIds[workerIndex])
-            const workerGenerationStale = workerGenerations[workerIndex] !== devPiecesState.getGeneration()
-            const workerIsDead = workerIsDisconnected || (!isWorkerReusable() && workerGenerationStale)
+            const workerIsDead = workerIsDisconnected || shouldRecreateWorker(workerGenerations[workerIndex])
             if (!workerIsDead) {
                 log.info({
                     workerIndex,
@@ -87,7 +86,7 @@ export const engineProcessManager = {
                     attributes: {
                         'worker.index': workerIndex,
                         'worker.isDisconnected': workerIsDisconnected,
-                        'worker.isReusable': isWorkerReusable(),
+                        'worker.isReusable': canReuseWorkers(),
                     },
                 }, async (span) => {
                     try {
@@ -117,7 +116,7 @@ export const engineProcessManager = {
                                     platformId: operation.platformId,
                                     flowVersionId: getFlowVersionId(operation, operationType),
                                     options,
-                                    reusable: isWorkerReusable(),
+                                    reusable: canReuseWorkers(),
                                 })
                                 workerGenerations[workerIndex] = devPiecesState.getGeneration()
                                 const processCreationTime = Math.floor(performance.now() - startTime)
@@ -326,8 +325,7 @@ async function processTask(workerIndex: number, operationType: EngineOperationTy
             if (!isNil(timeoutWorker)) {
                 clearTimeout(timeoutWorker)
             }
-            const generationStale = workerGenerations[workerIndex] !== devPiecesState.getGeneration()
-            if (!isWorkerReusable() && generationStale) {
+            if (shouldRecreateWorker(workerGenerations[workerIndex])) {
                 if (!isNil(processes[workerIndex])) {
                     await forceTerminate(processes[workerIndex], log)
                 }
@@ -379,17 +377,25 @@ async function forceTerminate(childProcess: ChildProcess, log: FastifyBaseLogger
     })
 }
 
-
-function isWorkerReusable(): boolean {
+function canReuseWorkers(): boolean {
     const settings = workerMachine.getSettings()
-    const isDev = settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT
-    if (isDev) {
-        return false
-    }
-    const isDedicated = workerMachine.isDedicatedWorker()
-    if (isDedicated) {
+
+    if (settings.ENVIRONMENT === ApEnvironment.DEVELOPMENT) {
         return true
     }
-    const trustedEnvironment = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED].includes(settings.EXECUTION_MODE as ExecutionMode)
-    return trustedEnvironment
+    const trustedModes = [ExecutionMode.SANDBOX_CODE_ONLY, ExecutionMode.UNSANDBOXED]
+    if (trustedModes.includes(settings.EXECUTION_MODE as ExecutionMode)) {
+        return true
+    }
+    if (workerMachine.isDedicatedWorker()) {
+        return true
+    }
+    return false
+}
+
+function shouldRecreateWorker(workerGeneration: number): boolean {
+    if (devPiecesState.isWorkerGenerationStale(workerGeneration)) {
+        return true
+    }
+    return !canReuseWorkers()
 }

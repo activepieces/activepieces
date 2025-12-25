@@ -29,7 +29,7 @@ import {
   isNil,
 } from '@activepieces/shared';
 
-import { GenericPropertiesFormComponent } from '../builder/piece-properties/generic-properties-form';
+import { GenericPropertiesForm } from '../builder/piece-properties/generic-properties-form';
 
 function OAuth2ConnectionSettings({
   authProperty,
@@ -109,11 +109,12 @@ function OAuth2ConnectionSettings({
         </>
       )}
       {authProperty.props && (
-        <GenericPropertiesFormComponent
+        <GenericPropertiesForm
           prefixValue="request.value.props"
           props={authProperty.props}
           useMentionTextInput={false}
-          allowDynamicValues={false}
+          propertySettings={null}
+          dynamicPropsInfo={null}
         />
       )}
 

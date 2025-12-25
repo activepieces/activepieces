@@ -22,11 +22,10 @@ afterAll(async () => {
 
 describe('Webhook Service', () => {
     it('should return GONE if the flow is not found', async () => {
-        const { mockProject, mockOwner } = await mockAndSaveBasicSetup()
+        const { mockOwner } = await mockAndSaveBasicSetup()
         const { mockPlatform } = await mockAndSaveBasicSetup()
         const mockToken = await generateMockToken({
             type: PrincipalType.USER,
-            projectId: mockProject.id,
             id: mockOwner.id,
             platform: {
                 id: mockPlatform.id,
@@ -59,7 +58,6 @@ describe('Webhook Service', () => {
         })
         const mockToken = await generateMockToken({
             type: PrincipalType.USER,
-            projectId: mockProject.id,
             platform: {
                 id: mockPlatform.id,
             },
