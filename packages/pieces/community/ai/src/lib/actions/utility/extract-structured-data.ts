@@ -9,7 +9,7 @@ import { AIProviderName } from '@activepieces/shared';
 export const extractStructuredData = createAction({
 	name: 'extractStructuredData',
 	displayName: 'Extract Structured Data',
-	description: 'Extract structured data from provided text,image or PDF.',
+	description: 'Accurately Pull names, amounts, and other structured data from emails, invoices, and scanned documents.',
 	props: {
 		provider: aiProps({ modelType: 'text' }).provider,
 		model: aiProps({ modelType: 'text' }).model,
