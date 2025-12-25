@@ -340,6 +340,9 @@
       ],
       "@activepieces/piece-clearoutphone": [
         "packages/pieces/community/clearoutphone/src/index.ts"
+      ],
+      "@activepieces/piece-clicdata": [
+        "packages/pieces/community/clicdata/src/index.ts"
       ]
     },
     "resolveJsonModule": true
