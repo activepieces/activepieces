@@ -15,6 +15,8 @@ import {
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
+import { ActiveFlowsChart } from './active-flows-chart';
+import { FlowsCreatedChart } from './flows-created-chart';
 import { RunsChart } from './runs-chart';
 import { TimeSavedChart } from './time-saved-chart';
 
@@ -114,6 +116,14 @@ export function Trends({ report }: TrendsProps) {
         />
         <TimeSavedChart
           runsUsage={analyticsData?.runsUsage}
+          isLoading={isLoading}
+        />
+        <FlowsCreatedChart
+          flowsCreated={analyticsData?.flowsCreated}
+          isLoading={isLoading}
+        />
+        <ActiveFlowsChart
+          activeFlowsOverTime={analyticsData?.activeFlowsOverTime}
           isLoading={isLoading}
         />
       </div>

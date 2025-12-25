@@ -48,6 +48,26 @@ export type AnalyticsRunsUsageItem = Static<typeof AnalyticsRunsUsageItem>
 export const AnalyticsRunsUsage = Type.Array(AnalyticsRunsUsageItem)
 export type AnalyticsRunsUsage = Static<typeof AnalyticsRunsUsage>
 
+export const AnalyticsFlowsCreatedItem = Type.Object({
+    day: Type.String(),
+    flowsCreated: Type.Number(),
+})
+export type AnalyticsFlowsCreatedItem = Static<typeof AnalyticsFlowsCreatedItem>
+
+export const AnalyticsActiveFlowsItem = Type.Object({
+    day: Type.String(),
+    activeFlows: Type.Number(),
+})
+export type AnalyticsActiveFlowsItem = Static<typeof AnalyticsActiveFlowsItem>
+
+export const AnalyticsUserItem = Type.Object({
+    id: Type.String(),
+    email: Type.String(),
+    firstName: Type.Optional(Type.String()),
+    lastName: Type.Optional(Type.String()),
+})
+export type AnalyticsUserItem = Static<typeof AnalyticsUserItem>
+
 export const AnalyticsFlowReportItem = Type.Object({
     flowId: Type.String(),
     flowName: Type.String(),
@@ -59,19 +79,12 @@ export const AnalyticsFlowReportItem = Type.Object({
         isEstimated: Type.Boolean(),    
     }),
     minutesSaved: Type.Number(),
+    owner: Type.Optional(AnalyticsUserItem),
 })
 export type AnalyticsFlowReportItem = Static<typeof AnalyticsFlowReportItem>
 
 export const AnalyticsFlowReport = Type.Array(AnalyticsFlowReportItem)
 export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
-
-export const AnalyticsUserItem = Type.Object({
-    id: Type.String(),
-    email: Type.String(),
-    firstName: Type.Optional(Type.String()),
-    lastName: Type.Optional(Type.String()),
-})
-export type AnalyticsUserItem = Static<typeof AnalyticsUserItem>
 
 export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
@@ -87,6 +100,8 @@ export const PlatformAnalyticsReport = Type.Object({
     topPieces: AnalyticsPieceReport,
     topProjects: AnalyticsProjectReport,
     runsUsage: AnalyticsRunsUsage,
+    flowsCreated: Type.Array(AnalyticsFlowsCreatedItem),
+    activeFlowsOverTime: Type.Array(AnalyticsActiveFlowsItem),
     flowsDetails: AnalyticsFlowReport,
     platformId: Type.String(),
     users: Type.Array(AnalyticsUserItem),

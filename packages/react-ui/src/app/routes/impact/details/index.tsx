@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, Folder, Info, Pencil, Workflow } from 'lucide-react';
+import { Clock, Folder, Info, Pencil, User, Workflow } from 'lucide-react';
 import { useContext, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -83,6 +83,28 @@ const createColumns = (
         {row.original.projectName}
       </div>
     ),
+  },
+  {
+    accessorKey: 'owner',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} />
+    ),
+    cell: ({ row }) => {
+      const owner = row.original.owner;
+      if (!owner) {
+        return <span className="text-muted-foreground">{t('Unknown')}</span>;
+      }
+      const displayName =
+        owner.firstName && owner.lastName
+          ? `${owner.firstName} ${owner.lastName}`
+          : owner.email;
+      return (
+        <div className="flex items-center gap-1 text-foreground">
+          <User className="h-3.5 w-3.5" />
+          {displayName}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'timeSavedPerRun',
