@@ -2,7 +2,6 @@
 
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
-import { DateRange } from 'react-day-picker';
 import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,20 +13,20 @@ import {
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatUtils } from '@/lib/utils';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { AnalyticsRunsUsageItem } from '@activepieces/shared';
 
 type TimeSavedChartProps = {
-  report?: PlatformAnalyticsReport;
-  selectedDateRange?: DateRange;
+  runsUsage?: AnalyticsRunsUsageItem[];
+  isLoading: boolean;
 };
 
 export function TimeSavedChart({
-  report,
-  selectedDateRange,
+  runsUsage,
+  isLoading,
 }: TimeSavedChartProps) {
   const chartData =
-    report?.runsUsage
-      .map((data) => ({
+    runsUsage
+      ?.map((data) => ({
         date: data.day,
         minutesSaved: data.minutesSaved,
       }))
@@ -42,14 +41,6 @@ export function TimeSavedChart({
     },
   } satisfies ChartConfig;
 
-  const filteredData = chartData.filter((data) => {
-    if (!selectedDateRange?.from || !selectedDateRange?.to) {
-      return true;
-    }
-    const date = new Date(data.date);
-    return date >= selectedDateRange.from && date <= selectedDateRange.to;
-  });
-
   return (
     <Card className="col-span-full">
       <CardHeader className="space-y-0 pb-2">
@@ -63,9 +54,9 @@ export function TimeSavedChart({
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        {!report ? (
+        {isLoading ? (
           <Skeleton className="h-[300px] w-full" />
-        ) : filteredData.length === 0 ? (
+        ) : chartData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
             <Clock className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
@@ -81,7 +72,7 @@ export function TimeSavedChart({
           >
             <LineChart
               accessibilityLayer
-              data={filteredData}
+              data={chartData}
               margin={{
                 left: 12,
                 right: 12,
@@ -125,7 +116,11 @@ export function TimeSavedChart({
                 type="monotone"
                 stroke="var(--color-minutesSaved)"
                 strokeWidth={2}
-                dot={filteredData.length === 1 ? { r: 6, fill: 'var(--color-minutesSaved)' } : false}
+                dot={
+                  chartData.length === 1
+                    ? { r: 6, fill: 'var(--color-minutesSaved)' }
+                    : false
+                }
                 activeDot={{ r: 5 }}
               />
             </LineChart>

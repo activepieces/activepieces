@@ -65,6 +65,14 @@ export type AnalyticsFlowReportItem = Static<typeof AnalyticsFlowReportItem>
 export const AnalyticsFlowReport = Type.Array(AnalyticsFlowReportItem)
 export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
 
+export const AnalyticsUserItem = Type.Object({
+    id: Type.String(),
+    email: Type.String(),
+    firstName: Type.Optional(Type.String()),
+    lastName: Type.Optional(Type.String()),
+})
+export type AnalyticsUserItem = Static<typeof AnalyticsUserItem>
+
 export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
     estimatedTimeSavedPerStep: Nullable(Type.Number()),
@@ -81,5 +89,14 @@ export const PlatformAnalyticsReport = Type.Object({
     runsUsage: AnalyticsRunsUsage,
     flowsDetails: AnalyticsFlowReport,
     platformId: Type.String(),
+    users: Type.Array(AnalyticsUserItem),
 })
 export type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>
+
+export const AnalyticsReportRequest = Type.Object({
+    projectId: Type.Optional(Type.String()),
+    userId: Type.Optional(Type.String()),
+    fromDate: Type.Optional(Type.String()),
+    toDate: Type.Optional(Type.String()),
+})
+export type AnalyticsReportRequest = Static<typeof AnalyticsReportRequest>

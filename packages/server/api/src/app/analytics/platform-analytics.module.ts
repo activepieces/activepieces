@@ -1,4 +1,4 @@
-import { FlowOperationType, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
+import { AnalyticsReportRequest, FlowOperationType, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { flowService } from '../flows/flow/flow.service'
@@ -7,7 +7,6 @@ import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
 export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustBeOwnedByCurrentUser)
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
     await piecesAnalyticsService(app.log).init()
     await app.register(platformAnalyticsController, { prefix: '/v1/analytics' })
@@ -15,9 +14,9 @@ export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) =>
 
 const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
-    app.get('/', PlatformAnalyticsRequest, async (request) => {
+    app.get('/', AnalyticsReportRequestSchema, async (request) => {
         const { platform } = request.principal
-        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
+        return platformAnalyticsReportService(request.log).getReport(platform.id, request.query)
     })
 
     app.post('/', UpdatePlatformReportRequestSchema, async (request) => {
@@ -72,5 +71,13 @@ const UpdatePlatformReportRequestSchema = {
 const PlatformAnalyticsRequest = {
     config: {
         allowedPrincipals: [PrincipalType.USER] as const,
+    },
+}
+const AnalyticsReportRequestSchema = {
+    config: {
+        allowedPrincipals: [PrincipalType.USER] as const,
+    },
+    schema: {
+        querystring: AnalyticsReportRequest,
     },
 }

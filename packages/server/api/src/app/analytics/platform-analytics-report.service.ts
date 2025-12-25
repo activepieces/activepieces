@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AnalyticsFlowReportItem, AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsRunsUsageItem, apId, assertNotNullOrUndefined, DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment, spreadIfDefined, UpdatePlatformReportRequest } from '@activepieces/shared'
+import { AnalyticsFlowReportItem, AnalyticsPieceReportItem, AnalyticsProjectReportItem, AnalyticsReportRequest, AnalyticsRunsUsageItem, AnalyticsUserItem, apId, assertNotNullOrUndefined, DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment, spreadIfDefined, UpdatePlatformReportRequest } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { MoreThan } from 'typeorm'
@@ -15,7 +15,7 @@ import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entit
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 
 export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
-    refreshReport: async (platformId: PlatformId) => {
+    refreshReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
         await distributedLock(log).runExclusive({
             key: `platform-analytics-report-${platformId}`,
             timeoutInSeconds: 400,
@@ -23,7 +23,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
                 await refreshReport(platformId, log)
             },
         })
-        return platformAnalyticsReportRepo().findOneBy({ platformId })
+        return platformAnalyticsReportService(log).getReport(platformId, {})
     },
     update: async (platformId: PlatformId, request: UpdatePlatformReportRequest) => {
         await platformAnalyticsReportRepo().update({ platformId }, {
@@ -31,22 +31,50 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             outdated: request.outdated,
         })
     },
-    getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
-        const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
-        if (report && !report.outdated) {
-            return report
+    getReport: async (platformId: PlatformId, filters: AnalyticsReportRequest): Promise<PlatformAnalyticsReport> => {
+        let report = await platformAnalyticsReportRepo().findOneBy({ platformId })
+        if (!report || report.outdated) {
+            await refreshReport(platformId, log)
+            report = await platformAnalyticsReportRepo().findOneBy({ platformId })
         }
-        return refreshReport(platformId, log)
+        if (!report) {
+            throw new Error('Failed to generate analytics report')
+        }
+        const hasFilters = !isNil(filters.projectId) || !isNil(filters.userId) || !isNil(filters.fromDate) || !isNil(filters.toDate)
+        const runsUsage = hasFilters
+            ? await analyzeRunsWithFilters(platformId, report.estimatedTimeSavedPerStep ?? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, filters)
+            : report.runsUsage
+        const users = await getUsers(platformId)
+        return {
+            id: report.id,
+            created: report.created,
+            updated: report.updated,
+            estimatedTimeSavedPerStep: report.estimatedTimeSavedPerStep,
+            totalFlows: report.totalFlows,
+            activeFlows: report.activeFlows,
+            outdated: report.outdated,
+            totalUsers: report.totalUsers,
+            activeUsers: report.activeUsers,
+            totalProjects: report.totalProjects,
+            activeFlowsWithAI: report.activeFlowsWithAI,
+            totalFlowRuns: report.totalFlowRuns,
+            topPieces: report.topPieces,
+            topProjects: report.topProjects,
+            runsUsage,
+            flowsDetails: report.flowsDetails,
+            platformId: report.platformId,
+            users,
+        }
     },
 })
 
 
 
-const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Promise<PlatformAnalyticsReport> => {
+const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Promise<void> => {
     const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
     const updatedInLastMinute = dayjs().subtract(1, 'minute').toISOString()
     if (!isNil(report) && dayjs(report.updated).isAfter(updatedInLastMinute)) {
-        return report
+        return
     }
     const estimatedTimeSavedPerStep = report?.estimatedTimeSavedPerStep ?? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
     const flows = await listAllFlows(log, platformId)
@@ -63,7 +91,7 @@ const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Pr
     const { runsUsage, totalFlowRuns } = await analyzeRuns(platformId, estimatedTimeSavedPerStep)
     const flowsDetails = await analyzeFlowsDetails(platformId, estimatedTimeSavedPerStep)
 
-    return platformAnalyticsReportRepo().save({
+    await platformAnalyticsReportRepo().save({
         totalUsers,
         activeUsers,
         activeFlows,
@@ -82,7 +110,6 @@ const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Pr
         updated: dayjs().toISOString(),
         id: report?.id ?? apId(),
     })
-
 }
 
 async function analyzeProjects(flows: PopulatedFlow[]): Promise<AnalyticsProjectReportItem[]> {
@@ -178,7 +205,18 @@ async function analyzeUsers(platformId: PlatformId) {
     }
 }
 
-
+async function getUsers(platformId: PlatformId): Promise<AnalyticsUserItem[]> {
+    const users = await userRepo().find({
+        where: { platformId },
+        relations: ['identity'],
+    })
+    return users.map(user => ({
+        id: user.id,
+        email: user.identity.email,
+        firstName: user.identity.firstName ?? undefined,
+        lastName: user.identity.lastName ?? undefined,
+    }))
+}
 
 async function listAllFlows(log: FastifyBaseLogger, platformId: PlatformId): Promise<PopulatedFlow[]> {
     const page = await flowService(log).list({
@@ -231,6 +269,59 @@ async function analyzeRuns(platformId: PlatformId, estimatedTimeSavedPerStep: nu
     })
 
     return { runsUsage, totalFlowRuns }
+}
+
+async function analyzeRunsWithFilters(
+    platformId: PlatformId,
+    estimatedTimeSavedPerStep: number,
+    filters: AnalyticsReportRequest,
+): Promise<AnalyticsRunsUsageItem[]> {
+    if (isNil(estimatedTimeSavedPerStep)) {
+        throw new Error('Estimated time saved per step is required')
+    }
+
+    const queryBuilder = flowRunRepo()
+        .createQueryBuilder('flow_run')
+        .select('DATE(flow_run.created)', 'day')
+        .addSelect('COUNT(*)::int', 'totalRuns')
+        .addSelect('COALESCE(SUM(COALESCE(flow."timeSavedPerRun", flow_run."stepsCount" * :estimatedTimeSavedPerStep)), 0)::int', 'minutesSaved')
+        .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
+        .innerJoin('flow', 'flow', 'flow_run."flowId" = flow.id')
+        .where('project."platformId" = :platformId', { platformId })
+        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .setParameters({ estimatedTimeSavedPerStep })
+
+    if (!isNil(filters.fromDate)) {
+        queryBuilder.andWhere('flow_run.created >= :fromDate', { fromDate: filters.fromDate })
+    } else {
+        queryBuilder.andWhere('flow_run.created >= now() - interval \'3 months\'')
+    }
+
+    if (!isNil(filters.toDate)) {
+        queryBuilder.andWhere('flow_run.created <= :toDate', { toDate: filters.toDate })
+    }
+
+    if (!isNil(filters.projectId)) {
+        queryBuilder.andWhere('flow_run."projectId" = :projectId', { projectId: filters.projectId })
+    }
+
+    if (!isNil(filters.userId)) {
+        queryBuilder.andWhere(
+            'EXISTS (SELECT 1 FROM flow_version WHERE flow_version."flowId" = flow.id AND flow_version."updatedBy" = :userId)',
+            { userId: filters.userId },
+        )
+    }
+
+    const runsData = await queryBuilder
+        .groupBy('DATE(flow_run.created)')
+        .orderBy('DATE(flow_run.created)', 'ASC')
+        .getRawMany()
+
+    return runsData.map((row) => ({
+        day: row.day,
+        totalRuns: parseInt(row.totalRuns),
+        minutesSaved: parseInt(row.minutesSaved) || 0,
+    }))
 }
 
 async function analyzeFlowsDetails(platformId: PlatformId, estimatedTimeSavedPerStep: number): Promise<AnalyticsFlowReportItem[]> {
