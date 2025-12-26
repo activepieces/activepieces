@@ -180,7 +180,7 @@ export function UserProfileDialog({
                           <img
                             src={badge.iconUrl}
                             alt={badge.name}
-                            className="w-16 h-16 object-cover cursor-default"
+                            className="w-12 h-12 object-cover cursor-default"
                           />
                         </TooltipTrigger>
                         <TooltipContent>
