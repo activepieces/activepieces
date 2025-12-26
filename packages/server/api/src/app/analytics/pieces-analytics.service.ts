@@ -48,7 +48,6 @@ export const piecesAnalyticsService = (log: FastifyBaseLogger) => ({
                         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
                             name: piece.name,
                             version: piece.version,
-                            projectId: flow.projectId,
                             platformId,
                         })
                         const pieceId = pieceMetadata.id!

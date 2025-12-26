@@ -44,7 +44,6 @@ describe('Flow API', () => {
             const { mockProject, mockOwner, mockPlatform } = await mockAndSaveBasicSetup()
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -178,7 +177,6 @@ describe('Flow API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: mockProject.id,
                 id: mockOwner.id,
             })
 
@@ -244,7 +242,6 @@ describe('Flow API', () => {
                 platform: {
                     id: mockPlatform.id,
                 },
-                projectId: mockProject.id,
                 id: mockOwner.id,
             })
 
@@ -359,7 +356,6 @@ describe('Flow API', () => {
             const mockToken = await generateMockToken({
                 id: mockOwner.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 platform: {
                     id: mockPlatform.id,
                 },
@@ -430,7 +426,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -472,7 +467,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -509,7 +503,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -554,7 +547,6 @@ describe('Flow API', () => {
 
             const mockToken = await generateMockToken({
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
                 id: mockOwner.id,
                 platform: {
                     id: mockPlatform.id,
@@ -616,7 +608,6 @@ describe('Flow API', () => {
             const mockApiKey = 'test_api_key'
             const mockToken = await generateMockToken({
                 type: PrincipalType.SERVICE,
-                projectId: mockProject.id,
                 id: mockApiKey,
                 platform: {
                     id: mockPlatform.id,

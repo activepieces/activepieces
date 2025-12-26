@@ -7,7 +7,7 @@ import { aiProps } from '../../common/props';
 export const summarizeText = createAction({
   name: 'summarizeText',
   displayName: 'Summarize Text',
-  description: '',
+  description: 'Summarize long emails, articles, or documents into what matters.',
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,
