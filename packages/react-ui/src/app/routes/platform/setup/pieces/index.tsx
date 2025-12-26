@@ -1,6 +1,14 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package, AppWindow, Tag, Hash, GitBranch, Tags } from 'lucide-react';
+import {
+  CheckIcon,
+  Package,
+  AppWindow,
+  Tag,
+  Hash,
+  GitBranch,
+  Tags,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 

@@ -1,4 +1,3 @@
-import { PopulatedFlow } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { EllipsisVertical, Tag, Blocks, Clock, ToggleLeft } from 'lucide-react';
@@ -16,6 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
+import { PopulatedFlow } from '@activepieces/shared';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;

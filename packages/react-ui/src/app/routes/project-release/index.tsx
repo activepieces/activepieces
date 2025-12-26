@@ -1,8 +1,3 @@
-import {
-  ProjectRelease,
-  ProjectReleaseType,
-  Permission,
-} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -19,10 +14,6 @@ import {
   Database,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-import { ApplyButton } from './apply-plan';
-import { PushEverythingDialog } from './push-everything-dialog';
-import { SelectionButton } from './selection-dialog';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -44,6 +35,15 @@ import { projectReleaseApi } from '@/features/project-releases/lib/project-relea
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  ProjectRelease,
+  ProjectReleaseType,
+  Permission,
+} from '@activepieces/shared';
+
+import { ApplyButton } from './apply-plan';
+import { PushEverythingDialog } from './push-everything-dialog';
+import { SelectionButton } from './selection-dialog';
 
 const ProjectReleasesPage = () => {
   const navigate = useNavigate();

@@ -78,7 +78,11 @@ export const ProjectRolesTable = ({
       size: 100,
       accessorFn: (row) => row.userCount,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Users')} icon={Users} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Users')}
+          icon={Users}
+        />
       ),
       cell: ({ row }) => (
         <div className="text-left">{row.original.userCount}</div>

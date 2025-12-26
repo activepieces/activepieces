@@ -1,4 +1,3 @@
-import { PlatformRole, UserStatus } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -16,8 +15,6 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { UpdateUserDialog } from './update-user-dialog';
-
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
@@ -32,6 +29,9 @@ import {
 } from '@/components/ui/tooltip';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
+import { PlatformRole, UserStatus } from '@activepieces/shared';
+
+import { UpdateUserDialog } from './update-user-dialog';
 
 export default function UsersPage() {
   const { data, isLoading, refetch } = platformUserHooks.useUsers();

@@ -1,8 +1,3 @@
-import {
-  ProjectType,
-  ProjectWithLimits,
-  TeamProjectsLimit,
-} from '@activepieces/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -11,9 +6,6 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffectOnce } from 'react-use';
 import { toast } from 'sonner';
-
-import { projectsTableColumns } from './columns';
-import { NewProjectDialog } from './new-project-dialog';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -39,6 +31,14 @@ import { userHooks } from '@/hooks/user-hooks';
 import { platformProjectApi } from '@/lib/platform-project-api';
 import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
+import {
+  ProjectType,
+  ProjectWithLimits,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
+
+import { projectsTableColumns } from './columns';
+import { NewProjectDialog } from './new-project-dialog';
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();

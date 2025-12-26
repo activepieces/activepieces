@@ -1,9 +1,3 @@
-import {
-  ApEdition,
-  ApFlagId,
-  WorkerMachineStatus,
-  WorkerMachineWithStatus,
-} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { t } from 'i18next';
@@ -21,8 +15,6 @@ import {
   GitBranch,
 } from 'lucide-react';
 
-import { WorkerConfigsModal } from './worker-configs-dialog';
-
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { CircularIcon } from '@/components/custom/circular-icon';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -31,6 +23,14 @@ import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-col
 import { workersApi } from '@/features/platform-admin/lib/workers-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn, useTimeAgo } from '@/lib/utils';
+import {
+  ApEdition,
+  ApFlagId,
+  WorkerMachineStatus,
+  WorkerMachineWithStatus,
+} from '@activepieces/shared';
+
+import { WorkerConfigsModal } from './worker-configs-dialog';
 
 const DEMO_WORKERS_DATA: WorkerMachineWithStatus[] = [
   {
