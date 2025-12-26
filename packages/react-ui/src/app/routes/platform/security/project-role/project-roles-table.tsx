@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Eye, Pencil, Trash, Users } from 'lucide-react';
+import { Eye, Pencil, Trash, Users, Tag, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -49,17 +49,23 @@ export const ProjectRolesTable = ({
   const columns: ColumnDef<RowDataWithActions<ProjectRole>>[] = [
     {
       accessorKey: 'name',
+      size: 200,
       accessorFn: (row) => row.name,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'updated',
+      size: 150,
       accessorFn: (row) => row.updated,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Updated')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Updated')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
         <div className="text-left">
@@ -69,12 +75,13 @@ export const ProjectRolesTable = ({
     },
     {
       accessorKey: 'userCount',
+      size: 100,
       accessorFn: (row) => row.userCount,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Users')}
-          className="text-center"
+          icon={Users}
         />
       ),
       cell: ({ row }) => (

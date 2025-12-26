@@ -161,7 +161,10 @@ const FlowVersionDetailsCard = React.memo(
         )}
         <div className="grid gap-2">
           <p className="text-sm font-medium leading-none select-none pointer-events-none">
-            {formatUtils.formatDateWithTime(new Date(flowVersion.created), true)}
+            {formatUtils.formatDateWithTime(
+              new Date(flowVersion.created),
+              true,
+            )}
           </p>
           <p className="flex gap-1 text-xs text-muted-foreground">
             {t('Version')} {flowVersionNumber}

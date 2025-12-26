@@ -32,12 +32,6 @@ export enum ProjectType {
 }
 
 
-export const SwitchProjectResponse = Type.Object({
-    token: Type.String(),
-})
-
-export type SwitchProjectResponse = Static<typeof SwitchProjectResponse>
-
 
 export type ProjectPlanId = string
 

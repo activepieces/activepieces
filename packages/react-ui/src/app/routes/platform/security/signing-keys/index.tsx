@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Key, Plus, Trash } from 'lucide-react';
+import { Key, Plus, Trash, Hash, Tag, Clock } from 'lucide-react';
 import { Trans } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
@@ -27,8 +27,9 @@ const SigningKeysPage = () => {
   const columns: ColumnDef<RowDataWithActions<SigningKey>>[] = [
     {
       accessorKey: 'id',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Id')} />
+        <DataTableColumnHeader column={column} title={t('Id')} icon={Hash} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.id}</div>;
@@ -36,8 +37,9 @@ const SigningKeysPage = () => {
     },
     {
       accessorKey: 'displayName',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.displayName}</div>;
@@ -45,8 +47,13 @@ const SigningKeysPage = () => {
     },
     {
       accessorKey: 'created',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
