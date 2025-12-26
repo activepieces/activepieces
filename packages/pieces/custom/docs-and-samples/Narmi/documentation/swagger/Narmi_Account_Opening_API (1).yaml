@@ -1,0 +1,2696 @@
+openapi: 3.0.3
+info:
+  title: Narmi Account Opening API
+  version: v1 (main)
+  description: 'To read about the primary endpoints required for Online Account Opening and recommended usage, go to [Account Opening Usage](https://narmi.stoplight.io/docs/narmi-developer-docs/i365qm2g7lq69-account-opening-usage).'
+  termsOfService: 'https://www.narmi.com/policies/developer-terms-conditions'
+  contact:
+    name: Narmi Support
+    email: support@narmi.com
+paths:
+  /v1/account_opening/:
+    post:
+      operationId: POST New AccountApplication
+      description: |-
+        Create a new AccountApplication
+
+        Authentication required:
+        - None
+
+        Security required:
+        - CSRF token under `HTTP_X_CSRFTOKEN`, `X-CSRFTOKEN`, or `CSRF_COOKIE` header
+        (obtained via `GET /csrf` without `applicant_token` key in HTTP cookie)
+
+        Returns:
+        - Created AccountApplication
+        - Note: Application `id` is the `uuid` used in `/account_opening/:uuid`
+
+        Side Effects:
+        - Creates Applicant or finds existing via `email`
+        - Errors if Applicant has incomplete Application in progress (use `PUT /account_opening/:uuid` instead)
+        - Adds JWT auth token under `applicant_token` key in HTTP cookie
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Create account application
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewApplicationCreateContactInfo'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/NewApplicationCreateContactInfo'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/NewApplicationCreateContactInfo'
+        required: true
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountApplicationCreateResponse'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicApiError'
+              examples:
+                Application/json:
+                  value:
+                    id: invalid_request_error
+                    message: 'Invalid email provided,Invalid product selected'
+                  summary: application/json
+          description: Unprocessable Entity
+      x-stoplight:
+        id: tcr8nn0vv0pd4
+  '/v1/account_opening/{uuid}/':
+    get:
+      operationId: GET AccountApplication
+      description: |-
+        Get AccountApplication by application UUID.
+
+        Authentication required:
+        - JWT: read from `applicant_token` key of cookie
+
+        Security required:
+        - CSRF token under `HTTP_X_CSRFTOKEN`, `X-CSRFTOKEN`, or `CSRF_COOKIE` header
+        (obtained via `GET /csrf` with `applicant_token` key in HTTP cookie)
+
+        Returns:
+        - 200 OK
+        - 404 if application not found
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Retrieve account application
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            pattern: '^[0-9a-z-]{36}$'
+          required: true
+      tags:
+        - account opening
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountApplication'
+          description: ''
+        '404':
+          description: Not Found
+      x-stoplight:
+        id: r4zamrb3nd2bo
+    post:
+      operationId: POST Submit Application
+      description: |-
+        Validates application and kicks off application processing.
+        - Enqueues task to sequentially evaluate KYC, fund, and open account
+        - Application `state` is updated after each phase of processing (listed below)
+        - Funding charge only occurs if application is approved
+        - Emails are sent to user if application is placed in `review`, `documents_requested`, or `rejected` state
+        - Final `state` will not be reflected in this response (recommend polling GET /account_opening/:id for updated state)
+
+        Authentication required:
+
+        - JWT: read from `applicant_token` key of cookie
+
+        Security required:
+
+        - CSRF token under HTTP_X_CSRFTOKEN, X-CSRFTOKEN, or CSRF_COOKIE header (obtain via GET /csrf)
+
+        Returns:
+        - 200 if accepted for processing
+        - 404 if application not found
+        - 404 if user has a previous application in progress
+        - 422 if application not ready for processing
+
+        Application states:
+        - `creating`: application is in-progress, has not yet been submitted
+        - `submitted`: application has just been submitted
+        - `reviewing`: application is pending a KYC decision
+        - `docs_requested`: documents requested by Alloy, applicant will need to upload documents
+          (see POST /account_application/:id/documents_requested)
+        - `review`: application is under manual review by the financial institution
+        - `rejected`: application is rejected for selected products
+        - `approved`: application is approved for selected products (not yet funded)
+        - `funding`: application is in process of being funded (Authorize.net confirmation has not yet been received)
+        - `funded`: application has been successfully funded or does not require funding
+        - `funding_unknown`: application funding state unknown
+        - `funding_failed`: application funding source could not be charged
+        - `funding_too_many_attempts`: application funding has been attempted too many times
+        - `opening`: application has been approved and funded, and is in process of being opened on the core
+        - `opening_failed`: application was approved, but account(s) were not successfully created on the core
+        - `opened`: application resulted in opened account(s)
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Submit application
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            pattern: '^[0-9a-z-]{36}$'
+          required: true
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountApplicationSubmitRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountApplicationSubmitRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountApplicationSubmitRequest'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountApplicationSubmitResponse'
+          description: ''
+        '404':
+          description: Application Not Found
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicApiError'
+              examples:
+                Application/json:
+                  value:
+                    id: application_incomplete
+                    message: 'Application not ready for submit,Application already submitted'
+                  summary: application/json
+          description: Unprocessable Entity
+      x-stoplight:
+        id: fozn0rzyordpq
+    put:
+      operationId: PUT AccountApplication
+      description: |-
+        Update an existing AccountApplication, e.g. with applicant information, selected_products, or funding information
+
+        Authentication required:
+        - JWT: read from `applicant_token` key of cookie
+
+        Security required:
+        - CSRF token under `HTTP_X_CSRFTOKEN`, `X-CSRFTOKEN`, or `CSRF_COOKIE header`
+        (obtained via `GET /csrf` with `applicant_token` key in HTTP cookie)
+
+        Returns:
+        - 200 if update successful
+        - 404 if application not found
+        - 404 if user has a previous application in progress
+        - 422 if application data not valid
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Update account application
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            pattern: '^[0-9a-z-]{36}$'
+          required: true
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountApplicationPut'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountApplicationPut'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountApplicationPut'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountApplication'
+          description: ''
+        '404':
+          description: Not Found
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicApiError'
+              examples:
+                Application/json:
+                  value:
+                    id: invalid_request_error
+                    message: 'Invalid tax id format,Address must not be a P.O. Box'
+                  summary: application/json
+          description: Unprocessable Entity
+      x-stoplight:
+        id: vnepl4ozn5p3j
+  '/v1/account_opening/{uuid}/documents_requested/':
+    post:
+      operationId: POST Evaluate Alloy Documents
+      description: |-
+        Enqueues task to check documents requested by Alloy KYC.
+        Called after user has uploaded documents to Alloy, as by npm package `@alloyidentity/web-sdk`.
+        - Expects `evaluation_token` provided by Alloy document upload widget
+        - Enqueues task to check KYC evaluation status of the related applicants and if requested documents have been verified
+        - Async task will update application `state` to reflect document evaluation result
+        - Updated `state` will not be reflected in response (recommend polling GET /account_opening/:id for updated state)
+
+        Authentication required:
+
+        - JWT: read from `applicant_token` key of cookie
+
+
+        Security required:
+
+        - CSRF token under HTTP_X_CSRFTOKEN, X-CSRFTOKEN, or CSRF_COOKIE header (obtain via GET /csrf)
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Evaluate Alloy documents
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            pattern: '^[0-9a-z-]+$'
+          required: true
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwaggerDocumentsRequestedPost'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SwaggerDocumentsRequestedPost'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SwaggerDocumentsRequestedPost'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantAccountApplication'
+          description: ''
+        '404':
+          description: Application Not Found
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicApiError'
+              examples:
+                Application/json:
+                  value:
+                    id: invalid_request_error
+                    message: 'Application not in docs_requested state,evaluation_token must be provided'
+                  summary: application/json
+          description: Unprocessable Entity
+      x-stoplight:
+        id: dn6knnedmedtd
+  '/v1/account_opening/{uuid}/kyc/':
+    post:
+      operationId: POST KYC
+      description: |-
+        Initiate KYC execution.
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Run KYC
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            pattern: '^[0-9a-z-]+$'
+          required: true
+      tags:
+        - account opening
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountApplicationKycResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicApiError'
+              examples:
+                Application/json:
+                  value:
+                    id: application_incomplete
+                    message: 'Application not ready for evaluation,Application already evaluated'
+                  summary: application/json
+          description: Unprocessable Entity
+      x-stoplight:
+        id: qvyjhlfo4oc3n
+    delete:
+      operationId: DELETE KYC
+      description: |-
+        Reattempts KYC execution.
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Retry KYC
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            pattern: '^[0-9a-z-]+$'
+          required: true
+      tags:
+        - account opening
+      responses:
+        '204':
+          description: No response body
+      x-stoplight:
+        id: tchpnrdh1sheb
+  /v1/account_opening/consumer/verification_code/locate_account/:
+    post:
+      operationId: account_opening_consumer_verification_code_locate_account_create
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountOpeningLocateConsumerAccountRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccountOpeningLocateConsumerAccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AccountOpeningLocateConsumerAccountRequest'
+        required: true
+      security:
+        - oauth2:
+            - write
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountOpeningLocateConsumerAccountRequest'
+          description: ''
+      description: '<i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>'
+      x-stoplight:
+        id: dg2yjsw49wsab
+  /v1/account_opening/consumer/verification_code/locate_applicant/:
+    post:
+      operationId: account_opening_consumer_verification_code_locate_applicant_create
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplicant'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplicant'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplicant'
+        required: true
+      security:
+        - oauth2:
+            - write
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplicant'
+          description: ''
+      description: '<i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>'
+      x-stoplight:
+        id: bbdqx1ynna64q
+  /v1/account_opening/consumer/verification_code/locate_application/:
+    post:
+      operationId: account_opening_consumer_verification_code_locate_application_create
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplication'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplication'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplication'
+        required: true
+      security:
+        - oauth2:
+            - write
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantVerificationCodeLocateApplication'
+          description: ''
+      description: '<i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>'
+      x-stoplight:
+        id: bpppmxaqs2ybq
+  /v1/account_opening/consumer/verification_code/verify/:
+    post:
+      operationId: account_opening_consumer_verification_code_verify_create
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeVerify'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeVerify'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApplicantVerificationCodeVerify'
+        required: true
+      security:
+        - oauth2:
+            - write
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantVerificationCodeVerify'
+          description: ''
+      description: '<i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>'
+      x-stoplight:
+        id: ak8jj8bzxj22z
+  /v1/account_opening/consumer_accounts/:
+    post:
+      operationId: POST CreateConsumerAccount
+      description: |-
+        Allows an applicant to begin a new account application by verifying their identity via a verification code sent to their email address.
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Verify applicant login
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountOpeningCreateConsumerAccountRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountOpeningCreateConsumerAccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SwaggerAccountOpeningCreateConsumerAccountRequest'
+        required: true
+      security:
+        - oauth2:
+            - write
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountOpeningLocateConsumerAccountResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                type: string
+          description: ''
+      x-stoplight:
+        id: fwdkxtxd7v6jx
+  /v1/account_opening/consumer_accounts/locate/:
+    post:
+      operationId: POST LocateConsumerAccount
+      description: |-
+        Locate a consumer account in the core using email address, SSN, DOB, and (optional) account number. If an account is found and the info matches, it sends a verification code to the email address.If the applicant exists in the core but not Narmi, it creates an applicant in the Narmi database and sends a verification code to the email address. If no account is found or info doesn't match, it returns a 422 with an intentionally generic error message.
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Verify consumer account
+      tags:
+        - account opening
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountOpeningLocateConsumerAccountRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/AccountOpeningLocateConsumerAccountRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/AccountOpeningLocateConsumerAccountRequest'
+        required: true
+      security:
+        - oauth2:
+            - write
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountOpeningLocateConsumerAccountResponse'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerAccountOpeningLocateConsumerAccountResponse'
+          description: ''
+      x-stoplight:
+        id: gdwzsor3lqwnb
+  /v1/account_opening/post_submission_token/:
+    post:
+      operationId: POST Generate Post-Submission Token
+      description: |-
+        Generates a Bearer token for accessing post-submission features.
+        This token should be used in the Authorization header as:
+        `Authorization: Bearer <token>`
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Generate Bearer token for post-submission features
+      tags:
+        - account opening
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                description: Bearer token generated successfully
+                examples:
+                  application/json:
+                    token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+                    expires_in: 900
+          description: ''
+        '403':
+          content:
+            application/json:
+              schema:
+                description: Application not in valid state for post-submission features
+          description: ''
+      x-stoplight:
+        id: l7xhe8wu3cemg
+  '/v1/account_opening_membership_card/{uuid}/':
+    get:
+      operationId: account_opening_membership_card_retrieve
+      description: |-
+        Generates and returns pdf file containing membership card or application record for application identified by `uuid`
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Retrieve membership card or application record
+      parameters:
+        - in: path
+          name: uuid
+          schema:
+            type: string
+            pattern: '^[0-9a-z-]+$'
+          required: true
+      tags:
+        - account opening
+      responses:
+        '200':
+          description: No response body
+      x-stoplight:
+        id: yr7tsremvqy26
+  /v1/csrf/:
+    get:
+      operationId: GET CSRF Token
+      description: |-
+        Appends `X-CSRFTOKEN` header to the response.
+
+        Authentication required:
+        - None or JWT: read from `applicant_token` key of cookie
+
+
+        Security required:
+        - None
+
+
+        Returns:
+        - Authenticated `X-CSRFTOKEN` if `applicant_token` cookie is provided, else
+        - `X-CSRFTOKEN` used in unauthenticated requests eg `POST /account_opening/`
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Get CSRF token
+      tags:
+        - csrf
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                X-CSRFTOKEN:
+                  description: A valid CSRF token
+                  type: string
+              examples:
+                Application/json:
+                  value:
+                    success: true
+                  summary: application/json
+          description: OK
+      x-stoplight:
+        id: irxjx6zbdmh9v
+  /v1/get_token_applicant/:
+    get:
+      operationId: GET Applicant by Token
+      description: |-
+        Returns the Applicant corresponding to the token found in the `applicant_token` cookie.
+
+        Useful for resuming in-progress applications or checking if a user has an application already in progress.
+
+        Authentication required:
+
+        - JWT: read from `applicant_token` cookie
+
+        Security required:
+
+        - None
+
+        Returns:
+        - 200: applicant JSON if able to authenticate
+        - 401: Unauthorized if unable to authenticate
+        - 403: Forbidden if permission denied
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Get applicant by token
+      tags:
+        - session
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwaggerGetTokenApplicant'
+          description: ''
+        '401':
+          description: Authentication failed
+        '403':
+          description: Permission denied
+      x-stoplight:
+        id: kjsjo9atggiju
+  /v1/products/:
+    get:
+      operationId: GET Products
+      description: |-
+        Returns list of the available Account Opening products.
+
+        Notable keys:
+
+        - category: `checking`, `savings`, ...
+        - name
+        - description
+        - details: a list of bullet points about the product
+        - minimum_balance: can be 0 or greater
+        - max_count: the maximum number of instances of the account that a user can open
+        - recommended: usable to pre-select a Product for opening
+        - required: required to open an account
+        - required_for_existing_members: if true, this product will be required for existing members even if they already have this
+          product. If false, this product won't be required for existing members.
+        - options: product options, including `debit_card: true` to add a debit card to an eligible Product
+        - monthly_service_fee: monthly service fee as a string
+        - more_details_url: url for more details link in card
+        - more_details_copy: rendered text for more_details_url hyperlink
+        Authentication required: None
+
+        Authorization required: None
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: List Account Opening products
+      tags:
+        - products
+      security:
+        - oauth2:
+            - read
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsGet'
+              examples:
+                Application/json:
+                  value:
+                    products:
+                      - id: '1'
+                        name: Savings
+                        description: Your membership account
+                        public: true
+                        category: savings
+                        minimum_balance: '5'
+                        monthly_service_fee: '0'
+                        more_details_url: 'https://www.example.com'
+                        ongoing_minimum_balance: '5'
+                        required: true
+                        details:
+                          - Access to Online and Mobile Banking
+                          - Customizable account names
+                          - '$5 minimum balance, no monthly fees'
+                        options:
+                          debit_card: boolean
+                        exclusive_application_types:
+                          - personal
+                      - id: '2'
+                        name: Checking
+                        description: A really great checking account
+                        public: true
+                        category: checking
+                        minimum_balance: '0'
+                        monthly_service_fee: '5'
+                        more_details_url: 'https://www.example.com'
+                        debit_card_required: true
+                        recommended: true
+                        max_count: 1
+                        details:
+                          - 'No minimum balance, no monthly fees'
+                          - Two monthly ATM surcharges refunded
+                          - '[Over 55,000 surcharge-free ATMs nationwide](https://www.example.com)'
+                        options:
+                          debit_card: boolean
+                          courtesy_pay: boolean
+                        features:
+                          overdraft: '1'
+                        exclusive_application_types:
+                          - personal
+                      - id: '3'
+                        name: Money Market
+                        description: A high interest rate
+                        public: true
+                        category: checking
+                        minimum_balance: '0'
+                        monthly_service_fee: '0'
+                        more_details_url: 'https://www.example.com'
+                        details:
+                          - A cool market for your money
+                          - Comes with something awesome
+                          - No monthly fee or balance minimum
+                        exclusive_application_types:
+                          - personal
+                    product_category_limits:
+                      savings: 2
+                      certificate_of_deposit: 1
+                  summary: application/json
+          description: OK
+      x-stoplight:
+        id: zpmclrsvzm9no
+  /v1/session/:
+    delete:
+      operationId: DELETE Session
+      description: |-
+        End an Account Opening session by deleting the `applicant_token` cookie.
+        - Usually invoked after application's final status is received, to allow opening new applications from the same browser.
+
+        Authentication required:
+
+        - JWT: read from `applicant_token` key of cookie
+
+
+        Security required:
+
+        - CSRF token under HTTP_X_CSRFTOKEN, X-CSRFTOKEN, or CSRF_COOKIE header (obtain via GET /csrf)
+
+
+
+        <i>How can we improve these docs?             <a href="mailto:docs+feedback@narmi.com">Share your feedback.</a></i>
+      summary: Delete session
+      tags:
+        - session
+      responses:
+        '200':
+          description: OK
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicApiError'
+              examples:
+                Application/json:
+                  value:
+                    id: not_found
+                    message: No active application found
+                  summary: application/json
+          description: Not Found
+      x-stoplight:
+        id: uqaqfcokiak3g
+components:
+  schemas:
+    AccountActivityQuestion:
+      type: object
+      properties:
+        question:
+          type: string
+        questionType:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        label:
+          type: string
+        portalVersion:
+          type: string
+      x-stoplight:
+        id: ysc7afjeruera
+    AccountApplicant:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        first_name:
+          type: string
+        middle_name:
+          type: string
+          nullable: true
+          default: ''
+        last_name:
+          type: string
+        tax_id:
+          type: string
+          writeOnly: true
+          pattern: '^((\d{3}-\d{2}-\d{4})|\d{9})$'
+        date_of_birth:
+          type: string
+          format: date
+          writeOnly: true
+        phone:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+        address:
+          allOf:
+            - $ref: '#/components/schemas/Address'
+          nullable: true
+        mailing_address:
+          allOf:
+            - $ref: '#/components/schemas/Address'
+          nullable: true
+        is_primary:
+          type: boolean
+        is_control_person:
+          type: boolean
+        business_ownership_percentage:
+          type: number
+          format: double
+          maximum: 1
+          minimum: 0
+          nullable: true
+          default: 0
+        kyc_id:
+          type: string
+          readOnly: true
+        kyc_link:
+          type: string
+          readOnly: true
+        kyc_status:
+          type: string
+          readOnly: true
+        has_tax_id:
+          type: boolean
+          readOnly: true
+        has_date_of_birth:
+          type: boolean
+          readOnly: true
+        occupation:
+          type: string
+          nullable: true
+          default: ''
+        language:
+          type: string
+          nullable: true
+          default: ''
+        user:
+          allOf:
+            - $ref: '#/components/schemas/Profile'
+          readOnly: true
+        role:
+          type: string
+          nullable: true
+          default: ''
+        is_authorized_signer:
+          type: boolean
+        is_responsible_individual:
+          type: boolean
+        is_existing_user:
+          type: boolean
+          readOnly: true
+        personal_info_completed_by:
+          type: string
+          nullable: true
+          default: ''
+        last_complete_info_email_sent_on:
+          type: string
+          format: date-time
+          nullable: true
+        direct_deposit_setup_completed:
+          type: boolean
+          readOnly: true
+      required:
+        - direct_deposit_setup_completed
+        - has_date_of_birth
+        - has_tax_id
+        - id
+        - is_existing_user
+        - kyc_id
+        - kyc_link
+        - kyc_status
+        - user
+      x-stoplight:
+        id: hvwmd7murigha
+    AccountApplicationOrganizationModel:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        has_ein:
+          type: boolean
+          readOnly: true
+        kyc_id:
+          type: string
+          readOnly: true
+          nullable: true
+        kyc_link:
+          type: string
+          readOnly: true
+        kyc_status:
+          type: string
+          readOnly: true
+          nullable: true
+        type:
+          type: string
+        name:
+          type: string
+        assumed_name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+        website:
+          type: string
+          nullable: true
+          maxLength: 128
+        address:
+          allOf:
+            - $ref: '#/components/schemas/Address'
+          nullable: true
+        mailing_address:
+          allOf:
+            - $ref: '#/components/schemas/Address'
+          nullable: true
+        state_of_incorporation:
+          type: string
+          nullable: true
+          maxLength: 128
+        date_of_incorporation:
+          type: string
+          format: date
+          nullable: true
+        industry:
+          type: string
+        ein:
+          type: string
+          nullable: true
+          maxLength: 9
+        is_dba:
+          type: boolean
+          nullable: true
+      required:
+        - has_ein
+        - kyc_id
+        - kyc_link
+        - kyc_status
+        - type
+        - uuid
+      x-stoplight:
+        id: jieqqrofh2wwk
+    AccountApplicationSpecialtyOwnershipStructure:
+      type: object
+      properties:
+        type:
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+        - type
+      x-stoplight:
+        id: nkd2bb8epknys
+    AccountFunding:
+      type: object
+      properties:
+        type:
+          type: string
+        amount:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+        description:
+          type: string
+          readOnly: true
+        account_id:
+          type: string
+        nonce:
+          type: string
+        card_number:
+          type: string
+        exp_year:
+          type: string
+        exp_month:
+          type: string
+        zip:
+          type: string
+        routing_number:
+          type: string
+        account_number:
+          type: string
+        account_type:
+          type: string
+        signature:
+          type: string
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        subsource:
+          type: string
+          nullable: true
+        provider:
+          type: string
+          readOnly: true
+      required:
+        - description
+        - provider
+      x-stoplight:
+        id: xo5094lt7ovyp
+    AccountOpeningBeneficiary:
+      type: object
+      properties:
+        first_name:
+          type: string
+          nullable: true
+          maxLength: 128
+        last_name:
+          type: string
+          nullable: true
+          maxLength: 128
+        tax_id:
+          type: string
+          writeOnly: true
+          nullable: true
+          maxLength: 128
+        date_of_birth:
+          type: string
+          format: date
+          writeOnly: true
+          nullable: true
+        has_tax_id:
+          type: boolean
+          readOnly: true
+        has_date_of_birth:
+          type: boolean
+          readOnly: true
+        phone:
+          type: string
+          nullable: true
+          maxLength: 30
+        email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        selected_products:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+          nullable: true
+        relationship:
+          type: string
+          nullable: true
+          maxLength: 128
+        address:
+          allOf:
+            - $ref: '#/components/schemas/Address'
+          nullable: true
+      required:
+        - has_date_of_birth
+        - has_tax_id
+      x-stoplight:
+        id: d7bso5lthhjx4
+    AccountOpeningLocateConsumerAccountRequest:
+      type: object
+      properties:
+        primary_account_number:
+          type: string
+          description: Primary account number to be linked. For account based cores.
+          maxLength: 16
+          minLength: 1
+        ssn:
+          type: string
+          description: Your Social Security or Tax Identification Number
+          maxLength: 9
+          minLength: 9
+        dob:
+          type: string
+          format: date
+          description: Your Date of Birth
+        email:
+          type: string
+          format: email
+      required:
+        - dob
+        - email
+        - ssn
+      x-stoplight:
+        id: 32du9gycbtuns
+    Address:
+      type: object
+      properties:
+        street_address:
+          type: string
+        street_address_2:
+          type: string
+        city:
+          type: string
+        region_code:
+          type: string
+        postal_code:
+          type: string
+        country_code:
+          type: string
+        type:
+          type: string
+        device_id:
+          type: string
+        device_request_id:
+          type: string
+      required:
+        - city
+        - postal_code
+        - region_code
+        - street_address
+      x-stoplight:
+        id: ybbuas3xv7dvs
+    ApplicantAccountApplication:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        eligibility_answers:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        due_diligence_answers:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        saved_primary_core_user_id:
+          type: string
+          readOnly: true
+          nullable: true
+        core_users:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+              nullable: true
+          readOnly: true
+        selected_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicantProduct'
+        applicants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountApplicant'
+          readOnly: true
+        organization:
+          $ref: '#/components/schemas/AccountApplicationOrganizationModel'
+        document:
+          type: string
+          format: uri
+        document_type:
+          type: string
+        documents:
+          type: object
+          properties:
+            dba_certificate:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            articles_of_organization:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            ein_verification_letter:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            business_registration:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            nonprofit_bylaws:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            other:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+          additionalProperties: false
+          readOnly: true
+        funding:
+          $ref: '#/components/schemas/AccountFunding'
+        opt_out_funding:
+          type: boolean
+        has_joint_applicant:
+          type: boolean
+        is_existing_on_core:
+          type: boolean
+        total_amount:
+          type: number
+          format: double
+        state:
+          allOf:
+            - $ref: '#/components/schemas/StateEnum'
+          readOnly: true
+        referral_code:
+          allOf:
+            - $ref: '#/components/schemas/ApplicationReferralCode'
+          nullable: true
+        metadata:
+          nullable: true
+        agreement:
+          type: boolean
+          description: 'In order for an account application to be submitted, a user must first agree to the account application terms and conditions.'
+        is_staffer_led:
+          type: boolean
+          nullable: true
+        banker_user:
+          type: string
+          nullable: true
+          readOnly: true
+        branch_location:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        disclosures_accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_disclosures_email_sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        beneficial_owner_certification_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        kyc_link:
+          type: string
+        kyc_id:
+          type: string
+        source:
+          type: string
+        persona_tag:
+          type: string
+          nullable: true
+        personas:
+          type: array
+          items:
+            type: string
+          nullable: true
+        personas_disclosures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Disclosure'
+          readOnly: true
+        beneficiaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountOpeningBeneficiary'
+          readOnly: true
+        using_previous_evaluation:
+          type: boolean
+          readOnly: true
+        specialty_ownership_structure:
+          allOf:
+            - $ref: '#/components/schemas/AccountApplicationSpecialtyOwnershipStructure'
+          readOnly: true
+        core_opening_progress:
+          nullable: true
+          default: {}
+        marketing_comms_consent:
+          type: boolean
+        occupation:
+          type: string
+          default: ''
+        language:
+          type: string
+          nullable: true
+          default: ''
+        core_user_id:
+          type: string
+          nullable: true
+          readOnly: true
+        internal_funding_options:
+          nullable: true
+          readOnly: true
+        latest_ai_analysis:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+      required:
+        - applicants
+        - banker_user
+        - beneficial_owner_certification_at
+        - beneficiaries
+        - core_user_id
+        - core_users
+        - created_at
+        - documents
+        - due_diligence_answers
+        - eligibility_answers
+        - id
+        - internal_funding_options
+        - latest_ai_analysis
+        - number
+        - personas_disclosures
+        - saved_primary_core_user_id
+        - specialty_ownership_structure
+        - state
+        - updated_at
+        - using_previous_evaluation
+      x-stoplight:
+        id: pcd2mmfjvfde2
+    ApplicantProduct:
+      type: object
+      properties:
+        id:
+          type: string
+        features: {}
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        minimum_balance:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+        maximum_balance:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+          nullable: true
+        required:
+          type: boolean
+        debit_card_required:
+          type: boolean
+        recommended:
+          type: boolean
+        options:
+          $ref: '#/components/schemas/ProductOptions'
+        amount:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+          nullable: true
+        account:
+          readOnly: true
+        exclusive_application_types:
+          readOnly: true
+        disclosures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Disclosure'
+        account_activity_questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountActivityQuestion'
+        can_add_beneficiaries:
+          type: boolean
+        ao_flow_category:
+          type: string
+        metadata: {}
+      required:
+        - account
+        - exclusive_application_types
+        - id
+      x-stoplight:
+        id: vmjrdn4m8jlqw
+    ApplicantVerificationCodeLocateApplicant:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+      required:
+        - email
+      x-stoplight:
+        id: qcedtsd1lvvkk
+    ApplicantVerificationCodeLocateApplication:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+      required:
+        - email
+      x-stoplight:
+        id: ie0uldau4s4dg
+    ApplicantVerificationCodeVerify:
+      type: object
+      properties:
+        code:
+          type: string
+          writeOnly: true
+          maxLength: 64
+        email:
+          type: string
+          writeOnly: true
+      required:
+        - code
+        - email
+      x-stoplight:
+        id: khwzvsdwazkse
+    ApplicationReferralCode:
+      type: object
+      description: 'For serializing "my_code" -> ReferralCode(id) on an application, and back to "my_code" for JSON'
+      properties:
+        code:
+          type: string
+          readOnly: true
+      required:
+        - code
+      x-stoplight:
+        id: pxr6ds3pwnvsv
+    BusinessPermissionsField:
+      type: object
+      properties:
+        model_str:
+          type: string
+        operation:
+          type: string
+        uuid:
+          type: string
+          format: uuid
+      required:
+        - model_str
+        - operation
+        - uuid
+      x-stoplight:
+        id: x8zpciz10p4da
+    CardImage:
+      type: object
+      properties:
+        card_name:
+          type: string
+        issue_code:
+          type: string
+        image_url:
+          type: string
+          format: uri
+      required:
+        - card_name
+        - image_url
+        - issue_code
+      x-stoplight:
+        id: 8bmsnkuy8folg
+    DebitCard:
+      type: object
+      properties:
+        issuance_type:
+          $ref: '#/components/schemas/IssuanceTypeEnum'
+        card_type:
+          type: string
+        allow_creation:
+          type: boolean
+        create_CardCreatableFields:
+          type: string
+      x-stoplight:
+        id: 6wc8jiuozz1x1
+    Disclosure:
+      type: object
+      properties:
+        checkbox_text:
+          type: string
+        markdown:
+          type: string
+        links:
+          type: array
+          items:
+            $ref: '#/components/schemas/Link'
+      x-stoplight:
+        id: bkeyzfazfudqs
+    IssuanceTypeEnum:
+      enum:
+        - mail
+        - instant
+      type: string
+      description: |-
+        * `mail` - mail
+        * `instant` - instant
+      x-stoplight:
+        id: xubopadx0ew5u
+    Link:
+      type: object
+      properties:
+        text:
+          type: string
+        url:
+          type: string
+      required:
+        - text
+        - url
+      x-stoplight:
+        id: pymdqwifkjmgw
+    NewApplicationCreateContactInfo:
+      type: object
+      description: |-
+        Serialize request parameters to open an application in POST /account_application
+        - currently only used to autodocument request parameters via DRF-yasg, though could be used more
+      properties:
+        email:
+          type: string
+        applicants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountApplicant'
+        selected_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicantProduct'
+      required:
+        - applicants
+        - email
+        - selected_products
+      x-stoplight:
+        id: qkqlfwmuisjfc
+    NullEnum:
+      enum:
+        - null
+      x-stoplight:
+        id: ccawkxezegbtv
+    OpeningProductCategoryLimits:
+      type: object
+      properties:
+        savings:
+          type: integer
+        certificate_of_deposit:
+          type: integer
+        checking:
+          type: integer
+        money_market:
+          type: integer
+        line_of_credit:
+          type: integer
+        credit_card:
+          type: integer
+        loan:
+          type: integer
+        mortgage:
+          type: integer
+      x-stoplight:
+        id: 9zwe1spczvvjq
+    OpeningProducts:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ao_flow_category:
+          type: string
+        description:
+          type: string
+        exclusive_application_types:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        minimum_balance:
+          type: integer
+        maximum_balance:
+          type: integer
+        details:
+          type: array
+          items:
+            type: string
+        options:
+          $ref: '#/components/schemas/ProductOptions'
+        features:
+          $ref: '#/components/schemas/ProductFeatures'
+        recommended:
+          type: boolean
+        debit_card_required:
+          type: boolean
+        debit_card_enabled_by_default:
+          type: boolean
+        required:
+          type: boolean
+        required_for_existing_members:
+          type: boolean
+        can_add_beneficiaries:
+          type: boolean
+        max_count:
+          type: integer
+        hidden:
+          type: boolean
+          default: false
+        disclosures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Disclosure'
+        monthly_service_fee:
+          type: string
+        more_details_url:
+          type: string
+        more_details_copy:
+          type: string
+        should_preselect:
+          type: boolean
+        account_activity_questions:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountActivityQuestion'
+        metadata: {}
+      required:
+        - category
+        - id
+        - minimum_balance
+        - name
+      x-stoplight:
+        id: ls2ngkbxypcll
+    OrgRoleEnum:
+      enum:
+        - Account Holder
+        - Admin
+        - Collaborator
+        - No Permissions
+        - Viewer
+      type: string
+      x-stoplight:
+        id: fdatxmxhvhn9h
+    Phone:
+      type: object
+      properties:
+        number:
+          type: string
+        device_id:
+          type: string
+          nullable: true
+        device_request_id:
+          type: string
+          nullable: true
+      required:
+        - number
+      x-stoplight:
+        id: ja4kla97xprag
+    ProductBundle:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        uuid:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 256
+        description:
+          type: string
+        is_active:
+          type: boolean
+        is_hidden:
+          type: boolean
+        is_business:
+          type: boolean
+        details:
+          type: array
+          items:
+            type: string
+            maxLength: 256
+        monthly_service_fee:
+          type: string
+          maxLength: 256
+        more_details_url:
+          type: string
+          maxLength: 256
+        more_details_copy:
+          type: string
+          maxLength: 256
+        products_ids:
+          type: array
+          items:
+            type: string
+          description: The list of individual products that are part of the bundle.
+      required:
+        - created_at
+        - details
+        - name
+        - products_ids
+        - updated_at
+        - uuid
+      x-stoplight:
+        id: r9wqlrxa4c8er
+    ProductFeatures:
+      type: object
+      properties:
+        debit_card:
+          type: boolean
+        courtesy_pay:
+          type: boolean
+        overdraft:
+          type: string
+      x-stoplight:
+        id: 9sbnkg6ubngxz
+    ProductOptions:
+      type: object
+      properties:
+        card_images:
+          type: array
+          items:
+            $ref: '#/components/schemas/CardImage'
+        debit_card:
+          type: string
+        debit_card_issuance:
+          type: array
+          items:
+            $ref: '#/components/schemas/DebitCard'
+        courtesy_pay:
+          type: string
+        ira_new_contribution:
+          type: boolean
+        ira_transfer:
+          type: boolean
+        ira_rollover:
+          type: boolean
+        ira_contribution_limits:
+          $ref: '#/components/schemas/ProductOptionsIraContributionsLimits'
+        ira_tax_year:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+      x-stoplight:
+        id: unwjrm1qpvllm
+    ProductOptionsIraContributionsLimits:
+      type: object
+      properties:
+        ira_contribution_limit_standard_min:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+        ira_contribution_limit_standard_max:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+        ira_contribution_limit_catchup_min:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+        ira_contribution_limit_catchup_max:
+          example: 100
+          maximum: 1000000000000000
+          minimum: -1000000000000000
+          description: A field that returns the original value in the currency's smallest unit (e.g. cents).
+          type: integer
+      x-stoplight:
+        id: tl2xjzjiqouon
+    ProductsGet:
+      type: object
+      properties:
+        products:
+          type: array
+          items:
+            $ref: '#/components/schemas/OpeningProducts'
+        product_category_limits:
+          $ref: '#/components/schemas/OpeningProductCategoryLimits'
+        personas:
+          type: array
+          items:
+            type: string
+        includes_default_products:
+          type: boolean
+        bundles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductBundle'
+          default: []
+      required:
+        - product_category_limits
+        - products
+      x-stoplight:
+        id: cjedwqmdwqq6m
+    Profile:
+      type: object
+      description: ''
+      properties:
+        email:
+          type: string
+          readOnly: true
+          description: Email address for the registered user.
+        core_provided_email:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Email address the user has registered to the core.
+        username:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Username for the registered user.
+        id:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
+          description: UUID of the registered user. This value is used as the unique identifier for the user in the API.
+        institution_user_identifier:
+          type: string
+          readOnly: true
+          description: 'Core user ID, may be set to empty string if the requesting user does not have the `core_user_id` scope for the target user.'
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: The last date-time that the information for this user was altered or saved.
+        addresses:
+          type: array
+          items:
+            $ref: '#/components/schemas/Address'
+          readOnly: true
+          description: 'A list of addresses for the registered user. This list contains the primary address and the mailing address of the user, if it exists. This may be set to empty list if the requesting user does not have the `address` scope for the target user.'
+        phone_numbers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Phone'
+          readOnly: true
+          description: A list of phone numbers for the registered user. This list often includes only one phone number. This may be set to empty list if the requesting user does not have the `phone` scope for the target user.
+        notifications_enabled:
+          type: boolean
+          nullable: true
+          readOnly: true
+          description: Whether the user has registered a device for notifications. This field will also check to make sure that at least one of the devices is set to active.
+        first_name:
+          type: string
+          readOnly: true
+          description: 'First name of the registered user, can also include middle or second names. This may be set to empty string if the requesting user does not have the `name` scope for the target user.'
+        last_name:
+          type: string
+          readOnly: true
+          description: 'Last name of the registered user, may include items such as hyphenated/multiple surnames and generational suffixes (ie. Jr, Sr, III). This may be set to empty string if the requesting user does not have the `name` scope for the target user.'
+        paper_statements:
+          type: boolean
+          nullable: true
+          readOnly: true
+          description: Whether the registered user has opted to receive eStatements. This may be set to `null` if the requesting user does not have the `preferences` scope for the target user.
+        user_category:
+          description: Used to distinguish whether this is a `business` or `personal` user.
+          nullable: true
+          readOnly: true
+          oneOf:
+            - $ref: '#/components/schemas/UserCategoryEnum'
+            - $ref: '#/components/schemas/NullEnum'
+        features:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+          description: A set of user features which define what the user can and can not do.
+        org_uuid:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
+          description: The UUID of the organization which the user belongs to. This will be set to `null` if the user category is set to `personal`.
+        org_role:
+          description: The role of the user for the organization it belongs to. This will be set to `null` if the user category is set to `personal`.
+          nullable: true
+          readOnly: true
+          oneOf:
+            - $ref: '#/components/schemas/OrgRoleEnum'
+            - $ref: '#/components/schemas/NullEnum'
+        org_name:
+          type: string
+          readOnly: true
+          description: 'Name of the organization the user belongs to. This will be the DBA (Doing Business As) name if it exists, otherwise it will be set to the organization''s legal name.'
+        business_permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessPermissionsField'
+          readOnly: true
+          description: Permissions that a user has to a business. The permissions which are granted are dictated by the users role in the organization. This will be set to an empty list for non-business users.
+        dual_approval_required:
+          type: boolean
+          nullable: true
+          readOnly: true
+          description: 'For business users, this field indicates whether wire transactions initiated by the user require approval from the organization. For non-business users this will always be set to `false`.'
+        ach_dual_approval_required:
+          type: boolean
+          nullable: true
+          readOnly: true
+          description: 'For business users, this field indicates whether ACH transactions initiated by the user require approval from the organization. For non-business users this will always be set to `false`.'
+        international_wire_dual_approval_required:
+          type: boolean
+          nullable: true
+          readOnly: true
+          description: 'For business users, this field indicates whether international wire transactions initiated by the user require approval from the organization. For non-business users this will always be set to `false`.'
+        is_staff:
+          type: boolean
+          readOnly: true
+          description: Indicates whether the registered user is an employee of the financial institution.
+        is_active:
+          type: boolean
+          readOnly: true
+          description: Indicates whether the user has been disabled.
+        is_superuser:
+          type: boolean
+          readOnly: true
+          description: Indicates whether the user is an admin.
+        is_narmi:
+          type: boolean
+          readOnly: true
+          description: Indicates whether the user is a Narmi user.
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+          description: The date-time the user was enrolled in the Narmi system.
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: The date-time the user last logged in.
+        segment:
+          type: string
+          readOnly: true
+          description: The banking segment which the user is a member of. These values can be unique for different financial institutions.
+        metadata:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+          description: 'Metadata for the registered user, this is often set as an empty object `{}`.'
+        has_username:
+          type: boolean
+          readOnly: true
+          description: Whether the username was defined by the user or was autogenerated by the system.
+        has_password:
+          type: boolean
+          readOnly: true
+          description: Whether the password was set by the user.
+        has_accepted_latest_terms:
+          type: boolean
+          readOnly: true
+          description: Whether the user has accepted the latest terms of service.
+        requires_enrollment_code_verification:
+          type: boolean
+          readOnly: true
+          description: Whether the user has verified their account. This can prevent the user from logging in. Enrollment can be completed via `/v1/enroll_verify/`.
+        enabled_estatements_at:
+          oneOf:
+            - type: string
+              format: date-time
+            - type: string
+          nullable: true
+          readOnly: true
+          description: Date-time the user opted into electronic statements.
+        is_converting:
+          type: boolean
+          readOnly: true
+          description: Whether the user is in the process of enrolling into online banking.
+        has_permitted_device:
+          type: boolean
+          readOnly: true
+          description: 'When 2FA is enabled for the FI, this field indicates whether the user has a device which they can use to authenticate to the system.'
+        has_backup_codes:
+          type: boolean
+          readOnly: true
+          description: Whether the registered user has a one-time password backup code for two-factor authentication.
+        support_teams:
+          type: array
+          items:
+            type: string
+            format: uuid
+          nullable: true
+          readOnly: true
+          description: The UUIDs of the support teams which the user belongs to. This will be set to `null` if the user does not belong to a support team.
+      required:
+        - ach_dual_approval_required
+        - addresses
+        - business_permissions
+        - core_provided_email
+        - date_joined
+        - dual_approval_required
+        - email
+        - enabled_estatements_at
+        - features
+        - first_name
+        - has_accepted_latest_terms
+        - has_backup_codes
+        - has_password
+        - has_permitted_device
+        - has_username
+        - id
+        - institution_user_identifier
+        - international_wire_dual_approval_required
+        - is_active
+        - is_converting
+        - is_narmi
+        - is_staff
+        - is_superuser
+        - last_login
+        - last_name
+        - metadata
+        - notifications_enabled
+        - org_name
+        - org_role
+        - org_uuid
+        - paper_statements
+        - phone_numbers
+        - requires_enrollment_code_verification
+        - segment
+        - support_teams
+        - updated_at
+        - user_category
+        - username
+      x-stoplight:
+        id: qrwyffziby2ly
+    PublicApiError:
+      type: object
+      properties:
+        id:
+          type: string
+        message:
+          type: string
+      required:
+        - id
+      x-stoplight:
+        id: fyjwszire2cma
+    StateEnum:
+      enum:
+        - creating
+        - creating_preapproved
+        - creating_reissued
+        - creating_unverified_already_exists_on_core
+        - creating_verified_already_exists_on_core
+        - submitted
+        - submitted_pending_applicants_info
+        - submitted_preapproved
+        - reviewing
+        - docs_requested
+        - docs_in_review
+        - review
+        - review_reissued
+        - rejected
+        - approved
+        - funding
+        - funded
+        - funding_unknown
+        - funding_review
+        - funding_failed
+        - max_funding_attempts_reached
+        - opening
+        - opening_failed
+        - opened
+        - adding_beneficiaries
+        - beneficiaries_failed
+        - canceled
+        - expired
+        - withdrawn
+        - ineligible
+      type: string
+      description: |-
+        * `creating` - creating
+        * `creating_preapproved` - creating_preapproved
+        * `creating_reissued` - creating_reissued
+        * `creating_unverified_already_exists_on_core` - creating_unverified_already_exists_on_core
+        * `creating_verified_already_exists_on_core` - creating_verified_already_exists_on_core
+        * `submitted` - submitted
+        * `submitted_pending_applicants_info` - submitted_pending_applicants_info
+        * `submitted_preapproved` - submitted_preapproved
+        * `reviewing` - reviewing
+        * `docs_requested` - docs_requested
+        * `docs_in_review` - docs_in_review
+        * `review` - review
+        * `review_reissued` - review_reissued
+        * `rejected` - rejected
+        * `approved` - approved
+        * `funding` - funding
+        * `funded` - funded
+        * `funding_unknown` - funding_unknown
+        * `funding_review` - funding_review
+        * `funding_failed` - funding_failed
+        * `max_funding_attempts_reached` - max_funding_attempts_reached
+        * `opening` - opening
+        * `opening_failed` - opening_failed
+        * `opened` - opened
+        * `adding_beneficiaries` - adding_beneficiaries
+        * `beneficiaries_failed` - beneficiaries_failed
+        * `canceled` - canceled
+        * `expired` - expired
+        * `withdrawn` - withdrawn
+        * `ineligible` - ineligible
+      x-stoplight:
+        id: seu1snlflpdd4
+    SwaggerAccountApplication:
+      type: object
+      properties:
+        application:
+          allOf:
+            - $ref: '#/components/schemas/ApplicantAccountApplication'
+          readOnly: true
+      required:
+        - application
+      x-stoplight:
+        id: irwqlchs9dq0o
+    SwaggerAccountApplicationCreateResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          readOnly: true
+        application:
+          allOf:
+            - $ref: '#/components/schemas/ApplicantAccountApplication'
+          readOnly: true
+      required:
+        - application
+        - token
+      x-stoplight:
+        id: f9kojmkakf4ti
+    SwaggerAccountApplicationKycResponse:
+      type: object
+      description: |-
+        Serializer to capture the {application: NewCustomerAcctAppSerializer.data}
+        response returned by POST /account_applications/:id/kyc
+      properties:
+        application:
+          allOf:
+            - $ref: '#/components/schemas/ApplicantAccountApplication'
+          readOnly: true
+      required:
+        - application
+      x-stoplight:
+        id: wqbh2d6oduadr
+    SwaggerAccountApplicationPut:
+      type: object
+      description: A serializer that casts `applicants` as a Serializer(many) field so DRF-yasg will render it as an argument
+      properties:
+        id:
+          type: string
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        eligibility_answers:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        due_diligence_answers:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+        saved_primary_core_user_id:
+          type: string
+          readOnly: true
+          nullable: true
+        core_users:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: string
+              nullable: true
+          readOnly: true
+        selected_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicantProduct'
+        applicants:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountApplicant'
+        organization:
+          $ref: '#/components/schemas/AccountApplicationOrganizationModel'
+        document:
+          type: string
+          format: uri
+        document_type:
+          type: string
+        documents:
+          type: object
+          properties:
+            dba_certificate:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            articles_of_organization:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            ein_verification_letter:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            business_registration:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            nonprofit_bylaws:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+            other:
+              type: object
+              properties:
+                filename:
+                  type: string
+                secure_url:
+                  type: string
+                  format: uri
+              required:
+                - filename
+                - secure_url
+              additionalProperties: false
+          additionalProperties: false
+          readOnly: true
+        funding:
+          $ref: '#/components/schemas/AccountFunding'
+        opt_out_funding:
+          type: boolean
+        has_joint_applicant:
+          type: boolean
+        is_existing_on_core:
+          type: boolean
+        total_amount:
+          type: number
+          format: double
+        state:
+          allOf:
+            - $ref: '#/components/schemas/StateEnum'
+          readOnly: true
+        referral_code:
+          allOf:
+            - $ref: '#/components/schemas/ApplicationReferralCode'
+          readOnly: true
+        metadata:
+          nullable: true
+        agreement:
+          type: boolean
+          description: 'In order for an account application to be submitted, a user must first agree to the account application terms and conditions.'
+        is_staffer_led:
+          type: boolean
+          nullable: true
+        banker_user:
+          type: string
+          nullable: true
+          readOnly: true
+        branch_location:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        disclosures_accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_disclosures_email_sent_at:
+          type: string
+          format: date-time
+          nullable: true
+        beneficial_owner_certification_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        kyc_link:
+          type: string
+        kyc_id:
+          type: string
+        source:
+          type: string
+        persona_tag:
+          type: string
+          nullable: true
+        personas:
+          type: array
+          items:
+            type: string
+          nullable: true
+        personas_disclosures:
+          type: array
+          items:
+            $ref: '#/components/schemas/Disclosure'
+          readOnly: true
+        beneficiaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/AccountOpeningBeneficiary'
+          readOnly: true
+        using_previous_evaluation:
+          type: boolean
+          readOnly: true
+        specialty_ownership_structure:
+          allOf:
+            - $ref: '#/components/schemas/AccountApplicationSpecialtyOwnershipStructure'
+          readOnly: true
+        core_opening_progress:
+          nullable: true
+          default: {}
+        marketing_comms_consent:
+          type: boolean
+      required:
+        - applicants
+        - banker_user
+        - beneficial_owner_certification_at
+        - beneficiaries
+        - core_users
+        - created_at
+        - documents
+        - due_diligence_answers
+        - eligibility_answers
+        - id
+        - number
+        - personas_disclosures
+        - referral_code
+        - saved_primary_core_user_id
+        - selected_products
+        - specialty_ownership_structure
+        - state
+        - updated_at
+        - using_previous_evaluation
+      x-stoplight:
+        id: mtonzddpm8lrh
+    SwaggerAccountApplicationSubmitRequest:
+      type: object
+      description: |-
+        A serializer to capture the {'selected_products': [...], 'device_id': '...'} request
+        expected by POST /account_applications/:id to submit the application
+      properties:
+        selected_products:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicantProduct'
+        device_id:
+          type: string
+          description: Included in the metadata payload to Alloy evaluations if present
+        utm_source:
+          type: string
+          description: Included in the metadata payload to Alloy evaluations if present
+      required:
+        - selected_products
+      x-stoplight:
+        id: nz7wpxfafen5s
+    SwaggerAccountApplicationSubmitResponse:
+      type: object
+      description: |-
+        Serializer to capture the {submitting: bool, application: NewCustomerAcctAppSerializer.data}
+        response returned by POST /account_applications/:id
+      properties:
+        submitting:
+          type: boolean
+          readOnly: true
+        application:
+          allOf:
+            - $ref: '#/components/schemas/ApplicantAccountApplication'
+          readOnly: true
+      required:
+        - application
+        - submitting
+      x-stoplight:
+        id: en6rwomgpe9zk
+    SwaggerAccountOpeningCreateConsumerAccountRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        verification_code:
+          type: string
+          maxLength: 6
+          minLength: 6
+        metadata:
+          type: object
+          additionalProperties: {}
+      required:
+        - email
+        - metadata
+        - verification_code
+      x-stoplight:
+        id: qsxb8zvrlkpzc
+    SwaggerAccountOpeningLocateConsumerAccountResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+      x-stoplight:
+        id: cj44hc6qscklm
+    SwaggerDocumentsRequestedPost:
+      type: object
+      description: 'A serializer to capture the `evaluation_token` required by /account_application/:id/documents_requested'
+      properties:
+        evaluation_token:
+          type: string
+      required:
+        - evaluation_token
+      x-stoplight:
+        id: 2pk7td8cdmiob
+    SwaggerGetTokenApplicant:
+      type: object
+      properties:
+        applicant:
+          allOf:
+            - $ref: '#/components/schemas/AccountApplicant'
+          readOnly: true
+      required:
+        - applicant
+      x-stoplight:
+        id: l2cpt1a3s5fql
+    UserCategoryEnum:
+      enum:
+        - personal
+        - business
+      type: string
+      x-stoplight:
+        id: paxwfq9nljr5g
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      flows: {}
+servers:
+  - url: 'https://api.sandbox.narmi.dev/'
+    description: ''
+tags:
+  - name: account opening
+  - name: csrf
+  - name: products
+  - name: session
+x-stoplight:
+  id: j1gfsrho7eeyd

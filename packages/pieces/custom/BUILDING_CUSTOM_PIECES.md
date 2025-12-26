@@ -2,7 +2,85 @@
 
 This guide documents the common issues and solutions when building custom pieces for Activepieces.
 
-## Action Naming Convention
+## Standard Requirements for All Custom Pieces
+
+### 1. Custom API Call Action (Required)
+
+**Every custom piece MUST include a Custom API Call action** to allow users to interact with any endpoint not covered by specific actions.
+
+**Implementation:**
+```typescript
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
+
+export const yourPiece = createPiece({
+  displayName: 'Your Piece',
+  auth: yourAuth,
+  actions: [
+    // ... your specific actions
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as any).baseUrl || 'https://api.example.com',
+      auth: yourAuth,
+      authMapping: async (auth) => ({
+        Authorization: `Bearer ${(auth as any).apiKey}`,
+      }),
+    }),
+  ],
+});
+```
+
+**Features the Custom API Call provides:**
+- Full URL or relative path support
+- All HTTP methods (GET, POST, PUT, DELETE, PATCH, etc.)
+- Custom headers and query parameters
+- JSON request body
+- Binary response handling (PDFs, images, etc.)
+- Failsafe mode (no error on failure)
+- Configurable timeout
+- Automatic authentication header injection
+
+**Examples by Auth Type:**
+
+**Bearer Token Auth:**
+```typescript
+createCustomApiCallAction({
+  baseUrl: () => 'https://api.example.com',
+  auth: yourAuth,
+  authMapping: async (auth) => ({
+    Authorization: `Bearer ${auth}`,  // For SecretText auth
+  }),
+})
+```
+
+**Custom Headers Auth (like Fiserv EFXHeader):**
+```typescript
+createCustomApiCallAction({
+  baseUrl: (auth) => (auth as any).baseUrl,
+  auth: yourAuth,
+  authMapping: async (auth) => ({
+    'EFXHeader': JSON.stringify({
+      OrganizationId: (auth as any).organizationId,
+      TrnId: crypto.randomUUID(),
+    }),
+  }),
+})
+```
+
+**Optional/Conditional Auth:**
+```typescript
+createCustomApiCallAction({
+  baseUrl: (auth) => (auth as any).baseUrl || 'https://api.example.com',
+  auth: yourAuth,
+  authMapping: async (auth) => {
+    const apiKey = (auth as any).apiKey;
+    if (apiKey) {
+      return { Authorization: `Bearer ${apiKey}` };
+    }
+    return {};  // No auth headers if apiKey not provided
+  },
+})
+```
+
+### 2. Action Naming Convention
 
 ### Pattern: `{Resource} - {Operation}`
 
