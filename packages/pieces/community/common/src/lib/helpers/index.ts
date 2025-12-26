@@ -10,6 +10,7 @@ import {
   DynamicPropsValue,
   AppConnectionValueForAuthProperty,
   ExtractPieceAuthPropertyTypeForMethods,
+  ApFile,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -19,7 +20,7 @@ import {
   QueryParams,
   httpClient,
 } from '../http';
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/shared';
 import fs from 'fs';
 import mime from 'mime-types';
 import FormData from 'form-data';
@@ -49,9 +50,13 @@ const joinBaseUrlWithRelativePath = ({
   return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
 };
 
-const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>(
+const getBaseUrlForDescription = <
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
+>(
   baseUrl: BaseUrlGetter<PieceAuth>,
-  auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>
+  auth?: AppConnectionValueForAuthProperty<
+    ExtractPieceAuthPropertyTypeForMethods<PieceAuth>
+  >
 ) => {
   const exampleBaseUrl = `https://api.example.com`;
   try {
@@ -67,8 +72,16 @@ const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| PieceAut
     }
   }
 };
-type BaseUrlGetter<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined> = (auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>) => string
-export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>({
+type BaseUrlGetter<
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
+> = (
+  auth?: AppConnectionValueForAuthProperty<
+    ExtractPieceAuthPropertyTypeForMethods<PieceAuth>
+  >
+) => string;
+export function createCustomApiCallAction<
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
+>({
   auth,
   baseUrl,
   authMapping,
@@ -82,7 +95,9 @@ export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| P
   auth?: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
   authMapping?: (
-    auth: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>,
+    auth: AppConnectionValueForAuthProperty<
+      ExtractPieceAuthPropertyTypeForMethods<PieceAuth>
+    >,
     propsValue: StaticPropsValue<any>
   ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
@@ -208,9 +223,34 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               });
               break;
             case 'form_data':
-              fields['data'] = Property.Object({
+              fields['data'] = Property.Array({
                 displayName: 'Form Data',
                 required: true,
+                properties: {
+                  fieldName: Property.ShortText({
+                    displayName: 'Field Name',
+                    required: true,
+                  }),
+                  fieldType: Property.StaticDropdown({
+                    displayName: 'Field Type',
+                    required: true,
+                    options: {
+                      disabled: false,
+                      options: [
+                        { label: 'Text', value: 'text' },
+                        { label: 'File', value: 'file' },
+                      ],
+                    },
+                  }),
+                  textFieldValue: Property.LongText({
+                    displayName: 'Text Field Value',
+                    required: false,
+                  }),
+                  fileFieldValue: Property.File({
+                    displayName: 'File Field Value',
+                    required: false,
+                  }),
+                },
               });
               break;
           }
@@ -219,8 +259,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       }),
       response_is_binary: Property.Checkbox({
         displayName: 'Response is Binary ?',
-        description:
-          'Enable for files like PDFs, images, etc..',
+        description: 'Enable for files like PDFs, images, etc.',
         required: false,
         defaultValue: false,
       }),
@@ -289,9 +328,28 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         if (body_type && body_type !== 'none') {
           const bodyInput = body['data'];
           if (body_type === 'form_data') {
+            const formBodyInput = bodyInput as Array<{
+              fieldName: string;
+              fieldType: 'text' | 'file';
+              textFieldValue?: string;
+              fileFieldValue?: ApFile;
+            }>;
+
             const formData = new FormData();
-            for (const key in bodyInput) {
-              formData.append(key, bodyInput[key]);
+
+            for (const {
+              fieldName,
+              fieldType,
+              textFieldValue,
+              fileFieldValue,
+            } of formBodyInput) {
+              if (fieldType === 'text' && !isEmpty(textFieldValue)) {
+                formData.append(fieldName, textFieldValue);
+              } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
+                formData.append(fieldName, fileFieldValue!.data, {
+                  filename: fileFieldValue?.filename,
+                });
+              }
             }
             request.body = formData;
             request.headers = { ...request.headers, ...formData.getHeaders() };
@@ -342,7 +400,7 @@ const handleBinaryResponse = async (
       : headers?.['content-type'];
     const fileExtension: string =
       mime.extension(contentTypeValue ?? '') || 'txt';
-    
+
     let bufferData: Buffer;
     if (bodyContent instanceof ArrayBuffer) {
       bufferData = Buffer.from(new Uint8Array(bodyContent));
@@ -351,7 +409,7 @@ const handleBinaryResponse = async (
     } else {
       bufferData = Buffer.from(bodyContent);
     }
-    
+
     body = await files.write({
       fileName: `output.${fileExtension}`,
       data: bufferData,
@@ -366,4 +424,3 @@ const handleBinaryResponse = async (
 const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
 };
-
