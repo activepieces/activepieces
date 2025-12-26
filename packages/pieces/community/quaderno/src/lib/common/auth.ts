@@ -15,7 +15,7 @@ export const quadernoAuth = PieceAuth.CustomAuth({
     }),
     api_key: PieceAuth.SecretText({
       displayName: 'API Key',
-      description: 'Your Quaderno API Key',
+      description: 'Your Quaderno Private API Key',
       required: true,
     }),
   },
@@ -25,7 +25,7 @@ export const quadernoAuth = PieceAuth.CustomAuth({
         auth.account_name,
         auth.api_key,
         HttpMethod.GET,
-        '/items'
+        '/tax_rates/calculate?to_country=US&to_postal_code=10128'
       );
       return {
         valid: true,

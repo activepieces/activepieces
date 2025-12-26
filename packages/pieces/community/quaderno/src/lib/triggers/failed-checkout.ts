@@ -1,15 +1,29 @@
 
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { quadernoAuth } from '../common/auth';
-import { makeRequest } from '../common/client';
-import { HttpMethod } from '@activepieces/pieces-common';
+
 
 export const failedCheckout = createTrigger({
   auth: quadernoAuth,
   name: 'failedCheckout',
   displayName: 'Failed Checkout',
   description: 'Triggers when a checkout session payment fails',
-  props: {},
+  props: {
+     instruction: Property.MarkDown({
+          value: `## Quaderno Webhook Setup
+          To use this trigger, you need to manually set up a webhook in your Quaderno account:
+    
+          1. Login to your Quaderno account.
+          2. On the left sidebar, navigate to **Settings** > **Webhooks**.
+          3. Click on **Create Webhook**.
+          4. Enter the following URL in the webhooks field and select **Checkout Failed** as webhook trigger:
+          \`\`\`text
+          {{webhookUrl}}
+          \`\`\`
+          5. Click Save to register the webhook.
+          `,
+        }),
+  },
   sampleData: {
     event_type: 'checkout.failed',
     account_id: 99999,
@@ -46,37 +60,37 @@ export const failedCheckout = createTrigger({
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
-    const { account_name, api_key } = context.auth.props;
-    const webhookUrl = context.webhookUrl;
+    // const { account_name, api_key } = context.auth.props;
+    // const webhookUrl = context.webhookUrl;
 
-    // Create webhook for checkout.failed event
-    const response = await makeRequest(
-      account_name,
-      api_key,
-      HttpMethod.POST,
-      '/webhooks',
-      {
-        url: webhookUrl,
-        events_types: ['checkout.failed'],
-      }
-    );
+    // // Create webhook for checkout.failed event
+    // const response = await makeRequest(
+    //   account_name,
+    //   api_key,
+    //   HttpMethod.POST,
+    //   '/webhooks',
+    //   {
+    //     url: webhookUrl,
+    //     events_types: ['checkout.failed'],
+    //   }
+    // );
 
-    // Store webhook ID for later deletion
-    await context.store.put('webhookId', response.id.toString());
+    // // Store webhook ID for later deletion
+    // await context.store.put('webhookId', response.id.toString());
   },
   async onDisable(context) {
-    const { account_name, api_key } = context.auth.props;
-    const webhookId = await context.store.get('webhookId');
+    // const { account_name, api_key } = context.auth.props;
+    // const webhookId = await context.store.get('webhookId');
 
-    if (webhookId) {
-      // Delete webhook
-      await makeRequest(
-        account_name,
-        api_key,
-        HttpMethod.DELETE,
-        `/webhooks/${webhookId}`
-      );
-    }
+    // if (webhookId) {
+    //   // Delete webhook
+    //   await makeRequest(
+    //     account_name,
+    //     api_key,
+    //     HttpMethod.DELETE,
+    //     `/webhooks/${webhookId}`
+    //   );
+    // }
   },
   async run(context) {
     return [context.payload.body];

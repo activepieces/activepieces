@@ -96,11 +96,13 @@ export const createInvoice = createAction({
       customerData.country = context.propsValue.customerCountry;
     }
 
-    const itemsData = [{
-      description: context.propsValue.itemDescription,
-      quantity: context.propsValue.itemQuantity,
-      unit_cost: context.propsValue.itemUnitCost,
-    }];
+    const itemsData = [
+      {
+        description: context.propsValue.itemDescription,
+        quantity: context.propsValue.itemQuantity,
+        unit_cost: context.propsValue.itemUnitCost,
+      },
+    ];
 
     const invoiceData: any = {
       issue_date: context.propsValue.issueDate,
@@ -119,7 +121,9 @@ export const createInvoice = createAction({
       invoiceData.po_number = context.propsValue.poNumber;
     }
     if (context.propsValue.tagList) {
-      invoiceData.tag_list = context.propsValue.tagList.split(',').map((tag: string) => tag.trim());
+      invoiceData.tag_list = context.propsValue.tagList
+        .split(',')
+        .map((tag: string) => tag.trim());
     }
     if (context.propsValue.notes) {
       invoiceData.notes = context.propsValue.notes;
