@@ -8,10 +8,12 @@ interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
   border?: boolean;
-  playOnHover?: boolean; // New prop for hover-based video playback
+  playOnHover?: boolean;
+  forcePlay?: boolean; // New prop for external hover control
 }
 
 const isGrayColor = (r: number, g: number, b: number): boolean => {
+  // ... (keep existing implementation)
   const threshold = 15;
   const darkThreshold = 150;
   const lightThreshold = 225;
@@ -32,6 +34,7 @@ const ImageWithColorBackground = ({
   alt,
   fallback,
   playOnHover = false,
+  forcePlay = false,
   ...props
 }: ImageWithColorBackgroundProps) => {
   const [hasError, setHasError] = useState(false);
@@ -73,10 +76,10 @@ const ImageWithColorBackground = ({
     };
   }, [src, isVideo]);
 
-  // Handle video play/pause on hover
+  // Handle video play/pause on hover or forcePlay
   useEffect(() => {
-    if (playOnHover && isVideo && videoRef.current) {
-      if (isHovered) {
+    if ((playOnHover || forcePlay) && isVideo && videoRef.current) {
+      if (isHovered || forcePlay) {
         videoRef.current.play().catch(() => {
           // Ignore play errors
         });
@@ -85,7 +88,7 @@ const ImageWithColorBackground = ({
         videoRef.current.currentTime = 0; // Reset to start
       }
     }
-  }, [isHovered, playOnHover, isVideo]);
+  }, [isHovered, playOnHover, forcePlay, isVideo]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -129,7 +132,7 @@ const ImageWithColorBackground = ({
           <video
             ref={videoRef}
             src={src}
-            autoPlay={!playOnHover}
+            autoPlay={!playOnHover && !forcePlay}
             loop
             muted
             playsInline
@@ -137,7 +140,7 @@ const ImageWithColorBackground = ({
             onLoadedData={handleLoad}
             onError={handleError}
             className={cn(
-              `transition-opacity duration-500 w-full h-full object-contain`,
+              `transition-opacity duration-500 w-full h-full object-cover`,
               {
                 'opacity-0': isLoading,
                 'opacity-100': !isLoading,
@@ -152,7 +155,7 @@ const ImageWithColorBackground = ({
             onLoad={handleLoad}
             onError={handleError}
             className={cn(
-              `transition-opacity duration-500 w-full h-full object-contain`,
+              `transition-opacity duration-500 w-full h-full object-cover`,
               {
                 'opacity-0': isLoading,
                 'opacity-100': !isLoading,

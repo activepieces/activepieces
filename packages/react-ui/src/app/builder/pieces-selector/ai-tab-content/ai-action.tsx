@@ -1,3 +1,5 @@
+import React, { useState } from 'react';
+
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
@@ -32,19 +34,23 @@ const AIActionItem = ({
   onClick,
 }: AIActionItemProps) => {
   const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <CardListItem
-      className="p-3 w-full rounded-xl flex items-center gap-4 bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 cursor-pointer group relative overflow-hidden"
+      className="h-[76px] w-full rounded-xl flex items-center gap-3 bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 cursor-pointer group relative overflow-hidden p-2.5"
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex-shrink-0 w-20 h-14 rounded-lg overflow-hidden flex items-center justify-center">
+      <div className="flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
         <PieceIcon
           logoUrl={stepMetadataWithSuggestions.logoUrl}
           displayName={stepMetadataWithSuggestions.displayName}
           showTooltip={false}
           size={'full'}
           playOnHover={true}
+          forcePlay={isHovered}
         />
       </div>
       <div className="flex flex-col gap-0.5 flex-1 min-w-0">

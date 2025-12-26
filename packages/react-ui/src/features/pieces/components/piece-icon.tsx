@@ -37,6 +37,7 @@ interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
   logoUrl?: string;
   showTooltip: boolean;
   playOnHover?: boolean;
+  forcePlay?: boolean;
 }
 
 const PieceIcon = React.memo(
@@ -48,6 +49,7 @@ const PieceIcon = React.memo(
     circle = false,
     showTooltip,
     playOnHover = false,
+    forcePlay = false,
   }: PieceIconCircleProps) => {
     return (
       <Tooltip>
@@ -60,6 +62,7 @@ const PieceIcon = React.memo(
                 className="object-cover w-full h-full"
                 key={logoUrl}
                 playOnHover={playOnHover}
+                forcePlay={forcePlay}
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
               />
             ) : (

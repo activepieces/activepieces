@@ -112,7 +112,7 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 500);
+  const listHeight = Math.min(listHeightRef.current, 420);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -168,7 +168,7 @@ const PieceSelectorContent = ({
           onContextMenu={(e) => {
             e.stopPropagation();
           }}
-          className="w-[340px] md:w-[800px] p-0 shadow-lg overflow-hidden"
+          className="w-[340px] md:w-[940px] p-0 shadow-lg overflow-hidden"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
