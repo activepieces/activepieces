@@ -1,0 +1,160 @@
+{
+  "name": "Stripe CRM",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "author": "",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-hubspot",
+    "@activepieces/piece-stripe",
+    "@activepieces/piece-microsoft-outlook"
+  ],
+  "status": "PUBLISHED",
+  "blogUrl": "",
+  "metadata": null,
+  "flows": [
+    {
+      "displayName": "Stripe CRM",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Contact Recently Created or Updated",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "markdown": {
+              "type": "MANUAL"
+            },
+            "additionalPropertiesToRetrieve": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-hubspot",
+          "pieceVersion": "~0.7.20",
+          "input": {
+            "auth": "{{connections['KZq0aHx5WRKpj1dYJvQwK']}}",
+            "additionalPropertiesToRetrieve": null
+          },
+          "sampleData": {},
+          "triggerName": "new-or-updated-contact"
+        },
+        "nextAction": {
+          "name": "step_1",
+          "type": "PIECE",
+          "valid": true,
+          "settings": {
+            "input": {
+              "auth": "{{connections['I8F64cbr7X1CNuyAwyDnG']}}",
+              "name": "{{trigger['properties']['firstname']}}",
+              "email": "{{trigger['properties']['email']}}",
+              "phone": "{{trigger['properties']['mobilephone']}}",
+              "description": "{{trigger['properties']['lastname']}}"
+            },
+            "pieceName": "@activepieces/piece-stripe",
+            "actionName": "create_customer",
+            "sampleData": {},
+            "pieceVersion": "~0.5.16",
+            "propertySettings": {
+              "city": {
+                "type": "MANUAL"
+              },
+              "name": {
+                "type": "MANUAL"
+              },
+              "email": {
+                "type": "MANUAL"
+              },
+              "line1": {
+                "type": "MANUAL"
+              },
+              "phone": {
+                "type": "MANUAL"
+              },
+              "state": {
+                "type": "MANUAL"
+              },
+              "country": {
+                "type": "MANUAL"
+              },
+              "description": {
+                "type": "MANUAL"
+              },
+              "postal_code": {
+                "type": "MANUAL"
+              }
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_2",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "auth": "{{connections['0OkPdbKKD6JC6HAlegAs3']}}",
+                "body": "{{step_1}}",
+                "subject": "{{trigger['properties']['email']}} contact created in stripe",
+                "bodyFormat": "text",
+                "recipients": [
+                  "vqnguyen1@gmail.com"
+                ],
+                "attachments": [],
+                "ccRecipients": [],
+                "bccRecipients": []
+              },
+              "pieceName": "@activepieces/piece-microsoft-outlook",
+              "actionName": "send-email",
+              "sampleData": {},
+              "pieceVersion": "~0.1.14",
+              "propertySettings": {
+                "body": {
+                  "type": "MANUAL"
+                },
+                "subject": {
+                  "type": "MANUAL"
+                },
+                "bodyFormat": {
+                  "type": "MANUAL"
+                },
+                "recipients": {
+                  "type": "MANUAL"
+                },
+                "attachments": {
+                  "type": "MANUAL"
+                },
+                "ccRecipients": {
+                  "type": "MANUAL"
+                },
+                "bccRecipients": {
+                  "type": "MANUAL"
+                }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "displayName": "Send Email"
+          },
+          "displayName": "Create Customer"
+        }
+      },
+      "valid": true,
+      "schemaVersion": "10"
+    }
+  ]
+}

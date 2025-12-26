@@ -1,0 +1,484 @@
+{
+  "name": "CRM -> LOS",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "author": "",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-hubspot",
+    "@vqnguyen1/piece-fiserv",
+    "@activepieces/piece-data-mapper",
+    "@vqnguyen1/piece-fiserv-premier",
+    "@activepieces/piece-store",
+    "@vqnguyen1/piece-icemortgage-encompass",
+    "@activepieces/piece-microsoft-outlook"
+  ],
+  "status": "PUBLISHED",
+  "blogUrl": "",
+  "metadata": null,
+  "flows": [
+    {
+      "displayName": "CRM -> LOS",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Updated Deal Stage",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "stageId": {
+              "type": "MANUAL"
+            },
+            "markdown": {
+              "type": "MANUAL"
+            },
+            "pipelineId": {
+              "type": "MANUAL"
+            },
+            "additionalPropertiesToRetrieve": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-hubspot",
+          "pieceVersion": "~0.7.20",
+          "input": {
+            "auth": "{{connections['KZq0aHx5WRKpj1dYJvQwK']}}",
+            "stageId": "qualifiedtobuy",
+            "pipelineId": "default",
+            "additionalPropertiesToRetrieve": [
+              "hs_primary_associated_company"
+            ]
+          },
+          "sampleData": {},
+          "triggerName": "deal-stage-updated"
+        },
+        "nextAction": {
+          "name": "step_1",
+          "skip": false,
+          "type": "ROUTER",
+          "valid": true,
+          "children": [
+            {
+              "name": "step_2",
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "auth": "{{connections['KZq0aHx5WRKpj1dYJvQwK']}}",
+                  "companyId": "{{trigger['properties']['hs_primary_associated_company']}}",
+                  "additionalPropertiesToRetrieve": null
+                },
+                "pieceName": "@activepieces/piece-hubspot",
+                "actionName": "get-company",
+                "sampleData": {},
+                "pieceVersion": "~0.7.20",
+                "propertySettings": {
+                  "markdown": {
+                    "type": "MANUAL"
+                  },
+                  "companyId": {
+                    "type": "MANUAL"
+                  },
+                  "additionalPropertiesToRetrieve": {
+                    "type": "MANUAL"
+                  }
+                },
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_4",
+                "skip": false,
+                "type": "ROUTER",
+                "valid": true,
+                "children": [
+                  {
+                    "name": "step_5",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": false,
+                    "settings": {
+                      "input": {
+                        "email": "{{step_2['properties']['owneremail']}}",
+                        "taxId": "{{step_2['properties']['hs_object_id']}}",
+                        "firstName": "{{step_2['properties']['name']}}",
+                        "partyType": "Person",
+                        "phoneNumber": "{{step_2['properties']['phone']}}",
+                        "organizationName": "{{step_2['properties']['name']}}"
+                      },
+                      "pieceName": "@vqnguyen1/piece-fiserv",
+                      "actionName": "party_create",
+                      "sampleData": {},
+                      "pieceVersion": "~0.0.2",
+                      "propertySettings": {
+                        "email": {
+                          "type": "MANUAL"
+                        },
+                        "taxId": {
+                          "type": "MANUAL"
+                        },
+                        "lastName": {
+                          "type": "MANUAL"
+                        },
+                        "birthDate": {
+                          "type": "MANUAL"
+                        },
+                        "firstName": {
+                          "type": "MANUAL"
+                        },
+                        "partyType": {
+                          "type": "MANUAL"
+                        },
+                        "middleName": {
+                          "type": "MANUAL"
+                        },
+                        "phoneNumber": {
+                          "type": "MANUAL"
+                        },
+                        "establishedDate": {
+                          "type": "MANUAL"
+                        },
+                        "organizationName": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "nextAction": {
+                      "name": "step_6",
+                      "type": "PIECE",
+                      "valid": true,
+                      "settings": {
+                        "input": {
+                          "mapping": "{\n  \"partyId\": \"{{trigger['properties']['hs_primary_associated_company']}}\",\n  \"name\": {{step_2['properties']['name']}}\n}"
+                        },
+                        "pieceName": "@activepieces/piece-data-mapper",
+                        "actionName": "advanced_mapping",
+                        "sampleData": {},
+                        "pieceVersion": "~0.3.11",
+                        "propertySettings": {
+                          "mapping": {
+                            "type": "MANUAL"
+                          }
+                        },
+                        "errorHandlingOptions": {
+                          "retryOnFailure": {
+                            "value": false
+                          },
+                          "continueOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "nextAction": {
+                        "name": "step_3",
+                        "skip": false,
+                        "type": "PIECE",
+                        "valid": false,
+                        "settings": {
+                          "input": {
+                            "url": {},
+                            "body": {},
+                            "method": null,
+                            "headers": {},
+                            "failsafe": false,
+                            "queryParams": {},
+                            "response_is_binary": false
+                          },
+                          "pieceName": "@vqnguyen1/piece-fiserv-premier",
+                          "actionName": "custom_api_call",
+                          "sampleData": {},
+                          "pieceVersion": "~0.0.14",
+                          "propertySettings": {
+                            "url": {
+                              "type": "MANUAL",
+                              "schema": {
+                                "url": {
+                                  "type": "SHORT_TEXT",
+                                  "required": true,
+                                  "description": "You can either use the full URL or the relative path to the base URL\ni.e https://api.example.com/resource or /resource",
+                                  "displayName": "URL",
+                                  "defaultValue": ""
+                                }
+                              }
+                            },
+                            "body": {
+                              "type": "MANUAL"
+                            },
+                            "method": {
+                              "type": "MANUAL"
+                            },
+                            "headers": {
+                              "type": "MANUAL"
+                            },
+                            "timeout": {
+                              "type": "MANUAL"
+                            },
+                            "failsafe": {
+                              "type": "MANUAL"
+                            },
+                            "queryParams": {
+                              "type": "MANUAL"
+                            },
+                            "response_is_binary": {
+                              "type": "MANUAL"
+                            }
+                          },
+                          "errorHandlingOptions": {
+                            "retryOnFailure": {
+                              "value": false
+                            },
+                            "continueOnFailure": {
+                              "value": false
+                            }
+                          }
+                        },
+                        "nextAction": {
+                          "name": "step_8",
+                          "skip": false,
+                          "type": "PIECE",
+                          "valid": true,
+                          "settings": {
+                            "input": {
+                              "key": "Fiserv Data",
+                              "value": "Fiserv Data",
+                              "store_scope": "FLOW"
+                            },
+                            "pieceName": "@activepieces/piece-store",
+                            "actionName": "put",
+                            "sampleData": {},
+                            "pieceVersion": "~0.6.10",
+                            "propertySettings": {
+                              "key": {
+                                "type": "MANUAL"
+                              },
+                              "value": {
+                                "type": "MANUAL"
+                              },
+                              "store_scope": {
+                                "type": "MANUAL"
+                              }
+                            },
+                            "errorHandlingOptions": {
+                              "retryOnFailure": {
+                                "value": false
+                              },
+                              "continueOnFailure": {
+                                "value": false
+                              }
+                            }
+                          },
+                          "displayName": "Put"
+                        },
+                        "displayName": "Custom API Call"
+                      },
+                      "displayName": "Advanced Mapping"
+                    },
+                    "displayName": "Party - Create"
+                  },
+                  null
+                ],
+                "settings": {
+                  "branches": [
+                    {
+                      "branchName": "Branch 1",
+                      "branchType": "CONDITION",
+                      "conditions": [
+                        [
+                          {
+                            "operator": "DOES_NOT_EXIST",
+                            "firstValue": "{{trigger['properties']['hs_primary_associated_company']}}"
+                          }
+                        ]
+                      ]
+                    },
+                    {
+                      "branchName": "Otherwise",
+                      "branchType": "FALLBACK"
+                    }
+                  ],
+                  "sampleData": {},
+                  "executionType": "EXECUTE_FIRST_MATCH"
+                },
+                "nextAction": {
+                  "name": "step_9",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "mapping": {
+                        "newProperty": "oldProperty"
+                      }
+                    },
+                    "pieceName": "@activepieces/piece-data-mapper",
+                    "actionName": "advanced_mapping",
+                    "sampleData": {},
+                    "pieceVersion": "~0.3.11",
+                    "propertySettings": {
+                      "mapping": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_7",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": false,
+                    "settings": {
+                      "input": {
+                        "view": "entity",
+                        "loanData": {},
+                        "loanFolder": "My Pipeline",
+                        "templateType": null
+                      },
+                      "pieceName": "@vqnguyen1/piece-icemortgage-encompass",
+                      "actionName": "loan_create",
+                      "sampleData": {},
+                      "pieceVersion": "~0.0.7",
+                      "propertySettings": {
+                        "view": {
+                          "type": "MANUAL"
+                        },
+                        "loanData": {
+                          "type": "MANUAL"
+                        },
+                        "loanFolder": {
+                          "type": "MANUAL"
+                        },
+                        "templatePath": {
+                          "type": "MANUAL"
+                        },
+                        "templateType": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "displayName": "Loan - Create"
+                  },
+                  "displayName": "Advanced Mapping"
+                },
+                "displayName": "Router - Party Exists"
+              },
+              "displayName": "Get Company"
+            },
+            null
+          ],
+          "settings": {
+            "branches": [
+              {
+                "branchName": "Branch 1",
+                "branchType": "CONDITION",
+                "conditions": [
+                  [
+                    {
+                      "operator": "TEXT_EXACTLY_MATCHES",
+                      "firstValue": "{{trigger['properties']['dealtype']}}",
+                      "secondValue": "Mortgage",
+                      "caseSensitive": false
+                    }
+                  ]
+                ]
+              },
+              {
+                "branchName": "Otherwise",
+                "branchType": "FALLBACK"
+              }
+            ],
+            "sampleData": {},
+            "executionType": "EXECUTE_FIRST_MATCH"
+          },
+          "nextAction": {
+            "name": "step_10",
+            "skip": false,
+            "type": "PIECE",
+            "valid": false,
+            "settings": {
+              "input": {
+                "auth": "{{connections['0OkPdbKKD6JC6HAlegAs3']}}",
+                "bodyFormat": "text",
+                "recipients": [
+                  ""
+                ],
+                "attachments": [],
+                "ccRecipients": [],
+                "bccRecipients": []
+              },
+              "pieceName": "@activepieces/piece-microsoft-outlook",
+              "actionName": "send-email",
+              "sampleData": {},
+              "pieceVersion": "~0.1.14",
+              "propertySettings": {
+                "body": {
+                  "type": "MANUAL"
+                },
+                "subject": {
+                  "type": "MANUAL"
+                },
+                "bodyFormat": {
+                  "type": "MANUAL"
+                },
+                "recipients": {
+                  "type": "MANUAL"
+                },
+                "attachments": {
+                  "type": "MANUAL"
+                },
+                "ccRecipients": {
+                  "type": "MANUAL"
+                },
+                "bccRecipients": {
+                  "type": "MANUAL"
+                }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "displayName": "Send Email"
+          },
+          "displayName": "Router - Deal Type Mortgage"
+        }
+      },
+      "valid": false,
+      "schemaVersion": "10"
+    }
+  ]
+}
