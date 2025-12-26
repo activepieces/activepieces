@@ -17,6 +17,7 @@ const pieceIconVariants = cva('flex items-center justify-center   ', {
       false: 'dark:rounded-[2px]',
     },
     size: {
+      full: 'w-full h-full',
       xxl: 'size-[64px] p-4',
       xl: 'size-[48px]',
       lg: 'size-[40px]',

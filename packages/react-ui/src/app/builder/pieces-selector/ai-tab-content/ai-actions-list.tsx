@@ -121,40 +121,46 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
   };
 
   return (
-    <ScrollArea className="h-full" viewPortClassName="h-full">
-      <div className="flex gap-4 p-4 w-full">
+    <div className="flex flex-col px-4">
+      <div className="flex gap-4 py-4 w-full">
         {/* Left: Featured AI Agent Card */}
         {agentAction && (
-          <div className="w-[45%] flex-shrink-0">
+          <div className="w-[48%] flex-shrink-0">
             <div
               onClick={() => handleClick(agentAction)}
-              className="group relative h-full min-h-[380px] rounded-2xl bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 dark:from-purple-900/40 dark:via-pink-900/40 dark:to-blue-900/40 p-6 cursor-pointer hover:shadow-xl transition-all duration-300 overflow-hidden border border-purple-200/50 dark:border-purple-700/50"
+              className="group relative flex flex-col h-full min-h-[400px] rounded-xl bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 cursor-pointer hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 overflow-hidden"
             >
-              {/* Large centered icon */}
-              <div className="flex items-center justify-center mb-6 mt-8">
-                <div className="w-48 h-48 rounded-3xl bg-gradient-to-br from-purple-200/80 via-pink-200/80 to-blue-200/80 dark:from-purple-800/60 dark:via-pink-800/60 dark:to-blue-800/60 flex items-center justify-center p-8 shadow-lg">
+              {/* Image Section */}
+              <div className="flex-1 w-full flex items-center justify-center p-6">
+                <div className="w-full h-full relative">
                   <PieceIcon
                     logoUrl={ACTION_ICON_MAP['run_agent']}
                     displayName="AI Agent"
                     showTooltip={false}
-                    size={'xxl'}
+                    size={'full'}
                     playOnHover={true}
                   />
                 </div>
               </div>
 
-              {/* Title and Description */}
-              <div className="text-center space-y-3">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-gray-50">
-                  AI Agent
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
-                  {getPieceSelectorItemInfo(agentAction).description}
-                </p>
-              </div>
+              {/* Content Section */}
+              <div className="px-6 pb-6 pt-2 flex flex-col gap-2">
+                <div className="space-y-1">
+                  <h3 className="text-[19px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                    AI Agent
+                  </h3>
+                  <p className="text-[14px] text-zinc-500 dark:text-zinc-400 leading-snug line-clamp-3">
+                    {getPieceSelectorItemInfo(agentAction).description}
+                  </p>
+                </div>
 
-              {/* Hover overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl" />
+                {/* Add link at bottom right */}
+                <div className="flex justify-end mt-2">
+                  <span className="text-[13px] font-bold text-zinc-900 dark:text-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200 uppercase tracking-wider">
+                    Add
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -181,6 +187,33 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
           })}
         </div>
       </div>
-    </ScrollArea>
+
+      {/* Footer: Available Models */}
+      <div className="pt-2 pb-8 flex items-center gap-3">
+        <span className="text-[13px] text-zinc-400 dark:text-zinc-500 font-medium">
+          Available models:
+        </span>
+        <div className="flex items-center gap-2.5">
+          <img
+            src="https://cdn.activepieces.com/pieces/google-gemini.svg"
+            alt="Gemini"
+            className="w-5 h-5 opacity-60 hover:opacity-100 transition-opacity cursor-default"
+          />
+          <img
+            src="https://cdn.activepieces.com/pieces/openai.svg"
+            alt="OpenAI"
+            className="w-5 h-5 opacity-60 hover:opacity-100 transition-opacity cursor-default"
+          />
+          <img
+            src="https://cdn.activepieces.com/pieces/anthropic.svg"
+            alt="Anthropic"
+            className="w-5 h-5 opacity-60 hover:opacity-100 transition-opacity cursor-default"
+          />
+          <span className="text-[13px] text-zinc-400 dark:text-zinc-500 ml-0.5">
+            + more
+          </span>
+        </div>
+      </div>
+    </div>
   );
 };

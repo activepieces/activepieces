@@ -2,7 +2,6 @@ import {
   CardListItem,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
   PieceSelectorTabType,
@@ -54,37 +53,35 @@ const ExploreTabContent = ({
   }
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div className="flex  p-2  ">
-        {categories.map((category) => (
-          <div key={category.title} className="flex w-[50%] flex-col gap-0.5 ">
-            <div className="text-sm text-muted-foreground mb-1.5">
-              {category.title}
-            </div>
-
-            {category.metadata.map((pieceMetadata) => (
-              <CardListItem
-                className="rounded-sm py-3"
-                key={pieceMetadata.displayName}
-                onClick={() => setSelectedPieceInExplore(pieceMetadata)}
-              >
-                <div className="flex gap-2 items-center h-full">
-                  <PieceIcon
-                    logoUrl={pieceMetadata.logoUrl}
-                    displayName={pieceMetadata.displayName}
-                    showTooltip={false}
-                    size={'sm'}
-                  />
-                  <div className="grow h-full flex items-center justify-left text-sm">
-                    {pieceMetadata.displayName}
-                  </div>
-                </div>{' '}
-              </CardListItem>
-            ))}
+    <div className="flex p-2 w-full">
+      {categories.map((category) => (
+        <div key={category.title} className="flex w-[50%] flex-col gap-0.5 ">
+          <div className="text-sm text-muted-foreground mb-1.5 px-3">
+            {category.title}
           </div>
-        ))}
-      </div>
-    </ScrollArea>
+
+          {category.metadata.map((pieceMetadata) => (
+            <CardListItem
+              className="rounded-sm py-3"
+              key={pieceMetadata.displayName}
+              onClick={() => setSelectedPieceInExplore(pieceMetadata)}
+            >
+              <div className="flex gap-2 items-center h-full">
+                <PieceIcon
+                  logoUrl={pieceMetadata.logoUrl}
+                  displayName={pieceMetadata.displayName}
+                  showTooltip={false}
+                  size={'sm'}
+                />
+                <div className="grow h-full flex items-center justify-left text-sm">
+                  {pieceMetadata.displayName}
+                </div>
+              </div>{' '}
+            </CardListItem>
+          ))}
+        </div>
+      ))}
+    </div>
   );
 };
 

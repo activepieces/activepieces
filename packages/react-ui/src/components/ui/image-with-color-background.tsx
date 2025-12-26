@@ -100,6 +100,8 @@ const ImageWithColorBackground = ({
 
   return (
     <span
+      onMouseEnter={() => playOnHover && setIsHovered(true)}
+      onMouseLeave={() => playOnHover && setIsHovered(false)}
       className={cn(
         'relative inline-block h-full w-full rounded-lg',
         className,
@@ -131,10 +133,9 @@ const ImageWithColorBackground = ({
             loop
             muted
             playsInline
+            preload="auto"
             onLoadedData={handleLoad}
             onError={handleError}
-            onMouseEnter={() => playOnHover && setIsHovered(true)}
-            onMouseLeave={() => playOnHover && setIsHovered(false)}
             className={cn(
               `transition-opacity duration-500 w-full h-full object-contain`,
               {

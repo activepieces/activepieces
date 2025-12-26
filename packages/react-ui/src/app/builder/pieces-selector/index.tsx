@@ -9,11 +9,8 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { PiecesSearchInput } from '@/features/pieces/components/piece-selector-search';
 import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-tabs';
@@ -39,7 +36,7 @@ const getTabsList = (operationType: FlowOperationType) => {
   const baseTabs = [
     {
       value: PieceSelectorTabType.EXPLORE,
-      name: t('Explore'),
+      name: t('All Apps'),
       icon: <LayoutGridIcon className="size-5" />,
     },
     {
@@ -49,7 +46,7 @@ const getTabsList = (operationType: FlowOperationType) => {
     },
     {
       value: PieceSelectorTabType.UTILITY,
-      name: t('Utility'),
+      name: t('Utilities'),
       icon: <WrenchIcon className="size-5" />,
     },
   ];
@@ -115,7 +112,7 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 300);
+  const listHeight = Math.min(listHeightRef.current, 500);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -171,14 +168,19 @@ const PieceSelectorContent = ({
           onContextMenu={(e) => {
             e.stopPropagation();
           }}
-          className="w-[340px] md:w-[600px] p-0 shadow-lg"
+          className="w-[340px] md:w-[800px] p-0 shadow-lg overflow-hidden"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
           }}
         >
-          <>
-            <div>
+          <ScrollArea
+            style={{
+              height: listHeight + 100 + 'px',
+            }}
+            viewPortClassName="h-full"
+          >
+            <div className="flex flex-col">
               <PiecesSearchInput
                 searchInputRef={searchInputRef}
                 onSearchChange={(e) => {
@@ -189,27 +191,22 @@ const PieceSelectorContent = ({
                 }}
               />
               {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
-              <Separator orientation="horizontal" className="mt-1" />
-            </div>
-            <div
-              className=" flex flex-row max-h-[300px]"
-              style={{
-                height: listHeight + 'px',
-              }}
-            >
-              <ExploreTabContent operation={operation} />
-              <AITabContent operation={operation} />
 
-              <PiecesCardList
-                //this is done to avoid debounced results when user clears search
-                searchQuery={searchQuery === '' ? '' : debouncedQuery}
-                operation={operation}
-                stepToReplacePieceDisplayName={
-                  isMobile ? undefined : stepToReplacePieceDisplayName
-                }
-              />
+              <div className="flex flex-row flex-1">
+                <ExploreTabContent operation={operation} />
+                <AITabContent operation={operation} />
+
+                <PiecesCardList
+                  //this is done to avoid debounced results when user clears search
+                  searchQuery={searchQuery === '' ? '' : debouncedQuery}
+                  operation={operation}
+                  stepToReplacePieceDisplayName={
+                    isMobile ? undefined : stepToReplacePieceDisplayName
+                  }
+                />
+              </div>
             </div>
-          </>
+          </ScrollArea>
         </PopoverContent>
       </PieceSelectorTabsProvider>
     </Popover>

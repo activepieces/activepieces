@@ -30,11 +30,12 @@ const PiecesSearchInput = ({
   const showBackButton =
     selectedPieceInExplore && selectedTab === PieceSelectorTabType.EXPLORE;
   return (
-    <div className="p-2 flex gap-2 items-center">
+    <div className="px-4 py-2.5 flex gap-2 items-center border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-950">
       {showBackButton && (
         <Button
           variant="ghost"
           size="icon"
+          className="size-8"
           onClick={() => {
             setSelectedPieceInExplore(null);
           }}
