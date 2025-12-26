@@ -10,20 +10,12 @@ import {
 import { RefreshAnalyticsContext } from './refresh-analytics-context';
 
 const queryKey = ['analytics'];
-const leaderboardQueryKey = ['analytics', 'leaderboard'];
 
 export const platformAnalyticsHooks = {
   useAnalytics: (request?: AnalyticsReportRequest) => {
     const { data, isLoading } = useQuery({
       queryKey: request ? ['analytics', request] : queryKey,
       queryFn: () => analyticsApi.get(request),
-    });
-    return { data, isLoading };
-  },
-  useLeaderboard: () => {
-    const { data, isLoading } = useQuery({
-      queryKey: leaderboardQueryKey,
-      queryFn: () => analyticsApi.getLeaderboard(),
     });
     return { data, isLoading };
   },
