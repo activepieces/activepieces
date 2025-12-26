@@ -1,0 +1,22 @@
+{
+  "name": "pieces-plaid",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/plaid/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/plaid",
+        "main": "packages/pieces/custom/plaid/src/index.ts",
+        "tsConfig": "packages/pieces/custom/plaid/tsconfig.lib.json",
+        "assets": [
+          "packages/pieces/custom/plaid/*.md",
+          "packages/pieces/custom/plaid/*.png"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

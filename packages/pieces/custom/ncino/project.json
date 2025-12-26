@@ -1,0 +1,22 @@
+{
+  "name": "pieces-ncino",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/ncino/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/ncino",
+        "main": "packages/pieces/custom/ncino/src/index.ts",
+        "tsConfig": "packages/pieces/custom/ncino/tsconfig.lib.json",
+        "assets": [
+          "packages/pieces/custom/ncino/*.md",
+          "packages/pieces/custom/ncino/*.png"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
