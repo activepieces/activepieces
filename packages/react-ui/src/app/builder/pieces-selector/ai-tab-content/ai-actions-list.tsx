@@ -132,10 +132,10 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               onClick={() => handleClick(agentAction)}
               onMouseEnter={() => setIsAgentHovered(true)}
               onMouseLeave={() => setIsAgentHovered(false)}
-              className="group relative flex flex-col rounded-xl bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 cursor-pointer hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 overflow-hidden h-[412px]"
+              className="group relative flex flex-col rounded-xl bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 cursor-pointer hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 overflow-hidden h-[452px]"
             >
               {/* Image Section - Aligns with 3 cards on the right */}
-              <div className="p-2.5 h-[244px]">
+              <div className="p-2.5 h-[280px]">
                 <div className="w-full h-full relative rounded-lg overflow-hidden border border-zinc-100/50 dark:border-zinc-800">
                   <PieceIcon
                     logoUrl={ACTION_ICON_MAP['run_agent']}
@@ -149,12 +149,12 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               </div>
 
               {/* Content Section - Aligns with 2 cards on the right */}
-              <div className="px-6 pb-6 pt-2 flex flex-col h-[168px]">
+              <div className="px-6 pb-8 pt-4 flex flex-col h-[172px]">
                 <div className="space-y-1">
                   <h3 className="text-[20px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                     AI Agent
                   </h3>
-                  <p className="text-[14.5px] text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3">
+                  <p className="text-[14.5px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
                     {getPieceSelectorItemInfo(agentAction).description}
                   </p>
                 </div>

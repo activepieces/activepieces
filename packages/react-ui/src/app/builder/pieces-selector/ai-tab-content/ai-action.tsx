@@ -43,7 +43,7 @@ const AIActionItem = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex-shrink-0 w-16 h-12 rounded-lg overflow-hidden flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
+      <div className="flex-shrink-0 h-full aspect-[1.4/1] rounded-lg overflow-hidden flex items-center justify-center border border-zinc-100 dark:border-zinc-800">
         <PieceIcon
           logoUrl={stepMetadataWithSuggestions.logoUrl}
           displayName={stepMetadataWithSuggestions.displayName}
