@@ -1,6 +1,16 @@
+import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Archive, ChevronDown, Hourglass } from 'lucide-react';
+import {
+  Archive,
+  ChevronDown,
+  Hourglass,
+  Workflow,
+  Activity,
+  Clock,
+  Timer,
+  AlertTriangle,
+} from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -22,7 +32,6 @@ import {
 } from '@/components/ui/tooltip';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
-import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
 
 type SelectedRow = {
   id: string;
@@ -49,8 +58,12 @@ export const runsTableColumns = ({
 }: RunsTableColumnsProps): ColumnDef<RowDataWithActions<FlowRun>>[] => [
   {
     id: 'select',
+    accessorKey: 'select',
+    size: 40,
+    minSize: 40,
+    maxSize: 40,
     header: ({ table }) => (
-      <div className="flex items-center h-full w-8">
+      <div className="flex items-center h-full relative">
         <Checkbox
           checked={selectedAll || table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => {
@@ -81,49 +94,51 @@ export const runsTableColumns = ({
           }}
         />
         {selectedRows.length > 0 && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="xs">
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="z-50">
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => {
-                  const currentPageRows = table
-                    .getRowModel()
-                    .rows.map((row) => ({
-                      id: row.original.id,
-                      status: row.original.status,
-                    }));
-                  setSelectedRows(currentPageRows);
-                  setSelectedAll(false);
-                  setExcludedRows(new Set());
-                  table.toggleAllPageRowsSelected(true);
-                }}
-              >
-                {t('Select shown')}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onClick={() => {
-                  if (data?.data) {
-                    const allRows = data.data.map((row) => ({
-                      id: row.id,
-                      status: row.status,
-                    }));
-                    setSelectedRows(allRows);
-                    setSelectedAll(true);
+          <div className="absolute left-5">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="xs">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="z-50">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    const currentPageRows = table
+                      .getRowModel()
+                      .rows.map((row) => ({
+                        id: row.original.id,
+                        status: row.original.status,
+                      }));
+                    setSelectedRows(currentPageRows);
+                    setSelectedAll(false);
                     setExcludedRows(new Set());
                     table.toggleAllPageRowsSelected(true);
-                  }
-                }}
-              >
-                {t('Select all')}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  }}
+                >
+                  {t('Select shown')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  onClick={() => {
+                    if (data?.data) {
+                      const allRows = data.data.map((row) => ({
+                        id: row.id,
+                        status: row.status,
+                      }));
+                      setSelectedRows(allRows);
+                      setSelectedAll(true);
+                      setExcludedRows(new Set());
+                      table.toggleAllPageRowsSelected(true);
+                    }
+                  }}
+                >
+                  {t('Select all')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         )}
       </div>
     ),
@@ -176,7 +191,11 @@ export const runsTableColumns = ({
   {
     accessorKey: 'flowId',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Flow')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Flow')}
+        icon={Workflow}
+      />
     ),
     cell: ({ row }) => {
       const { archivedAt, flowVersion } = row.original;
@@ -195,7 +214,11 @@ export const runsTableColumns = ({
   {
     accessorKey: 'status',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Status')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Status')}
+        icon={Activity}
+      />
     ),
     cell: ({ row }) => {
       const status = row.original.status;
@@ -214,7 +237,11 @@ export const runsTableColumns = ({
   {
     accessorKey: 'created',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Started At')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Started At')}
+        icon={Clock}
+      />
     ),
     cell: ({ row }) => {
       return (
@@ -231,7 +258,11 @@ export const runsTableColumns = ({
   {
     accessorKey: 'duration',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Duration')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Duration')}
+        icon={Timer}
+      />
     ),
     cell: ({ row }) => {
       const duration =
@@ -271,7 +302,11 @@ export const runsTableColumns = ({
   {
     accessorKey: 'failedStep',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Failed Step')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Failed Step')}
+        icon={AlertTriangle}
+      />
     ),
     cell: ({ row }) => {
       return (

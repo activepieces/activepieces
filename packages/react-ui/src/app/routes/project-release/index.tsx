@@ -1,3 +1,8 @@
+import {
+  ProjectRelease,
+  ProjectReleaseType,
+  Permission,
+} from '@activepieces/shared';
 import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -8,8 +13,16 @@ import {
   RotateCcw,
   FolderOpenDot,
   Package,
+  Tag,
+  Clock,
+  User,
+  Database,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+import { ApplyButton } from './apply-plan';
+import { PushEverythingDialog } from './push-everything-dialog';
+import { SelectionButton } from './selection-dialog';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -31,15 +44,6 @@ import { projectReleaseApi } from '@/features/project-releases/lib/project-relea
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import {
-  ProjectRelease,
-  ProjectReleaseType,
-  Permission,
-} from '@activepieces/shared';
-
-import { ApplyButton } from './apply-plan';
-import { PushEverythingDialog } from './push-everything-dialog';
-import { SelectionButton } from './selection-dialog';
 
 const ProjectReleasesPage = () => {
   const navigate = useNavigate();
@@ -55,17 +59,23 @@ const ProjectReleasesPage = () => {
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
       accessorKey: 'name',
+      size: 200,
       accessorFn: (row) => row.name,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'type',
+      size: 150,
       accessorFn: (row) => row.type,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Source')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Source')}
+          icon={Database}
+        />
       ),
       cell: ({ row }) => {
         const isGit = row.original.type === ProjectReleaseType.GIT;
@@ -91,9 +101,14 @@ const ProjectReleasesPage = () => {
     },
     {
       accessorKey: 'created',
+      size: 150,
       accessorFn: (row) => row.created,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Imported At')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Imported At')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
         <div className="text-left">
@@ -103,12 +118,13 @@ const ProjectReleasesPage = () => {
     },
     {
       accessorKey: 'importedBy',
+      size: 180,
       accessorFn: (row) => row.importedBy,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Imported By')}
-          className="text-center"
+          icon={User}
         />
       ),
       cell: ({ row }) => (

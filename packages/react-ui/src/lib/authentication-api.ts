@@ -1,4 +1,3 @@
-import { api } from '@/lib/api';
 import {
   CreateOtpRequestBody,
   GetCurrentProjectMemberRoleQuery,
@@ -13,10 +12,11 @@ import {
   SignInRequest,
   SignUpRequest,
   SwitchPlatformRequest,
-  SwitchProjectRequest,
   ThirdPartyAuthnProviderEnum,
   UserIdentity,
 } from '@activepieces/shared';
+
+import { api } from '@/lib/api';
 
 export const authenticationApi = {
   signIn(request: SignInRequest) {
@@ -53,12 +53,6 @@ export const authenticationApi = {
   },
   verifyEmail(request: VerifyEmailRequestBody) {
     return api.post<UserIdentity>('/v1/authn/local/verify-email', request);
-  },
-  switchProject(request: SwitchProjectRequest) {
-    return api.post<AuthenticationResponse>(
-      `/v1/authentication/switch-project`,
-      request,
-    );
   },
   switchPlatform(request: SwitchPlatformRequest) {
     return api.post<AuthenticationResponse>(

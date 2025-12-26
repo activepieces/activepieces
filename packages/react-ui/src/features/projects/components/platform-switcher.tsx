@@ -2,6 +2,10 @@ import { CheckIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 import * as React from 'react';
 
+import { ScrollArea } from '../../../components/ui/scroll-area';
+import { platformHooks } from '../../../hooks/platform-hooks';
+import { projectHooks } from '../../../hooks/project-hooks';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,10 +14,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-
-import { ScrollArea } from '../../../components/ui/scroll-area';
-import { platformHooks } from '../../../hooks/platform-hooks';
-import { projectHooks } from '../../../hooks/project-hooks';
 
 export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();
@@ -39,7 +39,7 @@ export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
       sideOffset={4}
     >
       <div className="px-2 py-1.5">
-        <p className="text-xs text-muted-foreground">{t('Accounts')}</p>
+        <p className="text-xs text-muted-foreground">{t('Platforms')}</p>
       </div>
       <ScrollArea viewPortClassName="max-h-[400px]">
         {platforms.map((platform) => (

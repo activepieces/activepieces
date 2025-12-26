@@ -1,3 +1,10 @@
+import {
+  AppConnectionScope,
+  AppConnectionStatus,
+  AppConnectionWithoutSensitiveData,
+  Permission,
+  PlatformRole,
+} from '@activepieces/shared';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import {
@@ -9,6 +16,9 @@ import {
   Replace,
   Trash2,
   Plus,
+  Clock,
+  Activity,
+  Workflow,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -50,13 +60,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
-import {
-  AppConnectionScope,
-  AppConnectionStatus,
-  AppConnectionWithoutSensitiveData,
-  Permission,
-  PlatformRole,
-} from '@activepieces/shared';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();
@@ -170,8 +173,13 @@ function AppConnectionsPage() {
   >[] = [
     {
       accessorKey: 'pieceName',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('App')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('App')}
+          icon={AppWindow}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -183,8 +191,9 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'displayName',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         const isPlatformConnection = row.original.scope === 'PLATFORM';
@@ -217,8 +226,13 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'status',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Status')}
+          icon={Activity}
+        />
       ),
       cell: ({ row }) => {
         const status = row.original.status;
@@ -237,8 +251,13 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'updated',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Connected At')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Connected At')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -250,8 +269,9 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'owner',
+      size: 180,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} />
+        <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
       ),
       cell: ({ row }) => {
         return (
@@ -276,8 +296,13 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'flowCount',
+      size: 80,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flows')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Flows')}
+          icon={Workflow}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -296,6 +321,7 @@ function AppConnectionsPage() {
     },
     {
       id: 'actions',
+      size: 100,
       cell: ({ row }) => {
         const isPlatformConnection =
           row.original.scope === AppConnectionScope.PLATFORM;

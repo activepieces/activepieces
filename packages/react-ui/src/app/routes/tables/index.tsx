@@ -1,3 +1,4 @@
+import { Permission, Table } from '@activepieces/shared';
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -8,6 +9,8 @@ import {
   Table2,
   UploadCloud,
   EllipsisVertical,
+  Tag,
+  Clock,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,7 +35,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
@@ -53,14 +55,18 @@ const ApTablesPage = () => {
     {
       accessorKey: 'name',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
         <FormattedDate

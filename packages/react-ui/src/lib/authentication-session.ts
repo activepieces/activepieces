@@ -1,11 +1,10 @@
-import dayjs from 'dayjs';
-import { jwtDecode } from 'jwt-decode';
-
 import {
   AuthenticationResponse,
   isNil,
   UserPrincipal,
 } from '@activepieces/shared';
+import dayjs from 'dayjs';
+import { jwtDecode } from 'jwt-decode';
 
 import { ApStorage } from './ap-browser-storage';
 import { authenticationApi } from './authentication-api';
@@ -91,9 +90,7 @@ export const authenticationSession = {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    const result = await authenticationApi.switchProject({ projectId });
-    ApStorage.getInstance().setItem(tokenKey, result.token);
-    ApStorage.getInstance().setItem('projectId', result.projectId);
+    ApStorage.getInstance().setItem('projectId', projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
