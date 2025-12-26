@@ -47,27 +47,27 @@ export interface UserProfileDialogProps {
   isOwner?: boolean;
 }
 
-// TODO: ts mock data, get from db later
+// TODO: mock data, get from db later
 const MOCK_BADGES: UserBadge[] = [
   {
     id: '1',
-    name: 'Early Adopter',
-    description: 'Joined during the early access period',
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/2620/2620653.png',
+    name: 'Automation Wizard',
+    description: 'You made your first flow',
+    iconUrl: 'https://media.giphy.com/media/LmNwrBhejkK9EFP504/giphy.gif',
     earnedAt: '2024-01-15',
   },
   {
     id: '2',
-    name: 'Flow Master',
-    description: 'Created 10+ flows',
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/3176/3176371.png',
+    name: 'Speed Demon',
+    description: 'Saved 100+ hours - time flies when you automate!',
+    iconUrl: 'https://media.giphy.com/media/3oriO0OEd9QIDdllqo/giphy.gif',
     earnedAt: '2024-02-20',
   },
   {
     id: '3',
-    name: 'Time Saver',
-    description: 'Saved 100+ hours with automations',
-    iconUrl: 'https://cdn-icons-png.flaticon.com/512/2972/2972531.png',
+    name: 'Flow Master',
+    description: 'Created 10+ flows like a boss',
+    iconUrl: 'https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif',
     earnedAt: '2024-03-10',
   },
 ];
@@ -173,20 +173,15 @@ export function UserProfileDialog({
                     <Award className="w-4 h-4" />
                     {t('Badges')}
                   </div>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-1">
                     {badges.map((badge) => (
                       <Tooltip key={badge.id}>
                         <TooltipTrigger asChild>
-                          <div className="flex flex-col items-center gap-1.5 cursor-default">
-                            <img
-                              src={badge.iconUrl}
-                              alt={badge.name}
-                              className="w-12 h-12 rounded-full object-cover border-2 border-border bg-muted p-1"
-                            />
-                            <span className="text-xs text-muted-foreground max-w-[60px] truncate text-center">
-                              {badge.name}
-                            </span>
-                          </div>
+                          <img
+                            src={badge.iconUrl}
+                            alt={badge.name}
+                            className="w-16 h-16 object-cover cursor-default"
+                          />
                         </TooltipTrigger>
                         <TooltipContent>
                           <div className="text-center">
