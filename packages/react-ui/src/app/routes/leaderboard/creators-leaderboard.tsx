@@ -1,8 +1,12 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Clock, Medal, User, Workflow } from 'lucide-react';
-import { useMemo } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 
+import {
+  UserProfileDialog,
+  UserProfileData,
+} from '@/app/components/account-settings';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import {
@@ -12,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
 import { LeaderboardCreatorItem } from '@activepieces/shared';
 
@@ -40,7 +45,36 @@ const getMedalColor = (rank: number) => {
   }
 };
 
-const columns: ColumnDef<RowDataWithActions<CreatorWithRank>>[] = [
+function CreatorProfileDialogWrapper({
+  userId,
+  open,
+  onClose,
+}: {
+  userId: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { data: user } = userHooks.useUserById(userId);
+
+  if (!user) {
+    return null;
+  }
+
+  const userProfileData: UserProfileData = {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+  };
+
+  return (
+    <UserProfileDialog open={open} onClose={onClose} user={userProfileData} />
+  );
+}
+
+const createColumns = (
+  onCreatorClick: (creatorId: string) => void,
+): ColumnDef<RowDataWithActions<CreatorWithRank>>[] => [
   {
     accessorKey: 'rank',
     header: ({ column }) => (
@@ -73,7 +107,10 @@ const columns: ColumnDef<RowDataWithActions<CreatorWithRank>>[] = [
           ? `${creator.firstName} ${creator.lastName}`
           : creator.email;
       return (
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2 cursor-pointer hover:underline"
+          onClick={() => onCreatorClick(creator.id)}
+        >
           <User className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">{displayName}</span>
         </div>
@@ -100,7 +137,9 @@ const columns: ColumnDef<RowDataWithActions<CreatorWithRank>>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <Clock className="h-4 w-4 text-muted-foreground" />
-        <span>{formatUtils.formatToHoursAndMinutes(row.original.timeSaved)}</span>
+        <span>
+          {formatUtils.formatToHoursAndMinutes(row.original.timeSaved)}
+        </span>
       </div>
     ),
   },
@@ -112,6 +151,10 @@ export function CreatorsLeaderboard({
   sortBy,
   onSortChange,
 }: CreatorsLeaderboardProps) {
+  const [selectedCreatorId, setSelectedCreatorId] = useState<string | null>(
+    null,
+  );
+
   const sortedCreators = useMemo(() => {
     if (!creators) return [];
 
@@ -129,11 +172,23 @@ export function CreatorsLeaderboard({
     }));
   }, [creators, sortBy]);
 
+  const columns = useMemo(
+    () => createColumns((creatorId) => setSelectedCreatorId(creatorId)),
+    [],
+  );
+
+  const handleCloseDialog = () => {
+    setSelectedCreatorId(null);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">{t('Top Creators')}</h3>
-        <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
+        <Select
+          value={sortBy}
+          onValueChange={(v) => onSortChange(v as SortOption)}
+        >
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder={t('Sort by')} />
           </SelectTrigger>
@@ -159,7 +214,16 @@ export function CreatorsLeaderboard({
         )}
         emptyStateIcon={<User className="h-10 w-10 text-muted-foreground" />}
       />
+
+      {selectedCreatorId && (
+        <Suspense fallback={null}>
+          <CreatorProfileDialogWrapper
+            userId={selectedCreatorId}
+            open={true}
+            onClose={handleCloseDialog}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }
-

@@ -1,8 +1,12 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Clock, Folder, Info, Pencil, User, Workflow } from 'lucide-react';
-import { useContext, useMemo } from 'react';
+import { Suspense, useContext, useMemo, useState } from 'react';
 
+import {
+  UserProfileDialog,
+  UserProfileData,
+} from '@/app/components/account-settings';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -12,6 +16,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { userHooks } from '@/hooks/user-hooks';
 import {
   AnalyticsFlowReportItem,
   DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
@@ -21,7 +26,6 @@ import {
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
-import { userHooks } from '@/hooks/user-hooks';
 
 type FlowsDetailsProps = {
   flowsDetails?: AnalyticsFlowReportItem[];
@@ -30,6 +34,33 @@ type FlowsDetailsProps = {
 };
 
 type FlowDetailsWithId = AnalyticsFlowReportItem & { id: string };
+
+function OwnerProfileDialogWrapper({
+  userId,
+  open,
+  onClose,
+}: {
+  userId: string;
+  open: boolean;
+  onClose: () => void;
+}) {
+  const { data: user } = userHooks.useUserById(userId);
+
+  if (!user) {
+    return null;
+  }
+
+  const userProfileData: UserProfileData = {
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+  };
+
+  return (
+    <UserProfileDialog open={open} onClose={onClose} user={userProfileData} />
+  );
+}
 
 const formatMinutes = (minutes: number) => {
   if (minutes < 60) {
@@ -45,7 +76,8 @@ const formatMinutes = (minutes: number) => {
 
 const createColumns = (
   estimatedTimeSavedPerStep: number,
-  isPlatformAdmin: boolean
+  isPlatformAdmin: boolean,
+  onOwnerClick: (ownerId: string) => void,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -99,7 +131,10 @@ const createColumns = (
           ? `${owner.firstName} ${owner.lastName}`
           : owner.email;
       return (
-        <div className="flex items-center gap-1 text-foreground">
+        <div
+          className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
+          onClick={() => onOwnerClick(owner.id)}
+        >
           <User className="h-3.5 w-3.5" />
           {displayName}
         </div>
@@ -227,6 +262,7 @@ export function FlowsDetails({
   const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
   const { data: user } = userHooks.useCurrentUser();
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
 
   const flowsDetailsWithOverrides = useMemo(() => {
     if (!flowsDetails) return undefined;
@@ -268,8 +304,13 @@ export function FlowsDetails({
 
   const columns = createColumns(
     resolvedEstimatedTimeSavedPerStep,
-    isPlatformAdmin
+    isPlatformAdmin,
+    (ownerId) => setSelectedOwnerId(ownerId),
   );
+
+  const handleCloseDialog = () => {
+    setSelectedOwnerId(null);
+  };
 
   return (
     <div className="flex flex-col gap-4 mb-8">
@@ -291,6 +332,16 @@ export function FlowsDetails({
           <Workflow className="h-10 w-10 text-muted-foreground" />
         }
       />
+
+      {selectedOwnerId && (
+        <Suspense fallback={null}>
+          <OwnerProfileDialogWrapper
+            userId={selectedOwnerId}
+            open={true}
+            onClose={handleCloseDialog}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

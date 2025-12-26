@@ -34,6 +34,18 @@ export const userHooks = {
     const userId = authenticationSession.getCurrentUserId();
     queryClient.invalidateQueries({ queryKey: ['currentUser', userId] });
   },
+  useUserById: (userId: string) => {
+    return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
+      queryKey: ['userById', userId],
+      queryFn: async () => {
+        const result = await userApi.getUserById(userId);
+        return result;
+      },
+    });
+  },
+  invalidateUserById: (queryClient: QueryClient, userId: string) => {
+    queryClient.invalidateQueries({ queryKey: ['userById', userId] });
+  },
   getCurrentUserPlatformRole: () => {
     const { data: user } = userHooks.useCurrentUser();
     return user?.platformRole;
