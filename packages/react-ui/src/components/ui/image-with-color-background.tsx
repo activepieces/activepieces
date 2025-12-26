@@ -8,6 +8,7 @@ interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
   border?: boolean;
+  playOnHover?: boolean; // New prop for hover-based video playback
 }
 
 const isGrayColor = (r: number, g: number, b: number): boolean => {
@@ -30,15 +31,19 @@ const ImageWithColorBackground = ({
   src,
   alt,
   fallback,
+  playOnHover = false,
   ...props
 }: ImageWithColorBackgroundProps) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState<string | null>(null);
+  const [isHovered, setIsHovered] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isVideo = src?.endsWith('.mp4') || src?.endsWith('.webm');
 
   useEffect(() => {
-    if (!src) return;
+    if (!src || isVideo) return;
 
     const fac = new FastAverageColor();
     const img = new Image();
@@ -66,7 +71,21 @@ const ImageWithColorBackground = ({
     return () => {
       fac.destroy();
     };
-  }, [src]);
+  }, [src, isVideo]);
+
+  // Handle video play/pause on hover
+  useEffect(() => {
+    if (playOnHover && isVideo && videoRef.current) {
+      if (isHovered) {
+        videoRef.current.play().catch(() => {
+          // Ignore play errors
+        });
+      } else {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0; // Reset to start
+      }
+    }
+  }, [isHovered, playOnHover, isVideo]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -104,21 +123,43 @@ const ImageWithColorBackground = ({
         </span>
       )}
       {!hasError ? (
-        <img
-          ref={imgRef}
-          src={src}
-          alt={alt}
-          onLoad={handleLoad}
-          onError={handleError}
-          className={cn(
-            `transition-opacity duration-500 w-full h-full object-contain`,
-            {
-              'opacity-0': isLoading,
-              'opacity-100': !isLoading,
-            },
-          )}
-          {...rest}
-        />
+        isVideo ? (
+          <video
+            ref={videoRef}
+            src={src}
+            autoPlay={!playOnHover}
+            loop
+            muted
+            playsInline
+            onLoadedData={handleLoad}
+            onError={handleError}
+            onMouseEnter={() => playOnHover && setIsHovered(true)}
+            onMouseLeave={() => playOnHover && setIsHovered(false)}
+            className={cn(
+              `transition-opacity duration-500 w-full h-full object-contain`,
+              {
+                'opacity-0': isLoading,
+                'opacity-100': !isLoading,
+              },
+            )}
+          />
+        ) : (
+          <img
+            ref={imgRef}
+            src={src}
+            alt={alt}
+            onLoad={handleLoad}
+            onError={handleError}
+            className={cn(
+              `transition-opacity duration-500 w-full h-full object-contain`,
+              {
+                'opacity-0': isLoading,
+                'opacity-100': !isLoading,
+              },
+            )}
+            {...rest}
+          />
+        )
       ) : (
         <span className="absolute inset-0 flex items-center justify-center">
           {fallback ?? <Skeleton className="w-full h-full" />}

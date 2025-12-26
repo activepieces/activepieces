@@ -24,12 +24,12 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className={`flex flex-col rounded-none bg-background h-full
+            className={`flex flex-col rounded-none bg-background h-full px-1
                data-[state=active]:text-accent-foreground data-[state=active]:shadow-none
                border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:active  data-[state=active]:text-primary   [&>svg]:size-5  [&>svg]:shrink-0`}
           >
             {tab.icon}
-            <span className="mt-1.5 text-[13px]">{tab.name}</span>
+            <span className="mt-1.5 text-[11px] leading-tight text-center break-words line-clamp-2">{tab.name}</span>
           </TabsTrigger>
         ))}
       </TabsList>

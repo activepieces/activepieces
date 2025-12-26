@@ -61,7 +61,7 @@ const getTabsList = (operationType: FlowOperationType) => {
   ) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
-      name: t('AI & Agents'),
+      name: t('Activepieces AI'),
       icon: <SparklesIcon className="size-5" />,
     });
   }
