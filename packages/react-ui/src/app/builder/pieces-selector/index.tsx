@@ -174,12 +174,6 @@ const PieceSelectorContent = ({
             e.preventDefault();
           }}
         >
-          <ScrollArea
-            style={{
-              height: listHeight + 100 + 'px',
-            }}
-            viewPortClassName="h-full"
-          >
             <div className="flex flex-col">
               <PiecesSearchInput
                 searchInputRef={searchInputRef}
@@ -192,21 +186,27 @@ const PieceSelectorContent = ({
               />
               {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
 
-              <div className="flex flex-row flex-1">
-                <ExploreTabContent operation={operation} />
-                <AITabContent operation={operation} />
+              <ScrollArea
+                style={{
+                  height: listHeight + 'px',
+                }}
+                viewPortClassName="h-full"
+              >
+                <div className="flex flex-row flex-1">
+                  <ExploreTabContent operation={operation} />
+                  <AITabContent operation={operation} />
 
-                <PiecesCardList
-                  //this is done to avoid debounced results when user clears search
-                  searchQuery={searchQuery === '' ? '' : debouncedQuery}
-                  operation={operation}
-                  stepToReplacePieceDisplayName={
-                    isMobile ? undefined : stepToReplacePieceDisplayName
-                  }
-                />
-              </div>
+                  <PiecesCardList
+                    //this is done to avoid debounced results when user clears search
+                    searchQuery={searchQuery === '' ? '' : debouncedQuery}
+                    operation={operation}
+                    stepToReplacePieceDisplayName={
+                      isMobile ? undefined : stepToReplacePieceDisplayName
+                    }
+                  />
+                </div>
+              </ScrollArea>
             </div>
-          </ScrollArea>
         </PopoverContent>
       </PieceSelectorTabsProvider>
     </Popover>

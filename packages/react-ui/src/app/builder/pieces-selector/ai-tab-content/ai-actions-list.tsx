@@ -131,20 +131,18 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               className="group relative flex flex-col h-full min-h-[400px] rounded-xl bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 cursor-pointer hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 overflow-hidden"
             >
               {/* Image Section */}
-              <div className="flex-1 w-full flex items-center justify-center p-6">
-                <div className="w-full h-full relative">
-                  <PieceIcon
-                    logoUrl={ACTION_ICON_MAP['run_agent']}
-                    displayName="AI Agent"
-                    showTooltip={false}
-                    size={'full'}
-                    playOnHover={true}
-                  />
-                </div>
+              <div className="w-full aspect-[16/11] relative">
+                <PieceIcon
+                  logoUrl={ACTION_ICON_MAP['run_agent']}
+                  displayName="AI Agent"
+                  showTooltip={false}
+                  size={'full'}
+                  playOnHover={true}
+                />
               </div>
 
               {/* Content Section */}
-              <div className="px-6 pb-6 pt-2 flex flex-col gap-2">
+              <div className="px-6 pb-6 pt-5 flex flex-col gap-2">
                 <div className="space-y-1">
                   <h3 className="text-[19px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                     AI Agent

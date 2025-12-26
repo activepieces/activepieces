@@ -57,7 +57,7 @@ const PieceIcon = React.memo(
               <ImageWithColorBackground
                 src={logoUrl}
                 alt={displayName}
-                className="object-contain w-full h-full p-1"
+                className="object-cover w-full h-full"
                 key={logoUrl}
                 playOnHover={playOnHover}
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
