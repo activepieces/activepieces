@@ -31,6 +31,8 @@ PIECES=(
   "fiserv-premier"
   "icemortgage-encompass"
   "gelato"
+  "plaid"
+  "ncino"
 )
 
 # Check if logged in to npm
