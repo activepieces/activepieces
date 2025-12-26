@@ -1,6 +1,6 @@
-import { AnalyticsReportRequest, FlowOperationType, LeaderboardReport, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
+import { AnalyticsReportRequest, FlowOperationType, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { platformMustBeOwnedByCurrentUser, platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
+import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { flowService } from '../flows/flow/flow.service'
 import { projectService } from '../project/project-service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
@@ -27,11 +27,6 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/refresh', PlatformAnalyticsRequest, async (request) => {
         const { platform } = request.principal
         return platformAnalyticsReportService(request.log).refreshReport(platform.id)
-    })
-
-    app.get('/leaderboard', PlatformAnalyticsRequest, async (request): Promise<LeaderboardReport> => {
-        const { platform } = request.principal
-        return platformAnalyticsReportService(request.log).getLeaderboard(platform.id)
     })
 
     // TODO(@chaker): remove this endpoint after solving the issue with removing project id from the principal
