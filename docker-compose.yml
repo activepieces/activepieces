@@ -13,6 +13,7 @@ services:
     env_file: .env
     volumes:
       - ./cache:/usr/src/app/cache
+      - ./dist/packages/pieces:/usr/src/app/dist/packages/pieces
     networks:
       - activepieces
   postgres:

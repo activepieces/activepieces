@@ -1,5 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { icemortgageEncompassAuth } from './lib/common/auth';
 import { createLoan } from './lib/actions/create-loan';
 import { retrieveLoan } from './lib/actions/retrieve-loan';
@@ -17,7 +18,7 @@ export const icemortgageEncompass = createPiece({
   displayName: 'IceMortgage Encompass',
   auth: icemortgageEncompassAuth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/icemortgage-encompass.png',
+  logoUrl: 'https://i.imgur.com/UqqkpPQ.png',
   authors: ['vqnguyen1'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   actions: [
@@ -32,6 +33,18 @@ export const icemortgageEncompass = createPiece({
     updateDocument,
     addDocumentComments,
     assignDocumentAttachments,
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as any).baseUrl || 'https://api.elliemae.com',
+      auth: icemortgageEncompassAuth,
+      authMapping: async (auth) => {
+        // Note: Encompass uses OAuth2, this is a simplified version
+        // In production, you'd need to handle token refresh
+        return {
+          'Authorization': `Bearer ${(auth as any).clientSecret}`,
+          'Content-Type': 'application/json',
+        };
+      },
+    }),
   ],
   triggers: [],
 });

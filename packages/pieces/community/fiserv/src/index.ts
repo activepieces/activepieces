@@ -1,5 +1,6 @@
 import { createPiece } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { fiservAuth } from './lib/common/auth';
 
 // Party actions
@@ -28,7 +29,7 @@ export const fiserv = createPiece({
   displayName: 'Fiserv',
   auth: fiservAuth,
   minimumSupportedRelease: '0.20.0',
-  logoUrl: 'logo.png',
+  logoUrl: 'https://i.imgur.com/1BOQN9O.png',
   authors: ['vqnguyen1'],
   categories: [PieceCategory.BUSINESS_INTELLIGENCE],
   actions: [
@@ -53,6 +54,22 @@ export const fiserv = createPiece({
     getEscrow,
     updateEscrow,
     deleteEscrow,
+
+    // Custom API Call
+    createCustomApiCallAction({
+      baseUrl: (auth) => (auth as any).baseUrl || 'https://api.fiservapps.com',
+      auth: fiservAuth,
+      authMapping: async (auth) => {
+        const organizationId = (auth as any).organizationId;
+        const trnId = crypto.randomUUID();
+        return {
+          'EFXHeader': JSON.stringify({
+            OrganizationId: organizationId,
+            TrnId: trnId,
+          }),
+        };
+      },
+    }),
   ],
   triggers: [],
 });

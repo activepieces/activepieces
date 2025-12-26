@@ -1,0 +1,22 @@
+{
+  "name": "pieces-narmi",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/narmi/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/narmi",
+        "main": "packages/pieces/custom/narmi/src/index.ts",
+        "tsConfig": "packages/pieces/custom/narmi/tsconfig.lib.json",
+        "assets": [
+          "packages/pieces/custom/narmi/*.md",
+          "packages/pieces/custom/narmi/*.png"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

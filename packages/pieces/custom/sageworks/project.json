@@ -1,0 +1,23 @@
+{
+  "name": "pieces-sageworks",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/custom/sageworks/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/custom/sageworks",
+        "tsConfig": "packages/pieces/custom/sageworks/tsconfig.lib.json",
+        "packageJson": "packages/pieces/custom/sageworks/package.json",
+        "main": "packages/pieces/custom/sageworks/src/index.ts",
+        "assets": [
+          "packages/pieces/custom/sageworks/*.md",
+          "packages/pieces/custom/sageworks/logo.png"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
