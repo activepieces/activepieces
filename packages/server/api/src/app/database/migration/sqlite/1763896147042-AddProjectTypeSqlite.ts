@@ -141,11 +141,13 @@ export class AddProjectTypeSqlite1763896147042 implements MigrationInterface {
                 paramIndex += 9
             }
 
-            await queryRunner.query(
-                `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
-                VALUES ${values.join(', ')}`,
-                params,
-            )
+            if (values.length > 0) {
+                await queryRunner.query(
+                    `INSERT INTO "project" ("id", "created", "updated", "ownerId", "displayName", "type", "platformId", "icon", "releasesEnabled") 
+                    VALUES ${values.join(', ')}`,
+                    params,
+                )
+            }
         }
     }
 

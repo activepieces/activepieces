@@ -16,6 +16,8 @@ interface CopyButtonProps extends ButtonProps {
   textToCopy: string;
   tooltipSide?: TooltipContentProps['side'];
   withoutTooltip?: boolean;
+  children?: React.ReactNode;
+  variant?: 'ghost' | 'outline';
 }
 
 export const CopyButton = ({
@@ -23,6 +25,8 @@ export const CopyButton = ({
   className,
   tooltipSide,
   withoutTooltip = false,
+  children,
+  variant = 'outline',
   ...props
 }: CopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -43,13 +47,14 @@ export const CopyButton = ({
   if (withoutTooltip) {
     return (
       <Button
-        variant="outline"
-        size="icon"
+        variant={variant}
+        size={children ? 'default' : 'icon'}
         type="button"
         className={className}
         onClick={() => copyToClipboard()}
         {...props}
       >
+        {children}
         {isCopied ? (
           <Check className="h-4 w-4" />
         ) : (
@@ -62,13 +67,14 @@ export const CopyButton = ({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
+          variant={variant}
+          size={children ? 'default' : 'icon'}
           type="button"
           className={className}
           onClick={() => copyToClipboard()}
           {...props}
         >
+          {children}
           {isCopied ? (
             <Check className="h-4 w-4" />
           ) : (
