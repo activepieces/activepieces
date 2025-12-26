@@ -1,0 +1,699 @@
+{
+  "name": "LOS->Core",
+  "type": "SHARED",
+  "summary": "",
+  "description": "",
+  "tags": [],
+  "author": "",
+  "categories": [],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@vqnguyen1/piece-icemortgage-encompass",
+    "@activepieces/piece-data-mapper",
+    "@activepieces/piece-store",
+    "@activepieces/piece-math-helper",
+    "@vqnguyen1/piece-fiserv"
+  ],
+  "status": "PUBLISHED",
+  "blogUrl": "",
+  "metadata": null,
+  "flows": [
+    {
+      "displayName": "LOS->Core",
+      "trigger": {
+        "name": "trigger",
+        "valid": true,
+        "displayName": "Catch Webhook",
+        "type": "PIECE_TRIGGER",
+        "settings": {
+          "propertySettings": {
+            "authType": {
+              "type": "MANUAL"
+            },
+            "authFields": {
+              "type": "MANUAL",
+              "schema": {}
+            },
+            "liveMarkdown": {
+              "type": "MANUAL"
+            },
+            "syncMarkdown": {
+              "type": "MANUAL"
+            },
+            "testMarkdown": {
+              "type": "MANUAL"
+            }
+          },
+          "pieceName": "@activepieces/piece-webhook",
+          "pieceVersion": "~0.1.25",
+          "input": {
+            "authType": "none",
+            "authFields": {}
+          },
+          "sampleData": {},
+          "triggerName": "catch_webhook"
+        },
+        "nextAction": {
+          "name": "step_17",
+          "skip": false,
+          "type": "PIECE",
+          "valid": false,
+          "settings": {
+            "input": {},
+            "pieceName": "@vqnguyen1/piece-icemortgage-encompass",
+            "actionName": "loan_retrieve",
+            "sampleData": {},
+            "pieceVersion": "~0.0.7",
+            "propertySettings": {
+              "loanId": {
+                "type": "MANUAL"
+              }
+            },
+            "errorHandlingOptions": {
+              "retryOnFailure": {
+                "value": false
+              },
+              "continueOnFailure": {
+                "value": false
+              }
+            }
+          },
+          "nextAction": {
+            "name": "step_1",
+            "skip": false,
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "mapping": {
+                  "newProperty": "oldProperty"
+                }
+              },
+              "pieceName": "@activepieces/piece-data-mapper",
+              "actionName": "advanced_mapping",
+              "sampleData": {},
+              "pieceVersion": "~0.3.11",
+              "propertySettings": {
+                "mapping": {
+                  "type": "MANUAL"
+                }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_18",
+              "skip": false,
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "key": "loopCounter",
+                  "value": "1",
+                  "store_scope": "FLOW"
+                },
+                "pieceName": "@activepieces/piece-store",
+                "actionName": "put",
+                "sampleData": {},
+                "pieceVersion": "~0.6.10",
+                "propertySettings": {
+                  "key": {
+                    "type": "MANUAL"
+                  },
+                  "value": {
+                    "type": "MANUAL"
+                  },
+                  "store_scope": {
+                    "type": "MANUAL"
+                  }
+                },
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_4",
+                "skip": false,
+                "type": "LOOP_ON_ITEMS",
+                "valid": false,
+                "settings": {
+                  "items": "",
+                  "sampleData": {}
+                },
+                "nextAction": {
+                  "name": "step_10",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": false,
+                  "settings": {
+                    "input": {
+                      "accountType": "LOAN",
+                      "customFields": {}
+                    },
+                    "pieceName": "@vqnguyen1/piece-fiserv",
+                    "actionName": "account_create",
+                    "sampleData": {},
+                    "pieceVersion": "~0.0.2",
+                    "propertySettings": {
+                      "partyId": {
+                        "type": "MANUAL"
+                      },
+                      "branchId": {
+                        "type": "MANUAL"
+                      },
+                      "loanRate": {
+                        "type": "MANUAL"
+                      },
+                      "loanTerm": {
+                        "type": "MANUAL"
+                      },
+                      "loanAmount": {
+                        "type": "MANUAL"
+                      },
+                      "accountType": {
+                        "type": "MANUAL"
+                      },
+                      "productCode": {
+                        "type": "MANUAL"
+                      },
+                      "customFields": {
+                        "type": "MANUAL"
+                      },
+                      "interestRate": {
+                        "type": "MANUAL"
+                      },
+                      "openingBalance": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_11",
+                    "skip": false,
+                    "type": "LOOP_ON_ITEMS",
+                    "valid": false,
+                    "settings": {
+                      "items": "",
+                      "sampleData": {}
+                    },
+                    "nextAction": {
+                      "name": "step_13",
+                      "skip": false,
+                      "type": "LOOP_ON_ITEMS",
+                      "valid": false,
+                      "settings": {
+                        "items": "",
+                        "sampleData": {}
+                      },
+                      "displayName": "Loop on Items",
+                      "firstLoopAction": {
+                        "name": "step_16",
+                        "skip": false,
+                        "type": "ROUTER",
+                        "valid": false,
+                        "children": [
+                          {
+                            "name": "step_15",
+                            "skip": false,
+                            "type": "PIECE",
+                            "valid": false,
+                            "settings": {
+                              "input": {
+                                "status": null
+                              },
+                              "pieceName": "@vqnguyen1/piece-fiserv",
+                              "actionName": "collateral_update",
+                              "sampleData": {},
+                              "pieceVersion": "~0.0.2",
+                              "propertySettings": {
+                                "status": {
+                                  "type": "MANUAL"
+                                },
+                                "description": {
+                                  "type": "MANUAL"
+                                },
+                                "collateralId": {
+                                  "type": "MANUAL"
+                                },
+                                "estimatedValue": {
+                                  "type": "MANUAL"
+                                }
+                              },
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": false
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "displayName": "Collateral - Update"
+                          },
+                          {
+                            "name": "step_14",
+                            "skip": false,
+                            "type": "PIECE",
+                            "valid": false,
+                            "settings": {
+                              "input": {
+                                "collateralType": null
+                              },
+                              "pieceName": "@vqnguyen1/piece-fiserv",
+                              "actionName": "collateral_add",
+                              "sampleData": {},
+                              "pieceVersion": "~0.0.2",
+                              "propertySettings": {
+                                "loanId": {
+                                  "type": "MANUAL"
+                                },
+                                "vinNumber": {
+                                  "type": "MANUAL"
+                                },
+                                "description": {
+                                  "type": "MANUAL"
+                                },
+                                "collateralType": {
+                                  "type": "MANUAL"
+                                },
+                                "estimatedValue": {
+                                  "type": "MANUAL"
+                                },
+                                "propertyAddress": {
+                                  "type": "MANUAL"
+                                }
+                              },
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": false
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "displayName": "Collateral - Add"
+                          }
+                        ],
+                        "settings": {
+                          "branches": [
+                            {
+                              "branchName": "Branch 1",
+                              "branchType": "CONDITION",
+                              "conditions": [
+                                [
+                                  {
+                                    "operator": "TEXT_EXACTLY_MATCHES",
+                                    "firstValue": "",
+                                    "secondValue": "",
+                                    "caseSensitive": false
+                                  }
+                                ]
+                              ]
+                            },
+                            {
+                              "branchName": "Otherwise",
+                              "branchType": "FALLBACK"
+                            }
+                          ],
+                          "sampleData": {},
+                          "executionType": "EXECUTE_FIRST_MATCH"
+                        },
+                        "displayName": "Router"
+                      }
+                    },
+                    "displayName": "Loop on Items",
+                    "firstLoopAction": {
+                      "name": "step_12",
+                      "skip": false,
+                      "type": "PIECE",
+                      "valid": false,
+                      "settings": {
+                        "input": {
+                          "escrowType": null,
+                          "currentBalance": 0
+                        },
+                        "pieceName": "@vqnguyen1/piece-fiserv",
+                        "actionName": "escrow_add",
+                        "sampleData": {},
+                        "pieceVersion": "~0.0.2",
+                        "propertySettings": {
+                          "payee": {
+                            "type": "MANUAL"
+                          },
+                          "loanId": {
+                            "type": "MANUAL"
+                          },
+                          "escrowType": {
+                            "type": "MANUAL"
+                          },
+                          "accountNumber": {
+                            "type": "MANUAL"
+                          },
+                          "targetBalance": {
+                            "type": "MANUAL"
+                          },
+                          "currentBalance": {
+                            "type": "MANUAL"
+                          },
+                          "monthlyPayment": {
+                            "type": "MANUAL"
+                          }
+                        },
+                        "errorHandlingOptions": {
+                          "retryOnFailure": {
+                            "value": false
+                          },
+                          "continueOnFailure": {
+                            "value": false
+                          }
+                        }
+                      },
+                      "displayName": "Escrow - Add"
+                    }
+                  },
+                  "displayName": "Account - Create"
+                },
+                "displayName": "Loop on Items",
+                "firstLoopAction": {
+                  "name": "step_7",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "first_number": "loopCounter",
+                      "second_number": "1"
+                    },
+                    "pieceName": "@activepieces/piece-math-helper",
+                    "actionName": "addition_math",
+                    "sampleData": {},
+                    "pieceVersion": "~0.0.17",
+                    "propertySettings": {
+                      "first_number": {
+                        "type": "MANUAL"
+                      },
+                      "second_number": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_2",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": false,
+                    "settings": {
+                      "input": {
+                        "maxRecords": 25,
+                        "searchType": "partyId",
+                        "includeFullDetails": false
+                      },
+                      "pieceName": "@vqnguyen1/piece-fiserv",
+                      "actionName": "party_get",
+                      "sampleData": {},
+                      "pieceVersion": "~0.0.2",
+                      "propertySettings": {
+                        "taxId": {
+                          "type": "MANUAL"
+                        },
+                        "partyId": {
+                          "type": "MANUAL"
+                        },
+                        "maxRecords": {
+                          "type": "MANUAL"
+                        },
+                        "searchType": {
+                          "type": "MANUAL"
+                        },
+                        "includeFullDetails": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "nextAction": {
+                      "name": "step_3",
+                      "skip": false,
+                      "type": "ROUTER",
+                      "valid": false,
+                      "children": [
+                        {
+                          "name": "step_5",
+                          "skip": false,
+                          "type": "PIECE",
+                          "valid": false,
+                          "settings": {
+                            "input": {},
+                            "pieceName": "@vqnguyen1/piece-fiserv",
+                            "actionName": "party_update",
+                            "sampleData": {},
+                            "pieceVersion": "~0.0.2",
+                            "propertySettings": {
+                              "email": {
+                                "type": "MANUAL"
+                              },
+                              "partyId": {
+                                "type": "MANUAL"
+                              },
+                              "lastName": {
+                                "type": "MANUAL"
+                              },
+                              "firstName": {
+                                "type": "MANUAL"
+                              },
+                              "middleName": {
+                                "type": "MANUAL"
+                              },
+                              "phoneNumber": {
+                                "type": "MANUAL"
+                              },
+                              "organizationName": {
+                                "type": "MANUAL"
+                              }
+                            },
+                            "errorHandlingOptions": {
+                              "retryOnFailure": {
+                                "value": false
+                              },
+                              "continueOnFailure": {
+                                "value": false
+                              }
+                            }
+                          },
+                          "nextAction": {
+                            "name": "step_8",
+                            "skip": false,
+                            "type": "PIECE",
+                            "valid": false,
+                            "settings": {
+                              "input": {
+                                "value": [],
+                                "store_scope": "COLLECTION",
+                                "ignore_if_exists": false
+                              },
+                              "pieceName": "@activepieces/piece-store",
+                              "actionName": "add_to_list",
+                              "sampleData": {},
+                              "pieceVersion": "~0.6.10",
+                              "propertySettings": {
+                                "key": {
+                                  "type": "MANUAL"
+                                },
+                                "value": {
+                                  "type": "MANUAL"
+                                },
+                                "store_scope": {
+                                  "type": "MANUAL"
+                                },
+                                "ignore_if_exists": {
+                                  "type": "MANUAL"
+                                }
+                              },
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": false
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "displayName": "Add To List"
+                          },
+                          "displayName": "Party - Update"
+                        },
+                        {
+                          "name": "step_6",
+                          "skip": false,
+                          "type": "PIECE",
+                          "valid": false,
+                          "settings": {
+                            "input": {
+                              "partyType": null
+                            },
+                            "pieceName": "@vqnguyen1/piece-fiserv",
+                            "actionName": "party_create",
+                            "sampleData": {},
+                            "pieceVersion": "~0.0.2",
+                            "propertySettings": {
+                              "email": {
+                                "type": "MANUAL"
+                              },
+                              "taxId": {
+                                "type": "MANUAL"
+                              },
+                              "lastName": {
+                                "type": "MANUAL"
+                              },
+                              "birthDate": {
+                                "type": "MANUAL"
+                              },
+                              "firstName": {
+                                "type": "MANUAL"
+                              },
+                              "partyType": {
+                                "type": "MANUAL"
+                              },
+                              "middleName": {
+                                "type": "MANUAL"
+                              },
+                              "phoneNumber": {
+                                "type": "MANUAL"
+                              },
+                              "establishedDate": {
+                                "type": "MANUAL"
+                              },
+                              "organizationName": {
+                                "type": "MANUAL"
+                              }
+                            },
+                            "errorHandlingOptions": {
+                              "retryOnFailure": {
+                                "value": false
+                              },
+                              "continueOnFailure": {
+                                "value": false
+                              }
+                            }
+                          },
+                          "nextAction": {
+                            "name": "step_9",
+                            "skip": false,
+                            "type": "PIECE",
+                            "valid": false,
+                            "settings": {
+                              "input": {
+                                "value": [],
+                                "store_scope": "COLLECTION",
+                                "ignore_if_exists": false
+                              },
+                              "pieceName": "@activepieces/piece-store",
+                              "actionName": "add_to_list",
+                              "sampleData": {},
+                              "pieceVersion": "~0.6.10",
+                              "propertySettings": {
+                                "key": {
+                                  "type": "MANUAL"
+                                },
+                                "value": {
+                                  "type": "MANUAL"
+                                },
+                                "store_scope": {
+                                  "type": "MANUAL"
+                                },
+                                "ignore_if_exists": {
+                                  "type": "MANUAL"
+                                }
+                              },
+                              "errorHandlingOptions": {
+                                "retryOnFailure": {
+                                  "value": false
+                                },
+                                "continueOnFailure": {
+                                  "value": false
+                                }
+                              }
+                            },
+                            "displayName": "Add To List Copy"
+                          },
+                          "displayName": "Party - Create"
+                        }
+                      ],
+                      "settings": {
+                        "branches": [
+                          {
+                            "branchName": "Branch 1",
+                            "branchType": "CONDITION",
+                            "conditions": [
+                              [
+                                {
+                                  "operator": "TEXT_EXACTLY_MATCHES",
+                                  "firstValue": "",
+                                  "secondValue": "",
+                                  "caseSensitive": false
+                                }
+                              ]
+                            ]
+                          },
+                          {
+                            "branchName": "Otherwise",
+                            "branchType": "FALLBACK"
+                          }
+                        ],
+                        "sampleData": {},
+                        "executionType": "EXECUTE_FIRST_MATCH"
+                      },
+                      "displayName": "Router"
+                    },
+                    "displayName": "Party - Get"
+                  },
+                  "displayName": "Addition"
+                }
+              },
+              "displayName": "Put"
+            },
+            "displayName": "Advanced Mapping"
+          },
+          "displayName": "Loan - Retrieve"
+        }
+      },
+      "valid": false,
+      "schemaVersion": "10"
+    }
+  ]
+}
