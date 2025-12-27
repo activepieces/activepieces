@@ -1,3 +1,4 @@
+import { securityAccess } from '@activepieces/server-shared'
 import { AnalyticsReportRequest, FlowOperationType, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
@@ -54,7 +55,8 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
 
 const UpdateTimeSavedPerRunRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+
     },
     schema: {
         body: UpdateTimeSavedPerRunRequest,
@@ -62,7 +64,7 @@ const UpdateTimeSavedPerRunRequestSchema = {
 }
 const UpdatePlatformReportRequestSchema = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     schema: {
         body: UpdatePlatformReportRequest,
@@ -70,7 +72,7 @@ const UpdatePlatformReportRequestSchema = {
 }
 const PlatformAnalyticsRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 const AnalyticsReportRequestSchema = {
