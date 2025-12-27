@@ -1,0 +1,37 @@
+{
+  "name": "pieces-pcloud",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/pcloud/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/pcloud",
+        "tsConfig": "packages/pieces/community/pcloud/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/pcloud/package.json",
+        "main": "packages/pieces/community/pcloud/src/index.ts",
+        "assets": [
+          "packages/pieces/community/pcloud/*.md",
+          {
+            "input": "packages/pieces/community/pcloud/src/i18n",
+            "glob": "**/*",
+            "output": "i18n"
+          }
+        ]
+      },
+      "dependsOn": ["prebuilt", "^build"]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    },
+    "prebuilt": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "bun install"
+      }
+    }
+  },
+  "tags": []
+}
