@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-canva",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@activepieces/pieces-common": "^0.4.0",
+    "@activepieces/pieces-framework": "^0.4.0",
+    "@activepieces/shared": "^0.43.0"
+  }
+}
