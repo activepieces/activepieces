@@ -1,4 +1,13 @@
 {
   "name": "@activepieces/piece-cognito-forms",
-  "version": "0.0.7"
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./src/index.ts",
+  "devDependencies": {
+    "@activepieces/pieces-common": "^0.10.2",
+    "@activepieces/pieces-framework": "^0.22.3",
+    "@activepieces/shared": "^0.30.4",
+    "@types/node": "^25.0.3",
+    "typescript": "^5.9.3"
+  }
 }
