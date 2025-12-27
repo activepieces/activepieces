@@ -45,7 +45,7 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-full h-full">
       <AIPieceActionsList
         stepMetadataWithSuggestions={pieceMetadataWithSuggestion}
         hidePieceIconAndDescription={false}

@@ -17,6 +17,7 @@ const pieceIconVariants = cva('flex items-center justify-center   ', {
       false: 'dark:rounded-[2px]',
     },
     size: {
+      full: 'w-full h-full',
       xxl: 'size-[64px] p-4',
       xl: 'size-[48px]',
       lg: 'size-[40px]',
@@ -35,6 +36,8 @@ interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
   displayName?: string;
   logoUrl?: string;
   showTooltip: boolean;
+  playOnHover?: boolean;
+  forcePlay?: boolean;
 }
 
 const PieceIcon = React.memo(
@@ -45,6 +48,8 @@ const PieceIcon = React.memo(
     size,
     circle = false,
     showTooltip,
+    playOnHover = false,
+    forcePlay = false,
   }: PieceIconCircleProps) => {
     return (
       <Tooltip>
@@ -54,8 +59,10 @@ const PieceIcon = React.memo(
               <ImageWithColorBackground
                 src={logoUrl}
                 alt={displayName}
-                className="object-contain w-full h-full p-1"
+                className="object-cover w-full h-full"
                 key={logoUrl}
+                playOnHover={playOnHover}
+                forcePlay={forcePlay}
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
               />
             ) : (
