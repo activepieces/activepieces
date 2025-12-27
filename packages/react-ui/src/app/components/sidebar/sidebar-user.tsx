@@ -166,6 +166,7 @@ export function SidebarUser() {
       <AccountSettingsDialog
         open={accountSettingsOpen}
         onClose={() => setAccountSettingsOpen(false)}
+        isOwner={true}
       />
       <InviteUserDialog open={inviteUserOpen} setOpen={setInviteUserOpen} />
     </SidebarMenu>
