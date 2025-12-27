@@ -17,6 +17,7 @@ import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-t
 import {
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
+  usePieceSelectorTabs,
 } from '@/features/pieces/lib/piece-selector-tabs-provider';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -29,6 +30,7 @@ import {
 } from '../../../features/pieces/lib/piece-search-context';
 
 import { AITabContent } from './ai-tab-content';
+import AITabFooter from './ai-tab-content/ai-footer';
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
@@ -112,7 +114,7 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 420);
+  const listHeight = Math.min(listHeightRef.current, 444);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -168,7 +170,7 @@ const PieceSelectorContent = ({
           onContextMenu={(e) => {
             e.stopPropagation();
           }}
-          className="w-[340px] md:w-[940px] p-0 shadow-lg overflow-hidden"
+          className="w-[340px] md:w-[860px] p-0 shadow-lg overflow-hidden rounded-[16px]"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
@@ -185,6 +187,7 @@ const PieceSelectorContent = ({
                 }}
               />
               {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
+              <Separator />
 
               <ScrollArea
                 style={{
@@ -206,11 +209,22 @@ const PieceSelectorContent = ({
                   />
                 </div>
               </ScrollArea>
+              <PieceSelectorAIFooter />
             </div>
         </PopoverContent>
       </PieceSelectorTabsProvider>
     </Popover>
   );
 };
+
+const PieceSelectorAIFooter = () => {
+  const { selectedTab } = usePieceSelectorTabs();
+  const { searchQuery } = usePieceSearchContext();
+  if (selectedTab !== PieceSelectorTabType.AI_AND_AGENTS || searchQuery !== '') {
+    return null;
+  }
+  return <AITabFooter />;
+};
+
 
 export { PieceSelectorWrapper as PieceSelector };

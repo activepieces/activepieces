@@ -38,7 +38,7 @@ const AIActionItem = ({
 
   return (
     <CardListItem
-      className="h-[76px] w-full rounded-xl flex items-center gap-3 bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 cursor-pointer group relative overflow-hidden p-2.5"
+      className="h-[76px] w-full rounded-xl flex items-center gap-3 bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 cursor-pointer group relative overflow-hidden p-1"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

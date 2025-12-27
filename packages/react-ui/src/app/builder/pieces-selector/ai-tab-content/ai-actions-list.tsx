@@ -124,7 +124,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
 
   return (
     <div className="flex flex-col px-4">
-      <div className="flex gap-4 py-4 w-full">
+      <div className="flex gap-4 pt-4 pb-0 w-full">
         {/* Left: Featured AI Agent Card */}
         {agentAction && (
           <div className="w-[45%] flex-shrink-0">
@@ -132,10 +132,10 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               onClick={() => handleClick(agentAction)}
               onMouseEnter={() => setIsAgentHovered(true)}
               onMouseLeave={() => setIsAgentHovered(false)}
-              className="group relative flex flex-col rounded-xl bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 cursor-pointer hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 overflow-hidden h-[452px]"
+              className="group relative flex flex-col rounded-xl bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 cursor-pointer hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 overflow-hidden h-[412px]"
             >
-              {/* Image Section - Aligns with 3 cards on the right */}
-              <div className="p-2.5 h-[280px]">
+              {/* Image Section - Aligns with 3 cards + 3 gaps on the right */}
+              <div className="p-2 h-[252px]">
                 <div className="w-full h-full relative rounded-lg overflow-hidden border border-zinc-100/50 dark:border-zinc-800">
                   <PieceIcon
                     logoUrl={ACTION_ICON_MAP['run_agent']}
@@ -148,13 +148,13 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
                 </div>
               </div>
 
-              {/* Content Section - Aligns with 2 cards on the right */}
-              <div className="px-6 pb-8 pt-4 flex flex-col h-[172px]">
+              {/* Content Section - Aligns with bottom 2 cards on the right */}
+              <div className="px-5 pb-4 pt-2.5 flex flex-col h-[160px]">
                 <div className="space-y-1">
-                  <h3 className="text-[20px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  <h3 className="text-[19px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                     AI Agent
                   </h3>
-                  <p className="text-[14.5px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  <p className="text-[14px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
                     {getPieceSelectorItemInfo(agentAction).description}
                   </p>
                 </div>
@@ -190,33 +190,6 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               />
             );
           })}
-        </div>
-      </div>
-
-      {/* Footer: Available Models */}
-      <div className="pt-2 pb-8 flex items-center gap-2.5">
-        <span className="text-[13.5px] text-zinc-400 dark:text-zinc-500 font-medium">
-          Available models:
-        </span>
-        <div className="flex items-center gap-3">
-          <img
-            src="https://cdn.activepieces.com/pieces/google-gemini.png"
-            alt="Gemini"
-            className="w-[22px] h-[22px] shrink-0"
-          />
-          <img
-            src="https://cdn.activepieces.com/pieces/openai.png"
-            alt="OpenAI"
-            className="w-[22px] h-[22px] shrink-0"
-          />
-          <img
-            src="https://cdn.activepieces.com/pieces/anthropic.png"
-            alt="Anthropic"
-            className="w-[22px] h-[22px] shrink-0"
-          />
-          <span className="text-[13.5px] text-zinc-400 dark:text-zinc-500 font-medium -ml-1">
-            + more
-          </span>
         </div>
       </div>
     </div>
