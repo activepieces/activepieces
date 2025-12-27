@@ -6,8 +6,21 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
+import { gmailReplyToEmailAction } from './lib/actions/reply-to-email';
+import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply';
+import { gmailAddLabelToEmailAction } from './lib/actions/add-label-to-email';
+import { gmailRemoveLabelFromEmailAction } from './lib/actions/remove-label-from-email';
+import { gmailAddLabelToThreadAction } from './lib/actions/add-label-to-thread';
+import { gmailRemoveLabelFromThreadAction } from './lib/actions/remove-label-from-thread';
+import { gmailCreateLabelAction } from './lib/actions/create-label';
+import { gmailArchiveEmailAction } from './lib/actions/archive-email';
+import { gmailDeleteEmailAction } from './lib/actions/delete-email';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
+import { gmailNewStarredEmailTrigger } from './lib/triggers/new-starred-email';
+import { gmailNewThreadTrigger } from './lib/triggers/new-thread';
+import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
+import { gmailNewLabelCreatedTrigger } from './lib/triggers/new-label-created';
 
 export const gmailAuth = PieceAuth.OAuth2({
   description: '',
@@ -19,6 +32,8 @@ export const gmailAuth = PieceAuth.OAuth2({
     'email',
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.compose',
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/gmail.labels',
   ],
 });
 
@@ -31,6 +46,15 @@ export const gmail = createPiece({
   ],
   actions: [
     gmailSendEmailAction,
+    gmailReplyToEmailAction,
+    gmailCreateDraftReplyAction,
+    gmailAddLabelToEmailAction,
+    gmailRemoveLabelFromEmailAction,
+    gmailAddLabelToThreadAction,
+    gmailRemoveLabelFromThreadAction,
+    gmailCreateLabelAction,
+    gmailArchiveEmailAction,
+    gmailDeleteEmailAction,
     createCustomApiCallAction({
       baseUrl: () => 'https://gmail.googleapis.com/gmail/v1',
       auth: gmailAuth,
@@ -53,7 +77,15 @@ export const gmail = createPiece({
     'khaledmashaly',
     'abuaboud',
     'AdamSelene',
+    'cybeleri',
   ],
-  triggers: [gmailNewEmailTrigger, gmailNewLabeledEmailTrigger],
+  triggers: [
+    gmailNewEmailTrigger,
+    gmailNewLabeledEmailTrigger,
+    gmailNewStarredEmailTrigger,
+    gmailNewThreadTrigger,
+    gmailNewAttachmentTrigger,
+    gmailNewLabelCreatedTrigger,
+  ],
   auth: gmailAuth,
 });
