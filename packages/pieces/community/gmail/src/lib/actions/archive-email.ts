@@ -1,0 +1,33 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { gmailAuth } from '../../';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'googleapis-common';
+
+export const gmailArchiveEmailAction = createAction({
+  auth: gmailAuth,
+  name: 'archive_email',
+  description: 'Archive an email by removing it from the inbox',
+  displayName: 'Archive Email',
+  props: {
+    message_id: Property.ShortText({
+      displayName: 'Message ID',
+      description: 'The ID of the email message to archive',
+      required: true,
+    }),
+  },
+  async run(context) {
+    const authClient = new OAuth2Client();
+    authClient.setCredentials(context.auth);
+    const gmail = google.gmail({ version: 'v1', auth: authClient });
+
+    const response = await gmail.users.messages.modify({
+      userId: 'me',
+      id: context.propsValue.message_id,
+      requestBody: {
+        removeLabelIds: ['INBOX'],
+      },
+    });
+
+    return response.data;
+  },
+});
