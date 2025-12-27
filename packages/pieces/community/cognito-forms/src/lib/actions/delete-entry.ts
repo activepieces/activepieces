@@ -1,30 +1,38 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { cognitoFormsAuth } from '../../index';
-import { formIdDropdown } from '../common/props';
 
-export const deleteEntryAction = createAction({
+export const cognitoFormsDeleteEntry = createAction({
   auth: cognitoFormsAuth,
   name: 'delete_entry',
   displayName: 'Delete Entry',
-  description: 'Deletes a specified entry.',
+  description: 'Delete an entry from a form',
   props: {
-    formId: formIdDropdown,
+    formId: Property.ShortText({
+      displayName: 'Form ID',
+      description: 'The ID of the form',
+      required: true,
+    }),
     entryId: Property.ShortText({
       displayName: 'Entry ID',
+      description: 'The ID of the entry to delete',
       required: true,
-      description: 'Enter the ID of the entry to delete.',
     }),
   },
-  async run(context) {
-    const apiKey = context.auth;
-    const { formId, entryId } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const { formId, entryId } = propsValue;
 
-    return await makeRequest(
-      apiKey,
-      HttpMethod.DELETE,
-      `/forms/${formId}/entries/${entryId}`
-    );
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.DELETE,
+      url: `https://www.cognitoforms.com/api/forms/${formId}/entries/${entryId}`,
+      headers: {
+        Authorization: `Bearer ${auth}`,
+      },
+    });
+
+    return {
+      success: true,
+      message: `Entry ${entryId} deleted successfully`,
+    };
   },
 });

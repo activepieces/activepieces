@@ -1,27 +1,38 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { cognitoFormsAuth } from '../../index';
-import { formFields, formIdDropdown } from '../common/props';
 
-export const createEntryAction = createAction({
+export const cognitoFormsCreateEntry = createAction({
   auth: cognitoFormsAuth,
   name: 'create_entry',
   displayName: 'Create Entry',
-  description: 'Creates a new entry.',
+  description: 'Create a new entry in a form',
   props: {
-    formId: formIdDropdown,
-    entryData: formFields,
+    formId: Property.ShortText({
+      displayName: 'Form ID',
+      description: 'The ID of the form to create an entry in',
+      required: true,
+    }),
+    entryData: Property.Json({
+      displayName: 'Entry Data',
+      description: 'The form field data as JSON. Field names must match your form fields.',
+      required: true,
+      defaultValue: {},
+    }),
   },
-  async run(context) {
-    const apiKey = context.auth;
-    const { formId, entryData } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const { formId, entryData } = propsValue;
 
-    return await makeRequest(
-      apiKey,
-      HttpMethod.POST,
-      `/forms/${formId}/entries`,
-      entryData
-    );
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: `https://www.cognitoforms.com/api/forms/${formId}/entries`,
+      headers: {
+        Authorization: `Bearer ${auth}`,
+        'Content-Type': 'application/json',
+      },
+      body: entryData,
+    });
+
+    return response.body;
   },
 });

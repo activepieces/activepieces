@@ -1,30 +1,35 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
-import { makeRequest } from '../common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { cognitoFormsAuth } from '../../index';
-import { formIdDropdown } from '../common/props';
 
-export const getEntryAction = createAction({
+export const cognitoFormsGetEntry = createAction({
   auth: cognitoFormsAuth,
   name: 'get_entry',
   displayName: 'Get Entry',
-  description: 'Gets a specified entry.',
+  description: 'Get a specific entry by ID',
   props: {
-    formId: formIdDropdown,
+    formId: Property.ShortText({
+      displayName: 'Form ID',
+      description: 'The ID of the form',
+      required: true,
+    }),
     entryId: Property.ShortText({
       displayName: 'Entry ID',
+      description: 'The ID of the entry to retrieve',
       required: true,
-      description: 'Enter the ID of the entry to retrieve.',
     }),
   },
-  async run(context) {
-    const apiKey = context.auth;
-    const { formId, entryId } = context.propsValue;
+  async run({ auth, propsValue }) {
+    const { formId, entryId } = propsValue;
 
-    return await makeRequest(
-      apiKey,
-      HttpMethod.GET,
-      `/forms/${formId}/entries/${entryId}`
-    );
+    const response = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: `https://www.cognitoforms.com/api/forms/${formId}/entries/${entryId}`,
+      headers: {
+        Authorization: `Bearer ${auth}`,
+      },
+    });
+
+    return response.body;
   },
 });
