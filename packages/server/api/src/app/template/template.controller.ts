@@ -1,3 +1,4 @@
+import { securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -5,6 +6,7 @@ import {
     CreateTemplateRequestBody,    
     ErrorCode,    
     FlowVersionTemplate,
+    GetFlowTemplateRequestQuery,
     isNil,
     ListTemplatesRequestQuery,
     Principal,
@@ -27,18 +29,21 @@ const edition = system.getEdition()
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
-        return templateService().getOneOrThrow({ id: request.params.id })
+        if (request.query.type === TemplateType.OFFICIAL) {
+            return communityTemplates.get(request.params.id)
+        }
+        return templateService(app.log).getOneOrThrow({ id: request.params.id })
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
         const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type ?? TemplateType.OFFICIAL)
         if (isNil(platformId)) {
             if (edition === ApEdition.CLOUD) {
-                return templateService().list({ platformId: null, requestQuery: request.query })
+                return templateService(app.log).list({ platformId: null, requestQuery: request.query })
             }
-            return communityTemplates.get(request.query)
+            return communityTemplates.list(request.query)
         }
-        return templateService().list({ platformId, requestQuery: request.query })
+        return templateService(app.log).list({ platformId, requestQuery: request.query })
     })
 
     app.post('/', {
@@ -75,28 +80,28 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
                 })
             }
         }
-        const result = await templateService().create({ platformId, params: request.body })
+        const result = await templateService(app.log).create({ platformId, params: request.body })
         return reply.status(StatusCodes.CREATED).send(result)
     })
 
     app.post('/:id', UpdateParams, async (request, reply) => {
-        const result = await templateService().update({ id: request.params.id, params: request.body })
+        const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
     })
 
     app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => { 
-        await templateService().incrementUsageCount({ id: request.params.id })
+        await templateService(app.log).incrementUsageCount({ id: request.params.id })
         return reply.status(StatusCodes.OK).send()
     })
 
     app.delete('/:id', DeleteParams, async (request, reply) => {
-        const template = await templateService().getOneOrThrow({ id: request.params.id })
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
         if (template.type === TemplateType.CUSTOM) {
             await platformMustBeOwnedByCurrentUser.call(app, request, reply)
         }
 
-        await templateService().delete({
+        await templateService(app.log).delete({
             id: request.params.id,
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
@@ -138,19 +143,20 @@ type GetIdParams = Static<typeof GetIdParams>
 
 const GetParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         tags: ['templates'],
         description: 'Get a template.',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
+        querystring: GetFlowTemplateRequestQuery,
     },
 }
 
 const ListTemplatesParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         tags: ['templates'],
@@ -162,7 +168,7 @@ const ListTemplatesParams = {
 
 const DeleteParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Delete a template.',
@@ -174,7 +180,7 @@ const DeleteParams = {
 
 const CreateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Create a template.',
@@ -186,7 +192,7 @@ const CreateParams = {
 
 const UpdateParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Update a template.',
@@ -199,7 +205,7 @@ const UpdateParams = {
 
 const IncrementUsageCountParams = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         description: 'Increment usage count of a template.',

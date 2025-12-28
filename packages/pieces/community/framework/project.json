@@ -18,7 +18,8 @@
           "packages/pieces/community/framework/*.md"
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
       "dependsOn": [
         "prebuild",

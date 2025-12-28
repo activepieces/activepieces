@@ -1,8 +1,8 @@
 import { useFormContext } from 'react-hook-form';
 
+import { AgentTools } from '@/app/builder/step-settings/agent-settings/agent-tools';
 import { FormField } from '@/components/ui/form';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AgentTools } from '@/features/agents/agent-tools';
 import { AgentStructuredOutput } from '@/features/agents/structured-output';
 import {
   AgentPieceProps,
@@ -17,8 +17,6 @@ import {
 } from '../../piece-properties/properties-utils';
 import { useStepSettingsContext } from '../step-settings-context';
 
-const inputNamePrefix = 'settings.input';
-
 type AgentSettingsProps = {
   step: PieceAction;
   flowId: string;
@@ -26,7 +24,8 @@ type AgentSettingsProps = {
 };
 
 export const AgentSettings = (props: AgentSettingsProps) => {
-  const { pieceModel } = useStepSettingsContext();
+  const { pieceModel, updateFormSchema, updatePropertySettingsSchema } =
+    useStepSettingsContext();
   const form = useFormContext();
 
   if (isNil(pieceModel)) {
@@ -57,24 +56,29 @@ export const AgentSettings = (props: AgentSettingsProps) => {
           return (
             <FormField
               key={propertyName}
-              name={`${inputNamePrefix}.${propertyName}`}
+              name={`settings.input.${propertyName}`}
               control={form.control}
               render={({ field }) =>
-                selectAgnetFormComponentForProperty({
+                selectAgentFormComponentForProperty({
                   field,
                   allowDynamicValues: false,
                   dynamicInputModeToggled: false,
                   markdownVariables: {},
-                  propertyName: propertyName as AgentPieceProps,
-                  inputName: `${inputNamePrefix}.${propertyName}`,
+                  propertyName: propertyName,
+                  inputName: `settings.input.${propertyName}`,
                   property: properties[propertyName],
                   useMentionTextInput: true,
                   disabled: props.readonly,
                   form: form,
-                  actionOrTriggerName: actionName,
-                  pieceName: props.step.settings.pieceName,
-                  pieceVersion: props.step.settings.pieceVersion,
-                  inputPrefix: 'settings.input',
+                  dynamicPropsInfo: {
+                    pieceName: props.step.settings.pieceName,
+                    pieceVersion: props.step.settings.pieceVersion,
+                    actionOrTriggerName: actionName,
+                    placedInside: 'stepSettings',
+                    updateFormSchema,
+                    updatePropertySettingsSchema,
+                  },
+                  propertySettings: null,
                 })
               }
             />
@@ -87,7 +91,7 @@ export const AgentSettings = (props: AgentSettingsProps) => {
 
 type selectFormComponentForPropertyParams =
   SelectGenericFormComponentForPropertyParams;
-const selectAgnetFormComponentForProperty = (
+const selectAgentFormComponentForProperty = (
   params: selectFormComponentForPropertyParams,
 ) => {
   const { propertyName, disabled, field } = params;
@@ -105,6 +109,7 @@ const selectAgnetFormComponentForProperty = (
       );
     }
     default: {
+      console.log(params.inputName);
       return selectGenericFormComponentForProperty(params);
     }
   }
