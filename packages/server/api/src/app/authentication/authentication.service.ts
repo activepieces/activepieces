@@ -28,8 +28,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
         if (isNil(params.platformId)) {
             const userIdentity = await userIdentityService(log).create({
                 ...params,
-                verified: true,
-                // verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
+                verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
             })
             return createUserAndPlatform(userIdentity, log)
         }
