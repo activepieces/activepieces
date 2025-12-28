@@ -132,11 +132,11 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               onClick={() => handleClick(agentAction)}
               onMouseEnter={() => setIsAgentHovered(true)}
               onMouseLeave={() => setIsAgentHovered(false)}
-              className="group relative flex flex-col rounded-xl bg-[#f8f8f8] dark:bg-zinc-900 border border-zinc-100/50 dark:border-zinc-800 cursor-pointer hover:bg-[#f2f2f2] dark:hover:bg-zinc-800/80 transition-all duration-200 overflow-hidden h-[412px]"
+              className="group relative flex flex-col rounded-xl bg-transparent border border-transparent cursor-pointer hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 hover:border-zinc-100 dark:hover:border-zinc-800 transition-all duration-200 overflow-hidden h-[428px]"
             >
               {/* Image Section - Aligns with 3 cards + 3 gaps on the right */}
-              <div className="p-2 h-[252px]">
-                <div className="w-full h-full relative rounded-lg overflow-hidden border border-zinc-100/50 dark:border-zinc-800">
+              <div className="p-1 h-[252px]">
+                <div className="w-full h-full relative rounded-xl overflow-hidden border border-transparent group-hover:border-zinc-100 dark:group-hover:border-zinc-800 transition-all duration-200">
                   <PieceIcon
                     logoUrl={ACTION_ICON_MAP['run_agent']}
                     displayName="AI Agent"
@@ -149,9 +149,9 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               </div>
 
               {/* Content Section - Aligns with bottom 2 cards on the right */}
-              <div className="px-5 pb-4 pt-2.5 flex flex-col h-[160px]">
+              <div className="px-5 pb-4 pt-3 flex flex-col h-[176px]">
                 <div className="space-y-1">
-                  <h3 className="text-[19px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  <h3 className="text-[22px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
                     AI Agent
                   </h3>
                   <p className="text-[14px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
@@ -171,7 +171,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
         )}
 
         {/* Right: Other Actions List */}
-        <div className="flex-1 flex flex-col gap-2">
+        <div className="flex-1 flex flex-col gap-3">
           {otherActions.map((item, index) => {
             const actionIcon =
               item.type === FlowActionType.PIECE

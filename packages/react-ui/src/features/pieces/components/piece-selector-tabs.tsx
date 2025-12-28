@@ -31,7 +31,7 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
                [&>svg]:size-[18px] [&>svg]:shrink-0`}
           >
             {tab.icon}
-            <span className="text-[14px] font-bold tracking-tight whitespace-nowrap">{tab.name}</span>
+            <span className="text-[15px] font-bold tracking-tight whitespace-nowrap">{tab.name}</span>
           </TabsTrigger>
         ))}
       </TabsList>
