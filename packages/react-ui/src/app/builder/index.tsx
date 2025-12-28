@@ -18,7 +18,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { RunStatus } from '@/features/flow-runs/components/run-status';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -38,6 +37,7 @@ import { cn, useElementSize } from '../../lib/utils';
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
 import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
+import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
@@ -140,7 +140,7 @@ const BuilderPage = () => {
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
             <PublishFlowReminderWidget />
-            <RunStatus run={run} />
+            <RunInfoWidget />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls

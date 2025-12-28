@@ -13,20 +13,17 @@ const BuilderFlowStatusSection = React.memo(() => {
   ]);
 
   return (
-    <>
-      <div className="flex items-center space-x-2">
-        <FlowVersionStateDot
-          state={flowVersion.state}
-          versionId={flowVersion.id}
-          publishedVersionId={flow.publishedVersionId}
-        ></FlowVersionStateDot>
-        {(flow.publishedVersionId === flowVersion.id ||
-          flowVersion.state === FlowVersionState.DRAFT) && (
-          <FlowStatusToggle flow={flow}></FlowStatusToggle>
-        )}
-      </div>
-      <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
-    </>
+    <div className="flex items-center space-x-2">
+      <FlowVersionStateDot
+        state={flowVersion.state}
+        versionId={flowVersion.id}
+        publishedVersionId={flow.publishedVersionId}
+      ></FlowVersionStateDot>
+      {(flow.publishedVersionId === flowVersion.id ||
+        flowVersion.state === FlowVersionState.DRAFT) && (
+        <FlowStatusToggle flow={flow}></FlowStatusToggle>
+      )}
+    </div>
   );
 });
 
