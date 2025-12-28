@@ -73,7 +73,7 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 200,
     activeFlowsLimit: 10,
     projectsLimit: 1,
-
+    aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
     agentsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
@@ -119,6 +119,7 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
+    aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
 }
 
 export const APPSUMO_PLAN = (planName: PlanName): PlatformPlanWithOnlyLimits => ({
