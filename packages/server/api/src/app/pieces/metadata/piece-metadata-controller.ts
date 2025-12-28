@@ -44,7 +44,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         })
     })
 
-    app.get( 
+    app.get(
         '/categories',
         ListCategoriesRequest,
         async (): Promise<PieceCategory[]> => {
@@ -165,7 +165,7 @@ function getPlatformId(principal: Principal): string | undefined {
 
 const RegistryPiecesRequest = {
     config: {
-        security: securityAccess.public(),
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         querystring: RegistryPiecesRequestQuery,
