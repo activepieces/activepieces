@@ -77,8 +77,8 @@ export const FlowStepInputOutput = () => {
   return (
     <ScrollArea className="h-full p-4">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-1 text-base font-medium">
-          <StepStatusIcon status={selectedStepOutput.status} size="5" />
+        <div className="flex items-center gap-2 text-base font-medium">
+          <StepStatusIcon status={selectedStepOutput.status} size="4.5" />
           <span>{selectedStep.displayName}</span>
         </div>
 
