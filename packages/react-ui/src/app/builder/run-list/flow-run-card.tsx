@@ -35,6 +35,7 @@ import {
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
+import { useNavigate } from 'react-router-dom';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -50,31 +51,8 @@ const FlowRunCard = React.memo(
       Permission.WRITE_RUN,
     );
     const projectId = authenticationSession.getProjectId();
+    const navigate = useNavigate();
 
-    const [setRun] = useBuilderStateContext((state) => [state.setRun]);
-    const { mutate: viewRun, isPending: isFetchingRun } = useMutation<
-      {
-        run: FlowRun;
-        populatedFlow: PopulatedFlow;
-      },
-      Error,
-      string
-    >({
-      mutationFn: async (flowRunId) => {
-        const run = await flowRunsApi.getPopulated(flowRunId);
-        const populatedFlow = await flowsApi.get(run.flowId, {
-          versionId: run.flowVersionId,
-        });
-        return {
-          run,
-          populatedFlow,
-        };
-      },
-      onSuccess: ({ run, populatedFlow }) => {
-        setRun(run, populatedFlow.version);
-        refetchRuns();
-      },
-    });
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
 
@@ -105,9 +83,9 @@ const FlowRunCard = React.memo(
         }
         throw Error("Project id isn't defined");
       },
-      onSuccess: ({ populatedFlow, run }) => {
+      onSuccess: ({ run }) => {
         refetchRuns();
-        setRun(run, populatedFlow.version);
+        navigate(`/runs/${run.id}`);
       },
     });
 
@@ -118,9 +96,7 @@ const FlowRunCard = React.memo(
         })}
         style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {
-          if (!isFetchingRun) {
-            viewRun(run.id);
-          }
+          navigate(`/runs/${run.id}`);
         }}
         key={run.id}
       >
@@ -184,11 +160,11 @@ const FlowRunCard = React.memo(
           )}
         </div>
         <div className="ml-auto font-medium">
-          {(isFetchingRun || isRetryingRun) && (
+          {(isRetryingRun) && (
             <LoadingSpinner className="size-4"></LoadingSpinner>
           )}
 
-          {!isFetchingRun && !isRetryingRun && (
+          {!isRetryingRun && (
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToRetryRun}
             >

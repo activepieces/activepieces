@@ -31,7 +31,7 @@ const FlowRunPage = () => {
         flow: flow,
       };
     },
-    staleTime: 0,
+    staleTime: 30000,
     gcTime: 0,
     enabled: runId !== undefined,
   });
