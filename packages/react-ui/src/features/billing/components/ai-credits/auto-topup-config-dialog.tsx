@@ -16,6 +16,8 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 
 import { billingMutations } from '../../lib/billing-hooks';
+import { UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared';
+import { AiCreditsAutoTopUpState } from '@activepieces/shared';
 
 interface AutoTopUpConfigDialogProps {
   isOpen: boolean;
@@ -38,29 +40,23 @@ export function AutoTopUpConfigDialog({
     currentCreditsToAdd ?? 10000,
   );
 
-  const { mutate: enableAutoTopUp, isPending: isEnabling } =
-    billingMutations.useEnableAutoTopUp(queryClient);
-
   const { mutate: updateAutoTopUp, isPending: isUpdating } =
-    billingMutations.useUpdateAutoTopUpConfig(queryClient);
+    billingMutations.useUpdateAutoTopUp(queryClient);
 
-  const isPending = isEnabling || isUpdating;
+  const isPending = isUpdating;
 
   const handleSave = () => {
-    const params = {
+    const params: UpdateAICreditsAutoTopUpParamsSchema = {
       minThreshold: threshold,
       creditsToAdd: creditsToAdd,
+      state: AiCreditsAutoTopUpState.ENABLED,
     };
 
     const onSuccess = () => {
       onOpenChange(false);
     };
 
-    if (isEditing) {
-      updateAutoTopUp(params, { onSuccess });
-    } else {
-      enableAutoTopUp(params, { onSuccess });
-    }
+    updateAutoTopUp(params, { onSuccess });
   };
 
   return (

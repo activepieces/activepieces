@@ -15,6 +15,8 @@ import {
 } from '@/components/ui/tooltip';
 import {
   AiCreditsAutoTopUpState,
+  ApEdition,
+  ApFlagId,
   PlatformBillingInformation,
 } from '@activepieces/shared';
 
@@ -22,6 +24,7 @@ import { billingMutations } from '../../lib/billing-hooks';
 
 import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
 import { PurchaseAICreditsDialog } from './purchase-ai-credits-dialog';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
@@ -40,22 +43,22 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const creditsRemaining = usage.aiCreditsRemaining;
 
   const autoTopUpState =
-    plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.NOT_ALLOWED;
+    plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED;
 
-  const isAutoTopUpAllowed =
-    autoTopUpState !== AiCreditsAutoTopUpState.NOT_ALLOWED;
+  const canBuyCredits =
+    flagsHooks.useFlag<ApEdition>(ApFlagId.CAN_BUY_AI_CREDITS);
   const isAutoTopUpEnabled =
-    autoTopUpState === AiCreditsAutoTopUpState.ALLOWED_AND_ON;
+    autoTopUpState === AiCreditsAutoTopUpState.ENABLED;
 
-  const { mutate: disableAutoTopUp, isPending: isDisablingAutoTopUp } =
-    billingMutations.useDisableAutoTopUp(queryClient);
+  const { mutate: updateAutoTopUp, isPending: isDisablingAutoTopUp } =
+    billingMutations.useUpdateAutoTopUp(queryClient);
 
   const handleToggleAutoTopUp = (checked: boolean) => {
     if (checked) {
       setIsAutoTopUpEditing(false);
       setIsAutoTopUpDialogOpen(true);
     } else {
-      disableAutoTopUp();
+      updateAutoTopUp({ state: AiCreditsAutoTopUpState.DISABLED });
     }
   };
 
@@ -80,14 +83,16 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              className="gap-2"
-              onClick={() => setIsPurchaseDialogOpen(true)}
-            >
-              <Plus className="w-4 h-4" />
-              {t('Purchase Credits')}
-            </Button>
+            {canBuyCredits && (
+              <Button
+                variant="default"
+                className="gap-2"
+                onClick={() => setIsPurchaseDialogOpen(true)}
+              >
+                <Plus className="w-4 h-4" />
+                {t('Purchase Credits')}
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -153,7 +158,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
         <Separator />
 
         <div className="space-y-6">
-          {isAutoTopUpAllowed && (
+          {canBuyCredits && (
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">

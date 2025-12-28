@@ -1,5 +1,5 @@
-import { CreateAICreditCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
-import { ActivepiecesError, AiCreditsAutoTopUpState, assertNotNullOrUndefined, ErrorCode, isNil, PlatformPlan } from '@activepieces/shared'
+import { CreateAICreditCheckoutSessionParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
+import { ActivepiecesError, AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -10,6 +10,7 @@ import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { openRouterApi } from './openrouter/openrouter-api'
 import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
+import { sleep } from '@activepieces/server-shared'
 
 const CREDIT_PER_DOLLAR = 1000
 
@@ -20,12 +21,16 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             try {
                 await distributedLock(log).runExclusive({
                     key: `ai_credits_update_${platformId}`,
-                    timeoutInSeconds: 10,
+                    timeoutInSeconds: 100,
                     fn: async () => {
                         const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-                        await this.tryResetPlanIncludedCredits(plan, apiKeyHash)
-                        await this.tryAutoTopUpPlan(plan, apiKeyHash)   
+                        await tryResetPlanIncludedCredits(plan, apiKeyHash, log)
+                        const autoToppedUp = await tryAutoTopUpPlan(plan, apiKeyHash, log)
+
+                        if (autoToppedUp) {
+                            await sleep(30000) // 30 seconds to wait for stripe to complete
+                        }
                     },
                 })
             }
@@ -74,16 +79,15 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         }
     },
 
-    async enableAutoTopUp(platformId: string, request: EnableAICreditsAutoTopUpParamsSchema): Promise<{ stripeCheckoutUrl?: string }> {
+    async updateAutoTopUp(platformId: string, request: UpdateAICreditsAutoTopUpParamsSchema): Promise<{ stripeCheckoutUrl?: string }> {
         const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
 
-        if (plan.aiCreditsAutoTopUpState === AiCreditsAutoTopUpState.ALLOWED_AND_ON) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'auto topup already enabled',
-                },
+        if (request.state === AiCreditsAutoTopUpState.DISABLED) {
+            await platformPlanService(log).update({
+                platformId,
+                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
             })
+            return {}
         }
 
         await platformPlanService(log).update({
@@ -93,19 +97,24 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         })
 
         assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
-
         const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
-        if (!isNil(paymentMethod)) {
+        if (!isNil(paymentMethod)) {    
             await platformPlanService(log).update({
                 platformId,
-                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON,
+                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ENABLED
             })
+
             return {}
-        }
+        }        
 
         const stripeCheckoutUrl = await stripeHelper(log).createNewAICreditAutoTopUpCheckoutSession({
             platformId,
             customerId: plan.stripeCustomerId,
+        })
+
+        await platformPlanService(log).update({
+            platformId,
+            aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
         })
 
         return { stripeCheckoutUrl }
@@ -114,39 +123,13 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async handleAutoTopUpCheckoutSessionCompleted(platformId: string, paymentMethodId: string): Promise<void> {
         await platformPlanService(log).update({
             platformId,
-            aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON,
+            aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ENABLED,
         })
 
         const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
         assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
 
         await stripeHelper(log).attachPaymentMethodToCustomer(paymentMethodId, plan.stripeCustomerId)
-    },
-
-    async updateAutoTopUpConfig(platformId: string, request: EnableAICreditsAutoTopUpParamsSchema): Promise<void> {
-        await platformPlanService(log).update({
-            platformId,
-            aiCreditsAutoTopUpCreditsToAdd: request.creditsToAdd,
-            aiCreditsAutoTopUpThreshold: request.minThreshold,
-            aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_AND_ON,
-        })
-    },
-
-    async disableAutoTopUp(platformId: string): Promise<void> {
-        const plan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-        if (plan.aiCreditsAutoTopUpState === AiCreditsAutoTopUpState.ALLOWED_BUT_OFF) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'auto topup already disabled',
-                },
-            })
-        }
-
-        await platformPlanService(log).update({
-            platformId,
-            aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ALLOWED_BUT_OFF,
-        })
     },
 
     async initializeStripeAiCreditsPayment(platformId: string, { aiCredits }: CreateAICreditCheckoutSessionParamsSchema): Promise<{ stripeCheckoutUrl: string }> {
@@ -171,74 +154,60 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             hash: apiKeyHash,
             limit: key.limit! + amount,
         })
-
-        if (paymentType === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP) {
-            const redis = await redisConnections.useExisting()
-
-            await redis.del(autoTopUpPlatformKey(platformId))
-        }
-    },
-
-    async tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string): Promise<void> {
-        if (dayjs().diff(plan.lastFreeAiCreditsRenewalDate, 'month') < 1) {
-            return
-        }
-
-        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
-
-        const amount = plan.includedAiCredits / CREDIT_PER_DOLLAR
-
-        await openRouterApi.updateKey({
-            hash: apiKeyHash,
-            limit: key.limit! + amount,
-        })
-
-        await platformPlanService(log).update({
-            platformId: plan.platformId,
-            lastFreeAiCreditsRenewalDate: new Date().toISOString(),
-        })
-    },
-
-    async tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string): Promise<void> {
-        if (plan.aiCreditsAutoTopUpState !== AiCreditsAutoTopUpState.ALLOWED_AND_ON) {
-            return
-        }
-
-        const redis = await redisConnections.useExisting()
-
-        const lockKey = autoTopUpPlatformKey(plan.platformId)
-        const lockAcquired = await redis.set(lockKey, '1', 'EX', 10, 'NX')
-        if (!lockAcquired) { // means there is already a topup operation on this platform
-            return
-        }
-
-        const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
-
-        const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
-        if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold!) {
-            return
-        }
-
-        assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
-        assertNotNullOrUndefined(plan.aiCreditsAutoTopUpCreditsToAdd, 'Auto Topup Credits To add is not set')
-        assertNotNullOrUndefined(plan.aiCreditsAutoTopUpThreshold, 'Auto Topup Threashold is not set')
-
-        const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
-
-        assertNotNullOrUndefined(paymentMethod, 'Auto Topup Stripe payment method is not set')
-
-        const amountInUsd = plan.aiCreditsAutoTopUpCreditsToAdd / CREDIT_PER_DOLLAR
-
-        await stripeHelper(log).createNewAICreditAutoTopUpInvoice({
-            amountInUsd,
-            customerId: plan.stripeCustomerId,
-            paymentMethod,
-            platformId: plan.platformId,
-        })
     },
 })
 
-const autoTopUpPlatformKey = (platformId: string) => `auto_topup:${platformId}`
+async function tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<void> {
+    if (dayjs().diff(plan.lastFreeAiCreditsRenewalDate, 'month') < 1) {
+        return
+    }
+
+    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+    const amount = plan.includedAiCredits / CREDIT_PER_DOLLAR
+
+    await openRouterApi.updateKey({
+        hash: apiKeyHash,
+        limit: key.limit! + amount,
+    })
+
+    await platformPlanService(log).update({
+        platformId: plan.platformId,
+        lastFreeAiCreditsRenewalDate: new Date().toISOString(),
+    })
+}
+
+async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<boolean> {
+    if (plan.aiCreditsAutoTopUpState !== AiCreditsAutoTopUpState.ENABLED) {
+        return false
+    }
+
+    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+    const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
+    if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold!) {
+        return false
+    }
+
+    assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
+    assertNotNullOrUndefined(plan.aiCreditsAutoTopUpCreditsToAdd, 'Auto Topup Credits To add is not set')
+    assertNotNullOrUndefined(plan.aiCreditsAutoTopUpThreshold, 'Auto Topup Threashold is not set')
+
+    const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
+
+    assertNotNullOrUndefined(paymentMethod, 'Auto Topup Stripe payment method is not set')
+
+    const amountInUsd = plan.aiCreditsAutoTopUpCreditsToAdd / CREDIT_PER_DOLLAR
+
+    await stripeHelper(log).createNewAICreditAutoTopUpInvoice({
+        amountInUsd,
+        customerId: plan.stripeCustomerId,
+        paymentMethod,
+        platformId: plan.platformId,
+    })
+
+    return true
+}
 
 type APIKeyUsage = {
     limit: number

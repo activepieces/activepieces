@@ -1,4 +1,4 @@
-import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, EnableAICreditsAutoTopUpParamsSchema, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema } from '@activepieces/ee-shared'
+import { CreateAICreditCheckoutSessionParamsSchema, CreateCheckoutSessionParamsSchema, STANDARD_CLOUD_PLAN, UpdateActiveFlowsAddonParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
 import { assertNotNullOrUndefined, PlatformBillingInformation, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -82,14 +82,8 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
     fastify.post('/ai-credits/create-checkout-session', CreateAICreditCheckoutSessionRequest, async (request) => {
         return platformAiCreditsService(request.log).initializeStripeAiCreditsPayment(request.principal.platform.id, request.body)
     })
-    fastify.post('/ai-credits/auto-topup/enable', EnableAICreditsAutoTopUpRequest, async (request) => {
-        return platformAiCreditsService(request.log).enableAutoTopUp(request.principal.platform.id, request.body)
-    })
-    fastify.post('/ai-credits/auto-topup/config', EnableAICreditsAutoTopUpRequest, async (request) => {
-        return platformAiCreditsService(request.log).updateAutoTopUpConfig(request.principal.platform.id, request.body)
-    })
-    fastify.post('/ai-credits/auto-topup/disable', DisableAICreditsAutoTopUpRequest, async (request) => {
-        return platformAiCreditsService(request.log).disableAutoTopUp(request.principal.platform.id)
+    fastify.post('/ai-credits/auto-topup', UpdateAICreditsAutoTopUpRequest, async (request) => {
+        return platformAiCreditsService(request.log).updateAutoTopUp(request.principal.platform.id, request.body)
     })
 }
 
@@ -134,20 +128,13 @@ const CreateAICreditCheckoutSessionRequest = {
     },
 }
 
-const EnableAICreditsAutoTopUpRequest = {
+const UpdateAICreditsAutoTopUpRequest = {
     schema: {
-        body: EnableAICreditsAutoTopUpParamsSchema,
+        body: UpdateAICreditsAutoTopUpParamsSchema,
         [StatusCodes.OK]: Type.Object({
             stripeCheckoutUrl: Type.Optional(Type.String()),
         }),
     },
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-}
-
-const DisableAICreditsAutoTopUpRequest = {
-    schema: {},
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },

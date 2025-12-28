@@ -1,4 +1,4 @@
-import { AiOverageState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
@@ -25,18 +25,6 @@ export const METRIC_TO_USAGE_MAPPING = {
     [PlatformUsageMetric.ACTIVE_FLOWS]: 'activeFlows',
 } as const
 
-
-export const SetAiCreditsOverageLimitParamsSchema = Type.Object({
-    limit: Type.Number({ minimum: 10 }),
-})
-
-export type SetAiCreditsOverageLimitParams = Static<typeof SetAiCreditsOverageLimitParamsSchema>
-
-export const ToggleAiCreditsOverageEnabledParamsSchema = Type.Object({
-    state: Type.Enum(AiOverageState),
-})
-export type ToggleAiCreditsOverageEnabledParams = Static<typeof ToggleAiCreditsOverageEnabledParamsSchema>
-
 export const UpdateActiveFlowsAddonParamsSchema = Type.Object({
     newActiveFlowsLimit: Type.Number(),
 })
@@ -52,11 +40,17 @@ export const CreateAICreditCheckoutSessionParamsSchema = Type.Object({
 })
 export type CreateAICreditCheckoutSessionParamsSchema = Static<typeof CreateAICreditCheckoutSessionParamsSchema>
 
-export const EnableAICreditsAutoTopUpParamsSchema = Type.Object({
-    minThreshold: Type.Number(),
-    creditsToAdd: Type.Number(),
-})
-export type EnableAICreditsAutoTopUpParamsSchema = Static<typeof EnableAICreditsAutoTopUpParamsSchema>
+export const UpdateAICreditsAutoTopUpParamsSchema = Type.Union([
+    Type.Object({
+        state: Type.Literal(AiCreditsAutoTopUpState.ENABLED),
+        minThreshold: Type.Number(),
+        creditsToAdd: Type.Number(),
+    }),
+    Type.Object({
+        state: Type.Literal(AiCreditsAutoTopUpState.DISABLED),
+    }),
+])
+export type UpdateAICreditsAutoTopUpParamsSchema = Static<typeof UpdateAICreditsAutoTopUpParamsSchema>
 
 export enum PRICE_NAMES {
     AI_CREDITS = 'ai-credit',

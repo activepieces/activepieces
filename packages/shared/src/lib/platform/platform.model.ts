@@ -25,12 +25,6 @@ export const PlatformUsage = Type.Object({
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
-export enum AiOverageState {
-    NOT_ALLOWED = 'not_allowed',
-    ALLOWED_BUT_OFF = 'allowed_but_off',
-    ALLOWED_AND_ON = 'allowed_and_on',
-}
-
 export enum PlanName {
     STANDARD = 'standard',
     ENTERPRISE = 'enterprise',
@@ -49,9 +43,8 @@ export enum TeamProjectsLimit {
 }
 
 export enum AiCreditsAutoTopUpState {
-    NOT_ALLOWED = 'not_allowed',
-    ALLOWED_BUT_OFF = 'allowed_but_off',
-    ALLOWED_AND_ON = 'allowed_and_on',
+    ENABLED = 'enabled',
+    DISABLED = 'disabled',
 }
 
 export const PlatformPlan = Type.Object({

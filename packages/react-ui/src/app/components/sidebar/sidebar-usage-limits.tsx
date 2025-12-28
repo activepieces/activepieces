@@ -122,7 +122,7 @@ const SidebarUsageLimits = React.memo(() => {
             )}{' '}
           </span>
           {isPlatformAdmin && (
-            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+            <FlagGuard flag={ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR}>
               <Link to={'/platform/setup/billing'} className="w-fit">
                 <span className="text-xs text-primary underline">
                   {t('Manage')}

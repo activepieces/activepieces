@@ -82,7 +82,7 @@ const BillingPageDetails = () => {
         <div className="flex items-center gap-2">
           {(isSubscriptionActive ||
             platformPlanInfo?.plan.aiCreditsAutoTopUpState ===
-              AiCreditsAutoTopUpState.ALLOWED_AND_ON) && (
+              AiCreditsAutoTopUpState.ENABLED) && (
             <Button variant="outline" onClick={() => redirectToPortalSession()}>
               {t('Access Billing Portal')}
             </Button>
