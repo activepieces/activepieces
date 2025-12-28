@@ -28,6 +28,7 @@ import {
   FlowStatusUpdatedResponse,
   isNil,
   ErrorCode,
+  SeekPage,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -286,6 +287,21 @@ export const flowHooks = {
         ),
     });
   },
+  useListFlowVersions: (flowId: string) => {
+   return useQuery<SeekPage<FlowVersionMetadata>, Error>({
+      queryKey: ['flow-versions', flowId],
+      queryFn: () =>
+        flowsApi.listVersions(flowId, {
+          limit: 1000,
+          cursor: undefined,
+        }),
+      staleTime: 0,
+    });
+  },
+  useGetFlowVersionNumber: ({flowId, versionId}: {flowId: string, versionId: string}) => {
+    const { data: flowVersions } = flowHooks.useListFlowVersions(flowId);
+    return flowVersions?.data ? flowVersions.data.length - flowVersions.data.findIndex(version => version.id === versionId)  : '';
+  }
 };
 
 type UseChangeFlowStatusParams = {

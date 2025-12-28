@@ -41,6 +41,7 @@ import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
 
@@ -141,6 +142,7 @@ const BuilderPage = () => {
             ></FlowCanvas>
             <PublishFlowReminderWidget />
             <RunInfoWidget />
+            <ViewingOldVersionWidget />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
