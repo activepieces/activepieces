@@ -141,7 +141,6 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
                     logoUrl={ACTION_ICON_MAP['run_agent']}
                     displayName="AI Agent"
                     showTooltip={false}
-                    size={'full'}
                     playOnHover={true}
                     forcePlay={isAgentHovered}
                   />

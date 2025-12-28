@@ -2,6 +2,7 @@ import {
   CardListItem,
   CardListItemSkeleton,
 } from '@/components/custom/card-list';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import {
   PieceSelectorTabType,
@@ -53,10 +54,11 @@ const ExploreTabContent = ({
   }
 
   return (
-    <div className="flex p-2 w-full">
+    <ScrollArea className="h-full w-full">
+      <div className="flex  p-2  ">
       {categories.map((category) => (
         <div key={category.title} className="flex w-[50%] flex-col gap-0.5 ">
-          <div className="text-sm text-muted-foreground mb-1.5 px-3">
+            <div className="text-sm text-muted-foreground mb-1.5">
             {category.title}
           </div>
 
@@ -82,6 +84,7 @@ const ExploreTabContent = ({
         </div>
       ))}
     </div>
+    </ScrollArea>
   );
 };
 

@@ -9,15 +9,17 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { PiecesSearchInput } from '@/features/pieces/components/piece-selector-search';
 import { PieceSelectorTabs } from '@/features/pieces/components/piece-selector-tabs';
 import {
   PieceSelectorTabsProvider,
   PieceSelectorTabType,
-  usePieceSelectorTabs,
 } from '@/features/pieces/lib/piece-selector-tabs-provider';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -29,9 +31,7 @@ import {
   usePieceSearchContext,
 } from '../../../features/pieces/lib/piece-search-context';
 
-import { AITabContent } from './ai-tab-content';
-import AITabFooter from './ai-tab-content/ai-footer';
-import { ExploreTabContent } from './explore-tab-content';
+import { AITabContent } from './ai-tab-content';import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (operationType: FlowOperationType) => {
@@ -59,8 +59,8 @@ const getTabsList = (operationType: FlowOperationType) => {
     )
   ) {
     baseTabs.splice(1, 0, {
-      value: PieceSelectorTabType.AI_AND_AGENTS,
-      name: t('Activepieces AI'),
+      value: PieceSelectorTabType.AI_AND_AGENTS, 
+      name: t('AI'),
       icon: <SparklesIcon className="size-5" />,
     });
   }
@@ -114,7 +114,7 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 444);
+  const listHeight = Math.min(listHeightRef.current, 400);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -170,13 +170,14 @@ const PieceSelectorContent = ({
           onContextMenu={(e) => {
             e.stopPropagation();
           }}
-          className="w-[340px] md:w-[720px] p-0 shadow-lg overflow-hidden rounded-[16px]"
+          className="w-[340px] md:w-[600px] p-0 shadow-lg"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
           }}
         >
-            <div className="flex flex-col">
+          <>
+            <div>
               <PiecesSearchInput
                 searchInputRef={searchInputRef}
                 onSearchChange={(e) => {
@@ -187,15 +188,14 @@ const PieceSelectorContent = ({
                 }}
               />
               {!isMobile && <PieceSelectorTabs tabs={tabsList} />}
-              <Separator />
-
-              <ScrollArea
+              <Separator orientation="horizontal" className="mt-1" />
+            </div>
+            <div
+              className=" flex flex-row max-h-[400px]"
                 style={{
                   height: listHeight + 'px',
                 }}
-                viewPortClassName="h-full"
               >
-                <div className="flex flex-row flex-1">
                   <ExploreTabContent operation={operation} />
                   <AITabContent operation={operation} />
 
@@ -208,23 +208,11 @@ const PieceSelectorContent = ({
                     }
                   />
                 </div>
-              </ScrollArea>
-              <PieceSelectorAIFooter />
-            </div>
+          </>
         </PopoverContent>
       </PieceSelectorTabsProvider>
     </Popover>
   );
 };
-
-const PieceSelectorAIFooter = () => {
-  const { selectedTab } = usePieceSelectorTabs();
-  const { searchQuery } = usePieceSearchContext();
-  if (selectedTab !== PieceSelectorTabType.AI_AND_AGENTS || searchQuery !== '') {
-    return null;
-  }
-  return <AITabFooter />;
-};
-
 
 export { PieceSelectorWrapper as PieceSelector };

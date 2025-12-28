@@ -48,7 +48,6 @@ const AIActionItem = ({
           logoUrl={stepMetadataWithSuggestions.logoUrl}
           displayName={stepMetadataWithSuggestions.displayName}
           showTooltip={false}
-          size={'full'}
           playOnHover={true}
           forcePlay={isHovered}
         />

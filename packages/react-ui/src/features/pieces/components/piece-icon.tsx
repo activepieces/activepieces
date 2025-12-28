@@ -17,7 +17,6 @@ const pieceIconVariants = cva('flex items-center justify-center   ', {
       false: 'dark:rounded-[2px]',
     },
     size: {
-      full: 'w-full h-full',
       xxl: 'size-[64px] p-4',
       xl: 'size-[48px]',
       lg: 'size-[40px]',
@@ -59,7 +58,7 @@ const PieceIcon = React.memo(
               <ImageWithColorBackground
                 src={logoUrl}
                 alt={displayName}
-                className="object-cover w-full h-full"
+                className="object-contain w-full h-full p-1"
                 key={logoUrl}
                 playOnHover={playOnHover}
                 forcePlay={forcePlay}
