@@ -1,7 +1,7 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, Logs } from 'lucide-react';
+import { ChevronDown, HistoryIcon, Logs } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -186,7 +186,7 @@ export const BuilderHeader = () => {
           onClick={() => setRightSidebar(RightSideBarType.RUNS)}
           className="gap-2 px-2"
         >
-          <Logs className="w-4 h-4" />
+          <HistoryIcon className="w-4 h-4" />
           {t('Runs')}
         </Button>
       )}

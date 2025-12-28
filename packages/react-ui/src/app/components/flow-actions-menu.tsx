@@ -4,10 +4,12 @@ import {
   Copy,
   CornerUpLeft,
   Download,
+  GalleryVerticalEnd,
   History,
   Import,
   Pencil,
   Share2,
+  SquareStack,
   Trash2,
   UploadCloud,
 } from 'lucide-react';
@@ -240,7 +242,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         {insideBuilder && !isRunsPage && (
           <DropdownMenuItem onClick={onVersionsListClick}>
             <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <History className="h-4 w-4" />
+              <GalleryVerticalEnd className="h-4 w-4" />
               <span>{t('Versions')}</span>
             </div>
           </DropdownMenuItem>
