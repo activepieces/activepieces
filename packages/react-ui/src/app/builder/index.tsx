@@ -37,6 +37,7 @@ import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
+import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
@@ -138,7 +139,7 @@ const BuilderPage = () => {
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
-
+            <PublishFlowReminderWidget />
             <RunStatus run={run} />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (

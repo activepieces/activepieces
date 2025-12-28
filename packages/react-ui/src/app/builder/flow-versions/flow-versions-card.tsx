@@ -114,16 +114,13 @@ const FlowVersionDetailsCard = React.memo(
   }: FlowVersionDetailsCardProps) => {
     const { checkAccess } = useAuthorization();
     const userHasPermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
-    const [setBuilderVersion, setRightSidebar, setReadonly] =
-      useBuilderStateContext((state) => [
-        state.setVersion,
-        state.setRightSidebar,
-        state.setReadOnly,
-      ]);
+    const [setVersion, setRightSidebar, setReadonly] = useBuilderStateContext(
+      (state) => [state.setVersion, state.setRightSidebar, state.setReadOnly],
+    );
     const [dropdownMenuOpen, setDropdownMenuOpen] = useState(false);
     const { mutate: viewVersion, isPending } = flowHooks.useFetchFlowVersion({
       onSuccess: (populatedFlowVersion) => {
-        setBuilderVersion(populatedFlowVersion);
+        setVersion(populatedFlowVersion);
         setReadonly(
           populatedFlowVersion.state === FlowVersionState.LOCKED ||
             !userHasPermissionToWriteFlow,
@@ -133,14 +130,17 @@ const FlowVersionDetailsCard = React.memo(
 
     const { mutate: overWriteDraftWithVersion, isPending: isDraftPending } =
       flowHooks.useOverWriteDraftWithVersion({
-        onSuccess: (populatedFlowVersion) => {
-          setBuilderVersion(populatedFlowVersion.version);
+        onSuccess: (updatedFlow) => {
+          setVersion(updatedFlow.version);
           setRightSidebar(RightSideBarType.NONE);
         },
       });
 
     const handleOverwriteDraftWtihVersion = () => {
-      overWriteDraftWithVersion(flowVersion);
+      overWriteDraftWithVersion({
+        flowId: flowVersion.flowId,
+        versionId: flowVersion.id,
+      });
       setDropdownMenuOpen(false);
     };
 
@@ -161,7 +161,10 @@ const FlowVersionDetailsCard = React.memo(
         )}
         <div className="grid gap-2">
           <p className="text-sm font-medium leading-none select-none pointer-events-none">
-            {formatUtils.formatDateWithTime(new Date(flowVersion.created), true)}
+            {formatUtils.formatDateWithTime(
+              new Date(flowVersion.created),
+              true,
+            )}
           </p>
           <p className="flex gap-1 text-xs text-muted-foreground">
             {t('Version')} {flowVersionNumber}

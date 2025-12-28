@@ -197,14 +197,18 @@ export const flowHooks = {
   useOverWriteDraftWithVersion: ({
     onSuccess,
   }: {
-    onSuccess: (flowVersion: PopulatedFlow) => void;
+    onSuccess: (flow: PopulatedFlow) => void;
   }) => {
-    return useMutation<PopulatedFlow, Error, FlowVersionMetadata>({
-      mutationFn: async (flowVersion) => {
-        const result = await flowsApi.update(flowVersion.flowId, {
+    return useMutation<
+      PopulatedFlow,
+      Error,
+      { flowId: string; versionId: string }
+    >({
+      mutationFn: async ({ flowId, versionId }) => {
+        const result = await flowsApi.update(flowId, {
           type: FlowOperationType.USE_AS_DRAFT,
           request: {
-            versionId: flowVersion.id,
+            versionId,
           },
         });
         return result;

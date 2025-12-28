@@ -5,7 +5,6 @@ import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { FlowVersionState } from '@activepieces/shared';
 
-import { PublishButton } from './publish-button';
 import { EditFlowOrViewDraftButton } from './view-draft-or-edit-flow-button';
 const BuilderFlowStatusSection = React.memo(() => {
   const [flowVersion, flow] = useBuilderStateContext((state) => [
@@ -27,7 +26,6 @@ const BuilderFlowStatusSection = React.memo(() => {
         )}
       </div>
       <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
-      <PublishButton />
     </>
   );
 });
