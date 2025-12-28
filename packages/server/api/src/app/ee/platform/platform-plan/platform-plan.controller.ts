@@ -141,7 +141,7 @@ const EnableAICreditsAutoTopUpRequest = {
             stripeCheckoutUrl: Type.Optional(Type.String()),
         }),
     },
-    config: {   
+    config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
