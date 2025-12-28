@@ -3,13 +3,12 @@ import { assertNotNullOrUndefined, PlatformBillingInformation, PrincipalType } f
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformService } from '../../../platform/platform.service'
-import { platformMustBeOwnedByCurrentUser } from '../../authentication/ee-authorization'
 import { platformAiCreditsService } from './platform-ai-credits.service'
 import { platformPlanService } from './platform-plan.service'
 import { stripeHelper } from './stripe-helper'
+import { securityAccess } from '@activepieces/server-shared'
 
 export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.addHook('preHandler', platformMustBeOwnedByCurrentUser)
 
     fastify.get('/info', InfoRequest, async (request) => {
         const platform = await platformService.getOneOrThrow(request.principal.platform.id)
@@ -35,7 +34,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
     fastify.post('/portal', {
         config: {
-            allowedPrincipals: [PrincipalType.USER] as const,
+            security: securityAccess.platformAdminOnly([PrincipalType.USER]),
         },
     }, async (request) => {
         return stripeHelper(request.log).createPortalSessionUrl(request.principal.platform.id)
@@ -96,7 +95,7 @@ export const platformPlanController: FastifyPluginAsyncTypebox = async (fastify)
 
 const InfoRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
     response: {
         [StatusCodes.OK]: PlatformBillingInformation,
@@ -108,7 +107,7 @@ const UpdateActiveFlowsAddonRequest = {
         body: UpdateActiveFlowsAddonParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -117,7 +116,7 @@ const CreateCheckoutSessionRequest = {
         body: CreateCheckoutSessionParamsSchema,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -131,7 +130,7 @@ const CreateAICreditCheckoutSessionRequest = {
         },
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
@@ -142,14 +141,14 @@ const EnableAICreditsAutoTopUpRequest = {
             stripeCheckoutUrl: Type.Optional(Type.String()),
         }),
     },
-    config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+    config: {   
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }
 
 const DisableAICreditsAutoTopUpRequest = {
     schema: {},
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
     },
 }

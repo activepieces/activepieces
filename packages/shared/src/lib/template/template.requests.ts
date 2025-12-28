@@ -37,9 +37,14 @@ export const ListFlowTemplatesRequestQuery = Type.Object({
     pieces: Type.Optional(Type.Array(Type.String())),
     tags: Type.Optional(Type.Array(TemplateTag)),
     search: Type.Optional(Type.String()),
+    category: Type.Optional(Type.Enum(TemplateCategory)),
 })
 export type ListFlowTemplatesRequestQuery = Static<typeof ListFlowTemplatesRequestQuery>
 
+export const GetFlowTemplateRequestQuery = Type.Object({
+    type: Type.Optional(Type.Enum(TemplateType)),
+})
+export type GetFlowTemplateRequestQuery = Static<typeof GetFlowTemplateRequestQuery>
 
 export const ListTemplatesRequestQuery = ListFlowTemplatesRequestQuery
 export type ListTemplatesRequestQuery = Static<typeof ListTemplatesRequestQuery>

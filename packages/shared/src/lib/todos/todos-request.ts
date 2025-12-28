@@ -6,7 +6,6 @@ const StatusOptionsSchema = Type.Array(StatusOption, { minItems: 1 })
 
 export const ListTodosQueryParams = Type.Object({
     platformId: ApId,
-    projectId: ApId,
     flowId: Type.Optional(ApId),
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),

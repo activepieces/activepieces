@@ -38,18 +38,18 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
         </div>
       </div>
 
-      <ScrollArea className="flex-grow p-4 overflow-y-auto">
-        {isPiecesLoading ? (
-          <div className="grid grid-cols-3 gap-4">
-            {Array.from({ length: 22 }).map((_, i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : isEmpty ? (
-          <div className="h-full flex items-center justify-center text-muted-foreground">
-            {t('No pieces found')}
-          </div>
-        ) : (
+      {isPiecesLoading ? (
+        <div className="grid grid-cols-3 gap-4 p-4">
+          {Array.from({ length: 22 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-lg" />
+          ))}
+        </div>
+      ) : isEmpty ? (
+        <div className="h-full flex items-center py-2 justify-center text-muted-foreground">
+          {t('No pieces found')}
+        </div>
+      ) : (
+        <ScrollArea className="flex-1 min-h-0 px-4">
           <div className="grid grid-cols-3 gap-4">
             {pieceMetadata.map((piece, index) => (
               <div
@@ -59,7 +59,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
               >
                 <div className="size-9 flex items-center justify-center rounded-sm aspect-square border bg-background">
                   <img
-                    className="size-6 rounded-full"
+                    className="size-6 rounded object-contain"
                     src={piece.logoUrl}
                     alt={piece.displayName}
                   />
@@ -69,8 +69,8 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
               </div>
             ))}
           </div>
-        )}
-      </ScrollArea>
+        </ScrollArea>
+      )}
     </div>
   );
 };

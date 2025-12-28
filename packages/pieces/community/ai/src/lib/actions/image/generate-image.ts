@@ -24,7 +24,7 @@ import { aiProps } from '../../common/props';
 export const generateImageAction = createAction({
   name: 'generateImage',
   displayName: 'Generate Image',
-  description: '',
+  description: 'Create unique, high-quality images from simple text descriptions using AI.',
   props: {
     provider: aiProps({ modelType: 'image' }).provider,
     model: aiProps({ modelType: 'image' }).model,

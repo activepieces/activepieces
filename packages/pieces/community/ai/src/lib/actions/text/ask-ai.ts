@@ -12,7 +12,7 @@ import { anthropicSearchTool, openaiSearchTool, googleSearchTool, createAIModel 
 export const askAI = createAction({
   name: 'askAi',
   displayName: 'Ask AI',
-  description: '',
+  description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,

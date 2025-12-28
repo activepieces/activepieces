@@ -19,3 +19,9 @@ export const ListUsersRequestBody = Type.Object({
 })
 
 export type ListUsersRequestBody = Static<typeof ListUsersRequestBody>
+
+export const GetCurrentUserRequestQuery = Type.Object({
+    projectId: Type.String(),
+})
+
+export type GetCurrentUserRequestQuery = Static<typeof GetCurrentUserRequestQuery>

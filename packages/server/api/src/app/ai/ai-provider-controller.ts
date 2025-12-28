@@ -1,3 +1,4 @@
+import { securityAccess } from '@activepieces/server-shared'
 import { AIProviderModel, AIProviderName, CreateAIProviderRequest, PrincipalType, UpdateAIProviderRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
@@ -33,13 +34,13 @@ export const aiProviderController: FastifyPluginAsyncTypebox = async (app) => {
 
 const ListAIProviders = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.ENGINE] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.ENGINE]),
     },
 }
 
 const GetAIProviderConfig = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: securityAccess.engine(),
     },
     schema: {
         params: Type.Object({
@@ -50,7 +51,7 @@ const GetAIProviderConfig = {
 
 const ListModels = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE] as const,
+        security: securityAccess.engine(),
     },
     schema: {
         params: Type.Object({
@@ -64,7 +65,7 @@ const ListModels = {
 
 const CreateAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         body: CreateAIProviderRequest,
@@ -73,7 +74,7 @@ const CreateAIProvider = {
 
 const UpdateAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({
@@ -85,7 +86,7 @@ const UpdateAIProvider = {
 
 const DeleteAIProvider = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         params: Type.Object({
