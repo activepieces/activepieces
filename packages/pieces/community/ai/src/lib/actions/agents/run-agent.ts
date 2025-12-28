@@ -23,7 +23,7 @@ import { agentUtils } from './utils';
 export const runAgent = createAction({
   name: 'run_agent',
   displayName: 'Run Agent',
-  description: 'Run the AI assistant to complete your task.',
+  description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
   auth: PieceAuth.None(),
   props: {
     [AgentPieceProps.PROMPT]: Property.LongText({

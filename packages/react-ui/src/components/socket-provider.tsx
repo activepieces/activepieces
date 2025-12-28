@@ -17,11 +17,12 @@ const SocketContext = React.createContext<typeof socket>(socket);
 
 export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   const token = authenticationSession.getToken();
+  const projectId = authenticationSession.getProjectId();
   const toastIdRef = useRef<string | null>(null);
 
   useEffectOnce(() => {
     if (token) {
-      socket.auth = { token };
+      socket.auth = { token, projectId };
       if (!socket.connected) {
         socket.connect();
 

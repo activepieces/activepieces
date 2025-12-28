@@ -6,6 +6,7 @@ import { FieldValues, UseFormReturn, useWatch } from 'react-hook-form';
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { DropdownState, PropertyType } from '@activepieces/pieces-framework';
 import { AUTHENTICATION_PROPERTY_NAME, isNil } from '@activepieces/shared';
 
@@ -89,6 +90,7 @@ const DynamicDropdownPiecePropertyImplementation = React.memo(
       mutate(
         {
           request: {
+            projectId: authenticationSession.getProjectId()!,
             pieceName: props.pieceName,
             pieceVersion: props.pieceVersion,
             propertyName: props.propertyName,

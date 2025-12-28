@@ -20,7 +20,9 @@ export const userHooks = {
           return null;
         }
         try {
-          const result = await userApi.getCurrentUser();
+          const result = await userApi.getCurrentUser({
+            projectId: authenticationSession.getProjectId()!,
+          });
           return result;
         } catch (error) {
           console.error(error);

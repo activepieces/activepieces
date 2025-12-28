@@ -1,5 +1,5 @@
+import { securityAccess } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     ApEdition,
     SERVICE_KEY_SECURITY_OPENAPI,
     TemplateTag,
@@ -16,12 +16,12 @@ const edition = system.getEdition()
 export const deprecatedFlowTemplateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', ListFlowTemplatesParams, async (request) => {
         if (edition === ApEdition.CLOUD) {
-            return templateService().list({ platformId: null, requestQuery: {
+            return templateService(app.log).list({ platformId: null, requestQuery: {
                 ...request.query,
                 type: TemplateType.OFFICIAL,
             } })
         }
-        return communityTemplates.get({
+        return communityTemplates.list({
             ...request.query,
             type: TemplateType.OFFICIAL,
         })
@@ -37,7 +37,7 @@ type ListFlowTemplatesRequestQuery = Static<typeof ListFlowTemplatesRequestQuery
 
 const ListFlowTemplatesParams = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         tags: ['templates'],
