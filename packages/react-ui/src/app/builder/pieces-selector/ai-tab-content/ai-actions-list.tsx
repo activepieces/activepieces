@@ -132,11 +132,11 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               onClick={() => handleClick(agentAction)}
               onMouseEnter={() => setIsAgentHovered(true)}
               onMouseLeave={() => setIsAgentHovered(false)}
-              className="group relative flex flex-col rounded-xl bg-transparent border border-transparent cursor-pointer hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 hover:border-zinc-100 dark:hover:border-zinc-800 transition-all duration-200 overflow-hidden h-[428px]"
+              className="group relative flex flex-col rounded-xl bg-transparent border border-transparent cursor-pointer hover:bg-accent/50 hover:border-border transition-all duration-200 overflow-hidden h-[428px]"
             >
               {/* Image Section - Aligns with 3 cards + 3 gaps on the right */}
               <div className="p-1 h-[252px]">
-                <div className="w-full h-full relative rounded-xl overflow-hidden border border-transparent group-hover:border-zinc-100 dark:group-hover:border-zinc-800 transition-all duration-200">
+                <div className="w-full h-full relative rounded-xl overflow-hidden border border-transparent group-hover:border-border transition-all duration-200">
                   <PieceIcon
                     logoUrl={ACTION_ICON_MAP['run_agent']}
                     displayName="AI Agent"
@@ -151,17 +151,17 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               {/* Content Section - Aligns with bottom 2 cards on the right */}
               <div className="px-5 pb-4 pt-3 flex flex-col h-[176px]">
                 <div className="space-y-1">
-                  <h3 className="text-[22px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  <h3 className="text-lg font-bold tracking-tight text-foreground">
                     AI Agent
                   </h3>
-                  <p className="text-[14px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
                     {getPieceSelectorItemInfo(agentAction).description}
                   </p>
                 </div>
 
                 {/* Add link at bottom right */}
                 <div className="mt-auto flex justify-end">
-                  <span className="text-[14px] font-bold text-zinc-900 dark:text-zinc-100 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  <span className="text-sm font-bold text-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     Add
                   </span>
                 </div>

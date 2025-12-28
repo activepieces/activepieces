@@ -170,7 +170,7 @@ const PieceSelectorContent = ({
           onContextMenu={(e) => {
             e.stopPropagation();
           }}
-          className="w-[340px] md:w-[800px] p-0 shadow-lg overflow-hidden rounded-[16px]"
+          className="w-[340px] md:w-[720px] p-0 shadow-lg overflow-hidden rounded-[16px]"
           onClick={(e) => {
             e.stopPropagation();
             e.preventDefault();
