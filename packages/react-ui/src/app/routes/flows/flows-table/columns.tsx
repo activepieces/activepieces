@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { EllipsisVertical } from 'lucide-react';
+import { EllipsisVertical, Tag, Blocks, Clock, ToggleLeft } from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import FlowActionMenu from '@/app/components/flow-actions-menu';
@@ -32,8 +32,9 @@ export const flowsTableColumns = ({
 })[] => [
   {
     accessorKey: 'name',
+    size: 200,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} />
+      <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
     ),
     cell: ({ row }) => {
       const displayName = row.original.version.displayName;
@@ -53,8 +54,9 @@ export const flowsTableColumns = ({
   },
   {
     accessorKey: 'steps',
+    size: 150,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Steps')} />
+      <DataTableColumnHeader column={column} title={t('Steps')} icon={Blocks} />
     ),
     cell: ({ row }) => {
       return (
@@ -68,14 +70,18 @@ export const flowsTableColumns = ({
   {
     accessorKey: 'updated',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Last modified')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Last modified')}
+        icon={Clock}
+      />
     ),
     cell: ({ row }) => {
       const updated = row.original.updated;
       return (
         <FormattedDate
           date={new Date(updated)}
-          className="text-left font-medium min-w-[150px]"
+          className="text-left font-medium"
         />
       );
     },
@@ -83,7 +89,11 @@ export const flowsTableColumns = ({
   {
     accessorKey: 'status',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Status')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Status')}
+        icon={ToggleLeft}
+      />
     ),
     cell: ({ row }) => {
       return (
