@@ -288,7 +288,7 @@ export const flowHooks = {
     });
   },
   useListFlowVersions: (flowId: string) => {
-   return useQuery<SeekPage<FlowVersionMetadata>, Error>({
+    return useQuery<SeekPage<FlowVersionMetadata>, Error>({
       queryKey: ['flow-versions', flowId],
       queryFn: () =>
         flowsApi.listVersions(flowId, {
@@ -298,10 +298,19 @@ export const flowHooks = {
       staleTime: 0,
     });
   },
-  useGetFlowVersionNumber: ({flowId, versionId}: {flowId: string, versionId: string}) => {
+  useGetFlowVersionNumber: ({
+    flowId,
+    versionId,
+  }: {
+    flowId: string;
+    versionId: string;
+  }) => {
     const { data: flowVersions } = flowHooks.useListFlowVersions(flowId);
-    return flowVersions?.data ? flowVersions.data.length - flowVersions.data.findIndex(version => version.id === versionId)  : '';
-  }
+    return flowVersions?.data
+      ? flowVersions.data.length -
+          flowVersions.data.findIndex((version) => version.id === versionId)
+      : '';
+  },
 };
 
 type UseChangeFlowStatusParams = {

@@ -5,11 +5,9 @@ import {
   CornerUpLeft,
   Download,
   GalleryVerticalEnd,
-  History,
   Import,
   Pencil,
   Share2,
-  SquareStack,
   Trash2,
   UploadCloud,
 } from 'lucide-react';

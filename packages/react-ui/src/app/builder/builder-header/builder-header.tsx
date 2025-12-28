@@ -1,7 +1,7 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, HistoryIcon, Logs } from 'lucide-react';
+import { ChevronDown, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,

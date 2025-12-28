@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import {
@@ -7,10 +6,11 @@ import {
 } from '@/app/builder/builder-hooks';
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
+
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowVersionDetailsCard } from './flow-versions-card';
-import { flowHooks } from '@/features/flows/lib/flow-hooks';
 
 const FlowVersionsList = () => {
   const [flow, setRightSidebar, selectedFlowVersion] = useBuilderStateContext(
@@ -21,8 +21,8 @@ const FlowVersionsList = () => {
     data: flowVersionPage,
     isLoading,
     isError,
-  } =flowHooks.useListFlowVersions(flow.id);
-  
+  } = flowHooks.useListFlowVersions(flow.id);
+
   return (
     <>
       <SidebarHeader onClose={() => setRightSidebar(RightSideBarType.NONE)}>

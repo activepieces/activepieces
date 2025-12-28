@@ -3,8 +3,8 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, Repeat } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -35,7 +35,6 @@ import {
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
-import { useNavigate } from 'react-router-dom';
 
 type FlowRunCardProps = {
   run: FlowRun;
@@ -160,7 +159,7 @@ const FlowRunCard = React.memo(
           )}
         </div>
         <div className="ml-auto font-medium">
-          {(isRetryingRun) && (
+          {isRetryingRun && (
             <LoadingSpinner className="size-4"></LoadingSpinner>
           )}
 

@@ -38,10 +38,10 @@ import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
 import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
 import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
+import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
-import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
 

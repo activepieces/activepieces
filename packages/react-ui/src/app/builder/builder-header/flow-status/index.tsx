@@ -5,7 +5,6 @@ import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { FlowVersionState } from '@activepieces/shared';
 
-import { EditFlowOrViewDraftButton } from './view-draft-or-edit-flow-button';
 const BuilderFlowStatusSection = React.memo(() => {
   const [flowVersion, flow] = useBuilderStateContext((state) => [
     state.flowVersion,

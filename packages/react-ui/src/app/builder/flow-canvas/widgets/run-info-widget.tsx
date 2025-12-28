@@ -1,9 +1,9 @@
 import { QuestionMarkIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
 
-import { CopyButton } from '@/components/custom/clipboard/copy-button';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { formatUtils } from '@/lib/utils';
 import {
   ApFlagId,
   FlowRunStatus,
@@ -14,7 +14,6 @@ import { EditFlowOrViewDraftButton } from '../../builder-header/flow-status/view
 import { useBuilderStateContext } from '../../builder-hooks';
 
 import LargeWidgetWrapper from './large-widget-wrapper';
-import { formatUtils } from '@/lib/utils';
 
 function getStatusText({
   status,
@@ -93,28 +92,30 @@ const RunInfoWidget = () => {
               <>
                 &nbsp;-&nbsp;
                 {run.startTime && (
-                  <>
-                  <DateSection text={t('Started')} dateOrDuration={formatUtils.formatDateWithTime(new Date(run.startTime), true)} />
-                  </>
+                  <DateSection
+                    text={t('Started')}
+                    dateOrDuration={formatUtils.formatDateWithTime(
+                      new Date(run.startTime),
+                      true,
+                    )}
+                  />
                 )}
                 {', '}
                 {run.finishTime && run.startTime && (
-                  <>
-                    <DateSection text={t('Took')} dateOrDuration={formatUtils.formatDuration(new Date(run.finishTime).getTime() - new Date(run.startTime).getTime())} />
-                  </>
+                  <DateSection
+                    text={t('Took')}
+                    dateOrDuration={formatUtils.formatDuration(
+                      new Date(run.finishTime).getTime() -
+                        new Date(run.startTime).getTime(),
+                    )}
+                  />
                 )}
               </>
             )}
           </div>
-          
-  
         </div>
-      
 
-       
-          <EditFlowOrViewDraftButton
-            onCanvas={false}
-          ></EditFlowOrViewDraftButton>
+        <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
       </div>
     </LargeWidgetWrapper>
   );
@@ -122,13 +123,17 @@ const RunInfoWidget = () => {
 RunInfoWidget.displayName = 'RunInfoWidget';
 export { RunInfoWidget };
 
-
-
-const DateSection = ({text,dateOrDuration}: {text: string,dateOrDuration: string}) => {
+const DateSection = ({
+  text,
+  dateOrDuration,
+}: {
+  text: string;
+  dateOrDuration: string;
+}) => {
   return (
     <>
-     <span>{`${text}: `}</span>
-     <span>{`${dateOrDuration}`}</span></>
-     
+      <span>{`${text}: `}</span>
+      <span>{`${dateOrDuration}`}</span>
+    </>
   );
 };
