@@ -108,6 +108,10 @@ export default function ProjectsPage() {
   >[] = [
     {
       id: 'select',
+      accessorKey: 'select',
+      size: 40,
+      minSize: 40,
+      maxSize: 40,
       header: ({ table }) => {
         const selectableRows = table
           .getRowModel()
@@ -205,7 +209,6 @@ export default function ProjectsPage() {
           </Tooltip>
         );
       },
-      accessorKey: 'select',
     },
     ...columns,
   ];

@@ -91,9 +91,7 @@ export const authenticationSession = {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    const result = await authenticationApi.switchProject({ projectId });
-    ApStorage.getInstance().setItem(tokenKey, result.token);
-    ApStorage.getInstance().setItem('projectId', result.projectId);
+    ApStorage.getInstance().setItem('projectId', projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {

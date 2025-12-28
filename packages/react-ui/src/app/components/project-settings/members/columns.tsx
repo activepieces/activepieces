@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ChevronDown, Info, Trash2 } from 'lucide-react';
+import { ChevronDown, Info, Trash2, User, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -231,8 +231,13 @@ export const membersTableColumns = ({
 })[] => [
   {
     accessorKey: 'member',
+    size: 250,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('User Name')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('User Name')}
+        icon={User}
+      />
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
@@ -273,8 +278,9 @@ export const membersTableColumns = ({
   },
   {
     accessorKey: 'role',
+    size: 180,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Role')} />
+      <DataTableColumnHeader column={column} title={t('Role')} icon={Shield} />
     ),
     cell: ({ row }) => {
       return (
