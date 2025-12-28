@@ -1,4 +1,5 @@
 import { CreateAICreditCheckoutSessionParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
+import { sleep } from '@activepieces/server-shared'
 import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -10,7 +11,6 @@ import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
 import { openRouterApi } from './openrouter/openrouter-api'
 import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
-import { sleep } from '@activepieces/server-shared'
 
 const CREDIT_PER_DOLLAR = 1000
 
@@ -101,7 +101,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         if (!isNil(paymentMethod)) {    
             await platformPlanService(log).update({
                 platformId,
-                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ENABLED
+                aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ENABLED,
             })
 
             return {}
@@ -146,7 +146,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         return { stripeCheckoutUrl }
     },
 
-    async aiCreditsPaymentSucceeded(platformId: string, amount: number, paymentType: StripeCheckoutType): Promise<void> {
+    async aiCreditsPaymentSucceeded(platformId: string, amount: number, _paymentType: StripeCheckoutType): Promise<void> {
         const { apiKeyHash } = await aiProviderService(log).getOrCreateActivePiecesProviderAuthConfig(platformId)
         const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
 

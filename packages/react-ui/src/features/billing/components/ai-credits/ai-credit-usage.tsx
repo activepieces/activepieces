@@ -13,6 +13,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   AiCreditsAutoTopUpState,
   ApEdition,
@@ -24,7 +25,6 @@ import { billingMutations } from '../../lib/billing-hooks';
 
 import { AutoTopUpConfigDialog } from './auto-topup-config-dialog';
 import { PurchaseAICreditsDialog } from './purchase-ai-credits-dialog';
-import { flagsHooks } from '@/hooks/flags-hooks';
 
 interface AiCreditUsageProps {
   platformSubscription: PlatformBillingInformation;
@@ -45,10 +45,10 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
   const autoTopUpState =
     plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED;
 
-  const canBuyCredits =
-    flagsHooks.useFlag<ApEdition>(ApFlagId.CAN_BUY_AI_CREDITS);
-  const isAutoTopUpEnabled =
-    autoTopUpState === AiCreditsAutoTopUpState.ENABLED;
+  const canBuyCredits = flagsHooks.useFlag<ApEdition>(
+    ApFlagId.CAN_BUY_AI_CREDITS,
+  );
+  const isAutoTopUpEnabled = autoTopUpState === AiCreditsAutoTopUpState.ENABLED;
 
   const { mutate: updateAutoTopUp, isPending: isDisablingAutoTopUp } =
     billingMutations.useUpdateAutoTopUp(queryClient);

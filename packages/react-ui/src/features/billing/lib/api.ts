@@ -5,7 +5,7 @@ import {
   CreateAICreditCheckoutSessionParamsSchema,
   UpdateAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/ee-shared';
-import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {

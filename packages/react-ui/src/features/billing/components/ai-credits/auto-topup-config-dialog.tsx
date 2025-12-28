@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-
-import { billingMutations } from '../../lib/billing-hooks';
 import { UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared';
 import { AiCreditsAutoTopUpState } from '@activepieces/shared';
+
+import { billingMutations } from '../../lib/billing-hooks';
 
 interface AutoTopUpConfigDialogProps {
   isOpen: boolean;
