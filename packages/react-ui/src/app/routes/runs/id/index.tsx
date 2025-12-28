@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useParams } from 'react-router-dom';
 
@@ -12,7 +12,6 @@ import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 
 const FlowRunPage = () => {
   const { runId, projectId } = useParams();
-
   const { data, isLoading } = useQuery<
     {
       run: FlowRun;
@@ -31,8 +30,6 @@ const FlowRunPage = () => {
         flow: flow,
       };
     },
-    staleTime: 30000,
-    gcTime: 0,
     enabled: runId !== undefined,
   });
 
