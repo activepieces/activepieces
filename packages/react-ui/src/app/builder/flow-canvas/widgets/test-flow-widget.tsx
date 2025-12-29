@@ -9,7 +9,7 @@ import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { isNil, FlowTriggerType } from '@activepieces/shared';
 
-import { AboveTriggerButton } from '../above-trigger-button';
+import { AboveTriggerButton } from './above-trigger-button';
 
 const TestFlowWidget = () => {
   const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =

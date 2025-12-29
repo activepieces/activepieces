@@ -21,13 +21,20 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsOverageLimit: {
+        aiCreditsAutoTopUpCreditsToAdd: {
             type: Number,
             nullable: true,
         },
-        aiCreditsOverageState: {
-            type: String,
+        lastFreeAiCreditsRenewalDate: {
+            type: Date,
             nullable: true,
+        },
+        aiCreditsAutoTopUpThreshold: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpState: {
+            type: String,
         },
         stripeSubscriptionStartDate: {
             type: Number,

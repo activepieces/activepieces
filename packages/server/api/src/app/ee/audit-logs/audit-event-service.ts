@@ -32,7 +32,7 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
     },
     sendUserEventFromRequest(request: FastifyRequest, params: AuditEventParam): void {
         const principal = request.principal
-        if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
+        if (!principal || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
             return
         }
         rejectedPromiseHandler((async () => {

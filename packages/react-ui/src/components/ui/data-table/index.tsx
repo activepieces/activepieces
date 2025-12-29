@@ -117,6 +117,9 @@ export function DataTable<
     id: 'select',
     accessorKey: 'select',
     notClickable: true,
+    size: 40,
+    minSize: 40,
+    maxSize: 40,
     header: ({ table }) => (
       <div className="flex items-center h-full">
         <Checkbox
@@ -301,13 +304,21 @@ export function DataTable<
       )}
 
       <div className="rounded-md mt-0 overflow-hidden">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
+                  const size = header.column.columnDef.size;
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      style={
+                        size
+                          ? { width: size, minWidth: size, maxWidth: size }
+                          : undefined
+                      }
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -365,31 +376,41 @@ export function DataTable<
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      <div
-                        className={cn('flex items-center', {
-                          'justify-end': cell.column.id === 'actions',
-                          'justify-start': cell.column.id !== 'actions',
-                        })}
+                  {row.getVisibleCells().map((cell) => {
+                    const size = cell.column.columnDef.size;
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={
+                          size
+                            ? { width: size, minWidth: size, maxWidth: size }
+                            : undefined
+                        }
                       >
                         <div
-                          onClick={(e) => {
-                            if (cell.column.id === 'select') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              return;
-                            }
-                          }}
+                          className={cn('flex items-center', {
+                            'justify-end': cell.column.id === 'actions',
+                            'justify-start': cell.column.id !== 'actions',
+                          })}
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
+                          <div
+                            onClick={(e) => {
+                              if (cell.column.id === 'select') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return;
+                              }
+                            }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                  ))}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (
