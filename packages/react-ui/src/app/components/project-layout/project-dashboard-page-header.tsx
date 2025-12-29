@@ -93,11 +93,6 @@ export const ProjectDashboardPageHeader = ({
     return 'pieces';
   };
 
-  const showSettingsButton =
-    hasGeneralSettings ||
-    (project.type === ProjectType.TEAM &&
-      showProjectMembersFlag &&
-      userHasPermissionToReadProjectMembers);
 
   const titleContent = (
     <div className="flex items-center gap-2">
@@ -132,9 +127,8 @@ export const ProjectDashboardPageHeader = ({
         <Button
           variant="ghost"
           className="gap-2"
-          aria-label={`View ${projectMembers?.length} team member${
-            projectMembers?.length !== 1 ? 's' : ''
-          }`}
+          aria-label={`View ${projectMembers?.length} team member${projectMembers?.length !== 1 ? 's' : ''
+            }`}
           onClick={() => {
             setSettingsInitialTab('members');
             setSettingsOpen(true);
@@ -155,19 +149,17 @@ export const ProjectDashboardPageHeader = ({
           <span className="text-sm font-medium">Invite</span>
         </Button>
       )}
-      {showSettingsButton && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => {
-            setSettingsInitialTab(getFirstAvailableTab());
-            setSettingsOpen(true);
-          }}
-        >
-          <Settings className="w-4 h-4" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => {
+          setSettingsInitialTab(getFirstAvailableTab());
+          setSettingsOpen(true);
+        }}
+      >
+        <Settings className="w-4 h-4" />
+      </Button>
     </div>
   ) : (
     children

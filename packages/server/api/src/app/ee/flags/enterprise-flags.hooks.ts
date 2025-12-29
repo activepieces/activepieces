@@ -38,7 +38,7 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             platformId,
         })
         modifiedFlags[ApFlagId.SHOW_COMMUNITY] = platformWithPlan.plan.showPoweredBy
-        modifiedFlags[ApFlagId.SHOW_BILLING] = !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan) && system.getEdition() === ApEdition.CLOUD
+        modifiedFlags[ApFlagId.SHOW_BILLING_PAGE] = flags[ApFlagId.SHOW_BILLING_PAGE] && !platformUtils.isCustomerOnDedicatedDomain(platformWithPlan)
         modifiedFlags[ApFlagId.CLOUD_AUTH_ENABLED] = platform.cloudAuthEnabled
         modifiedFlags[ApFlagId.PUBLIC_URL] = await domainHelper.getPublicUrl({
             path: '',

@@ -39,19 +39,19 @@ export const authenticationSession = {
   },
 
   getProjectId(): string | null {
-    // projectId is no longer in the token, but we still need to support it for backwards compatibility, in case where projectId is not stored in the local storage but the token is
     const token = this.getToken();
     if (isNil(token)) {
       return null;
     }
+    const projectId = ApStorage.getInstance().getItem('projectId');
+    if (!isNil(projectId)) {
+      return projectId;
+    }
     const decodedJwt = getDecodedJwt(token);
     if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
-      const projectId = decodedJwt.projectId;
-      if (!isNil(projectId)) {
-        return projectId;
-      }
+      return decodedJwt.projectId;
     }
-    return ApStorage.getInstance().getItem('projectId') ?? null;
+    return null;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
@@ -91,9 +91,7 @@ export const authenticationSession = {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    const result = await authenticationApi.switchProject({ projectId });
-    ApStorage.getInstance().setItem(tokenKey, result.token);
-    ApStorage.getInstance().setItem('projectId', result.projectId);
+    ApStorage.getInstance().setItem('projectId', projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
