@@ -167,6 +167,7 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
         stripeSubscriptionEndDate: defaultEndDate,
         aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
         ...plan,
+        aiCreditsAutoTopUpState: plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED,
     }
     const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
     if (!isNil(savedPlatformPlan.plan)) {

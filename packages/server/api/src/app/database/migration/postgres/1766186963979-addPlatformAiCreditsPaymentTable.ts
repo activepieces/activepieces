@@ -23,9 +23,18 @@ export class AddPlatformAiCreditsPaymentTable1766186963979 implements MigrationI
             ADD "aiCreditsAutoTopUpState" character varying
         `)
         await queryRunner.query(`
+            UPDATE "platform_plan"
+            SET "aiCreditsAutoTopUpState" = 'disabled'
+        `)
+        await queryRunner.query(`
+            ALTER TABLE "platform_plan"
+            ALTER COLUMN "aiCreditsAutoTopUpState" SET NOT NULL
+        `)
+        await queryRunner.query(`
             ALTER TABLE "platform_plan"
             ADD "lastFreeAiCreditsRenewalDate" timestamp with time zone
         `)
+ 
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

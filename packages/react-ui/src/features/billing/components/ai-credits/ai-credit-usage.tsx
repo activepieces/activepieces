@@ -108,13 +108,14 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
             </div>
             <div className="flex items-baseline justify-between">
               <div className="text-3xl font-bold">
-                {creditsRemaining.toLocaleString()}
+                {Math.floor(creditsRemaining).toLocaleString()}
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   {t('credits available')}
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">
-                {t('Total lifetime usage')}: {totalCreditsUsed.toLocaleString()}
+                {t('Total lifetime usage')}:{' '}
+                {Math.floor(totalCreditsUsed).toLocaleString()}
               </div>
             </div>
           </div>
