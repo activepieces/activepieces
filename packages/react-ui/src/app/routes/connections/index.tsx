@@ -33,6 +33,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
@@ -218,7 +219,7 @@ function AppConnectionsPage() {
               title={t('External ID')}
               text={row.original.externalId || ''}
             >
-              <div className="text-left">{row.original.displayName}</div>
+              <TruncatedColumnTextValue value={row.original.displayName} />
             </CopyTextTooltip>
           </div>
         );

@@ -23,6 +23,7 @@ import {
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -163,9 +164,7 @@ function TodosPage() {
         <DataTableColumnHeader column={column} title={t('Title')} icon={Tag} />
       ),
       cell: ({ row }) => {
-        return (
-          <div className="flex items-center gap-2">{row.original.title}</div>
-        );
+        return <TruncatedColumnTextValue value={row.original.title} />;
       },
     },
     {

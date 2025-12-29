@@ -33,7 +33,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { getProjectName, projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -116,7 +116,11 @@ export const BuilderHeader = () => {
         {!embedState.hideFlowNameInBuilder && (
           <BreadcrumbItem>
             <BreadcrumbPage>
-              <div className="flex items-center gap-1 text-base">
+              <div
+                className={cn('flex items-center gap-1 text-base', {
+                  'max-w-[500px]': !isEditingFlowName,
+                })}
+              >
                 <EditableText
                   className="hover:cursor-text"
                   value={flowVersion.displayName}
