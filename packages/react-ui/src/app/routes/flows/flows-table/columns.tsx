@@ -16,6 +16,8 @@ import {
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { PopulatedFlow } from '@activepieces/shared';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;
@@ -39,16 +41,7 @@ export const flowsTableColumns = ({
     cell: ({ row }) => {
       const displayName = row.original.version.displayName;
       return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="text-left truncate max-w-[250px]">
-              {displayName}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{displayName}</p>
-          </TooltipContent>
-        </Tooltip>
+         <TruncatedColumnTextValue value={displayName} />
       );
     },
   },

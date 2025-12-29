@@ -60,6 +60,7 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();
@@ -218,7 +219,7 @@ function AppConnectionsPage() {
               title={t('External ID')}
               text={row.original.externalId || ''}
             >
-              <div className="text-left">{row.original.displayName}</div>
+              <TruncatedColumnTextValue value={row.original.displayName} />
             </CopyTextTooltip>
           </div>
         );

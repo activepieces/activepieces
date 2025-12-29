@@ -40,6 +40,7 @@ import {
 import { ApAvatar } from '../../../components/custom/ap-avatar';
 
 import { TodoDetailsDrawer } from './todos-details-drawer';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 function TodosPage() {
   const [selectedRows, setSelectedRows] = useState<Array<Todo>>([]);
@@ -164,7 +165,7 @@ function TodosPage() {
       ),
       cell: ({ row }) => {
         return (
-          <div className="flex items-center gap-2">{row.original.title}</div>
+          <TruncatedColumnTextValue value={row.original.title} />
         );
       },
     },

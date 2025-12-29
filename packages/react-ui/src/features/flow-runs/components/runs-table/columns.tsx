@@ -32,6 +32,7 @@ import {
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
 import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 type SelectedRow = {
   id: string;
@@ -206,7 +207,7 @@ export const runsTableColumns = ({
           {!isNil(archivedAt) && (
             <Archive className="size-4 text-muted-foreground" />
           )}
-          <span>{displayName}</span>
+          <TruncatedColumnTextValue value={displayName} />
         </div>
       );
     },

@@ -30,11 +30,9 @@ import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
 
 export const ProjectDashboardPageHeader = ({
-  title,
   children,
   description,
 }: {
-  title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
 }) => {
