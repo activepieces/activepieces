@@ -90,6 +90,12 @@ export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
         displayName: Type.String(),
         externalFlowId: Type.String(),
     }),
+    Type.Object({
+        ...ToolCallBaseSchema.properties,
+        toolCallType: Type.Literal(ToolCallType.MCP),
+        displayName: Type.String(),
+        serverUrl: Type.String(),
+    }),
 ])
 
 export type ToolCallContentBlock = Static<typeof ToolCallContentBlock>

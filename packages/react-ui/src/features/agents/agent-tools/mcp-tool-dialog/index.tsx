@@ -16,7 +16,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -45,13 +44,12 @@ const McpToolFormSchema = Type.Object({
   toolName: Type.String({ minLength: 1 }),
   serverUrl: Type.String({ format: 'uri' }),
   protocol: Type.Enum(McpProtocol),
-  description: Type.Optional(Type.String()),
   authType: Type.Enum(McpAuthType),
 
-  authorizationUrl: Type.Optional(Type.String({ format: 'uri' })),
-  tokenUrl: Type.Optional(Type.String({ format: 'uri' })),
-  clientId: Type.Optional(Type.String()),
-  scopes: Type.Optional(Type.String()),
+  accessToken: Type.Optional(Type.String()),
+
+  apiKeyHeader: Type.Optional(Type.String()),
+  apiKey: Type.Optional(Type.String()),
 
   headers: Type.Optional(
     Type.Array(
@@ -76,17 +74,22 @@ export function AgentMcpDialog({
   const { showAddMcpDialog, setShowAddMcpDialog, editingMcpTool } =
     useAgentToolsStore();
 
+  const isToolNameUnique = (value: string) => {
+    return !tools.some(
+      (tool) =>
+        tool.toolName === value && tool.toolName !== editingMcpTool?.toolName,
+    );
+  };
+
   const form = useForm<McpToolFormData>({
     defaultValues: {
       toolName: '',
       serverUrl: '',
       protocol: McpProtocol.STREAMABLE_HTTP,
-      description: '',
       authType: McpAuthType.NONE,
-      authorizationUrl: '',
-      tokenUrl: '',
-      clientId: '',
-      scopes: '',
+      accessToken: '',
+      apiKey: '',
+      apiKeyHeader: 'X-API-Key',
       headers: [{ key: '', value: '' }],
     },
     mode: 'onChange',
@@ -101,13 +104,13 @@ export function AgentMcpDialog({
         toolName: editingMcpTool.toolName,
         serverUrl: editingMcpTool.serverUrl,
         protocol: editingMcpTool.protocol,
-        description: editingMcpTool.description || '',
         authType: editingMcpTool.auth.type,
-        ...(editingMcpTool.auth.type === McpAuthType.OAUTH2 && {
-          authorizationUrl: editingMcpTool.auth.authorizationUrl,
-          tokenUrl: editingMcpTool.auth.tokenUrl,
-          clientId: editingMcpTool.auth.clientId,
-          scopes: editingMcpTool.auth.scopes?.join(', ') || '',
+        ...(editingMcpTool.auth.type === McpAuthType.ACCESS_TOKEN && {
+          accessToken: editingMcpTool.auth.accessToken,
+        }),
+        ...(editingMcpTool.auth.type === McpAuthType.API_KEY && {
+          apiKey: editingMcpTool.auth.apiKey,
+          apiKeyHeader: editingMcpTool.auth.apiKeyHeader,
         }),
         ...(editingMcpTool.auth.type === McpAuthType.HEADERS && {
           headers: Object.entries(editingMcpTool.auth.headers).map(
@@ -128,18 +131,18 @@ export function AgentMcpDialog({
         auth = { type: McpAuthType.NONE };
         break;
       }
-      case McpAuthType.OAUTH2: {
+      case McpAuthType.ACCESS_TOKEN: {
         auth = {
-          type: McpAuthType.OAUTH2,
-          authorizationUrl: data.authorizationUrl,
-          tokenUrl: data.tokenUrl,
-          clientId: data.clientId,
-          scopes: data.scopes
-            ? data.scopes
-                .split(',')
-                .map((s) => s.trim())
-                .filter(Boolean)
-            : [],
+          type: McpAuthType.ACCESS_TOKEN,
+          accessToken: data.accessToken,
+        };
+        break;
+      }
+      case McpAuthType.API_KEY: {
+        auth = {
+          type: McpAuthType.API_KEY,
+          apiKey: data.apiKey,
+          apiKeyHeader: data.apiKeyHeader,
         };
         break;
       }
@@ -167,7 +170,6 @@ export function AgentMcpDialog({
       serverUrl: data.serverUrl,
       protocol: data.protocol,
       auth: auth as McpAuthConfig,
-      ...(data.description && { description: data.description }),
     };
 
     if (editingMcpTool) {
@@ -221,6 +223,9 @@ export function AgentMcpDialog({
               rules={{
                 required: 'Tool name is required',
                 minLength: { value: 1, message: 'Tool name is required' },
+                validate: (value) =>
+                  isToolNameUnique(value) ||
+                  t('An MCP server with this name already exists'),
               }}
               render={({ field }) => (
                 <FormItem>
@@ -249,23 +254,6 @@ export function AgentMcpDialog({
                   <FormControl>
                     <Input placeholder="https://example.com/mcp" {...field} />
                   </FormControl>
-                  <FormDescription>
-                    {t('The base URL of your MCP server')}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Description')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('Optional description')} {...field} />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -284,9 +272,14 @@ export function AgentMcpDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value={McpProtocol.SSE}>SSE</SelectItem>
+                      <SelectItem value={McpProtocol.SSE}>
+                        {t('SSE')}
+                      </SelectItem>
+                      <SelectItem value={McpProtocol.SIMPLE_HTTP}>
+                        {t('Simple HTTP')}
+                      </SelectItem>
                       <SelectItem value={McpProtocol.STREAMABLE_HTTP}>
-                        Streamable HTTP
+                        {t('Streamable HTTP')}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -314,7 +307,12 @@ export function AgentMcpDialog({
                       <SelectItem value={McpAuthType.HEADERS}>
                         {t('Headers')}
                       </SelectItem>
-                      <SelectItem value={McpAuthType.OAUTH2}>OAuth2</SelectItem>
+                      <SelectItem value={McpAuthType.ACCESS_TOKEN}>
+                        {t('Access Token')}
+                      </SelectItem>
+                      <SelectItem value={McpAuthType.API_KEY}>
+                        {t('Api Key')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -322,28 +320,34 @@ export function AgentMcpDialog({
               )}
             />
 
-            {authType === McpAuthType.OAUTH2 && (
+            {authType === McpAuthType.ACCESS_TOKEN && (
               <div className="space-y-4 p-4 border rounded-lg">
-                <h3 className="font-medium text-sm">
-                  {t('OAuth2 Configuration')}
-                </h3>
-
                 <FormField
                   control={form.control}
-                  name="authorizationUrl"
-                  rules={
-                    authType === McpAuthType.OAUTH2
-                      ? { required: 'Authorization URL is required for OAuth2' }
-                      : {}
-                  }
+                  name="accessToken"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Authorization URL')} *</FormLabel>
+                      <FormLabel>{t('Access Token')} *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="https://auth.example.com/authorize"
-                          {...field}
-                        />
+                        <Input placeholder="Enter access token" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            )}
+
+            {authType === McpAuthType.API_KEY && (
+              <div className="space-y-4 p-4 border rounded-lg">
+                <FormField
+                  control={form.control}
+                  name="apiKeyHeader"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{t('API Key Header')} *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="X-API-KEY" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -352,57 +356,13 @@ export function AgentMcpDialog({
 
                 <FormField
                   control={form.control}
-                  name="tokenUrl"
-                  rules={
-                    authType === McpAuthType.OAUTH2
-                      ? { required: 'Token URL is required for OAuth2' }
-                      : {}
-                  }
+                  name="apiKey"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t('Token URL')} *</FormLabel>
+                      <FormLabel>{t('Api Key')} *</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="https://auth.example.com/token"
-                          {...field}
-                        />
+                        <Input placeholder="Enter API Key" {...field} />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="clientId"
-                  rules={
-                    authType === McpAuthType.OAUTH2
-                      ? { required: 'Client ID is required for OAuth2' }
-                      : {}
-                  }
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Client ID')} *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="your-client-id" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="scopes"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{t('Scopes')}</FormLabel>
-                      <FormControl>
-                        <Input placeholder="read, write, admin" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        {t('Comma-separated list of OAuth scopes')}
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
