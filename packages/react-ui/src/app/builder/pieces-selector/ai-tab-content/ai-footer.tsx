@@ -2,7 +2,7 @@ import React from 'react';
 
 const AITabFooter = () => {
   return (
-    <div className="py-3 flex items-center gap-2.5 px-4 bg-white dark:bg-zinc-950 border-t border-zinc-100 dark:border-zinc-800">
+    <div className="py-3 flex items-center gap-2.5 px-4 bg-white dark:bg-zinc-950">
       <span className="text-[13.5px] text-zinc-400 dark:text-zinc-500">
         Available models:
       </span>

@@ -8,12 +8,9 @@ interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
   fallback?: React.ReactNode;
   border?: boolean;
-  playOnHover?: boolean;
-  forcePlay?: boolean; // New prop for external hover control
 }
 
 const isGrayColor = (r: number, g: number, b: number): boolean => {
-  // ... (keep existing implementation)
   const threshold = 15;
   const darkThreshold = 150;
   const lightThreshold = 225;
@@ -33,20 +30,15 @@ const ImageWithColorBackground = ({
   src,
   alt,
   fallback,
-  playOnHover = false,
-  forcePlay = false,
   ...props
 }: ImageWithColorBackgroundProps) => {
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [backgroundColor, setBackgroundColor] = useState<string | null>(null);
-  const [isHovered, setIsHovered] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const isVideo = src?.endsWith('.mp4') || src?.endsWith('.webm');
 
   useEffect(() => {
-    if (!src || isVideo) return;
+    if (!src) return;
 
     const fac = new FastAverageColor();
     const img = new Image();
@@ -74,21 +66,7 @@ const ImageWithColorBackground = ({
     return () => {
       fac.destroy();
     };
-  }, [src, isVideo]);
-
-  // Handle video play/pause on hover or forcePlay
-  useEffect(() => {
-    if ((playOnHover || forcePlay) && isVideo && videoRef.current) {
-      if (isHovered || forcePlay) {
-        videoRef.current.play().catch(() => {
-          // Ignore play errors
-        });
-      } else {
-        videoRef.current.pause();
-        videoRef.current.currentTime = 0; // Reset to start
-      }
-    }
-  }, [isHovered, playOnHover, forcePlay, isVideo]);
+  }, [src]);
 
   const handleLoad = () => {
     setIsLoading(false);
@@ -103,8 +81,6 @@ const ImageWithColorBackground = ({
 
   return (
     <span
-      onMouseEnter={() => playOnHover && setIsHovered(true)}
-      onMouseLeave={() => playOnHover && setIsHovered(false)}
       className={cn(
         'relative inline-block h-full w-full rounded-lg',
         className,
@@ -128,42 +104,21 @@ const ImageWithColorBackground = ({
         </span>
       )}
       {!hasError ? (
-        isVideo ? (
-          <video
-            ref={videoRef}
-            src={src}
-            autoPlay={!playOnHover && !forcePlay}
-            loop
-            muted
-            playsInline
-            preload="auto"
-            onLoadedData={handleLoad}
-            onError={handleError}
-            className={cn(
-              `transition-opacity duration-500 w-full h-full object-cover`,
-              {
-                'opacity-0': isLoading,
-                'opacity-100': !isLoading,
-              },
-            )}
-          />
-        ) : (
-          <img
-            ref={imgRef}
-            src={src}
-            alt={alt}
-            onLoad={handleLoad}
-            onError={handleError}
-            className={cn(
-              `transition-opacity duration-500 w-full h-full object-cover`,
-              {
-                'opacity-0': isLoading,
-                'opacity-100': !isLoading,
-              },
-            )}
-            {...rest}
-          />
-        )
+        <img
+          ref={imgRef}
+          src={src}
+          alt={alt}
+          onLoad={handleLoad}
+          onError={handleError}
+          className={cn(
+            `transition-opacity duration-500 w-full h-full object-contain`,
+            {
+              'opacity-0': isLoading,
+              'opacity-100': !isLoading,
+            },
+          )}
+          {...rest}
+        />
       ) : (
         <span className="absolute inset-0 flex items-center justify-center">
           {fallback ?? <Skeleton className="w-full h-full" />}

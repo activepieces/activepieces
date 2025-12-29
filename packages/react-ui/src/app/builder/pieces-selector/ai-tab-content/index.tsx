@@ -9,6 +9,7 @@ import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType, isNil } from '@activepieces/shared';
 
 import { AIPieceActionsList } from './ai-actions-list';
+import AITabFooter from './ai-footer';
 
 const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
   const { selectedTab } = usePieceSelectorTabs();
@@ -45,12 +46,15 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
   };
 
   return (
-    <div className="w-full h-full">
-      <AIPieceActionsList
-        stepMetadataWithSuggestions={pieceMetadataWithSuggestion}
-        hidePieceIconAndDescription={false}
-        operation={operation}
-      />
+    <div className="w-full h-full flex flex-col">
+      <div className="flex-1 overflow-y-auto">
+        <AIPieceActionsList
+          stepMetadataWithSuggestions={pieceMetadataWithSuggestion}
+          hidePieceIconAndDescription={false}
+          operation={operation}
+        />
+      </div>
+      <AITabFooter />
     </div>
   );
 };

@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 
 import { useTelemetry } from '@/components/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   PieceSelectorOperation,
@@ -21,7 +20,7 @@ import { usePieceSearchContext } from '../../../../features/pieces/lib/piece-sea
 import { useBuilderStateContext } from '../../builder-hooks';
 import { convertStepMetadataToPieceSelectorItems } from '../piece-actions-or-triggers-list';
 
-import AIActionItem from './ai-action';
+import AIActionItem, { MediaIcon } from './ai-action';
 
 type AIPieceActionsListProps = {
   hidePieceIconAndDescription: boolean;
@@ -132,23 +131,21 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               onClick={() => handleClick(agentAction)}
               onMouseEnter={() => setIsAgentHovered(true)}
               onMouseLeave={() => setIsAgentHovered(false)}
-              className="group relative flex flex-col rounded-xl bg-transparent border border-transparent cursor-pointer hover:bg-accent/50 hover:border-border transition-all duration-200 overflow-hidden h-[428px]"
+              className="group relative flex flex-col rounded-xl bg-transparent cursor-pointer hover:bg-accent transition-all duration-200 overflow-hidden h-[400px]"
             >
               {/* Image Section - Aligns with 3 cards + 3 gaps on the right */}
-              <div className="p-1 h-[252px]">
-                <div className="w-full h-full relative rounded-xl overflow-hidden border border-transparent group-hover:border-border transition-all duration-200">
-                  <PieceIcon
-                    logoUrl={ACTION_ICON_MAP['run_agent']}
-                    displayName="AI Agent"
-                    showTooltip={false}
-                    playOnHover={true}
-                    forcePlay={isAgentHovered}
+              <div className="p-1 h-[236px]">
+                <div className="w-full h-full relative rounded-xl overflow-hidden transition-all duration-200">
+                  <MediaIcon
+                    src={ACTION_ICON_MAP['run_agent']}
+                    alt="AI Agent"
+                    isHovered={isAgentHovered}
                   />
                 </div>
               </div>
 
               {/* Content Section - Aligns with bottom 2 cards on the right */}
-              <div className="px-5 pb-4 pt-3 flex flex-col h-[176px]">
+              <div className="px-5 pb-4 pt-3 flex flex-col h-[164px]">
                 <div className="space-y-1">
                   <h3 className="text-lg font-bold tracking-tight text-foreground">
                     AI Agent
