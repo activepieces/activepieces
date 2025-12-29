@@ -32,6 +32,7 @@ import { platformUserApi } from '@/lib/platform-user-api';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 
 import { UpdateUserDialog } from './update-user-dialog';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 export default function UsersPage() {
   const { data, isLoading, refetch } = platformUserHooks.useUsers();
@@ -104,7 +105,7 @@ export default function UsersPage() {
                 />
               ),
               cell: ({ row }) => {
-                return <div className="text-left">{row.original.email}</div>;
+                return <TruncatedColumnTextValue value={row.original.email} />
               },
             },
             {
@@ -119,9 +120,7 @@ export default function UsersPage() {
               ),
               cell: ({ row }) => {
                 return (
-                  <div className="text-left">
-                    {row.original.firstName} {row.original.lastName}
-                  </div>
+                  <TruncatedColumnTextValue value={row.original.firstName + ' ' + row.original.lastName} />
                 );
               },
             },
