@@ -119,6 +119,8 @@ const PublishFlowReminderWidget = () => {
                 size="sm"
                 variant="default"
                 loading={isSaving}
+                //for e2e tests
+                name="Publish"
                 onClick={() => publish()}
               >
                 {t('Publish')}
