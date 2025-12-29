@@ -1,5 +1,6 @@
-import { AIProviderName } from '@activepieces/shared';
 import { t } from 'i18next';
+
+import { AIProviderName } from '@activepieces/shared';
 
 export const SUPPORTED_AI_PROVIDERS: AiProviderInfo[] = [
   {
@@ -37,8 +38,9 @@ It is strongly recommended that you add your credit card information to your Ope
     provider: AIProviderName.AZURE,
     name: 'Azure',
     logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
-    markdown:
-      t('Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.'),
+    markdown: t(
+      'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
+    ),
   },
   {
     provider: AIProviderName.OPENROUTER,
@@ -52,7 +54,8 @@ It is strongly recommended that you add your credit card information to your Ope
     provider: AIProviderName.CLOUDFLARE_GATEWAY,
     name: 'Cloudflare AI Gateway',
     logoUrl: 'https://cdn.activepieces.com/pieces/cloudflare-gateway.png',
-    markdown: t(`Follow these instructions to get your Cloudflare AI Gateway API Key:
+    markdown:
+      t(`Follow these instructions to get your Cloudflare AI Gateway API Key:
 1. Visit the following website: https://developers.cloudflare.com/ai-gateway/get-started/.
 2. Once on the website, follow the instructions to get your account id, gateway id and create an API Key.
 3. After creating the gateway, make sure to enable the Authenticated Gateway Option in your settings.
@@ -62,7 +65,8 @@ It is strongly recommended that you add your credit card information to your Ope
     provider: AIProviderName.CUSTOM,
     name: 'OpenAI Compatible',
     logoUrl: 'https://cdn.activepieces.com/pieces/openai-compatible.png',
-    markdown: t(`Follow these instructions to get your OpenAI Compatible API Key:
+    markdown:
+      t(`Follow these instructions to get your OpenAI Compatible API Key:
 1. Set the base url to your proxy url.
 2. In the api key header, set the value of your auth header name.
 3. In the api key, set your auth header value (full value including the Bearer if any).`),
