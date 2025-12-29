@@ -7,6 +7,7 @@ import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { SkeletonList } from '@/components/ui/skeleton';
 import { formUtils } from '@/features/pieces/lib/form-utils';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { authenticationSession } from '@/lib/authentication-session';
 import { PiecePropertyMap, PropertyType } from '@activepieces/pieces-framework';
 import {
   AUTHENTICATION_PROPERTY_NAME,
@@ -116,6 +117,7 @@ const DynamicPropertiesImplementation = React.memo(
       mutate(
         {
           request: {
+            projectId: authenticationSession.getProjectId()!,
             pieceName: props.pieceName,
             pieceVersion: props.pieceVersion,
             propertyName: props.propertyName,

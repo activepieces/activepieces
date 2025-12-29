@@ -1,3 +1,4 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
     ListProjectRequestForUserQueryParams,
@@ -21,7 +22,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
 ) => {
 
     fastify.get('/:id', GetProjectRequestForUser, async (request) => {
-        return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.principal.projectId)
+        return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
     })
 
     fastify.get('/', ListProjectRequestForUser, async (request) => {
@@ -69,12 +70,17 @@ async function getPlatformsForUser(identityId: string, platformId: string) {
 
 const GetProjectRequestForUser = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            undefined, {
+                type: ProjectResourceType.PARAM,
+                paramKey: 'id',
+            }),
     },
 }
 const ListProjectRequestForUser = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         response: {
@@ -86,7 +92,7 @@ const ListProjectRequestForUser = {
 
 const ListProjectsForPlatforms = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         response: {
