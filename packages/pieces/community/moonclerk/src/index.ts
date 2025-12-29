@@ -7,6 +7,7 @@ import { newPayment } from './lib/triggers/new-payment';
 import { planEnded } from './lib/triggers/plan-ended';
 import { planPaymentFailed } from './lib/triggers/plan-payment-failed';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { PieceCategory } from '@activepieces/shared';
 
 export const moonclerk = createPiece({
   displayName: 'Moonclerk',
@@ -14,6 +15,8 @@ export const moonclerk = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/moonclerk.png',
   authors: ['sanket-a11y'],
+  description: 'MoonClerk is an easy-to-use payment form builder for Stripe.',
+  categories: [PieceCategory.COMMERCE],
   actions: [
     retrivePlan,
     createCustomApiCallAction({
