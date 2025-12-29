@@ -131,7 +131,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
               onClick={() => handleClick(agentAction)}
               onMouseEnter={() => setIsAgentHovered(true)}
               onMouseLeave={() => setIsAgentHovered(false)}
-              className="group relative flex flex-col rounded-xl bg-transparent cursor-pointer hover:bg-accent transition-all duration-200 overflow-hidden h-[400px]"
+              className="group relative flex flex-col rounded-xl bg-transparent cursor-pointer hover:bg-accent/40 border-0 outline-none transition-all duration-200 overflow-hidden h-[400px]"
             >
               {/* Image Section - Aligns with 3 cards + 3 gaps on the right */}
               <div className="p-1 h-[236px]">

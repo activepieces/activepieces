@@ -80,7 +80,7 @@ const AIActionItem = ({
 
   return (
     <CardListItem
-      className="h-[76px] w-full rounded-xl flex items-center gap-4 bg-transparent hover:bg-accent transition-all duration-200 cursor-pointer group relative overflow-hidden p-1"
+      className="h-[76px] w-full rounded-xl flex items-center gap-4 bg-transparent hover:bg-accent/40 border-0 outline-none transition-all duration-200 cursor-pointer group relative overflow-hidden p-1"
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
