@@ -94,6 +94,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             platformId,
             aiCreditsAutoTopUpCreditsToAdd: request.creditsToAdd,
             aiCreditsAutoTopUpThreshold: request.minThreshold,
+            maxAutoTopUpCreditsMonthly: request.maxMonthlyLimit,
         })
 
         assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
@@ -192,6 +193,21 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
     assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
     assertNotNullOrUndefined(plan.aiCreditsAutoTopUpCreditsToAdd, 'Auto Topup Credits To add is not set')
     assertNotNullOrUndefined(plan.aiCreditsAutoTopUpThreshold, 'Auto Topup Threashold is not set')
+
+    if (!isNil(plan.maxAutoTopUpCreditsMonthly) && plan.maxAutoTopUpCreditsMonthly > 0) {
+        const totalAmountThisMonth = await stripeHelper(log).getAutoTopUpInvoicesTotalThisMonth(plan.stripeCustomerId, plan.platformId)
+        const totalCreditsThisMonth = totalAmountThisMonth * CREDIT_PER_DOLLAR
+
+        if (totalCreditsThisMonth + plan.aiCreditsAutoTopUpCreditsToAdd > plan.maxAutoTopUpCreditsMonthly) {
+            log.info({
+                platformId: plan.platformId,
+                totalCreditsThisMonth,
+                creditsToAdd: plan.aiCreditsAutoTopUpCreditsToAdd,
+                maxMonthlyLimit: plan.maxAutoTopUpCreditsMonthly,
+            }, '(tryAutoTopUpPlan) AI credit auto top-up limit reached this month')
+            return false
+        }
+    }
 
     const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
 
