@@ -44,7 +44,7 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
 
       {!onCanvas && (
         <Button
-          size={'default'}
+          size={'sm'}
           variant={'basic'}
           loading={isSwitchingToDraftPending}
           className="gap-2"
