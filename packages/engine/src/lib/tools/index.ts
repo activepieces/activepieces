@@ -1,5 +1,5 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentTool, AgentToolType, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
+import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
 import { generateObject, LanguageModel, ToolSet } from 'ai'
 import { z } from 'zod/v4'
 import { EngineConstants } from '../handler/context/engine-constants'
@@ -11,34 +11,32 @@ import { tsort } from './tsort'
 
 export const agentTools = {
     async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<ToolSet> {
-        const piecesTools = await Promise.all(tools
-            .filter((tool) => tool.type === AgentToolType.PIECE)
-            .map(async (tool) => {
+        const piecesTools = await Promise.all(tools.map(async (tool) => {
 
-                const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
-                    pieceName: tool.pieceMetadata.pieceName,
-                    pieceVersion: tool.pieceMetadata.pieceVersion,
-                    actionName: tool.pieceMetadata.actionName,
-                    devPieces: EngineConstants.DEV_PIECES,
-                })
-                return {
-                    name: tool.toolName,
-                    description: pieceAction.description,
-                    inputSchema: z.object({
-                        instruction: z.string().describe('The instruction to the tool'),
+            const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
+                pieceName: tool.pieceMetadata.pieceName,
+                pieceVersion: tool.pieceMetadata.pieceVersion,
+                actionName: tool.pieceMetadata.actionName,
+                devPieces: EngineConstants.DEV_PIECES,
+            })
+            return {
+                name: tool.toolName,
+                description: pieceAction.description,
+                inputSchema: z.object({
+                    instruction: z.string().describe('The instruction to the tool'),
+                }),
+                execute: async ({ instruction }: { instruction: string }) =>
+                    execute({
+                        ...engineConstants,
+                        instruction,
+                        pieceName: tool.pieceMetadata.pieceName,
+                        pieceVersion: tool.pieceMetadata.pieceVersion,
+                        actionName: tool.pieceMetadata.actionName,
+                        predefinedInput: tool.pieceMetadata.predefinedInput,
+                        model,
                     }),
-                    execute: async ({ instruction }: { instruction: string }) =>
-                        execute({
-                            ...engineConstants,
-                            instruction,
-                            pieceName: tool.pieceMetadata.pieceName,
-                            pieceVersion: tool.pieceMetadata.pieceVersion,
-                            actionName: tool.pieceMetadata.actionName,
-                            predefinedInput: tool.pieceMetadata.predefinedInput,
-                            model,
-                        }),
-                }
-            }))
+            }
+        }))
   
         return {
             ...Object.fromEntries(piecesTools.map((tool) => [tool.name, tool])),
@@ -312,6 +310,6 @@ async function loadOptions(propertyName: string, operation: ExecuteToolOperation
 
 type ConstructToolParams = {
     engineConstants: EngineConstants
-    tools: AgentTool[]
+    tools: AgentPieceTool[]
     model: LanguageModel
 }

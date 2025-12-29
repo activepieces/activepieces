@@ -2,19 +2,25 @@ import {
   AgentOutputField,
   AgentOutputFieldType,
   isNil,
-  AgentTool,
   TASK_COMPLETION_TOOL_NAME,
   SeekPage,
   PopulatedFlow,
-  AgentToolType,
   McpTrigger,
   ExecuteToolResponse,
   ExecutionToolStatus,
   McpProperty,
   McpPropertyType,
+  AgentFlowTool,
+  AgentMcpTool,
+  McpAuthConfig,
+  McpAuthType,
+  McpProtocol,
 } from '@activepieces/shared';
+import { experimental_createMCPClient as createMCPClient, MCPTransport } from '@ai-sdk/mcp';
 import { z, ZodObject } from 'zod';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+
 
 export const agentUtils = {
     isTaskCompletionToolCall: (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME,
@@ -38,8 +44,40 @@ export const agentUtils = {
         }
         return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
     },
+    async constructMcpServersTools(
+        tools: AgentMcpTool[]
+    ): Promise<Record<string, unknown>> {
+        const collected = [];
+
+        for (const tool of tools) {
+            try {
+                const mcpClient = await createMCPClient({
+                    transport: createTransportConfig(tool.protocol, tool.serverUrl, buildAuthHeaders(tool.auth))
+                });
+
+                const tools = await mcpClient.tools();
+                collected.push({
+                    mcpName: tool.toolName,
+                    tools,
+                });
+            } catch (error) {
+                console.error(`Failed to connect to MCP server ${tool.serverUrl}:`);
+            }
+        }
+
+        return collected.reduce<Record<string, unknown>>(
+            (acc, { mcpName, tools }) => {
+                for (const [toolName, fn] of Object.entries(tools)) {
+                    acc[`${toolName}_${mcpName}`] = fn;
+                }
+
+                return acc;
+            },
+            {}
+        );
+    },
     async constructFlowsTools(params: ConstructFlowsToolsParams) {
-        const flowTools = params.agentToolsMetadata.filter(tool => tool.type === AgentToolType.FLOW)
+        const flowTools = params.tools
         const flowExternalIds = flowTools.map((tool) => tool.externalFlowId)
         const flows = await params.fetchFlows({ externalIds: flowExternalIds })
 
@@ -141,7 +179,7 @@ function mcpPropertyToSchema(property: McpProperty): z.ZodTypeAny {
 
 
 type ConstructFlowsToolsParams = {
-    agentToolsMetadata: AgentTool[]
+    tools: AgentFlowTool[]
     fetchFlows: (params: { externalIds: string[] }) => Promise<SeekPage<PopulatedFlow>>
     publicUrl: string;
     token: string
@@ -152,4 +190,65 @@ type CallMcpFlowToolParams = {
     token: string;
     publicUrl: string;
     async: boolean;
+}
+
+
+function buildAuthHeaders(authConfig: McpAuthConfig): Record<string, string> {
+  let headers: Record<string, string> = {};
+
+  switch (authConfig.type) {
+    case McpAuthType.NONE:
+      break;
+    case McpAuthType.HEADERS: {
+    headers = authConfig.headers
+      break;
+    }
+    case McpAuthType.ACCESS_TOKEN: { 
+      headers['Authorization'] = `Bearer ${authConfig.accessToken}`
+      break;
+    }
+    case McpAuthType.API_KEY: {
+      const headerName = authConfig.apiKeyHeader;
+      headers[headerName] = authConfig.apiKey
+      break;
+    }
+  }
+
+  return headers;
+}
+
+function createTransportConfig(
+  protocol: McpProtocol,
+  serverUrl: string,
+  headers: Record<string, string> = {}
+): any {
+  const url = new URL(serverUrl);
+
+  switch (protocol) {
+    case McpProtocol.SIMPLE_HTTP:
+      return {
+        type: 'http',
+        url: serverUrl,
+        headers: headers,
+      };
+
+    case McpProtocol.STREAMABLE_HTTP:
+      const sessionId = crypto.randomUUID()
+      return new StreamableHTTPClientTransport(url, {
+        sessionId: sessionId,
+        requestInit: {
+            headers
+        }
+      })
+
+    case McpProtocol.SSE:
+      return {
+        type: 'sse',
+        url: serverUrl,
+        headers: headers,
+      };
+
+    default:
+      throw new Error(`Unsupported MCP protocol type: ${protocol}`);
+  }
 }

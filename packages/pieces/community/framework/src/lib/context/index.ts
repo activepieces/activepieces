@@ -1,5 +1,5 @@
 import {
-  AgentTool,
+  AgentPieceTool,
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
@@ -232,7 +232,7 @@ export type ActionContext<
 
 
 export type ConstructToolParams = {
-  tools: AgentTool[]
+  tools: AgentPieceTool[]
   model: unknown,
 }
 

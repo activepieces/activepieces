@@ -4,6 +4,7 @@ import {
   PieceAuth,
   ArraySubProps,
 } from '@activepieces/pieces-framework';
+
 import {
   AgentOutputField,
   AgentPieceProps,
@@ -12,6 +13,7 @@ import {
   AgentTool,
   TASK_COMPLETION_TOOL_NAME,
   AIProviderName,
+  AgentToolType,
 } from '@activepieces/shared';
 import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
 import { z } from 'zod';
@@ -118,19 +120,20 @@ export const runAgent = createAction({
     const hasStructuredOutput =
       !isNil(context.propsValue.structuredOutput) &&
       context.propsValue.structuredOutput.length > 0;
-    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[];
-    const agentTools = await context.agent.tools({
-      tools: agentToolsMetadata,
+
+    const agentTools = context.propsValue.agentTools as AgentTool[];
+
+    const agentPieceTools = await context.agent.tools({
+      tools: agentTools.filter(tool => tool.type === AgentToolType.PIECE),
       model: model,
     });
-
     const flowsTools = await agentUtils.constructFlowsTools({
-      agentToolsMetadata,
+      tools: agentTools.filter(tool => tool.type === AgentToolType.FLOW),
       fetchFlows: context.flows.list,
       publicUrl: context.server.publicUrl,
       token: context.server.token
     })
-
+    const mcpTools = await agentUtils.constructMcpServersTools(agentTools.filter(tool => tool.type === AgentToolType.MCP))
 
     const stream = streamText({
       model: model,
@@ -151,7 +154,7 @@ Help the user finish their goal quickly and accurately.
         `.trim(),
       stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
       tools: {
-        ...{...agentTools, ...flowsTools},
+        ...{...agentPieceTools, ...flowsTools, ...mcpTools },
         [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
           description:
             "This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user's task, or if you are unable to continue. Once you call this tool, you should not take any further actions.",
@@ -218,7 +221,7 @@ Help the user finish their goal quickly and accurately.
             toolName: chuck.toolName,
             toolCallId: chuck.toolCallId,
             input: chuck.input as Record<string, unknown>,
-            agentTools: agentToolsMetadata,
+            agentTools: agentTools,
           });
           break;
         }
