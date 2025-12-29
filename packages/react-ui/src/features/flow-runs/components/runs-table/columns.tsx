@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,7 +33,6 @@ import {
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { formatUtils } from '@/lib/utils';
 import { FlowRun, FlowRunStatus, isNil, SeekPage } from '@activepieces/shared';
-import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 type SelectedRow = {
   id: string;

@@ -7,17 +7,11 @@ import FlowActionMenu from '@/app/components/flow-actions-menu';
 import { Button } from '@/components/ui/button';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { PopulatedFlow } from '@activepieces/shared';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;
@@ -40,9 +34,7 @@ export const flowsTableColumns = ({
     ),
     cell: ({ row }) => {
       const displayName = row.original.version.displayName;
-      return (
-         <TruncatedColumnTextValue value={displayName} />
-      );
+      return <TruncatedColumnTextValue value={displayName} />;
     },
   },
   {

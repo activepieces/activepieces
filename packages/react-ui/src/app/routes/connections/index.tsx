@@ -33,6 +33,7 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
@@ -60,7 +61,6 @@ import {
   Permission,
   PlatformRole,
 } from '@activepieces/shared';
-import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 function AppConnectionsPage() {
   const navigate = useNavigate();
