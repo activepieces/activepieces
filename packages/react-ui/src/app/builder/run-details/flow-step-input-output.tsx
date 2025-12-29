@@ -18,6 +18,7 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { isRunAgent } from '../test-step/agent-test-step';
 
 export const FlowStepInputOutput = () => {
   const [run, loopsIndexes, flowVersion, selectedStep] = useBuilderStateContext(
@@ -43,9 +44,7 @@ export const FlowStepInputOutput = () => {
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
-  const isAgent = selectedStep
-    ? flowStructureUtil.isAgentPiece(selectedStep)
-    : false;
+  const isAgent = isRunAgent(selectedStep);
   const isStepRunning =
     selectedStepOutput?.status === StepOutputStatus.RUNNING ||
     selectedStepOutput?.status === StepOutputStatus.PAUSED;
@@ -106,12 +105,13 @@ export const FlowStepInputOutput = () => {
             <JsonViewer json={selectedStepOutput.input} title={t('Input')} />
           </TabsContent>
 
-          <TabsContent value="timeline">
-            <AgentTimeline
-              agentResult={selectedStepOutput.output as AgentResult}
-            />
-          </TabsContent>
-
+          {isAgent && (
+            <TabsContent value="timeline">
+              <AgentTimeline
+                agentResult={selectedStepOutput.output as AgentResult}
+              />
+            </TabsContent>
+          )}
           <TabsContent value="output">
             {isStepRunning ? (
               <OutputSkeleton />
