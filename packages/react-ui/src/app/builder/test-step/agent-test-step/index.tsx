@@ -7,12 +7,12 @@ import {
   AgentResult,
   AgentTaskStatus,
   AI_PIECE_NAME,
-  FlowAction,
   FlowActionType,
   isNil,
+  Step,
 } from '@activepieces/shared';
 
-export const isRunAgent = (step?: FlowAction) => {
+export const isRunAgent = (step?: Step | null) => {
   return (
     !isNil(step) &&
     step.type === FlowActionType.PIECE &&
@@ -40,7 +40,7 @@ export const AgentTestStep = ({
   return (
     <div className="flex flex-col justify-center w-full items-start">
       <Tabs defaultValue="timeline" className="w-full">
-        <TabsList>
+        <TabsList className="w-[250px] grid grid-cols-2">
           <TabsTrigger value="timeline">{t('Timeline')}</TabsTrigger>
           <TabsTrigger value="output">{t('Output')}</TabsTrigger>
         </TabsList>
