@@ -156,7 +156,9 @@ const useShouldShowPublishButton = ({
   const isViewingPublishableVersion =
     flowVersion.state === FlowVersionState.DRAFT;
   return (
-    ((permissionToEditFlow && isViewingPublishableVersion) || isPublishing || isSaving) &&
+    ((permissionToEditFlow && isViewingPublishableVersion) ||
+      isPublishing ||
+      isSaving) &&
     isNil(run) &&
     isValid
   );
