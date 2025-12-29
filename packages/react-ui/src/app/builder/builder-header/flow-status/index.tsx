@@ -5,7 +5,6 @@ import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { FlowVersionState } from '@activepieces/shared';
 
-import { EditFlowOrViewDraftButton } from './view-draft-or-edit-flow-button';
 const BuilderFlowStatusSection = React.memo(() => {
   const [flowVersion, flow] = useBuilderStateContext((state) => [
     state.flowVersion,
@@ -13,20 +12,17 @@ const BuilderFlowStatusSection = React.memo(() => {
   ]);
 
   return (
-    <>
-      <div className="flex items-center space-x-2">
-        <FlowVersionStateDot
-          state={flowVersion.state}
-          versionId={flowVersion.id}
-          publishedVersionId={flow.publishedVersionId}
-        ></FlowVersionStateDot>
-        {(flow.publishedVersionId === flowVersion.id ||
-          flowVersion.state === FlowVersionState.DRAFT) && (
-          <FlowStatusToggle flow={flow}></FlowStatusToggle>
-        )}
-      </div>
-      <EditFlowOrViewDraftButton onCanvas={false}></EditFlowOrViewDraftButton>
-    </>
+    <div className="flex items-center space-x-2">
+      <FlowVersionStateDot
+        state={flowVersion.state}
+        versionId={flowVersion.id}
+        publishedVersionId={flow.publishedVersionId}
+      ></FlowVersionStateDot>
+      {(flow.publishedVersionId === flowVersion.id ||
+        flowVersion.state === FlowVersionState.DRAFT) && (
+        <FlowStatusToggle flow={flow}></FlowStatusToggle>
+      )}
+    </div>
   );
 });
 

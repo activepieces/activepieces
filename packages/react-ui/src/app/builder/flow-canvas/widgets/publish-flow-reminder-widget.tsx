@@ -12,13 +12,17 @@ import {
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
+  FlowRun,
   FlowStatusUpdatedResponse,
+  FlowVersion,
   FlowVersionState,
   isNil,
   Permission,
 } from '@activepieces/shared';
 
 import { RightSideBarType, useBuilderStateContext } from '../../builder-hooks';
+
+import LargeWidgetWrapper from './large-widget-wrapper';
 
 const PublishFlowReminderWidget = () => {
   const [
@@ -30,6 +34,8 @@ const PublishFlowReminderWidget = () => {
     setFlow,
     setVersion,
     setRightSidebar,
+    flowVersion,
+    run,
   ] = useBuilderStateContext((state) => [
     state.saving,
     state.isPublishing,
@@ -39,8 +45,15 @@ const PublishFlowReminderWidget = () => {
     state.setFlow,
     state.setVersion,
     state.setRightSidebar,
+    state.flowVersion,
+    state.run,
   ]);
-  const showShouldPublishButton = useShouldShowPublishButton();
+  const showShouldPublishButton = useShouldShowPublishButton({
+    flowVersion,
+    isPublishing,
+    run,
+    isValid,
+  });
   const { mutate: discardChange, isPending: isDiscardingChanges } = useMutation(
     {
       mutationFn: async () => {
@@ -71,70 +84,75 @@ const PublishFlowReminderWidget = () => {
         setRightSidebar(RightSideBarType.NONE);
       },
     });
+
+  if (!showShouldPublishButton) {
+    return null;
+  }
   const showLoading = isPublishing || isDiscardingChanges;
   const loadingText = isDiscardingChanges
     ? t('Discarding changes...')
     : t('Publishing...');
-  if (!showShouldPublishButton || !isValid) {
-    return null;
-  }
   return (
-    <div
-      id="publish-flow-reminder-widget"
-      className="absolute top-[8px] z-40 w-full px-2"
-    >
-      <div className="py-1.5 px-3 border min-h-11.5 border border-border  bg-background shadow-sm z-40  w-full animate animate-fade duration-300 rounded-md  flex items-center justify-between">
+    <LargeWidgetWrapper>
+      <div className="flex items-center gap-2">
+        <InfoCircledIcon className="size-5" />
+        {showLoading ? loadingText : t('You have unpublished changes')}
+      </div>
+      {showLoading ? (
+        <LoadingSpinner className="size-5 stroke-foreground" />
+      ) : (
         <div className="flex items-center gap-2">
-          <InfoCircledIcon className="size-5" />
-          {showLoading ? loadingText : t('You have unpublished changes')}
-        </div>
-        {showLoading ? (
-          <LoadingSpinner className="size-5 stroke-foreground" />
-        ) : (
-          <div className="flex items-center gap-2">
-            {!isNil(flow.publishedVersionId) && !isSaving && (
+          {!isNil(flow.publishedVersionId) && !isSaving && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="hover:bg-gray-300/10 text-foreground"
+              onClick={() => discardChange()}
+            >
+              {t('Discard changes')}
+            </Button>
+          )}
+
+          <Tooltip>
+            <TooltipTrigger asChild>
               <Button
                 size="sm"
-                variant="ghost"
-                className="hover:bg-gray-300/10 text-foreground"
-                onClick={() => discardChange()}
+                variant="default"
+                loading={isSaving}
+                onClick={() => publish()}
               >
-                {t('Discard Changes')}
+                {t('Publish')}
               </Button>
-            )}
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="default"
-                  loading={isSaving}
-                  onClick={() => publish()}
-                >
-                  {t('Publish')}
-                </Button>
-              </TooltipTrigger>
-              {isSaving && <TooltipContent>{t('Saving...')}</TooltipContent>}
-            </Tooltip>
-          </div>
-        )}
-      </div>
-    </div>
+            </TooltipTrigger>
+            {isSaving && <TooltipContent>{t('Saving...')}</TooltipContent>}
+          </Tooltip>
+        </div>
+      )}
+    </LargeWidgetWrapper>
   );
 };
 
 PublishFlowReminderWidget.displayName = 'PublishFlowReminderWidget';
 export default PublishFlowReminderWidget;
 
-const useShouldShowPublishButton = () => {
-  const [flowVersion, isPublishing] = useBuilderStateContext((state) => [
-    state.flowVersion,
-    state.isPublishing,
-    state.flow,
-  ]);
+const useShouldShowPublishButton = ({
+  flowVersion,
+  isPublishing,
+  run,
+  isValid,
+}: {
+  flowVersion: FlowVersion;
+  isPublishing: boolean;
+  run: FlowRun | null;
+  isValid: boolean;
+}) => {
   const { checkAccess } = useAuthorization();
   const permissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const isViewingPublishableVersion =
     flowVersion.state === FlowVersionState.DRAFT;
-  return (permissionToEditFlow && isViewingPublishableVersion) || isPublishing;
+  return (
+    ((permissionToEditFlow && isViewingPublishableVersion) || isPublishing) &&
+    isNil(run) &&
+    isValid
+  );
 };
