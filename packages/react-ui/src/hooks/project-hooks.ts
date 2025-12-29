@@ -137,13 +137,11 @@ export const projectHooks = {
           await projectApi.current();
           return true;
         } catch (error) {
-          const unauthenticatedResponse =  api.isError(error) &&
-          (error.response?.status === HttpStatusCode.BadRequest ||
-            error.response?.status === HttpStatusCode.Forbidden)
-          if (
-            unauthenticatedResponse && !isNil(previousProjectId)
-          ) {
-            debugger;
+          const unauthenticatedResponse =
+            api.isError(error) &&
+            (error.response?.status === HttpStatusCode.BadRequest ||
+              error.response?.status === HttpStatusCode.Forbidden);
+          if (unauthenticatedResponse && !isNil(previousProjectId)) {
             authenticationSession.switchToProject(previousProjectId);
             toast.error(t('Invalid Access'), {
               description: t(

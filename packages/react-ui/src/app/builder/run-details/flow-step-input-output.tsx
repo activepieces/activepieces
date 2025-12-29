@@ -44,7 +44,7 @@ export const FlowStepInputOutput = () => {
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
-  const isAgent = isRunAgent(selectedStep)
+  const isAgent = isRunAgent(selectedStep);
   const isStepRunning =
     selectedStepOutput?.status === StepOutputStatus.RUNNING ||
     selectedStepOutput?.status === StepOutputStatus.PAUSED;
@@ -105,12 +105,13 @@ export const FlowStepInputOutput = () => {
             <JsonViewer json={selectedStepOutput.input} title={t('Input')} />
           </TabsContent>
 
-         {isAgent && <TabsContent value="timeline">
-            <AgentTimeline
-              agentResult={selectedStepOutput.output as AgentResult}
-            />
-          </TabsContent>
-}
+          {isAgent && (
+            <TabsContent value="timeline">
+              <AgentTimeline
+                agentResult={selectedStepOutput.output as AgentResult}
+              />
+            </TabsContent>
+          )}
           <TabsContent value="output">
             {isStepRunning ? (
               <OutputSkeleton />

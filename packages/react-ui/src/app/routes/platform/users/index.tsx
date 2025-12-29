@@ -21,6 +21,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
@@ -32,7 +33,6 @@ import { platformUserApi } from '@/lib/platform-user-api';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 
 import { UpdateUserDialog } from './update-user-dialog';
-import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 
 export default function UsersPage() {
   const { data, isLoading, refetch } = platformUserHooks.useUsers();
@@ -105,7 +105,7 @@ export default function UsersPage() {
                 />
               ),
               cell: ({ row }) => {
-                return <TruncatedColumnTextValue value={row.original.email} />
+                return <TruncatedColumnTextValue value={row.original.email} />;
               },
             },
             {
@@ -120,7 +120,9 @@ export default function UsersPage() {
               ),
               cell: ({ row }) => {
                 return (
-                  <TruncatedColumnTextValue value={row.original.firstName + ' ' + row.original.lastName} />
+                  <TruncatedColumnTextValue
+                    value={row.original.firstName + ' ' + row.original.lastName}
+                  />
                 );
               },
             },
