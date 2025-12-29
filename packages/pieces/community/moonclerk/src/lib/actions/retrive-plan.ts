@@ -1,20 +1,17 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { moonclerkAuth } from '../common/auth';
-import {
-  HttpMessageBody,
-  HttpMethod,
-  QueryParams,
-  httpClient,
-  HttpRequest,
-} from '@activepieces/pieces-common';
-import { customerId } from '../common/props';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
 export const retrivePlan = createAction({
   auth: moonclerkAuth,
   name: 'retrivePlan',
   displayName: 'Retrieve Plan',
   description: 'Retrieve a customer plan from MoonClerk using the customer ID',
   props: {
-    customerId: customerId,
+    customerId: Property.ShortText({
+      displayName: 'Customer ID',
+      description: 'The ID of the customer to retrieve the plan for',
+      required: true,
+    }),
   },
   async run(context) {
     const { customerId } = context.propsValue;
