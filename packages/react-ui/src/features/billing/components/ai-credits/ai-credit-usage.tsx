@@ -114,7 +114,8 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">
-                {t('Total lifetime usage')}: {Math.floor(totalCreditsUsed).toLocaleString()}
+                {t('Total lifetime usage')}:{' '}
+                {Math.floor(totalCreditsUsed).toLocaleString()}
               </div>
             </div>
           </div>

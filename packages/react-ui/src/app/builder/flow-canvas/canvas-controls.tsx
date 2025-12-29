@@ -104,7 +104,10 @@ const CanvasControls = ({
           x:
             canvasWidth / 2 -
             (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
-          y: nodes[0].position.y + verticalPaddingOnFitView * zoomRatio,
+          y:
+            nodes[0].position.y +
+            verticalPaddingOnFitView * zoomRatio +
+            flowUtilConsts.AP_NODE_SIZE.STEP.height,
           zoom: zoomRatio,
         },
         {

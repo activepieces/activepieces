@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 
 import {
@@ -7,8 +6,7 @@ import {
 } from '@/app/builder/builder-hooks';
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flowsApi } from '@/features/flows/lib/flows-api';
-import { FlowVersionMetadata, SeekPage } from '@activepieces/shared';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 
 import { SidebarHeader } from '../sidebar-header';
 
@@ -23,15 +21,7 @@ const FlowVersionsList = () => {
     data: flowVersionPage,
     isLoading,
     isError,
-  } = useQuery<SeekPage<FlowVersionMetadata>, Error>({
-    queryKey: ['flow-versions', flow.id],
-    queryFn: () =>
-      flowsApi.listVersions(flow.id, {
-        limit: 1000,
-        cursor: undefined,
-      }),
-    staleTime: 0,
-  });
+  } = flowHooks.useListFlowVersions(flow.id);
 
   return (
     <>
