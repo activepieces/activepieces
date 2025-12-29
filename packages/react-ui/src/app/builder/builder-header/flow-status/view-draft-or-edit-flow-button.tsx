@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { EyeIcon, PencilIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-use';
 
@@ -30,9 +29,7 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
       switchToDraft();
     }
   };
-  const { text, icon } = getButtonTextAndIcon({
-    hasPermissionToEditFlow: permissionToEditFlow,
-  });
+  const text = permissionToEditFlow ? t('Edit flow') : t('View draft');
 
   return (
     <>
@@ -47,10 +44,10 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
 
       {!onCanvas && (
         <Button
-          size={'default'}
-          variant={'ghost'}
+          size={'sm'}
+          variant={'default'}
           loading={isSwitchingToDraftPending}
-          className="text-foreground gap-2"
+          className="gap-2"
           onClick={() => {
             if (location.pathname?.includes('/runs')) {
               navigate(`/flows/${flowId}`);
@@ -59,7 +56,6 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
             }
           }}
         >
-          {icon}
           {text}
         </Button>
       )}
@@ -68,21 +64,3 @@ const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
 };
 EditFlowOrViewDraftButton.displayName = 'EditFlowOrViewDraftButton';
 export { EditFlowOrViewDraftButton };
-function getButtonTextAndIcon({
-  hasPermissionToEditFlow,
-}: {
-  hasPermissionToEditFlow: boolean;
-}) {
-  const text = hasPermissionToEditFlow ? t('Edit flow') : t('View draft');
-
-  if (hasPermissionToEditFlow) {
-    return {
-      icon: <PencilIcon className="size-4" />,
-      text,
-    };
-  }
-  return {
-    icon: <EyeIcon className="size-4" />,
-    text,
-  };
-}

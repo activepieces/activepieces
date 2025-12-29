@@ -22,6 +22,7 @@ import {
 import {
   doesSelectionRectangleExist,
   NODE_SELECTION_RECT_CLASS_NAME,
+  RightSideBarType,
   useBuilderStateContext,
   useFocusOnStep,
   useHandleKeyPressOnCanvas,
@@ -92,6 +93,7 @@ export const FlowCanvas = React.memo(
       selectedStep,
       panningMode,
       selectStepByName,
+      rightSidebar,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -100,6 +102,7 @@ export const FlowCanvas = React.memo(
         state.selectedStep,
         state.panningMode,
         state.selectStepByName,
+        state.rightSidebar,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -154,7 +157,11 @@ export const FlowCanvas = React.memo(
           const showStepContextMenu =
             stepElement || targetIsSelectionRect || targetIsSelectionChevron;
           if (showStepContextMenu) {
-            setContextMenuType(ContextMenuType.STEP);
+            if (rightSidebar === RightSideBarType.NONE) {
+              setTimeout(() => setContextMenuType(ContextMenuType.STEP), 10000);
+            } else {
+              setContextMenuType(ContextMenuType.STEP);
+            }
           } else {
             setContextMenuType(ContextMenuType.CANVAS);
           }
@@ -167,7 +174,12 @@ export const FlowCanvas = React.memo(
           }
         }
       },
-      [setSelectedNodes, selectedNodes, doesSelectionRectangleExist],
+      [
+        setSelectedNodes,
+        selectedNodes,
+        doesSelectionRectangleExist,
+        rightSidebar,
+      ],
     );
 
     const onSelectionEnd = useCallback(() => {
