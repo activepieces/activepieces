@@ -2,10 +2,9 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ArrowDown, ArrowUp, ArrowUpDown, Folder, Medal, Trophy } from 'lucide-react';
+import { Clock, LayoutGrid, Medal, Rocket, Trophy, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { Button } from '@/components/ui/button';
 import {
   DataTable,
   RowDataWithActions,
@@ -42,7 +41,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   {
     accessorKey: 'rank',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Rank')} />
+      <DataTableColumnHeader column={column} title={t('Rank')} icon={Medal} />
     ),
     cell: ({ row, table }) => {
       const sortedRows = table.getSortedRowModel().rows;
@@ -55,12 +54,12 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   {
     accessorKey: 'projectName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Project')} icon={Folder} />
+      <DataTableColumnHeader column={column} title={t('Project')} icon={LayoutGrid} />
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Folder className="h-5 w-5" />
+          <LayoutGrid className="h-5 w-5" />
         </div>
         <div className="flex flex-col">
           <p className="font-medium">{row.original.projectName}</p>
@@ -73,48 +72,28 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   },
   {
     accessorKey: 'flowCount',
-    header: ({ column }) => {
-      const sortDirection = column.getIsSorted();
-      const SortIcon = sortDirection === 'asc' ? ArrowUp : sortDirection === 'desc' ? ArrowDown : ArrowUpDown;
-      
-      return (
-        <Button
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            column.toggleSorting(column.getIsSorted() === 'asc');
-          }}
-          className="h-auto p-0 hover:bg-transparent -ml-3"
-        >
-          {t('Flows')}
-          <SortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Flows')}
+        icon={Workflow}
+        sortable={true}
+      />
+    ),
     cell: ({ row }) => (
       <div className="text-right font-semibold">{row.original.flowCount}</div>
     ),
   },
   {
     accessorKey: 'minutesSaved',
-    header: ({ column }) => {
-      const sortDirection = column.getIsSorted();
-      const SortIcon = sortDirection === 'asc' ? ArrowUp : sortDirection === 'desc' ? ArrowDown : ArrowUpDown;
-      
-      return (
-        <Button
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            column.toggleSorting(column.getIsSorted() === 'asc');
-          }}
-          className="h-auto p-0 hover:bg-transparent -ml-3"
-        >
-          {t('Time Saved')}
-          <SortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Time Saved')}
+        icon={Clock}
+        sortable={true}
+      />
+    ),
     cell: ({ row }) => (
       <div className="text-right font-semibold">
         {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
@@ -173,11 +152,11 @@ export function ProjectsLeaderboard({
       }}
       isLoading={isLoading ?? false}
       hidePagination={true}
-      emptyStateTextTitle={t('No project data available yet')}
+      emptyStateTextTitle={t('No projects on the board yet')}
       emptyStateTextDescription={t(
-        'Start creating flows to see project statistics',
+        'Projects will rank here as flows are created and time is saved',
       )}
-      emptyStateIcon={<Folder className="h-10 w-10 text-muted-foreground" />}
+      emptyStateIcon={<Rocket className="h-10 w-10 text-muted-foreground" />}
       onRowClick={(row) => {
         window.open(`/projects/${row.projectId}`, '_blank');
       }}

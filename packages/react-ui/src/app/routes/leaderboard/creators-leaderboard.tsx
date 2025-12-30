@@ -2,10 +2,9 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ArrowDown, ArrowUp, ArrowUpDown, Medal, Trophy, User } from 'lucide-react';
+import { Clock, Medal, Trophy, User, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { Button } from '@/components/ui/button';
 import {
   DataTable,
   RowDataWithActions,
@@ -43,7 +42,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
   {
     accessorKey: 'rank',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Rank')} />
+      <DataTableColumnHeader column={column} title={t('Rank')} icon={Medal} />
     ),
     cell: ({ row, table }) => {
       const sortedRows = table.getSortedRowModel().rows;
@@ -74,48 +73,28 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
   },
   {
     accessorKey: 'flowCount',
-    header: ({ column }) => {
-      const sortDirection = column.getIsSorted();
-      const SortIcon = sortDirection === 'asc' ? ArrowUp : sortDirection === 'desc' ? ArrowDown : ArrowUpDown;
-      
-      return (
-        <Button
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            column.toggleSorting(column.getIsSorted() === 'asc');
-          }}
-          className="h-auto p-0 hover:bg-transparent -ml-3"
-        >
-          {t('Flows')}
-          <SortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Flows')}
+        icon={Workflow}
+        sortable={true}
+      />
+    ),
     cell: ({ row }) => (
       <div className="text-right font-semibold">{row.original.flowCount}</div>
     ),
   },
   {
     accessorKey: 'minutesSaved',
-    header: ({ column }) => {
-      const sortDirection = column.getIsSorted();
-      const SortIcon = sortDirection === 'asc' ? ArrowUp : sortDirection === 'desc' ? ArrowDown : ArrowUpDown;
-      
-      return (
-        <Button
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            column.toggleSorting(column.getIsSorted() === 'asc');
-          }}
-          className="h-auto p-0 hover:bg-transparent -ml-3"
-        >
-          {t('Time Saved')}
-          <SortIcon className="ml-2 h-4 w-4" />
-        </Button>
-      );
-    },
+    header: ({ column }) => (
+      <DataTableColumnHeader
+        column={column}
+        title={t('Time Saved')}
+        icon={Clock}
+        sortable={true}
+      />
+    ),
     cell: ({ row }) => (
       <div className="text-right font-semibold">
         {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
@@ -184,11 +163,11 @@ export function CreatorsLeaderboard({
       }}
       isLoading={isLoading ?? false}
       hidePagination={true}
-      emptyStateTextTitle={t('No creator data available yet')}
+      emptyStateTextTitle={t('No automation heroes yet')}
       emptyStateTextDescription={t(
-        'Start creating flows to see creator statistics',
+        'Once your team starts building flows, their achievements will shine here',
       )}
-      emptyStateIcon={<User className="h-10 w-10 text-muted-foreground" />}
+      emptyStateIcon={<Trophy className="h-10 w-10 text-muted-foreground" />}
     />
   );
 }

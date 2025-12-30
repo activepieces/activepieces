@@ -55,7 +55,7 @@ export default function AnalyticsPage() {
     : data?.estimatedTimeSavedPerStep;
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-2 w-full">
       <DashboardPageHeader
         title={
           <div className="flex items-center gap-3">
