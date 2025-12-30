@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
+import { FastAverageColor } from 'fast-average-color';
 import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
@@ -9,7 +10,6 @@ import { twMerge } from 'tailwind-merge';
 import { LocalesEnum, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
-import { FastAverageColor } from 'fast-average-color';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -403,14 +403,14 @@ export const routesThatRequireProjectId = {
   singleRelease: '/releases/:releaseId',
 };
 
-
 export const averageColorInImageUtils = {
   isGrayColor: (r: number, g: number, b: number): boolean => {
     const threshold = 15;
     const darkThreshold = 150;
     const lightThreshold = 225;
-  
-    const isDark = r <= darkThreshold && g <= darkThreshold && b <= darkThreshold;
+
+    const isDark =
+      r <= darkThreshold && g <= darkThreshold && b <= darkThreshold;
     const isLight =
       r >= lightThreshold && g >= lightThreshold && b >= lightThreshold;
     const diffRG = Math.abs(r - g);
@@ -420,16 +420,22 @@ export const averageColorInImageUtils = {
       diffRG <= threshold && diffRB <= threshold && diffGB <= threshold;
     return isDark || isLight || isGray;
   },
-  useAverageColorInImage: ({imgUrl, transparency}: {imgUrl:string, transparency:number}) => {
+  useAverageColorInImage: ({
+    imgUrl,
+    transparency,
+  }: {
+    imgUrl: string;
+    transparency: number;
+  }) => {
     const [backgroundColor, setBackgroundColor] = useState<string | null>(null);
     useEffect(() => {
       if (!imgUrl) return;
-  
+
       const fac = new FastAverageColor();
       const img = new Image();
       img.crossOrigin = 'anonymous';
       img.src = imgUrl;
-  
+
       img.onload = () => {
         fac
           .getColorAsync(img, { algorithm: 'simple' })
@@ -447,11 +453,11 @@ export const averageColorInImageUtils = {
             setBackgroundColor(null);
           });
       };
-  
+
       return () => {
         fac.destroy();
       };
     }, [imgUrl]);
     return backgroundColor;
-  }
-}
+  },
+};

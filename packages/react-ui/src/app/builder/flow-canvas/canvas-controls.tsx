@@ -1,7 +1,7 @@
 import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { Fullscreen, Hand, Map, Minus, MousePointer, Plus } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -160,9 +160,15 @@ const CanvasControls = ({
     }
   };
 
-  const [setPanningMode, panningMode, showMinimap, setShowMinimap] = useBuilderStateContext((state) => {
-    return [state.setPanningMode, state.panningMode, state.showMinimap, state.setShowMinimap];
-  });
+  const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
+    useBuilderStateContext((state) => {
+      return [
+        state.setPanningMode,
+        state.panningMode,
+        state.showMinimap,
+        state.setShowMinimap,
+      ];
+    });
   const spacePressed = useKeyPress('Space');
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
@@ -174,16 +180,20 @@ const CanvasControls = ({
       className="z-50 absolute bottom-2 left-0 flex items-center  w-full pointer-events-none "
     >
       <div className="flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-background border border-sidebar-border">
-      <CanvasButtonWrapper tooltip={t('Minimap')}>
-          <Button variant={showMinimap ? 'default' : 'ghost'} size="icon" onClick={() => {
-            setShowMinimap(!showMinimap);
-          }}>
+        <CanvasButtonWrapper tooltip={t('Minimap')}>
+          <Button
+            variant={showMinimap ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setShowMinimap(!showMinimap);
+            }}
+          >
             <Map className="size-4" />
           </Button>
         </CanvasButtonWrapper>
       </div>
-      <div className='grow'></div>
-     
+      <div className="grow"></div>
+
       <div className="bg-background gap-2 flex items-center shadow-2xl justify-center border border-sidebar-border p-1.5 rounded-lg pointer-events-auto">
         <CanvasButtonWrapper tooltip={t('Zoom in')}>
           <Button variant="ghost" size="icon" onClick={handleZoomIn}>
@@ -226,7 +236,7 @@ const CanvasControls = ({
           </Button>
         </CanvasButtonWrapper>
       </div>
-      <div className='grow'></div>
+      <div className="grow"></div>
     </div>
   );
 };

@@ -17,7 +17,10 @@ const ImageWithColorBackground = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const backgroundColor = averageColorInImageUtils.useAverageColorInImage({imgUrl: src ?? '', transparency: 10});
+  const backgroundColor = averageColorInImageUtils.useAverageColorInImage({
+    imgUrl: src ?? '',
+    transparency: 10,
+  });
   const handleLoad = () => {
     setIsLoading(false);
   };

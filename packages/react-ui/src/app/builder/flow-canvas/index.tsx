@@ -7,7 +7,6 @@ import {
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
-  MiniMap,
   getNodesBounds,
   CoordinateExtent,
 } from '@xyflow/react';
@@ -44,8 +43,8 @@ import {
 } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
-import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
 import Minimap from './widgets/minimap';
+import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -98,7 +97,6 @@ export const FlowCanvas = React.memo(
       panningMode,
       selectStepByName,
       rightSidebar,
-      showMinimap,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -108,7 +106,6 @@ export const FlowCanvas = React.memo(
         state.panningMode,
         state.selectStepByName,
         state.rightSidebar,
-        state.showMinimap,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -216,15 +213,16 @@ export const FlowCanvas = React.memo(
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
     const translateExtent = useMemo(() => {
-       const nodes = graph.nodes;
-       const graphRectangle = getNodesBounds(nodes);
-       const maxWidth = Math.max(window.innerWidth, graphRectangle.width) + 150;
-       const maxHeight = Math.max(window.innerHeight, graphRectangle.height) +150;
-       const extent: CoordinateExtent = [
-        [-maxWidth, -maxHeight/2],
+      const nodes = graph.nodes;
+      const graphRectangle = getNodesBounds(nodes);
+      const maxWidth = Math.max(window.innerWidth, graphRectangle.width) + 150;
+      const maxHeight =
+        Math.max(window.innerHeight, graphRectangle.height) + 150;
+      const extent: CoordinateExtent = [
+        [-maxWidth, -maxHeight / 2],
         [maxWidth, maxHeight],
-       ];
-       return extent;
+      ];
+      return extent;
     }, [graphKey]);
 
     return (
@@ -278,7 +276,7 @@ export const FlowCanvas = React.memo(
                 bgColor={`var(--builder-background)`}
                 color={`var(--builder-background-pattern)`}
               />
-             <Minimap key={graphKey} />
+              <Minimap key={graphKey} />
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>
