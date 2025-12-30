@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { skyprepAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { user_idDropdown } from '../common/props';
 
 export const enrollAUserIntoAUserGroup = createAction({
   auth: skyprepAuth,
@@ -25,11 +26,7 @@ export const enrollAUserIntoAUserGroup = createAction({
       description: 'The email address of the user to enroll',
       required: false,
     }),
-    user_id: Property.Number({
-      displayName: 'User ID',
-      description: 'The ID of the user to enroll',
-      required: false,
-    }),
+    user_id:user_idDropdown,
     user_group_id: Property.Number({
       displayName: 'User Group ID',
       description: 'The ID of the user group to enroll the user into',

@@ -34,3 +34,35 @@ export const courceID = Property.Dropdown({
     };
   },
 });
+
+export const user_idDropdown = Property.Dropdown({
+  auth: skyprepAuth,
+  displayName: 'User',
+  description: 'Select the user',
+  required: true,
+  refreshers: [],
+  options: async ({ auth }) => {
+    if (!auth || !auth.secret_text) {
+      return {
+        disabled: true,
+        options: [],
+      };
+    }
+    const response = await makeRequest(
+      auth.secret_text,
+      HttpMethod.POST,
+      '/get_users',
+      {
+        per_page: 100,
+      }
+    );
+
+    return {
+      disabled: false,
+      options: response.map((user: any) => ({
+        label: ` ${user.username} (${user.first_name} ${user.last_name})`,
+        value: user.id,
+      })),
+    };
+  },
+});
