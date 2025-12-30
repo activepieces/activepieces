@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search, Loader2, Plus, LineChart } from 'lucide-react';
+import { Compass, Search, Loader2, Plus, LineChart, Trophy } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -176,8 +176,18 @@ export function ProjectDashboardSidebar() {
     hasPermission: true,
     isSubItem: false,
   };
+  
+  const leaderboardLink: SidebarItemType = {
+    type: 'link',
+    to: '/leaderboard',
+    label: t('Leaderboard'),
+    icon: Trophy,
+    show: true,
+    hasPermission: true,
+    isSubItem: false,
+  };
 
-  const items = [exploreLink, impactLink].filter(permissionFilter);
+  const items = [exploreLink, impactLink, leaderboardLink].filter(permissionFilter);
 
   const handleProjectSelect = async (projectId: string) => {
     const project = displayProjects?.find((p) => p.id === projectId);

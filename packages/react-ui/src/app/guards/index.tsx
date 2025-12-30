@@ -69,6 +69,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import LeaderboardPage from '../routes/leaderboard';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -346,6 +347,16 @@ const routes = [
       <ProjectDashboardLayout>
         <PageTitle title="Impact">
           <AnalyticsPage />
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  },
+  {
+    path: '/leaderboard',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Leaderboard">
+          <LeaderboardPage />
         </PageTitle>
       </ProjectDashboardLayout>
     ),
