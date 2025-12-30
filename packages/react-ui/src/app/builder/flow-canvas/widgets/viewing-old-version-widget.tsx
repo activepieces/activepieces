@@ -1,6 +1,5 @@
 import { InfoCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { UndoIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
@@ -48,7 +47,6 @@ const ViewingOldVersionWidget = () => {
               onConfirm={undefined}
             >
               <Button variant="ghost" size="sm">
-                <UndoIcon className="size-4" />
                 {t('Use as Draft')}
               </Button>
             </OverwriteDraftDialog>

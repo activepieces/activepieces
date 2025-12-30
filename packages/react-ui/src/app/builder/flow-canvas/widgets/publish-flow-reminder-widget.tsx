@@ -53,6 +53,7 @@ const PublishFlowReminderWidget = () => {
     isPublishing,
     run,
     isValid,
+    isSaving,
   });
   const { mutate: discardChange, isPending: isDiscardingChanges } = useMutation(
     {
@@ -119,6 +120,8 @@ const PublishFlowReminderWidget = () => {
                 size="sm"
                 variant="default"
                 loading={isSaving}
+                //for e2e tests
+                name="Publish"
                 onClick={() => publish()}
               >
                 {t('Publish')}
@@ -140,18 +143,22 @@ const useShouldShowPublishButton = ({
   isPublishing,
   run,
   isValid,
+  isSaving,
 }: {
   flowVersion: FlowVersion;
   isPublishing: boolean;
   run: FlowRun | null;
   isValid: boolean;
+  isSaving: boolean;
 }) => {
   const { checkAccess } = useAuthorization();
   const permissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
   const isViewingPublishableVersion =
     flowVersion.state === FlowVersionState.DRAFT;
   return (
-    ((permissionToEditFlow && isViewingPublishableVersion) || isPublishing) &&
+    ((permissionToEditFlow && isViewingPublishableVersion) ||
+      isPublishing ||
+      isSaving) &&
     isNil(run) &&
     isValid
   );
