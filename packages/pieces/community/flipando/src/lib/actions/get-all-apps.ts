@@ -9,24 +9,15 @@ export const getAllApps = createAction({
   displayName: 'Get All Apps',
   description:
     'Retrieves all the applications created by the authenticated user.',
-  props: {
-    max_results: Property.Number({
-      displayName: 'Max Results',
-      description: 'Maximum number of results to return.',
-      required: false,
-      defaultValue: 100,
-    }),
-  },
+  props: {},
   async run(context) {
     const apiKey = context.auth.secret_text;
-    const maxResults = context.propsValue.max_results;
-
     return await makeRequest(
       apiKey,
       HttpMethod.GET,
       '/integrations/applications',
       {
-        max_results: maxResults,
+        max_results: 20,
       }
     );
   },
