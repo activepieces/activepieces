@@ -46,6 +46,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         const newFlow = await flowService(request.log).create({
             projectId: request.projectId,
             request: request.body,
+            ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
         })
 
         eventsHooks.get(request.log).sendUserEventFromRequest(request, {

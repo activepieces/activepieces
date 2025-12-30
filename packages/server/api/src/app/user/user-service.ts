@@ -147,6 +147,16 @@ export const userService = {
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneOrFail({ where: { id } })
     },
+    async getOneByIdAndPlatformIdOrThrow({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<UserWithMetaInformation> {
+        const exists = await userRepo().existsBy({ id, platformId })
+        if (!exists) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: { entityType: 'user', entityId: id },
+            })
+        }
+        return this.getMetaInformation({ id })
+    },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await userRepo().delete({
             id,
@@ -216,6 +226,10 @@ type UpdateLastActiveDateParams = {
     id: UserId
 }
 
+type GetOneByIdAndPlatformIdParams = {
+    id: UserId
+    platformId: PlatformId
+}
 type ListUsersForProjectParams = {
     projectId: ProjectId
     platformId: PlatformId

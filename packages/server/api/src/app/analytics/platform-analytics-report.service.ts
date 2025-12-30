@@ -9,7 +9,6 @@ import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 import { userRepo } from '../user/user-service'
-import { In } from 'typeorm'
 
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 
