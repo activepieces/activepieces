@@ -9,6 +9,8 @@ import {
   ListTodo,
   CheckCheck,
   Trash2,
+  Activity,
+  Clock,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -21,6 +23,7 @@ import {
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -156,19 +159,23 @@ function TodosPage() {
   const columns: ColumnDef<RowDataWithActions<PopulatedTodo>, unknown>[] = [
     {
       accessorKey: 'title',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Title')} />
+        <DataTableColumnHeader column={column} title={t('Title')} icon={Tag} />
       ),
       cell: ({ row }) => {
-        return (
-          <div className="flex items-center gap-2">{row.original.title}</div>
-        );
+        return <TruncatedColumnTextValue value={row.original.title} />;
       },
     },
     {
       accessorKey: 'createdBy',
+      size: 180,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created by')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created by')}
+          icon={User}
+        />
       ),
       cell: ({ row }) => {
         const authorName = todoUtils.getAuthorName(row.original);
@@ -187,8 +194,13 @@ function TodosPage() {
     },
     {
       accessorKey: 'assignee',
+      size: 180,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Assigned to')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Assigned to')}
+          icon={User}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -213,8 +225,13 @@ function TodosPage() {
     },
     {
       accessorKey: 'status',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Status')}
+          icon={Activity}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -232,8 +249,13 @@ function TodosPage() {
 
     {
       accessorKey: 'created',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Date Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Date Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (

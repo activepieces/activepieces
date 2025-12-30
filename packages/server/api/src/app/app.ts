@@ -14,7 +14,8 @@ import { setPlatformOAuthService } from './app-connection/app-connection-service
 import { appConnectionModule } from './app-connection/app-connection.module'
 import { authenticationModule } from './authentication/authentication.module'
 import { rateLimitModule } from './core/security/rate-limit'
-import { securityHandlerChain } from './core/security/security-handler-chain'
+import { authenticationMiddleware } from './core/security/v2/authn/authentication-middleware'
+import { authorizationMiddleware } from './core/security/v2/authz/authorization-middleware'
 import { websocketService } from './core/websockets.service'
 import { distributedLock, redisConnections } from './database/redis-connections'
 import { alertsModule } from './ee/alerts/alerts-module'
@@ -40,6 +41,7 @@ import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
+import { platformAiCreditsService } from './ee/platform/platform-plan/platform-ai-credits.service'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
@@ -176,8 +178,10 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         }
     })
 
-    app.addHook('preHandler', securityHandlerChain)
+    app.addHook('preHandler', authenticationMiddleware)
+    app.addHook('preHandler', authorizationMiddleware)
     app.addHook('preHandler', rbacMiddleware)
+
     await systemJobsSchedule(app.log).init()
     await app.register(fileModule)
     await app.register(flagModule)
@@ -269,6 +273,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(appCredentialModule)
             await app.register(connectionKeyModule)
             await app.register(platformProjectModule)
+            await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
@@ -294,6 +299,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             exceptionHandler.initializeSentry(system.get(AppSystemProp.SENTRY_DSN))
             break
         case ApEdition.ENTERPRISE:
+            await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)

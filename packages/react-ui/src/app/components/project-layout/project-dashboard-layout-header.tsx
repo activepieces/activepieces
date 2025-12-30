@@ -101,12 +101,12 @@ export const ProjectDashboardLayoutHeader = () => {
       );
       return matchedItem || null;
     });
-
+  const shownItemsUnderMoreDropdown = moreItems.filter(
+    (item) => item.to !== pinnedItem?.to && item.show && item.hasPermission,
+  );
   return (
     <div className="flex flex-col gap-1">
-      {!isEmbedded && (
-        <ProjectDashboardPageHeader title={project?.displayName} />
-      )}
+      {!isEmbedded && <ProjectDashboardPageHeader />}
       <Tabs className="px-4">
         {!embedState.hideSideNav && (
           <TabsList variant="outline">
@@ -183,12 +183,12 @@ export const ProjectDashboardLayoutHeader = () => {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 {(() => {
-                  const filteredMoreItems = moreItems.filter(
-                    (item) => item.to !== pinnedItem?.to,
-                  );
-                  const activeItem = filteredMoreItems.find((item) =>
+                  const activeItem = shownItemsUnderMoreDropdown.find((item) =>
                     location.pathname.includes(item.to),
                   );
+                  if (shownItemsUnderMoreDropdown.length === 0) {
+                    return null;
+                  }
 
                   if (activeItem) {
                     return (
@@ -218,29 +218,22 @@ export const ProjectDashboardLayoutHeader = () => {
                 })()}
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
-                {moreItems
-                  .filter(
-                    (item) =>
-                      item.show &&
-                      item.hasPermission !== false &&
-                      item.to !== pinnedItem?.to,
-                  )
-                  .map((item) => {
-                    return (
-                      <DropdownMenuItem
-                        key={item.to}
-                        onClick={() => {
-                          setPinnedItem(item);
-                          navigate(item.to);
-                        }}
-                      >
-                        <div className="flex items-center gap-2">
-                          <item.icon className={cn('size-4')} />
-                          <span>{item.label}</span>
-                        </div>
-                      </DropdownMenuItem>
-                    );
-                  })}
+                {shownItemsUnderMoreDropdown.map((item) => {
+                  return (
+                    <DropdownMenuItem
+                      key={item.to}
+                      onClick={() => {
+                        setPinnedItem(item);
+                        navigate(item.to);
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        <item.icon className={cn('size-4')} />
+                        <span>{item.label}</span>
+                      </div>
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
           </TabsList>

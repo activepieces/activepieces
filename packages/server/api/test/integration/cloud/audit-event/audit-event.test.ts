@@ -32,7 +32,7 @@ describe('Audit Event API', () => {
                     auditLogEnabled: true,
                 },
             })
-            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo, mockProject: mockProjectOne } = await mockAndSaveBasicSetup({
+            const { mockOwner: mockUserTwo, mockPlatform: mockPlatformTwo } = await mockAndSaveBasicSetup({
                
             })
 
@@ -40,7 +40,6 @@ describe('Audit Event API', () => {
             const testToken1 = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUserOne.id,
-                projectId: mockProjectOne.id,
                 platform: { id: mockPlatformOne.id },
             })
 
@@ -96,7 +95,7 @@ describe('Audit Event API', () => {
 
         it('should return forbidden if the user is not the owner', async () => {
             // arrange
-            const { mockPlatform, mockProject } = await mockAndSaveBasicSetup()
+            const { mockPlatform } = await mockAndSaveBasicSetup()
 
             const { mockUser } = await mockBasicUser({
                 user: {
@@ -107,7 +106,7 @@ describe('Audit Event API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
-                projectId: mockProject.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
