@@ -34,7 +34,7 @@ export const lucidya = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/lucidya.png',
   categories: [PieceCategory.MARKETING],
-  authors: [],
+  authors: ["onyedikachi-david"],
   actions: [],
   triggers: [newAlertTrigger],
 });
