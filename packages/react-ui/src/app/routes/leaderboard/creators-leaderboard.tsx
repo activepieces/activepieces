@@ -1,23 +1,26 @@
 'use client';
 
+import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Medal, Trophy, User } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Medal, Trophy, User } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import {
+  DataTable,
+  RowDataWithActions,
+} from '@/components/ui/data-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type SortOption = 'flows' | 'timeSaved';
-
 type CreatorsLeaderboardProps = {
   report?: PlatformAnalyticsReport;
-  sortBy: SortOption;
   isLoading?: boolean;
 };
 
 type CreatorStats = {
+  id: string;
   userId: string;
   userName: string;
   userEmail: string;
@@ -25,9 +28,107 @@ type CreatorStats = {
   minutesSaved: number;
 };
 
+const getRankIcon = (index: number) => {
+  if (index === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
+  if (index === 1) return <Medal className="w-5 h-5 text-gray-400" />;
+  if (index === 2) return <Medal className="w-5 h-5 text-amber-600" />;
+  return (
+    <span className="flex h-6 w-6 items-center justify-center text-sm font-semibold text-muted-foreground">
+      {index + 1}
+    </span>
+  );
+};
+
+const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
+  {
+    accessorKey: 'rank',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Rank')} />
+    ),
+    cell: ({ row, table }) => {
+      const sortedRows = table.getSortedRowModel().rows;
+      const index = sortedRows.findIndex((r) => r.id === row.id);
+      return <div className="shrink-0">{getRankIcon(index)}</div>;
+    },
+    enableSorting: false,
+    size: 60,
+  },
+  {
+    accessorKey: 'userName',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Creator')} icon={User} />
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+          {row.original.userName.charAt(0).toUpperCase()}
+        </div>
+        <div className="flex flex-col">
+          <p className="font-medium">{row.original.userName}</p>
+          <p className="text-sm text-muted-foreground">
+            {row.original.userEmail}
+          </p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'flowCount',
+    header: ({ column }) => {
+      const sortDirection = column.getIsSorted();
+      const SortIcon = sortDirection === 'asc' ? ArrowUp : sortDirection === 'desc' ? ArrowDown : ArrowUpDown;
+      
+      return (
+        <Button
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            column.toggleSorting(column.getIsSorted() === 'asc');
+          }}
+          className="h-auto p-0 hover:bg-transparent -ml-3"
+        >
+          {t('Flows')}
+          <SortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="text-right font-semibold">{row.original.flowCount}</div>
+    ),
+  },
+  {
+    accessorKey: 'minutesSaved',
+    header: ({ column }) => {
+      const sortDirection = column.getIsSorted();
+      const SortIcon = sortDirection === 'asc' ? ArrowUp : sortDirection === 'desc' ? ArrowDown : ArrowUpDown;
+      
+      return (
+        <Button
+          variant="ghost"
+          onClick={(e) => {
+            e.stopPropagation();
+            column.toggleSorting(column.getIsSorted() === 'asc');
+          }}
+          className="h-auto p-0 hover:bg-transparent -ml-3"
+        >
+          {t('Time Saved')}
+          <SortIcon className="ml-2 h-4 w-4" />
+        </Button>
+      );
+    },
+    cell: ({ row }) => (
+      <div className="text-right font-semibold">
+        {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
+      </div>
+    ),
+    sortingFn: (rowA, rowB) => {
+      return rowA.original.minutesSaved - rowB.original.minutesSaved;
+    },
+  },
+];
+
 export function CreatorsLeaderboard({
   report,
-  sortBy,
   isLoading,
 }: CreatorsLeaderboardProps) {
   const leaderboardData = useMemo(() => {
@@ -53,6 +154,7 @@ export function CreatorsLeaderboard({
         existing.minutesSaved += flow.minutesSaved;
       } else {
         creatorStatsMap.set(flow.ownerId, {
+          id: flow.ownerId,
           userId: flow.ownerId,
           userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
           userEmail: user.email,
@@ -62,93 +164,31 @@ export function CreatorsLeaderboard({
       }
     });
 
-    const data = Array.from(creatorStatsMap.values());
-    data.sort((a, b) => {
-      if (sortBy === 'flows') {
-        return b.flowCount - a.flowCount;
-      } else {
-        return b.minutesSaved - a.minutesSaved;
-      }
-    });
+    return Array.from(creatorStatsMap.values());
+  }, [report?.flowsDetails, report?.users]);
 
-    return data;
-  }, [report?.flowsDetails, report?.users, sortBy]);
+  const columns = useMemo(() => createColumns(), []);
 
-  const getRankIcon = (index: number) => {
-    if (index === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
-    if (index === 1) return <Medal className="w-5 h-5 text-gray-400" />;
-    if (index === 2) return <Medal className="w-5 h-5 text-amber-600" />;
-    return (
-      <span className="flex h-6 w-6 items-center justify-center text-sm font-semibold text-muted-foreground">
-        {index + 1}
-      </span>
-    );
-  };
-
-  if (isLoading || !report) {
-    return (
-      <div className="space-y-4">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-20 w-full" />
-        ))}
-      </div>
-    );
-  }
-
-  if (leaderboardData.length === 0) {
-    return (
-      <Card>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <User className="h-12 w-12 text-muted-foreground/50 mb-4" />
-          <p className="text-sm text-muted-foreground">
-            {t('No creator data available yet')}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const dataWithIds: CreatorStats[] = leaderboardData.map((creator) => ({
+    ...creator,
+    id: creator.userId,
+  }));
 
   return (
-    <div className="space-y-3">
-      {leaderboardData.map((creator, index) => (
-        <Card key={creator.userId} className="hover:bg-accent/50 transition-colors">
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="shrink-0">{getRankIcon(index)}</div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                  {creator.userName.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{creator.userName}</p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {creator.userEmail}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-6 text-right">
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  {t('Flows')}
-                </p>
-                <p className="text-lg font-semibold">{creator.flowCount}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  {t('Time Saved')}
-                </p>
-                <p className="text-lg font-semibold">
-                  {formatUtils.formatToHoursAndMinutes(creator.minutesSaved)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+    <DataTable
+      columns={columns}
+      page={{
+        data: dataWithIds,
+        next: null,
+        previous: null,
+      }}
+      isLoading={isLoading ?? false}
+      hidePagination={true}
+      emptyStateTextTitle={t('No creator data available yet')}
+      emptyStateTextDescription={t(
+        'Start creating flows to see creator statistics',
+      )}
+      emptyStateIcon={<User className="h-10 w-10 text-muted-foreground" />}
+    />
   );
 }
-
