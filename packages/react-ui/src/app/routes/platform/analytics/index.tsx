@@ -1,12 +1,17 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { RefreshCcwIcon } from 'lucide-react';
+import { CalendarDays, RefreshCcwIcon } from 'lucide-react';
 import { useContext } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -58,12 +63,26 @@ export default function AnalyticsPage() {
     >
       <div className="flex flex-col gap-6 w-full">
         <DashboardPageHeader
-          title={t('Analytics')}
+          title={
+            <div className="flex items-center gap-3">
+              <span>{t('Analytics')}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/80 text-accent-foreground text-xs font-medium border border-border/50 cursor-help">
+                    <CalendarDays className="w-3.5 h-3.5" />
+                    {t('Past 3 months')}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('Showing insights from the last 90 days')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          }
           description={
-            <span>
-              {t('Last updated')}:{' '}
-              {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
-              {t('Analytics refresh automatically every day')}
+            <span className="text-muted-foreground">
+              {t('Updated')} {dayjs(data?.updated).format('MMM DD, hh:mm A')} —{' '}
+              {t('Refreshes daily')}
             </span>
           }
         >

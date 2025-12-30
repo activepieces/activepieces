@@ -4,15 +4,26 @@ description: "This list shows all versions that include breaking changes and how
 icon: "hammer"
 ---
 
+## 0.75.0
+
+### What has changed?
+- In **development mode**, loading piece translations are now off by default. Set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` to enable.
+
+### Do you need to take action?
+- If you want to load translations for pieces in development mode, set `AP_LOAD_TRANSLATIONS_FOR_DEV_PIECES=true` in your environment variables.
+
 ## 0.74.0
 
 ### What has changed?
 - The default embedded database for development and lightweight deployments has changed from **SQLite3** to [**PGLite**](https://pglite.dev/) (embedded PostgreSQL).
 - The environment variable `AP_DB_TYPE=SQLITE3` is now deprecated and replaced with `AP_DB_TYPE=PGLITE`.
 - Existing SQLite databases will be automatically migrated to PGLite on first startup.
+- Templates are broken in this version. A migration issue changed template IDs, breaking API endpoints. This will be fixed in the next patch release.
+- The `aiCredits` feature per project has been removed. In the next version, it will be replaced by integration with the AI Gateway.
 
 ### Do you need to take action?
 - **If you are using `AP_DB_TYPE=SQLITE3`:** Update your configuration to use `AP_DB_TYPE=PGLITE` instead.
+- **If you are using templates:** Wait for the next patch release to fix the template IDs.
 
 
 ## 0.73.0

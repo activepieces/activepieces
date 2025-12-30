@@ -26,6 +26,7 @@ export type FeatureKey =
   | 'AGENTS'
   | 'TABLES'
   | 'TODOS'
+  | 'BILLING'
   | 'MCPS';
 
 type RequestTrialProps = {

@@ -22,7 +22,8 @@
             "glob": "**/!(i18n.json)"
           }
         ],
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
       "dependsOn": [
         "^build",

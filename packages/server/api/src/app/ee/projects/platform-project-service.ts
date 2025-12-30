@@ -107,7 +107,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             })
             await Promise.all(allFlows.map((flow) => flowService(log).delete({ id: flow.id, projectId: id })))
             await appConnectionService(log).deleteAllProjectConnections(id)
-            await projectRepo().delete({
+            await projectRepo(entityManager).delete({
                 id,
                 platformId,
             })

@@ -1,10 +1,9 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import { apId, FlowVersion, isNil } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { MigrationInterface, QueryRunner } from 'typeorm'
 import { system } from '../../../helper/system/system'
 
-const cloudPlatformId = system.get(AppSystemProp.CLOUD_PLATFORM_ID)
+const cloudPlatformId = 'NgixMLyPUxy1ZgCcxw5cM'
 const logger = system.globalLogger()
 
 enum TemplateCategory {

@@ -5,15 +5,14 @@ import {
   Property,
 } from '@activepieces/pieces-framework';
 import { ModelMessage, ToolSet, generateText, stepCountIs } from 'ai';
-import { spreadIfDefined } from '@activepieces/shared';
+import { spreadIfDefined, AIProviderName } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
-import { AIProviderName } from '../../common/types';
 import { anthropicSearchTool, openaiSearchTool, googleSearchTool, createAIModel } from '../../common/ai-sdk';
 
 export const askAI = createAction({
   name: 'askAi',
   displayName: 'Ask AI',
-  description: '',
+  description: 'A flexible AI step. ask it to analyze data, explain, draft, or decide based on your flow\'s data.',
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,
@@ -157,16 +156,19 @@ export const askAI = createAction({
     }),
   },
   async run(context) {
-    const providerId = context.propsValue.provider;
+    const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
     const storage = context.store;
     const webSearchOptions = context.propsValue.webSearchOptions as WebSearchOptions;
 
     const model = await createAIModel({
-      providerId,
+      provider: provider as AIProviderName,
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
       openaiResponsesModel: true,
     });
 
@@ -194,7 +196,7 @@ export const askAI = createAction({
       maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: (context.propsValue.creativity ?? 100) / 100,
       tools: context.propsValue.webSearch
-        ? createWebSearchTool(providerId, webSearchOptions)
+        ? createWebSearchTool(provider, webSearchOptions)
         : undefined,
       stopWhen: stepCountIs(webSearchOptions?.maxUses ?? 5),
     });
@@ -230,7 +232,7 @@ export function createWebSearchTool(
   switch (provider) {
     case AIProviderName.ANTHROPIC: {
       const anthropicOptions = options as AnthropicWebSearchOptions;
-      
+
       let allowedDomains: string[] | undefined;
       let blockedDomains: string[] | undefined;
 
@@ -314,24 +316,24 @@ function buildUserLocation(
 }
 
 type BaseWebSearchOptions = {
-    maxUses?: number
-    includeSources?: boolean
+  maxUses?: number
+  includeSources?: boolean
 }
 
 type UserLocationOptions = {
-    userLocationCity?: string
-    userLocationRegion?: string
-    userLocationCountry?: string
-    userLocationTimezone?: string
+  userLocationCity?: string
+  userLocationRegion?: string
+  userLocationCountry?: string
+  userLocationTimezone?: string
 }
 
 type AnthropicWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
-    allowedDomains?: { domain: string }[]
-    blockedDomains?: { domain: string }[]
+  allowedDomains?: { domain: string }[]
+  blockedDomains?: { domain: string }[]
 }
 
 type OpenAIWebSearchOptions = BaseWebSearchOptions & UserLocationOptions & {
-    searchContextSize?: 'low' | 'medium' | 'high'
+  searchContextSize?: 'low' | 'medium' | 'high'
 }
 
 export type WebSearchOptions = AnthropicWebSearchOptions | OpenAIWebSearchOptions

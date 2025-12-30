@@ -12,7 +12,7 @@ import { runAgent } from "./lib/actions/agents/run-agent";
 export const ai = createPiece({
   displayName: "AI",
   auth: PieceAuth.None(),
-  minimumSupportedRelease: '0.73.0',
+  minimumSupportedRelease: '0.75.0',
   categories: [
     PieceCategory.ARTIFICIAL_INTELLIGENCE,
     PieceCategory.UNIVERSAL_AI,
@@ -23,7 +23,5 @@ export const ai = createPiece({
   triggers: [],
 });
 
-
-export * from './lib/common/types';
 export * from './lib/common/props';
 export * from './lib/common/ai-sdk';

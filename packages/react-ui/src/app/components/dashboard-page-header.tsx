@@ -5,7 +5,7 @@ export const DashboardPageHeader = ({
   children,
   description,
 }: {
-  title: string;
+  title: React.ReactNode;
   children?: React.ReactNode;
   description?: React.ReactNode;
 }) => {

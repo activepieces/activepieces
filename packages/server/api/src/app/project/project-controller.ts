@@ -1,4 +1,5 @@
-import { EndpointScope, PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { PrincipalType, Project, UpdateProjectRequestInCommunity } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -7,15 +8,18 @@ import { projectService } from './project-service'
 export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.get('/:id', {
         config: {
-            allowedPrincipals: [PrincipalType.USER] as const,
+            security: securityAccess.project([PrincipalType.USER], undefined, {
+                type: ProjectResourceType.PARAM,
+                paramKey: 'id',
+            }),
         },
     }, async (request) => {
-        return projectService.getOneOrThrow(request.principal.projectId)
+        return projectService.getOneOrThrow(request.projectId)
     })
 
     fastify.get('/', {
         config: {
-            allowedPrincipals: [PrincipalType.USER] as const,
+            security: securityAccess.publicPlatform([PrincipalType.USER]),
         },
     }, async (request) => {
         return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
@@ -34,8 +38,7 @@ export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
 
 const UpdateProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        scope: EndpointScope.PLATFORM,
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         tags: ['projects'],

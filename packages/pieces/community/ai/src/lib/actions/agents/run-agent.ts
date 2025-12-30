@@ -2,27 +2,65 @@ import {
   createAction,
   Property,
   PieceAuth,
+  ArraySubProps,
 } from '@activepieces/pieces-framework';
+
 import {
   AgentOutputField,
-  AgentOutputFieldType,
   AgentPieceProps,
   AgentTaskStatus,
   isNil,
   AgentTool,
   TASK_COMPLETION_TOOL_NAME,
+  AIProviderName,
 } from '@activepieces/shared';
-import { dynamicTool, hasToolCall, stepCountIs, streamText } from 'ai';
-import { z, ZodObject } from 'zod';
+import { hasToolCall, stepCountIs, streamText } from 'ai';
 import { agentOutputBuilder } from './agent-output-builder';
 import { createAIModel } from '../../common/ai-sdk';
 import { aiProps } from '../../common/props';
 import { inspect } from 'util';
+import { agentUtils } from './utils';
+import { constructAgentTools } from './tools';
+
+const agentToolArrayItems: ArraySubProps<boolean> = {
+  type: Property.ShortText({
+    displayName: 'Tool Type',
+    required: true,
+  }),
+
+  toolName: Property.ShortText({
+    displayName: 'Tool Name',
+    required: true,
+  }),
+
+  pieceMetadata: Property.Json({
+    displayName: 'Piece Metadata',
+    required: false,
+  }),
+
+  externalFlowId: Property.ShortText({
+    displayName: 'Flow External ID',
+    required: false,
+  }),
+
+  serverUrl: Property.ShortText({
+    displayName: 'MCP Server URL',
+    required: false,
+  }),
+  protocol: Property.ShortText({
+    displayName: 'Protocol',
+    required: false,
+  }),
+  auth: Property.Json({
+    displayName: 'Auth Configuration',
+    required: false,
+  }),
+}
 
 export const runAgent = createAction({
   name: 'run_agent',
   displayName: 'Run Agent',
-  description: 'Run the AI assistant to complete your task.',
+  description: 'Handles complex, multi-step tasks by reasoning through problems, using tools accurately, and iterating until the job is done.',
   auth: PieceAuth.None(),
   props: {
     [AgentPieceProps.PROMPT]: Property.LongText({
@@ -35,24 +73,7 @@ export const runAgent = createAction({
     [AgentPieceProps.AGENT_TOOLS]: Property.Array({
       displayName: 'Agent Tools',
       required: false,
-      properties: {
-        type: Property.ShortText({
-          displayName: 'Tool Type',
-          required: true,
-        }),
-        toolName: Property.ShortText({
-          displayName: 'Tool Name',
-          required: true,
-        }),
-        pieceMetadata: Property.Json({
-          displayName: 'Piece Metadata',
-          required: false,
-        }),
-        flowId: Property.ShortText({
-          displayName: 'Flow Id',
-          required: false,
-        }),
-      },
+      properties: agentToolArrayItems,
     }),
     [AgentPieceProps.STRUCTURED_OUTPUT]: Property.Array({
       displayName: 'Structured Output',
@@ -81,93 +102,41 @@ export const runAgent = createAction({
     }),
   },
   async run(context) {
-    const { prompt, maxSteps, model: modelId, provider: providerId } = context.propsValue;
+    const { prompt, maxSteps, model: modelId, provider } = context.propsValue;
 
     const model = await createAIModel({
       modelId,
-      providerId,
+      provider: provider as AIProviderName,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
     });
 
     const outputBuilder = agentOutputBuilder(prompt);
     const hasStructuredOutput =
       !isNil(context.propsValue.structuredOutput) &&
       context.propsValue.structuredOutput.length > 0;
-    const agentToolsMetadata = context.propsValue.agentTools as AgentTool[];
-    const agentTools = await context.agent.tools({
-      tools: agentToolsMetadata,
-      model: model,
-    });
+    const structuredOutput = hasStructuredOutput ? context.propsValue.structuredOutput as AgentOutputField[] : undefined
+    const agentTools = context.propsValue.agentTools as AgentTool[];
+
+    const { mcpClients, tools } = await constructAgentTools({
+      context,
+      agentTools,
+      model,
+      outputBuilder,
+      structuredOutput
+    })
+
     const stream = streamText({
       model: model,
-      prompt: `
-${prompt}
-
-<important_note>
-As your FINAL ACTION, you must call the \`${TASK_COMPLETION_TOOL_NAME}\` tool to indicate if the task is complete or not. 
-Call this tool only once you have done everything you can to achieve the user's goal, or if you are unable to continue. 
-If you do not make this final call, your work will be considered unsuccessful.
-</important_note>
-`,
-      system: `
-You are a helpful, proactive AI assistant.
-Today's date is ${new Date().toISOString().split('T')[0]}.
-
-Help the user finish their goal quickly and accurately.
-        `.trim(),
+      system: agentUtils.getPrompts(prompt).system,
+      prompt: agentUtils.getPrompts(prompt).prompt,
+      tools,
       stopWhen: [stepCountIs(maxSteps), hasToolCall(TASK_COMPLETION_TOOL_NAME)],
-      tools: {
-        ...agentTools,
-        [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
-          description:
-            "This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user's task, or if you are unable to continue. Once you call this tool, you should not take any further actions.",
-          inputSchema: z.object({
-            success: z
-              .boolean()
-              .describe(
-                'Set to true if the assigned goal was achieved, or false if the task was abandoned or failed.'
-              ),
-            ...(hasStructuredOutput
-              ? {
-                  output: z
-                    .object(
-                      structuredOutputSchema(
-                        context.propsValue
-                          .structuredOutput as AgentOutputField[]
-                      )?.shape ?? {}
-                    )
-                    .nullable()
-                    .describe(
-                      'The structured output of your task. This is optional and can be omitted if you have not achieved the goal.'
-                    ),
-                }
-              : {
-                  output: z
-                    .string()
-                    .nullable()
-                    .describe(
-                      'The message to the user with the result of your task. This is optional and can be omitted if you have not achieved the goal.'
-                    ),
-                }),
-          }),
-          execute: async (params) => {
-            const { success, output } = params as {
-              success: boolean;
-              output?: Record<string, unknown>;
-            };
-            outputBuilder.setStatus(
-              success ? AgentTaskStatus.COMPLETED : AgentTaskStatus.FAILED
-            );
-            if (hasStructuredOutput && !isNil(output)) {
-              outputBuilder.setStructuredOutput(output);
-            }
-            if (!hasStructuredOutput && !isNil(output)) {
-              outputBuilder.addMarkdown(output as unknown as string);
-            }
-            return {};
-          },
-        }),
+      onFinish: async () => {
+        await Promise.all(mcpClients.map(async (client) => client.close()))
       },
     });
 
@@ -178,19 +147,19 @@ Help the user finish their goal quickly and accurately.
           break;
         }
         case 'tool-call': {
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
             continue;
           }
           outputBuilder.startToolCall({
             toolName: chuck.toolName,
             toolCallId: chuck.toolCallId,
             input: chuck.input as Record<string, unknown>,
-            agentTools: agentToolsMetadata,
+            agentTools: agentTools,
           });
           break;
         }
         case 'tool-result': {
-          if (isTaskCompletionToolCall(chuck.toolName)) {
+          if (agentUtils.isTaskCompletionToolCall(chuck.toolName)) {
             continue;
           }
           outputBuilder.finishToolCall({
@@ -216,30 +185,3 @@ Help the user finish their goal quickly and accurately.
     return outputBuilder.build();
   },
 });
-
-const isTaskCompletionToolCall = (toolName: string) =>
-  toolName === TASK_COMPLETION_TOOL_NAME;
-
-function structuredOutputSchema(
-  outputFields: AgentOutputField[]
-): ZodObject | undefined {
-  const shape: Record<string, z.ZodType> = {};
-
-  for (const field of outputFields) {
-    switch (field.type) {
-      case AgentOutputFieldType.TEXT:
-        shape[field.displayName] = z.string();
-        break;
-      case AgentOutputFieldType.NUMBER:
-        shape[field.displayName] = z.number();
-        break;
-      case AgentOutputFieldType.BOOLEAN:
-        shape[field.displayName] = z.boolean();
-        break;
-      default:
-        shape[field.displayName] = z.any();
-    }
-  }
-
-  return Object.keys(shape).length > 0 ? z.object(shape) : undefined;
-}

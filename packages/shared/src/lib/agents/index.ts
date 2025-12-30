@@ -32,6 +32,7 @@ export enum ExecutionToolStatus {
 export enum ToolCallType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
+    MCP = 'MCP',
 }
 
 export const AgentOutputField = Type.Object({
@@ -87,7 +88,13 @@ export const ToolCallContentBlock = DiscriminatedUnion('toolCallType', [
         ...ToolCallBaseSchema.properties,
         toolCallType: Type.Literal(ToolCallType.FLOW),
         displayName: Type.String(),
-        flowId: Type.String(),
+        externalFlowId: Type.String(),
+    }),
+    Type.Object({
+        ...ToolCallBaseSchema.properties,
+        toolCallType: Type.Literal(ToolCallType.MCP),
+        displayName: Type.String(),
+        serverUrl: Type.String(),
     }),
 ])
 

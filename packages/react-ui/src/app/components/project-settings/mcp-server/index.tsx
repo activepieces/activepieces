@@ -85,7 +85,7 @@ export const McpServerSettings = () => {
                 <div className="flex flex-col gap-2 max-w-xs">
                   {mcpServer.flows.map((flow) => {
                     const isEnabled = flow.status === FlowStatus.ENABLED;
-                    const flowUrl = `/flow/${flow.id}`;
+                    const flowUrl = `/project/${flow.projectId}/flow/${flow.id}`;
                     return (
                       <div
                         key={flow.id}
