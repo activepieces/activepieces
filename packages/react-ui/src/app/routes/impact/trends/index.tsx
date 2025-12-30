@@ -8,7 +8,6 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 import { RunsChart } from './runs-chart';
 import { TimeSavedChart } from './time-saved-chart';
-import { FlowsOverTimeChart } from './flows-over-time-chart';
 
 type TrendsProps = {
   report?: PlatformAnalyticsReport;
@@ -39,7 +38,6 @@ export function Trends({ report }: TrendsProps) {
           <RunsChart report={report} selectedDateRange={selectedDateRange} />
           <TimeSavedChart report={report} selectedDateRange={selectedDateRange} />
         </div>
-        <FlowsOverTimeChart report={report} selectedDateRange={selectedDateRange} />
       </div>
     </div>
   );
