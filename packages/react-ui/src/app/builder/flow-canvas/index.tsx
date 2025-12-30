@@ -7,6 +7,9 @@ import {
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
+  MiniMap,
+  getNodesBounds,
+  CoordinateExtent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -94,6 +97,7 @@ export const FlowCanvas = React.memo(
       panningMode,
       selectStepByName,
       rightSidebar,
+      showMinimap,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -103,6 +107,7 @@ export const FlowCanvas = React.memo(
         state.panningMode,
         state.selectStepByName,
         state.rightSidebar,
+        state.showMinimap,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -208,6 +213,19 @@ export const FlowCanvas = React.memo(
         .addSelectedNodes(selectedSteps.map((step) => step.name));
     }, [selectedNodes, storeApi, selectedStep]);
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+
+    const translateExtent = useMemo(() => {
+       const nodes = graph.nodes;
+       const graphRectangle = getNodesBounds(nodes);
+       const maxWidth = Math.max(window.innerWidth, graphRectangle.width) + 500;
+       const maxHeight = Math.max(window.innerHeight, graphRectangle.height) +500;
+       const extent: CoordinateExtent = [
+        [-maxWidth, -maxHeight/2],
+        [maxWidth, maxHeight],
+       ];
+       return extent;
+    }, [graphKey]);
+
     return (
       <div
         ref={containerRef}
@@ -221,6 +239,7 @@ export const FlowCanvas = React.memo(
               onPaneClick={() => {
                 storeApi.getState().unselectNodesAndEdges();
               }}
+              translateExtent={translateExtent}
               nodeTypes={flowUtilConsts.nodeTypes}
               nodes={graph.nodes}
               edgeTypes={flowUtilConsts.edgeTypes}
@@ -258,6 +277,9 @@ export const FlowCanvas = React.memo(
                 bgColor={`var(--builder-background)`}
                 color={`var(--builder-background-pattern)`}
               />
+              {
+                showMinimap && (<MiniMap  position='bottom-left' className='rounded-md !bottom-[50px] animate-in fade-in duration-300'  nodeClassName={'!fill-primary'} nodeStrokeWidth={3} zoomable pannable />)
+              }
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>

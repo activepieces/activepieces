@@ -102,6 +102,8 @@ export type BuilderState = {
   chatDrawerOpenSource: ChatDrawerSource | null;
   chatSessionMessages: Messages;
   chatSessionId: string | null;
+  showMinimap: boolean;
+  setShowMinimap: (showMinimap: boolean) => void;
   setChatDrawerOpenSource: (source: ChatDrawerSource | null) => void;
   setChatSessionMessages: (messages: Messages) => void;
   addChatMessage: (message: Messages[0]) => void;
@@ -211,6 +213,8 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       initiallySelectedStep === 'trigger' &&
       initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
     return {
+      showMinimap: false,
+      setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
       loopsIndexes:
         initialState.run && initialState.run.steps
           ? flowRunUtils.findLoopsState(
