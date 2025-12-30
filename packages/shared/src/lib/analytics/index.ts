@@ -59,23 +59,26 @@ export const AnalyticsFlowReportItem = Type.Object({
         isEstimated: Type.Boolean(),    
     }),
     minutesSaved: Type.Number(),
+    ownerId: Type.String(),
 })
 export type AnalyticsFlowReportItem = Static<typeof AnalyticsFlowReportItem>
 
 export const AnalyticsFlowReport = Type.Array(AnalyticsFlowReportItem)
 export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
 
+export const PlatformAnalyticsUserReportItem = Type.Object({
+    id: Type.String(),
+    name: Type.String(),
+    email: Type.String(),
+    active: Type.Boolean(),
+})
+
+export type PlatformAnalyticsUserReportItem = Static<typeof PlatformAnalyticsUserReportItem>
 export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
     estimatedTimeSavedPerStep: Nullable(Type.Number()),
-    totalFlows: Type.Number(),
-    activeFlows: Type.Number(),
     outdated: Type.Boolean(),
-    totalUsers: Type.Number(),
-    activeUsers: Type.Number(),
-    totalProjects: Type.Number(),
-    activeFlowsWithAI: Type.Number(),
-    totalFlowRuns: Type.Number(),
+    users: Type.Array(PlatformAnalyticsUserReportItem),
     topPieces: AnalyticsPieceReport,
     topProjects: AnalyticsProjectReport,
     runsUsage: AnalyticsRunsUsage,
