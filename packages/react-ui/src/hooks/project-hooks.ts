@@ -123,6 +123,7 @@ export const projectHooks = {
     const query = useSuspenseQuery<boolean, Error>({
       //added currentProjectId in case user switches project and goes back to the same project
       queryKey: ['switch-to-project', projectIdFromParams, currentProjectId],
+      refetchOnWindowFocus: false,
       queryFn: async () => {
         if (edition === ApEdition.COMMUNITY) {
           return true;
