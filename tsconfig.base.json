@@ -340,6 +340,9 @@
       ],
       "@activepieces/piece-clearoutphone": [
         "packages/pieces/community/clearoutphone/src/index.ts"
+      ],
+      "@activepieces/piece-omnihr": [
+        "packages/pieces/community/omnihr/src/index.ts"
       ]
     },
     "resolveJsonModule": true
