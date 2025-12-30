@@ -376,6 +376,9 @@
       ],
       "@activepieces/piece-heymarket-sms": [
         "packages/pieces/community/heymarket-sms/src/index.ts"
+      ],
+      "@activepieces/piece-flipando": [
+        "packages/pieces/community/flipando/src/index.ts"
       ]
     },
     "resolveJsonModule": true
