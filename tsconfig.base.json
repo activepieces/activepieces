@@ -391,6 +391,9 @@
       ],
       "@activepieces/piece-influencers-club": [
         "packages/pieces/community/influencers-club/src/index.ts"
+      ],
+      "@activepieces/piece-barcode-lookup": [
+        "packages/pieces/community/barcode-lookup/src/index.ts"
       ]
     },
     "resolveJsonModule": true
