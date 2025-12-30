@@ -391,6 +391,9 @@
       ],
       "@activepieces/piece-influencers-club": [
         "packages/pieces/community/influencers-club/src/index.ts"
+      ],
+      "@activepieces/piece-phone-validator": [
+        "packages/pieces/community/phone-validator/src/index.ts"
       ]
     },
     "resolveJsonModule": true
