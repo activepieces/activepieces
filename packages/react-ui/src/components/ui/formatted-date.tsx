@@ -1,7 +1,6 @@
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { formatUtils } from '@/lib/utils';
@@ -22,17 +21,15 @@ export const FormattedDate = ({
   const fullDateTimeTooltip = formatUtils.formatDateWithTime(date, true);
 
   return (
-    <TooltipProvider delayDuration={300}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className={className}>
-            {includeTime ? formattedDateWithTime : formattedDate}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{fullDateTimeTooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className={className}>
+          {includeTime ? formattedDateWithTime : formattedDate}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{fullDateTimeTooltip}</p>
+      </TooltipContent>
+    </Tooltip>
   );
 };
