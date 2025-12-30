@@ -55,7 +55,7 @@ export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
     estimatedTimeSavedPerStep: Nullable(Type.Number()),
     outdated: Type.Boolean(),
-    users: Type.Array(Type.Pick(UserWithMetaInformation, ['id', 'email', 'firstName', 'lastName', 'status', 'lastActiveDate'])),
+    users: Type.Array(UserWithMetaInformation),
     topPieces: AnalyticsPieceReport,
     runsUsage: AnalyticsRunsUsage,
     flowsDetails: AnalyticsFlowReport,

@@ -1,5 +1,5 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
-import { AnalyticsFlowReportItem, AnalyticsPieceReportItem, AnalyticsRunsUsageItem, apId, assertNotNullOrUndefined, DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment, spreadIfDefined, UpdatePlatformReportRequest } from '@activepieces/shared'
+import { AnalyticsFlowReportItem, AnalyticsPieceReportItem, AnalyticsRunsUsageItem, apId, assertNotNullOrUndefined, DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, flowPieceUtil, FlowStatus, FlowVersionState, isNil, PieceCategory, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment, spreadIfDefined, UpdatePlatformReportRequest, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
@@ -8,6 +8,8 @@ import { flowService } from '../flows/flow/flow.service'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
+import { userRepo } from '../user/user-service'
+import { In } from 'typeorm'
 
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 
@@ -53,10 +55,12 @@ const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Pr
 
     const runsUsage = await analyzeRuns(platformId, estimatedTimeSavedPerStep)
     const flowsDetails = await analyzeFlowsDetails(platformId, estimatedTimeSavedPerStep)
+    const users = await analyzeUsers(platformId)
 
     return platformAnalyticsReportRepo().save({
         estimatedTimeSavedPerStep: report?.estimatedTimeSavedPerStep,
         outdated: false,
+        users,
         topPieces,
         runsUsage,
         flowsDetails,
@@ -69,7 +73,29 @@ const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Pr
 }
 
 
-
+async function analyzeUsers(platformId: PlatformId): Promise<UserWithMetaInformation[]> {
+    const users = await userRepo().find({
+        where: {
+            platformId,
+        },
+        relations: {
+            identity: true,
+        },
+    })
+    return users.map((user) => {
+        return {
+            id: user.id,
+            email: user.identity.email,
+            firstName: user.identity.firstName,
+            lastName: user.identity.lastName,
+            status: user.status,
+            lastActiveDate: user.lastActiveDate,
+            platformRole: user.platformRole,
+            created: user.created,
+            updated: user.updated,
+        }
+    })
+}
 
 function analyzePieces(flows: PopulatedFlow[], pieceMetadataMap: Map<string, PieceMetadataModel>): AnalyticsPieceReportItem[] {
     const pieces: Record<string, AnalyticsPieceReportItem> = {}
