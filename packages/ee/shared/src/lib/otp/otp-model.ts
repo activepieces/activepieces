@@ -1,8 +1,13 @@
 import { ApId, BaseModelSchema } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
-import { OtpType } from './otp-type'
 
 export type OtpId = ApId
+
+enum OtpType {
+    EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
+    PASSWORD_RESET = 'PASSWORD_RESET',
+}
+
 
 export enum OtpState {
     PENDING = 'PENDING',

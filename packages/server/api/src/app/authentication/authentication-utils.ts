@@ -47,7 +47,7 @@ export const authenticationUtils = {
             })
         }
         const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
-        if (!identity.verified) {
+        if (!identity.emailVerified) {
             throw new ActivepiecesError({
                 code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
                 params: {
@@ -78,7 +78,7 @@ export const authenticationUtils = {
             email: identity.email,
             trackEvents: identity.trackEvents,
             newsLetter: identity.newsLetter,
-            verified: identity.verified,
+            emailVerified: identity.emailVerified,
             token,
             projectId: project.id,
         }

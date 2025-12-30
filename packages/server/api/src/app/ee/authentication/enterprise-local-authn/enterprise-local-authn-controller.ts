@@ -6,6 +6,7 @@ import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { eventsHooks } from '../../../helper/application-events'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
+import { CreateOtpRequestBody } from '@ee/shared/src/lib/authn'
 
 export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
     app,
@@ -16,6 +17,10 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
             data: {},
         })
         await enterpriseLocalAuthnService(req.log).verifyEmail(req.body)
+    }),
+
+    app.post('/send-otp', CreateOtpRequestRequest, async (req, res) => {
+        await enterpriseLocalAuthnService(req.log).sendOTP(req.body)
     })
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
@@ -33,6 +38,15 @@ const VerifyEmailRequest = {
     },
     schema: {
         body: VerifyEmailRequestBody,
+    },
+}
+
+const CreateOtpRequestRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        body: CreateOtpRequestBody,
     },
 }
 

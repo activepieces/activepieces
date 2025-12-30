@@ -1,80 +1,99 @@
-import { ActivepiecesError, apId, ErrorCode, isNil, UserIdentity } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, UserIdentityProvider, UserIdentity, tryCatch } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
-import { repoFactory } from '../../core/db/repo-factory'
-import { passwordHasher } from '../lib/password-hasher'
-import { UserIdentityEntity } from './user-identity-entity'
+import auth from '../better-auth/auth'
+import { databaseConnection } from '../../database/database-connection'
+import { EntityManager } from 'typeorm'
+import { userService } from '../../user/user-service'
 
-export const userIdentityRepository = repoFactory(UserIdentityEntity)
+const userIdentityRepository = (entityManager?: EntityManager) => (entityManager ?? databaseConnection()).getRepository('user_identity')
 
 export const userIdentityService = (log: FastifyBaseLogger) => ({
-    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'>): Promise<UserIdentity> {
+
+    async create(params: CreateIdentityParams): Promise<UserIdentity> {
         log.info({
             email: params.email,
         }, 'Creating user identity')
 
-        const cleanedEmail = params.email.toLowerCase().trim()
-        const hashedPassword = await passwordHasher.hash(params.password)
-        const userByEmail = await userIdentityRepository().findOne({ where: { email: cleanedEmail } })
-        if (userByEmail) {
+        let call = null;
+
+        switch(params.provider) {
+            case UserIdentityProvider.EMAIL:
+                call = async () => await auth.api.signUpEmail({
+                    body: {
+                        email: params.email,
+                        name: `${params.firstName } ${params.lastName}`,
+                        password: params.password,
+                        firstName: params.firstName,
+                        lastName: params.lastName,
+                        provider: params.provider,
+                        trackEvents: params.trackEvents,
+                        newsLetter: params.newsLetter,
+                        tokenVersion: nanoid(),
+                    },
+                })
+                break;
+            case UserIdentityProvider.GOOGLE:
+                break;
+        }
+
+        const response = await call?.()
+        if (!response) {
+            console.error(response)
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
-                    email: cleanedEmail,
+                    email: params.email,
                     platformId: null,
                 },
             })
         }
-        const newUserIdentity: UserIdentity = {
-            firstName: params.firstName,
-            lastName: params.lastName,
-            provider: params.provider,
-            email: cleanedEmail,
-            created: new Date().toISOString(),
-            updated: new Date().toISOString(),
-            verified: params.verified,
-            id: apId(),
-            password: hashedPassword,
-            trackEvents: params.trackEvents,
-            newsLetter: params.newsLetter,
-            tokenVersion: nanoid(),
-        }
-        const identity = await userIdentityRepository().save(newUserIdentity)
-        return identity
+       
+        return response.user as UserIdentity
     },
+
     async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<UserIdentity> {
-        const userIdentity = await getIdentityByEmail(params.email)
-        if (isNil(userIdentity)) {
+        const { error, data } = await tryCatch(async () => await auth.api.signInEmail({
+            body: {
+                email: params.email,
+                password: params.password
+            }
+        }))
+
+        if (error) {
+            if (error.message === "Invalid email or password")
+                throw new ActivepiecesError({
+                    code: ErrorCode.INVALID_CREDENTIALS,
+                    params: null,
+                })
+            if (error.message === "Email not verified"){
+               
+                await this.sendVerifyEmail({ email: params.email })
+                throw new ActivepiecesError({
+                    code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+                    params: {
+                        email: params.email,
+                    },
+                })
+            }
             throw new ActivepiecesError({
-                code: ErrorCode.INVALID_CREDENTIALS,
-                params: null,
-            })
-        }
-        if (!userIdentity.verified) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EMAIL_IS_NOT_VERIFIED,
+                code: ErrorCode.AUTHENTICATION,
                 params: {
-                    email: userIdentity.email,
+                    message: error.message,
                 },
             })
         }
 
-        const passwordMatches = await passwordHasher.compare(params.password, userIdentity.password)
-        if (!passwordMatches) {
-            throw new ActivepiecesError({
-                code: ErrorCode.INVALID_CREDENTIALS,
-                params: null,
-            })
-        }
-        return userIdentity
+        return data.user as UserIdentity 
     },
     async getIdentityByEmail(email: string): Promise<UserIdentity | null> {
         const cleanedEmail = email.toLowerCase().trim()
-        return userIdentityRepository().findOneBy({ email: cleanedEmail })
+        const identity = await userIdentityRepository().findOneBy({ email: cleanedEmail })
+        return identity as UserIdentity | null
     },
     async getOneOrFail(params: GetOneOrFailParams): Promise<UserIdentity> {
-        const userIdentity = await userIdentityRepository().findOneByOrFail({ id: params.id })
-        return userIdentity
+        const identity = await userIdentityRepository().findOneByOrFail({ id: params.id })
+        return identity as UserIdentity
     },
     async getBasicInformation(id: string): Promise<Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter'>> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
@@ -86,13 +105,58 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             newsLetter: user.newsLetter,
         }
     },
-    async updatePassword(params: UpdatePasswordParams): Promise<void> {
-        const hashedPassword = await passwordHasher.hash(params.newPassword)
-        await userIdentityRepository().update(params.id, {
-            password: hashedPassword,
-            tokenVersion: nanoid(),
+    async sendVerifyEmail(params: SendVerificationEmailParams): Promise<void> {
+        await auth.api.sendVerificationEmail({
+            body: {
+                email: params.email,
+            },
+            query: {
+                platformId: params.platformId ?? await getPlatformIdByEmail(params.email),
+            }
         })
     },
+    async verifyEmail(params: VerifyEmailParams): Promise<UserIdentity> {
+        const res = await auth.api.verifyEmail({
+            query: {
+                token: params.otp
+            }
+        })
+        if (res?.status === false) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_OTP,
+                params: {},
+            })
+        }
+        const user = await userIdentityRepository().findOneByOrFail({ id: params.identityId })
+        return user as UserIdentity 
+    },
+    async sendResetPasswordEmail(params: SendResetPasswordParams): Promise<void> {
+        await auth.api.requestPasswordReset({
+            body: {
+                email: params.email,
+            },
+            query: {
+                platformId: params.platformId ?? await getPlatformIdByEmail(params.email),
+            }
+        })
+    },
+    async resetPassword(params: ResetPasswordParams): Promise<UserIdentity> {
+        const res = await auth.api.resetPassword({
+            body: {
+                token: params.otp,
+                newPassword: params.newPassword
+            }
+        })
+        if (res?.status === false) {
+            throw new ActivepiecesError({
+                code: ErrorCode.INVALID_OTP,
+                params: {},
+            })
+        }
+        const user = await userIdentityRepository().findOneByOrFail({ id: params.identityId })
+        return user as UserIdentity 
+    },
+    // to force verification
     async verify(id: string): Promise<UserIdentity> {
         const user = await userIdentityRepository().findOneByOrFail({ id })
         if (user.verified) {
@@ -103,29 +167,58 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
-        return userIdentityRepository().save({
-            ...user,
-            verified: true,
+        await userIdentityRepository().update({ id }, {
+            emailVerified: true
         })
+        return {
+            ...user as UserIdentity,
+            emailVerified: true
+        }
     },
+    async delete(id: string, entityManager?: EntityManager): Promise<void> {
+        await userIdentityRepository(entityManager).delete({ id })
+    }
 })
 
-
-async function getIdentityByEmail(email: string): Promise<UserIdentity | null> {
-    const cleanedEmail = email.toLowerCase().trim()
-    return userIdentityRepository().findOneBy({ email: cleanedEmail })
+const getPlatformIdByEmail = async (email: string) => {
+    const identity = await userIdentityRepository().findOneByOrFail({ email })
+    const user     = await userService.getOneByIdentityIdOnly({ identityId: identity.id })
+    return user?.platformId ?? null
 }
+
+type CreateIdentityParams =
+    Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider'> &
+    (
+        | { provider: Exclude<UserIdentityProvider, UserIdentityProvider.EMAIL> }
+        | { provider: UserIdentityProvider.EMAIL | UserIdentityProvider.JWT, password: string }
+    );
 
 type GetOneOrFailParams = {
     id: string
 }
 
-type UpdatePasswordParams = {
-    id: string
-    newPassword: string
-}
-
 type VerifyIdentityPasswordParams = {
     email: string
     password: string
+}
+
+type SendVerificationEmailParams = {
+    email: string
+    platformId?: string
+}
+
+type VerifyEmailParams = {
+    identityId: string,
+    otp: string
+}
+
+type SendResetPasswordParams = {
+    email: string
+    platformId?: string
+}
+
+type ResetPasswordParams = {
+    identityId: string,
+    otp: string,
+    newPassword: string
 }

@@ -8,7 +8,7 @@ export type UserWithoutPassword = Static<typeof UserWithoutPassword>
 
 export const AuthenticationResponse = Type.Composite([
     UserWithoutPassword,
-    Type.Pick(UserIdentity, ['verified', 'firstName', 'lastName', 'email', 'trackEvents', 'newsLetter']),
+    Type.Pick(UserIdentity, ['emailVerified', 'firstName', 'lastName', 'email', 'trackEvents', 'newsLetter']),
     Type.Object({
         token: Type.String(),
         projectId: Type.String(),

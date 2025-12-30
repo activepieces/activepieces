@@ -1,14 +1,20 @@
-import { ApId, SignUpRequest } from '@activepieces/shared'
+import { SignUpRequest } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
+export enum OtpType {
+    EMAIL_VERIFICATION = 'EMAIL_VERIFICATION',
+    PASSWORD_RESET = 'PASSWORD_RESET',
+}
+
+
 export const VerifyEmailRequestBody = Type.Object({
-    identityId: ApId,
+    identityId: Type.String(),
     otp: Type.String(),
 })
 export type VerifyEmailRequestBody = Static<typeof VerifyEmailRequestBody>
 
 export const ResetPasswordRequestBody = Type.Object({
-    identityId: ApId,
+    identityId: Type.String(),
     otp: Type.String(),
     newPassword: Type.String(),
 })
@@ -23,3 +29,10 @@ export const SignUpAndAcceptRequestBody = Type.Composite([
 
 export type SignUpAndAcceptRequestBody = Static<typeof SignUpAndAcceptRequestBody>
 
+
+export const CreateOtpRequestBody = Type.Object({
+    email: Type.String(),
+    type: Type.Enum(OtpType),
+})
+
+export type CreateOtpRequestBody = Static<typeof CreateOtpRequestBody>

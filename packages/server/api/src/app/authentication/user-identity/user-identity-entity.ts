@@ -1,18 +1,31 @@
 import { UserIdentity } from '@activepieces/shared'
-import { EntitySchema } from 'typeorm'
-import { BaseColumnSchemaPart } from '../../database/database-common'
+import { EntitySchema, EntitySchemaColumnOptions } from 'typeorm'
+import { ApIdSchema } from '../../database/database-common'
 
-export const UserIdentityEntity = new EntitySchema<UserIdentity>({
+type UserIdentitySchema = UserIdentity & {
+    name: string,
+    image?: string,
+}
+
+export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
     name: 'user_identity',
     columns: {
-        ...BaseColumnSchemaPart,
+        id: {
+            type: String,
+            primary: true,
+        } as EntitySchemaColumnOptions,
+        createdAt: {
+            type: 'timestamp with time zone',
+            createDate: true,
+        } as EntitySchemaColumnOptions,
+        updatedAt: {
+            type: 'timestamp with time zone',
+            updateDate: true,
+        } as EntitySchemaColumnOptions,
         email: {
             type: String,
             nullable: false,
             unique: true,
-        },
-        password: {
-            type: String,
         },
         trackEvents: {
             type: Boolean,
@@ -22,7 +35,7 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
             type: Boolean,
             nullable: true,
         },
-        verified: {
+        emailVerified: {
             type: Boolean,
             nullable: false,
             default: false,
@@ -42,6 +55,17 @@ export const UserIdentityEntity = new EntitySchema<UserIdentity>({
         provider: {
             type: String,
             nullable: false,
+        },
+
+        // unused better required by better-auth
+        name: {
+            type: String,
+            nullable: false,
+            default: '',
+        },
+        image: {
+            type: String,
+            nullable: true,
         },
     },
     indices: [
