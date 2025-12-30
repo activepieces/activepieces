@@ -11,6 +11,7 @@ import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-serv
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
+const parallelLimit = system.getNumberOrThrow(AppSystemProp.PIECES_SYNC_PARALLEL_LIMIT)
 
 export const pieceSyncService = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
@@ -41,7 +42,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
             const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
             const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
             const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
-            const limit = pLimit(20)
+            const limit = pLimit(parallelLimit)
             const newPiecesMetadata = await Promise.all(newPiecesToFetch.map(piece => limit(async () => {
                 const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
                 const response = await fetch(url)
@@ -91,4 +92,3 @@ type PieceRegistryResponse = {
     name: string
     version: string
 }
-
