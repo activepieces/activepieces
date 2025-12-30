@@ -124,6 +124,7 @@ export const projectHooks = {
     const query = useSuspenseQuery<boolean, Error>({
       //added currentProjectId in case user switches project and goes back to the same project
       queryKey: ['switch-to-project', projectIdFromParams, projectIdFromToken],
+      refetchOnWindowFocus: false,
       queryFn: async () => {
         if (edition === ApEdition.COMMUNITY) {
           return true;
@@ -136,14 +137,18 @@ export const projectHooks = {
         }
         const previousProjectId = authenticationSession.getProjectId();
         try {
+          if (projectIdFromParams === projectIdFromToken) {
+            await projectApi.current();
+            return true;
+          }
           authenticationSession.switchToProject(projectIdFromParams);
-          await projectApi.current();
           return true;
         } catch (error) {
           const unauthenticatedResponse =
             api.isError(error) &&
             (error.response?.status === HttpStatusCode.BadRequest ||
               error.response?.status === HttpStatusCode.Forbidden);
+
           if (unauthenticatedResponse && !isNil(previousProjectId)) {
             authenticationSession.switchToProject(previousProjectId);
             toast.error(t('Invalid Access'), {
