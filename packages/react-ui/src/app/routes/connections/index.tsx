@@ -280,14 +280,10 @@ function AppConnectionsPage() {
             {row.original.owner && (
               <ApAvatar
                 type="user"
+                id={row.original.owner.id}
+                includeAvatar={true}
                 includeName={true}
                 size="small"
-                userEmail={row.original.owner.email}
-                fullName={
-                  row.original.owner.firstName +
-                  ' ' +
-                  row.original.owner.lastName
-                }
               />
             )}
             {!row.original.owner && <div className="text-left">-</div>}

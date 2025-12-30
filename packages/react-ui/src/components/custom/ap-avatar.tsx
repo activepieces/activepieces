@@ -1,77 +1,67 @@
-import { AvatarImage } from '@radix-ui/react-avatar';
-import { Workflow } from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-
 import { UserAvatar } from '../ui/user-avatar';
+import { userApi } from '@/lib/user-api';
 
+import { Skeleton } from '@/components/ui/skeleton';
+import { useEffect, useState } from 'react';
 interface ApAvatarProps {
-  type: 'agent' | 'user' | 'flow';
-  fullName: string;
-  userEmail?: string;
-  pictureUrl?: string;
-  profileUrl?: string;
+  type: "user"
+  id: string;
   size: 'small' | 'medium';
+  includeAvatar?: boolean;
   includeName?: boolean;
 }
 
 export const ApAvatar = ({
   type,
-  fullName,
-  userEmail,
-  pictureUrl,
-  profileUrl,
+  id,
+  includeAvatar = true,
   includeName = false,
   size = 'medium',
 }: ApAvatarProps) => {
-  const renderAvatar = () => {
-    if (type === 'agent') {
-      return (
-        <Avatar className={size === 'small' ? 'w-6 h-6' : 'w-8 h-8'}>
-          <AvatarImage
-            src={pictureUrl}
-            alt={fullName}
-            className={`${size} rounded-full`}
-          />
-        </Avatar>
-      );
-    }
 
-    if (type === 'user') {
-      return (
-        <UserAvatar
-          name={fullName}
-          email={userEmail!}
-          size={size === 'small' ? 24 : 32}
-          disableTooltip={true}
-        />
-      );
-    }
+  const avatarSize = size === 'small' ? 24 : 32;
 
-    return (
-      <Avatar className={size === 'small' ? 'w-6 h-6' : 'w-8 h-8'}>
-        <AvatarFallback
-          className={`text-xs font-bold border ${
-            size === 'small' ? 'w-6 h-6' : 'w-8 h-8'
-          }`}
-        >
-          <Workflow className="p-1" />
-        </AvatarFallback>
-      </Avatar>
-    );
-  };
+  const [user, setUser] = useState<{
+    firstName: string;
+    lastName: string;
+    email: string;
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    userApi.getUserById(id).then(u => {
+      if (isMounted) {
+        setUser(u);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const content = (
     <div className="flex items-center gap-2">
-      {renderAvatar()}
-      {includeName && <span className="text-sm">{fullName}</span>}
+      {includeAvatar && (
+        user ? (
+          <UserAvatar
+            name={`${user.firstName} ${user.lastName}`}
+            email={user.email}
+            size={avatarSize}
+            disableTooltip={true}
+          />
+        ) : (
+          <Skeleton className="rounded-full" style={{ width: avatarSize, height: avatarSize }} />
+        )
+      )}
+      {includeName && (
+        user ? (
+          <span className="text-sm">{`${user.firstName} ${user.lastName}`}</span>
+        ) : (
+          <Skeleton className="h-4 w-20 rounded" />
+        )
+      )}
     </div>
   );
-
-  if (type === 'agent' && profileUrl) {
-    return <Link to={profileUrl}>{content}</Link>;
-  }
 
   return content;
 };
