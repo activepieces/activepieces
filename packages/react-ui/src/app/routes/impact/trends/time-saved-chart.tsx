@@ -3,7 +3,7 @@
 import { t } from 'i18next';
 import { Clock } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
+import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -79,7 +79,7 @@ export function TimeSavedChart({
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
           >
-            <BarChart
+            <LineChart
               accessibilityLayer
               data={filteredData}
               margin={{
@@ -120,12 +120,15 @@ export function TimeSavedChart({
                   />
                 }
               />
-              <Bar
+              <Line
                 dataKey="minutesSaved"
-                fill="var(--color-minutesSaved)"
-                radius={4}
+                type="monotone"
+                stroke="var(--color-minutesSaved)"
+                strokeWidth={2}
+                dot={filteredData.length === 1 ? { r: 6, fill: 'var(--color-minutesSaved)' } : false}
+                activeDot={{ r: 5 }}
               />
-            </BarChart>
+            </LineChart>
           </ChartContainer>
         )}
       </CardContent>
