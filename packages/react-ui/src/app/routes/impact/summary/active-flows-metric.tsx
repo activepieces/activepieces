@@ -14,7 +14,9 @@ export const ActiveFlowsMetric = ({ report }: ActiveFlowsMetricProps) => {
     return <MetricCardSkeleton />;
   }
 
-  const activeFlows = report.flowsDetails.filter((flow) => flow.status === FlowStatus.ENABLED).length;
+  const activeFlows = report.flowsDetails.filter(
+    (flow) => flow.status === FlowStatus.ENABLED,
+  ).length;
   const totalFlows = report.flowsDetails.length;
 
   return (

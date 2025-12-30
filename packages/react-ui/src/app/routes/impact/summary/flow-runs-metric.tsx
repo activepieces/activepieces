@@ -14,7 +14,10 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
     return <MetricCardSkeleton />;
   }
 
-  const totalFlowRuns = report.flowsDetails.reduce((acc, flow) => acc + flow.runs, 0);
+  const totalFlowRuns = report.flowsDetails.reduce(
+    (acc, flow) => acc + flow.runs,
+    0,
+  );
 
   return (
     <MetricCard

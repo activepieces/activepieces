@@ -36,7 +36,10 @@ export function Trends({ report }: TrendsProps) {
       <div className="mt-4 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <RunsChart report={report} selectedDateRange={selectedDateRange} />
-          <TimeSavedChart report={report} selectedDateRange={selectedDateRange} />
+          <TimeSavedChart
+            report={report}
+            selectedDateRange={selectedDateRange}
+          />
         </div>
       </div>
     </div>

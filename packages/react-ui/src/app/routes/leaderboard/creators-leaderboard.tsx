@@ -5,26 +5,22 @@ import { t } from 'i18next';
 import { Clock, Medal, Trophy, User, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
-import {
-  DataTable,
-  RowDataWithActions,
-} from '@/components/ui/data-table';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type CreatorsLeaderboardProps = {
-  report?: PlatformAnalyticsReport;
-  isLoading?: boolean;
-};
-
-type CreatorStats = {
+export type CreatorStats = {
   id: string;
-  userId: string;
+  visibleId: string;
   userName: string;
   userEmail: string;
   flowCount: number;
   minutesSaved: number;
+};
+
+type CreatorsLeaderboardProps = {
+  data: CreatorStats[];
+  isLoading?: boolean;
 };
 
 const getRankIcon = (index: number) => {
@@ -107,57 +103,16 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
 ];
 
 export function CreatorsLeaderboard({
-  report,
+  data,
   isLoading,
 }: CreatorsLeaderboardProps) {
-  const leaderboardData = useMemo(() => {
-    if (!report?.flowsDetails || !report?.users) {
-      return [];
-    }
-
-    const userMap = new Map(
-      report.users.map((user) => [user.id, user]),
-    );
-
-    const creatorStatsMap = new Map<string, CreatorStats>();
-
-    report.flowsDetails.forEach((flow) => {
-      if (!flow.ownerId) return;
-
-      const user = userMap.get(flow.ownerId);
-      if (!user) return;
-
-      const existing = creatorStatsMap.get(flow.ownerId);
-      if (existing) {
-        existing.flowCount += 1;
-        existing.minutesSaved += flow.minutesSaved;
-      } else {
-        creatorStatsMap.set(flow.ownerId, {
-          id: flow.ownerId,
-          userId: flow.ownerId,
-          userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
-          userEmail: user.email,
-          flowCount: 1,
-          minutesSaved: flow.minutesSaved,
-        });
-      }
-    });
-
-    return Array.from(creatorStatsMap.values());
-  }, [report?.flowsDetails, report?.users]);
-
   const columns = useMemo(() => createColumns(), []);
-
-  const dataWithIds: CreatorStats[] = leaderboardData.map((creator) => ({
-    ...creator,
-    id: creator.userId,
-  }));
 
   return (
     <DataTable
       columns={columns}
       page={{
-        data: dataWithIds,
+        data,
         next: null,
         previous: null,
       }}

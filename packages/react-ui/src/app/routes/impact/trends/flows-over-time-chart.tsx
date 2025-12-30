@@ -1,8 +1,8 @@
 'use client';
 
+import dayjs from 'dayjs';
 import { t } from 'i18next';
 import { Workflow } from 'lucide-react';
-import dayjs from 'dayjs';
 import { DateRange } from 'react-day-picker';
 import { LineChart, CartesianGrid, XAxis, Line, YAxis, Legend } from 'recharts';
 
@@ -75,14 +75,14 @@ export function FlowsOverTimeChart({
 
     sortedRunsUsage.forEach((runData) => {
       const date = runData.day;
-      
+
       cumulativeFlowsCreated += flowsCreatedTimeline[date] || 0;
 
       const targetActiveFlows = Math.min(
         Math.round(cumulativeFlowsCreated * 0.8),
         enabledFlows.length,
       );
-      
+
       if (cumulativeActiveFlows < targetActiveFlows) {
         cumulativeActiveFlows = Math.min(
           cumulativeActiveFlows + 1,
@@ -182,11 +182,7 @@ export function FlowsOverTimeChart({
                   });
                 }}
               />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-              />
+              <YAxis tickLine={false} axisLine={false} tickMargin={8} />
               <ChartTooltip
                 content={
                   <ChartTooltipContent
@@ -207,7 +203,11 @@ export function FlowsOverTimeChart({
                 type="monotone"
                 stroke="var(--color-activeFlows)"
                 strokeWidth={2}
-                dot={filteredData.length === 1 ? { r: 6, fill: 'var(--color-activeFlows)' } : false}
+                dot={
+                  filteredData.length === 1
+                    ? { r: 6, fill: 'var(--color-activeFlows)' }
+                    : false
+                }
                 activeDot={{ r: 5 }}
                 name={t('Active Flows')}
               />
@@ -216,7 +216,11 @@ export function FlowsOverTimeChart({
                 type="monotone"
                 stroke="var(--color-flowsCreated)"
                 strokeWidth={2}
-                dot={filteredData.length === 1 ? { r: 6, fill: 'var(--color-flowsCreated)' } : false}
+                dot={
+                  filteredData.length === 1
+                    ? { r: 6, fill: 'var(--color-flowsCreated)' }
+                    : false
+                }
                 activeDot={{ r: 5 }}
                 name={t('Flows Created')}
               />
@@ -227,4 +231,3 @@ export function FlowsOverTimeChart({
     </Card>
   );
 }
-

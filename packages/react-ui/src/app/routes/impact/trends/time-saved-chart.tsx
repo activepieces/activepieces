@@ -125,7 +125,11 @@ export function TimeSavedChart({
                 type="monotone"
                 stroke="var(--color-minutesSaved)"
                 strokeWidth={2}
-                dot={filteredData.length === 1 ? { r: 6, fill: 'var(--color-minutesSaved)' } : false}
+                dot={
+                  filteredData.length === 1
+                    ? { r: 6, fill: 'var(--color-minutesSaved)' }
+                    : false
+                }
                 activeDot={{ r: 5 }}
               />
             </LineChart>

@@ -2,28 +2,31 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, LayoutGrid, Medal, Rocket, Trophy, Workflow } from 'lucide-react';
+import {
+  Clock,
+  LayoutGrid,
+  Medal,
+  Rocket,
+  Trophy,
+  Workflow,
+} from 'lucide-react';
 import { useMemo } from 'react';
 
-import {
-  DataTable,
-  RowDataWithActions,
-} from '@/components/ui/data-table';
+import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type ProjectsLeaderboardProps = {
-  report?: PlatformAnalyticsReport;
-  isLoading?: boolean;
-};
-
-type ProjectStats = {
+export type ProjectStats = {
   id: string;
   projectId: string;
   projectName: string;
   flowCount: number;
   minutesSaved: number;
+};
+
+type ProjectsLeaderboardProps = {
+  data: ProjectStats[];
+  isLoading?: boolean;
 };
 
 const getRankIcon = (index: number) => {
@@ -54,7 +57,11 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
   {
     accessorKey: 'projectName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Project')} icon={LayoutGrid} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Project')}
+        icon={LayoutGrid}
+      />
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
@@ -63,9 +70,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
         </div>
         <div className="flex flex-col">
           <p className="font-medium">{row.original.projectName}</p>
-          <p className="text-sm text-muted-foreground">
-            {t('Project')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('Project')}</p>
         </div>
       </div>
     ),
@@ -106,47 +111,16 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
 ];
 
 export function ProjectsLeaderboard({
-  report,
+  data,
   isLoading,
 }: ProjectsLeaderboardProps) {
-  const leaderboardData = useMemo(() => {
-    if (!report?.flowsDetails) {
-      return [];
-    }
-
-    const projectStatsMap = new Map<string, ProjectStats>();
-
-    report.flowsDetails.forEach((flow) => {
-      const existing = projectStatsMap.get(flow.projectId);
-      if (existing) {
-        existing.flowCount += 1;
-        existing.minutesSaved += flow.minutesSaved;
-      } else {
-        projectStatsMap.set(flow.projectId, {
-          id: flow.projectId,
-          projectId: flow.projectId,
-          projectName: flow.projectName,
-          flowCount: 1,
-          minutesSaved: flow.minutesSaved,
-        });
-      }
-    });
-
-    return Array.from(projectStatsMap.values());
-  }, [report?.flowsDetails]);
-
   const columns = useMemo(() => createColumns(), []);
-
-  const dataWithIds: ProjectStats[] = leaderboardData.map((project) => ({
-    ...project,
-    id: project.projectId,
-  }));
 
   return (
     <DataTable
       columns={columns}
       page={{
-        data: dataWithIds,
+        data,
         next: null,
         previous: null,
       }}
