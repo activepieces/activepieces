@@ -20,9 +20,7 @@ export function extractResourceName(url: string): string | undefined {
  * the `projectId` property value does not match the principal's `projectId`.
  * Otherwise, does nothing.
  */
-export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<
-Payload | null
-> = (request, _response, payload, done) => {
+export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<Payload | null> = (request, _response, payload, done) => {
     request.log.trace(
         { payload, principal: request.principal, route: request.routeOptions.config },
         'entitiesMustBeOwnedByCurrentProject',
