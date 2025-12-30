@@ -8,6 +8,7 @@ import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 import { RunsChart } from './runs-chart';
 import { TimeSavedChart } from './time-saved-chart';
+import { FlowsOverTimeChart } from './flows-over-time-chart';
 
 type TrendsProps = {
   report?: PlatformAnalyticsReport;
@@ -33,9 +34,12 @@ export function Trends({ report }: TrendsProps) {
           presetType="past"
         />
       </div>
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <RunsChart report={report} selectedDateRange={selectedDateRange} />
-        <TimeSavedChart report={report} selectedDateRange={selectedDateRange} />
+      <div className="mt-4 space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <RunsChart report={report} selectedDateRange={selectedDateRange} />
+          <TimeSavedChart report={report} selectedDateRange={selectedDateRange} />
+        </div>
+        <FlowsOverTimeChart report={report} selectedDateRange={selectedDateRange} />
       </div>
     </div>
   );
