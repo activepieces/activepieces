@@ -1,8 +1,9 @@
-
 import {
   createTrigger,
   TriggerStrategy,
   AppConnectionValueForAuthProperty,
+  Property,
+  StaticPropsValue,
 } from '@activepieces/pieces-framework';
 import {
   DedupeStrategy,
@@ -13,10 +14,14 @@ import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { skyprepAuth } from '../common/auth';
 import dayjs from 'dayjs';
+import { courceID } from '../common/props';
 
+const props = {
+  course_id: courceID,
+};
 const polling: Polling<
   AppConnectionValueForAuthProperty<typeof skyprepAuth>,
-  Record<string, never>
+  StaticPropsValue<typeof props>
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue, lastFetchEpochMS, auth }) => {
@@ -26,15 +31,18 @@ const polling: Polling<
       HttpMethod.POST,
       '/get_course_progresses',
       {
+        course_id: propsValue.course_id || null,
         status: 'failed',
         per_page: 100,
       }
     );
 
-   
     return (response || [])
-      .filter((progress: any) => dayjs(progress.updated_at).valueOf() > lastFetchEpochMS)
-      .map((progress:any) => ({
+      .filter(
+        (progress: any) =>
+          dayjs(progress.updated_at).valueOf() > lastFetchEpochMS
+      )
+      .map((progress: any) => ({
         epochMilliSeconds: dayjs(progress.updated_at).valueOf(),
         data: progress,
       }));
@@ -46,7 +54,7 @@ export const courceFailed = createTrigger({
   name: 'courceFailed',
   displayName: 'Course Failed',
   description: 'Trigger when a user fails a course',
-  props: {},
+  props,
   sampleData: {
     id: 21869069,
     status: 'failed',
