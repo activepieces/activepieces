@@ -14,11 +14,13 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
     return <MetricCardSkeleton />;
   }
 
+  const totalFlowRuns = report.flowsDetails.reduce((acc, flow) => acc + flow.runs, 0);
+
   return (
     <MetricCard
       icon={Zap}
       title={t('Automation Runs')}
-      value={report.totalFlowRuns.toLocaleString()}
+      value={totalFlowRuns.toLocaleString()}
       description={t(
         'Total flow runs completed automatically, showing how many tasks your team automated in the last 3 months.',
       )}
