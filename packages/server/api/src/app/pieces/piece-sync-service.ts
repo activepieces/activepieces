@@ -44,10 +44,12 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                     pieceType: true,
                 }
             }), listCloudPieces()])
-            await installNewPieces(cloudPieces, dbPieces, log)
-            await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
+            const added = await installNewPieces(cloudPieces, dbPieces, log)
+            const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
 
             log.info({
+                added,
+                deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
         }
@@ -57,34 +59,36 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger) {
+async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger): Promise<number> {
     const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
     const piecesToDelete = dbPieces.filter(piece => !cloudMap.has(`${piece.name}:${piece.version}`))
     await pieceMetadataService(log).bulkDelete(piecesToDelete.map(piece => ({ name: piece.name, version: piece.version })))
+    return piecesToDelete.length
 }
 
-async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger) {
+async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5;
     for (let i = 0; i < newPiecesToFetch.length; i += batchSize) {
-        await Promise.all(newPiecesToFetch.slice(i, i + batchSize).map(piece => {
-            return async () => {
-                const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
-                const response = await fetch(url)
-                if (!response.ok) {
-                    log.warn({ name: piece.name, version: piece.version, status: response.status }, 'Error reading piece metadata')
-                    return
-                }
-                const pieceMetadata = await response.json()
-                await pieceMetadataService(log).create({
-                    pieceMetadata,
-                    packageType: pieceMetadata.packageType,
-                    pieceType: pieceMetadata.pieceType,
-                })
+        const currentBatch = newPiecesToFetch.slice(i, i + batchSize)
+        await Promise.all(currentBatch.map(async (piece) => {
+            const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
+            const response = await fetch(url)
+            if (!response.ok) {
+                log.warn({ name: piece.name, version: piece.version, status: response.status }, 'Error reading piece metadata')
+                return
             }
+            const pieceMetadata = await response.json()
+            await pieceMetadataService(log).create({
+                pieceMetadata,
+                packageType: pieceMetadata.packageType,
+                pieceType: pieceMetadata.pieceType,
+            })
+
         }))
     }
+    return newPiecesToFetch.length
 }
 
 
