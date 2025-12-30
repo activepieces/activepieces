@@ -131,6 +131,9 @@ export const projectHooks = {
         if (isNil(projectIdFromParams)) {
           return false;
         }
+        if (projectIdFromParams === projectIdFromToken) {
+          return true;
+        }
         const previousProjectId = authenticationSession.getProjectId();
         try {
           authenticationSession.switchToProject(projectIdFromParams);
