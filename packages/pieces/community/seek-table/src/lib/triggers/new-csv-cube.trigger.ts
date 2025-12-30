@@ -21,7 +21,7 @@ interface Cube {
   CreateDate: string;
 }
 
-const polling: Polling<AppConnectionValueForAuthProperty<typeof seekTableAuth>, {}> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof seekTableAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth }) => {
     const response = await seekTableApiCall({
