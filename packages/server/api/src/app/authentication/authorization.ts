@@ -21,7 +21,7 @@ export function extractResourceName(url: string): string | undefined {
  * Otherwise, does nothing.
  */
 export const entitiesMustBeOwnedByCurrentProject: preSerializationHookHandler<
-    Payload | null
+Payload | null
 > = (request, _response, payload, done) => {
     request.log.trace(
         { payload, principal: request.principal, route: request.routeOptions.config },
