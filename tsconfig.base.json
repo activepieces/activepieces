@@ -386,6 +386,9 @@
       "@activepieces/piece-flipando": [
         "packages/pieces/community/flipando/src/index.ts"
       ],
+      "@activepieces/piece-skyprep": [
+        "packages/pieces/community/skyprep/src/index.ts"
+      ],
       "@activepieces/piece-influencers-club": [
         "packages/pieces/community/influencers-club/src/index.ts"
       ],
