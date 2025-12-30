@@ -12,6 +12,8 @@ export const skyprep = createPiece({
   auth: skyprepAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/skyprep.png',
+  description:
+    ' SkyPrep is a powerful Learning Management System (LMS) designed to help businesses and organizations deliver effective training and educational content to their employees and users.',
   authors: ['sanket-a11y'],
   actions: [enrollAUserIntoACource, enrollAUserIntoAUserGroup, updateUser],
   triggers: [courceFailed, courcePassed, newUser],
