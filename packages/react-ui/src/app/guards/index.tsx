@@ -355,7 +355,7 @@ const routes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Platform">
-          <Navigate to="/platform/analytics" />
+          <Navigate to="/platform/projects" />
         </PageTitle>
       </PlatformLayout>
     ),
