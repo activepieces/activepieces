@@ -12,7 +12,7 @@
     "dev": "node tools/scripts/install-bun.js && concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend --port=4300\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:backend": "concurrently -n \"API,ENG\" -c \"bgGreen.bold,bgRed.bold\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "dev:frontend": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
-    "start": "node tools/scripts/install-bun.js && bun install && npm run dev",
+    "start": "node tools/setup-dev.js && npm run dev",
     "test:e2e": "nx run tests-e2e:test-e2e",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
