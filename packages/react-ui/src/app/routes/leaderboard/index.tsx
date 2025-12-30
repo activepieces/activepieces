@@ -1,5 +1,4 @@
 import { t } from 'i18next';
-import { Trophy } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,12 +15,7 @@ export default function LeaderboardPage() {
     <RefreshAnalyticsProvider>
       <div className="flex flex-col gap-2 w-full">
         <DashboardPageHeader
-          title={
-            <div className="flex items-center gap-3">
-              <Trophy className="w-6 h-6" />
-              <span>{t('Leaderboard')}</span>
-            </div>
-          }
+          title={t('Leaderboard')}
           description={t(
             'See top performers by flows created and time saved',
           )}
