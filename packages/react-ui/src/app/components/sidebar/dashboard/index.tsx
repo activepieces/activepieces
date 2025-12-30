@@ -228,7 +228,7 @@ export function ProjectDashboardSidebar() {
           </SidebarGroup>
 
           <SidebarSeparator
-            className={cn(state === 'collapsed' ? 'mb-3' : 'mb-5', 'shrink-0')}
+            className='mb-3 shrink-0'
           />
 
           <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
