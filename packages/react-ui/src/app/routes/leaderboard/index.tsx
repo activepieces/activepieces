@@ -24,8 +24,12 @@ export default function LeaderboardPage() {
         <Tabs defaultValue="creators" className="w-full">
           <div className="flex items-center justify-between mb-4">
             <TabsList variant="outline">
-              <TabsTrigger variant="outline" value="creators">{t('Creators')}</TabsTrigger>
-              <TabsTrigger variant="outline" value="projects">{t('Projects')}</TabsTrigger>
+              <TabsTrigger variant="outline" value="creators">
+                {t('People')}
+              </TabsTrigger>
+              <TabsTrigger variant="outline" value="projects">
+                {t('Projects')}
+              </TabsTrigger>
             </TabsList>
           </div>
 
