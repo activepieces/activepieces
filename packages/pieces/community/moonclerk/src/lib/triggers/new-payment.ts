@@ -90,7 +90,7 @@ export const newPayment = createTrigger({
         date: '2022-04-08T18:57:26Z',
         fee: 0,
         subtotal: 1000,
-        token: 'sGhAhMWZdVdJqEYByx4xcLP9',
+        token: '',
         total: 1000,
         trial_period_days: null,
         upfront_amount: 0,

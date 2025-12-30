@@ -86,7 +86,7 @@ export const newPlan = createTrigger({
         date: '2014-07-23T13:44:12Z',
         fee: 200,
         subtotal: 1000,
-        token: 'YUAf1PJde1Uho7CnQ1BVPuCz',
+        token: '',
         total: 1700,
         trial_period_days: null,
         upfront_amount: 500,
