@@ -1,5 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
+    ErrorCode,
     isNil,
     ListTemplatesRequestQuery,
     SeekPage,
@@ -9,7 +11,27 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 
 export const communityTemplates = {
-    get: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
+    get: async (id: string): Promise<Template> => {
+        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
+        if (isNil(templateSource)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Templates source URL is not set',
+                },
+            })
+        }
+        const url = `${templateSource}/${id}`
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        const template = await response.json()
+        return template
+    },
+    list: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {
             return paginationHelper.createPage([], null)

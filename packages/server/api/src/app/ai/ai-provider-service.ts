@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
@@ -9,13 +8,17 @@ import {
     PlatformId,
     UpdateAIProviderRequest,
 } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
+import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
 import { encryptUtils } from '../helper/encryption'
-import { system } from '../helper/system/system'
+import { SystemJobName } from '../helper/system-jobs/common'
+import { systemJobsSchedule } from '../helper/system-jobs/system-job'
 import { AIProviderEntity, AIProviderSchema } from './ai-provider-entity'
 import { aiProviders } from './providers'
 
@@ -131,16 +134,33 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
                 },
             })
         }
+
+        let auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
+
         if (aiProvider.provider === AIProviderName.ACTIVEPIECES) {
-            const doesHaveKeys = await doesActivepiecesProviderHasKeys(aiProvider)
+            const doesHaveKeys = !isNil(auth) && !isNil(auth.apiKey) && auth.apiKey !== ''
             if (!doesHaveKeys) {
-                return enrichWithKeysIfNeeded(aiProvider, platformId, log)
+                const { auth: activePiecesAuth } = await enrichWithKeysIfNeeded(aiProvider, platformId, log)
+
+                auth = activePiecesAuth
             }
+
+            await systemJobsSchedule(log).upsertJob({
+                job: {
+                    name: SystemJobName.AI_CREDIT_UPDATE_CHECK,
+                    data: { apiKeyHash: (auth as ActivePiecesProviderAuthConfig).apiKeyHash, platformId },
+                },
+                schedule: {
+                    type: 'one-time',
+                    date: dayjs(),
+                },
+            })
         }
-        const auth = await encryptUtils.decryptObject<AIProviderAuthConfig>(aiProvider.auth)
+        
+        
         return { provider: aiProvider.provider, auth, config: aiProvider.config }
     },
-    async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<GetProviderConfigResponse | null> {
+    async getActivepiecesProviderIfEnriched(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig | null> {
         const aiProvider = await aiProviderRepo().findOneBy({
             platformId,
             provider: AIProviderName.ACTIVEPIECES,
@@ -152,7 +172,48 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
         if (!doesHaveKeys) {
             return null
         }
-        return this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
+        const { auth } = await this.getConfigOrThrow({ platformId, provider: aiProvider.provider })
+
+        return auth as ActivePiecesProviderAuthConfig
+    },
+
+    async getOrCreateActivePiecesProviderAuthConfig(platformId: PlatformId): Promise<ActivePiecesProviderAuthConfig> {
+        const aiProvider = await aiProviderRepo().findOneBy({
+            platformId,
+            provider: AIProviderName.ACTIVEPIECES,
+        })
+        if (isNil(aiProvider)) {
+            await aiProviderRepo().save({
+                id: apId(),
+                auth: await encryptUtils.encryptObject({}),
+                config: {},
+                provider: AIProviderName.ACTIVEPIECES,
+                displayName: 'Activepieces',
+                platformId,
+            })
+        }
+
+        const { auth } = await this.getConfigOrThrow({ platformId, provider: AIProviderName.ACTIVEPIECES })
+        return auth as ActivePiecesProviderAuthConfig
+    },
+
+    async getAllActivePiecesProvidersConfigs(platformIds?: string[]): Promise<{ [platformId: string]: ActivePiecesProviderAuthConfig }> {
+        const aiProviders = await aiProviderRepo().find({
+            where: {
+                provider: AIProviderName.ACTIVEPIECES,
+                platformId: platformIds?.length ? In(platformIds) : undefined,
+            },
+        })
+
+        const result: { [platformId: string]: ActivePiecesProviderAuthConfig } = {}
+        for (const aiProvider of aiProviders) {
+            const hasKeys = await doesActivepiecesProviderHasKeys(aiProvider)
+            if (!hasKeys) continue
+
+            result[aiProvider.platformId] = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
+        }
+
+        return result
     },
 })
 
@@ -163,8 +224,11 @@ type GetOrCreateActivepiecesConfigResponse = {
 
 async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: PlatformId, log: FastifyBaseLogger): Promise<GetProviderConfigResponse> {
     const platformPlan = await platformPlanService(log).getOrCreateForPlatform(platformId)
-    const limit = ((platformPlan.aiCreditsOverageLimit ?? 0) + platformPlan.includedAiCredits) / 1000
-    const { key, data } = await openRouterCreateKey(`Platform ${platformId}`, limit)
+    const limit = platformPlan.includedAiCredits / 1000
+    const { key, data } = await openRouterApi.createKey({
+        name: `Platform ${platformId}`, 
+        limit,
+    })
     const rawAuth: ActivePiecesProviderAuthConfig = { apiKey: key, apiKeyHash: data.hash }
     const savedAiProvider = await aiProviderRepo().save({
         id: aiProvider.id,
@@ -173,6 +237,10 @@ async function enrichWithKeysIfNeeded(aiProvider: AIProviderSchema, platformId: 
         displayName: 'Activepieces',
         config: {},
         auth: await encryptUtils.encryptObject(rawAuth),
+    })
+    await platformPlanService(log).update({
+        platformId,
+        lastFreeAiCreditsRenewalDate: new Date().toISOString(),
     })
     return { provider: savedAiProvider.provider, auth: rawAuth, config: savedAiProvider.config }
 }
@@ -185,24 +253,3 @@ async function doesActivepiecesProviderHasKeys(aiProvider: AIProviderSchema): Pr
     const decryptedAuth = await encryptUtils.decryptObject<ActivePiecesProviderAuthConfig>(aiProvider.auth)
     return !isNil(decryptedAuth) && !isNil(decryptedAuth.apiKey) && decryptedAuth.apiKey !== ''
 }
-
-async function openRouterCreateKey(name: string, limit: number): Promise<{ key: string, data: { hash: string } }> {
-    const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
-    const res = await fetch('https://openrouter.ai/api/v1/keys', {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            name,
-            limit,
-        }),
-    })
-    if (!res.ok) {
-        throw new Error(`Failed to create OpenRouter key: ${res.status} ${await res.text()}`)
-    }
-    const data = await res.json()
-    return { key: data.key, data: data.data }
-}
-

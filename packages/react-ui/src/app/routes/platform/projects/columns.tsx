@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Tag, Users, Workflow, Clock, Hash } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { RowDataWithActions } from '@/components/ui/data-table';
@@ -27,8 +27,9 @@ export const projectsTableColumns = ({
   const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     {
       accessorKey: 'displayName',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
@@ -55,8 +56,13 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'users',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Active Users')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Active Users')}
+          icon={Users}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -69,8 +75,13 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'flows',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Active Flows')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Active Flows')}
+          icon={Workflow}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -83,8 +94,13 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'createdAt',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -99,8 +115,13 @@ export const projectsTableColumns = ({
   if (platform.plan.embeddingEnabled) {
     columns.push({
       accessorKey: 'externalId',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('External ID')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('External ID')}
+          icon={Hash}
+        />
       ),
       cell: ({ row }) => {
         const displayValue =
