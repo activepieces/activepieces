@@ -36,7 +36,6 @@ export const validatePhone = createAction({
     const client = new PhoneValidatorClient(auth.secret_text);
     const response = await client.validatePhone(propsValue.phoneNumber, propsValue.searchType as 'basic' | 'fake');
 
-    // Handle the response structure based on the documentation
     if (response.StatusCode === '200') {
       const result: any = {
         phoneNumber: response.PhoneNumber,
@@ -46,7 +45,6 @@ export const validatePhone = createAction({
         statusMessage: response.StatusMessage,
       };
 
-      // Add specific results based on search type
       if (response.PhoneBasic) {
         result.phoneBasic = {
           phoneNumber: response.PhoneBasic.PhoneNumber,
