@@ -394,6 +394,15 @@
       ],
       "@activepieces/piece-seek-table": [
         "packages/pieces/community/seek-table/src/index.ts"
+      ],
+      "@activepieces/piece-lucidya": [
+        "packages/pieces/community/lucidya/src/index.ts"
+      ],
+      "@activepieces/piece-phone-validator": [
+        "packages/pieces/community/phone-validator/src/index.ts"
+      ],
+      "@activepieces/piece-barcode-lookup": [
+        "packages/pieces/community/barcode-lookup/src/index.ts"
       ]
     },
     "resolveJsonModule": true
