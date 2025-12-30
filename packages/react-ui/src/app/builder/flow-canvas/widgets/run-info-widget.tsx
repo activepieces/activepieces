@@ -3,7 +3,7 @@ import { t } from 'i18next';
 
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { formatUtils } from '@/lib/utils';
+import { cn, formatUtils } from '@/lib/utils';
 import {
   ApFlagId,
   FlowRunStatus,
@@ -75,7 +75,10 @@ const RunInfoWidget = () => {
   });
   return (
     <LargeWidgetWrapper
-      containerClassName={flowRunUtils.getStatusContainerClassName(variant)}
+      containerClassName={cn(
+        flowRunUtils.getStatusContainerClassName(variant),
+        'bg-background border border-border',
+      )}
       key={run.id + run.status}
     >
       <div className="flex items-center justify-between w-full flex-wrap">

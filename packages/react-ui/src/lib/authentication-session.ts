@@ -87,7 +87,7 @@ export const authenticationSession = {
     ApStorage.getInstance().setItem('projectId', result.projectId);
     window.location.href = '/';
   },
-  async switchToProject(projectId: string) {
+  switchToProject(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }

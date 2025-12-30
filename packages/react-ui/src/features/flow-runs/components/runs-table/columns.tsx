@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -206,7 +207,7 @@ export const runsTableColumns = ({
           {!isNil(archivedAt) && (
             <Archive className="size-4 text-muted-foreground" />
           )}
-          <span>{displayName}</span>
+          <TruncatedColumnTextValue value={displayName} />
         </div>
       );
     },
