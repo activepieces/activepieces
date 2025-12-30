@@ -130,7 +130,7 @@ export const projectHooks = {
         if (isNil(projectIdFromParams)) {
           return false;
         }
-       
+
         const previousProjectId = authenticationSession.getProjectId();
         try {
           if (projectIdFromParams !== currentProjectId) {
