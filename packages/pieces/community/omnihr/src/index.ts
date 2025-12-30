@@ -10,14 +10,11 @@ const OMNIHR_API_BASE_URL = 'https://api.omnihr.co/api/';
 const OMNIHR_TOKEN_URL = 'https://api.omnihr.co/api/v1/auth/token/';
 const markdown = 'Enter your OmniHR credentials to authenticate:';
 
-async function getAccessToken(username: string, password: string, origin?: string): Promise<string> {
+async function getAccessToken(username: string, password: string, origin: string): Promise<string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'Origin': origin,
   };
-
-  if (origin) {
-    headers['Origin'] = origin;
-  }
 
   const response = await httpClient.sendRequest<{
     access: string;
