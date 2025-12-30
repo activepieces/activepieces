@@ -175,7 +175,7 @@ const CanvasControls = ({
     >
       <div className="flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-background border border-sidebar-border">
       <CanvasButtonWrapper tooltip={t('Minimap')}>
-          <Button variant="ghost" size="icon" onClick={() => {
+          <Button variant={showMinimap ? 'default' : 'ghost'} size="icon" onClick={() => {
             setShowMinimap(!showMinimap);
           }}>
             <Map className="size-4" />

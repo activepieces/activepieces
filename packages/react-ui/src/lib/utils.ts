@@ -9,6 +9,7 @@ import { twMerge } from 'tailwind-merge';
 import { LocalesEnum, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
+import { FastAverageColor } from 'fast-average-color';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -401,3 +402,56 @@ export const routesThatRequireProjectId = {
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
 };
+
+
+export const averageColorInImageUtils = {
+  isGrayColor: (r: number, g: number, b: number): boolean => {
+    const threshold = 15;
+    const darkThreshold = 150;
+    const lightThreshold = 225;
+  
+    const isDark = r <= darkThreshold && g <= darkThreshold && b <= darkThreshold;
+    const isLight =
+      r >= lightThreshold && g >= lightThreshold && b >= lightThreshold;
+    const diffRG = Math.abs(r - g);
+    const diffRB = Math.abs(r - b);
+    const diffGB = Math.abs(g - b);
+    const isGray =
+      diffRG <= threshold && diffRB <= threshold && diffGB <= threshold;
+    return isDark || isLight || isGray;
+  },
+  useAverageColorInImage: ({imgUrl, transparency}: {imgUrl:string, transparency:number}) => {
+    const [backgroundColor, setBackgroundColor] = useState<string | null>(null);
+    useEffect(() => {
+      if (!imgUrl) return;
+  
+      const fac = new FastAverageColor();
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = imgUrl;
+  
+      img.onload = () => {
+        fac
+          .getColorAsync(img, { algorithm: 'simple' })
+          .then((color) => {
+            const [r, g, b] = color.value;
+            if (averageColorInImageUtils.isGrayColor(r, g, b)) {
+              setBackgroundColor(null);
+            } else {
+              setBackgroundColor(
+                `color-mix(in srgb, rgb(${r},${g},${b}) ${transparency}%, #fff 92%)`,
+              );
+            }
+          })
+          .catch(() => {
+            setBackgroundColor(null);
+          });
+      };
+  
+      return () => {
+        fac.destroy();
+      };
+    }, [imgUrl]);
+    return backgroundColor;
+  }
+}

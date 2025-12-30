@@ -45,6 +45,7 @@ import {
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
+import Minimap from './widgets/minimap';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -217,8 +218,8 @@ export const FlowCanvas = React.memo(
     const translateExtent = useMemo(() => {
        const nodes = graph.nodes;
        const graphRectangle = getNodesBounds(nodes);
-       const maxWidth = Math.max(window.innerWidth, graphRectangle.width) + 500;
-       const maxHeight = Math.max(window.innerHeight, graphRectangle.height) +500;
+       const maxWidth = Math.max(window.innerWidth, graphRectangle.width) + 150;
+       const maxHeight = Math.max(window.innerHeight, graphRectangle.height) +150;
        const extent: CoordinateExtent = [
         [-maxWidth, -maxHeight/2],
         [maxWidth, maxHeight],
@@ -277,9 +278,7 @@ export const FlowCanvas = React.memo(
                 bgColor={`var(--builder-background)`}
                 color={`var(--builder-background-pattern)`}
               />
-              {
-                showMinimap && (<MiniMap  position='bottom-left' className='rounded-md !bottom-[50px] animate-in fade-in duration-300'  nodeClassName={'!fill-primary'} nodeStrokeWidth={3} zoomable pannable />)
-              }
+             <Minimap key={graphKey} />
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>
