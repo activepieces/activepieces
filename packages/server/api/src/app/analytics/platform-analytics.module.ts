@@ -1,9 +1,7 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { FlowOperationType, PrincipalType, UpdatePlatformReportRequest, UpdateTimeSavedPerRunRequest } from '@activepieces/shared'
+import { PrincipalType, UpdatePlatformReportRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
-import { flowService } from '../flows/flow/flow.service'
-import { projectService } from '../project/project-service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
@@ -30,38 +28,9 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
         return platformAnalyticsReportService(request.log).refreshReport(platform.id)
     })
 
-    // TODO(@chaker): remove this endpoint after solving the issue with removing project id from the principal
-    app.post('/time-saved-per-run', UpdateTimeSavedPerRunRequestSchema, async (request) => {
-        const flow = await flowService(request.log).getOneById(request.body.flowId)
-        if (!flow) {
-            throw new Error('Flow not found')
-        }
-        const platformId = await projectService.getPlatformId(flow.projectId)
-        if (platformId !== request.principal.platform.id) {
-            throw new Error('Unauthorized')
-        }
-        return flowService(request.log).update({
-            id: flow.id,
-            projectId: flow.projectId,
-            userId: request.principal.id,
-            platformId: request.principal.platform.id,
-            operation: {
-                type: FlowOperationType.UPDATE_MINUTES_SAVED,
-                request: { timeSavedPerRun: request.body.timeSavedPerRun ?? null },
-            },
-        })
-    })
 }
 
-const UpdateTimeSavedPerRunRequestSchema = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
 
-    },
-    schema: {
-        body: UpdateTimeSavedPerRunRequest,
-    },
-}
 const UpdatePlatformReportRequestSchema = {
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
