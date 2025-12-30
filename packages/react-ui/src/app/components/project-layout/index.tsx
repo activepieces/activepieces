@@ -1,4 +1,4 @@
-import { Compass, LineChart } from 'lucide-react';
+import { Compass, LineChart, Trophy } from 'lucide-react';
 import React, { ComponentType, SVGProps } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
@@ -69,7 +69,7 @@ export function ProjectDashboardLayout({
       to: '/leaderboard',
       label: t('Leaderboard'),
       show: true,
-      icon: LineChart,
+      icon: Trophy,
       hasPermission: true,
     },
   ];
