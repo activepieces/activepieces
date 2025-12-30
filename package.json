@@ -135,6 +135,7 @@
     "axios": "1.13.1",
     "axios-retry": "4.4.1",
     "bcrypt": "6.0.0",
+    "better-auth": "1.4.9",
     "boring-avatars": "1.11.2",
     "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",

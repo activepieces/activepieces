@@ -1,7 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import { ApEdition, assertNotNullOrUndefined, isNil } from '@activepieces/shared'
 import { createBullBoard } from '@bull-board/api'
-import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'
+import { BullMQAdapter } from '@bull-board/api/bullMQAdapter.js'
 import { FastifyAdapter } from '@bull-board/fastify'
 import basicAuth from '@fastify/basic-auth'
 import { FastifyInstance } from 'fastify'
