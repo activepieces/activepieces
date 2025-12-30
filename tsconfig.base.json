@@ -392,6 +392,9 @@
       "@activepieces/piece-influencers-club": [
         "packages/pieces/community/influencers-club/src/index.ts"
       ],
+      "@activepieces/piece-tenzo": [
+        "packages/pieces/community/tenzo/src/index.ts"
+      ],
       "@activepieces/piece-seek-table": [
         "packages/pieces/community/seek-table/src/index.ts"
       ],
