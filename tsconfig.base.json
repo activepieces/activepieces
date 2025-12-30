@@ -376,6 +376,9 @@
       ],
       "@activepieces/piece-moonclerk": [
         "packages/pieces/community/moonclerk/src/index.ts"
+      ],
+      "@activepieces/piece-flipando": [
+        "packages/pieces/community/flipando/src/index.ts"
       ]
     },
     "resolveJsonModule": true

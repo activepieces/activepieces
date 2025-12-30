@@ -21,6 +21,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
@@ -104,7 +105,7 @@ export default function UsersPage() {
                 />
               ),
               cell: ({ row }) => {
-                return <div className="text-left">{row.original.email}</div>;
+                return <TruncatedColumnTextValue value={row.original.email} />;
               },
             },
             {
@@ -119,9 +120,9 @@ export default function UsersPage() {
               ),
               cell: ({ row }) => {
                 return (
-                  <div className="text-left">
-                    {row.original.firstName} {row.original.lastName}
-                  </div>
+                  <TruncatedColumnTextValue
+                    value={row.original.firstName + ' ' + row.original.lastName}
+                  />
                 );
               },
             },

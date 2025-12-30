@@ -49,7 +49,7 @@ export const ExplorePage = () => {
 
   return (
     <div>
-      <ProjectDashboardPageHeader title={t('Explore Templates')} />
+      <ProjectDashboardPageHeader />
       <div>
         <div className="mb-4">
           <InputWithIcon
