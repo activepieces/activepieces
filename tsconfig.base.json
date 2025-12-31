@@ -406,6 +406,17 @@
       ],
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@zroswiss/piece-zroswiss": [
+        "packages/pieces/custom/zroswiss/src/index.ts"
+      ],
+      "@zroswiss/piece-zroarb": ["packages/pieces/custom/zroarb/src/index.ts"],
+      "@zroswiss/piece-bitgo": ["packages/pieces/custom/bitgo/src/index.ts"],
+      "@zroswiss/piece-mural-pay": [
+        "packages/pieces/custom/mural-pay/src/index.ts"
+      ],
+      "@zroswiss/piece-circle-pay": [
+        "packages/pieces/custom/circle-pay/src/index.ts"
       ]
     },
     "resolveJsonModule": true
