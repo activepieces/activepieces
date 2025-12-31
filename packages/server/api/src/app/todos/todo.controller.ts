@@ -132,13 +132,7 @@ const ListTodosRequest = {
     },
     config: {
         security: securityAccess.project([PrincipalType.USER], undefined, {
-            type: ProjectResourceType.TABLE,
-            tableName: FlowEntity,
-            entitySourceType: EntitySourceType.QUERY,
-            lookup: {
-                paramKey: 'flowId',
-                entityField: 'id',
-            },
+            type: ProjectResourceType.QUERY,
         }),
     },
 }
