@@ -1,8 +1,9 @@
 'use client';
 
 import { t } from 'i18next';
-import { TrendingUp } from 'lucide-react';
-import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
+import { Clock } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
+import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,52 +13,64 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnalyticsRunsUsageItem } from '@activepieces/shared';
+import { formatUtils } from '@/lib/utils';
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type RunsChartProps = {
-  runsUsage?: AnalyticsRunsUsageItem[];
-  isLoading: boolean;
+type TimeSavedChartProps = {
+  report?: PlatformAnalyticsReport;
+  selectedDateRange?: DateRange;
 };
 
-export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
+export function TimeSavedChart({
+  report,
+  selectedDateRange,
+}: TimeSavedChartProps) {
   const chartData =
-    runsUsage
-      ?.map((data) => ({
+    report?.runsUsage
+      .map((data) => ({
         date: data.day,
-        runs: data.totalRuns,
+        minutesSaved: data.minutesSaved,
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
       ) || [];
 
   const chartConfig = {
-    runs: {
-      label: t('Runs'),
-      color: 'hsl(var(--chart-1))',
+    minutesSaved: {
+      label: t('Time Saved'),
+      color: 'hsl(var(--chart-2))',
     },
   } satisfies ChartConfig;
+
+  const filteredData = chartData.filter((data) => {
+    if (!selectedDateRange?.from || !selectedDateRange?.to) {
+      return true;
+    }
+    const date = new Date(data.date);
+    return date >= selectedDateRange.from && date <= selectedDateRange.to;
+  });
 
   return (
     <Card className="col-span-full">
       <CardHeader className="space-y-0 pb-2">
         <div className="space-y-1">
           <CardTitle className="text-base">
-            {t('Flow Runs Over Time')}
+            {t('Time Saved Over Time')}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            {t('Track your automation execution trends')}
+            {t('Track how much time your automations are saving')}
           </p>
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        {isLoading ? (
+        {!report ? (
           <Skeleton className="h-[300px] w-full" />
-        ) : chartData.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <TrendingUp className="h-10 w-10 text-muted-foreground/50" />
+            <Clock className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
               {t(
-                'No runs recorded yet. Data will appear here once your flows start running.',
+                'No time saved yet. Data will appear here once your flows start running.',
               )}
             </p>
           </div>
@@ -66,9 +79,9 @@ export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
           >
-            <LineChart
+            <BarChart
               accessibilityLayer
-              data={chartData}
+              data={filteredData}
               margin={{
                 left: 12,
                 right: 12,
@@ -93,7 +106,7 @@ export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
                 content={
                   <ChartTooltipContent
                     className="w-[150px]"
-                    nameKey="runs"
+                    nameKey="minutesSaved"
                     labelFormatter={(value) => {
                       return new Date(value).toLocaleDateString('en-US', {
                         month: 'short',
@@ -101,22 +114,18 @@ export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
                         year: 'numeric',
                       });
                     }}
+                    formatter={(value) =>
+                      formatUtils.formatToHoursAndMinutes(value as number)
+                    }
                   />
                 }
               />
-              <Line
-                dataKey="runs"
-                type="monotone"
-                stroke="var(--color-runs)"
-                strokeWidth={2}
-                dot={
-                  chartData.length === 1
-                    ? { r: 6, fill: 'var(--color-runs)' }
-                    : false
-                }
-                activeDot={{ r: 5 }}
+              <Bar
+                dataKey="minutesSaved"
+                fill="var(--color-minutesSaved)"
+                radius={4}
               />
-            </LineChart>
+            </BarChart>
           </ChartContainer>
         )}
       </CardContent>

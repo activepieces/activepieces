@@ -9,8 +9,7 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/impact';
-import LeaderboardPage from '@/app/routes/leaderboard';
+import AnalyticsPage from '@/app/routes/platform/analytics';
 import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
@@ -342,23 +341,13 @@ const routes = [
     ),
   },
   {
-    path: '/impact',
+    path: '/platform/analytics',
     element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Impact">
+      <PlatformLayout>
+        <PageTitle title="Analytics">
           <AnalyticsPage />
         </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
-  {
-    path: '/leaderboard',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Leaderboard">
-          <LeaderboardPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
+      </PlatformLayout>
     ),
   },
   {
