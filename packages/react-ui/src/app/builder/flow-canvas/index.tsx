@@ -109,7 +109,6 @@ export const FlowCanvas = React.memo(
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
-
     useShowChevronNextToSelection();
     useFocusOnStep();
     useHandleKeyPressOnCanvas();
@@ -215,12 +214,18 @@ export const FlowCanvas = React.memo(
     const translateExtent = useMemo(() => {
       const nodes = graph.nodes;
       const graphRectangle = getNodesBounds(nodes);
-      const maxWidth = Math.max(window.innerWidth, graphRectangle.width) + 150;
-      const maxHeight =
-        Math.max(window.innerHeight, graphRectangle.height) + 150;
+      const stepWidth = flowUtilConsts.AP_NODE_SIZE.STEP.width;
+      const start = {
+        x: -graphRectangle.width - 5 * stepWidth,
+        y: -graphRectangle.height ,
+      }
+      const end = {
+        x: 2.5 * graphRectangle.width + 5 * stepWidth,
+        y: 2 * graphRectangle.height ,
+      }
       const extent: CoordinateExtent = [
-        [-maxWidth, -maxHeight / 2],
-        [maxWidth, maxHeight],
+        [start.x, start.y],
+        [end.x, end.y],
       ];
       return extent;
     }, [graphKey]);
