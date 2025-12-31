@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, Folder, Info, Pencil, Workflow } from 'lucide-react';
+import { Clock, Folder, Info, Pencil, User, Workflow } from 'lucide-react';
 import { useContext, useMemo } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,7 @@ import {
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
+import { ApAvatar } from '@/components/custom/ap-avatar';
 
 type FlowsDetailsProps = {
   flowsDetails?: AnalyticsFlowReportItem[];
@@ -66,6 +67,15 @@ const createColumns = (
         {row.original.flowName}
       </div>
     ),
+  },
+  {
+    accessorKey: 'owner',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+    ),
+    cell: ({ row }) => {
+      return <ApAvatar type="user" id={row.original.ownerId ?? ''} size="small" includeAvatar={true} includeName={true} />;
+    },
   },
   {
     accessorKey: 'projectName',
