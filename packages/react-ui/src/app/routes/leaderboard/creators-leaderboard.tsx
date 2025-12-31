@@ -5,6 +5,7 @@ import { t } from 'i18next';
 import { Clock, Medal, Trophy, User, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
+import { ApAvatar } from '@/components/custom/ap-avatar';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
@@ -27,11 +28,7 @@ const getRankIcon = (index: number) => {
   if (index === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
   if (index === 1) return <Medal className="w-5 h-5 text-gray-400" />;
   if (index === 2) return <Medal className="w-5 h-5 text-amber-600" />;
-  return (
-    <span className="flex h-6 w-6 items-center justify-center text-sm font-semibold text-muted-foreground">
-      {index + 1}
-    </span>
-  );
+  return null;
 };
 
 const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
@@ -43,7 +40,13 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
     cell: ({ row, table }) => {
       const sortedRows = table.getSortedRowModel().rows;
       const index = sortedRows.findIndex((r) => r.id === row.id);
-      return <div className="shrink-0">{getRankIcon(index)}</div>;
+      const rankIcon = getRankIcon(index);
+      return (
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-sm text-muted-foreground">{index + 1}#</span>
+          {rankIcon && <div>{rankIcon}</div>}
+        </div>
+      );
     },
     enableSorting: false,
     size: 60,
@@ -55,15 +58,13 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-          {row.original.userName.charAt(0).toUpperCase()}
-        </div>
-        <div className="flex flex-col">
-          <p className="font-medium">{row.original.userName}</p>
-          <p className="text-sm text-muted-foreground">
-            {row.original.userEmail}
-          </p>
-        </div>
+        <ApAvatar
+          type="user"
+          id={row.original.visibleId}
+          size="medium"
+          includeAvatar={true}
+          includeName={true}
+        />
       </div>
     ),
   },
@@ -78,7 +79,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
       />
     ),
     cell: ({ row }) => (
-      <div className="text-right font-semibold">{row.original.flowCount}</div>
+      <div className="text-right">{row.original.flowCount}</div>
     ),
   },
   {
@@ -92,7 +93,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
       />
     ),
     cell: ({ row }) => (
-      <div className="text-right font-semibold">
+      <div className="text-right">
         {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
       </div>
     ),
