@@ -16,7 +16,9 @@ import {
     UserId,
     UserIdentity,
     UserStatus,
-    UserWithMetaInformation } from '@activepieces/shared'
+    UserWithBadges,
+    UserWithMetaInformation
+} from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -55,7 +57,7 @@ export const userService = {
                 platformId,
                 platformRole: PlatformRole.MEMBER,
             })
-    
+
             await projectService.create({
                 displayName: identity.firstName + '\'s Project',
                 ownerId: newUser.id,
@@ -147,15 +149,22 @@ export const userService = {
     async getOneOrFail({ id }: IdParams): Promise<User> {
         return userRepo().findOneOrFail({ where: { id } })
     },
-    async getOneByIdAndPlatformIdOrThrow({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<UserWithMetaInformation> {
-        const exists = await userRepo().existsBy({ id, platformId })
-        if (!exists) {
+    async getOneByIdAndPlatformIdOrThrow({ id, platformId }: GetOneByIdAndPlatformIdParams): Promise<UserWithBadges> {
+        const user = await userRepo().findOne({ where: { id, platformId }, relations: { badges: true } })
+        if (isNil(user)) {
             throw new ActivepiecesError({
                 code: ErrorCode.ENTITY_NOT_FOUND,
                 params: { entityType: 'user', entityId: id },
             })
         }
-        return this.getMetaInformation({ id })
+        const meta = await this.getMetaInformation({ id })
+        return {
+            ...meta,
+            badges: user.badges.map((badge) => ({
+                name: badge.name,
+                created: badge.created,
+            })),
+        }
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
         await userRepo().delete({

@@ -1,6 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
 import { ApId } from '../common/id-generator'
+import { UserBadge } from './badges'
 
 export type UserId = ApId
 
@@ -65,3 +66,11 @@ export const UserWithMetaInformation = Type.Object({
 })
 
 export type UserWithMetaInformation = Static<typeof UserWithMetaInformation>
+
+
+export const UserWithBadges = Type.Object({
+    ...UserWithMetaInformation.properties,
+    badges: Type.Array(Type.Pick(UserBadge, ['name', 'created'])),
+})
+
+export type UserWithBadges = Static<typeof UserWithBadges>

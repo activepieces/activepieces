@@ -1,10 +1,11 @@
 import { UserAvatar } from '../ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
 
-import { Skeleton } from '@/components/ui/skeleton';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Mail, Calendar } from 'lucide-react';
+import { t } from 'i18next';
+import { BADGES } from '@activepieces/shared';
 
 interface ApAvatarProps {
   type: "user"
@@ -90,26 +91,28 @@ export const ApAvatar = ({
         </div>
         <div className="mt-3 pt-3 border-t">
           <h5 className="text-xs text-foreground mb-2 tracking-wide">
-            Badges
+            {t('Badges')}
           </h5>
           <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="cursor-pointer">
-                  <img
-                    src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3ZoZ3d1dWlzcnNuY2RwbTdpZGV1em9xeGQweHpma3B0Zm0xczdvZyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/BPJmthQ3YRwD6QqcVD/giphy.gif"
-                    alt="Welcome Badge"
-                    className="h-12 w-12 object-cover rounded"
-                  />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent className="text-left">
-                <div className="flex flex-col">
-                  <p className="font-semibold">Welcome</p>
-                  <p className="text-xs">Welcome to Activepieces!</p>
-                </div>
-              </TooltipContent>
-            </Tooltip>
+            {user.badges.map((badge) => (
+              <Tooltip key={badge.name}>
+                <TooltipTrigger asChild>
+                  <div className="cursor-pointer">
+                    <img
+                      src={BADGES[badge.name as keyof typeof BADGES]!.imageUrl}
+                      alt="Welcome Badge"
+                      className="h-12 w-12 object-cover rounded"
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="text-left">
+                  <div className="flex flex-col">
+                    <p className="font-semibold">{BADGES[badge.name as keyof typeof BADGES]!.title}</p>
+                    <p className="text-xs">{BADGES[badge.name as keyof typeof BADGES]!.description}</p>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            ))}
           </div>
         </div>
       </HoverCardContent>

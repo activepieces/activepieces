@@ -4,6 +4,6 @@ import { BadgeCheck } from '../badge-check'
 export const welcomeBadge: BadgeCheck = {
     name: 'welcome',
     eval: async ({ event }) => {
-        return event.action === ApplicationEventName.USER_SIGNED_UP
+        return event.action === ApplicationEventName.USER_SIGNED_UP || event.action === ApplicationEventName.USER_SIGNED_IN
     },
 }
