@@ -11,7 +11,7 @@ export type OmniHrAuth = {
 export async function getAccessToken(auth: OmniHrAuth): Promise<string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Origin': auth.props.origin,
+    Origin: auth.props.origin,
   };
 
   const tokenResponse = await httpClient.sendRequest<{
@@ -30,12 +30,14 @@ export async function getAccessToken(auth: OmniHrAuth): Promise<string> {
   return tokenResponse.body.access;
 }
 
-export async function getAuthHeaders(auth: OmniHrAuth): Promise<Record<string, string>> {
+export async function getAuthHeaders(
+  auth: OmniHrAuth
+): Promise<Record<string, string>> {
   const accessToken = await getAccessToken(auth);
 
   return {
     Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
-    'Origin': auth.props.origin,
+    Origin: auth.props.origin,
   };
 }

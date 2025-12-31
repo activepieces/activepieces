@@ -7,7 +7,8 @@ export const getEmployeeOrganizationalChart = createAction({
   auth: omnihrAuth,
   name: 'get_employee_organizational_chart',
   displayName: 'Get Employee Organizational Chart',
-  description: 'Retrieves employee organizational relationships including the complete management chain, direct reports, and peers',
+  description:
+    'Retrieves employee organizational relationships including the complete management chain, direct reports, and peers',
   props: {
     system_id: Property.Number({
       displayName: 'System ID',

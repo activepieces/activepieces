@@ -1,5 +1,13 @@
-import { PieceAuth, createPiece, Property } from '@activepieces/pieces-framework';
-import { createCustomApiCallAction, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import {
+  PieceAuth,
+  createPiece,
+  Property,
+} from '@activepieces/pieces-framework';
+import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
 import { PieceCategory } from '@activepieces/shared';
 import { getEmployeeSystemId } from './lib/actions/get-employee-system-id';
 import { getEmployeeInfo } from './lib/actions/get-employee-info';
@@ -10,10 +18,14 @@ const OMNIHR_API_BASE_URL = 'https://api.omnihr.co/api/';
 const OMNIHR_TOKEN_URL = 'https://api.omnihr.co/api/v1/auth/token/';
 const markdown = 'Enter your OmniHR credentials to authenticate:';
 
-async function getAccessToken(username: string, password: string, origin: string): Promise<string> {
+async function getAccessToken(
+  username: string,
+  password: string,
+  origin: string
+): Promise<string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    'Origin': origin,
+    Origin: origin,
   };
 
   const response = await httpClient.sendRequest<{
@@ -53,10 +65,10 @@ export const omnihrAuth = PieceAuth.CustomAuth({
       required: true,
     }),
     origin: Property.ShortText({
-        displayName: 'Origin',
-        description: 'Your OmniHR origin URL',
-        required: true,
-    })
+      displayName: 'Origin',
+      description: 'Your OmniHR origin URL',
+      required: true,
+    }),
   },
   validate: async ({ auth }) => {
     try {
@@ -68,20 +80,23 @@ export const omnihrAuth = PieceAuth.CustomAuth({
     } catch (error: any) {
       return {
         valid: false,
-        error: `Authentication failed: ${error.message || 'Invalid credentials'}`,
+        error: `Authentication failed: ${
+          error.message || 'Invalid credentials'
+        }`,
       };
     }
   },
 });
 
 export const omnihr = createPiece({
-  displayName: 'OmniHR',
-  description: 'Smart, all-in-one HR platform for managing employees, time tracking, and HR workflows',
+  displayName: 'Omni HR',
+  description:
+    'Smart, all-in-one HR platform for managing employees, time tracking, and HR workflows',
   auth: omnihrAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/omnihr.png',
   authors: ['arinmak'],
-	categories: [PieceCategory.HUMAN_RESOURCES],
+  categories: [PieceCategory.HUMAN_RESOURCES],
   actions: [
     getEmployeeSystemId,
     getEmployeeInfo,

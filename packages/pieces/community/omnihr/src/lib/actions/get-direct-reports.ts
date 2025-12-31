@@ -7,7 +7,8 @@ export const getDirectReports = createAction({
   auth: omnihrAuth,
   name: 'get_direct_reports',
   displayName: 'Get Employee Direct Reports',
-  description: 'Retrieves a list of employees who directly report to the specified employee',
+  description:
+    'Retrieves a list of employees who directly report to the specified employee',
   props: {
     system_id: Property.Number({
       displayName: 'User ID',

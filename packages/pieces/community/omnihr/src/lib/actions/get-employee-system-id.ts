@@ -7,7 +7,8 @@ export const getEmployeeSystemId = createAction({
   auth: omnihrAuth,
   name: 'get_employee_system_id',
   displayName: 'Get Employee System ID by Email',
-  description: 'Searches for an employee by email and returns their system ID and user ID',
+  description:
+    'Searches for an employee by email and returns their system ID and user ID',
   props: {
     email: Property.ShortText({
       displayName: 'Employee Email',
@@ -29,7 +30,8 @@ export const getEmployeeSystemId = createAction({
       });
 
       const employee = listResponse.body.results.find(
-        (emp: any) => emp.primary_email.value.toLowerCase() === email.toLowerCase()
+        (emp: any) =>
+          emp.primary_email.value.toLowerCase() === email.toLowerCase()
       );
 
       if (employee) {
