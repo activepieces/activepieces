@@ -1,9 +1,17 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { EllipsisVertical, Tag, Blocks, Clock, ToggleLeft, User } from 'lucide-react';
+import {
+  EllipsisVertical,
+  Tag,
+  Blocks,
+  Clock,
+  ToggleLeft,
+  User,
+} from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import FlowActionMenu from '@/app/components/flow-actions-menu';
+import { ApAvatar } from '@/components/custom/ap-avatar';
 import { Button } from '@/components/ui/button';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -12,7 +20,6 @@ import { FormattedDate } from '@/components/ui/formatted-date';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { PopulatedFlow } from '@activepieces/shared';
-import { ApAvatar } from '@/components/custom/ap-avatar';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;
@@ -45,7 +52,15 @@ export const flowsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
     ),
     cell: ({ row }) => {
-      return <ApAvatar type="user" id={row.original.ownerId ?? ''} size="small" includeAvatar={true} includeName={true} />;
+      return (
+        <ApAvatar
+          type="user"
+          id={row.original.ownerId ?? ''}
+          size="small"
+          includeAvatar={true}
+          includeName={true}
+        />
+      );
     },
   },
   {

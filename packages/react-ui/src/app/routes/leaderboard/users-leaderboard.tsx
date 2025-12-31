@@ -103,10 +103,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
   },
 ];
 
-export function UsersLeaderboard({
-  data,
-  isLoading,
-}: UsersLeaderboardProps) {
+export function UsersLeaderboard({ data, isLoading }: UsersLeaderboardProps) {
   const columns = useMemo(() => createColumns(), []);
 
   return (

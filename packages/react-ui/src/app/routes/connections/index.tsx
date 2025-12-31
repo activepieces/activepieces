@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Globe,
-  AppWindow,
   Tag,
   User,
   Replace,

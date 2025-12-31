@@ -3,6 +3,7 @@ import { t } from 'i18next';
 import { Clock, Folder, Info, Pencil, User, Workflow } from 'lucide-react';
 import { useContext, useMemo } from 'react';
 
+import { ApAvatar } from '@/components/custom/ap-avatar';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -22,7 +23,6 @@ import {
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
-import { ApAvatar } from '@/components/custom/ap-avatar';
 
 type FlowsDetailsProps = {
   flowsDetails?: AnalyticsFlowReportItem[];
@@ -74,7 +74,15 @@ const createColumns = (
       <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
     ),
     cell: ({ row }) => {
-      return <ApAvatar type="user" id={row.original.ownerId ?? ''} size="small" includeAvatar={true} includeName={true} />;
+      return (
+        <ApAvatar
+          type="user"
+          id={row.original.ownerId ?? ''}
+          size="small"
+          includeAvatar={true}
+          includeName={true}
+        />
+      );
     },
   },
   {

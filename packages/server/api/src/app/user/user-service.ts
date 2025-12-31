@@ -17,7 +17,7 @@ import {
     UserIdentity,
     UserStatus,
     UserWithBadges,
-    UserWithMetaInformation
+    UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { In } from 'typeorm'

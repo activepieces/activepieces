@@ -657,7 +657,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         RecreateMcpToolTable1766072572000,
         PlatformIdAndProviderUnique1766375959255,
         AnalyticsAndOwnerToFlowId1767127482383,
-        AddBadges1767141831647
+        AddBadges1767141831647,
     ]
     return migrations
 }

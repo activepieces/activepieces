@@ -1,4 +1,5 @@
 import { UserWithBadges } from '@activepieces/shared';
+
 import { api } from './api';
 
 export const userApi = {

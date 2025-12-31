@@ -9,8 +9,8 @@ import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { downloadFile, formatUtils } from '@/lib/utils';
 
-import { UsersLeaderboard, UserStats } from './users-leaderboard';
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
+import { UsersLeaderboard, UserStats } from './users-leaderboard';
 
 export default function LeaderboardPage() {
   const { data, isLoading } = platformAnalyticsHooks.useAnalytics();

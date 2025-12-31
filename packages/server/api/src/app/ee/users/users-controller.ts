@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ApId, PrincipalType, UserWithBadges, UserWithMetaInformation } from '@activepieces/shared'
+import { ApId, PrincipalType, UserWithBadges } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userService } from '../../user/user-service'

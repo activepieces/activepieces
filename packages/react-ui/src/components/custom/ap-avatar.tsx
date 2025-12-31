@@ -1,14 +1,16 @@
-import { UserAvatar } from '../ui/user-avatar';
+import { Mail } from 'lucide-react';
+
+import {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+} from '@/components/ui/hover-card';
 import { userHooks } from '@/hooks/user-hooks';
 
-import { HoverCard, HoverCardTrigger, HoverCardContent } from '@/components/ui/hover-card';
-import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { Mail, Calendar } from 'lucide-react';
-import { t } from 'i18next';
-import { BADGES } from '@activepieces/shared';
+import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
-  type: "user"
+  type: 'user';
   id: string;
   size: 'small' | 'medium';
   includeAvatar?: boolean;
@@ -24,7 +26,6 @@ export const ApAvatar = ({
   size = 'medium',
   hideHover = false,
 }: ApAvatarProps) => {
-
   const avatarSize = size === 'small' ? 24 : 32;
 
   const { data: user } = userHooks.useUserById(id);
@@ -55,11 +56,12 @@ export const ApAvatar = ({
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <div className="cursor-pointer">
-          {content}
-        </div>
+        <div className="cursor-pointer">{content}</div>
       </HoverCardTrigger>
-      <HoverCardContent className="w-80 rounded-md border bg-background p-4 shadow-md" align="start">
+      <HoverCardContent
+        className="w-80 rounded-md border bg-background p-4 shadow-md"
+        align="start"
+      >
         <div className="flex items-center gap-3">
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
@@ -81,32 +83,6 @@ export const ApAvatar = ({
             </div>
           </div>
         </div>
-        {/* <div className="mt-3 pt-3 border-t">
-          <h5 className="text-xs text-foreground mb-2 tracking-wide">
-            {t('Badges')}
-          </h5>
-          <div className="flex items-center gap-2">
-            {user.badges.map((badge) => (
-              <Tooltip key={badge.name}>
-                <TooltipTrigger asChild>
-                  <div className="cursor-pointer">
-                    <img
-                      src={BADGES[badge.name as keyof typeof BADGES]!.imageUrl}
-                      alt={BADGES[badge.name as keyof typeof BADGES]!.title}
-                      className="h-12 w-12 object-cover rounded"
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="text-left">
-                  <div className="flex flex-col">
-                    <p className="font-semibold">{BADGES[badge.name as keyof typeof BADGES]!.title}</p>
-                    <p className="text-xs">{BADGES[badge.name as keyof typeof BADGES]!.description}</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </div>
-        </div> */}
       </HoverCardContent>
     </HoverCard>
   );
