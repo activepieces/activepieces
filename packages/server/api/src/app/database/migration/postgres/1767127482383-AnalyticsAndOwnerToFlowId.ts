@@ -44,7 +44,23 @@ export class AnalyticsAndOwnerToFlowId1767127482383 implements MigrationInterfac
             ADD CONSTRAINT "fk_flow_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE
             SET NULL ON UPDATE NO ACTION
         `)
-        
+
+        // For each flow, if the user in updatedBy does not belong to the flow's platform, set updatedBy (ownerId) to null
+        await queryRunner.query(`
+         UPDATE "flow_version" fv
+            SET "updatedBy" = NULL
+            FROM "flow" f
+            JOIN "project" p ON p."id" = f."projectId",
+                "user" u
+            WHERE fv."flowId" = f."id"
+            AND fv."updatedBy" IS NOT NULL
+            AND u."id" = fv."updatedBy"
+            AND (
+                u."platformId" IS DISTINCT FROM p."platformId"
+                OR u."platformId" IS NULL
+            );
+
+        `)
         // Backfill ownerId with the first flow version's updatedBy (earliest created) where updatedBy is not null
         await queryRunner.query(`
             UPDATE "flow" f
