@@ -109,7 +109,6 @@ const ApStepCanvasNode = React.memo(
         const currentRect = target.getBoundingClientRect();
         const screenX = currentRect.left + relativeX;
         const screenY = currentRect.top + relativeY;
-
         const contextMenuEvent = new MouseEvent('contextmenu', {
           bubbles: true,
           cancelable: true,
@@ -118,9 +117,8 @@ const ApStepCanvasNode = React.memo(
           button: 2,
           buttons: 2,
         });
-
         target.dispatchEvent(contextMenuEvent);
-      }, 250);
+      }, flowCanvasUtils.sidebarAnimationDuration+50);
     };
 
     const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
