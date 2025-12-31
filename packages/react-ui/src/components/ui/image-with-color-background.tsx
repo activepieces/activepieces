@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { averageColorInImageUtils, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { colorsUtils } from '@/lib/color-utils';
 
 interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {
@@ -17,7 +18,7 @@ const ImageWithColorBackground = ({
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const backgroundColor = averageColorInImageUtils.useAverageColorInImage({
+  const backgroundColor = colorsUtils.useAverageColorInImage({
     imgUrl: src ?? '',
     transparency: 10,
   });

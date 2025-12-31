@@ -2,7 +2,7 @@ import { MiniMap, MiniMapNodeProps } from '@xyflow/react';
 
 import { useTheme } from '@/components/theme-provider';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { averageColorInImageUtils } from '@/lib/utils';
+import { colorsUtils } from '@/lib/color-utils';
 import { flowStructureUtil, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -10,7 +10,7 @@ import { useBuilderStateContext } from '../../builder-hooks';
 const Minimap = () => {
   const [showMinimap] = useBuilderStateContext((state) => [state.showMinimap]);
   const { theme } = useTheme();
-  const maskTransparency = theme === 'dark' ? 0.8 : 0.04;
+  const maskTransparency = theme === 'dark' ? 0.8 : 0.055;
   return (
     <>
       {showMinimap && (
@@ -43,7 +43,7 @@ const MinimapNode = ({ node }: { node: MiniMapNodeProps }) => {
   if (isNil(stepMetadata)) {
     return null;
   }
-  const nodeColor = averageColorInImageUtils.useAverageColorInImage({
+  const nodeColor = colorsUtils.useAverageColorInImage({
     imgUrl: stepMetadata.logoUrl ?? '',
     transparency: 50,
   });
