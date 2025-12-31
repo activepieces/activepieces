@@ -279,10 +279,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       },
       selectStepByName: (selectedStep: string) => {
         set((state) => {
-          const selectedNodes =
-            isNil(selectedStep) || selectedStep === 'trigger'
-              ? []
-              : [selectedStep];
+          const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
 
           const rightSidebar =
             selectedStep === 'trigger' &&
