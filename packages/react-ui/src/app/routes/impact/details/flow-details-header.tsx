@@ -14,7 +14,7 @@ export function FlowDetailsHeader({ flowsDetails }: FlowDetailsHeaderProps) {
     if (!flowsDetails || flowsDetails.length === 0) return;
 
     const csvHeader =
-      'Flow Name,Project Name,Runs,Time Saved Per Run (min),Total Time Saved (min)\n';
+      'Flow Name,Project Name,Owner,Runs,Time Saved Per Run (min),Total Time Saved (min)\n';
     const csvContent = flowsDetails
       .map((flow) => {
         const timeSavedPerRun =
@@ -22,7 +22,12 @@ export function FlowDetailsHeader({ flowsDetails }: FlowDetailsHeaderProps) {
             ? flow.timeSavedPerRun.value ??
               Math.round(flow.minutesSaved / flow.runs)
             : flow.timeSavedPerRun.value ?? 0;
-        return `"${flow.flowName}","${flow.projectName}",${flow.runs},${timeSavedPerRun},${flow.minutesSaved}`;
+        const ownerName = flow.owner
+          ? flow.owner.firstName && flow.owner.lastName
+            ? `${flow.owner.firstName} ${flow.owner.lastName}`
+            : flow.owner.email
+          : '';
+        return `"${flow.flowName}","${flow.projectName}","${ownerName}",${flow.runs},${timeSavedPerRun},${flow.minutesSaved}`;
       })
       .join('\n');
 

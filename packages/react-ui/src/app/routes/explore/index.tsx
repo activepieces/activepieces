@@ -33,7 +33,7 @@ export const ExplorePage = () => {
     type: TemplateType.OFFICIAL,
   });
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
-    null,
+    null
   );
   const { data: user } = userHooks.useCurrentUser();
   const navigate = useNavigate();
@@ -77,7 +77,7 @@ export const ExplorePage = () => {
                   <EmptyDescription>
                     {search
                       ? t(
-                          'No templates match your search criteria. Try adjusting your search terms.',
+                          'No templates match your search criteria. Try adjusting your search terms.'
                         )
                       : t('No templates are available at the moment.')}
                   </EmptyDescription>
