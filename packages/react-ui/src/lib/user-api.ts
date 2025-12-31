@@ -1,6 +1,4 @@
-import {
-  UserWithMetaInformation,
-} from '@activepieces/shared';
+import { UserWithMetaInformation } from '@activepieces/shared';
 
 import { api } from './api';
 

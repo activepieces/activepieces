@@ -39,6 +39,7 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
+import LeaderboardPage from '../routes/leaderboard';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
@@ -69,7 +70,6 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
-import LeaderboardPage from '../routes/leaderboard';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

@@ -118,7 +118,11 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
                 type="monotone"
                 stroke="var(--color-runs)"
                 strokeWidth={2}
-                dot={filteredData.length === 1 ? { r: 6, fill: 'var(--color-runs)' } : false}
+                dot={
+                  filteredData.length === 1
+                    ? { r: 6, fill: 'var(--color-runs)' }
+                    : false
+                }
                 activeDot={{ r: 5 }}
               />
             </LineChart>

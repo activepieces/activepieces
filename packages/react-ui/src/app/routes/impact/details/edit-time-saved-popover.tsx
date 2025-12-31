@@ -10,9 +10,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
-import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { FlowOperationType } from '@activepieces/shared';
 
 type EditTimeSavedPopoverProps = {

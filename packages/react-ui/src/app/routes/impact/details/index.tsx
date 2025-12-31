@@ -12,6 +12,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { userHooks } from '@/hooks/user-hooks';
 import {
   AnalyticsFlowReportItem,
   DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
@@ -21,7 +22,6 @@ import {
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
-import { userHooks } from '@/hooks/user-hooks';
 
 type FlowsDetailsProps = {
   flowsDetails?: AnalyticsFlowReportItem[];
@@ -45,7 +45,7 @@ const formatMinutes = (minutes: number) => {
 
 const createColumns = (
   estimatedTimeSavedPerStep: number,
-  isPlatformAdmin: boolean
+  isPlatformAdmin: boolean,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -58,7 +58,7 @@ const createColumns = (
         onClick={() =>
           window.open(
             `/projects/${row.original.projectId}/flows/${row.original.flowId}`,
-            '_blank'
+            '_blank',
           )
         }
       >
@@ -99,7 +99,7 @@ const createColumns = (
           <TooltipContent side="top" className="max-w-xs">
             {t(
               'Each completed step saves {minutes} minutes of manual work. You can customize the estimated time saved per step or set a custom value for individual flows.',
-              { minutes: Math.round(estimatedTimeSavedPerStep) }
+              { minutes: Math.round(estimatedTimeSavedPerStep) },
             )}
           </TooltipContent>
         </Tooltip>
@@ -178,7 +178,7 @@ const createColumns = (
         {
           runs: runs.toLocaleString(),
           perRun: `${isEstimated ? '~' : ''}${perRunValue}`,
-        }
+        },
       );
       return (
         <Tooltip>
@@ -246,7 +246,7 @@ export function FlowsDetails({
 
   const columns = createColumns(
     resolvedEstimatedTimeSavedPerStep,
-    isPlatformAdmin
+    isPlatformAdmin,
   );
 
   return (
@@ -263,7 +263,7 @@ export function FlowsDetails({
         hidePagination={true}
         emptyStateTextTitle={t('No Runs Yet')}
         emptyStateTextDescription={t(
-          'Start running your flows to see time saved'
+          'Start running your flows to see time saved',
         )}
         emptyStateIcon={
           <Workflow className="h-10 w-10 text-muted-foreground" />

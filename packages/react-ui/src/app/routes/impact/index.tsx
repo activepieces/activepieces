@@ -5,7 +5,6 @@ import { useContext } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
@@ -14,7 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
-import { platformHooks } from '@/hooks/platform-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import {
   DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
   isNil,
@@ -25,7 +24,6 @@ import { FlowsDetails } from './details';
 import { EditEstimatedTimeSavedPerStepPopover } from './edit-estimated-time-saved-per-step-popover';
 import { Summary } from './summary';
 import { Trends } from './trends';
-import { userHooks } from '@/hooks/user-hooks';
 
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
@@ -49,7 +47,7 @@ export default function AnalyticsPage() {
   });
 
   const resolvedEstimatedTimeSavedPerStep = isNil(
-    data?.estimatedTimeSavedPerStep
+    data?.estimatedTimeSavedPerStep,
   )
     ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
     : data?.estimatedTimeSavedPerStep;

@@ -24,8 +24,8 @@ export function DataTableColumnHeader<TData, TValue>({
       sortDirection === 'asc'
         ? ArrowUp
         : sortDirection === 'desc'
-          ? ArrowDown
-          : ArrowUpDown;
+        ? ArrowDown
+        : ArrowUpDown;
 
     return (
       <Button
