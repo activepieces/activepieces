@@ -1,0 +1,3 @@
+[submodule "packages/pieces/custom"]
+	path = packages/pieces/custom
+	url = https://github.com/coinwise-io/zrobank-pieces.git
