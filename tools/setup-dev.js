@@ -5,7 +5,7 @@ const fs = require('fs');
 
 // Check Node.js version
 const nodeVersion = execSync('node --version').toString().trim();
-const requiredVersions = ['v18','v20'];
+const requiredVersions = ['v18','v20','v22'];
 
 // Check operating system
 const os = process.platform;
