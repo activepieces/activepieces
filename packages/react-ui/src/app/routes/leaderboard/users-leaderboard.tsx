@@ -25,7 +25,7 @@ type UsersLeaderboardProps = {
 };
 
 const getRankIcon = (index: number) => {
-  if (index === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
+  if (index === 0) return <Medal className="w-5 h-5 text-yellow-500" />;
   if (index === 1) return <Medal className="w-5 h-5 text-gray-400" />;
   if (index === 2) return <Medal className="w-5 h-5 text-amber-600" />;
   return null;
@@ -44,7 +44,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       return (
         <div className="flex items-center gap-2 shrink-0">
           {rankIcon && <div>{rankIcon}</div>}
-          <span className="text-sm text-muted-foreground">{index + 1}</span>
+          <span className="text-sm text-foreground">#{index + 1}</span>
         </div>
       );
     },
