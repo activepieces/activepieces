@@ -129,7 +129,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
       <Accordion
         type="single"
         collapsible
-        className="border-0 w-full bg-accent/20 rounded-md text-foreground border border-border"
+        className="w-full bg-accent/20 rounded-md text-foreground border border-border"
       >
         <AccordionItem value={`block-${index}`} className="border-0">
           <AccordionTrigger className="p-3 text-sm">
