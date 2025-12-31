@@ -118,12 +118,12 @@ export const projectHooks = {
     const { projectId: projectIdFromParams } = useParams<{
       projectId: string;
     }>();
-    const projectIdFromToken = authenticationSession.getProjectId();
+    const currentProjectId = authenticationSession.getProjectId();
     const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-
     const query = useSuspenseQuery<boolean, Error>({
       //added currentProjectId in case user switches project and goes back to the same project
-      queryKey: ['switch-to-project', projectIdFromParams, projectIdFromToken],
+      queryKey: ['switch-to-project', projectIdFromParams, currentProjectId],
+      refetchOnWindowFocus: false,
       queryFn: async () => {
         if (edition === ApEdition.COMMUNITY) {
           return true;
@@ -131,22 +131,32 @@ export const projectHooks = {
         if (isNil(projectIdFromParams)) {
           return false;
         }
+
+        const previousProjectId = authenticationSession.getProjectId();
         try {
-          await authenticationSession.switchToProject(projectIdFromParams);
+          if (projectIdFromParams !== currentProjectId) {
+            authenticationSession.switchToProject(projectIdFromParams);
+          }
+          //check if the current project is valid
+          await projectApi.current();
           return true;
         } catch (error) {
-          if (
+          const unauthenticatedResponse =
             api.isError(error) &&
             (error.response?.status === HttpStatusCode.BadRequest ||
-              error.response?.status === HttpStatusCode.Forbidden)
-          ) {
+              error.response?.status === HttpStatusCode.Forbidden);
+
+          if (unauthenticatedResponse && !isNil(previousProjectId)) {
+            authenticationSession.switchToProject(previousProjectId);
             toast.error(t('Invalid Access'), {
               description: t(
-                'Either the project does not exist or you do not have access to it.',
+                'You tried to access a project that you do not have access to.',
               ),
               duration: 10000,
             });
+            return false;
           }
+          authenticationSession.logOut();
           return false;
         }
       },
@@ -156,7 +166,7 @@ export const projectHooks = {
 
     return {
       projectIdFromParams,
-      projectIdFromToken,
+      projectIdFromToken: currentProjectId,
       ...query,
     };
   },

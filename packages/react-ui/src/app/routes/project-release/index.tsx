@@ -8,6 +8,10 @@ import {
   RotateCcw,
   FolderOpenDot,
   Package,
+  Tag,
+  Clock,
+  User,
+  Database,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -55,17 +59,23 @@ const ProjectReleasesPage = () => {
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
       accessorKey: 'name',
+      size: 200,
       accessorFn: (row) => row.name,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'type',
+      size: 150,
       accessorFn: (row) => row.type,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Source')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Source')}
+          icon={Database}
+        />
       ),
       cell: ({ row }) => {
         const isGit = row.original.type === ProjectReleaseType.GIT;
@@ -91,9 +101,14 @@ const ProjectReleasesPage = () => {
     },
     {
       accessorKey: 'created',
+      size: 150,
       accessorFn: (row) => row.created,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Imported At')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Imported At')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
         <div className="text-left">
@@ -103,12 +118,13 @@ const ProjectReleasesPage = () => {
     },
     {
       accessorKey: 'importedBy',
+      size: 180,
       accessorFn: (row) => row.importedBy,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
           title={t('Imported By')}
-          className="text-center"
+          icon={User}
         />
       ),
       cell: ({ row }) => (

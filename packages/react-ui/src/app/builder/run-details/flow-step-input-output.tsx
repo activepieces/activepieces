@@ -18,6 +18,7 @@ import {
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { isRunAgent } from '../test-step/agent-test-step';
 
 export const FlowStepInputOutput = () => {
   const [run, loopsIndexes, flowVersion, selectedStep] = useBuilderStateContext(
@@ -43,9 +44,7 @@ export const FlowStepInputOutput = () => {
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
-  const isAgent = selectedStep
-    ? flowStructureUtil.isAgentPiece(selectedStep)
-    : false;
+  const isAgent = isRunAgent(selectedStep);
   const isStepRunning =
     selectedStepOutput?.status === StepOutputStatus.RUNNING ||
     selectedStepOutput?.status === StepOutputStatus.PAUSED;
@@ -77,8 +76,8 @@ export const FlowStepInputOutput = () => {
   return (
     <ScrollArea className="h-full p-4">
       <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-1 text-base font-medium">
-          <StepStatusIcon status={selectedStepOutput.status} size="5" />
+        <div className="flex items-center gap-2 text-base font-medium">
+          <StepStatusIcon status={selectedStepOutput.status} size="4.5" />
           <span>{selectedStep.displayName}</span>
         </div>
 
@@ -106,12 +105,13 @@ export const FlowStepInputOutput = () => {
             <JsonViewer json={selectedStepOutput.input} title={t('Input')} />
           </TabsContent>
 
-          <TabsContent value="timeline">
-            <AgentTimeline
-              agentResult={selectedStepOutput.output as AgentResult}
-            />
-          </TabsContent>
-
+          {isAgent && (
+            <TabsContent value="timeline">
+              <AgentTimeline
+                agentResult={selectedStepOutput.output as AgentResult}
+              />
+            </TabsContent>
+          )}
           <TabsContent value="output">
             {isStepRunning ? (
               <OutputSkeleton />
