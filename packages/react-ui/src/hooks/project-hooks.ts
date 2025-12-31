@@ -118,12 +118,11 @@ export const projectHooks = {
     const { projectId: projectIdFromParams } = useParams<{
       projectId: string;
     }>();
-    const projectIdFromToken = authenticationSession.getProjectId();
+    const currentProjectId = authenticationSession.getProjectId();
     const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
-
     const query = useSuspenseQuery<boolean, Error>({
       //added currentProjectId in case user switches project and goes back to the same project
-      queryKey: ['switch-to-project', projectIdFromParams, projectIdFromToken],
+      queryKey: ['switch-to-project', projectIdFromParams, currentProjectId],
       refetchOnWindowFocus: false,
       queryFn: async () => {
         if (edition === ApEdition.COMMUNITY) {
@@ -132,16 +131,14 @@ export const projectHooks = {
         if (isNil(projectIdFromParams)) {
           return false;
         }
-        if (projectIdFromParams === projectIdFromToken) {
-          return true;
-        }
+
         const previousProjectId = authenticationSession.getProjectId();
         try {
-          if (projectIdFromParams === projectIdFromToken) {
-            await projectApi.current();
-            return true;
+          if (projectIdFromParams !== currentProjectId) {
+            authenticationSession.switchToProject(projectIdFromParams);
           }
-          authenticationSession.switchToProject(projectIdFromParams);
+          //check if the current project is valid
+          await projectApi.current();
           return true;
         } catch (error) {
           const unauthenticatedResponse =
@@ -169,7 +166,7 @@ export const projectHooks = {
 
     return {
       projectIdFromParams,
-      projectIdFromToken,
+      projectIdFromToken: currentProjectId,
       ...query,
     };
   },

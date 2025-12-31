@@ -59,6 +59,7 @@ export const todosHooks = {
           activeTab === 'needs-action' ? [UNRESOLVED_STATUS.name] : undefined;
 
         return todosApi.list({
+          projectId,
           cursor: cursor ?? undefined,
           limit,
           platformId,

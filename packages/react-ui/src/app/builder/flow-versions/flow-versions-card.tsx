@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
@@ -22,7 +23,6 @@ import { UserAvatar } from '@/components/ui/user-avatar';
 import { FlowVersionStateDot } from '@/features/flows/components/flow-version-state-dot';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { formatUtils } from '@/lib/utils';
 import {
   FlowVersionMetadata,
   FlowVersionState,
@@ -71,12 +71,11 @@ const FlowVersionDetailsCard = React.memo(
           />
         )}
         <div className="grid gap-2">
-          <p className="text-sm font-medium leading-none select-none pointer-events-none">
-            {formatUtils.formatDateWithTime(
-              new Date(flowVersion.created),
-              true,
-            )}
-          </p>
+          <FormattedDate
+            date={new Date(flowVersion.created)}
+            includeTime={true}
+            className="text-sm font-medium leading-none select-none cursor-default"
+          ></FormattedDate>
           <p className="flex gap-1 text-xs text-muted-foreground">
             {t('Version')} #{flowVersionNumber}
           </p>
