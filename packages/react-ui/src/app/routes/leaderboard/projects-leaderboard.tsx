@@ -2,14 +2,7 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Clock,
-  LayoutGrid,
-  Medal,
-  Rocket,
-  Trophy,
-  Workflow,
-} from 'lucide-react';
+import { Clock, LayoutGrid, Medal, Rocket, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
@@ -30,7 +23,7 @@ type ProjectsLeaderboardProps = {
 };
 
 const getRankIcon = (index: number) => {
-  if (index === 0) return <Trophy className="w-5 h-5 text-yellow-500" />;
+  if (index === 0) return <Medal className="w-5 h-5 text-yellow-500" />;
   if (index === 1) return <Medal className="w-5 h-5 text-gray-400" />;
   if (index === 2) return <Medal className="w-5 h-5 text-amber-600" />;
   return null;
@@ -49,7 +42,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
       return (
         <div className="flex items-center gap-2 shrink-0">
           {rankIcon && <div>{rankIcon}</div>}
-          <span className="text-sm text-muted-foreground">{index + 1}</span>
+          <span className="text-sm text-foreground">#{index + 1}</span>
         </div>
       );
     },

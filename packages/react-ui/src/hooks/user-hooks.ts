@@ -1,8 +1,8 @@
-import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { userApi } from '@/lib/user-api';
-import { UserWithMetaInformation } from '@activepieces/shared';
+import { isNil, UserWithMetaInformation } from '@activepieces/shared';
 
 export const userHooks = {
   useCurrentUser: () => {
@@ -30,13 +30,13 @@ export const userHooks = {
       staleTime: Infinity,
     });
   },
-  useUserById: (id: string) => {
-    return useSuspenseQuery({
+  useUserById: (id: string | null) => {
+    return useQuery({
       queryKey: ['user', id],
       queryFn: async () => {
-        const result = await userApi.getUserById(id);
-        return result;
+        return await userApi.getUserById(id!);
       },
+      enabled: !isNil(id),
       staleTime: Infinity,
     });
   },

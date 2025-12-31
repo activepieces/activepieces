@@ -6,6 +6,7 @@ import {
   HoverCardContent,
 } from '@/components/ui/hover-card';
 import { userHooks } from '@/hooks/user-hooks';
+import { isNil } from '@activepieces/shared';
 
 import { UserAvatar } from '../ui/user-avatar';
 
@@ -29,7 +30,7 @@ export const ApAvatar = ({
   const avatarSize = size === 'small' ? 24 : 32;
 
   const { data: user } = userHooks.useUserById(id);
-  if (!user) {
+  if (!user || isNil(id)) {
     return <span className="text-muted-foreground">—</span>;
   }
 

@@ -46,24 +46,6 @@ export const flowsTableColumns = ({
     },
   },
   {
-    accessorKey: 'owner',
-    size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
-    ),
-    cell: ({ row }) => {
-      return (
-        <ApAvatar
-          type="user"
-          id={row.original.ownerId ?? ''}
-          size="small"
-          includeAvatar={true}
-          includeName={true}
-        />
-      );
-    },
-  },
-  {
     accessorKey: 'steps',
     size: 150,
     header: ({ column }) => (
@@ -93,6 +75,24 @@ export const flowsTableColumns = ({
         <FormattedDate
           date={new Date(updated)}
           className="text-left font-medium"
+        />
+      );
+    },
+  },
+  {
+    accessorKey: 'owner',
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <ApAvatar
+          type="user"
+          id={row.original.ownerId ?? ''}
+          size="small"
+          includeAvatar={true}
+          includeName={true}
         />
       );
     },
