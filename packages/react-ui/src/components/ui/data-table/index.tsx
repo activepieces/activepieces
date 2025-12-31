@@ -4,6 +4,8 @@ import {
   ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
   useReactTable,
 } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -80,6 +82,7 @@ interface DataTableProps<
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
   selectColumn?: boolean;
+  initialSorting?: SortingState;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -112,6 +115,7 @@ export function DataTable<
   emptyStateIcon,
   customFilters,
   selectColumn = false,
+  initialSorting = [],
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -219,12 +223,14 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getRowId: () => apId(),
     initialState: {
       pagination: {
         pageSize: parseInt(startingLimit),
       },
       columnVisibility,
+      sorting: initialSorting,
     },
   });
 

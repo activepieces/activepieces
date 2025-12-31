@@ -10,7 +10,7 @@ import {
     FastifyPluginAsyncTypebox,
     Type,
 } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../../../helper/application-events'
+import { applicationEvents } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { platformUtils } from '../../../platform/platform.utils'
 import { federatedAuthnService } from './federated-authn-service'
@@ -35,7 +35,7 @@ const federatedAuthnController: FastifyPluginAsyncTypebox = async (app) => {
             platformId: platformId ?? undefined,
             code: req.body.code,
         })
-        eventsHooks.get(req.log).sendUserEvent({
+        applicationEvents.sendUserEvent({
             platformId: response.platformId!,
             userId: response.id,
             projectId: response.projectId,

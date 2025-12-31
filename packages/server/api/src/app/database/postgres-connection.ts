@@ -320,6 +320,8 @@ import { AddPlatformAiCreditsPaymentTable1766186963979 } from './migration/postg
 import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1766375959255-PlatformIdAndProviderUnique'
 import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migration/postgres/1767016169819-AddMaxAutoTopUpCreditsMonthlyToPlatformPlan'
+import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
+import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -656,6 +658,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         RecreateMcpToolTable1766072572000,
         PlatformIdAndProviderUnique1766375959255,
         AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819,
+        AnalyticsAndOwnerToFlowId1767127482383,
+        AddBadges1767141831647,
     ]
     return migrations
 }

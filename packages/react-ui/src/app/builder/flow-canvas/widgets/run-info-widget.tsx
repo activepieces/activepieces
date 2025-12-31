@@ -77,20 +77,22 @@ const RunInfoWidget = () => {
     <LargeWidgetWrapper
       containerClassName={cn(
         flowRunUtils.getStatusContainerClassName(variant),
-        'bg-background border border-border',
+        'bg-background border border-border dark:bg-background dark:border-border',
       )}
       key={run.id + run.status}
     >
       <div className="flex items-center justify-between w-full flex-wrap">
         <div className="flex items-center text-sm shrink-0">
           <Icon className="size-5 mr-2" />
+          <span className="text-foreground dark:text-foreground font-medium">
+            {getStatusText({
+              status: run.status,
+              timeout: timeoutSeconds ?? -1,
+              memoryLimit: memoryLimit ?? -1,
+            })}
+          </span>
 
-          {getStatusText({
-            status: run.status,
-            timeout: timeoutSeconds ?? -1,
-            memoryLimit: memoryLimit ?? -1,
-          })}
-          <div className="shrink-0">
+          <div className="shrink-0 text-foreground dark:text-foreground">
             {isRunTerminal && (
               <>
                 &nbsp;-&nbsp;

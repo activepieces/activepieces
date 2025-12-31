@@ -507,4 +507,5 @@ export const flowCanvasUtils = {
   createAddOperationFromAddButtonData,
   isSkipped,
   getStepStatus,
+  sidebarAnimationDuration: 200,
 };
