@@ -42,6 +42,7 @@ import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-versi
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all duration-200`;
 
@@ -188,7 +189,8 @@ const BuilderPage = () => {
           <div ref={rightSidePanelRef} className="h-full w-full">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               memorizedSelectedStep && (
-                <StepSettingsProvider
+                <ResizableVerticalPanelsProvider>
+              <StepSettingsProvider
                   pieceModel={pieceModel}
                   selectedStep={memorizedSelectedStep}
                   key={constructContainerKey({
@@ -199,6 +201,7 @@ const BuilderPage = () => {
                 >
                   <StepSettingsContainer />
                 </StepSettingsProvider>
+                </ResizableVerticalPanelsProvider>
               )}
             {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}

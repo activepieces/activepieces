@@ -37,6 +37,7 @@ import { PieceSettings } from './piece-settings';
 import { RouterSettings } from './router-settings';
 import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
+import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectHooks.useCurrentProject();
@@ -137,6 +138,8 @@ const StepSettingsContainer = () => {
     form.trigger();
   }, []);
 
+  const { height, setHeight } = useResizableVerticalPanelsContext();
+
   return (
     <Form {...form}>
       <form
@@ -183,7 +186,6 @@ const StepSettingsContainer = () => {
         >
           <ResizablePanelGroup direction="vertical">
             <ResizablePanel
-              defaultSize={showStepInputOutFromRun ? 35 : 55}
               className="min-h-[80px]"
             >
               <ScrollArea className="h-full">
@@ -251,7 +253,8 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={showStepInputOutFromRun ? 65 : 45}
+                  defaultSize={height}
+                  onResize={(size) => setHeight(size)}
                   className="min-h-[130px]"
                 >
                   <ScrollArea className="h-[calc(100%-35px)]  ">
