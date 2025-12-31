@@ -1,6 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Compass, Search, Loader2, Plus } from 'lucide-react';
+import {
+  Compass,
+  Search,
+  Loader2,
+  Plus,
+  LineChart,
+  Trophy,
+} from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -167,7 +174,29 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const items = [exploreLink].filter(permissionFilter);
+  const impactLink: SidebarItemType = {
+    type: 'link',
+    to: '/impact',
+    label: t('Impact'),
+    icon: LineChart,
+    show: true,
+    hasPermission: true,
+    isSubItem: false,
+  };
+
+  const leaderboardLink: SidebarItemType = {
+    type: 'link',
+    to: '/leaderboard',
+    label: t('Leaderboard'),
+    icon: Trophy,
+    show: true,
+    hasPermission: true,
+    isSubItem: false,
+  };
+
+  const items = [exploreLink, impactLink, leaderboardLink].filter(
+    permissionFilter,
+  );
 
   const handleProjectSelect = async (projectId: string) => {
     const project = displayProjects?.find((p) => p.id === projectId);
@@ -207,9 +236,7 @@ export function ProjectDashboardSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator
-            className={cn(state === 'collapsed' ? 'mb-3' : 'mb-5', 'shrink-0')}
-          />
+          <SidebarSeparator className="mb-3 shrink-0" />
 
           <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
             {state === 'expanded' && (

@@ -3,11 +3,11 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Package,
-  AppWindow,
   Tag,
   Hash,
   GitBranch,
   Tags,
+  Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -60,8 +60,8 @@ const PlatformPiecesPage = () => {
           header: ({ column }) => (
             <DataTableColumnHeader
               column={column}
-              title={t('App')}
-              icon={AppWindow}
+              title={t('Piece')}
+              icon={Puzzle}
             />
           ),
           cell: ({ row }) => {
