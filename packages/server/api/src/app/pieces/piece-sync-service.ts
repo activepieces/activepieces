@@ -1,5 +1,5 @@
 import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { groupBy, PieceSyncMode } from '@activepieces/shared'
+import { groupBy, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { system } from '../helper/system/system'
@@ -61,7 +61,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
 
 async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger): Promise<number> {
     const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
-    const piecesToDelete = dbPieces.filter(piece => !cloudMap.has(`${piece.name}:${piece.version}`))
+    const piecesToDelete = dbPieces.filter(piece => piece.pieceType === PieceType.OFFICIAL && !cloudMap.has(`${piece.name}:${piece.version}`))
     await pieceMetadataService(log).bulkDelete(piecesToDelete.map(piece => ({ name: piece.name, version: piece.version })))
     return piecesToDelete.length
 }

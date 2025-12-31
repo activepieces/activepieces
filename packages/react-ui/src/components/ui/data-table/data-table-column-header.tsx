@@ -1,5 +1,5 @@
 import { Column } from '@tanstack/react-table';
-import { ArrowDown, ArrowUp, ArrowUpDown, LucideIcon } from 'lucide-react';
+import { ArrowDown, ArrowUpDown, LucideIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -20,19 +20,16 @@ export function DataTableColumnHeader<TData, TValue>({
 }: DataTableColumnHeaderProps<TData, TValue>) {
   if (sortable) {
     const sortDirection = column.getIsSorted();
-    const SortIcon =
-      sortDirection === 'asc'
-        ? ArrowUp
-        : sortDirection === 'desc'
-        ? ArrowDown
-        : ArrowUpDown;
+    const SortIcon = sortDirection === 'desc' ? ArrowDown : ArrowUpDown;
 
     return (
       <Button
         variant="ghost"
         onClick={(e) => {
           e.stopPropagation();
-          column.toggleSorting(column.getIsSorted() === 'asc');
+          if (sortDirection !== 'desc') {
+            column.toggleSorting(true, false);
+          }
         }}
         className={`h-auto text-foreground p-0 hover:bg-transparent -ml-3 ${className}`}
       >
