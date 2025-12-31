@@ -116,6 +116,7 @@ export function UsersLeaderboard({ data, isLoading }: UsersLeaderboardProps) {
       }}
       isLoading={isLoading ?? false}
       hidePagination={true}
+      initialSorting={[{ id: 'flowCount', desc: true }]}
       emptyStateTextTitle={t('No automation heroes yet')}
       emptyStateTextDescription={t(
         'Once your team starts building flows, their achievements will shine here',

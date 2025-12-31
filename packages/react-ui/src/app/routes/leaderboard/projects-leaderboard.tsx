@@ -115,6 +115,7 @@ export function ProjectsLeaderboard({
       }}
       isLoading={isLoading ?? false}
       hidePagination={true}
+      initialSorting={[{ id: 'flowCount', desc: true }]}
       emptyStateTextTitle={t('No projects on the board yet')}
       emptyStateTextDescription={t(
         'Projects will rank here as flows are created and time is saved',
