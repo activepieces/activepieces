@@ -48,7 +48,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
       const rankIcon = getRankIcon(index);
       return (
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm text-muted-foreground">{index + 1}#</span>
+          <span className="text-sm text-muted-foreground">{index + 1}</span>
           {rankIcon && <div>{rankIcon}</div>}
         </div>
       );
