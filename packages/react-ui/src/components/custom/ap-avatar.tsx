@@ -12,7 +12,7 @@ import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
   type: 'user';
-  id: string;
+  id: string | null;
   size: 'small' | 'medium';
   includeAvatar?: boolean;
   includeName?: boolean;
