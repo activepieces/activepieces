@@ -16,7 +16,7 @@ const Minimap = () => {
       {showMinimap && (
         <MiniMap
           position="bottom-left"
-          className="!rounded-md !bottom-[50px] animate-in fade-in duration-300"
+          className="!rounded-md !left-0 !ml-2 !bottom-[50px] animate-in fade-in duration-300"
           zoomable
           pannable
           zoomStep={0.3}
