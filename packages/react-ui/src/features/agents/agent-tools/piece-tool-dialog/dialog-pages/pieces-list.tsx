@@ -49,7 +49,7 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
           {t('No pieces found')}
         </div>
       ) : (
-        <ScrollArea className="flex-1 min-h-0 px-4">
+        <ScrollArea className="flex-1 min-h-0 px-4 py-2">
           <div className="grid grid-cols-3 gap-4">
             {pieceMetadata.map((piece, index) => (
               <div
