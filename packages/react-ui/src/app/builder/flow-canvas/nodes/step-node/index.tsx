@@ -118,7 +118,7 @@ const ApStepCanvasNode = React.memo(
           buttons: 2,
         });
         target.dispatchEvent(contextMenuEvent);
-      }, flowCanvasUtils.sidebarAnimationDuration+50);
+      }, flowCanvasUtils.sidebarAnimationDuration + 50);
     };
 
     const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
