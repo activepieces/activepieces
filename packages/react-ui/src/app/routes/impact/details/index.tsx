@@ -1,12 +1,9 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Clock, Folder, Info, Pencil, User, Workflow } from 'lucide-react';
-import { Suspense, useContext, useMemo, useState } from 'react';
+import { useContext, useMemo } from 'react';
 
-import {
-  UserProfileDialog,
-  UserProfileData,
-} from '@/app/components/account-settings';
+import { ApAvatar } from '@/components/custom/ap-avatar';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -35,33 +32,6 @@ type FlowsDetailsProps = {
 
 type FlowDetailsWithId = AnalyticsFlowReportItem & { id: string };
 
-function OwnerProfileDialogWrapper({
-  userId,
-  open,
-  onClose,
-}: {
-  userId: string;
-  open: boolean;
-  onClose: () => void;
-}) {
-  const { data: user } = userHooks.useUserById(userId);
-
-  if (!user) {
-    return null;
-  }
-
-  const userProfileData: UserProfileData = {
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-  };
-
-  return (
-    <UserProfileDialog open={open} onClose={onClose} user={userProfileData} />
-  );
-}
-
 const formatMinutes = (minutes: number) => {
   if (minutes < 60) {
     return `${minutes}m`;
@@ -77,7 +47,6 @@ const formatMinutes = (minutes: number) => {
 const createColumns = (
   estimatedTimeSavedPerStep: number,
   isPlatformAdmin: boolean,
-  onOwnerClick: (ownerId: string) => void,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -90,7 +59,7 @@ const createColumns = (
         onClick={() =>
           window.open(
             `/projects/${row.original.projectId}/flows/${row.original.flowId}`,
-            '_blank'
+            '_blank',
           )
         }
       >
@@ -98,6 +67,23 @@ const createColumns = (
         {row.original.flowName}
       </div>
     ),
+  },
+  {
+    accessorKey: 'owner',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <ApAvatar
+          type="user"
+          id={row.original.ownerId ?? ''}
+          size="small"
+          includeAvatar={true}
+          includeName={true}
+        />
+      );
+    },
   },
   {
     accessorKey: 'projectName',
@@ -117,31 +103,6 @@ const createColumns = (
     ),
   },
   {
-    accessorKey: 'owner',
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Owner')} />
-    ),
-    cell: ({ row }) => {
-      const owner = row.original.owner;
-      if (!owner) {
-        return <span className="text-muted-foreground">{t('Unknown')}</span>;
-      }
-      const displayName =
-        owner.firstName && owner.lastName
-          ? `${owner.firstName} ${owner.lastName}`
-          : owner.email;
-      return (
-        <div
-          className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
-          onClick={() => onOwnerClick(owner.id)}
-        >
-          <User className="h-3.5 w-3.5" />
-          {displayName}
-        </div>
-      );
-    },
-  },
-  {
     accessorKey: 'timeSavedPerRun',
     header: ({ column }) => (
       <div className="flex items-center gap-1.5">
@@ -156,7 +117,7 @@ const createColumns = (
           <TooltipContent side="top" className="max-w-xs">
             {t(
               'Each completed step saves {minutes} minutes of manual work. You can customize the estimated time saved per step or set a custom value for individual flows.',
-              { minutes: Math.round(estimatedTimeSavedPerStep) }
+              { minutes: Math.round(estimatedTimeSavedPerStep) },
             )}
           </TooltipContent>
         </Tooltip>
@@ -194,6 +155,8 @@ const createColumns = (
                   variant="ghost"
                   className="h-auto p-1 gap-1.5 text-foreground hover:bg-accent"
                 >
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
+
                   {displayValue == null ? (
                     <span>{t('N/A')}</span>
                   ) : (
@@ -202,8 +165,6 @@ const createColumns = (
                       {isEstimated && '~'}
                     </span>
                   )}
-
-                  <Pencil className="h-3 w-3 text-muted-foreground" />
                 </Button>
               </EditTimeSavedPopover>
             </div>
@@ -235,7 +196,7 @@ const createColumns = (
         {
           runs: runs.toLocaleString(),
           perRun: `${isEstimated ? '~' : ''}${perRunValue}`,
-        }
+        },
       );
       return (
         <Tooltip>
@@ -262,7 +223,6 @@ export function FlowsDetails({
   const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
   const { data: user } = userHooks.useCurrentUser();
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
-  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
 
   const flowsDetailsWithOverrides = useMemo(() => {
     if (!flowsDetails) return undefined;
@@ -305,12 +265,7 @@ export function FlowsDetails({
   const columns = createColumns(
     resolvedEstimatedTimeSavedPerStep,
     isPlatformAdmin,
-    (ownerId) => setSelectedOwnerId(ownerId),
   );
-
-  const handleCloseDialog = () => {
-    setSelectedOwnerId(null);
-  };
 
   return (
     <div className="flex flex-col gap-4 mb-8">
@@ -326,22 +281,12 @@ export function FlowsDetails({
         hidePagination={true}
         emptyStateTextTitle={t('No Runs Yet')}
         emptyStateTextDescription={t(
-          'Start running your flows to see time saved'
+          'Start running your flows to see time saved',
         )}
         emptyStateIcon={
           <Workflow className="h-10 w-10 text-muted-foreground" />
         }
       />
-
-      {selectedOwnerId && (
-        <Suspense fallback={null}>
-          <OwnerProfileDialogWrapper
-            userId={selectedOwnerId}
-            open={true}
-            onClose={handleCloseDialog}
-          />
-        </Suspense>
-      )}
     </div>
   );
 }

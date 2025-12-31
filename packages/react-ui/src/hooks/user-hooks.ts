@@ -2,14 +2,14 @@ import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { userApi } from '@/lib/user-api';
-import { UserWithMetaInformationAndProject } from '@activepieces/shared';
+import { UserWithMetaInformation } from '@activepieces/shared';
 
 export const userHooks = {
   useCurrentUser: () => {
     const userId = authenticationSession.getCurrentUserId();
     const token = authenticationSession.getToken();
     const expired = authenticationSession.isJwtExpired(token!);
-    return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
+    return useSuspenseQuery<UserWithMetaInformation | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
         // Skip user data fetch if JWT is expired to prevent redirect to sign-in page
@@ -20,9 +20,7 @@ export const userHooks = {
           return null;
         }
         try {
-          const result = await userApi.getCurrentUser({
-            projectId: authenticationSession.getProjectId()!,
-          });
+          const result = await userApi.getUserById(userId);
           return result;
         } catch (error) {
           console.error(error);
@@ -32,21 +30,19 @@ export const userHooks = {
       staleTime: Infinity,
     });
   },
+  useUserById: (id: string) => {
+    return useSuspenseQuery({
+      queryKey: ['user', id],
+      queryFn: async () => {
+        const result = await userApi.getUserById(id);
+        return result;
+      },
+      staleTime: Infinity,
+    });
+  },
   invalidateCurrentUser: (queryClient: QueryClient) => {
     const userId = authenticationSession.getCurrentUserId();
     queryClient.invalidateQueries({ queryKey: ['currentUser', userId] });
-  },
-  useUserById: (userId: string) => {
-    return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
-      queryKey: ['userById', userId],
-      queryFn: async () => {
-        const result = await userApi.getUserById(userId);
-        return result;
-      },
-    });
-  },
-  invalidateUserById: (queryClient: QueryClient, userId: string) => {
-    queryClient.invalidateQueries({ queryKey: ['userById', userId] });
   },
   getCurrentUserPlatformRole: () => {
     const { data: user } = userHooks.useCurrentUser();

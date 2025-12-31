@@ -2,6 +2,7 @@
 
 import { t } from 'i18next';
 import { TrendingUp } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
 import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,17 +13,17 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AnalyticsRunsUsageItem } from '@activepieces/shared';
+import { PlatformAnalyticsReport } from '@activepieces/shared';
 
 type RunsChartProps = {
-  runsUsage?: AnalyticsRunsUsageItem[];
-  isLoading: boolean;
+  report?: PlatformAnalyticsReport;
+  selectedDateRange?: DateRange;
 };
 
-export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
+export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
   const chartData =
-    runsUsage
-      ?.map((data) => ({
+    report?.runsUsage
+      .map((data) => ({
         date: data.day,
         runs: data.totalRuns,
       }))
@@ -37,6 +38,14 @@ export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
     },
   } satisfies ChartConfig;
 
+  const filteredData = chartData.filter((data) => {
+    if (!selectedDateRange?.from || !selectedDateRange?.to) {
+      return true;
+    }
+    const date = new Date(data.date);
+    return date >= selectedDateRange.from && date <= selectedDateRange.to;
+  });
+
   return (
     <Card className="col-span-full">
       <CardHeader className="space-y-0 pb-2">
@@ -50,9 +59,9 @@ export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
         </div>
       </CardHeader>
       <CardContent className="pt-4">
-        {isLoading ? (
+        {!report ? (
           <Skeleton className="h-[300px] w-full" />
-        ) : chartData.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
             <TrendingUp className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
@@ -68,7 +77,7 @@ export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
           >
             <LineChart
               accessibilityLayer
-              data={chartData}
+              data={filteredData}
               margin={{
                 left: 12,
                 right: 12,
@@ -110,7 +119,7 @@ export function RunsChart({ runsUsage, isLoading }: RunsChartProps) {
                 stroke="var(--color-runs)"
                 strokeWidth={2}
                 dot={
-                  chartData.length === 1
+                  filteredData.length === 1
                     ? { r: 6, fill: 'var(--color-runs)' }
                     : false
                 }
