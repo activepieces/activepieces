@@ -12,6 +12,7 @@ import {
   Clock,
   Activity,
   Workflow,
+  Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -150,7 +151,7 @@ function AppConnectionsPage() {
       type: 'select',
       title: t('Pieces'),
       accessorKey: 'pieceName',
-      icon: AppWindow,
+      icon: Puzzle,
       options: pieceOptions,
     },
     {
@@ -178,8 +179,8 @@ function AppConnectionsPage() {
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('App')}
-          icon={AppWindow}
+          title={t('Piece')}
+          icon={Puzzle}
         />
       ),
       cell: ({ row }) => {

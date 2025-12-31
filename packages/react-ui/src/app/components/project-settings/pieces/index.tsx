@@ -35,8 +35,8 @@ const columns: ColumnDef<RowDataWithActions<PieceMetadataModelSummary>>[] = [
   {
     accessorKey: 'name',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('App')} icon={Puzzle} />
-    ),
+      <DataTableColumnHeader column={column} title={t('Piece')} icon={Puzzle} />
+    ),  
     cell: ({ row }) => {
       return (
         <div className="text-left">
