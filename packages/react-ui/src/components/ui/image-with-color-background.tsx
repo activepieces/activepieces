@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import { colorsUtils } from '@/lib/color-utils';
+import { cn } from '@/lib/utils';
 
 interface ImageWithColorBackgroundProps
   extends React.ImgHTMLAttributes<HTMLImageElement> {

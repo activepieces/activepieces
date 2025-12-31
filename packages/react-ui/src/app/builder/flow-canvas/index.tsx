@@ -217,12 +217,12 @@ export const FlowCanvas = React.memo(
       const stepWidth = flowUtilConsts.AP_NODE_SIZE.STEP.width;
       const start = {
         x: -graphRectangle.width - 5 * stepWidth,
-        y: -graphRectangle.height ,
-      }
+        y: -graphRectangle.height,
+      };
       const end = {
         x: 2.5 * graphRectangle.width + 5 * stepWidth,
-        y: 2 * graphRectangle.height ,
-      }
+        y: 2 * graphRectangle.height,
+      };
       const extent: CoordinateExtent = [
         [start.x, start.y],
         [end.x, end.y],

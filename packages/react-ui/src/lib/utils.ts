@@ -1,7 +1,6 @@
 import { AxiosError } from 'axios';
 import { clsx, type ClassValue } from 'clsx';
 import dayjs from 'dayjs';
-import { FastAverageColor } from 'fast-average-color';
 import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
@@ -10,7 +9,6 @@ import { twMerge } from 'tailwind-merge';
 import { LocalesEnum, Permission } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
-import { useQuery } from '@tanstack/react-query';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -403,4 +401,3 @@ export const routesThatRequireProjectId = {
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
 };
-
