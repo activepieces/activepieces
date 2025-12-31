@@ -433,6 +433,9 @@
       ],
       "@activepieces/piece-insta-charts": [
         "packages/pieces/community/insta-charts/src/index.ts"
+      ],
+      "@activepieces/piece-duckdb": [
+        "packages/pieces/community/duckdb/src/index.ts"
       ]
     },
     "resolveJsonModule": true
