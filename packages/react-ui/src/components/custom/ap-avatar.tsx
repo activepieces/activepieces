@@ -27,32 +27,27 @@ export const ApAvatar = ({
   const avatarSize = size === 'small' ? 24 : 32;
 
   const { data: user } = userHooks.useUserById(id);
+  if (!user) {
+    return <span className="text-muted-foreground">—</span>;
+  }
 
   const content = (
     <div className="flex items-center gap-2">
       {includeAvatar && (
-        user ? (
-          <UserAvatar
-            name={`${user.firstName} ${user.lastName}`}
-            email={user.email}
-            size={avatarSize}
-            disableTooltip={true}
-          />
-        ) : (
-          <Skeleton className="rounded-full" style={{ width: avatarSize, height: avatarSize }} />
-        )
+        <UserAvatar
+          name={`${user.firstName} ${user.lastName}`}
+          email={user.email}
+          size={avatarSize}
+          disableTooltip={true}
+        />
       )}
       {includeName && (
-        user ? (
-          <span className="text-sm">{`${user.firstName} ${user.lastName}`}</span>
-        ) : (
-          <Skeleton className="h-4 w-20 rounded" />
-        )
+        <span className="text-sm">{`${user.firstName} ${user.lastName}`}</span>
       )}
     </div>
   );
 
-  if (!user || hideHover) {
+  if (hideHover) {
     return content;
   }
 
