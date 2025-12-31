@@ -30,19 +30,18 @@ import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { FlowDialogContent } from './flow-dialog-content';
 
 type AgentFlowToolDialogProps = {
-  selectedFlows: AgentFlowTool[];
   onToolsUpdate: (tools: AgentTool[]) => void;
   tools: AgentTool[];
 };
 
 export function AgentFlowToolDialog({
-  selectedFlows: initialSelectedFlows,
   onToolsUpdate,
   tools,
 }: AgentFlowToolDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFlows, setSelectedFlows] =
-    useState<AgentFlowTool[]>(initialSelectedFlows);
+  const [selectedFlows, setSelectedFlows] = useState<AgentFlowTool[]>(
+    tools.filter((tools) => tools.type === AgentToolType.FLOW),
+  );
 
   const { showAddFlowDialog, setShowAddFlowDialog } = useAgentToolsStore();
 

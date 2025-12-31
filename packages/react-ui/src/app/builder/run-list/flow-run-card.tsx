@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
@@ -125,10 +126,11 @@ const FlowRunCard = React.memo(
         </div>
         <div className="grid gap-2">
           <div className="text-sm font-medium leading-none flex gap-2 items-center">
-            {formatUtils.formatDateWithTime(
-              new Date(run.created ?? new Date()),
-              true,
-            )}{' '}
+            <FormattedDate
+              date={new Date(run.created ?? new Date())}
+              includeTime={true}
+              className="text-sm font-medium leading-none select-none cursor-default"
+            ></FormattedDate>
             {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
           </div>
           {isFlowRunStateTerminal({
