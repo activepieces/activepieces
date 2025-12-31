@@ -190,17 +190,17 @@ const BuilderPage = () => {
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               memorizedSelectedStep && (
                 <ResizableVerticalPanelsProvider>
-              <StepSettingsProvider
-                  pieceModel={pieceModel}
-                  selectedStep={memorizedSelectedStep}
-                  key={constructContainerKey({
-                    flowVersionId: flowVersion.id,
-                    step: memorizedSelectedStep,
-                    hasPieceModelLoaded: !!pieceModel,
-                  })}
-                >
-                  <StepSettingsContainer />
-                </StepSettingsProvider>
+                  <StepSettingsProvider
+                    pieceModel={pieceModel}
+                    selectedStep={memorizedSelectedStep}
+                    key={constructContainerKey({
+                      flowVersionId: flowVersion.id,
+                      step: memorizedSelectedStep,
+                      hasPieceModelLoaded: !!pieceModel,
+                    })}
+                  >
+                    <StepSettingsContainer />
+                  </StepSettingsProvider>
                 </ResizableVerticalPanelsProvider>
               )}
             {rightSidebar === RightSideBarType.RUNS && <RunsList />}

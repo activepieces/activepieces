@@ -34,10 +34,10 @@ import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 import { RouterSettings } from './router-settings';
 import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
-import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
   const { project } = projectHooks.useCurrentProject();
@@ -185,9 +185,7 @@ const StepSettingsContainer = () => {
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel
-              className="min-h-[80px]"
-            >
+            <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="flex flex-col gap-2 px-4 pb-6">
                   <StepInfo step={modifiedStep}></StepInfo>

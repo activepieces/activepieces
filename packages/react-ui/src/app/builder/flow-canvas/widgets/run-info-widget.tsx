@@ -84,16 +84,14 @@ const RunInfoWidget = () => {
       <div className="flex items-center justify-between w-full flex-wrap">
         <div className="flex items-center text-sm shrink-0">
           <Icon className="size-5 mr-2" />
-          <span className="text-foreground dark:text-foreground font-medium"
-          >
+          <span className="text-foreground dark:text-foreground font-medium">
             {getStatusText({
               status: run.status,
               timeout: timeoutSeconds ?? -1,
               memoryLimit: memoryLimit ?? -1,
             })}
           </span>
-           
-          
+
           <div className="shrink-0 text-foreground dark:text-foreground">
             {isRunTerminal && (
               <>
