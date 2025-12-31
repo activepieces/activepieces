@@ -1,6 +1,6 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, Folder, Info, Pencil, User, Workflow } from 'lucide-react';
+import { Clock, Folder, Info, LayoutGrid, Pencil, User, Workflow } from 'lucide-react';
 import { useContext, useMemo } from 'react';
 
 import { ApAvatar } from '@/components/custom/ap-avatar';
@@ -97,7 +97,7 @@ const createColumns = (
           window.open(`/projects/${row.original.projectId}`, '_blank')
         }
       >
-        <Folder className="h-3.5 w-3.5" />
+        <LayoutGrid className="h-3.5 w-3.5" />
         {row.original.projectName}
       </div>
     ),
