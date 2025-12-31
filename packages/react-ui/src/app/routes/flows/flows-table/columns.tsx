@@ -19,7 +19,7 @@ import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-c
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { PopulatedFlow } from '@activepieces/shared';
+import { isNil, PopulatedFlow } from '@activepieces/shared';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;
@@ -86,10 +86,12 @@ export const flowsTableColumns = ({
       <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
     ),
     cell: ({ row }) => {
-      return (
+      return isNil(row.original.ownerId) ? (
+        <span className="text-muted-foreground">—</span>
+      ) : (
         <ApAvatar
           type="user"
-          id={row.original.ownerId ?? ''}
+          id={row.original.ownerId}
           size="small"
           includeAvatar={true}
           includeName={true}
