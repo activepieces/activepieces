@@ -30,6 +30,16 @@ export const userHooks = {
       staleTime: Infinity,
     });
   },
+  useUserById: (id: string) => {
+    return useSuspenseQuery({
+      queryKey: ['user', id],
+      queryFn: async () => {
+        const result = await userApi.getUserById(id);
+        return result;
+      },
+      staleTime: Infinity,
+    });
+  },
   invalidateCurrentUser: (queryClient: QueryClient) => {
     const userId = authenticationSession.getCurrentUserId();
     queryClient.invalidateQueries({ queryKey: ['currentUser', userId] });
