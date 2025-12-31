@@ -42,8 +42,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
 
 const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Promise<PlatformAnalyticsReport> => {
     const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
-    const updatedInLastMinute = dayjs().add(1, 'minute').toISOString()
-    if (!isNil(report) && dayjs(report.updated).isBefore(updatedInLastMinute)) {
+    if (!isNil(report) && dayjs(report.updated).add(1, 'minute').isAfter(dayjs())) {
         return report
     }
     const estimatedTimeSavedPerStep = report?.estimatedTimeSavedPerStep ?? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
