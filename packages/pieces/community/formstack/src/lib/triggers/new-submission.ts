@@ -12,8 +12,8 @@ import {
   HttpMethod,
 } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
-import timezone from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone.js';
+import utc from 'dayjs/plugin/utc.js';
 import { formStackAuth } from '../common/auth';
 import { formIdDropdown } from '../common/props';
 import { makeRequest } from '../common/client';

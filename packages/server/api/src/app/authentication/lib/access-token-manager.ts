@@ -82,7 +82,7 @@ async function assertUserSession(decoded: Principal | Principal): Promise<void> 
     const user = await userService.getOneOrFail({ id: decoded.id })
     const identity = await userIdentityService(system.globalLogger()).getOneOrFail({ id: user.identityId })
     const isExpired = (identity.tokenVersion ?? null) !== (decoded.tokenVersion ?? null)
-    if (isExpired || user.status === UserStatus.INACTIVE || !identity.verified) {
+    if (isExpired || user.status === UserStatus.INACTIVE || !identity.emailVerified) {
         throw new ActivepiecesError({
             code: ErrorCode.SESSION_EXPIRED,
             params: {

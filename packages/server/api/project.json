@@ -17,7 +17,7 @@
         "outputFileName": "main.js",
         "tsConfig": "packages/server/api/tsconfig.app.json",
         "platform": "node",
-        "format": ["cjs"],
+        "format": ["esm"],
         "bundle": true,
         "sourcemap": true,
         "generatePackageJson": true,

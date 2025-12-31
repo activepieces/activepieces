@@ -3,7 +3,7 @@ import { apDayjsDuration } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, apId, ApId, ErrorCode, SeekPage } from '@activepieces/shared'
 
 import dayjs from 'dayjs'
-import timezone from 'dayjs/plugin/timezone'
+import timezone from 'dayjs/plugin/timezone.js'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { redisConnections } from '../../database/redis-connections'

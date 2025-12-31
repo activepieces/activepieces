@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
-import timezone from 'dayjs/plugin/timezone'
-import utc from 'dayjs/plugin/utc'
+import utc from 'dayjs/plugin/utc.js'
+import timezone from 'dayjs/plugin/timezone.js'
 import { ProcessorFn } from './types'
 
 export const dateTimeProcessor: ProcessorFn = (_property, value) => {

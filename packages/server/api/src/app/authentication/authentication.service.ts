@@ -1,8 +1,6 @@
-import { OtpType } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
 import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
@@ -26,10 +24,10 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             })
         }
         if (isNil(params.platformId)) {
-            const userIdentity = await userIdentityService(log).create({
-                ...params,
-                verified: params.provider === UserIdentityProvider.GOOGLE || params.provider === UserIdentityProvider.JWT || params.provider === UserIdentityProvider.SAML,
-            })
+            const userIdentity = await userIdentityService(log).create(params)
+            if (params.provider !== UserIdentityProvider.EMAIL) {
+                await userIdentityService(log).verify(userIdentity.id)
+            }
             return createUserAndPlatform(userIdentity, log)
         }
 
@@ -37,10 +35,7 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             email: params.email,
             platformId: params.platformId,
         })
-        const userIdentity = await userIdentityService(log).create({
-            ...params,
-            verified: true,
-        })
+        const userIdentity = await userIdentityService(log).create(params)
         const user = await userService.getOrCreateWithProject({
             identity: userIdentity,
             platformId: params.platformId,
@@ -210,10 +205,14 @@ async function createUserAndPlatform(userIdentity: UserIdentity, log: FastifyBas
 
     switch (cloudEdition) {
         case ApEdition.CLOUD:
-            await otpService(log).createAndSend({
-                platformId: platform.id,
+            // await otpService(log).createAndSend({
+            //     platformId: platform.id,
+            //     email: userIdentity.email,
+            //     type: OtpType.EMAIL_VERIFICATION,
+            // })
+            await userIdentityService(log).sendVerifyEmail({
                 email: userIdentity.email,
-                type: OtpType.EMAIL_VERIFICATION,
+                platformId: platform.id
             })
             break
         case ApEdition.COMMUNITY:

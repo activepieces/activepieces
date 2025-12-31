@@ -1,23 +1,15 @@
 import {
-    OtpType,
     ResetPasswordRequestBody,
     VerifyEmailRequestBody,
 } from '@activepieces/ee-shared'
-import { ActivepiecesError, ErrorCode, UserId, UserIdentity } from '@activepieces/shared'
+import { UserIdentity } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../../../authentication/user-identity/user-identity-service'
-import { otpService } from '../otp/otp-service'
+import { CreateOtpRequestBody, OtpType } from '@ee/shared/src/lib/authn'
 
 export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
     async verifyEmail({ identityId, otp }: VerifyEmailRequestBody): Promise<UserIdentity> {
-        await confirmOtp({
-            identityId,
-            otp,
-            otpType: OtpType.EMAIL_VERIFICATION,
-            log,
-        })
-
-        return userIdentityService(log).verify(identityId)
+        return userIdentityService(log).verifyEmail({ identityId, otp })
     },
 
     async resetPassword({
@@ -25,43 +17,23 @@ export const enterpriseLocalAuthnService = (log: FastifyBaseLogger) => ({
         otp,
         newPassword,
     }: ResetPasswordRequestBody): Promise<void> {
-        await confirmOtp({
+        await userIdentityService(log).resetPassword({
             identityId,
             otp,
-            otpType: OtpType.PASSWORD_RESET,
-            log,
-        })
-
-        await userIdentityService(log).updatePassword({
-            id: identityId,
             newPassword,
         })
     },
-})
 
-const confirmOtp = async ({
-    identityId,
-    otp,
-    otpType,
-    log,
-}: ConfirmOtpParams): Promise<void> => {
-    const isOtpValid = await otpService(log).confirm({
-        identityId,
-        type: otpType,
-        value: otp,
-    })
-
-    if (!isOtpValid) {
-        throw new ActivepiecesError({
-            code: ErrorCode.INVALID_OTP,
-            params: {},
-        })
+    async sendOTP({
+        email,
+        type
+    }: CreateOtpRequestBody): Promise<void> {
+        switch(type){
+            case OtpType.EMAIL_VERIFICATION: 
+                await userIdentityService(log).sendVerifyEmail({ email })
+                break;
+            case OtpType.PASSWORD_RESET:
+                await userIdentityService(log).sendResetPasswordEmail({ email })
+        }
     }
-}
-
-type ConfirmOtpParams = {
-    identityId: UserId
-    otp: string
-    otpType: OtpType
-    log: FastifyBaseLogger
-}
+})

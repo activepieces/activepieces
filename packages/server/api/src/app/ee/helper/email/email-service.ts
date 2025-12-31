@@ -86,7 +86,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             return
         }
 
-        if (userIdentity.verified && type === OtpType.EMAIL_VERIFICATION) {
+        if (userIdentity.emailVerified && type === OtpType.EMAIL_VERIFICATION) {
             return
         }
 
@@ -191,7 +191,7 @@ type SendOtpArgs = {
     type: OtpType
     platformId: string | null
     otp: string
-    userIdentity: UserIdentity
+    userIdentity: Pick<UserIdentity, 'email' | 'emailVerified' | 'id'>
 }
 
 type IssueCreatedArgs = {

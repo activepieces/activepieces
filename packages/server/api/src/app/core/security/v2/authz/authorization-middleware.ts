@@ -7,6 +7,9 @@ import { projectIdExtractor } from './projectIdExtractor'
 
 export const authorizationMiddleware = async (request: FastifyRequest): Promise<void> => {
     const security = request.routeOptions.config?.security
+    if (isNil(security)) {
+        return
+    }
     const securityAccessRequest = await convertToSecurityAccessRequest(request)
     await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
     

@@ -45,7 +45,7 @@ export const authenticationApi = {
     );
   },
   sendOtpEmail(request: CreateOtpRequestBody) {
-    return api.post<void>('/v1/otp', request);
+    return api.post<void>('/v1/authn/local/send-otp', request);
   },
   resetPassword(request: ResetPasswordRequestBody) {
     return api.post<void>('/v1/authn/local/reset-password', request);

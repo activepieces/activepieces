@@ -26,7 +26,7 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
             email: identity.email,
             trackEvents: identity.trackEvents,
             newsLetter: identity.newsLetter,
-            verified: identity.verified,
+            verified: identity.emailVerified,
             projectId: req.projectId,
             lastActiveDate: user.lastActiveDate,
         }

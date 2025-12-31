@@ -319,6 +319,7 @@ import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/
 import { AddPlatformAiCreditsPaymentTable1766186963979 } from './migration/postgres/1766186963979-addPlatformAiCreditsPaymentTable'
 import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1766375959255-PlatformIdAndProviderUnique'
+import { UserIdentityForBetterAuth1767099825137 } from './migration/postgres/1767099825137-UserIdentityForBetterAuth'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -654,6 +655,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         DropLegacyTables1766015156683,
         RecreateMcpToolTable1766072572000,
         PlatformIdAndProviderUnique1766375959255,
+        UserIdentityForBetterAuth1767099825137,
     ]
     return migrations
 }

@@ -19,7 +19,6 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { userIdentityRepository } from '../authentication/user-identity/user-identity-service'
 import { transaction } from '../core/db/transaction'
 import { platformToEditMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
@@ -30,6 +29,7 @@ import { system } from '../helper/system/system'
 import { projectRepo } from '../project/project-service'
 import { userRepo, userService } from '../user/user-service'
 import { platformRepo, platformService } from './platform.service'
+import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 
 const edition = system.getEdition()
 export const platformController: FastifyPluginAsyncTypebox = async (app) => {
@@ -151,9 +151,7 @@ export const platformController: FastifyPluginAsyncTypebox = async (app) => {
                     },
                 })
                 if (usersUsingIdentity.length === 0) {
-                    await userIdentityRepository(entityManager).delete({
-                        id: user.identityId,
-                    })
+                    await userIdentityService(req.log).delete(user.identityId)
                 }
             })
 
