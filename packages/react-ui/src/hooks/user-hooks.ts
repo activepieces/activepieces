@@ -34,8 +34,7 @@ export const userHooks = {
     return useQuery({
       queryKey: ['user', id],
       queryFn: async () => {
-        const result = await userApi.getUserById(id!);
-        return result;
+        return await userApi.getUserById(id!);
       },
       enabled: !isNil(id),
       staleTime: Infinity,
