@@ -100,7 +100,7 @@ export const ApAvatar = ({
                   <div className="cursor-pointer">
                     <img
                       src={BADGES[badge.name as keyof typeof BADGES]!.imageUrl}
-                      alt="Welcome Badge"
+                      alt={BADGES[badge.name as keyof typeof BADGES]!.title}
                       className="h-12 w-12 object-cover rounded"
                     />
                   </div>
