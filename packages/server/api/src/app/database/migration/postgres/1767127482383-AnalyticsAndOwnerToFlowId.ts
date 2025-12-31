@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AnalyticsAndOwnerToFlowId1767127482383 implements MigrationInterface {
     name = 'AnalyticsAndOwnerToFlowId1767127482383'
@@ -6,44 +6,44 @@ export class AnalyticsAndOwnerToFlowId1767127482383 implements MigrationInterfac
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             TRUNCATE TABLE "platform_analytics_report";
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "totalFlows"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "activeFlows"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "totalUsers"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "activeUsers"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "totalProjects"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "activeFlowsWithAI"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "topProjects"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "totalFlowRuns"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow"
             ADD "ownerId" character varying
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "users" jsonb NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow"
             ADD CONSTRAINT "fk_flow_owner_id" FOREIGN KEY ("ownerId") REFERENCES "user"("id") ON DELETE
             SET NULL ON UPDATE NO ACTION
-        `);
+        `)
         
         // Backfill ownerId with the first flow version's updatedBy (earliest created) where updatedBy is not null
         await queryRunner.query(`
@@ -56,51 +56,51 @@ export class AnalyticsAndOwnerToFlowId1767127482383 implements MigrationInterfac
                 ORDER BY "flowId", "created" ASC
             ) sub
             WHERE f."id" = sub."flowId"
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow" DROP CONSTRAINT "fk_flow_owner_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP COLUMN "users"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "flow" DROP COLUMN "ownerId"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "totalFlowRuns" integer NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "topProjects" jsonb NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "activeFlowsWithAI" integer NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "totalProjects" integer NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "activeUsers" integer NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "totalUsers" integer NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "activeFlows" integer NOT NULL
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report"
             ADD "totalFlows" integer NOT NULL
-        `);
+        `)
     }
 
 }

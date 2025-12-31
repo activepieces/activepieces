@@ -1,8 +1,8 @@
+import { securityAccess } from '@activepieces/server-shared'
 import { ApId, PrincipalType, UserWithMetaInformation } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userService } from '../../user/user-service'
-import { securityAccess } from '@activepieces/server-shared'
 
 export const usersController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetUserByIdRequest, async (req): Promise<UserWithMetaInformation> => {

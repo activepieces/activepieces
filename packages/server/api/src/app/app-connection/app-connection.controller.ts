@@ -20,7 +20,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../helper/application-events'
+import { applicationEvents } from '../helper/application-events'
 import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import { AppConnectionEntity } from './app-connection.entity'
@@ -40,7 +40,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             metadata: request.body.metadata,
             pieceVersion: request.body.pieceVersion,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -119,7 +119,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             projectId: request.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,

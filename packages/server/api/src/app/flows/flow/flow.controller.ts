@@ -33,7 +33,7 @@ import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/author
 import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
-import { eventsHooks } from '../../helper/application-events'
+import { applicationEvents } from '../../helper/application-events'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
@@ -49,7 +49,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
         })
 
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.FLOW_CREATED,
             data: {
                 flow: newFlow,
@@ -112,7 +112,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.projectId,
             operation: cleanOperation(request.body),
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
                 request: request.body,
@@ -177,7 +177,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.projectId,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.FLOW_DELETED,
             data: {
                 flow,
