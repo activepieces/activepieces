@@ -10,7 +10,7 @@ import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
 
-export type CreatorStats = {
+export type UserStats = {
   id: string;
   visibleId: string;
   userName: string;
@@ -19,8 +19,8 @@ export type CreatorStats = {
   minutesSaved: number;
 };
 
-type CreatorsLeaderboardProps = {
-  data: CreatorStats[];
+type UsersLeaderboardProps = {
+  data: UserStats[];
   isLoading?: boolean;
 };
 
@@ -31,7 +31,7 @@ const getRankIcon = (index: number) => {
   return null;
 };
 
-const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
+const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
   {
     accessorKey: 'rank',
     header: ({ column }) => (
@@ -54,7 +54,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
   {
     accessorKey: 'userName',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Creator')} icon={User} />
+      <DataTableColumnHeader column={column} title={t('User')} icon={User} />
     ),
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
@@ -73,7 +73,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t('Flows')}
+        title={t('Active Flows')}
         icon={Workflow}
         sortable={true}
       />
@@ -103,10 +103,10 @@ const createColumns = (): ColumnDef<RowDataWithActions<CreatorStats>>[] => [
   },
 ];
 
-export function CreatorsLeaderboard({
+export function UsersLeaderboard({
   data,
   isLoading,
-}: CreatorsLeaderboardProps) {
+}: UsersLeaderboardProps) {
   const columns = useMemo(() => createColumns(), []);
 
   return (

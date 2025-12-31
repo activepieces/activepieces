@@ -9,18 +9,18 @@ import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { downloadFile, formatUtils } from '@/lib/utils';
 
-import { CreatorsLeaderboard, CreatorStats } from './creators-leaderboard';
+import { UsersLeaderboard, UserStats } from './users-leaderboard';
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 
 export default function LeaderboardPage() {
   const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
   const [activeTab, setActiveTab] = useState('creators');
 
-  const peopleData = useMemo((): CreatorStats[] => {
+  const peopleData = useMemo((): UserStats[] => {
     if (!data?.flowsDetails || !data?.users) return [];
 
     const userMap = new Map(data.users.map((user) => [user.id, user]));
-    const creatorStatsMap = new Map<string, CreatorStats>();
+    const creatorStatsMap = new Map<string, UserStats>();
 
     data.flowsDetails.forEach((flow) => {
       if (!flow.ownerId) return;
@@ -149,7 +149,7 @@ export default function LeaderboardPage() {
           </div>
 
           <TabsContent value="creators">
-            <CreatorsLeaderboard data={peopleData} isLoading={isLoading} />
+            <UsersLeaderboard data={peopleData} isLoading={isLoading} />
           </TabsContent>
 
           <TabsContent value="projects">

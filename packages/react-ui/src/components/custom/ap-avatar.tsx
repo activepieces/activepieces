@@ -72,14 +72,6 @@ export const ApAvatar = ({
               <h4 className="text-sm font-semibold leading-none truncate">
                 {user.firstName} {user.lastName}
               </h4>
-              {user.lastActiveDate && (
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground whitespace-nowrap">
-                    {new Date(user.lastActiveDate).toLocaleDateString()}
-                  </span>
-                </div>
-              )}
             </div>
             <div className="flex items-center gap-2 mt-1.5">
               <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -89,7 +81,7 @@ export const ApAvatar = ({
             </div>
           </div>
         </div>
-        <div className="mt-3 pt-3 border-t">
+        {/* <div className="mt-3 pt-3 border-t">
           <h5 className="text-xs text-foreground mb-2 tracking-wide">
             {t('Badges')}
           </h5>
@@ -114,7 +106,7 @@ export const ApAvatar = ({
               </Tooltip>
             ))}
           </div>
-        </div>
+        </div> */}
       </HoverCardContent>
     </HoverCard>
   );

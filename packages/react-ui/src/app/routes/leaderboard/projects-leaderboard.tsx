@@ -48,8 +48,8 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
       const rankIcon = getRankIcon(index);
       return (
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm text-muted-foreground">{index + 1}</span>
           {rankIcon && <div>{rankIcon}</div>}
+          <span className="text-sm text-muted-foreground">{index + 1}</span>
         </div>
       );
     },
@@ -76,7 +76,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<ProjectStats>>[] => [
     header: ({ column }) => (
       <DataTableColumnHeader
         column={column}
-        title={t('Flows')}
+        title={t('Active Flows')}
         icon={Workflow}
         sortable={true}
       />
