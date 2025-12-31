@@ -306,7 +306,7 @@ export const stripeHelper = (log: FastifyBaseLogger) => ({
                 invoice.metadata?.platformId === platformId &&
                 invoice.metadata?.type === StripeCheckoutType.AI_CREDIT_AUTO_TOP_UP
             ) {
-                totalCents += invoice.total ?? 0
+                totalCents += invoice.amount_paid ?? 0
             }
         }
 

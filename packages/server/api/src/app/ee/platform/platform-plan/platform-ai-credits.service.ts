@@ -183,22 +183,25 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
         return false
     }
 
-    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
-
-    const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
-    if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold!) {
-        return false
-    }
-
     assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
     assertNotNullOrUndefined(plan.aiCreditsAutoTopUpCreditsToAdd, 'Auto Topup Credits To add is not set')
     assertNotNullOrUndefined(plan.aiCreditsAutoTopUpThreshold, 'Auto Topup Threashold is not set')
+
+    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+    const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
+    if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold) {
+        return false
+    }
+
 
     if (!isNil(plan.maxAutoTopUpCreditsMonthly) && plan.maxAutoTopUpCreditsMonthly > 0) {
         const totalAmountThisMonth = await stripeHelper(log).getAutoTopUpInvoicesTotalThisMonth(plan.stripeCustomerId, plan.platformId)
         const totalCreditsThisMonth = totalAmountThisMonth * CREDIT_PER_DOLLAR
 
-        if (totalCreditsThisMonth + plan.aiCreditsAutoTopUpCreditsToAdd > plan.maxAutoTopUpCreditsMonthly) {
+        const autoTopUpCreditsThisMonthAfterThisTopUp = totalCreditsThisMonth + plan.aiCreditsAutoTopUpCreditsToAdd
+
+        if (autoTopUpCreditsThisMonthAfterThisTopUp > plan.maxAutoTopUpCreditsMonthly) {
             log.info({
                 platformId: plan.platformId,
                 totalCreditsThisMonth,
