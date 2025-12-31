@@ -2,13 +2,7 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import {
-  Clock,
-  LayoutGrid,
-  Medal,
-  Rocket,
-  Workflow,
-} from 'lucide-react';
+import { Clock, LayoutGrid, Medal, Rocket, Workflow } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
