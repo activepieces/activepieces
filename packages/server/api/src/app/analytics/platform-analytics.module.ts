@@ -28,7 +28,7 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
         return platformAnalyticsReportService(request.log).update(platform.id, request.body)
     })
 
-    app.post('/refresh', PlatformAnalyticsRequest, async (request) => {
+    app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
         return platformAnalyticsReportService(request.log).refreshReport(platform.id)
@@ -56,8 +56,15 @@ const UpdatePlatformReportRequestSchema = {
         body: UpdatePlatformReportRequest,
     },
 }
+
+const RefreshPlatformAnalyticsRequest = {
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
 const PlatformAnalyticsRequest = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
 }
