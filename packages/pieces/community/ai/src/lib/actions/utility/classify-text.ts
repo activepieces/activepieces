@@ -7,7 +7,7 @@ import { AIProviderName } from '@activepieces/shared';
 export const classifyText = createAction({
   name: 'classifyText',
   displayName: 'Classify Text',
-  description: 'Classify your text into one of your provided categories.',
+  description: 'Categorize any text input using custom labels, so your flow knows what to do next.',
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,

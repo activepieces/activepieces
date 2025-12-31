@@ -7,6 +7,7 @@ import { Piece, PieceMetadata, pieceTranslation } from '@activepieces/pieces-fra
 import { extractPieceFromModule } from '@activepieces/shared'
 import clearModule from 'clear-module'
 import { FastifyBaseLogger } from 'fastify'
+import { AppSystemProp, environmentVariables } from '../system-props'
 
 const DIST_PIECES_PATH = resolve(cwd(), 'dist', 'packages', 'pieces')
 const SOURCE_PIECES_PATH = resolve(cwd(), 'packages', 'pieces')
@@ -113,7 +114,8 @@ const loadPieceFromFolder = async (
         pieceVersion,
     })
     const originalMetadata = piece.metadata()
-    const i18n = await pieceTranslation.initializeI18n(folderPath)
+    const loadTranslations = environmentVariables.getBooleanEnvironment(AppSystemProp.LOAD_TRANSLATIONS_FOR_DEV_PIECES)
+    const i18n = loadTranslations ? await pieceTranslation.initializeI18n(folderPath) : undefined
     const metadata: PieceMetadata = {
         ...originalMetadata,
         name: pieceName,

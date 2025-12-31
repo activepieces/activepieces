@@ -30,11 +30,9 @@ import { ApProjectDisplay } from '../ap-project-display';
 import { ProjectSettingsDialog } from '../project-settings';
 
 export const ProjectDashboardPageHeader = ({
-  title,
   children,
   description,
 }: {
-  title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
 }) => {
@@ -93,12 +91,6 @@ export const ProjectDashboardPageHeader = ({
     return 'pieces';
   };
 
-  const showSettingsButton =
-    hasGeneralSettings ||
-    (project.type === ProjectType.TEAM &&
-      showProjectMembersFlag &&
-      userHasPermissionToReadProjectMembers);
-
   const titleContent = (
     <div className="flex items-center gap-2">
       <ApProjectDisplay
@@ -155,19 +147,17 @@ export const ProjectDashboardPageHeader = ({
           <span className="text-sm font-medium">Invite</span>
         </Button>
       )}
-      {showSettingsButton && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8"
-          onClick={() => {
-            setSettingsInitialTab(getFirstAvailableTab());
-            setSettingsOpen(true);
-          }}
-        >
-          <Settings className="w-4 h-4" />
-        </Button>
-      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => {
+          setSettingsInitialTab(getFirstAvailableTab());
+          setSettingsOpen(true);
+        }}
+      >
+        <Settings className="w-4 h-4" />
+      </Button>
     </div>
   ) : (
     children

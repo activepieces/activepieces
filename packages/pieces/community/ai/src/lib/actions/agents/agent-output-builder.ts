@@ -136,6 +136,16 @@ function getToolMetadata({
         externalFlowId: tool.externalFlowId
       };
     }
+    case AgentToolType.MCP: {
+      assertNotNullOrUndefined(tool.serverUrl, 'Mcp server URL is required');
+      return {
+        ...baseTool,
+        toolCallType: ToolCallType.MCP,
+        displayName: tool.toolName,
+        serverUrl: tool.serverUrl,
+        
+      };
+    }
   }
 }
 
