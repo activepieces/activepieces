@@ -110,6 +110,7 @@ export const CanvasContextMenuContent = ({
     selectedNodes.length === 1 &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
+
   const showCopy =
     !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
   const showDuplicate =
