@@ -9,7 +9,7 @@ import {
 import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/platform/analytics';
+import AnalyticsPage from '@/app/routes/impact';
 import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
@@ -39,6 +39,7 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
+import LeaderboardPage from '../routes/leaderboard';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
@@ -341,13 +342,23 @@ const routes = [
     ),
   },
   {
-    path: '/platform/analytics',
+    path: '/impact',
     element: (
-      <PlatformLayout>
-        <PageTitle title="Analytics">
+      <ProjectDashboardLayout>
+        <PageTitle title="Impact">
           <AnalyticsPage />
         </PageTitle>
-      </PlatformLayout>
+      </ProjectDashboardLayout>
+    ),
+  },
+  {
+    path: '/leaderboard',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Leaderboard">
+          <LeaderboardPage />
+        </PageTitle>
+      </ProjectDashboardLayout>
     ),
   },
   {
@@ -355,7 +366,7 @@ const routes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Platform">
-          <Navigate to="/platform/analytics" />
+          <Navigate to="/platform/projects" />
         </PageTitle>
       </PlatformLayout>
     ),

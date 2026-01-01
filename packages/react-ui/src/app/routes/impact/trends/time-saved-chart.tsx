@@ -1,9 +1,9 @@
 'use client';
 
 import { t } from 'i18next';
-import { BarChart3 } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
-import { BarChart, CartesianGrid, XAxis, Bar } from 'recharts';
+import { LineChart, CartesianGrid, XAxis, Line } from 'recharts';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -13,28 +13,32 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatUtils } from '@/lib/utils';
 import { PlatformAnalyticsReport } from '@activepieces/shared';
 
-type RunsChartProps = {
+type TimeSavedChartProps = {
   report?: PlatformAnalyticsReport;
   selectedDateRange?: DateRange;
 };
 
-export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
+export function TimeSavedChart({
+  report,
+  selectedDateRange,
+}: TimeSavedChartProps) {
   const chartData =
     report?.runsUsage
       .map((data) => ({
         date: data.day,
-        runs: data.totalRuns,
+        minutesSaved: data.minutesSaved,
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
       ) || [];
 
   const chartConfig = {
-    runs: {
-      label: t('Runs'),
-      color: 'hsl(var(--chart-1))',
+    minutesSaved: {
+      label: t('Time Saved'),
+      color: 'hsl(var(--chart-2))',
     },
   } satisfies ChartConfig;
 
@@ -51,10 +55,10 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
       <CardHeader className="space-y-0 pb-2">
         <div className="space-y-1">
           <CardTitle className="text-base">
-            {t('Flow Runs Over Time')}
+            {t('Time Saved Over Time')}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
-            {t('Track your automation execution trends')}
+            {t('Track how much time your automations are saving')}
           </p>
         </div>
       </CardHeader>
@@ -63,10 +67,10 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
           <Skeleton className="h-[300px] w-full" />
         ) : filteredData.length === 0 ? (
           <div className="flex h-[300px] w-full flex-col items-center justify-center gap-2">
-            <BarChart3 className="h-10 w-10 text-muted-foreground/50" />
+            <Clock className="h-10 w-10 text-muted-foreground/50" />
             <p className="text-sm text-muted-foreground">
               {t(
-                'No runs recorded yet. Data will appear here once your flows start running.',
+                'No time saved yet. Data will appear here once your flows start running.',
               )}
             </p>
           </div>
@@ -75,7 +79,7 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
           >
-            <BarChart
+            <LineChart
               accessibilityLayer
               data={filteredData}
               margin={{
@@ -102,7 +106,7 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
                 content={
                   <ChartTooltipContent
                     className="w-[150px]"
-                    nameKey="runs"
+                    nameKey="minutesSaved"
                     labelFormatter={(value) => {
                       return new Date(value).toLocaleDateString('en-US', {
                         month: 'short',
@@ -110,11 +114,25 @@ export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
                         year: 'numeric',
                       });
                     }}
+                    formatter={(value) =>
+                      formatUtils.formatToHoursAndMinutes(value as number)
+                    }
                   />
                 }
               />
-              <Bar dataKey="runs" fill="var(--color-runs)" radius={4} />
-            </BarChart>
+              <Line
+                dataKey="minutesSaved"
+                type="monotone"
+                stroke="var(--color-minutesSaved)"
+                strokeWidth={2}
+                dot={
+                  filteredData.length === 1
+                    ? { r: 6, fill: 'var(--color-minutesSaved)' }
+                    : false
+                }
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
           </ChartContainer>
         )}
       </CardContent>

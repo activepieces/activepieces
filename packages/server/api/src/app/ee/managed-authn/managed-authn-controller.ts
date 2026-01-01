@@ -4,7 +4,7 @@ import {
     AuthenticationResponse,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../../helper/application-events'
+import { applicationEvents } from '../../helper/application-events'
 import { managedAuthnService } from './managed-authn-service'
 
 export const managedAuthnController: FastifyPluginAsyncTypebox = async (
@@ -19,7 +19,7 @@ export const managedAuthnController: FastifyPluginAsyncTypebox = async (
             const response = await managedAuthnService(req.log).externalToken({
                 externalAccessToken,
             })
-            eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+            applicationEvents.sendUserEvent(req, {
                 action: ApplicationEventName.USER_SIGNED_UP,
                 data: {
                     source: 'managed',

@@ -183,9 +183,8 @@ function TodosPage() {
           <div className="text-left flex items-center gap-2">
             <ApAvatar
               size="small"
-              type={todoUtils.getAuthorType(row.original)}
-              fullName={authorName ?? ''}
-              userEmail={row.original.createdByUser?.email ?? ''}
+              type="user"
+              id={row.original.createdByUser?.id ?? ''}
             />
             <div>{authorName}</div>
           </div>
@@ -210,12 +209,7 @@ function TodosPage() {
                 type="user"
                 size="small"
                 includeName={true}
-                userEmail={row.original.assignee.email}
-                fullName={
-                  row.original.assignee.firstName +
-                  ' ' +
-                  row.original.assignee.lastName
-                }
+                id={row.original.assignee.id}
               />
             )}
             {!row.original.assignee && <div className="text-left">-</div>}

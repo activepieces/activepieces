@@ -1,8 +1,9 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Clock, Folder, Info, Pencil, Workflow } from 'lucide-react';
+import { Clock, Info, LayoutGrid, Pencil, User, Workflow } from 'lucide-react';
 import { useContext, useMemo } from 'react';
 
+import { ApAvatar } from '@/components/custom/ap-avatar';
 import { Button } from '@/components/ui/button';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
@@ -12,10 +13,12 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
+import { userHooks } from '@/hooks/user-hooks';
 import {
   AnalyticsFlowReportItem,
   DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
   isNil,
+  PlatformRole,
 } from '@activepieces/shared';
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
@@ -43,6 +46,7 @@ const formatMinutes = (minutes: number) => {
 
 const createColumns = (
   estimatedTimeSavedPerStep: number,
+  isPlatformAdmin: boolean,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -65,6 +69,23 @@ const createColumns = (
     ),
   },
   {
+    accessorKey: 'owner',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <ApAvatar
+          type="user"
+          id={row.original.ownerId ?? ''}
+          size="small"
+          includeAvatar={true}
+          includeName={true}
+        />
+      );
+    },
+  },
+  {
     accessorKey: 'projectName',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Project')} />
@@ -76,7 +97,7 @@ const createColumns = (
           window.open(`/projects/${row.original.projectId}`, '_blank')
         }
       >
-        <Folder className="h-3.5 w-3.5" />
+        <LayoutGrid className="h-3.5 w-3.5" />
         {row.original.projectName}
       </div>
     ),
@@ -107,6 +128,21 @@ const createColumns = (
       const displayValue = timeSavedPerRun?.value;
       const isEstimated = timeSavedPerRun?.isEstimated;
 
+      if (!isPlatformAdmin) {
+        return (
+          <div className="flex items-center gap-1 text-foreground">
+            {displayValue == null ? (
+              <span>{t('N/A')}</span>
+            ) : (
+              <span>
+                {formatMinutes(Math.round(displayValue ?? 0))}
+                {isEstimated && '~'}
+              </span>
+            )}
+          </div>
+        );
+      }
+
       return (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -119,6 +155,8 @@ const createColumns = (
                   variant="ghost"
                   className="h-auto p-1 gap-1.5 text-foreground hover:bg-accent"
                 >
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
+
                   {displayValue == null ? (
                     <span>{t('N/A')}</span>
                   ) : (
@@ -127,8 +165,6 @@ const createColumns = (
                       {isEstimated && '~'}
                     </span>
                   )}
-
-                  <Pencil className="h-3 w-3 text-muted-foreground" />
                 </Button>
               </EditTimeSavedPopover>
             </div>
@@ -185,6 +221,8 @@ export function FlowsDetails({
   estimatedTimeSavedPerStep,
 }: FlowsDetailsProps) {
   const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
+  const { data: user } = userHooks.useCurrentUser();
+  const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const flowsDetailsWithOverrides = useMemo(() => {
     if (!flowsDetails) return undefined;
@@ -224,7 +262,10 @@ export function FlowsDetails({
     ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
     : estimatedTimeSavedPerStep;
 
-  const columns = createColumns(resolvedEstimatedTimeSavedPerStep);
+  const columns = createColumns(
+    resolvedEstimatedTimeSavedPerStep,
+    isPlatformAdmin,
+  );
 
   return (
     <div className="flex flex-col gap-4 mb-8">
