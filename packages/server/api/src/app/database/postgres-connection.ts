@@ -673,11 +673,21 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
         synchronize: false,
     }
 
+    const statementTimeout = system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
+    const lockTimeout = system.getNumberOrThrow(AppSystemProp.POSTGRES_MIGRATION_LOCK_TIMEOUT_MS)
+    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
+
+    const extra = {
+        idleTimeoutMillis,
+        ...(forMigration && {
+            lock_timeout: lockTimeout,
+        }),
+        ...(!forMigration && {
+            statement_timeout: statementTimeout,
+        }),
+    }
+
     const url = system.get(AppSystemProp.POSTGRES_URL)
-
-    const statementTimeout = !forMigration && system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
-    const lockTimeout = forMigration && system.getNumberOrThrow(AppSystemProp.POSTGRES_MIGRATION_LOCK_TIMEOUT_MS)
-
     if (!isNil(url)) {
         return new DataSource({
             type: 'postgres',
@@ -686,10 +696,7 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
             ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
-            extra: {
-                ...spreadIfDefined('statement_timeout', statementTimeout),
-                ...spreadIfDefined('lock_timeout', lockTimeout),
-            },
+            extra,
         })
     }
 
@@ -698,7 +705,6 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
     const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
     const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
-    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
     const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
@@ -712,11 +718,7 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...commonProperties,
         ...migrationConfig,
-        extra: {
-            idleTimeoutMillis,
-            ...spreadIfDefined('statement_timeout', statementTimeout),
-            ...spreadIfDefined('lock_timeout', lockTimeout),
-        },
+        extra,
     })
 }
 
