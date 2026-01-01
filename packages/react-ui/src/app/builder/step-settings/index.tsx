@@ -34,6 +34,7 @@ import { CodeSettings } from './code-settings';
 import EditableStepName from './editable-step-name';
 import { LoopsSettings } from './loops-settings';
 import { PieceSettings } from './piece-settings';
+import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-context';
 import { RouterSettings } from './router-settings';
 import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
@@ -137,6 +138,8 @@ const StepSettingsContainer = () => {
     form.trigger();
   }, []);
 
+  const { height, setHeight } = useResizableVerticalPanelsContext();
+
   return (
     <Form {...form}>
       <form
@@ -182,10 +185,7 @@ const StepSettingsContainer = () => {
           key={`${selectedStep.name}-${selectedStep.type}`}
         >
           <ResizablePanelGroup direction="vertical">
-            <ResizablePanel
-              defaultSize={showStepInputOutFromRun ? 35 : 55}
-              className="min-h-[80px]"
-            >
+            <ResizablePanel className="min-h-[80px]">
               <ScrollArea className="h-full">
                 <div className="flex flex-col gap-2 px-4 pb-6">
                   <StepInfo step={modifiedStep}></StepInfo>
@@ -251,7 +251,8 @@ const StepSettingsContainer = () => {
               <>
                 <ResizableHandle withHandle={true} />
                 <ResizablePanel
-                  defaultSize={showStepInputOutFromRun ? 65 : 45}
+                  defaultSize={height}
+                  onResize={(size) => setHeight(size)}
                   className="min-h-[130px]"
                 >
                   <ScrollArea className="h-[calc(100%-35px)]  ">

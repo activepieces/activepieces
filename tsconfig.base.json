@@ -347,6 +347,9 @@
       "@activepieces/piece-clearoutphone": [
         "packages/pieces/community/clearoutphone/src/index.ts"
       ],
+      "@activepieces/piece-clicdata": [
+        "packages/pieces/community/clicdata/src/index.ts"
+      ],
       "@activepieces/piece-katana": [
         "packages/pieces/community/katana/src/index.ts"
       ],
@@ -374,11 +377,35 @@
       "@activepieces/piece-octopush-sms": [
         "packages/pieces/community/octopush-sms/src/index.ts"
       ],
+      "@activepieces/piece-moonclerk": [
+        "packages/pieces/community/moonclerk/src/index.ts"
+      ],
       "@activepieces/piece-heymarket-sms": [
         "packages/pieces/community/heymarket-sms/src/index.ts"
       ],
       "@activepieces/piece-flipando": [
         "packages/pieces/community/flipando/src/index.ts"
+      ],
+      "@activepieces/piece-skyprep": [
+        "packages/pieces/community/skyprep/src/index.ts"
+      ],
+      "@activepieces/piece-influencers-club": [
+        "packages/pieces/community/influencers-club/src/index.ts"
+      ],
+      "@activepieces/piece-tenzo": [
+        "packages/pieces/community/tenzo/src/index.ts"
+      ],
+      "@activepieces/piece-seek-table": [
+        "packages/pieces/community/seek-table/src/index.ts"
+      ],
+      "@activepieces/piece-lucidya": [
+        "packages/pieces/community/lucidya/src/index.ts"
+      ],
+      "@activepieces/piece-phone-validator": [
+        "packages/pieces/community/phone-validator/src/index.ts"
+      ],
+      "@activepieces/piece-barcode-lookup": [
+        "packages/pieces/community/barcode-lookup/src/index.ts"
       ]
     },
     "resolveJsonModule": true

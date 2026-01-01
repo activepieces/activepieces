@@ -2,13 +2,19 @@ import { create } from 'zustand';
 
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { ActionBase } from '@activepieces/pieces-framework';
-import { AgentPieceTool, AgentToolType, isNil } from '@activepieces/shared';
+import {
+  AgentMcpTool,
+  AgentPieceTool,
+  AgentToolType,
+  isNil,
+} from '@activepieces/shared';
 
 type SelectedDialogPage = 'pieces-list' | 'piece-selected' | 'action-selected';
 
 interface AgentToolsState {
   showAddPieceDialog: boolean;
   showAddFlowDialog: boolean;
+  showAddMcpDialog: boolean;
   selectedPage: SelectedDialogPage;
 
   searchQuery: string;
@@ -17,10 +23,12 @@ interface AgentToolsState {
   selectedAction: ActionBase | null;
   predefinedInputs: Record<string, unknown>;
 
-  editingTool: AgentPieceTool | null;
+  editingPieceTool: AgentPieceTool | null;
+  editingMcpTool: AgentMcpTool | null;
 
   setShowAddPieceDialog: (show: boolean) => void;
   setShowAddFlowDialog: (show: boolean) => void;
+  setShowAddMcpDialog: (show: boolean, tool?: AgentMcpTool) => void;
   setSelectedPage: (page: SelectedDialogPage) => void;
   setSearchQuery: (query: string) => void;
   setSelectedPiece: (piece: PieceStepMetadataWithSuggestions | null) => void;
@@ -52,12 +60,14 @@ interface AgentToolsState {
 const initialState = {
   showAddPieceDialog: false,
   showAddFlowDialog: false,
+  showAddMcpDialog: false,
   selectedPage: 'pieces-list' as SelectedDialogPage,
   searchQuery: '',
   selectedPiece: null,
   selectedAction: null,
   predefinedInputs: {},
-  editingTool: null,
+  editingPieceTool: null,
+  editingMcpTool: null,
 };
 
 export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
@@ -69,13 +79,10 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       get().resetDialogState();
     }
   },
+  setShowAddMcpDialog: (show, tool) =>
+    set({ showAddMcpDialog: show, editingMcpTool: tool }),
 
-  setShowAddFlowDialog: (show) => {
-    set({ showAddFlowDialog: show });
-    if (!show) {
-      get().resetDialogState();
-    }
-  },
+  setShowAddFlowDialog: (show) => set({ showAddFlowDialog: show }),
 
   setSelectedPage: (page) => set({ selectedPage: page }),
   setSearchQuery: (query) => set({ searchQuery: query }),
@@ -87,7 +94,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
     set({
       showAddPieceDialog: true,
       selectedPage: defaultPage,
-      editingTool: tool || null,
+      editingPieceTool: tool || null,
       predefinedInputs: tool?.pieceMetadata.predefinedInput,
       selectedPiece: piece,
     });
@@ -164,7 +171,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       selectedPiece: null,
       selectedAction: null,
       predefinedInputs: {},
-      editingTool: null,
+      editingPieceTool: null,
     });
   },
 
@@ -176,7 +183,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       selectedPiece: null,
       selectedAction: null,
       predefinedInputs: {},
-      editingTool: null,
+      editingPieceTool: null,
     });
   },
 }));

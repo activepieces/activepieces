@@ -5,11 +5,11 @@ import {
   Trash,
   Globe,
   Search,
-  AppWindow,
   Tag,
   Activity,
   Clock,
   FolderOpen,
+  Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -89,8 +89,8 @@ const GlobalConnectionsTable = () => {
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('App')}
-          icon={AppWindow}
+          title={t('Piece')}
+          icon={Puzzle}
         />
       ),
       cell: ({ row }) => {

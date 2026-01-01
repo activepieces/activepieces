@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { PlatformRole, UserStatus } from './user'
 
 export * from './user'
+export * from './badges'
 
 export const UpdateUserRequestBody = Type.Object({
     status: Type.Optional(Type.Enum(UserStatus)),
@@ -19,9 +20,3 @@ export const ListUsersRequestBody = Type.Object({
 })
 
 export type ListUsersRequestBody = Static<typeof ListUsersRequestBody>
-
-export const GetCurrentUserRequestQuery = Type.Object({
-    projectId: Type.String(),
-})
-
-export type GetCurrentUserRequestQuery = Static<typeof GetCurrentUserRequestQuery>
