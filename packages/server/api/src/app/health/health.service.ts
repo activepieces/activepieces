@@ -26,11 +26,16 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         }
     },
     isHealthy: async (): Promise<boolean> => {
+        let workerHealthy = true
+        let databaseHealthy = true
+
         if (system.isWorker()) {
-            return workerHealthStatus
+            workerHealthy = workerHealthStatus
         }
-        const databaseHealthy = await healthStatusService(log).checkDatabaseHealth()
-        return databaseHealthy
+        if (system.isApp()) {
+            databaseHealthy = await healthStatusService(log).checkDatabaseHealth()
+        }
+        return  workerHealthy && databaseHealthy
     },
     getSystemHealthChecks: async (): Promise<GetSystemHealthChecksResponse> => {
         const workers = await machineService(log).list()
