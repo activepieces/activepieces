@@ -2,16 +2,16 @@ import {
     ApplicationEventName,
     ResetPasswordRequestBody,
     VerifyEmailRequestBody } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../../../helper/application-events'
+import { applicationEvents } from '../../../helper/application-events'
 import { enterpriseLocalAuthnService } from './enterprise-local-authn-service'
 
 export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
     app.post('/verify-email', VerifyEmailRequest, async (req) => {
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents.sendUserEvent(req, {
             action: ApplicationEventName.USER_EMAIL_VERIFIED,
             data: {},
         })
@@ -19,7 +19,7 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
     })
 
     app.post('/reset-password', ResetPasswordRequest, async (req) => {
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents.sendUserEvent(req, {
             action: ApplicationEventName.USER_PASSWORD_RESET,
             data: {},
         })
@@ -29,7 +29,7 @@ export const enterpriseLocalAuthnController: FastifyPluginAsyncTypebox = async (
 
 const VerifyEmailRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         body: VerifyEmailRequestBody,
@@ -38,7 +38,7 @@ const VerifyEmailRequest = {
 
 const ResetPasswordRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         body: ResetPasswordRequestBody,

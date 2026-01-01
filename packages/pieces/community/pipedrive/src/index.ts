@@ -50,6 +50,7 @@ export const pipedriveAuth = PieceAuth.OAuth2({
 	tokenUrl: 'https://oauth.pipedrive.com/oauth/token',
 	required: true,
 	scope: [
+		'base',
 		'admin',
 		'contacts:full',
 		'users:read',
@@ -57,6 +58,7 @@ export const pipedriveAuth = PieceAuth.OAuth2({
 		'activities:full',
 		'leads:full',
 		'products:full',
+		'webhooks:full'
 	],
 });
 

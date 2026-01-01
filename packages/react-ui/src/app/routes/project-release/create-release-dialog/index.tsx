@@ -393,7 +393,7 @@ const CreateReleaseDialog = ({
       }}
     >
       <DialogContent className="min-h-[100px] max-h-[850px] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
+        <DialogHeader className="shrink-0">
           <DialogTitle>
             {diffRequest.type === ProjectReleaseType.GIT
               ? t('Create Git Release')

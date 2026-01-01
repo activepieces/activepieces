@@ -4,21 +4,22 @@ import { useMemo } from 'react';
 import { useDebounce } from 'use-debounce';
 
 import { Checkbox } from '@/components/ui/checkbox';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { PopulatedFlow } from '@activepieces/shared';
+  AgentFlowTool,
+  AgentToolType,
+  PopulatedFlow,
+} from '@activepieces/shared';
 
 import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { flowDialogUtils } from './flow-dialog-utils';
 
 interface FlowDialogContentProps {
   flows: PopulatedFlow[];
-  selectedFlows: string[];
-  setSelectedFlows: (value: string[] | ((prev: string[]) => string[])) => void;
+  selectedFlows: AgentFlowTool[];
+  setSelectedFlows: (
+    value: AgentFlowTool[] | ((prev: AgentFlowTool[]) => AgentFlowTool[]),
+  ) => void;
   searchQuery: string;
 }
 
@@ -39,64 +40,105 @@ export const FlowDialogContent = ({
     );
   }, [flows, debouncedQuery]);
 
-  const handleSelectFlow = (flowId: string) => {
-    setSelectedFlows((prev: string[]) => {
-      const newSelected = prev.includes(flowId)
-        ? prev.filter((id: string) => id !== flowId)
-        : [...prev, flowId];
-      return newSelected;
+  const isSelected = (flow: PopulatedFlow) =>
+    selectedFlows.some((tool) => tool.externalFlowId === flow.externalId);
+
+  const toggleFlow = (flow: PopulatedFlow) => {
+    setSelectedFlows((prev) => {
+      const exists = prev.some(
+        (tool) => tool.externalFlowId === flow.externalId,
+      );
+
+      if (exists) {
+        return prev.filter((tool) => tool.externalFlowId !== flow.externalId);
+      }
+
+      return [
+        ...prev,
+        {
+          externalFlowId: flow.externalId,
+          toolName: `${flow.version.displayName}_${flow.id}`,
+          type: AgentToolType.FLOW,
+        },
+      ];
     });
   };
 
   return (
-    <ScrollArea className="flex-grow overflow-y-auto rounded-md">
-      <div className="grid grid-cols-4 gap-4">
-        <CreateMcpFlowButton />
-
-        {filteredFlows.map((flow) => {
-          const tooltip = flowDialogUtils.getFlowTooltip(flow);
+    <>
+      <div className="flex flex-col px-4 py-2">
+        {filteredFlows.map((flow, index) => {
+          const helperText = flowDialogUtils.getFlowTooltip(flow);
           const isSelectable = flowDialogUtils.isFlowSelectable(flow);
+          const selected = isSelected(flow);
 
           return (
-            <Tooltip key={flow.id}>
-              <TooltipTrigger asChild>
-                <div
-                  className={`border p-2 h-[150px] w-[150px] flex flex-col items-center justify-center hover:bg-accent hover:text-accent-foreground cursor-pointer rounded-lg relative ${
-                    !isSelectable ? 'opacity-50' : ''
-                  } ${selectedFlows.includes(flow.id) ? 'bg-accent' : ''}`}
-                  onClick={() => isSelectable && handleSelectFlow(flow.id)}
-                >
-                  <Checkbox
-                    checked={selectedFlows.includes(flow.id)}
-                    onCheckedChange={() =>
-                      isSelectable && handleSelectFlow(flow.id)
-                    }
-                    className="absolute top-2 left-2"
-                    onClick={(e) => e.stopPropagation()}
-                    disabled={!isSelectable}
-                  />
+            <div key={flow.id}>
+              <div
+                className={`
+                  flex items-center gap-4 px-4 py-2 h-14 rounded-md cursor-pointer
+                  hover:bg-accent hover:text-accent-foreground
+                  ${selected ? 'bg-accent' : ''}
+                  ${!isSelectable ? 'opacity-50 cursor-not-allowed' : ''}
+                `}
+                onClick={() => isSelectable && toggleFlow(flow)}
+              >
+                <Checkbox
+                  checked={selected}
+                  disabled={!isSelectable}
+                  onCheckedChange={() => isSelectable && toggleFlow(flow)}
+                  onClick={(e) => e.stopPropagation()}
+                />
 
-                  <Workflow className="w-[40px] h-[40px] text-muted-foreground" />
-                  <div className="w-full mt-2 text-center text-md px-2 text-ellipsis overflow-hidden">
+                <div className="flex-1 min-w-0">
+                  <div className="truncate text-sm font-medium">
                     {flow.version.displayName}
                   </div>
+
+                  {helperText && (
+                    <div className="text-xs text-muted-foreground truncate">
+                      {helperText}
+                    </div>
+                  )}
                 </div>
-              </TooltipTrigger>
-              {tooltip && (
-                <TooltipContent>
-                  <p>{tooltip}</p>
-                </TooltipContent>
+
+                <PieceIconList
+                  trigger={flow.version.trigger}
+                  maxNumberOfIconsToShow={3}
+                />
+              </div>
+
+              {index < filteredFlows.length - 1 && (
+                <div className="h-px bg-border my-1" />
               )}
-            </Tooltip>
+            </div>
           );
         })}
       </div>
 
       {filteredFlows.length === 0 && (
-        <div className="text-center text-muted-foreground py-8">
-          {searchQuery ? t('No flows found') : t('No flows available')}
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-5 flex size-14 items-center justify-center rounded-xl border bg-muted/40">
+            <Workflow className="size-7 text-muted-foreground" />
+          </div>
+
+          <div className="text-base font-semibold text-foreground">
+            {t('No flows found')}
+          </div>
+
+          <div className="mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            {searchQuery
+              ? t('Try adjusting your search or create a new flow.')
+              : t('Create a flow to use it as a tool in your agent.')}
+          </div>
+
+          {!searchQuery && (
+            <div className="mt-6">
+              <CreateMcpFlowButton />
+            </div>
+          )}
         </div>
       )}
-    </ScrollArea>
+    </>
   );
 };

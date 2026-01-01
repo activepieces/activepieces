@@ -135,11 +135,11 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
               className="w-6 h-6 object-contain"
               src={step?.settings?.customLogoUrl ?? stepMetadata?.logoUrl}
             />
-            <div className="break-all truncate min-w-0 grow-1 shrink-1">{`${
+            <div className="break-all truncate min-w-0 grow shrink">{`${
               stepIndex + 1
             }. ${step?.displayName}`}</div>
             <div className="w-2"></div>
-            <div className="flex gap-1 justify-end  items-center flex-grow">
+            <div className="flex gap-1 justify-end  items-center grow">
               {isLoopStep && isStepSelected && (
                 <span className="text-sm font-semibold animate-fade">
                   {loopHasNoIterations
@@ -149,12 +149,9 @@ const RunStepCardItem = ({ stepName, depth }: RunStepCardProps) => {
               )}
               {isLoopStep && !isStepSelected && (
                 <div
-                  className={cn(
-                    'flex gap-1 justify-end  items-center flex-grow',
-                    {
-                      hidden: !isChildSelected || loopHasNoIterations,
-                    },
-                  )}
+                  className={cn('flex gap-1 justify-end  items-center grow', {
+                    hidden: !isChildSelected || loopHasNoIterations,
+                  })}
                 >
                   <LoopIterationInput stepName={stepName} />
                 </div>

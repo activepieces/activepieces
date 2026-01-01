@@ -361,7 +361,7 @@
   "days": "days",
   "hours": "hours",
   "minutes": "minutes",
-  "Executions": "",
+  "Executions": "Runs",
   "Unlimited": "Unlimited",
   "Active Flows": "Active Flows",
   "Usage resets in": "Usage resets in",
@@ -1265,5 +1265,6 @@
   "Activation failed, invalid license key": "Activation failed, invalid license key",
   "Invalid Access": "Invalid Access",
   "Either the project does not exist or you do not have access to it.": "Either the project does not exist or you do not have access to it.",
-  "Yesterday": ""
+  "Yesterday": "Yesterday",
+  "Show child steps output on round ({iteration}/{totalIterations})": "Show child steps output on round ({iteration}/{totalIterations})"
 }

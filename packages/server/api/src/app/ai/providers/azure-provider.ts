@@ -1,12 +1,12 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, AzureProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, AzureProviderAuthConfig, AzureProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
-export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
+export const azureProvider: AIProviderStrategy<AzureProviderAuthConfig, AzureProviderConfig> = {
     name: 'Azure OpenAI',
-    async listModels(config: AzureProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(authConfig: AzureProviderAuthConfig, config: AzureProviderConfig): Promise<AIProviderModel[]> {
         const endpoint = `https://${config.resourceName}.openai.azure.com`
-        const apiKey = config.apiKey
+        const apiKey = authConfig.apiKey
         const apiVersion = '2024-10-21'
 
         if (!endpoint || !apiKey) {
@@ -17,7 +17,7 @@ export const azureProvider: AIProviderStrategy<AzureProviderConfig> = {
             url: `${endpoint}/openai/deployments?api-version=${apiVersion}`,
             method: HttpMethod.GET,
             headers: {
-                'api-key': config.apiKey,
+                'api-key': apiKey,
                 'Content-Type': 'application/json',
             },
         })

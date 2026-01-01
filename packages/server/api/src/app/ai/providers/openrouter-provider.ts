@@ -1,16 +1,15 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, OpenRouterProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, OpenRouterProviderAuthConfig, OpenRouterProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
-export const openRouterProvider: AIProviderStrategy<OpenRouterProviderConfig> = {
+export const openRouterProvider: AIProviderStrategy<OpenRouterProviderAuthConfig, OpenRouterProviderConfig> = {
     name: 'OpenRouter',
-    async listModels(config: OpenRouterProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(_authConfig: OpenRouterProviderAuthConfig, _config: OpenRouterProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: OpenRouterModel[] }>({
-            url: 'https://openrouter.ai/api/v1/models/user',
+            url: 'https://openrouter.ai/api/v1/models',
             method: HttpMethod.GET,
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${config.apiKey}`,
             },
         })
 

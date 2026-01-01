@@ -3,7 +3,7 @@ import { t } from 'i18next';
 import React, { useMemo } from 'react';
 
 import {
-  LeftSideBarType,
+  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import {
@@ -28,9 +28,9 @@ type RunsListItem =
   | { type: 'flowRun'; run: FlowRun }
   | { type: 'loadMoreButton'; id: 'loadMoreButton' };
 const RunsList = React.memo(() => {
-  const [flow, setLeftSidebar, run] = useBuilderStateContext((state) => [
+  const [flow, setRightSidebar, run] = useBuilderStateContext((state) => [
     state.flow,
-    state.setLeftSidebar,
+    state.setRightSidebar,
     state.run,
   ]);
 
@@ -88,7 +88,7 @@ const RunsList = React.memo(() => {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <SidebarHeader onClose={() => setLeftSidebar(LeftSideBarType.NONE)}>
+      <SidebarHeader onClose={() => setRightSidebar(RightSideBarType.NONE)}>
         {t('Recent Runs')}
       </SidebarHeader>
       {isLoading && <CardListItemSkeleton numberOfCards={10} />}

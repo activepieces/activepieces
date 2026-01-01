@@ -28,11 +28,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libcap-dev && \
     yarn config set python /usr/bin/python3
 
-# Install bun using official curl installer
-RUN curl -fsSL https://bun.sh/install | bash -s "bun-v1.3.1"
-
-ENV BUN_INSTALL="/root/.bun"
-ENV PATH="${BUN_INSTALL}/bin:${PATH}"
+RUN export ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-x64-baseline.zip -o bun.zip; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+      curl -fSL https://github.com/oven-sh/bun/releases/download/bun-v1.3.1/bun-linux-aarch64.zip -o bun.zip; \
+    fi
+    
+RUN unzip bun.zip \
+    && mv bun-*/bun /usr/local/bin/bun \
+    && chmod +x /usr/local/bin/bun \
+    && rm -rf bun.zip bun-*
 
 RUN bun --version
 

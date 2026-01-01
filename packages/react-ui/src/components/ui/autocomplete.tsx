@@ -60,17 +60,17 @@ export function AutoComplete<T extends string>({
               e.preventDefault();
             }
           }}
-          className="w-[--radix-popover-trigger-width] p-0"
+          className="w-(--radix-popover-trigger-width) p-0"
         >
           <Command className={className} ref={listRef}>
             <CommandList className="bg-background">
               <ScrollArea
                 className={cn('', {
-                  'h-[12.5rem]': items.length >= 5,
-                  'h-[2.5rem]': items.length === 1,
-                  'h-[5rem]': items.length === 2,
-                  'h-[7.5rem]': items.length === 3,
-                  'h-[10rem]': items.length === 4,
+                  'h-50': items.length >= 5,
+                  'h-10': items.length === 1,
+                  'h-20': items.length === 2,
+                  'h-30': items.length === 3,
+                  'h-40': items.length === 4,
                 })}
               >
                 {items.length > 0 ? (

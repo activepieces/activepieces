@@ -1,24 +1,21 @@
 import {
     ApplicationEvent,
 } from '@activepieces/ee-shared'
-import { AppSystemProp, networkUtils, rejectedPromiseHandler } from '@activepieces/server-shared'
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
     apId,
     Cursor,
     isNil,
-    PrincipalType,
     SeekPage,
 } from '@activepieces/shared'
 import { Value } from '@sinclair/typebox/value'
-import { FastifyBaseLogger, FastifyRequest } from 'fastify'
+import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { authenticationUtils } from '../../authentication/authentication-utils'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
-import { AuditEventParam } from '../../helper/application-events'
+import { applicationEvents, AuditEventParam, MetaInformation } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { projectService } from '../../project/project-service'
 import { userService } from '../../user/user-service'
@@ -27,33 +24,22 @@ import { AuditEventEntity } from './audit-event-entity'
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
 export const auditLogService = (log: FastifyBaseLogger) => ({
-    sendUserEvent(requestInformation: MetaInformation, params: AuditEventParam): void {
-        rejectedPromiseHandler(saveEvent(requestInformation, params, log), log)
-    },
-    sendUserEventFromRequest(request: FastifyRequest, params: AuditEventParam): void {
-        const principal = request.principal
-        if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
-            return
-        }
-        rejectedPromiseHandler((async () => {
-            const userId = await authenticationUtils.extractUserIdFromPrincipal(principal)
-            await saveEvent({
-                platformId: principal.platform.id,
-                projectId: principal.projectId,
-                userId,
-                ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-            }, params, log)
-        })(), log)
-    },
-    sendWorkerEvent(projectId: string, params: AuditEventParam): void {
-        rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {
-            rejectedPromiseHandler(saveEvent({
-                platformId: project.platformId,
-                projectId,
-                userId: undefined,
-                ip: undefined,
-            }, params, log), log)
-        }), log)
+    setup(): void {
+        applicationEvents.registerListeners(log, {
+            userEvent: (log) => (requestInformation, params) => {
+                rejectedPromiseHandler(saveEvent(requestInformation, params, log), log)
+            },
+            workerEvent: (log) => (projectId, params) => {
+                rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {
+                    rejectedPromiseHandler(saveEvent({
+                        platformId: project.platformId,
+                        projectId,
+                        userId: undefined,
+                        ip: undefined,
+                    }, params, log), log)
+                }), log)
+            },
+        })
     },
     async list({ platformId, cursorRequest, limit, userId, action, projectId, createdBefore, createdAfter }: ListParams): Promise<SeekPage<ApplicationEvent>> {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
@@ -139,14 +125,6 @@ async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: 
         message: '[AuditEventService#saveEvent] Audit event saved',
     })
 }
-
-type MetaInformation = {
-    platformId: string
-    projectId?: string
-    userId?: string
-    ip?: string
-}
-
 
 type ListParams = {
     platformId: string

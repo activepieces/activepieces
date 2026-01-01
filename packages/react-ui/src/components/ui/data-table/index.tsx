@@ -4,6 +4,8 @@ import {
   ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
   useReactTable,
 } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -23,6 +25,7 @@ import { cn } from '@/lib/utils';
 import { apId, isNil, SeekPage } from '@activepieces/shared';
 
 import { Button } from '../button';
+import { Checkbox } from '../checkbox';
 import {
   Select,
   SelectTrigger,
@@ -78,6 +81,8 @@ interface DataTableProps<
   emptyStateTextTitle: string;
   emptyStateTextDescription: string;
   emptyStateIcon: React.ReactNode;
+  selectColumn?: boolean;
+  initialSorting?: SortingState;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -109,10 +114,41 @@ export function DataTable<
   emptyStateTextDescription,
   emptyStateIcon,
   customFilters,
+  selectColumn = false,
+  initialSorting = [],
 }: DataTableProps<TData, TValue, Keys>) {
+  const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
+    id: 'select',
+    accessorKey: 'select',
+    notClickable: true,
+    size: 40,
+    minSize: 40,
+    maxSize: 40,
+    header: ({ table }) => (
+      <div className="flex items-center h-full">
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className="flex items-center h-full">
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      </div>
+    ),
+  };
+
+  const columnsWithSelect = selectColumn
+    ? [selectColumnDef, ...columnsInitial]
+    : columnsInitial;
+
   const columns =
     actions.length > 0
-      ? columnsInitial.concat([
+      ? columnsWithSelect.concat([
           {
             accessorKey: '__actions',
             header: ({ column }) => (
@@ -133,7 +169,7 @@ export function DataTable<
             },
           },
         ])
-      : columnsInitial;
+      : columnsWithSelect;
 
   const columnVisibility = columnsInitial.reduce((acc, column) => {
     if (column.enableHiding && 'accessorKey' in column) {
@@ -187,12 +223,14 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     getRowId: () => apId(),
     initialState: {
       pagination: {
         pageSize: parseInt(startingLimit),
       },
       columnVisibility,
+      sorting: initialSorting,
     },
   });
 
@@ -271,14 +309,22 @@ export function DataTable<
         </DataTableToolbar>
       )}
 
-      <div className="rounded-md border mt-0 overflow-hidden">
-        <Table>
+      <div className="rounded-md mt-0 overflow-hidden">
+        <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="hover:bg-transparent">
                 {headerGroup.headers.map((header) => {
+                  const size = header.column.columnDef.size;
                   return (
-                    <TableHead key={header.id}>
+                    <TableHead
+                      key={header.id}
+                      style={
+                        size
+                          ? { width: size, minWidth: size, maxWidth: size }
+                          : undefined
+                      }
+                    >
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -314,7 +360,7 @@ export function DataTable<
                     )?.cellIndex;
                     if (
                       clickedCellIndex !== undefined &&
-                      columnsInitial[clickedCellIndex]?.notClickable
+                      columns[clickedCellIndex]?.notClickable
                     ) {
                       return; // Don't trigger onRowClick for not clickable columns
                     }
@@ -327,7 +373,7 @@ export function DataTable<
                     )?.cellIndex;
                     if (
                       clickedCellIndex !== undefined &&
-                      columnsInitial[clickedCellIndex]?.notClickable
+                      columns[clickedCellIndex]?.notClickable
                     ) {
                       return;
                     }
@@ -336,31 +382,41 @@ export function DataTable<
                   key={row.id}
                   data-state={row.getIsSelected() && 'selected'}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      <div
-                        className={cn('flex items-center', {
-                          'justify-end': cell.column.id === 'actions',
-                          'justify-start': cell.column.id !== 'actions',
-                        })}
+                  {row.getVisibleCells().map((cell) => {
+                    const size = cell.column.columnDef.size;
+                    return (
+                      <TableCell
+                        key={cell.id}
+                        style={
+                          size
+                            ? { width: size, minWidth: size, maxWidth: size }
+                            : undefined
+                        }
                       >
                         <div
-                          onClick={(e) => {
-                            if (cell.column.id === 'select') {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              return;
-                            }
-                          }}
+                          className={cn('flex items-center', {
+                            'justify-end': cell.column.id === 'actions',
+                            'justify-start': cell.column.id !== 'actions',
+                          })}
                         >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
+                          <div
+                            onClick={(e) => {
+                              if (cell.column.id === 'select') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                return;
+                              }
+                            }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                  ))}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

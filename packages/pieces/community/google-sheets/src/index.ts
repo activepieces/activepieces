@@ -24,6 +24,7 @@ import { copyWorksheetAction } from './lib/actions/copy-worksheet';
 import { updateMultipleRowsAction } from './lib/actions/update-multiple-rows';
 import { createColumnAction } from './lib/actions/create-column';
 import { exportSheetAction } from './lib/actions/export-sheet';
+import { getManyRowsAction } from './lib/actions/get-many-rows';
 
 export const googleSheets = createPiece({
   minimumSupportedRelease: '0.71.4',
@@ -52,6 +53,7 @@ export const googleSheets = createPiece({
     clearSheetAction,
     findRowByNumAction,
     getRowsAction,
+    getManyRowsAction,
     findSpreadsheets,
     findWorksheetAction,
     copyWorksheetAction,

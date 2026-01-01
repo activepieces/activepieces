@@ -27,6 +27,8 @@ import {
   WebsocketClientEvent,
   FlowStatusUpdatedResponse,
   isNil,
+  ErrorCode,
+  SeekPage,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -128,8 +130,21 @@ export const flowHooks = {
         }
         onSuccess?.(response);
       },
-      onError: (_uncaughtError: unknown) => {
-        internalErrorToast();
+      onError: (error: unknown) => {
+        const errorCode = (error as any)?.response?.data?.code;
+        const errorMessage = (error as any)?.response?.data?.params?.message;
+
+        if (
+          errorCode === ErrorCode.FLOW_OPERATION_IN_PROGRESS &&
+          errorMessage
+        ) {
+          toast.error(t('Flow Is Busy'), {
+            description: errorMessage,
+            duration: 5000,
+          });
+        } else {
+          internalErrorToast();
+        }
       },
     });
   },
@@ -183,14 +198,18 @@ export const flowHooks = {
   useOverWriteDraftWithVersion: ({
     onSuccess,
   }: {
-    onSuccess: (flowVersion: PopulatedFlow) => void;
+    onSuccess: (flow: PopulatedFlow) => void;
   }) => {
-    return useMutation<PopulatedFlow, Error, FlowVersionMetadata>({
-      mutationFn: async (flowVersion) => {
-        const result = await flowsApi.update(flowVersion.flowId, {
+    return useMutation<
+      PopulatedFlow,
+      Error,
+      { flowId: string; versionId: string }
+    >({
+      mutationFn: async ({ flowId, versionId }) => {
+        const result = await flowsApi.update(flowId, {
           type: FlowOperationType.USE_AS_DRAFT,
           request: {
-            versionId: flowVersion.id,
+            versionId,
           },
         });
         return result;
@@ -267,6 +286,30 @@ export const flowHooks = {
           onUpdateRun,
         ),
     });
+  },
+  useListFlowVersions: (flowId: string) => {
+    return useQuery<SeekPage<FlowVersionMetadata>, Error>({
+      queryKey: ['flow-versions', flowId],
+      queryFn: () =>
+        flowsApi.listVersions(flowId, {
+          limit: 1000,
+          cursor: undefined,
+        }),
+      staleTime: 0,
+    });
+  },
+  useGetFlowVersionNumber: ({
+    flowId,
+    versionId,
+  }: {
+    flowId: string;
+    versionId: string;
+  }) => {
+    const { data: flowVersions } = flowHooks.useListFlowVersions(flowId);
+    return flowVersions?.data
+      ? flowVersions.data.length -
+          flowVersions.data.findIndex((version) => version.id === versionId)
+      : '';
   },
 };
 

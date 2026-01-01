@@ -167,6 +167,7 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 socket.removeAllListeners(EngineSocketEvent.ENGINE_STDOUT)
                 socket.removeAllListeners(EngineSocketEvent.ENGINE_STDERR)
                 socket.removeAllListeners(EngineSocketEvent.UPDATE_RUN_PROGRESS)
+                socket.removeAllListeners(EngineSocketEvent.UPDATE_STEP_PROGRESS)
                 socket.removeAllListeners(EngineSocketEvent.SEND_FLOW_RESPONSE)
             }
         },

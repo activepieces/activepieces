@@ -370,6 +370,8 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         }
         case FlowOperationType.UPDATE_METADATA:
             return `Updated metadata for flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_MINUTES_SAVED:
+            return `Updated minutes saved for flow "${event.data.flowVersion.displayName}".`
         case FlowOperationType.MOVE_BRANCH:
             return `Moved branch number ${
                 event.data.request.request.sourceBranchIndex + 1

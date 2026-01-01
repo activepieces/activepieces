@@ -82,7 +82,7 @@ export const AlertsSettings = () => {
               {Array.isArray(alertsData) &&
                 alertsData.map((alert) => (
                   <div
-                    className="flex items-center justify-between p-3 border rounded-lg hover:shadow-sm transition-all"
+                    className="flex items-center justify-between p-3 border rounded-lg hover:shadow-xs transition-all"
                     key={alert.id}
                   >
                     <div className="flex items-center space-x-3">

@@ -18,7 +18,7 @@ export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
 export async function workerPostBoot(app: FastifyInstance): Promise<void> {
     const workerToken = await generateWorkerToken()
-    await flowWorker(app.log).init({ workerToken, markAsHealthy: async () => healthStatusService.markWorkerHealthy() })
+    await flowWorker(app.log).init({ workerToken, markAsHealthy: async () => healthStatusService(app.log).markWorkerHealthy() })
 }
 
 

@@ -53,7 +53,7 @@ const SidebarUsageLimits = React.memo(() => {
   const isPlatformAdmin = currentUser.data?.platformRole === PlatformRole.ADMIN;
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
-  if (edition === ApEdition.COMMUNITY) {
+  if (edition !== ApEdition.CLOUD) {
     return null;
   }
 
@@ -98,18 +98,15 @@ const SidebarUsageLimits = React.memo(() => {
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-bold">{t('Executions')}</span>
+            <span className="text-xs font-bold">{t('Runs')}</span>
             <Badge variant="ghost" className="bg-muted font-bold">
               {t('Unlimited')}
             </Badge>
           </div>
           <UsageProgress
             name={t('AI Credits')}
-            value={Math.floor(platform.usage?.aiCredits ?? 0)}
-            max={
-              platform.plan.includedAiCredits +
-              (platform.plan.aiCreditsOverageLimit ?? 0)
-            }
+            value={Math.floor(platform.usage?.totalAiCreditsUsed ?? 0)}
+            max={platform.usage?.aiCreditsLimit ?? 0}
           />
           <UsageProgress
             name={t('Active Flows')}
@@ -125,7 +122,7 @@ const SidebarUsageLimits = React.memo(() => {
             )}{' '}
           </span>
           {isPlatformAdmin && (
-            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+            <FlagGuard flag={ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR}>
               <Link to={'/platform/setup/billing'} className="w-fit">
                 <span className="text-xs text-primary underline">
                   {t('Manage')}

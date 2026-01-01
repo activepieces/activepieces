@@ -28,7 +28,7 @@ export const ApRouterEndCanvasEdge = ({
   const generatePath = () => {
     // Start point
     let path = `M ${sourceX - 0.5} ${
-      sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE * 2
+      sourceY - flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE
     }`;
 
     // Vertical line from start
@@ -82,11 +82,7 @@ export const ApRouterEndCanvasEdge = ({
             flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width / 2 -
             flowUtilConsts.LINE_WIDTH / 2
           }
-          y={
-            targetY -
-            verticalLineLength +
-            flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height
-          }
+          y={targetY - verticalLineLength}
           width={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width}
           height={flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height}
           className="overflow-visible"

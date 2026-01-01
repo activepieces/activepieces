@@ -39,7 +39,7 @@ export const AssignConnectionToProjectsControl = ({
             showDeselect={field.value.length > 0}
           />
 
-          <FormMessage className="!mt-4" />
+          <FormMessage className="mt-4!" />
         </FormItem>
       )}
     />

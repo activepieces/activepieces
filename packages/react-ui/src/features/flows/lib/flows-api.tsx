@@ -3,19 +3,20 @@ import { toast } from 'sonner';
 
 import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
+import { GetFlowTemplateRequestQuery } from '@activepieces/ee-shared';
 import {
   CreateFlowRequest,
   ErrorCode,
   FlowOperationRequest,
-  FlowTemplate,
   FlowVersion,
   FlowVersionMetadata,
   GetFlowQueryParamsRequest,
-  GetFlowTemplateRequestQuery,
   ListFlowVersionRequest,
   ListFlowsRequest,
   PopulatedFlow,
+  SharedTemplate,
   SeekPage,
+  CountFlowsRequest,
 } from '@activepieces/shared';
 
 export const flowsApi = {
@@ -60,7 +61,7 @@ export const flowsApi = {
       });
   },
   getTemplate(flowId: string, request: GetFlowTemplateRequestQuery) {
-    return api.get<FlowTemplate>(`/v1/flows/${flowId}/template`, {
+    return api.get<SharedTemplate>(`/v1/flows/${flowId}/template`, {
       params: request,
     });
   },
@@ -82,7 +83,7 @@ export const flowsApi = {
   delete(flowId: string) {
     return api.delete<void>(`/v1/flows/${flowId}`);
   },
-  count() {
-    return api.get<number>('/v1/flows/count');
+  count(query: CountFlowsRequest) {
+    return api.get<number>('/v1/flows/count', query);
   },
 };

@@ -10,6 +10,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 
 export const packageManager = (log: FastifyBaseLogger) => ({
+    async validate(): Promise<void> {
+        await execPromise('bun --version')
+        await execPromise('bun install')
+    },
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
         const args = [
             '--ignore-scripts',

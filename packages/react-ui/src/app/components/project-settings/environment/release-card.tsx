@@ -40,7 +40,7 @@ const ReleaseCard = () => {
         <div className="flex flex-col gap-2 text-center mr-2">
           <Package className="size-8" />
         </div>
-        <div className="flex flex-grow flex-col">
+        <div className="flex grow flex-col">
           <div className="text-lg">{t('Releases')}</div>
           <div className="text-sm text-muted-foreground">
             {t('Enable releases to easily create and manage project releases.')}

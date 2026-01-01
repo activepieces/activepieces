@@ -1,6 +1,14 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package } from 'lucide-react';
+import {
+  CheckIcon,
+  Package,
+  Tag,
+  Hash,
+  GitBranch,
+  Tags,
+  Puzzle,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -11,7 +19,6 @@ import { PieceActions } from '@/app/routes/platform/setup/pieces/piece-actions';
 import { SyncPiecesButton } from '@/app/routes/platform/setup/pieces/sync-pieces';
 import { ConfigurePieceOAuth2Dialog } from '@/app/routes/platform/setup/pieces/update-oauth2-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { LockedAlert } from '@/components/ui/locked-alert';
@@ -48,33 +55,14 @@ const PlatformPiecesPage = () => {
     useMemo(
       () => [
         {
-          id: 'select',
-          header: ({ table }) => (
-            <Checkbox
-              checked={
-                table.getIsAllPageRowsSelected() ||
-                (table.getIsSomePageRowsSelected() && 'indeterminate')
-              }
-              variant="secondary"
-              onCheckedChange={(value) =>
-                table.toggleAllPageRowsSelected(!!value)
-              }
-            />
-          ),
-          cell: ({ row }) => (
-            <Checkbox
-              variant="secondary"
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => {
-                row.toggleSelected(!!value);
-              }}
-            />
-          ),
-        },
-        {
           accessorKey: 'name',
+          size: 80,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('App')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Piece')}
+              icon={Puzzle}
+            />
           ),
           cell: ({ row }) => {
             return (
@@ -93,8 +81,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'displayName',
+          size: 180,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Display Name')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Display Name')}
+              icon={Tag}
+            />
           ),
           cell: ({ row }) => {
             return <div className="text-left">{row.original.displayName}</div>;
@@ -102,8 +95,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'packageName',
+          size: 200,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Package Name')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Package Name')}
+              icon={Hash}
+            />
           ),
           cell: ({ row }) => {
             return <div className="text-left">{row.original.name}</div>;
@@ -111,8 +109,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'version',
+          size: 100,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Version')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Version')}
+              icon={GitBranch}
+            />
           ),
           cell: ({ row }) => {
             return <div className="text-left">{row.original.version}</div>;
@@ -120,8 +123,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'tags',
+          size: 150,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Tags')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Tags')}
+              icon={Tags}
+            />
           ),
           cell: ({ row }) => {
             return (
@@ -222,6 +230,7 @@ const PlatformPiecesPage = () => {
             previous: null,
           }}
           isLoading={isLoading}
+          selectColumn={true}
           onSelectedRowsChange={setSelectedPieces}
         />
       </div>

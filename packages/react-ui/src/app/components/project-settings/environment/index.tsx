@@ -50,7 +50,7 @@ const EnvironmentSettings = () => {
           <div className="flex w-full">
             {!isLoading && (
               <>
-                <div className="flex flex-grow flex-col gap-2">
+                <div className="flex grow flex-col gap-2">
                   <p>
                     {t('Repository URL')}:{' '}
                     {gitSync?.remoteUrl ?? t('Not connected')}
@@ -82,7 +82,7 @@ const EnvironmentSettings = () => {
               </>
             )}
             {isLoading && (
-              <div className="flex flex-grow justify-center items-center">
+              <div className="flex grow justify-center items-center">
                 <LoadingSpinner className="size-5"></LoadingSpinner>
               </div>
             )}

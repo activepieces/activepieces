@@ -87,6 +87,7 @@ export const CreateFlowDropdown = ({
                 disabled={!doesUserHavePermissionToWriteFlow}
                 variant={variant === 'small' ? 'ghost' : 'default'}
                 size={variant === 'small' ? 'icon' : 'default'}
+                className={cn(variant === 'small' ? '!bg-transparent' : '')}
                 loading={isCreateFlowPending}
                 onClick={(e) => e.stopPropagation()}
                 data-testid="new-flow-button"
@@ -106,7 +107,7 @@ export const CreateFlowDropdown = ({
             {t('New flow')}
           </TooltipContent>
         </Tooltip>
-        <DropdownMenuContent>
+        <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();

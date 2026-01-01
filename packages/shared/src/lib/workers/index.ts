@@ -20,6 +20,7 @@ export const MachineInformation = Type.Object({
     workerProps: Type.Record(Type.String(), Type.String()),
     ramUsagePercentage: Type.Number(),
     totalAvailableRamInBytes: Type.Number(),
+    totalCpuCores: Type.Number(),
     ip: Type.String(),
     totalSandboxes: Type.Number(),
     freeSandboxes: Type.Number(),

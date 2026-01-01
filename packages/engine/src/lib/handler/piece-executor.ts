@@ -180,7 +180,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict({
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
@@ -190,13 +190,13 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 throw new EngineGenericError('PauseResponseNotSetError', 'Pause response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
+            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted()
                 .setVerdict({
                     status: FlowRunStatus.PAUSED,
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).setVerdict({ status: FlowRunStatus.RUNNING })
+        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))
 

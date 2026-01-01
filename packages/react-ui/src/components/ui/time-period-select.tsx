@@ -65,7 +65,7 @@ export const TimePeriodSelect = React.forwardRef<
           <SelectTrigger
             ref={ref}
             className={cn(
-              ' hover:bg-accent w-[73px] h-[29px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1  rounded-xs justify-center p-0 transition-all border-none text-sm shadow-none gap-3 ',
+              ' hover:bg-accent w-[73px] h-[29px] focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1  rounded-xs justify-center p-0 transition-all border-none text-sm shadow-none gap-3 ',
               {
                 'bg-background': isActive,
               },

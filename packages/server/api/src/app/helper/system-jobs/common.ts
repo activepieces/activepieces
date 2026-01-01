@@ -7,18 +7,11 @@ export enum SystemJobName {
     PIECES_SYNC = 'pieces-sync',
     FILE_CLEANUP_TRIGGER = 'file-cleanup-trigger',
     TRIAL_TRACKER = 'trial-tracker',
-    ISSUES_SUMMARY = 'issues-summary',
     RUN_TELEMETRY = 'run-telemetry',
     DELETE_FLOW = 'delete-flow',
     UPDATE_FLOW_STATUS = 'update-flow-status',
+    AI_CREDIT_UPDATE_CHECK = 'ai-credit-update-check',
 }
-
-type IssuesSummarySystemJobData = {
-    projectId: ProjectId
-    projectName: string
-    platformId: string
-}
-
 
 type DeleteFlowDurableSystemJobData =  {
     flow: Flow
@@ -33,8 +26,12 @@ type UpdateFlowStatusDurableSystemJobData =  {
     preUpdateDone: boolean
 }
 
+type AiCreditUpdateCheckSystemJobData = {
+    apiKeyHash: string
+    platformId: string
+}
+
 type SystemJobDataMap = {
-    [SystemJobName.ISSUES_SUMMARY]: IssuesSummarySystemJobData
     [SystemJobName.PIECES_ANALYTICS]: Record<string, never>
     [SystemJobName.PIECES_SYNC]: Record<string, never>
     [SystemJobName.FILE_CLEANUP_TRIGGER]: Record<string, never>
@@ -42,6 +39,7 @@ type SystemJobDataMap = {
     [SystemJobName.TRIAL_TRACKER]: Record<string, never>
     [SystemJobName.DELETE_FLOW]: DeleteFlowDurableSystemJobData
     [SystemJobName.UPDATE_FLOW_STATUS]: UpdateFlowStatusDurableSystemJobData
+    [SystemJobName.AI_CREDIT_UPDATE_CHECK]: AiCreditUpdateCheckSystemJobData
 }
 
 export type SystemJobData<T extends SystemJobName = SystemJobName> = T extends SystemJobName ? SystemJobDataMap[T] : never

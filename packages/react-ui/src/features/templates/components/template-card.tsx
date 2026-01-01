@@ -15,15 +15,17 @@ import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
-  FlowTemplate,
   PopulatedFlow,
+  Template,
   UncategorizedFolderId,
   isNil,
 } from '@activepieces/shared';
 
+import { templatesApi } from '../lib/templates-api';
+
 type TemplateCardProps = {
-  template: FlowTemplate;
-  onSelectTemplate: (template: FlowTemplate) => void;
+  template: Template;
+  onSelectTemplate: (template: Template) => void;
   folderId?: string;
 };
 
@@ -35,31 +37,39 @@ export const TemplateCard = ({
   const navigate = useNavigate();
 
   const { mutate: createFlow, isPending } = useMutation<
-    PopulatedFlow,
+    PopulatedFlow[],
     Error,
-    FlowTemplate
+    Template
   >({
-    mutationFn: async (template: FlowTemplate) => {
+    mutationFn: async (template: Template) => {
       const folder =
         !isNil(folderId) && folderId !== UncategorizedFolderId
           ? await foldersApi.get(folderId)
           : undefined;
-      const newFlow = await flowsApi.create({
-        displayName: template.name,
-        projectId: authenticationSession.getProjectId()!,
-        folderName: folder?.displayName,
-      });
-      return await flowsApi.update(newFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: template.name,
-          trigger: template.template.trigger,
-          schemaVersion: template.template.schemaVersion,
+
+      const flowImportPromises = (template.flows || []).map(
+        async (templateFlow) => {
+          const newFlow = await flowsApi.create({
+            displayName: templateFlow.displayName,
+            projectId: authenticationSession.getProjectId()!,
+            folderName: folder?.displayName,
+          });
+          return await flowsApi.update(newFlow.id, {
+            type: FlowOperationType.IMPORT_FLOW,
+            request: {
+              displayName: templateFlow.displayName,
+              trigger: templateFlow.trigger,
+              schemaVersion: templateFlow.schemaVersion,
+            },
+          });
         },
-      });
+      );
+
+      return Promise.all(flowImportPromises);
     },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}`);
+    onSuccess: (flows) => {
+      templatesApi.incrementUsageCount(template.id);
+      navigate(`/flows/${flows[0].id}`);
     },
   });
 
@@ -70,7 +80,7 @@ export const TemplateCard = ({
     >
       <div className="flex items-center gap-2 p-4">
         <PieceIconList
-          trigger={template.template.trigger}
+          trigger={template.flows![0].trigger}
           maxNumberOfIconsToShow={2}
         />
       </div>

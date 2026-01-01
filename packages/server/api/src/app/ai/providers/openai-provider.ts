@@ -1,15 +1,15 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common'
-import { AIProviderModel, AIProviderModelType, OpenAIProviderConfig } from '@activepieces/shared'
+import { AIProviderModel, AIProviderModelType, OpenAIProviderAuthConfig, OpenAIProviderConfig } from '@activepieces/shared'
 import { AIProviderStrategy } from './ai-provider'
 
-export const openaiProvider: AIProviderStrategy<OpenAIProviderConfig> = {
+export const openaiProvider: AIProviderStrategy<OpenAIProviderAuthConfig, OpenAIProviderConfig> = {
     name: 'OpenAI',
-    async listModels(config: OpenAIProviderConfig): Promise<AIProviderModel[]> {
+    async listModels(authConfig: OpenAIProviderAuthConfig, _config: OpenAIProviderConfig): Promise<AIProviderModel[]> {
         const res = await httpClient.sendRequest<{ data: OpenAIModel[] }>({
             url: 'https://api.openai.com/v1/models',
             method: HttpMethod.GET,
             headers: {
-                'Authorization': `Bearer ${config.apiKey}`,
+                'Authorization': `Bearer ${authConfig.apiKey}`,
                 'Content-Type': 'application/json',
             },
         })
