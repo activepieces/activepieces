@@ -118,19 +118,26 @@ export const commonProperties = {
 
 let _databaseConnection: DataSource | null = null
 
-const createDataSource = (): DataSource => {
+const createDataSource = (params?: { forMigration?: boolean }): DataSource => {
     switch (databaseType) {
         case DatabaseType.PGLITE:
             return createPGliteDataSource()
         case DatabaseType.POSTGRES:
         default:
-            return createPostgresDataSource()
+            return createPostgresDataSource(params)
     }
 }
 
-export const databaseConnection = (): DataSource => {
+export const databaseConnection = (params?: { forMigration?: boolean }): DataSource => {
+    const forMigration = params?.forMigration ?? false
+    
+    if (forMigration) {
+        return createPostgresDataSource({ forMigration: true })
+    }
+    
     if (isNil(_databaseConnection)) {
         _databaseConnection = createDataSource()
     }
     return _databaseConnection
 }
+

@@ -633,9 +633,11 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
 }
 
 
-export const createPostgresDataSource = (): DataSource => {
+export const createPostgresDataSource = (params?: { forMigration?: boolean }): DataSource => {
+    const forMigration = params?.forMigration ?? false
+    
     const migrationConfig: MigrationConfig =  {
-        migrationsRun: true,
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,
@@ -643,7 +645,8 @@ export const createPostgresDataSource = (): DataSource => {
 
     const url = system.get(AppSystemProp.POSTGRES_URL)
 
-    const statementTimeout = system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
+    const statementTimeout = !forMigration && system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
+    const lockTimeout = forMigration && system.getNumberOrThrow(AppSystemProp.POSTGRES_MIGRATION_LOCK_TIMEOUT_MS)
 
     if (!isNil(url)) {
         return new DataSource({
@@ -654,7 +657,8 @@ export const createPostgresDataSource = (): DataSource => {
             ...migrationConfig,
             ...commonProperties,
             extra: {
-                statement_timeout: statementTimeout,
+                ...spreadIfDefined('statement_timeout', statementTimeout),
+                ...spreadIfDefined('lock_timeout', lockTimeout),
             },
         })
     }
@@ -680,7 +684,8 @@ export const createPostgresDataSource = (): DataSource => {
         ...migrationConfig,
         extra: {
             idleTimeoutMillis,
-            statement_timeout: statementTimeout,
+            ...spreadIfDefined('statement_timeout', statementTimeout),
+            ...spreadIfDefined('lock_timeout', lockTimeout),
         },
     })
 }
