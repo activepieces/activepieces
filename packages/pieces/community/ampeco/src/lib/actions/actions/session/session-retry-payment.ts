@@ -6,22 +6,22 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/session/v1.0/{session}/retry-payment
 export const sessionRetryPaymentAction = createAction({
   auth: ampecoAuth,
   name: 'sessionRetryPayment',
-  displayName: 'Actions - Session - Session Retry Payment',
-  description: 'Retry failed payment for a session. (Endpoint: POST /public-api/actions/session/v1.0/{session}/retry-payment)',
+  displayName: 'Actions - Session - Retry Payment',
+  description: 'Retry failed payment for a session.',
   props: {
         
   session: Property.Number({
     displayName: 'Session',
-    description: '',
     required: true,
   }),
 
   paymentMethodId: Property.Number({
     displayName: 'Payment Method Id',
-    description: '',
     required: false,
   }),
   },

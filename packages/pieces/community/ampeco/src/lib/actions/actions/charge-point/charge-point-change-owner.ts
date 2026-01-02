@@ -6,21 +6,22 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/change-owner
 export const chargePointChangeOwnerAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointChangeOwner',
-  displayName: 'Actions - Charge Point - Charge Point Change Owner',
-  description: 'Change the owner of the Charge Point. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/change-owner)',
+  displayName: 'Actions - Charge Point - Change Owner',
+  description: 'Change the owner of the Charge Point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   userId: Property.Number({
-    displayName: 'User Id',
+    displayName: 'User ID',
     description: 'This User would become the owner of the personal charge point. If left empty - no Owner would be assigned.',
     required: false,
   }),

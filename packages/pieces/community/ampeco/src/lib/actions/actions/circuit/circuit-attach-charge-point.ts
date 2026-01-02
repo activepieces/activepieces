@@ -6,28 +6,28 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/circuit/v2.0/{circuit}/attach-charge-point
+
 export const circuitAttachChargePointAction = createAction({
   auth: ampecoAuth,
   name: 'circuitAttachChargePoint',
-  displayName: 'Actions - Circuit - Circuit Attach Charge Point',
-  description: 'To maintain safety and compatibility, only charge points with an identical electrical configuration to the circuit can be added. (Endpoint: POST /public-api/actions/circuit/v2.0/{circuit}/attach-charge-point)',
+  displayName: 'Actions - Circuit - Attach Charge Point',
+  description: 'To maintain safety and compatibility, only charge points with an identical electrical configuration to the circuit can be added.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
   chargePointId: Property.Number({
     displayName: 'Charge Point Id',
-    description: '',
     required: true,
   }),
 
   priority: Property.Number({
     displayName: 'Priority',
-    description: '',
     required: false,
   }),
   },

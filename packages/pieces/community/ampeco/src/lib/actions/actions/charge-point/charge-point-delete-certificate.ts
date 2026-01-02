@@ -1,21 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/delete-certificate
+
 export const chargePointDeleteCertificateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDeleteCertificate',
-  displayName: 'Actions - Charge Point - Charge Point Delete Certificate',
-  description: 'Delete certificate. (Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/delete-certificate)',
+  displayName: 'Actions - Charge Point - Delete Certificate',
+  description: 'Delete certificate.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 

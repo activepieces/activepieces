@@ -1,28 +1,29 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { ChangeFlexibilityAssetStatusResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/flexibility-asset/v1.0/{flexibilityAsset}/change-status
+
 export const changeFlexibilityAssetStatusAction = createAction({
   auth: ampecoAuth,
   name: 'changeFlexibilityAssetStatus',
   displayName: 'Actions - Flexibility Asset - Change Flexibility Asset Status',
-  description: 'Change the status of the Flexibility Asset. (Endpoint: POST /public-api/actions/flexibility-asset/v1.0/{flexibilityAsset}/change-status)',
+  description: 'Change the status of the Flexibility Asset.',
   props: {
         
   flexibilityAsset: Property.ShortText({
     displayName: 'Flexibility Asset',
-    description: '',
     required: true,
   }),
 
   status: Property.StaticDropdown({
     displayName: 'Status',
-    description: '',
     required: true,
     options: {
       options: [

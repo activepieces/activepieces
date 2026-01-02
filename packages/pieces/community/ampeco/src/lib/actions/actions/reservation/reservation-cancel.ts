@@ -6,16 +6,17 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/reservation/v1.0/{reservation}/cancel
 export const reservationCancelAction = createAction({
   auth: ampecoAuth,
   name: 'reservationCancel',
   displayName: 'Actions - Reservation - Reservation Cancel',
-  description: 'Cancel a reservation. (Endpoint: POST /public-api/actions/reservation/v1.0/{reservation}/cancel)',
+  description: 'Cancel a reservation.',
   props: {
         
   reservation: Property.Number({
     displayName: 'Reservation',
-    description: '',
     required: true,
   }),
 

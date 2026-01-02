@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//  Endpoint: POST /public-api/actions/subscription-plans/v1.0/{subscriptionPlan}/replace
+
 export const subscriptionPlanReplaceAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanReplace',
-  displayName: 'Actions - Subscription Plans - Subscription Plan Replace',
-  description: 'Replace a subscription plan with another one. (Endpoint: POST /public-api/actions/subscription-plans/v1.0/{subscriptionPlan}/replace)',
+  displayName: 'Actions - Subscription Plans - Replace',
+  description: 'Replace a subscription plan with another one.',
   props: {
         
   subscriptionPlan: Property.Number({
     displayName: 'Subscription Plan',
-    description: '',
     required: true,
   }),
 

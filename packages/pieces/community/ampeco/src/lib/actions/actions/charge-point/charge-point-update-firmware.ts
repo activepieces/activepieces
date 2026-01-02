@@ -6,21 +6,23 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/update-firmware
+
 export const chargePointUpdateFirmwareAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointUpdateFirmware',
-  displayName: 'Actions - Charge Point - Charge Point Update Firmware',
-  description: 'Charge Point / Update Firmware. (Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/update-firmware)',
+  displayName: 'Actions - Charge Point - Update Firmware',
+  description: 'Charge Point / Update Firmware.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   url: Property.ShortText({
-    displayName: 'Url',
+    displayName: 'URL',
     description: 'Location (URL) from which to retrieve the firmware. Either this or \`firmwareVersionId\` must be provided.',
     required: false,
   }),

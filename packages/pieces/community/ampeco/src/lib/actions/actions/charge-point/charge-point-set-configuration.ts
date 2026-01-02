@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/set-configuration
+
 export const chargePointSetConfigurationAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSetConfiguration',
-  displayName: 'Actions - Charge Point - Charge Point Set Configuration',
-  description: 'Set Configuration for the Charge Point. (Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/set-configuration)',
+  displayName: 'Actions - Charge Point - Set Configuration',
+  description: 'Set Configuration for the Charge Point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 

@@ -1,21 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/evse/v1.0/{evse}/trigger-message
+
 export const evseTriggerMessageAction = createAction({
   auth: ampecoAuth,
   name: 'evseTriggerMessage',
-  displayName: 'Actions - Evse - Evse Trigger Message',
-  description: 'Trigger message to given EVSE. (Endpoint: POST /public-api/actions/evse/v1.0/{evse}/trigger-message)',
+  displayName: 'Actions - EVSE - Trigger Message',
+  description: 'Trigger message to given EVSE.',
   props: {
         
   evse: Property.Number({
-    displayName: 'Evse',
-    description: '',
+    displayName: 'EVSE',
     required: true,
   }),
 

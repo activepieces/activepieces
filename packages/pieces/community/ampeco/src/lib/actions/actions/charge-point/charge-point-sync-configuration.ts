@@ -1,22 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { ChargePointSyncConfigurationResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/sync-configuration
+
 export const chargePointSyncConfigurationAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSyncConfiguration',
-  displayName: 'Actions - Charge Point - Charge Point Sync Configuration',
-  description: 'Send a partial or full sync configuration request to the chargepoint. You will get back a requerstId that you can monitor the status of using the ChargePointSyncConfigurationNotification. Please note that calling this action should not be required, as each time the charge point boots the configuration is automatically synced. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/sync-configuration)',
+  displayName: 'Actions - Charge Point - Sync Configuration',
+  description: 'Send a partial or full sync configuration request to the chargepoint. You will get back a requerstId that you can monitor the status of using the ChargePointSyncConfigurationNotification. Please note that calling this action should not be required, as each time the charge point boots the configuration is automatically synced.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 

@@ -1,27 +1,28 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/parking-spaces/v1.0/{parkingSpace}/update-occupancy-status
+
 export const parkingSpaceUpdateOccupancyStatusAction = createAction({
   auth: ampecoAuth,
   name: 'parkingSpaceUpdateOccupancyStatus',
-  displayName: 'Actions - Parking Spaces - Parking Space Update Occupancy Status',
-  description: 'Parking Space / Update occupancy status. (Endpoint: POST /public-api/actions/parking-spaces/v1.0/{parkingSpace}/update-occupancy-status)',
+  displayName: 'Actions - Parking Spaces - Update Occupancy Status',
+  description: 'Parking Space / Update occupancy status.',
   props: {
         
   parkingSpace: Property.Number({
     displayName: 'Parking Space',
-    description: '',
     required: true,
   }),
 
   status: Property.StaticDropdown({
     displayName: 'Status',
-    description: '',
     required: true,
     options: {
       options: [

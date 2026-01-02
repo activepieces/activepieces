@@ -6,16 +6,17 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//  Endpoint: POST /public-api/actions/transactions/v1.0/{transaction}/update-payment-reference
 export const transactionUpdatePaymentReferenceAction = createAction({
   auth: ampecoAuth,
   name: 'transactionUpdatePaymentReference',
-  displayName: 'Actions - Transactions - Transaction Update Payment Reference',
-  description: 'Link the transaction to external resource where the payment took place. (Endpoint: POST /public-api/actions/transactions/v1.0/{transaction}/update-payment-reference)',
+  displayName: 'Actions - Transactions - Update Payment Reference',
+  description: 'Link the transaction to external resource where the payment took place.',
   props: {
         
   transaction: Property.Number({
     displayName: 'Transaction',
-    description: '',
     required: true,
   }),
 

@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/users/v1.0/{user}/change-status
+
 export const userChangeStatusAction = createAction({
   auth: ampecoAuth,
   name: 'userChangeStatus',
-  displayName: 'Actions - Users - User Change Status',
-  description: 'Set the status for a user. (Endpoint: POST /public-api/actions/users/v1.0/{user}/change-status)',
+  displayName: 'Actions - Users - Change Status',
+  description: 'Set the status for a user.',
   props: {
         
   user: Property.Number({
     displayName: 'User',
-    description: '',
     required: true,
   }),
 
@@ -33,7 +35,6 @@ export const userChangeStatusAction = createAction({
 
   reason: Property.ShortText({
     displayName: 'Reason',
-    description: '',
     required: true,
   }),
   },

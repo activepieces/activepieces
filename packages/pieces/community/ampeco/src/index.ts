@@ -389,20 +389,20 @@ import { webhookTrigger } from './lib/triggers/webhook';
  * AMPECO.CHARGE Public API
  */
 export const ampeco = createPiece({
-  displayName: 'Ampeco',
+  displayName: 'AMPECO',
   description: 'AMPECO piece provides integrations of APIs and webhook notifications of the AMPECO platform for managing EV charging infrastructure and operations.',
   minimumSupportedRelease: '0.60.0',
-  logoUrl: 'https://www.ampeco.com/content/uploads/2022/10/cropped-fav-270x270.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/ampeco.png',
   authors: ["Ampeco"],
   auth: ampecoAuth,
   actions: [
     createCustomApiCallAction({
         baseUrl: (auth) => {
-            return `${(auth as { baseApiUrl: string }).baseApiUrl}`;
+            return `${auth?.props.baseApiUrl}`;
         },
         auth: ampecoAuth,
         authMapping: async (auth) => ({
-            Authorization: `Bearer ${(auth as { token: string }).token}`,
+            Authorization: `Bearer ${auth.props.token}`,
         }),
     }),
         // Charge actions

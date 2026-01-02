@@ -1,21 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/tariffs/v2.0/{tariff}/set-tariff-display-information
+
 export const tariffSetDisplayInformationAction = createAction({
   auth: ampecoAuth,
   name: 'tariffSetDisplayInformation',
-  displayName: 'Actions - Tariffs - Tariff Set Display Information',
-  description: 'Apply a Tariff Display Information to tariff. (Endpoint: POST /public-api/actions/tariffs/v2.0/{tariff}/set-tariff-display-information)',
+  displayName: 'Actions - Tariffs - Set Display Information',
+  description: 'Apply a Tariff Display Information to tariff.',
   props: {
         
   tariff: Property.Number({
     displayName: 'Tariff',
-    description: '',
     required: true,
   }),
 

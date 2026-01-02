@@ -6,11 +6,13 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//  Endpoint: POST /public-api/actions/roaming-operator/v2.0/{roamingOperator}/custom-tariff-filter/{customTariffFilter}/set-pricing-data
 export const updateCustomTariffFilterTariffAction = createAction({
   auth: ampecoAuth,
   name: 'updateCustomTariffFilterTariff',
   displayName: 'Actions - Roaming Operator - Update Custom Tariff Filter Tariff',
-  description: 'Set the pricing data for a custom tariff filter. This action will update the underling roaming tariff and create a pricing based on it. The pricing can then be utilized by attaching a markup tariff to the tariff map of the custom tariff filter. (Endpoint: POST /public-api/actions/roaming-operator/v2.0/{roamingOperator}/custom-tariff-filter/{customTariffFilter}/set-pricing-data)',
+  description: 'Set the pricing data for a custom tariff filter. This action will update the underling roaming tariff and create a pricing based on it. The pricing can then be utilized by attaching a markup tariff to the tariff map of the custom tariff filter.',
   props: {
         
   roamingOperator: Property.Number({

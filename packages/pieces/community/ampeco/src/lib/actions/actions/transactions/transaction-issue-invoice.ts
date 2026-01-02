@@ -6,16 +6,17 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/transactions/v1.0/{transaction}/issue-invoice
 export const transactionIssueInvoiceAction = createAction({
   auth: ampecoAuth,
   name: 'transactionIssueInvoice',
-  displayName: 'Actions - Transactions - Transaction Issue Invoice',
-  description: 'Issue ad-hoc invoice for the transaction (only if AMPECO invoice integration is used). For Számlázz.hu integration in Hungary, if a fiscalized receipt exists for the transaction, it will be automatically canceled and both the invoice and storno receipt will be sent to the user. (Endpoint: POST /public-api/actions/transactions/v1.0/{transaction}/issue-invoice)',
+  displayName: 'Actions - Transactions - Issue Invoice',
+  description: 'Issue ad-hoc invoice for the transaction (only if AMPECO invoice integration is used). For Számlázz.hu integration in Hungary, if a fiscalized receipt exists for the transaction, it will be automatically canceled and both the invoice and storno receipt will be sent to the user.',
   props: {
         
   transaction: Property.Number({
     displayName: 'Transaction',
-    description: '',
     required: true,
   }),
 
@@ -27,7 +28,6 @@ export const transactionIssueInvoiceAction = createAction({
 
   invoiceDetails__invoiceType: Property.StaticDropdown({
     displayName: 'Invoice Details - Invoice Type',
-    description: '',
     required: true,
     options: {
       options: [
@@ -39,49 +39,41 @@ export const transactionIssueInvoiceAction = createAction({
 
   invoiceDetails__individualName: Property.ShortText({
     displayName: 'Invoice Details - Individual Name',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__individualPersonalId: Property.ShortText({
     displayName: 'Invoice Details - Individual Personal Id',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__individualTaxId: Property.ShortText({
     displayName: 'Invoice Details - Individual Tax Id',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__companyName: Property.ShortText({
     displayName: 'Invoice Details - Company Name',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__companyRegNo: Property.ShortText({
     displayName: 'Invoice Details - Company Reg No',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__companyTaxId: Property.ShortText({
     displayName: 'Invoice Details - Company Tax Id',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__companyTaxAdministrationOfficeName: Property.ShortText({
     displayName: 'Invoice Details - Company Tax Administration Office Name',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__country: Property.StaticDropdown({
     displayName: 'Invoice Details - Country',
-    description: '',
     required: false,
     options: {
       options: [
@@ -341,19 +333,16 @@ export const transactionIssueInvoiceAction = createAction({
 
   invoiceDetails__city: Property.ShortText({
     displayName: 'Invoice Details - City',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__postCode: Property.ShortText({
     displayName: 'Invoice Details - Post Code',
-    description: '',
     required: false,
   }),
 
   invoiceDetails__address: Property.ShortText({
     displayName: 'Invoice Details - Address',
-    description: '',
     required: false,
   }),
   },

@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/install-certificate
+
 export const chargePointInstallCertificateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointInstallCertificate',
-  displayName: 'Actions - Charge Point - Charge Point Install Certificate',
-  description: 'Charge Point / Install Certificate. (Endpoint: POST /public-api/actions/charge-point/v2.0/{chargePoint}/install-certificate)',
+  displayName: 'Actions - Charge Point - Install Certificate',
+  description: 'Charge Point / Install Certificate.',
   props: {
         
   chargePoint: Property.Number({

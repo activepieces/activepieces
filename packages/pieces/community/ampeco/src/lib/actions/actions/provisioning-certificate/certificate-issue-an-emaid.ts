@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/provisioning-certificate/v1.0/{provisioningCertificate}/issue-emaid
+
 export const certificateIssueAnEmaidAction = createAction({
   auth: ampecoAuth,
   name: 'certificateIssueAnEmaid',
-  displayName: 'Actions - Provisioning Certificate - Certificate Issue An Emaid',
-  description: 'Certificate / Issue an EMAID. (Endpoint: POST /public-api/actions/provisioning-certificate/v1.0/{provisioningCertificate}/issue-emaid)',
+  displayName: 'Actions - Provisioning Certificate - Certificate Issue An EMAID',
+  description: 'Certificate / Issue an EMAID.',
   props: {
         
   provisioningCertificate: Property.Number({
     displayName: 'Provisioning Certificate',
-    description: '',
     required: true,
   }),
 

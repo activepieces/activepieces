@@ -1,21 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/circuit/v2.0/{circuit}/set-circuit-soc-priorities.
+
 export const circuitSetCircuitSocPriorityAction = createAction({
   auth: ampecoAuth,
   name: 'circuitSetCircuitSocPriority',
-  displayName: 'Actions - Circuit - Circuit Set Circuit Soc Priority',
-  description: 'Set DLM priority based on the session&#x27;s state of charge (SoC). The active priority will be used to either decrease or increase the energy used by the session&#x27;s EVSE. - If the SoC exceeds the &#x60;upperThresholdPercent&#x60;, then the &#x60;highSoCPriority&#x60; will be applied. (Endpoint: POST /public-api/actions/circuit/v2.0/{circuit}/set-circuit-soc-priorities)',
+  displayName: 'Actions - Circuit - Set Circuit SoC Priority',
+  description: 'Set DLM priority based on the session\'s state of charge (SoC). The active priority will be used to either decrease or increase the energy used by the session\'s EVSE. - If the SoC exceeds the &#x60;upperThresholdPercent&#x60;, then the &#x60;highSoCPriority&#x60; will be applied.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
@@ -26,8 +28,7 @@ export const circuitSetCircuitSocPriorityAction = createAction({
   }),
 
   highSoCPriority: Property.Number({
-    displayName: 'High So C Priority',
-    description: '',
+    displayName: 'High SoC Priority',
     required: false,
   }),
 
@@ -38,8 +39,7 @@ export const circuitSetCircuitSocPriorityAction = createAction({
   }),
 
   lowSoCPriority: Property.Number({
-    displayName: 'Low So C Priority',
-    description: '',
+    displayName: 'Low SoC Priority',
     required: false,
   }),
   },

@@ -6,34 +6,32 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/users/v1.0/{user}/add-balance
 export const userAddBalanceAction = createAction({
   auth: ampecoAuth,
   name: 'userAddBalance',
-  displayName: 'Actions - Users - User Add Balance',
-  description: 'Add to the current balance of the user. (Endpoint: POST /public-api/actions/users/v1.0/{user}/add-balance)',
+  displayName: 'Actions - Users - Add Balance',
+  description: 'Add to the current balance of the user.',
   props: {
         
   user: Property.Number({
     displayName: 'User',
-    description: '',
     required: true,
   }),
 
   amount: Property.Number({
     displayName: 'Amount',
-    description: '',
     required: true,
   }),
 
   reason: Property.ShortText({
     displayName: 'Reason',
-    description: '',
     required: true,
   }),
 
   app_info: Property.ShortText({
     displayName: 'App Info',
-    description: '',
     required: false,
   }),
   },

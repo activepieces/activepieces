@@ -1,22 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { ChargePointGetDiagnosticsResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/get-diagnostics
+
 export const chargePointGetDiagnosticsAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointGetDiagnostics',
-  displayName: 'Actions - Charge Point - Charge Point Get Diagnostics',
-  description: 'Request a get diagnostics upload from the charge point. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/get-diagnostics)',
+  displayName: 'Actions - Charge Point - Get Diagnostics',
+  description: 'Request a get diagnostics upload from the charge point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 

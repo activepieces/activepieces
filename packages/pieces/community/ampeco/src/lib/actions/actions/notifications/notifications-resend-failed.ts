@@ -6,22 +6,23 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/notifications/v1.0/{notification}/resend
+
 export const notificationsResendFailedAction = createAction({
   auth: ampecoAuth,
   name: 'notificationsResendFailed',
-  displayName: 'Actions - Notifications - Notifications Resend Failed',
-  description: 'Resend failed webhook notifications. - Resend for a specific notification ID can be requested once every 15 minutes. - Notifications that are disabled cannot be resent. (Endpoint: POST /public-api/actions/notifications/v1.0/{notification}/resend)',
+  displayName: 'Actions - Notifications - Resend Failed',
+  description: 'Resend failed webhook notifications. - Resend for a specific notification ID can be requested once every 15 minutes. - Notifications that are disabled cannot be resent.',
   props: {
         
   notification: Property.Number({
     displayName: 'Notification',
-    description: '',
     required: true,
   }),
 
   notifications: Property.StaticMultiSelectDropdown({
     displayName: 'Notifications',
-    description: '',
     required: true,
     options: {
       options: [

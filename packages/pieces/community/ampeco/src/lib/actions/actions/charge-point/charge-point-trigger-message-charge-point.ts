@@ -1,16 +1,18 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/trigger-message
 export const chargePointTriggerMessageChargePointAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointTriggerMessageChargePoint',
-  displayName: 'Actions - Charge Point - Charge Point Trigger Message Charge Point',
-  description: 'Trigger message to given Charge Point. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/trigger-message)',
+  displayName: 'Actions - Charge Point - Trigger Message Charge Point',
+  description: 'Trigger message to given Charge Point.',
   props: {
         
   chargePoint: Property.Number({

@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/configuration-template/v1.0/{template}/apply-to-charge-points
+
 export const configurationTemplateApplyToChargePointsAction = createAction({
   auth: ampecoAuth,
   name: 'configurationTemplateApplyToChargePoints',
-  displayName: 'Actions - Configuration Template - Configuration Template Apply To Charge Points',
-  description: 'Apply a configuration template to charge points. (Endpoint: POST /public-api/actions/configuration-template/v1.0/{template}/apply-to-charge-points)',
+  displayName: 'Actions - Configuration Template - Apply To Charge Points',
+  description: 'Apply a configuration template to charge points.',
   props: {
         
   template: Property.Number({
     displayName: 'Template',
-    description: '',
     required: true,
   }),
 

@@ -6,22 +6,22 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/users/v1.0/{user}/apply-custom-fee
 export const userApplyCustomFeeAction = createAction({
   auth: ampecoAuth,
   name: 'userApplyCustomFee',
-  displayName: 'Actions - Users - User Apply Custom Fee',
-  description: 'Apply custom fee for a user. (Endpoint: POST /public-api/actions/users/v1.0/{user}/apply-custom-fee)',
+  displayName: 'Actions - Users - Apply Custom Fee',
+  description: 'Apply custom fee for a user.',
   props: {
         
   user: Property.Number({
     displayName: 'User',
-    description: '',
     required: true,
   }),
 
   amount: Property.Number({
     displayName: 'Amount',
-    description: '',
     required: true,
   }),
 

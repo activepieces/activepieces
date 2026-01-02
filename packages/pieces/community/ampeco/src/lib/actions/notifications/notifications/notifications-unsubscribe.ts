@@ -1,21 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/notifications/v2.0/{notification}
+
 export const notificationsUnsubscribeAction = createAction({
   auth: ampecoAuth,
   name: 'notificationsUnsubscribe',
   displayName: 'Notifications - V2.0 - Notifications Unsubscribe',
-  description: 'Unsubscribe for a notification. (Endpoint: DELETE /public-api/notifications/v2.0/{notification})',
+  description: 'Unsubscribe for a notification.',
   props: {
         
   notification: Property.ShortText({
     displayName: 'Notification',
-    description: '',
     required: true,
   }),
   },

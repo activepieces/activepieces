@@ -1,27 +1,28 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/session/v1.0/{session}/assign-user
+
 export const sessionAssignToUserAction = createAction({
   auth: ampecoAuth,
   name: 'sessionAssignToUser',
-  displayName: 'Actions - Session - Session Assign To User',
-  description: 'Assign a user to a session. This action is only applicable to sessions with Completed billing status that have no user associated with them. This operation can be done only once and is not reversible. (Endpoint: POST /public-api/actions/session/v1.0/{session}/assign-user)',
+  displayName: 'Actions - Session - Assign To User',
+  description: 'Assign a user to a session. This action is only applicable to sessions with Completed billing status that have no user associated with them. This operation can be done only once and is not reversible.',
   props: {
         
   session: Property.Number({
     displayName: 'Session',
-    description: '',
     required: true,
   }),
 
   userId: Property.Number({
     displayName: 'User Id',
-    description: '',
     required: true,
   }),
   },

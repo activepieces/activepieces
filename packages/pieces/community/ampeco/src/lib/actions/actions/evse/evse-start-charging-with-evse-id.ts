@@ -7,22 +7,22 @@ import { EvseStartChargingWithEvseIdResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/evse/v1.0/{evse}/start
 export const evseStartChargingWithEvseIdAction = createAction({
   auth: ampecoAuth,
   name: 'evseStartChargingWithEvseId',
-  displayName: 'Actions - Evse - Evse Start Charging With Evse Id',
-  description: 'Start a charging session. (Endpoint: POST /public-api/actions/evse/v1.0/{evse}/start)',
+  displayName: 'Actions - EVSE - Start Charging With EVSE Id',
+  description: 'Start a charging session.',
   props: {
         
   evse: Property.Number({
-    displayName: 'Evse',
-    description: '',
+    displayName: 'EVSE',
     required: true,
   }),
 
   userId: Property.Number({
     displayName: 'User Id',
-    description: '',
     required: false,
   }),
 

@@ -7,11 +7,14 @@ import { ChargePointEvseUnlockResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/unlock/{evse}
+
 export const chargePointEvseUnlockAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseUnlock',
-  displayName: 'Actions - Charge Point - Charge Point Evse Unlock',
-  description: 'Unlock an EVSE. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/unlock/{evse})',
+  displayName: 'Actions - Charge Point - EVSE Unlock',
+  description: 'Unlock an EVSE.',
   props: {
         
   chargePoint: Property.Number({

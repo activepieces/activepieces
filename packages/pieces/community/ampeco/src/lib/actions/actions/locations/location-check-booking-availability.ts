@@ -1,22 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { LocationCheckBookingAvailabilityResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/locations/v2.0/{location}/check-booking-availability
+
 export const locationCheckBookingAvailabilityAction = createAction({
   auth: ampecoAuth,
   name: 'locationCheckBookingAvailability',
-  displayName: 'Actions - Locations - Location Check Booking Availability',
-  description: 'Get a consolidated view of EVSEs availability for a given location and time frame. Returns available time slots for each bookable EVSE at the location. (Endpoint: POST /public-api/actions/locations/v2.0/{location}/check-booking-availability)',
+  displayName: 'Actions - Locations - Check Booking Availability',
+  description: 'Get a consolidated view of EVSEs availability for a given location and time frame. Returns available time slots for each bookable EVSE at the location.',
   props: {
         
   location: Property.Number({
     displayName: 'Location',
-    description: '',
     required: true,
   }),
 

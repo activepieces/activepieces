@@ -7,28 +7,27 @@ import { ChargePointReserveResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/reserve/{evse}
 export const chargePointReserveAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointReserve',
-  displayName: 'Actions - Charge Point - Charge Point Reserve',
-  description: 'Reserve an evse. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/reserve/{evse})',
+  displayName: 'Actions - Charge Point - Reserve',
+  description: 'Reserve an evse.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   evse: Property.Number({
     displayName: 'Evse',
-    description: '',
     required: true,
   }),
 
   userId: Property.Number({
     displayName: 'User Id',
-    description: '',
     required: true,
   }),
 

@@ -1,21 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/electricity-meter/v1.0/{electricityMeter}/report-consumption
+
 export const electricityMeterReportConsumptionAction = createAction({
   auth: ampecoAuth,
   name: 'electricityMeterReportConsumption',
-  displayName: 'Actions - Electricity Meter - Electricity Meter Report Consumption',
-  description: 'Add an electricity meter report for the meter readings at the current moment. (Endpoint: POST /public-api/actions/electricity-meter/v1.0/{electricityMeter}/report-consumption)',
+  displayName: 'Actions - Electricity Meter - Report Consumption',
+  description: 'Add an electricity meter report for the meter readings at the current moment.',
   props: {
         
   electricityMeter: Property.Number({
     displayName: 'Electricity Meter',
-    description: '',
     required: true,
   }),
 

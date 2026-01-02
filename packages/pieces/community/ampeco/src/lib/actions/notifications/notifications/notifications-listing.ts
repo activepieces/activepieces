@@ -7,11 +7,13 @@ import { NotificationsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/notifications/v2.0
 export const notificationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'notificationsListing',
   displayName: 'Notifications - V2.0 - Notifications Listing',
-  description: 'Notifications / Listing. (Endpoint: GET /public-api/notifications/v2.0)',
+  description: 'Notifications / Listing',
   props: {
         
     per_page: Property.Number({

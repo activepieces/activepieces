@@ -7,11 +7,13 @@ import { ChargePointSendDataTransferResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/send-data-transfer
 export const chargePointSendDataTransferAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSendDataTransfer',
-  displayName: 'Actions - Charge Point - Charge Point Send Data Transfer',
-  description: 'Charge Point / Send Data Transfer. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/send-data-transfer)',
+  displayName: 'Actions - Charge Point - Send Data Transfer',
+  description: 'Charge Point / Send Data Transfer.',
   props: {
         
   chargePoint: Property.Number({

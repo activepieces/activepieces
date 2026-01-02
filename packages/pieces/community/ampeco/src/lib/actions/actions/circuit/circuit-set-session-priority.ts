@@ -6,28 +6,27 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/circuit/v2.0/{circuit}/set-session-priority/{session}
 export const circuitSetSessionPriorityAction = createAction({
   auth: ampecoAuth,
   name: 'circuitSetSessionPriority',
-  displayName: 'Actions - Circuit - Circuit Set Session Priority',
-  description: 'Circuit / Set Session Priority. (Endpoint: POST /public-api/actions/circuit/v2.0/{circuit}/set-session-priority/{session})',
+  displayName: 'Actions - Circuit - Set Session Priority',
+  description: 'Circuit / Set Session Priority.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
   session: Property.Number({
     displayName: 'Session',
-    description: '',
     required: true,
   }),
 
   priority: Property.Number({
     displayName: 'Priority',
-    description: '',
     required: true,
   }),
   },

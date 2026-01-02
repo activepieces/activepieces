@@ -6,16 +6,17 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/users/v2.0/{user}/redeem-voucher
 export const userRedeemVoucherAction = createAction({
   auth: ampecoAuth,
   name: 'userRedeemVoucher',
-  displayName: 'Actions - Users - User Redeem Voucher',
-  description: 'Apply a voucher to a user. (Endpoint: POST /public-api/actions/users/v2.0/{user}/redeem-voucher)',
+  displayName: 'Actions - Users - Redeem Voucher',
+  description: 'Apply a voucher to a user.',
   props: {
         
   user: Property.Number({
     displayName: 'User',
-    description: '',
     required: true,
   }),
 

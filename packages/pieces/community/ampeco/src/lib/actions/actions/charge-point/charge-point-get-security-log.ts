@@ -7,21 +7,23 @@ import { ChargePointGetSecurityLogResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/get-security-log
+
 export const chargePointGetSecurityLogAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointGetSecurityLog',
-  displayName: 'Actions - Charge Point - Charge Point Get Security Log',
-  description: 'Charge Point / Get Security Log. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/get-security-log)',
+  displayName: 'Actions - Charge Point - Get Security Log',
+  description: 'Charge Point / Get Security Log. ',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   url: Property.ShortText({
-    displayName: 'Url',
+    displayName: 'URL',
     description: 'The URL of the location at the remote system where the log should be stored.',
     required: true,
   }),

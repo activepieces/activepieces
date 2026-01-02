@@ -6,16 +6,17 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/transactions/v1.0/{transaction}/resend-invoice
 export const transactionResendInvoiceAction = createAction({
   auth: ampecoAuth,
   name: 'transactionResendInvoice',
-  displayName: 'Actions - Transactions - Transaction Resend Invoice',
-  description: 'Resend already issued invoice. If the transaction has an associated fiscalized receipt that was automatically canceled (Hungary compliance), both the invoice and the storno receipt will be sent together. (Endpoint: POST /public-api/actions/transactions/v1.0/{transaction}/resend-invoice)',
+  displayName: 'Actions - Transactions - Resend Invoice',
+  description: 'Resend already issued invoice. If the transaction has an associated fiscalized receipt that was automatically canceled (Hungary compliance), both the invoice and the storno receipt will be sent together.',
   props: {
         
   transaction: Property.Number({
     displayName: 'Transaction',
-    description: '',
     required: true,
   }),
   },

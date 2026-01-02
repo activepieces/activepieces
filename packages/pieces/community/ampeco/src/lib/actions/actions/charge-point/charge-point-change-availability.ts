@@ -1,21 +1,24 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/change-availability
+
 export const chargePointChangeAvailabilityAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointChangeAvailability',
-  displayName: 'Actions - Charge Point - Charge Point Change Availability',
-  description: 'change the availability to available or unavailable. A Charge Point is considered unavailable when it does not allow any charging. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/change-availability)',
+  displayName: 'Actions - Charge Point - Change Availability',
+  description: 'Change the availability to available or unavailable. A Charge Point is considered unavailable when it does not allow any charging.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
@@ -27,7 +30,7 @@ export const chargePointChangeAvailabilityAction = createAction({
 
   type: Property.StaticDropdown({
     displayName: 'Type',
-    description: `the type of availability change that the Charge Point should perform\n* \`Inoperative\` Charge point is not available for charging.\n* \`Operative\` Charge point is available for charging.\n`,
+    description: `The type of availability change that the Charge Point should perform\n* \`Inoperative\` Charge point is not available for charging.\n* \`Operative\` Charge point is available for charging.\n`,
     required: true,
     options: {
       options: [

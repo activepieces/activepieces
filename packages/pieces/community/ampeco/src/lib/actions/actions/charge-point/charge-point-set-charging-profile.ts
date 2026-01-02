@@ -1,40 +1,39 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { ChargePointSetChargingProfileResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/set-charging-profile/{evseNetworkId}
+
 export const chargePointSetChargingProfileAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSetChargingProfile',
-  displayName: 'Actions - Charge Point - Charge Point Set Charging Profile',
-  description: 'Set a smart charging profile. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/set-charging-profile/{evseNetworkId})',
+  displayName: 'Actions - Charge Point - Set Charging Profile',
+  description: 'Set a smart charging profile.',
   props: {
         
   evseNetworkId: Property.Number({
     displayName: 'Evse Network Id',
-    description: '',
     required: true,
   }),
 
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   transactionId: Property.Number({
     displayName: 'Transaction Id',
-    description: '',
     required: false,
   }),
 
   stackLevel: Property.Number({
     displayName: 'Stack Level',
-    description: '',
     required: true,
   }),
 
@@ -78,37 +77,31 @@ export const chargePointSetChargingProfileAction = createAction({
 
   validFrom: Property.DateTime({
     displayName: 'Valid From',
-    description: '',
     required: false,
   }),
 
   validTo: Property.DateTime({
     displayName: 'Valid To',
-    description: '',
     required: false,
   }),
 
   chargingSchedule__id: Property.Number({
     displayName: 'Charging Schedule - Id',
-    description: '',
     required: false,
   }),
 
   chargingSchedule__duration: Property.Number({
     displayName: 'Charging Schedule - Duration',
-    description: '',
     required: false,
   }),
 
   chargingSchedule__startSchedule: Property.DateTime({
     displayName: 'Charging Schedule - Start Schedule',
-    description: '',
     required: false,
   }),
 
   chargingSchedule__chargingRateUnit: Property.StaticDropdown({
     displayName: 'Charging Schedule - Charging Rate Unit',
-    description: '',
     required: true,
     options: {
       options: [
@@ -120,25 +113,21 @@ export const chargePointSetChargingProfileAction = createAction({
 
   chargingSchedule__chargingSchedulePeriod: Property.Array({
     displayName: 'Charging Schedule - Charging Schedule Period',
-    description: '',
     required: true,
     properties: { 
          
   startPeriod: Property.Number({
     displayName: 'Start Period',
-    description: '',
     required: true,
   }),
 
   limit: Property.Number({
     displayName: 'Limit',
-    description: '',
     required: true,
   }),
 
   numberPhases: Property.Number({
     displayName: 'Number Phases',
-    description: '',
     required: false,
   }), 
     },
@@ -146,7 +135,6 @@ export const chargePointSetChargingProfileAction = createAction({
 
   chargingSchedule__minChargingRate: Property.Number({
     displayName: 'Charging Schedule - Min Charging Rate',
-    description: '',
     required: false,
   }),
   },

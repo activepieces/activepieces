@@ -7,16 +7,17 @@ import { NotificationReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/notifications/v2.0/{notification}
 export const notificationReadAction = createAction({
   auth: ampecoAuth,
   name: 'notificationRead',
   displayName: 'Notifications - V2.0 - Notification Read',
-  description: 'Get a notification. (Endpoint: GET /public-api/notifications/v2.0/{notification})',
+  description: 'Get a notification.',
   props: {
         
   notification: Property.ShortText({
     displayName: 'Notification',
-    description: '',
     required: true,
   }),
   },

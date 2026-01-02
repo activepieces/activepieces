@@ -7,22 +7,22 @@ import { FlexibilityAssetCreateActivationRequestResponse } from '../../../models
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/flexibility-asset/v1.0/{flexibilityAsset}/create-activation-request
 export const flexibilityAssetCreateActivationRequestAction = createAction({
   auth: ampecoAuth,
   name: 'flexibilityAssetCreateActivationRequest',
-  displayName: 'Actions - Flexibility Asset - Flexibility Asset Create Activation Request',
-  description: 'Create Flexibility Activation Request for a specific Asset. (Endpoint: POST /public-api/actions/flexibility-asset/v1.0/{flexibilityAsset}/create-activation-request)',
+  displayName: 'Actions - Flexibility Asset - Create Activation Request',
+  description: 'Create Flexibility Activation Request for a specific Asset.',
   props: {
         
   flexibilityAsset: Property.ShortText({
     displayName: 'Flexibility Asset',
-    description: '',
     required: true,
   }),
 
   periods: Property.Array({
     displayName: 'Periods',
-    description: '',
     required: false,
   }),
   },

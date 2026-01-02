@@ -7,16 +7,17 @@ import { NotificationsSubscribeResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/notifications/v2.0
 export const notificationsSubscribeAction = createAction({
   auth: ampecoAuth,
   name: 'notificationsSubscribe',
   displayName: 'Notifications - V2.0 - Notifications Subscribe',
-  description: 'Subscribe for a webhook or kafka events. Each notification sent to the webhook/kafka will be retried a number of times and will be rate limited. The rate limits, retries and retry intervals will be configured by Ampeco. (Endpoint: POST /public-api/notifications/v2.0)',
+  description: 'Subscribe for a webhook or kafka events. Each notification sent to the webhook/kafka will be retried a number of times and will be rate limited. The rate limits, retries and retry intervals will be configured by Ampeco.',
   props: {
         
   via: Property.StaticDropdown({
     displayName: 'Via',
-    description: '',
     required: true,
     options: {
       options: [
@@ -28,7 +29,6 @@ export const notificationsSubscribeAction = createAction({
 
   notifications: Property.StaticMultiSelectDropdown({
     displayName: 'Notifications',
-    description: '',
     required: true,
     options: {
       options: [
@@ -80,25 +80,21 @@ export const notificationsSubscribeAction = createAction({
 
   webhook__callbackUrl: Property.ShortText({
     displayName: 'Webhook - Callback Url',
-    description: '',
     required: true,
   }),
 
   kafka__topic: Property.ShortText({
     displayName: 'Kafka - Topic',
-    description: '',
     required: true,
   }),
 
   kafka__brokers: Property.Array({
     displayName: 'Kafka - Brokers',
-    description: '',
     required: true,
   }),
 
   kafka__compressionCodec: Property.StaticDropdown({
     displayName: 'Kafka - Compression Codec',
-    description: '',
     required: false,
     options: {
       options: [
@@ -112,7 +108,6 @@ export const notificationsSubscribeAction = createAction({
 
   kafka__securityProtocol: Property.StaticDropdown({
     displayName: 'Kafka - Security Protocol',
-    description: '',
     required: false,
     options: {
       options: [
@@ -124,7 +119,6 @@ export const notificationsSubscribeAction = createAction({
 
   kafka__saslMechanism: Property.StaticDropdown({
     displayName: 'Kafka - Sasl Mechanism',
-    description: '',
     required: false,
     options: {
       options: [
@@ -137,13 +131,11 @@ export const notificationsSubscribeAction = createAction({
 
   kafka__saslUsername: Property.ShortText({
     displayName: 'Kafka - Sasl Username',
-    description: '',
     required: false,
   }),
 
   kafka__saslPassword: Property.ShortText({
     displayName: 'Kafka - Sasl Password',
-    description: '',
     required: false,
   }),
   },

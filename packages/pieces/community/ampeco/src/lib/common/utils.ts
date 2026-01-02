@@ -1,4 +1,7 @@
 import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { isNil } from '@activepieces/shared';
+import { ampecoAuth } from './auth';
 
 /**
  * Ampeco API Utilities
@@ -34,7 +37,7 @@ export interface ApiErrorResponse {
  * @returns API response
  */
 export async function makeAmpecoApiCall(
-  auth: AmpecoAuthType,
+  auth: AppConnectionValueForAuthProperty<typeof ampecoAuth>,
   path: string,
   method: HttpMethod,
   body?: Record<string, unknown>,
@@ -47,7 +50,7 @@ export async function makeAmpecoApiCall(
     url = path;
   } else {
     // Build URL from base URL and path
-    const baseUrl = auth.baseApiUrl || '';
+    const baseUrl = auth.props.baseApiUrl || '';
     const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     url = `${normalizedBaseUrl}${normalizedPath}`;
@@ -69,7 +72,7 @@ export async function makeAmpecoApiCall(
     url,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${auth.token}`,
+      'Authorization': `Bearer ${auth.props.token}`,
     },
     queryParams,
     body,
@@ -99,8 +102,8 @@ export function processPathParameters(url: string, params: Record<string, unknow
     for (const param of pathParams) {
       const paramName = param.slice(1, -1);
       const paramValue = params[paramName];
-      
-      if (paramValue !== undefined && paramValue !== null) {
+
+      if(!isNil(paramValue)){
         processedUrl = processedUrl.replace(param, encodeURIComponent(String(paramValue)));
       }
     }
@@ -346,7 +349,7 @@ export async function paginate({
   perPage = 100,
   dataPath = 'data',
 }: {
-  auth: AmpecoAuthType;
+  auth:  AppConnectionValueForAuthProperty<typeof ampecoAuth>;
   method: string;
   path: string;
   queryParams?: Record<string, string>;
@@ -383,7 +386,7 @@ async function paginateWithCursor({
   perPage = 100,
   dataPath = 'data',
 }: {
-  auth: AmpecoAuthType;
+  auth:  AppConnectionValueForAuthProperty<typeof ampecoAuth>;
   method: string;
   path: string;
   queryParams?: Record<string, string>;

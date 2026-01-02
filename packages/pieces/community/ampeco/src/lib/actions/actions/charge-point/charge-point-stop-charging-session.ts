@@ -6,22 +6,23 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/stop/{session}
+
 export const chargePointStopChargingSessionAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointStopChargingSession',
-  displayName: 'Actions - Charge Point - Charge Point Stop Charging Session',
-  description: 'Stop a charging session. (Endpoint: POST /public-api/actions/charge-point/v1.0/{chargePoint}/stop/{session})',
+  displayName: 'Actions - Charge Point - Stop Charging Session',
+  description: 'Stop a charging session.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   session: Property.Number({
     displayName: 'Session',
-    description: '',
     required: true,
   }),
 

@@ -6,16 +6,17 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/users/v1.0/{user}/cancel-subscription
 export const userCancelSubscriptionAction = createAction({
   auth: ampecoAuth,
   name: 'userCancelSubscription',
-  displayName: 'Actions - Users - User Cancel Subscription',
-  description: 'Cancel a subscription to a user. (Endpoint: POST /public-api/actions/users/v1.0/{user}/cancel-subscription)',
+  displayName: 'Actions - Users - Cancel Subscription',
+  description: 'Cancel a subscription to a user.',
   props: {
         
   user: Property.Number({
     displayName: 'User',
-    description: '',
     required: true,
   }),
 

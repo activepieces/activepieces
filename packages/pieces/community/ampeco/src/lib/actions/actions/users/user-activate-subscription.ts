@@ -6,22 +6,22 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/actions/users/v1.0/{user}/activate-subscription
 export const userActivateSubscriptionAction = createAction({
   auth: ampecoAuth,
   name: 'userActivateSubscription',
-  displayName: 'Actions - Users - User Activate Subscription',
-  description: 'Activate a subscription to a user. (Endpoint: POST /public-api/actions/users/v1.0/{user}/activate-subscription)',
+  displayName: 'Actions - Users - Activate Subscription',
+  description: 'Activate a subscription to a user.',
   props: {
         
   user: Property.Number({
     displayName: 'User',
-    description: '',
     required: true,
   }),
 
   planId: Property.Number({
     displayName: 'Plan Id',
-    description: '',
     required: true,
   }),
 
