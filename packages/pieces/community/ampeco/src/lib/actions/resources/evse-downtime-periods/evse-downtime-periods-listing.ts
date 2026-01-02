@@ -61,13 +61,13 @@ export const evseDowntimePeriodsListingAction = createAction({
 
   filter__startedAfter: Property.DateTime({
     displayName: 'Filter - Started After',
-    description: 'ISO 8601 formatted date. Resources with \`startedAt >= startedAfter\`.',
+    description: 'ISO 8601 formatted date. Resources with `startedAt >= startedAfter`.',
     required: false,
   }),
 
   filter__stoppedBefore: Property.DateTime({
     displayName: 'Filter - Stopped Before',
-    description: 'ISO 8601 formatted date. Resources with \`stoppedAt <= stoppedBefore\`.',
+    description: 'ISO 8601 formatted date. Resources with `stoppedAt <= stoppedBefore`.',
     required: false,
   }),
 

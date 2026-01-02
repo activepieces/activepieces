@@ -82,7 +82,34 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   elements: Property.Json({
     displayName: 'Elements',
-    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"required\": [\n      \"startAt\",\n      \"endAt\"\n    ],\n    \"properties\": {\n      \"startAt\": {\n        \"type\": \"string\",\n        \"format\": \"time\",\n        \"example\": \"00:00\",\n        \"description\": \"The 24-hour format should be used.</br>\\nExample '00:00'\\n\"\n      },\n      \"endAt\": {\n        \"type\": \"string\",\n        \"format\": \"time\",\n        \"example\": \"00:00\",\n        \"description\": \"The 24-hour format should be used.</br>\\nExample '01:00'\\n\"\n      },\n      \"maxCurrent\": {\n        \"type\": \"number\",\n        \"nullable\": true\n      }\n    }\n  }\n}`,
+    defaultValue:{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "required": [
+      "startAt",
+      "endAt"
+    ],
+    "properties": {
+      "startAt": {
+        "type": "string",
+        "format": "time",
+        "example": "00:00",
+        "description": "The 24-hour format should be used.</br>\nExample '00:00'\n"
+      },
+      "endAt": {
+        "type": "string",
+        "format": "time",
+        "example": "00:00",
+        "description": "The 24-hour format should be used.</br>\nExample '01:00'\n"
+      },
+      "maxCurrent": {
+        "type": "number",
+        "nullable": true
+      }
+    }
+  }
+},
     required: true,
   }), 
     },

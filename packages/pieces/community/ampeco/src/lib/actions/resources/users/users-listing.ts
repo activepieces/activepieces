@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
 import { UsersListingResponse } from '../../../models/responses';
 
 /**
@@ -43,7 +43,7 @@ export const usersListingAction = createAction({
 
   filter__externalAppData: Property.ShortText({
     displayName: 'Filter - External App Data',
-    description: 'Only list records with specific external application data. You can use a dot notation to search for nested properties. For example, \`filter[externalAppData.property1.property2]=value\`.',
+    description: 'Only list records with specific external application data. You can use a dot notation to search for nested properties. For example, `filter[externalAppData.property1.property2]=value`.',
     required: false,
   }),
 

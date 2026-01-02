@@ -125,7 +125,7 @@ export const chargePointUpdateAction = createAction({
 
   managedByOperator: Property.StaticDropdown({
     displayName: 'Managed By Operator',
-    description: `This flag indicates whether the operator can actively manage the charge point. If the flag is set to 'false' the charge point can still be shown to users, but they can\'t request to start a session on it.\n\nDeprecated. Please use \`communicationMode\` instead. The \`communicationMode\` can only be set when creating a charge point.\n`,
+    description: `This flag indicates whether the operator can actively manage the charge point. If the flag is set to 'false' the charge point can still be shown to users, but they can't request to start a session on it.\n\nDeprecated. Please use \`communicationMode\` instead. The \`communicationMode\` can only be set when creating a charge point.\n`,
     required: false,
     options: {
       options: [

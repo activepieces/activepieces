@@ -19,7 +19,7 @@ export const partnerCreateAction = createAction({
         
   businessName: Property.ShortText({
     displayName: 'Business Name',
-    description: 'The Partner\'s business name is used when showing the name of the Partner to EV drivers and admin users. If not provided, the \`name\` will be used instead.',
+    description: 'The Partner\'s business name is used when showing the name of the Partner to EV drivers and admin users. If not provided, the `name` will be used instead.',
     required: false,
   }),
 
@@ -498,7 +498,7 @@ export const partnerCreateAction = createAction({
 
   options__allowToControlTariffGroups: Property.StaticDropdown({
     displayName: 'Options - Allow To Control Tariff Groups',
-    description: 'In addition to \`allowToControlTariffs\`, the Partner would also be able to manage Tariff Groups - attach and remove Tariffs, change Tariffs order in the Tariff Group.',
+    description: 'In addition to `allowToControlTariffs`, the Partner would also be able to manage Tariff Groups - attach and remove Tariffs, change Tariffs order in the Tariff Group.',
     required: false,
     options: {
       options: [

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
 import { TariffsListingResponse } from '../../../models/responses';
 
 /**
@@ -25,7 +25,7 @@ export const tariffsListingAction = createAction({
 
   filter__userId: Property.Number({
     displayName: 'Filter - User Id',
-    description: 'Can only be used with \`tariffGroupId\`. When set, a single tariff of the group will be returned (no meta or link props will be included), that will be applied to the when the given user is charging. Note that when you set it to empty (null) then the tariff for anonymous charging will be returned',
+    description: 'Can only be used with `tariffGroupId`. When set, a single tariff of the group will be returned (no meta or link props will be included), that will be applied to the when the given user is charging. Note that when you set it to empty (null) then the tariff for anonymous charging will be returned',
     required: false,
   }),
 

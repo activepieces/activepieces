@@ -80,7 +80,7 @@ export const idTagUpdateAction = createAction({
 
   paymentMethodId: Property.ShortText({
     displayName: 'Payment Method Id',
-    description: `The payment method that will be associated with the ID Tag.\n* For **credit/debit cards** the \`paymentMethodId\` should be provided\n* For **Corporate billing** - \`corporate:{id}\`\n* For **Auto selection** - use \`\"auto\"\` (recommended) or \`null\` (deprecated)\n* The \"last used\" concept has been replaced with \"auto\" selection which cycles through available payment methods.\n`,
+    description: `The payment method that will be associated with the ID Tag.\n* For **credit/debit cards** the \`paymentMethodId\` should be provided\n* For **Corporate billing** - \`corporate:{id}\`\n* For **Auto selection** - use \`"auto"\` (recommended) or \`null\` (deprecated)\n* The "last used" concept has been replaced with "auto" selection which cycles through available payment methods.\n`,
     required: false,
   }),
 

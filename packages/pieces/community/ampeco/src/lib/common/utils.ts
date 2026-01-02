@@ -1,4 +1,8 @@
-import { HttpMethod, HttpRequest, httpClient } from '@activepieces/pieces-common';
+import {
+  HttpMethod,
+  HttpRequest,
+  httpClient,
+} from '@activepieces/pieces-common';
 import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
 import { ampecoAuth } from './auth';
@@ -51,7 +55,9 @@ export async function makeAmpecoApiCall(
   } else {
     // Build URL from base URL and path
     const baseUrl = auth.props.baseApiUrl || '';
-    const normalizedBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const normalizedBaseUrl = baseUrl.endsWith('/')
+      ? baseUrl.slice(0, -1)
+      : baseUrl;
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
     url = `${normalizedBaseUrl}${normalizedPath}`;
   }
@@ -62,8 +68,8 @@ export async function makeAmpecoApiCall(
 
   if (!('cursor' in queryParams) && !('page' in queryParams)) {
     queryParams = {
-        ...queryParams,
-        'cursor': 'null'
+      ...queryParams,
+      cursor: 'null',
     };
   }
 
@@ -72,18 +78,22 @@ export async function makeAmpecoApiCall(
     url,
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${auth.props.token}`,
+      Authorization: `Bearer ${auth.props.token}`,
     },
     queryParams,
     body,
   };
-  
+
   const response = await httpClient.sendRequest(request);
-  
+
   if (response.status < 200 || response.status >= 300) {
-    throw new Error(`API call failed with status ${response.status}: ${JSON.stringify(response.body)}`);
+    throw new Error(
+      `API call failed with status ${response.status}: ${JSON.stringify(
+        response.body
+      )}`
+    );
   }
-  
+
   return response.body;
 }
 
@@ -93,9 +103,12 @@ export async function makeAmpecoApiCall(
  * @param params Parameters object
  * @returns Processed URL
  */
-export function processPathParameters(url: string, params: Record<string, unknown>): string {
+export function processPathParameters(
+  url: string,
+  params: Record<string, unknown>
+): string {
   let processedUrl = url;
-  
+
   // Replace path parameters in URL
   const pathParams = url.match(/\{([^}]+)\}/g);
   if (pathParams) {
@@ -103,12 +116,15 @@ export function processPathParameters(url: string, params: Record<string, unknow
       const paramName = param.slice(1, -1);
       const paramValue = params[paramName];
 
-      if(!isNil(paramValue)){
-        processedUrl = processedUrl.replace(param, encodeURIComponent(String(paramValue)));
+      if (!isNil(paramValue)) {
+        processedUrl = processedUrl.replace(
+          param,
+          encodeURIComponent(String(paramValue))
+        );
       }
     }
   }
-  
+
   return processedUrl;
 }
 
@@ -118,32 +134,41 @@ export function processPathParameters(url: string, params: Record<string, unknow
  * @param prefix Prefix for keys
  * @returns Flattened query parameters
  */
-function flattenToQueryParams(obj: Record<string, unknown>, prefix: string): Record<string, string> {
+function flattenToQueryParams(
+  obj: Record<string, unknown>,
+  prefix: string
+): Record<string, string> {
   const result: Record<string, string> = {};
-  
+
   for (const [key, value] of Object.entries(obj)) {
     const newKey = `${prefix}[${key}]`;
-    
+
     if (value === null || value === undefined) {
       continue;
     }
-    
+
     if (Array.isArray(value)) {
       value.forEach((item, index) => {
         const arrayKey = `${newKey}[${index}]`;
         if (typeof item === 'object' && item !== null) {
-          Object.assign(result, flattenToQueryParams(item as Record<string, unknown>, arrayKey));
+          Object.assign(
+            result,
+            flattenToQueryParams(item as Record<string, unknown>, arrayKey)
+          );
         } else {
           result[arrayKey] = String(item);
         }
       });
     } else if (typeof value === 'object' && value !== null) {
-      Object.assign(result, flattenToQueryParams(value as Record<string, unknown>, newKey));
+      Object.assign(
+        result,
+        flattenToQueryParams(value as Record<string, unknown>, newKey)
+      );
     } else {
       result[newKey] = String(value);
     }
   }
-  
+
   return result;
 }
 
@@ -175,7 +200,9 @@ function isDeepEmpty(obj: any): boolean {
  * @param params Parameters object with flattened properties
  * @returns Object with reconstructed nested structure
  */
-export function reconstructNestedObjects(params: Record<string, unknown>): Record<string, unknown> {
+export function reconstructNestedObjects(
+  params: Record<string, unknown>
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(params)) {
@@ -193,7 +220,11 @@ export function reconstructNestedObjects(params: Record<string, unknown>): Recor
 
     for (let i = 0; i < parts.length - 1; i++) {
       const part = parts[i];
-      if (current[part] === undefined || typeof current[part] !== 'object' || current[part] === null) {
+      if (
+        current[part] === undefined ||
+        typeof current[part] !== 'object' ||
+        current[part] === null
+      ) {
         current[part] = {};
       }
       current = current[part];
@@ -204,14 +235,22 @@ export function reconstructNestedObjects(params: Record<string, unknown>): Recor
 
     // If the value is an object, recursively process it.
     if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-      processedValue = reconstructNestedObjects(value as Record<string, unknown>);
-      
+      processedValue = reconstructNestedObjects(
+        value as Record<string, unknown>
+      );
+
       // If the processed value is an object with a single key that matches `lastPart`,
       // and the value of that key is also an object, we merge them to prevent double nesting.
       const processedKeys = Object.keys(processedValue);
       if (processedKeys.length === 1 && processedKeys[0] === lastPart) {
-        const nestedValue = (processedValue as Record<string, unknown>)[lastPart];
-        if (typeof nestedValue === 'object' && nestedValue !== null && !Array.isArray(nestedValue)) {
+        const nestedValue = (processedValue as Record<string, unknown>)[
+          lastPart
+        ];
+        if (
+          typeof nestedValue === 'object' &&
+          nestedValue !== null &&
+          !Array.isArray(nestedValue)
+        ) {
           processedValue = nestedValue;
         }
       }
@@ -252,39 +291,44 @@ export function prepareQueryParams(
   const reconstructedParams = reconstructNestedObjects(params);
 
   for (const [key, value] of Object.entries(reconstructedParams)) {
-
     if (!Object.prototype.hasOwnProperty.call(reconstructedParams, key)) {
-       continue;
+      continue;
     }
 
     if (internalProps.includes(key) || value === undefined || value === null) {
-       continue;
+      continue;
     }
 
     if (Array.isArray(value) && value.length === 0) {
-       continue;
+      continue;
     }
 
     if (includeKeys.length === 0 || !includeKeys.includes(key)) {
-       continue;
+      continue;
     }
 
     if (Array.isArray(value)) {
-        value.forEach((item, index) => {
-            const arrayKey = `${key}[${index}]`;
-            if (typeof item === 'object' && item !== null) {
-                Object.assign(queryParams, flattenToQueryParams(item as Record<string, unknown>, arrayKey));
-            } else {
-                queryParams[arrayKey] = String(item);
-            }
-        });
+      value.forEach((item, index) => {
+        const arrayKey = `${key}[${index}]`;
+        if (typeof item === 'object' && item !== null) {
+          Object.assign(
+            queryParams,
+            flattenToQueryParams(item as Record<string, unknown>, arrayKey)
+          );
+        } else {
+          queryParams[arrayKey] = String(item);
+        }
+      });
     } else if (typeof value === 'object' && value !== null) {
-        Object.assign(queryParams, flattenToQueryParams(value as Record<string, unknown>, key));
+      Object.assign(
+        queryParams,
+        flattenToQueryParams(value as Record<string, unknown>, key)
+      );
     } else {
-        queryParams[key] = String(value);
+      queryParams[key] = String(value);
     }
   }
-  
+
   return queryParams;
 }
 
@@ -304,34 +348,35 @@ export function prepareRequestBody(
   const reconstructedParams = reconstructNestedObjects(params);
 
   for (const [key, value] of Object.entries(reconstructedParams)) {
-    if (!Object.prototype.hasOwnProperty.call(reconstructedParams, key)) continue;
+    if (!Object.prototype.hasOwnProperty.call(reconstructedParams, key))
+      continue;
 
     if (internalProps.includes(key) || value === undefined || value === null) {
-       continue;
+      continue;
     }
 
     if (isDeepEmpty(value)) {
-       continue;
+      continue;
     }
 
     // Special case: if key is 'requestBody' and value is an array, add array values directly
     if (key === 'requestBody') {
-       for (const [akey, avalue] of Object.entries(value)) {
-          if (avalue !== undefined && avalue !== null) {
-            body[akey] = avalue;
-          }
-       }
-       continue;
+      for (const [akey, avalue] of Object.entries(value)) {
+        if (avalue !== undefined && avalue !== null) {
+          body[akey] = avalue;
+        }
+      }
+      continue;
     }
 
     if (includeKeys.length === 0 || !includeKeys.includes(key)) {
-       continue;
+      continue;
     }
 
     // Include the value as-is (arrays, objects, primitives)
     body[key] = value;
   }
-  
+
   return body;
 }
 
@@ -349,7 +394,7 @@ export async function paginate({
   perPage = 100,
   dataPath = 'data',
 }: {
-  auth:  AppConnectionValueForAuthProperty<typeof ampecoAuth>;
+  auth: AppConnectionValueForAuthProperty<typeof ampecoAuth>;
   method: string;
   path: string;
   queryParams?: Record<string, string>;
@@ -368,7 +413,11 @@ export async function paginate({
       dataPath,
     });
   } catch (error) {
-    throw new Error(`Pagination failed: ${error instanceof Error ? error.message : String(error)}`);
+    throw new Error(
+      `Pagination failed: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
   }
 }
 
@@ -386,7 +435,7 @@ async function paginateWithCursor({
   perPage = 100,
   dataPath = 'data',
 }: {
-  auth:  AppConnectionValueForAuthProperty<typeof ampecoAuth>;
+  auth: AppConnectionValueForAuthProperty<typeof ampecoAuth>;
   method: string;
   path: string;
   queryParams?: Record<string, string>;
@@ -401,8 +450,8 @@ async function paginateWithCursor({
   let nextPageUrl: string | null = path;
   let requestQueryParams: Record<string, string> = {
     ...queryParams,
-    'per_page': String(pageSize),
-    'cursor': 'null',
+    per_page: String(pageSize),
+    cursor: 'null',
   };
   let firstResponse: unknown = null;
 
@@ -419,7 +468,10 @@ async function paginateWithCursor({
       firstResponse = response;
     }
 
-    const data = extractDataFromResponse(response as Record<string, unknown>, dataPath);
+    const data = extractDataFromResponse(
+      response as Record<string, unknown>,
+      dataPath
+    );
     if (data.length === 0) {
       break; // No more data to fetch
     }
@@ -427,9 +479,7 @@ async function paginateWithCursor({
     aggregatedResults.push(...data);
 
     // Determine the URL for the next page from the 'links.next' property
-    const links = (response as Record<string, any>)?.[
-      'links'
-    ];
+    const links = (response as Record<string, any>)?.['links'];
     nextPageUrl = links?.['next'] ?? null;
 
     // For subsequent requests, the full URL is in `nextPageUrl`, so we don't need to pass query params separately.
@@ -473,7 +523,10 @@ async function paginateWithCursor({
  * @param dataPath Path to data in response
  * @returns Array of data items
  */
-export function extractDataFromResponse(response: Record<string, unknown>, dataPath = 'data'): unknown[] {
+export function extractDataFromResponse(
+  response: Record<string, unknown>,
+  dataPath = 'data'
+): unknown[] {
   // Try to get data from the specified path
   if (response && typeof response === 'object' && dataPath in response) {
     const data = response[dataPath];
@@ -481,12 +534,12 @@ export function extractDataFromResponse(response: Record<string, unknown>, dataP
       return data;
     }
   }
-  
+
   // If response itself is an array, return it
   if (Array.isArray(response)) {
     return response;
   }
-  
+
   throw new Error(`Could not find array data at '${dataPath}' in API response`);
 }
 
@@ -505,27 +558,37 @@ export function handleApiError(error: unknown): never {
     };
     request?: unknown;
   }
-  
+
   // Handle HTTP errors with response
-  if (typeof error === 'object' && error !== null && 
-      'response' in error && 
-      (error as HttpError).response !== undefined) {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    (error as HttpError).response !== undefined
+  ) {
     const httpError = error as HttpError;
     const statusCode = httpError.response?.status;
-    const errorData = httpError.response?.data || httpError.response?.body || {};
-    
+    const errorData =
+      httpError.response?.data || httpError.response?.body || {};
+
     throw new Error(
       `API call failed (Status ${statusCode}): ${
-        errorData.message || errorData.error || JSON.stringify(errorData) || 'Unknown error'
+        errorData.message ||
+        errorData.error ||
+        JSON.stringify(errorData) ||
+        'Unknown error'
       }`
     );
-  } 
+  }
   // Handle network errors (no response received)
-  else if (typeof error === 'object' && error !== null && 
-           'request' in error && 
-           (error as HttpError).request !== undefined) {
+  else if (
+    typeof error === 'object' &&
+    error !== null &&
+    'request' in error &&
+    (error as HttpError).request !== undefined
+  ) {
     throw new Error(`Network Error: No response received from API`);
-  } 
+  }
   // Handle all other errors
   else {
     const errorMessage = error instanceof Error ? error.message : String(error);

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
 import { VouchersListingResponse } from '../../../models/responses';
 
 /**
@@ -19,7 +19,7 @@ export const vouchersListingAction = createAction({
         
   filter__type: Property.StaticDropdown({
     displayName: 'Filter - Type',
-    description: 'Lists only vouchers that are with one of these types \`voucher\`, \`manual_top_up\`, \`top_up_auto\`, \`auto_top_up\`, \`top_up_by_operator\`, \`api_top_up\`, \`promo_code\`, \`subscribe_to_plan\`.',
+    description: 'Lists only vouchers that are with one of these types `voucher`, `manual_top_up`, `top_up_auto`, `auto_top_up`, `top_up_by_operator`, `api_top_up`, `promo_code`, `subscribe_to_plan`.',
     required: false,
     options: {
       options: [
@@ -36,7 +36,7 @@ export const vouchersListingAction = createAction({
 
   filter__status: Property.StaticDropdown({
     displayName: 'Filter - Status',
-    description: 'Lists only the vouchers that are with one of these statuses \`enabled\`, \`disabled\`.',
+    description: 'Lists only the vouchers that are with one of these statuses `enabled`, `disabled`.',
     required: false,
     options: {
       options: [
@@ -48,7 +48,7 @@ export const vouchersListingAction = createAction({
 
   filter__createdAt: Property.DateTime({
     displayName: 'Filter - Created At',
-    description: 'Lists only vouchers that are created on a particular date. Please provide the value in the following format \`YYYY-MM-DD\`.',
+    description: 'Lists only vouchers that are created on a particular date. Please provide the value in the following format `YYYY-MM-DD`.',
     required: false,
   }),
 
@@ -72,13 +72,13 @@ export const vouchersListingAction = createAction({
 
   filter__expireDateAfter: Property.DateTime({
     displayName: 'Filter - Expire Date After',
-    description: 'Lists only vouchers with expiration date after the specified date. Please provide the value in RFC 3339 formatted date \`YYYY-MM-DD\`.',
+    description: 'Lists only vouchers with expiration date after the specified date. Please provide the value in RFC 3339 formatted date `YYYY-MM-DD`.',
     required: false,
   }),
 
   filter__expireDateBefore: Property.DateTime({
     displayName: 'Filter - Expire Date Before',
-    description: 'Lists only vouchers with expiration date before the specified date. Please provide the value in RFC 3339 formatted date \`YYYY-MM-DD\`.',
+    description: 'Lists only vouchers with expiration date before the specified date. Please provide the value in RFC 3339 formatted date `YYYY-MM-DD`.',
     required: false,
   }),
 

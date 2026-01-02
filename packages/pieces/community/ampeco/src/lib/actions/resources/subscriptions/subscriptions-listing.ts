@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
 import { SubscriptionsListingResponse } from '../../../models/responses';
 
 /**
@@ -51,7 +51,7 @@ export const subscriptionsListingAction = createAction({
 
   filter__billedExternally: Property.ShortText({
     displayName: 'Filter - Billed Externally',
-    description: 'Applicable only when the system uses both payment processor and external billing mode simultaneously. Show or hide subscriptions where users have enabled \"External billing\" (if allowed by the Billing settings).',
+    description: 'Applicable only when the system uses both payment processor and external billing mode simultaneously. Show or hide subscriptions where users have enabled "External billing" (if allowed by the Billing settings).',
     required: false,
   }),
     per_page: Property.Number({

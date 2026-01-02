@@ -31,13 +31,13 @@ export const evseDowntimePeriodUpdateAction = createAction({
 
   startedAt: Property.DateTime({
     displayName: 'Started At',
-    description: 'Allowed only for downtime period with \`type = exempt AND entryMode = manual\`',
+    description: 'Allowed only for downtime period with `type = exempt AND entryMode = manual`',
     required: false,
   }),
 
   endedAt: Property.DateTime({
     displayName: 'Ended At',
-    description: 'Allowed only for downtime period with \`type = exempt AND entryMode = manual\`',
+    description: 'Allowed only for downtime period with `type = exempt AND entryMode = manual`',
     required: false,
   }),
   },

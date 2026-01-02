@@ -498,7 +498,7 @@ export const partnerUpdateAction = createAction({
 
   options__allowToControlTariffGroups: Property.StaticDropdown({
     displayName: 'Options - Allow To Control Tariff Groups',
-    description: 'In addition to \`allowToControlTariffs\`, the Partner would also be able to manage Tariff Groups - attach and remove Tariffs, change Tariffs order in the Tariff Group.',
+    description: 'In addition to `allowToControlTariffs`, the Partner would also be able to manage Tariff Groups - attach and remove Tariffs, change Tariffs order in the Tariff Group.',
     required: false,
     options: {
       options: [

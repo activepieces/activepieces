@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
 import { SessionsListingResponse } from '../../../models/responses';
 
 /**
@@ -251,7 +251,7 @@ export const sessionsListingAction = createAction({
 
   filter__paymentType: Property.StaticDropdown({
     displayName: 'Filter - Payment Type',
-    description: '\`bank_transfer\` is used for one-time bank transfers, for saved (tokenized) bank transfers use \`tokenized\`.',
+    description: '`bank_transfer` is used for one-time bank transfers, for saved (tokenized) bank transfers use `tokenized`.',
     required: false,
     options: {
       options: [
@@ -299,7 +299,7 @@ export const sessionsListingAction = createAction({
 
   filter__externalAppData: Property.ShortText({
     displayName: 'Filter - External App Data',
-    description: 'Only list records with specific external application data. You can use a dot notation to search for nested properties. For example, \`filter[externalAppData.property1.property2]=value\`.',
+    description: 'Only list records with specific external application data. You can use a dot notation to search for nested properties. For example, `filter[externalAppData.property1.property2]=value`.',
     required: false,
   }),
 

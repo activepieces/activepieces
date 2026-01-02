@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { TransactionUpdateResponse } from '../../../models/responses';
 
 /**
@@ -37,7 +37,7 @@ export const transactionUpdateAction = createAction({
 
   paymentMethod__cardNetwork: Property.StaticDropdown({
     displayName: 'Payment Method - Card Network',
-    description: 'Required when \`methodType\` is \`card\`.',
+    description: 'Required when `methodType` is `card`.',
     required: false,
     options: {
       options: [
@@ -53,7 +53,7 @@ export const transactionUpdateAction = createAction({
 
   paymentMethod__bankTransferType: Property.StaticDropdown({
     displayName: 'Payment Method - Bank Transfer Type',
-    description: 'Required when \`methodType\` is \`bank_transfer\`.',
+    description: 'Required when `methodType` is `bank_transfer`.',
     required: false,
     options: {
       options: [
@@ -65,7 +65,7 @@ export const transactionUpdateAction = createAction({
 
   paymentMethod__type: Property.StaticDropdown({
     displayName: 'Payment Method - Type',
-    description: 'Deprecated, please use \`methodType\` and \`cardNetwork\` instead.',
+    description: 'Deprecated, please use `methodType` and `cardNetwork` instead.',
     required: false,
     options: {
       options: [

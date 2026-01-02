@@ -31,7 +31,7 @@ export const firmwareVersionsListingAction = createAction({
 
   filter__firmwareVersion: Property.ShortText({
     displayName: 'Filter - Firmware Version',
-    description: 'Filter by firmware version string. Matches both exact versions and versions that begin with the search string (e.g., \"1.2\" will match exactly \"1.2\" as well as versions like \"1.2.0\", \"1.2.3\", etc.).',
+    description: 'Filter by firmware version string. Matches both exact versions and versions that begin with the search string (e.g., "1.2" will match exactly "1.2" as well as versions like "1.2.0", "1.2.3", etc.).',
     required: false,
   }),
 

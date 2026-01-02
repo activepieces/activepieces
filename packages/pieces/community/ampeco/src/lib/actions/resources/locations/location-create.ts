@@ -1,14 +1,13 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createAction, Property } from '@activepieces/pieces-framework';
+import { ampecoAuth } from '../../../common/auth';
 import {
+  handleApiError,
   makeAmpecoApiCall,
-  processPathParameters,
   prepareQueryParams,
   prepareRequestBody,
-  paginate,
-  handleApiError,
+  processPathParameters
 } from '../../../common/utils';
-import { ampecoAuth } from '../../../common/auth';
 import { LocationCreateResponse } from '../../../models/responses';
 
 /**

@@ -1,8 +1,8 @@
-import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { createTrigger, Property, TriggerStrategy } from '@activepieces/pieces-framework';
 import { MarkdownVariant } from '@activepieces/shared';
-import { makeAmpecoApiCall } from '../common/utils';
 import { ampecoAuth } from '../common/auth';
+import { makeAmpecoApiCall } from '../common/utils';
 
 const liveMarkdown = `**Live URL:**
 \`\`\`text

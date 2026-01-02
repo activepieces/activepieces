@@ -161,7 +161,7 @@ export const evseUpdateAction = createAction({
 
   powerOptions__phaseRotation: Property.StaticDropdown({
     displayName: 'Power Options - Phase Rotation',
-    description: '\`R\` stands for \`L1\`, </br> \`S\` - for \`L2\` </br> \`T\` - for \`L3\` </br> So for example \`RST\` = \`L1\`, \`L2\`, \`L3\`, while \`RTS\` = \`L1\`, \`L3\`, \`L2\`, etc.',
+    description: '`R` stands for `L1`, </br> `S` - for `L2` </br> `T` - for `L3` </br> So for example `RST` = `L1`, `L2`, `L3`, while `RTS` = `L1`, `L3`, `L2`, etc.',
     required: false,
     options: {
       options: [
@@ -177,7 +177,7 @@ export const evseUpdateAction = createAction({
 
   powerOptions__connectedPhase: Property.StaticDropdown({
     displayName: 'Power Options - Connected Phase',
-    description: 'Specifies the active line conductors used in the circuit. - \`L1_L2\` - Valid when \`phases\` = \`split_phase\` in electrical configuration \`star\` or \`phases\` = \`single_phase\` in electrical configuration \`delta\` - \`L2_L3\` - Valid when \`phases\` = \`split_phase\` in electrical configuration \`star\` or \`phases\` = \`single_phase\` in electrical configuration \`delta\` - \`L1_L3\` - Valid when \`phases\` = \`split_phase\` in electrical configuration \`star\` or \`phases\` = \`single_phase\` in electrical configuration \`delta\` - \`L1\` - Valid when \`phases\` = \`single_phase\` in electrical configuration \`star\` - \`L2\` - Valid when \`phases\` = \`single_phase\` in electrical configuration \`star\` - \`L3\` - Valid when \`phases\` = \`single_phase\` in electrical configuration \`star\`.',
+    description: 'Specifies the active line conductors used in the circuit. - `L1_L2` - Valid when `phases` = `split_phase` in electrical configuration `star` or `phases` = `single_phase` in electrical configuration `delta` - `L2_L3` - Valid when `phases` = `split_phase` in electrical configuration `star` or `phases` = `single_phase` in electrical configuration `delta` - `L1_L3` - Valid when `phases` = `split_phase` in electrical configuration `star` or `phases` = `single_phase` in electrical configuration `delta` - `L1` - Valid when `phases` = `single_phase` in electrical configuration `star` - `L2` - Valid when `phases` = `single_phase` in electrical configuration `star` - `L3` - Valid when `phases` = `single_phase` in electrical configuration `star`.',
     required: false,
     options: {
       options: [

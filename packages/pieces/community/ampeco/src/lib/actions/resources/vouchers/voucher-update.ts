@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { VoucherUpdateResponse } from '../../../models/responses';
 
 /**
@@ -34,15 +34,15 @@ export const voucherUpdateAction = createAction({
     },
   }),
 
-  expireDate: Property.DateTime({
+   expireDate: Property.DateTime({
     displayName: 'Expire Date',
-    description: 'RFC 3339 formatted date. Defines the date on which the voucher expires. The field can be calculated based on the \`redeemedAt\` timestamp and the \`validityPeriod\` field if the \`validityPeriod\` is set and the \`expireDate\` is not.',
+    description: 'RFC 3339 formatted date. Defines the date on which the voucher expires. The field can be calculated based on the `redeemedAt` timestamp and the `validityPeriod` field if the `validityPeriod` is set and the `expireDate` is not.',
     required: false,
   }),
 
   validityPeriod: Property.StaticDropdown({
     displayName: 'Validity Period',
-    description: 'Defines the validity period for the voucher. When a user redeems the voucher, this period is added to the \`redeemedAt\` timestamp to calculate the voucher\'s \`expireDate\`. This field is only used when \`expireDate\` is not already set - if \`expireDate\` has a value, this period is ignored and the defined \`expireDate\` is used instead.',
+    description: 'Defines the validity period for the voucher. When a user redeems the voucher, this period is added to the `redeemedAt` timestamp to calculate the voucher\'s `expireDate`. This field is only used when `expireDate` is not already set - if `expireDate` has a value, this period is ignored and the defined `expireDate` is used instead.',
     required: false,
     options: {
       options: [

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { LocationUpdateResponse } from '../../../models/responses';
 
 /**
@@ -488,7 +488,7 @@ export const locationUpdateAction = createAction({
 
   workingHours__isAlwaysOpen: Property.StaticDropdown({
     displayName: 'Working Hours - Is Always Open',
-    description: 'Indicates that the location is always open for charging. If set to false, the \`hours\` field is required, otherwise it should be ignored.',
+    description: 'Indicates that the location is always open for charging. If set to false, the `hours` field is required, otherwise it should be ignored.',
     required: false,
     options: {
       options: [
@@ -658,7 +658,7 @@ export const locationUpdateAction = createAction({
 
   timezone: Property.ShortText({
     displayName: 'Timezone',
-    description: 'A valid timezone in the form of Area/Location, required when \`Allow Multiple Time Zones\` option is turned on in the Timezone Setting.',
+    description: 'A valid timezone in the form of Area/Location, required when `Allow Multiple Time Zones` option is turned on in the Timezone Setting.',
     required: false,
   }),
 

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { TariffUpdateResponse } from '../../../models/responses';
 
 /**
@@ -31,7 +31,7 @@ export const tariffUpdateAction = createAction({
 
   type: Property.StaticDropdown({
     displayName: 'Type',
-    description: 'Setting the type to \`charging not allowed\` or \`free\` is enough for creating the particular type of tariff',
+    description: 'Setting the type to `charging not allowed` or `free` is enough for creating the particular type of tariff',
     required: true,
     options: {
       options: [
@@ -258,7 +258,7 @@ export const tariffUpdateAction = createAction({
 
   pricing__flexibleMarkUpAsFixedPerKwh__defaultPrice: Property.Number({
     displayName: 'Pricing - Flexible Mark Up As Fixed Per Kwh - Default Price',
-    description: 'Set price for the intervals not specified in \`intervalPricing\` field.',
+    description: 'Set price for the intervals not specified in `intervalPricing` field.',
     required: false,
   }),
 
@@ -494,7 +494,14 @@ export const tariffUpdateAction = createAction({
 
   specialDates: Property.Json({
     displayName: 'Special Dates',
-    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"string\",\n    \"format\": \"date\"\n  },\n  \"example\": \"2022-01-30\"\n}`,
+    defaultValue:{
+  "type": "array",
+  "items": {
+    "type": "string",
+    "format": "date"
+  },
+  "example": "2022-01-30"
+},
     required: false,
   }),
 
@@ -556,25 +563,45 @@ export const tariffUpdateAction = createAction({
 
   pricePeriods__connectionFeePeriods__fee: Property.Json({
     displayName: 'Price Periods - Connection Fee Periods - Fee',
-    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"number\"\n  }\n}`,
+   defaultValue:{
+  "type": "array",
+  "items": {
+    "type": "number"
+  }
+},
     required: false,
   }),
 
   pricePeriods__energyFeePeriods__fee: Property.Json({
     displayName: 'Price Periods - Energy Fee Periods - Fee',
-    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"number\"\n  }\n}`,
+   defaultValue:{
+  "type": "array",
+  "items": {
+    "type": "number"
+  }
+},
     required: false,
   }),
 
   pricePeriods__durationFeePeriods__fee: Property.Json({
     displayName: 'Price Periods - Duration Fee Periods - Fee',
-    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"number\"\n  }\n}`,
+   defaultValue:{
+  "type": "array",
+  "items": {
+    "type": "number"
+  }
+},
     required: false,
   }),
 
   pricePeriods__idleFeePeriods__fee: Property.Json({
     displayName: 'Price Periods - Idle Fee Periods - Fee',
-    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"number\"\n  }\n}`,
+   defaultValue:{
+  "type": "array",
+  "items": {
+    "type": "number"
+  }
+},
     required: false,
   }), 
     },
@@ -666,7 +693,7 @@ export const tariffUpdateAction = createAction({
 
   pricing__stateOfChargeIdleThreshold: Property.StaticDropdown({
     displayName: 'Pricing - State Of Charge Idle Threshold',
-    description: 'Switches the session to idle when the SoC (%) exceeds the selected value. Leave empty to use the system wide setting. This option will take effect only if \`Allow custom SoC (%) threshold per Tariff\` is set in \`Idle period detection\` setting.',
+    description: 'Switches the session to idle when the SoC (%) exceeds the selected value. Leave empty to use the system wide setting. This option will take effect only if `Allow custom SoC (%) threshold per Tariff` is set in `Idle period detection` setting.',
     required: false,
     options: {
       options: [
@@ -682,7 +709,7 @@ export const tariffUpdateAction = createAction({
 
   pricing__averagePowerIdleThreshold: Property.Number({
     displayName: 'Pricing - Average Power Idle Threshold',
-    description: 'Sets the session to idle state when the average kW for the past 5 minutes is below the set threshold. This option will take effect only if \`Allow custom power threshold per Tariff\` is set in \`Idle period detection\` setting.',
+    description: 'Sets the session to idle state when the average kW for the past 5 minutes is below the set threshold. This option will take effect only if `Allow custom power threshold per Tariff` is set in `Idle period detection` setting.',
     required: false,
   }),
 
@@ -748,7 +775,7 @@ export const tariffUpdateAction = createAction({
 
   restrictions__adHocPreAuthorizeAmount: Property.Number({
     displayName: 'Restrictions - Ad Hoc Pre Authorize Amount',
-    description: 'Sets the amount that would be blocked on the user\'s card at the start of the session. Required if applyToAdHocUsers is true and one of the following billing strategies is chosen: \`Require payment method and authorize certain amount before starting session\` or \`Require payment method OR minimum amount in balance\`.',
+    description: 'Sets the amount that would be blocked on the user\'s card at the start of the session. Required if applyToAdHocUsers is true and one of the following billing strategies is chosen: `Require payment method and authorize certain amount before starting session` or `Require payment method OR minimum amount in balance`.',
     required: false,
   }),
 

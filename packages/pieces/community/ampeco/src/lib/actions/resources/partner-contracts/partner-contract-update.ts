@@ -193,7 +193,7 @@ export const partnerContractUpdateAction = createAction({
 
   revenueSharing__handlingFee: Property.Number({
     displayName: 'Revenue Sharing - Handling Fee',
-    description: 'Additional percentage fee to be applied on the total amount paid by the user for the session. This fee is then subtracted from the Partner\'s share of the revenue. This fee is available only if the feature \"Additional Platform Fees\" is enabled for the system.',
+    description: 'Additional percentage fee to be applied on the total amount paid by the user for the session. This fee is then subtracted from the Partner\'s share of the revenue. This fee is available only if the feature "Additional Platform Fees" is enabled for the system.',
     required: false,
   }),
 

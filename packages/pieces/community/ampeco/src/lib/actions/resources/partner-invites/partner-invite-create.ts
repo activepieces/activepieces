@@ -43,7 +43,7 @@ export const partnerInviteCreateAction = createAction({
 
   language: Property.ShortText({
     displayName: 'Language',
-    description: 'The language of the e-mail sent to the invitee. If none selected, the default end-users language will be used. Prohibited if \`sendViaEmail\` is false.',
+    description: 'The language of the e-mail sent to the invitee. If none selected, the default end-users language will be used. Prohibited if `sendViaEmail` is false.',
     required: false,
   }),
 
