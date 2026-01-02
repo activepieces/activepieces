@@ -149,26 +149,26 @@ export function DataTable<
   const columns =
     actions.length > 0
       ? columnsWithSelect.concat([
-          {
-            accessorKey: '__actions',
-            header: ({ column }) => (
-              <DataTableColumnHeader column={column} title="" />
-            ),
-            cell: ({ row }) => {
-              return (
-                <div className="flex justify-end gap-4">
-                  {actions.map((action, index) => {
-                    return (
-                      <React.Fragment key={index}>
-                        {action(row.original)}
-                      </React.Fragment>
-                    );
-                  })}
-                </div>
-              );
-            },
+        {
+          accessorKey: '__actions',
+          header: ({ column }) => (
+            <DataTableColumnHeader column={column} title="" />
+          ),
+          cell: ({ row }) => {
+            return (
+              <div className="flex justify-end gap-4">
+                {actions.map((action, index) => {
+                  return (
+                    <React.Fragment key={index}>
+                      {action(row.original)}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            );
           },
-        ])
+        },
+      ])
       : columnsWithSelect;
 
   const columnVisibility = columnsInitial.reduce((acc, column) => {
@@ -255,8 +255,15 @@ export function DataTable<
       (prev) => {
         const newParams = new URLSearchParams(prev);
 
-        newParams.set('cursor', currentCursor ?? '');
-        newParams.set('limit', `${table.getState().pagination.pageSize}`);
+        if (!isNil(currentCursor) && currentCursor !== '') {
+          newParams.set('cursor', currentCursor);
+        } else {
+          newParams.delete('cursor');
+        }
+        const pageSize = table.getState().pagination.pageSize;
+        if (pageSize) {
+          newParams.set('limit', `${pageSize}`);
+        }
         return newParams;
       },
       { replace: true },
@@ -328,9 +335,9 @@ export function DataTable<
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
                     </TableHead>
                   );
                 })}
