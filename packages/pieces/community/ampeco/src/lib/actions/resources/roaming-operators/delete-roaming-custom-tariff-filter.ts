@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/{customTariffFilter}
+
 export const deleteRoamingCustomTariffFilterAction = createAction({
   auth: ampecoAuth,
   name: 'deleteRoamingCustomTariffFilter',
   displayName: 'Resources - Roaming Operators - Delete Roaming Custom Tariff Filter',
-  description: 'Delete a custom tariff filter. (Endpoint: DELETE /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/{customTariffFilter})',
+  description: 'Delete a custom tariff filter.',
   props: {
         
   roamingOperator: Property.Number({

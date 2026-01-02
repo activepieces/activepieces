@@ -7,11 +7,14 @@ import { UpdateConfigurationTemplateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/configuration-templates/v1.0/{template}
+
 export const updateConfigurationTemplateAction = createAction({
   auth: ampecoAuth,
   name: 'updateConfigurationTemplate',
   displayName: 'Resources - Configuration Templates - Update Configuration Template',
-  description: 'Update Configuration Template. (Endpoint: PATCH /public-api/resources/configuration-templates/v1.0/{template})',
+  description: 'Update Configuration Template.',
   props: {
         
   template: Property.Number({

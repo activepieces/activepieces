@@ -7,11 +7,13 @@ import { SubscriptionPlanReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/subscription-plans/v2.0/{subscriptionPlan}
 export const subscriptionPlanReadAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanRead',
-  displayName: 'Resources - Subscription Plans - Subscription Plan Read',
-  description: 'Get a single subscription plan. (Endpoint: GET /public-api/resources/subscription-plans/v2.0/{subscriptionPlan})',
+  displayName: 'Resources - Subscription Plans - Read',
+  description: 'Get a single subscription plan.',
   props: {
         
   subscriptionPlan: Property.Number({

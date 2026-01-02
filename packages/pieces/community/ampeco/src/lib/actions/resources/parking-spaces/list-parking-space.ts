@@ -7,11 +7,14 @@ import { ListParkingSpaceResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/parking-spaces/v1.0
+
 export const listParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'listParkingSpace',
-  displayName: 'Resources - Parking Spaces - List Parking Space',
-  description: 'Get all Parking spaces. (Endpoint: GET /public-api/resources/parking-spaces/v1.0)',
+  displayName: 'Resources - Parking Spaces - List',
+  description: 'Get all Parking spaces.',
   props: {
         
   filter__externalId: Property.ShortText({

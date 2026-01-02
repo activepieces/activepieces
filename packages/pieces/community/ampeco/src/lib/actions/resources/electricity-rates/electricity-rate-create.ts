@@ -7,11 +7,14 @@ import { ElectricityRateCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/electricity-rates/v2.0
+
 export const electricityRateCreateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateCreate',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Create',
-  description: 'Create a new Electricity rate. (Endpoint: POST /public-api/resources/electricity-rates/v2.0)',
+  displayName: 'Resources - Electricity Rates - Create',
+  description: 'Create a new Electricity rate.',
   props: {
         
   name: Property.ShortText({

@@ -1,27 +1,36 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import {
+  makeAmpecoApiCall,
+  processPathParameters,
+  prepareQueryParams,
+  prepareRequestBody,
+  paginate,
+  handleApiError,
+} from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { ChargePointModelsListingResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-point-models/v1.0
+
 export const chargePointModelsListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointModelsListing',
-  displayName: 'Resources - Charge Point Models - Charge Point Models Listing',
-  description: 'Get all Charge Point Models. (Endpoint: GET /public-api/resources/charge-point-models/v1.0)',
+  displayName: 'Resources - Charge Point Models - Listing',
+  description: 'Get all Charge Point Models.',
   props: {
-        
-  filter__vendorId: Property.ShortText({
-    displayName: 'Filter - Vendor Id',
-    description: '',
-    required: false,
-  }),
+    filter__vendorId: Property.ShortText({
+      displayName: 'Filter - Vendor Id',
+      required: false,
+    }),
     per_page: Property.Number({
       displayName: 'Per page',
-      description: 'When pagination is enabled: maximum total results across all pages. When pagination is disabled: number of results per API request (max 100).',
+      description:
+        'When pagination is enabled: maximum total results across all pages. When pagination is disabled: number of results per API request (max 100).',
       required: false,
       defaultValue: 100,
     }),
@@ -34,33 +43,38 @@ export const chargePointModelsListingAction = createAction({
   },
   async run(context): Promise<ChargePointModelsListingResponse> {
     try {
-      const url = processPathParameters('/public-api/resources/charge-point-models/v1.0', context.propsValue);
-      
-      const queryParams = prepareQueryParams(context.propsValue, ['page', 'per_page', 'filter']);
-      
+      const url = processPathParameters(
+        '/public-api/resources/charge-point-models/v1.0',
+        context.propsValue
+      );
+
+      const queryParams = prepareQueryParams(context.propsValue, [
+        'page',
+        'per_page',
+        'filter',
+      ]);
+
       const body = undefined;
 
-          if (context.propsValue.usePagination) {
-      return await paginate({
-        auth: context.auth,
-        method: 'GET',
-        path: url,
-        queryParams,
-        body,
-        perPage: context.propsValue.per_page ?? 100,
-        dataPath: 'data',
-      }) as ChargePointModelsListingResponse;
-    }
+      if (context.propsValue.usePagination) {
+        return (await paginate({
+          auth: context.auth,
+          method: 'GET',
+          path: url,
+          queryParams,
+          body,
+          perPage: context.propsValue.per_page ?? 100,
+          dataPath: 'data',
+        })) as ChargePointModelsListingResponse;
+      }
 
-      
-      return await makeAmpecoApiCall(
+      return (await makeAmpecoApiCall(
         context.auth,
         url,
         HttpMethod.GET,
         body,
         queryParams
-      ) as ChargePointModelsListingResponse;
-
+      )) as ChargePointModelsListingResponse;
     } catch (error) {
       handleApiError(error);
     }

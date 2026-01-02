@@ -7,11 +7,14 @@ import { PartnerInviteCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/partner-invites/v1.0
+
 export const partnerInviteCreateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerInviteCreate',
-  displayName: 'Resources - Partner Invites - Partner Invite Create',
-  description: 'Create new invite. (Endpoint: POST /public-api/resources/partner-invites/v1.0)',
+  displayName: 'Resources - Partner Invites - Create',
+  description: 'Create new invite.',
   props: {
         
   partnerId: Property.Number({

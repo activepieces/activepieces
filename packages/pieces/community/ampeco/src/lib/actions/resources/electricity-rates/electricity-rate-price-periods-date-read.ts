@@ -7,11 +7,14 @@ import { ElectricityRatePricePeriodsDateReadResponse } from '../../../models/res
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/date/{date}
+
 export const electricityRatePricePeriodsDateReadAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsDateRead',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Price Periods Date Read',
-  description: 'Get the price periods for a specific date. (Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/date/{date})',
+  displayName: 'Resources - Electricity Rates - Price Periods Date Read',
+  description: 'Get the price periods for a specific date.',
   props: {
         
   electricityRate: Property.Number({

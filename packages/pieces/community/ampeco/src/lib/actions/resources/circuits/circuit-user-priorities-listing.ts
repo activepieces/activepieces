@@ -7,16 +7,18 @@ import { CircuitUserPrioritiesListingResponse } from '../../../models/responses'
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/user-priorities
+
 export const circuitUserPrioritiesListingAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUserPrioritiesListing',
   displayName: 'Resources - Circuits - Circuit User Priorities Listing',
-  description: 'Get all circuit&#x27;s user priorities. (Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/user-priorities)',
+  description: 'Get all circuit&#x27;s user priorities.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
     per_page: Property.Number({

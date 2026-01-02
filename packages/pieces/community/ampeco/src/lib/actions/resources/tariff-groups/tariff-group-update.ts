@@ -7,11 +7,13 @@ import { TariffGroupUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/tariff-groups/v1.0/{tariffGroup}
 export const tariffGroupUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'tariffGroupUpdate',
-  displayName: 'Resources - Tariff Groups - Tariff Group Update',
-  description: 'Update a tariff group. (Endpoint: PUT /public-api/resources/tariff-groups/v1.0/{tariffGroup})',
+  displayName: 'Resources - Tariff Groups - Update',
+  description: 'Update a tariff group.',
   props: {
         
   tariffGroup: Property.Number({

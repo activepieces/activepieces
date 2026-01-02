@@ -7,11 +7,14 @@ import { InvoicesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/invoices/v1.0
+
 export const invoicesListingAction = createAction({
   auth: ampecoAuth,
   name: 'invoicesListing',
-  displayName: 'Resources - Invoices - Invoices Listing',
-  description: 'Get all invoices. (Endpoint: GET /public-api/resources/invoices/v1.0)',
+  displayName: 'Resources - Invoices - Listing',
+  description: 'Get all invoices.',
   props: {
         
   filter__issuedFrom: Property.ShortText({

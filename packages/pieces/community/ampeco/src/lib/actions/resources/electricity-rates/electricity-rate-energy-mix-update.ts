@@ -7,11 +7,14 @@ import { ElectricityRateEnergyMixUpdateResponse } from '../../../models/response
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/electricity-rates/v2.0/{electricityRate}/energy-mix
+
 export const electricityRateEnergyMixUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateEnergyMixUpdate',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Energy Mix Update',
-  description: 'Set an electricity rate energy mix. By default the energy mix generated with creation of the electricity rate is filled with 0. (Endpoint: PUT /public-api/resources/electricity-rates/v2.0/{electricityRate}/energy-mix)',
+  displayName: 'Resources - Electricity Rates - Energy Mix Update',
+  description: 'Set an electricity rate energy mix. By default the energy mix generated with creation of the electricity rate is filled with 0.',
   props: {
         
   electricityRate: Property.Number({

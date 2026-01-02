@@ -7,11 +7,14 @@ import { AuthorizationsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/authorizations/v2.0
+
 export const authorizationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'authorizationsListing',
   displayName: 'Resources - Authorizations - Authorizations Listing',
-  description: 'Get all authorizations. (Endpoint: GET /public-api/resources/authorizations/v2.0)',
+  description: 'Get all authorizations.',
   props: {
         
   filter__createdAfter: Property.DateTime({

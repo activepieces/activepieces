@@ -7,11 +7,14 @@ import { SessionReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/sessions/v1.0/{session})
+
 export const sessionReadAction = createAction({
   auth: ampecoAuth,
   name: 'sessionRead',
-  displayName: 'Resources - Sessions - Session Read',
-  description: 'Session / Read. (Endpoint: GET /public-api/resources/sessions/v1.0/{session})',
+  displayName: 'Resources - Sessions - Read',
+  description: 'Session / Read.',
   props: {
         
   session: Property.ShortText({

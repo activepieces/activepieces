@@ -7,11 +7,14 @@ import { ReceiptReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/receipts/v2.0/{receipt}
+
 export const receiptReadAction = createAction({
   auth: ampecoAuth,
   name: 'receiptRead',
   displayName: 'Resources - Receipts - Receipt Read',
-  description: 'Get a single receipt. (Endpoint: GET /public-api/resources/receipts/v2.0/{receipt})',
+  description: 'Get a single receipt.',
   props: {
         
   receipt: Property.Number({

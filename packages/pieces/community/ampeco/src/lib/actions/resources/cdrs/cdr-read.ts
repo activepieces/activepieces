@@ -7,22 +7,23 @@ import { CdrReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/cdrs/v2.0/{cdr}
+
 export const cdrReadAction = createAction({
   auth: ampecoAuth,
   name: 'cdrRead',
-  displayName: 'Resources - Cdrs - Cdr Read',
-  description: 'Get a CDR. (Endpoint: GET /public-api/resources/cdrs/v2.0/{cdr})',
+  displayName: 'Resources - Cdrs - Read',
+  description: 'Get a CDR.',
   props: {
         
   cdr: Property.Number({
     displayName: 'Cdr',
-    description: '',
     required: true,
   }),
 
   include: Property.StaticMultiSelectDropdown({
     displayName: 'Include',
-    description: '',
     required: false,
     options: {
       options: [

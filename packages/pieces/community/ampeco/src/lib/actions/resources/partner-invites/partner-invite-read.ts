@@ -7,11 +7,14 @@ import { PartnerInviteReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/partner-invites/v1.0/{partnerInvite}
+
 export const partnerInviteReadAction = createAction({
   auth: ampecoAuth,
   name: 'partnerInviteRead',
-  displayName: 'Resources - Partner Invites - Partner Invite Read',
-  description: 'Get a invite. (Endpoint: GET /public-api/resources/partner-invites/v1.0/{partnerInvite})',
+  displayName: 'Resources - Partner Invites - Read',
+  description: 'Get a invite.',
   props: {
         
   partnerInvite: Property.Number({

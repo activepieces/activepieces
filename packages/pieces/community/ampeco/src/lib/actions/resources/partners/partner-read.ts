@@ -7,11 +7,13 @@ import { PartnerReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: GET /public-api/resources/partners/v2.0/{partner}
 export const partnerReadAction = createAction({
   auth: ampecoAuth,
   name: 'partnerRead',
-  displayName: 'Resources - Partners - Partner Read',
-  description: 'Get a partner. (Endpoint: GET /public-api/resources/partners/v2.0/{partner})',
+  displayName: 'Resources - Partners - Read',
+  description: 'Get a partner.',
   props: {
         
   partner: Property.Number({

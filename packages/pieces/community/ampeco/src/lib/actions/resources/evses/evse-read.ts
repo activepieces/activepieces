@@ -7,11 +7,14 @@ import { EvseReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/evses/v2.1/{evse}
+
 export const evseReadAction = createAction({
   auth: ampecoAuth,
   name: 'evseRead',
-  displayName: 'Resources - Evses - Evse Read',
-  description: 'Get an EVSE. (Endpoint: GET /public-api/resources/evses/v2.1/{evse})',
+  displayName: 'Resources - Evses - Read',
+  description: 'Get an EVSE.',
   props: {
         
   evse: Property.Number({

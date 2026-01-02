@@ -6,28 +6,27 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/charge-points/v2.0/{chargePoint}/evses/{evse}
 export const chargePointEvseDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseDelete',
   displayName: 'Resources - Charge Points - Charge Point Evse Delete',
-  description: 'Delete an EVSE. (Endpoint: DELETE /public-api/resources/charge-points/v2.0/{chargePoint}/evses/{evse})',
+  description: 'Delete an EVSE.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   evse: Property.Number({
     displayName: 'Evse',
-    description: '',
     required: true,
   }),
 
   include: Property.StaticMultiSelectDropdown({
     displayName: 'Include',
-    description: '',
     required: false,
     options: {
       options: [

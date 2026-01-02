@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/installer-jobs/v1.0/{installerJob}
+
 export const deleteInstallerJobAction = createAction({
   auth: ampecoAuth,
   name: 'deleteInstallerJob',
-  displayName: 'Resources - Installer Jobs - Delete Installer Job',
-  description: 'Delete Installer Job. (Endpoint: DELETE /public-api/resources/installer-jobs/v1.0/{installerJob})',
+  displayName: 'Resources - Installer Jobs - Delete',
+  description: 'Delete Installer Job.',
   props: {
         
   installerJob: Property.Number({

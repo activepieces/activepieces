@@ -7,11 +7,14 @@ import { SubscriptionPlanCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/subscription-plans/v2.0
+
 export const subscriptionPlanCreateAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanCreate',
-  displayName: 'Resources - Subscription Plans - Subscription Plan Create',
-  description: 'Create a new Subscription plans. (Endpoint: POST /public-api/resources/subscription-plans/v2.0)',
+  displayName: 'Resources - Subscription Plans -  Create',
+  description: 'Create a new Subscription plans.',
   props: {
         
   name: Property.Array({

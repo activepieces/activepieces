@@ -7,11 +7,14 @@ import { UpdateParkingSpaceResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/parking-spaces/v1.0/{parkingSpace}
+
 export const updateParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'updateParkingSpace',
-  displayName: 'Resources - Parking Spaces - Update Parking Space',
-  description: 'Update Parking Space. (Endpoint: PUT /public-api/resources/parking-spaces/v1.0/{parkingSpace})',
+  displayName: 'Resources - Parking Spaces - Update',
+  description: 'Update Parking Space.',
   props: {
         
   parkingSpace: Property.Number({

@@ -7,11 +7,14 @@ import { RoamingOperatorUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/roaming-operators/v2.0/{roamingOperator}
+
 export const roamingOperatorUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'roamingOperatorUpdate',
   displayName: 'Resources - Roaming Operators - Roaming Operator Update',
-  description: 'Update Roaming Operator. (Endpoint: PATCH /public-api/resources/roaming-operators/v2.0/{roamingOperator})',
+  description: 'Update Roaming Operator.',
   props: {
         
   roamingOperator: Property.Number({

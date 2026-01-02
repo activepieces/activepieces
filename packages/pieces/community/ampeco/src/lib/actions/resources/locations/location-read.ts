@@ -7,11 +7,14 @@ import { LocationReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/locations/v2.0/{location}
+
 export const locationReadAction = createAction({
   auth: ampecoAuth,
   name: 'locationRead',
-  displayName: 'Resources - Locations - Location Read',
-  description: 'Get a location. (Endpoint: GET /public-api/resources/locations/v2.0/{location})',
+  displayName: 'Resources - Locations - Read',
+  description: 'Get a location.',
   props: {
         
   location: Property.Number({

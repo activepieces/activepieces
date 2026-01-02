@@ -7,11 +7,14 @@ import { ChargePointSharedPartnersListingResponse } from '../../../models/respon
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/shared-partners
+
 export const chargePointSharedPartnersListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSharedPartnersListing',
   displayName: 'Resources - Charge Points - Charge Point Shared Partners Listing',
-  description: 'Get all Shared Partners of the Charge Point. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/shared-partners)',
+  description: 'Get all Shared Partners of the Charge Point.',
   props: {
         
   chargePoint: Property.Number({

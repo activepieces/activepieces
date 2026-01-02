@@ -1,34 +1,34 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, paginate, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { ChargePointDowntimePeriodsListingResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-point-downtime-periods/v1.0
+
 export const chargePointDowntimePeriodsListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodsListing',
-  displayName: 'Resources - Charge Point Downtime Periods - Charge Point Downtime Periods Listing',
-  description: 'Get all Charge Point Downtime Periods. (Endpoint: GET /public-api/resources/charge-point-downtime-periods/v1.0)',
+  displayName: 'Resources - Charge Point Downtime Periods - Listing',
+  description: 'Get all Charge Point Downtime Periods.',
   props: {
         
   filter__chargePointId: Property.Number({
     displayName: 'Filter - Charge Point Id',
-    description: '',
     required: false,
   }),
 
   filter__locationId: Property.Number({
     displayName: 'Filter - Location Id',
-    description: '',
     required: false,
   }),
 
   filter__entryMode: Property.StaticDropdown({
     displayName: 'Filter - Entry Mode',
-    description: '',
     required: false,
     options: {
       options: [
@@ -40,7 +40,6 @@ export const chargePointDowntimePeriodsListingAction = createAction({
 
   filter__type: Property.StaticDropdown({
     displayName: 'Filter - Type',
-    description: '',
     required: false,
     options: {
       options: [

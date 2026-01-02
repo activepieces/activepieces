@@ -7,11 +7,14 @@ import { GetEvseLatestHardwareStatusLogResponse } from '../../../models/response
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/evses/v2.0/{evse}/latest-hardware-status-log
+
 export const getEvseLatestHardwareStatusLogAction = createAction({
   auth: ampecoAuth,
   name: 'getEvseLatestHardwareStatusLog',
   displayName: 'Resources - Evses - Get Evse Latest Hardware Status Log',
-  description: 'Get the latest hardware status log entry for an EVSE. (Endpoint: GET /public-api/resources/evses/v2.0/{evse}/latest-hardware-status-log)',
+  description: 'Get the latest hardware status log entry for an EVSE.',
   props: {
         
   evse: Property.Number({

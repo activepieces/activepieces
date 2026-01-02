@@ -7,11 +7,14 @@ import { ElectricityRatePricePeriodsDateCreateOrUpdateResponse } from '../../../
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/date/{date}
+
 export const electricityRatePricePeriodsDateCreateOrUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsDateCreateOrUpdate',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Price Periods Date Create Or Update',
-  description: 'Update the price periods for a specific date. This operation will overwrite all existing periods for the given date, so a complete list must be provided. (Endpoint: PUT /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/date/{date})',
+  displayName: 'Resources - Electricity Rates - Price Periods Date Create Or Update',
+  description: 'Update the price periods for a specific date. This operation will overwrite all existing periods for the given date, so a complete list must be provided.',
   props: {
         
   electricityRate: Property.Number({

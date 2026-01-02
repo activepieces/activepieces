@@ -7,11 +7,14 @@ import { ListConfigurationTemplatesResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/configuration-templates/v1.0
+
 export const listConfigurationTemplatesAction = createAction({
   auth: ampecoAuth,
   name: 'listConfigurationTemplates',
   displayName: 'Resources - Configuration Templates - List Configuration Templates',
-  description: 'Get all Configuration Templates. (Endpoint: GET /public-api/resources/configuration-templates/v1.0)',
+  description: 'Get all Configuration Templates.',
   props: {
         
   filter__ocppVersion: Property.StaticDropdown({

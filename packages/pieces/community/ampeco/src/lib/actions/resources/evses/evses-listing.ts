@@ -7,11 +7,14 @@ import { EvsesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/evses/v2.1
+
 export const evsesListingAction = createAction({
   auth: ampecoAuth,
   name: 'evsesListing',
-  displayName: 'Resources - Evses - Evses Listing',
-  description: 'Get all EVSEs. (Endpoint: GET /public-api/resources/evses/v2.1)',
+  displayName: 'Resources - Evses - Listing',
+  description: 'Get all EVSEs.',
   props: {
         
   filter__chargePointId: Property.Number({

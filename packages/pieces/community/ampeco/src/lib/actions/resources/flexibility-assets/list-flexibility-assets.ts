@@ -7,11 +7,14 @@ import { ListFlexibilityAssetsResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/flexibility-assets/v1.0
+
 export const listFlexibilityAssetsAction = createAction({
   auth: ampecoAuth,
   name: 'listFlexibilityAssets',
-  displayName: 'Resources - Flexibility Assets - List Flexibility Assets',
-  description: 'Get a list of Flexibility Assets. (Endpoint: GET /public-api/resources/flexibility-assets/v1.0)',
+  displayName: 'Resources - Flexibility Assets - List',
+  description: 'Get a list of Flexibility Assets.',
   props: {
         
   filter__updatedSince: Property.DateTime({

@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/electricity-meters/v1.0/{electricityMeter}
+
 export const electricityMeterDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'electricityMeterDelete',
-  displayName: 'Resources - Electricity Meters - Electricity Meter Delete',
-  description: 'Delete an electricity meter. (Endpoint: DELETE /public-api/resources/electricity-meters/v1.0/{electricityMeter})',
+  displayName: 'Resources - Electricity Meters - Delete',
+  description: 'Delete an electricity meter.',
   props: {
         
   electricityMeter: Property.Number({
     displayName: 'Electricity Meter',
-    description: '',
     required: true,
   }),
   },

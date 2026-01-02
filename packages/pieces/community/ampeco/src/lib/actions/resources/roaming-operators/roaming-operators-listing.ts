@@ -7,11 +7,14 @@ import { RoamingOperatorsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/roaming-operators/v2.0
+
 export const roamingOperatorsListingAction = createAction({
   auth: ampecoAuth,
   name: 'roamingOperatorsListing',
   displayName: 'Resources - Roaming Operators - Roaming Operators Listing',
-  description: 'Get all Roaming Operators. (Endpoint: GET /public-api/resources/roaming-operators/v2.0)',
+  description: 'Get all Roaming Operators.',
   props: {
         
     per_page: Property.Number({

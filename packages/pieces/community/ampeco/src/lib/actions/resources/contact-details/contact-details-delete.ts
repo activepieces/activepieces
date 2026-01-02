@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/contact-details/v2.0
+
 export const contactDetailsDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'contactDetailsDelete',
   displayName: 'Resources - Contact Details - Contact Details Delete',
-  description: 'Delete contact details. (Endpoint: DELETE /public-api/resources/contact-details/v2.0)',
+  description: 'Delete contact details.',
   props: {
   },
   async run(context): Promise<unknown> {

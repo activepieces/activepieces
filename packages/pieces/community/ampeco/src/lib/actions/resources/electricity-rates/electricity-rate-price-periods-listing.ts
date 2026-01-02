@@ -7,11 +7,14 @@ import { ElectricityRatePricePeriodsListingResponse } from '../../../models/resp
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods
+
 export const electricityRatePricePeriodsListingAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsListing',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Price Periods Listing',
-  description: 'List all of the configured price period days (including week days and dates). (Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods)',
+  displayName: 'Resources - Electricity Rates - Price Periods Listing',
+  description: 'List all of the configured price period days (including week days and dates).',
   props: {
         
   electricityRate: Property.Number({

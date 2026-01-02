@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records/{PartnerSettlementRecord}
+
 export const partnerSettlementReportPartnerSettlementRecordDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'partnerSettlementReportPartnerSettlementRecordDelete',
-  displayName: 'Resources - Partner Settlement Reports - Partner Settlement Report Partner Settlement Record Delete',
-  description: 'Delete a single Partner Settlement Record. (Endpoint: DELETE /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records/{PartnerSettlementRecord})',
+  displayName: 'Resources - Partner Settlement Reports - Delete Partner Settlement Record',
+  description: 'Delete a single Partner Settlement Record.',
   props: {
         
   partnerSettlementReport: Property.Number({

@@ -7,16 +7,18 @@ import { ListChargePointNetworkStatusLogsResponse } from '../../../models/respon
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/network-status-logs
+
 export const listChargePointNetworkStatusLogsAction = createAction({
   auth: ampecoAuth,
   name: 'listChargePointNetworkStatusLogs',
   displayName: 'Resources - Charge Points - List Charge Point Network Status Logs',
-  description: 'Get paginated list of network status logs for a charge point with optional date filtering. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/network-status-logs)',
+  description: 'Get paginated list of network status logs for a charge point with optional date filtering.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 

@@ -7,11 +7,13 @@ import { TariffGroupReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/tariff-groups/v1.0/{tariffGroup}
 export const tariffGroupReadAction = createAction({
   auth: ampecoAuth,
   name: 'tariffGroupRead',
-  displayName: 'Resources - Tariff Groups - Tariff Group Read',
-  description: 'Get a tariff group. (Endpoint: GET /public-api/resources/tariff-groups/v1.0/{tariffGroup})',
+  displayName: 'Resources - Tariff Groups - Read',
+  description: 'Get a tariff group.',
   props: {
         
   tariffGroup: Property.Number({

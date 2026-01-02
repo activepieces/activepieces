@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/partner-contracts/v1.0/{partnerContract}
+
 export const partnerContractDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractDelete',
-  displayName: 'Resources - Partner Contracts - Partner Contract Delete',
-  description: 'Delete a Partner Contract. (Endpoint: DELETE /public-api/resources/partner-contracts/v1.0/{partnerContract})',
+  displayName: 'Resources - Partner Contracts - Delete',
+  description: 'Delete a Partner Contract.',
   props: {
         
   partnerContract: Property.Number({

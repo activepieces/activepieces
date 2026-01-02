@@ -7,11 +7,14 @@ import { CustomFeesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/custom-fees/v2.0
+
 export const customFeesListingAction = createAction({
   auth: ampecoAuth,
   name: 'customFeesListing',
-  displayName: 'Resources - Custom Fees - Custom Fees Listing',
-  description: 'Get all custom fees. (Endpoint: GET /public-api/resources/custom-fees/v2.0)',
+  displayName: 'Resources - Custom Fees - Listing',
+  description: 'Get all custom fees.',
   props: {
         
   filter__createdAfter: Property.DateTime({

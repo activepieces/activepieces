@@ -7,11 +7,14 @@ import { CreateInstallerJobResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/installer-jobs/v1.0)
+
 export const createInstallerJobAction = createAction({
   auth: ampecoAuth,
   name: 'createInstallerJob',
-  displayName: 'Resources - Installer Jobs - Create Installer Job',
-  description: 'Create Installer Job. (Endpoint: POST /public-api/resources/installer-jobs/v1.0)',
+  displayName: 'Resources - Installer Jobs - Create',
+  description: 'Create Installer Job.',
   props: {
         
   installationAndMaintenanceCompanyId: Property.Number({

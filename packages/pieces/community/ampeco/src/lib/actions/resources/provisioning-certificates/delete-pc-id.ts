@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/provisioning-certificates/v2.0
+
 export const deletePcIdAction = createAction({
   auth: ampecoAuth,
   name: 'deletePcId',
   displayName: 'Resources - Provisioning Certificates - Delete Pc Id',
-  description: 'Delete a provisioning certificate. (Endpoint: DELETE /public-api/resources/provisioning-certificates/v2.0/{provisioningCertificate})',
+  description: 'Delete a provisioning certificate.',
   props: {
         
   provisioningCertificate: Property.Number({

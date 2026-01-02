@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/subscription-plans/v2.0/{subscriptionPlan}
+
 export const subscriptionPlanDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanDelete',
-  displayName: 'Resources - Subscription Plans - Subscription Plan Delete',
-  description: 'Delete a Subscription plan. (Endpoint: DELETE /public-api/resources/subscription-plans/v2.0/{subscriptionPlan})',
+  displayName: 'Resources - Subscription Plans - Delete',
+  description: 'Delete a Subscription plan.',
   props: {
         
   subscriptionPlan: Property.Number({

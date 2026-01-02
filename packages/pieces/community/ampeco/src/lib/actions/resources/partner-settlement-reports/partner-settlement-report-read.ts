@@ -7,11 +7,14 @@ import { PartnerSettlementReportReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}
+
 export const partnerSettlementReportReadAction = createAction({
   auth: ampecoAuth,
   name: 'partnerSettlementReportRead',
-  displayName: 'Resources - Partner Settlement Reports - Partner Settlement Report Read',
-  description: 'Get a single Partner Settlement Report. (Endpoint: GET /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport})',
+  displayName: 'Resources - Partner Settlement Reports - Read',
+  description: 'Get a single Partner Settlement Report.',
   props: {
         
   partnerSettlementReport: Property.Number({

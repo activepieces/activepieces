@@ -7,22 +7,23 @@ import { ElectricityMeterCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/electricity-meters/v1.0
+
 export const electricityMeterCreateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityMeterCreate',
-  displayName: 'Resources - Electricity Meters - Electricity Meter Create',
-  description: 'Create a new electricity meter. (Endpoint: POST /public-api/resources/electricity-meters/v1.0)',
+  displayName: 'Resources - Electricity Meters - Create',
+  description: 'Create a new electricity meter.',
   props: {
         
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: true,
   }),
 
   integrationId: Property.Number({
     displayName: 'Integration Id',
-    description: '',
     required: true,
   }),
   },

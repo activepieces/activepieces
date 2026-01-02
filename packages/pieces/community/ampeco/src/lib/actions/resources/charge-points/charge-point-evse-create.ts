@@ -7,16 +7,18 @@ import { ChargePointEvseCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/charge-points/v2.0/{chargePoint}/evses
+
 export const chargePointEvseCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseCreate',
   displayName: 'Resources - Charge Points - Charge Point Evse Create',
-  description: 'Create new EVSE within the Charge Point. (Endpoint: POST /public-api/resources/charge-points/v2.0/{chargePoint}/evses)',
+  description: 'Create new EVSE within the Charge Point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 

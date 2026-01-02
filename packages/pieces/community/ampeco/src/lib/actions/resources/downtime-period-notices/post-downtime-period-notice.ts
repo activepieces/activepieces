@@ -7,11 +7,14 @@ import { PostDowntimePeriodNoticeResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/downtime-period-notices/v1.0
+
 export const postDowntimePeriodNoticeAction = createAction({
   auth: ampecoAuth,
   name: 'postDowntimePeriodNotice',
   displayName: 'Resources - Downtime Period Notices - Post Downtime Period Notice',
-  description: 'Create Downtime Period Notice. (Endpoint: POST /public-api/resources/downtime-period-notices/v1.0)',
+  description: 'Create Downtime Period Notice.',
   props: {
         
   type: Property.StaticDropdown({

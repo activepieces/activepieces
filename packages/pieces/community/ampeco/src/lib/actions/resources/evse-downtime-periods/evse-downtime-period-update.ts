@@ -7,11 +7,14 @@ import { EvseDowntimePeriodUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/evse-downtime-periods/v1.0/{evseDowntimePeriod}
+
 export const evseDowntimePeriodUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'evseDowntimePeriodUpdate',
-  displayName: 'Resources - Evse Downtime Periods - Evse Downtime Period Update',
-  description: 'Update EVSE Downtime Period. (Endpoint: PATCH /public-api/resources/evse-downtime-periods/v1.0/{evseDowntimePeriod})',
+  displayName: 'Resources - Evse Downtime Periods - Update',
+  description: 'Update EVSE Downtime Period.',
   props: {
         
   evseDowntimePeriod: Property.Number({

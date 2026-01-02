@@ -7,11 +7,14 @@ import { CreateRoamingCustomTariffFilterResponse } from '../../../models/respons
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters
+
 export const createRoamingCustomTariffFilterAction = createAction({
   auth: ampecoAuth,
   name: 'createRoamingCustomTariffFilter',
   displayName: 'Resources - Roaming Operators - Create Roaming Custom Tariff Filter',
-  description: 'Create new custom tariff filter for a roaming operator. (Endpoint: POST /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters)',
+  description: 'Create new custom tariff filter for a roaming operator.',
   props: {
         
   roamingOperator: Property.Number({

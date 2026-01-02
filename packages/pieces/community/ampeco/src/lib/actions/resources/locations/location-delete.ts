@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/locations/v2.0/{location}
+
 export const locationDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'locationDelete',
-  displayName: 'Resources - Locations - Location Delete',
-  description: 'Delete a location. (Endpoint: DELETE /public-api/resources/locations/v2.0/{location})',
+  displayName: 'Resources - Locations - Delete',
+  description: 'Delete a location.',
   props: {
         
   location: Property.Number({

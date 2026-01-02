@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: DELETE /public-api/resources/evse-downtime-periods/v1.0/{evseDowntimePeriod}
+
 export const evseDowntimePeriodDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'evseDowntimePeriodDelete',
-  displayName: 'Resources - Evse Downtime Periods - Evse Downtime Period Delete',
-  description: 'Delete Manual Created EVSE Downtime Period. (Endpoint: DELETE /public-api/resources/evse-downtime-periods/v1.0/{evseDowntimePeriod})',
+  displayName: 'Resources - Evse Downtime Periods - Delete',
+  description: 'Delete Manual Created EVSE Downtime Period.',
   props: {
         
   evseDowntimePeriod: Property.Number({

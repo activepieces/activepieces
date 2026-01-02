@@ -7,16 +7,17 @@ import { AuthorizationReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/authorizations/v2.0/{authorization}
 export const authorizationReadAction = createAction({
   auth: ampecoAuth,
   name: 'authorizationRead',
   displayName: 'Resources - Authorizations - Authorization Read',
-  description: 'Authorization / Read. (Endpoint: GET /public-api/resources/authorizations/v2.0/{authorization})',
+  description: 'Authorization / Read.',
   props: {
         
   authorization: Property.ShortText({
     displayName: 'Authorization',
-    description: '',
     required: true,
   }),
   },

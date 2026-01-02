@@ -7,11 +7,14 @@ import { UpdatePaymentTerminalResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/payment-terminals/v1.0/{paymentTerminal}
+
 export const updatePaymentTerminalAction = createAction({
   auth: ampecoAuth,
   name: 'updatePaymentTerminal',
   displayName: 'Resources - Payment Terminals - Update Payment Terminal',
-  description: 'Update Payment terminal. (Endpoint: PATCH /public-api/resources/payment-terminals/v1.0/{paymentTerminal})',
+  description: 'Update Payment terminal.',
   props: {
         
   paymentTerminal: Property.ShortText({
@@ -43,6 +46,7 @@ export const updatePaymentTerminalAction = createAction({
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
      required: true,
+     auth:ampecoAuth,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {
         if (!requestBody_VariantType) {

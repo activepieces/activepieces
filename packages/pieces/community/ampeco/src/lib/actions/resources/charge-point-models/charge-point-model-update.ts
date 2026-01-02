@@ -7,28 +7,28 @@ import { ChargePointModelUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/charge-point-models/v1.0/{modelId}
+
 export const chargePointModelUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointModelUpdate',
-  displayName: 'Resources - Charge Point Models - Charge Point Model Update',
-  description: 'Charge Point Model. (Endpoint: PATCH /public-api/resources/charge-point-models/v1.0/{modelId})',
+  displayName: 'Resources - Charge Point Models - Update',
+  description: 'Charge Point Model.',
   props: {
         
   modelId: Property.Number({
     displayName: 'Model Id',
-    description: '',
     required: true,
   }),
 
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: false,
   }),
 
   vendorId: Property.Number({
     displayName: 'Vendor Id',
-    description: '',
     required: false,
   }),
 

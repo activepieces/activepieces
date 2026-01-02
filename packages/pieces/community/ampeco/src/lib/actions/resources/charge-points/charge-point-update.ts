@@ -7,22 +7,23 @@ import { ChargePointUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: PATCH /public-api/resources/charge-points/v2.0/{chargePoint}
+
 export const chargePointUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointUpdate',
   displayName: 'Resources - Charge Points - Charge Point Update',
-  description: 'Update a charge point. (Endpoint: PATCH /public-api/resources/charge-points/v2.0/{chargePoint})',
+  description: 'Update a charge point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   include: Property.StaticMultiSelectDropdown({
     displayName: 'Include',
-    description: '',
     required: false,
     options: {
       options: [
@@ -38,7 +39,6 @@ export const chargePointUpdateAction = createAction({
 
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: false,
   }),
 
@@ -69,7 +69,6 @@ export const chargePointUpdateAction = createAction({
 
   chargingZoneId: Property.Number({
     displayName: 'Charging Zone Id',
-    description: '',
     required: false,
   }),
 
@@ -138,7 +137,6 @@ export const chargePointUpdateAction = createAction({
 
   externalId: Property.ShortText({
     displayName: 'External Id',
-    description: '',
     required: false,
   }),
 
@@ -164,7 +162,6 @@ export const chargePointUpdateAction = createAction({
 
   network__password: Property.ShortText({
     displayName: 'Network - Password',
-    description: '',
     required: false,
   }),
 
@@ -233,7 +230,6 @@ export const chargePointUpdateAction = createAction({
 
   enableAutoFaultRecovery: Property.StaticDropdown({
     displayName: 'Enable Auto Fault Recovery',
-    description: '',
     required: false,
     options: {
       options: [
@@ -245,13 +241,11 @@ export const chargePointUpdateAction = createAction({
 
   user__id: Property.Number({
     displayName: 'User - Id',
-    description: '',
     required: false,
   }),
 
   user__automaticFirmwareUpdatesEnabled: Property.StaticDropdown({
     displayName: 'User - Automatic Firmware Updates Enabled',
-    description: '',
     required: false,
     options: {
       options: [
@@ -263,7 +257,6 @@ export const chargePointUpdateAction = createAction({
 
   partner__id: Property.Number({
     displayName: 'Partner - Id',
-    description: '',
     required: false,
   }),
 

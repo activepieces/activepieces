@@ -7,11 +7,14 @@ import { LocationChargingZoneReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/locations/v2.0/{location}/charging-zones/{chargingZone}
+
 export const locationChargingZoneReadAction = createAction({
   auth: ampecoAuth,
   name: 'locationChargingZoneRead',
-  displayName: 'Resources - Locations - Location Charging Zone Read',
-  description: 'Get a Charging Zone. (Endpoint: GET /public-api/resources/locations/v2.0/{location}/charging-zones/{chargingZone})',
+  displayName: 'Resources - Locations - Read Charging Zone',
+  description: 'Get a Charging Zone.',
   props: {
         
   location: Property.Number({

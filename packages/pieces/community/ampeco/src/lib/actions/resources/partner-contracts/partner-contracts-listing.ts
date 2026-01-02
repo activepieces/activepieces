@@ -7,11 +7,14 @@ import { PartnerContractsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/partner-contracts/v1.0
+
 export const partnerContractsListingAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractsListing',
-  displayName: 'Resources - Partner Contracts - Partner Contracts Listing',
-  description: 'Get all Partner Contracts. (Endpoint: GET /public-api/resources/partner-contracts/v1.0)',
+  displayName: 'Resources - Partner Contracts - Listing',
+  description: 'Get all Partner Contracts.',
   props: {
         
     per_page: Property.Number({

@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/downtime-period-notices/v1.0/{notice}
+
 export const deleteDowntimePeriodNoticeAction = createAction({
   auth: ampecoAuth,
   name: 'deleteDowntimePeriodNotice',
-  displayName: 'Resources - Downtime Period Notices - Delete Downtime Period Notice',
-  description: 'Delete Downtime Period Notice. (Endpoint: DELETE /public-api/resources/downtime-period-notices/v1.0/{notice})',
+  displayName: 'Resources - Downtime Period Notices - Delete',
+  description: 'Delete Downtime Period Notice.',
   props: {
         
   notice: Property.Number({
     displayName: 'Notice',
-    description: '',
     required: true,
   }),
   },

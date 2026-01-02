@@ -7,11 +7,14 @@ import { GetPaymentTerminalResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/payment-terminals/v1.0/{paymentTerminal}
+
 export const getPaymentTerminalAction = createAction({
   auth: ampecoAuth,
   name: 'getPaymentTerminal',
   displayName: 'Resources - Payment Terminals - Get Payment Terminal',
-  description: 'Get information for a payment terminal by ID. (Endpoint: GET /public-api/resources/payment-terminals/v1.0/{paymentTerminal})',
+  description: 'Get information for a payment terminal by ID.',
   props: {
         
   paymentTerminal: Property.ShortText({

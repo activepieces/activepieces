@@ -7,28 +7,28 @@ import { ElectricityMeterUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/electricity-meters/v1.0/{electricityMeter}
+
 export const electricityMeterUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityMeterUpdate',
-  displayName: 'Resources - Electricity Meters - Electricity Meter Update',
-  description: 'Update electricity meter. (Endpoint: PATCH /public-api/resources/electricity-meters/v1.0/{electricityMeter})',
+  displayName: 'Resources - Electricity Meters - Update',
+  description: 'Update electricity meter.',
   props: {
         
   electricityMeter: Property.Number({
     displayName: 'Electricity Meter',
-    description: '',
     required: true,
   }),
 
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: false,
   }),
 
   integrationId: Property.Number({
     displayName: 'Integration Id',
-    description: '',
     required: false,
   }),
   },

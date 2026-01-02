@@ -7,11 +7,14 @@ import { SubOperatorReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/sub-operators/v1.0/{subOperator}
+
 export const subOperatorReadAction = createAction({
   auth: ampecoAuth,
   name: 'subOperatorRead',
-  displayName: 'Resources - Sub Operators - Sub Operator Read',
-  description: 'Get a sub operator. (Endpoint: GET /public-api/resources/sub-operators/v1.0/{subOperator})',
+  displayName: 'Resources - Sub Operators - Read',
+  description: 'Get a sub operator.',
   props: {
         
   subOperator: Property.Number({

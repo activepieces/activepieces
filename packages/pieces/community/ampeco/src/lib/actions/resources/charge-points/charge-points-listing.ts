@@ -7,11 +7,14 @@ import { ChargePointsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0
+
 export const chargePointsListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointsListing',
   displayName: 'Resources - Charge Points - Charge Points Listing',
-  description: 'Get all charge points. (Endpoint: GET /public-api/resources/charge-points/v2.0)',
+  description: 'Get all charge points.',
   props: {
         
   filter__desiredSecurityProfileStatus: Property.StaticDropdown({

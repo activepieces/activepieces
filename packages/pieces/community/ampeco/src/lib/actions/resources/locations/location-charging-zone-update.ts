@@ -7,11 +7,13 @@ import { LocationChargingZoneUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/locations/v2.0/{location}/charging-zones/{chargingZone}
 export const locationChargingZoneUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'locationChargingZoneUpdate',
-  displayName: 'Resources - Locations - Location Charging Zone Update',
-  description: 'Update a existing Charging Zone. (Endpoint: PATCH /public-api/resources/locations/v2.0/{location}/charging-zones/{chargingZone})',
+  displayName: 'Resources - Locations - Update Charging Zone',
+  description: 'Update a existing Charging Zone.',
   props: {
         
   location: Property.Number({

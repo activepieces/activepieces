@@ -7,11 +7,14 @@ import { PartnersListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/partners/v2.0)
+
 export const partnersListingAction = createAction({
   auth: ampecoAuth,
   name: 'partnersListing',
-  displayName: 'Resources - Partners - Partners Listing',
-  description: 'Get all partners. (Endpoint: GET /public-api/resources/partners/v2.0)',
+  displayName: 'Resources - Partners - Listing',
+  description: 'Get all partners.',
   props: {
         
   filter__country: Property.StaticDropdown({

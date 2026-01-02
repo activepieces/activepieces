@@ -7,11 +7,14 @@ import { PartnerCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/partners/v2.0
+
 export const partnerCreateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerCreate',
-  displayName: 'Resources - Partners - Partner Create',
-  description: 'Create new partner. (Endpoint: POST /public-api/resources/partners/v2.0)',
+  displayName: 'Resources - Partners - Create',
+  description: 'Create new partner.',
   props: {
         
   businessName: Property.ShortText({
@@ -325,6 +328,7 @@ export const partnerCreateAction = createAction({
   state: Property.Dropdown({
         displayName: 'State',
         required: false,
+        auth:ampecoAuth,
         refreshers: ['country'],
         options: async ({ country }) => {
           if (!country) {

@@ -7,11 +7,14 @@ import { PartnerInviteUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/partner-invites/v1.0/{partnerInvite}
+
 export const partnerInviteUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerInviteUpdate',
-  displayName: 'Resources - Partner Invites - Partner Invite Update',
-  description: 'Update a invite. (Endpoint: PATCH /public-api/resources/partner-invites/v1.0/{partnerInvite})',
+  displayName: 'Resources - Partner Invites - Update',
+  description: 'Update a invite.',
   props: {
         
   partnerInvite: Property.Number({

@@ -7,22 +7,23 @@ import { ChargePointEvsesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/evses
+
 export const chargePointEvsesListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvsesListing',
   displayName: 'Resources - Charge Points - Charge Point Evses Listing',
-  description: 'Get all EVSEs of the Charge Point. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/evses)',
+  description: 'Get all EVSEs of the Charge Point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   include: Property.StaticMultiSelectDropdown({
     displayName: 'Include',
-    description: '',
     required: false,
     options: {
       options: [

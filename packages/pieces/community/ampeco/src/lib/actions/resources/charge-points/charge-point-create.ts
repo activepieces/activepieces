@@ -7,16 +7,18 @@ import { ChargePointCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/charge-points/v2.0
+
 export const chargePointCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointCreate',
   displayName: 'Resources - Charge Points - Charge Point Create',
-  description: 'Create new charge point. (Endpoint: POST /public-api/resources/charge-points/v2.0)',
+  description: 'Create new charge point.',
   props: {
         
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: true,
   }),
 

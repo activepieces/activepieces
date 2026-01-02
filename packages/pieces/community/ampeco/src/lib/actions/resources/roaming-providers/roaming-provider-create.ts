@@ -7,11 +7,14 @@ import { RoamingProviderCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/roaming-providers/v2.0
+
 export const roamingProviderCreateAction = createAction({
   auth: ampecoAuth,
   name: 'roamingProviderCreate',
-  displayName: 'Resources - Roaming Providers - Roaming Provider Create',
-  description: 'Create new Roaming Provider **Only applicable for Hubject, Gireve 2.2.1 and OCPI with missing credentials module emsp roaming connections**. (Endpoint: POST /public-api/resources/roaming-providers/v2.0)',
+  displayName: 'Resources - Roaming Providers - Create',
+  description: 'Create new Roaming Provider **Only applicable for Hubject, Gireve 2.2.1 and OCPI with missing credentials module emsp roaming connections**.',
   props: {
         
   requestBody_VariantType: Property.StaticDropdown({
@@ -29,6 +32,7 @@ export const roamingProviderCreateAction = createAction({
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
      required: true,
+     auth:ampecoAuth,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {
         if (!requestBody_VariantType) {

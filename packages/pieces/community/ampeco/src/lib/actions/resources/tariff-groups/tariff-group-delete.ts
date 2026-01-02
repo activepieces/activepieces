@@ -6,11 +6,13 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: DELETE /public-api/resources/tariff-groups/v1.0/{tariffGroup}
 export const tariffGroupDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'tariffGroupDelete',
-  displayName: 'Resources - Tariff Groups - Tariff Group Delete',
-  description: 'Delete a tariff group. (Endpoint: DELETE /public-api/resources/tariff-groups/v1.0/{tariffGroup})',
+  displayName: 'Resources - Tariff Groups - Delete',
+  description: 'Delete a tariff group.',
   props: {
         
   tariffGroup: Property.Number({

@@ -7,11 +7,14 @@ import { SubOperatorsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/sub-operators/v1.0
+
 export const subOperatorsListingAction = createAction({
   auth: ampecoAuth,
   name: 'subOperatorsListing',
-  displayName: 'Resources - Sub Operators - Sub Operators Listing',
-  description: 'Get all sub operators. (Endpoint: GET /public-api/resources/sub-operators/v1.0)',
+  displayName: 'Resources - Sub Operators - Listing',
+  description: 'Get all sub operators.',
   props: {
         
     per_page: Property.Number({

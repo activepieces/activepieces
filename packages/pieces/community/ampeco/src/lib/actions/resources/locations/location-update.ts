@@ -7,11 +7,14 @@ import { LocationUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/locations/v2.0/{location}
+
 export const locationUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'locationUpdate',
-  displayName: 'Resources - Locations - Location Update',
-  description: 'Update a location. (Endpoint: PATCH /public-api/resources/locations/v2.0/{location})',
+  displayName: 'Resources - Locations - Update',
+  description: 'Update a location.',
   props: {
         
   location: Property.Number({
@@ -181,6 +184,7 @@ export const locationUpdateAction = createAction({
   state: Property.Dropdown({
         displayName: 'State',
         required: false,
+        auth:ampecoAuth,
         refreshers: ['country'],
         options: async ({ country }) => {
           if (!country) {

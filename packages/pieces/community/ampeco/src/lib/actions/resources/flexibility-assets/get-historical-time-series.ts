@@ -7,11 +7,13 @@ import { GetHistoricalTimeSeriesResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset}/historical-time-series
 export const getHistoricalTimeSeriesAction = createAction({
   auth: ampecoAuth,
   name: 'getHistoricalTimeSeries',
   displayName: 'Resources - Flexibility Assets - Get Historical Time Series',
-  description: 'Get Historical Time Series for a Flexibility Asset. (Endpoint: GET /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset}/historical-time-series)',
+  description: 'Get Historical Time Series for a Flexibility Asset.',
   props: {
         
   flexibilityAsset: Property.Number({

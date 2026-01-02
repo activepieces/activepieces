@@ -6,22 +6,23 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/charge-points/v2.0/{chargePoint}/shared-partners
+
 export const chargePointSharedPartnersSyncAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSharedPartnersSync',
   displayName: 'Resources - Charge Points - Charge Point Shared Partners Sync',
-  description: 'Set the Shared Partners of the Charge Point. Attach Shared Partners within the Charge Point. The charge point must have an owner associated and its &#x60;access_type&#x60; must be &#x60;private&#x60;. (Endpoint: PUT /public-api/resources/charge-points/v2.0/{chargePoint}/shared-partners)',
+  description: 'Set the Shared Partners of the Charge Point. Attach Shared Partners within the Charge Point. The charge point must have an owner associated and its "access_type" must be "private".',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   partnerIds: Property.Array({
     displayName: 'Partner Ids',
-    description: '',
     required: true,
   }),
   },

@@ -7,11 +7,14 @@ import { CreatePaymentTerminalResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/payment-terminals/v1.0
+
 export const createPaymentTerminalAction = createAction({
   auth: ampecoAuth,
   name: 'createPaymentTerminal',
   displayName: 'Resources - Payment Terminals - Create Payment Terminal',
-  description: 'Create a new payment terminal. (Endpoint: POST /public-api/resources/payment-terminals/v1.0)',
+  description: 'Create a new payment terminal.',
   props: {
         
   requestBody_VariantType: Property.StaticDropdown({
@@ -37,6 +40,7 @@ export const createPaymentTerminalAction = createAction({
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
      required: true,
+     auth:ampecoAuth,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {
         if (!requestBody_VariantType) {
@@ -61,6 +65,7 @@ export const createPaymentTerminalAction = createAction({
 
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
+     auth:ampecoAuth,
      required: true,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {

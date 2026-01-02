@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/locations/v2.0/{location}/charging-zones/{chargingZone}
+
 export const locationChargingZoneDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'locationChargingZoneDelete',
-  displayName: 'Resources - Locations - Location Charging Zone Delete',
-  description: 'Location / Charging Zone / Delete. (Endpoint: DELETE /public-api/resources/locations/v2.0/{location}/charging-zones/{chargingZone})',
+  displayName: 'Resources - Locations - Delete Charging Zone',
+  description: 'Location / Charging Zone / Delete.',
   props: {
         
   location: Property.Number({

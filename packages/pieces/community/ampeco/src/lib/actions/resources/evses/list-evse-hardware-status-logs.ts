@@ -7,11 +7,14 @@ import { ListEvseHardwareStatusLogsResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/evses/v2.0/{evse}/hardware-status-logs
+
 export const listEvseHardwareStatusLogsAction = createAction({
   auth: ampecoAuth,
   name: 'listEvseHardwareStatusLogs',
   displayName: 'Resources - Evses - List Evse Hardware Status Logs',
-  description: 'Get paginated list of hardware status logs for an EVSE with optional date filtering. (Endpoint: GET /public-api/resources/evses/v2.0/{evse}/hardware-status-logs)',
+  description: 'Get paginated list of hardware status logs for an EVSE with optional date filtering.',
   props: {
         
   evse: Property.Number({

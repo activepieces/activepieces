@@ -7,11 +7,14 @@ import { PartnerContractCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/partner-contracts/v1.0
+
 export const partnerContractCreateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractCreate',
-  displayName: 'Resources - Partner Contracts - Partner Contract Create',
-  description: 'Create new Partner Contract. (Endpoint: POST /public-api/resources/partner-contracts/v1.0)',
+  displayName: 'Resources - Partner Contracts -Create',
+  description: 'Create new Partner Contract.',
   props: {
         
   title: Property.ShortText({

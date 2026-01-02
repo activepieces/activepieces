@@ -7,11 +7,14 @@ import { ReservationsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/reservations/v1.0
+
 export const reservationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'reservationsListing',
   displayName: 'Resources - Reservations - Reservations Listing',
-  description: 'Get all reservations. (Endpoint: GET /public-api/resources/reservations/v1.0)',
+  description: 'Get all reservations.',
   props: {
         
   filter__evseId: Property.Number({

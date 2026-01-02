@@ -7,11 +7,14 @@ import { LocationsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/locations/v2.0
+
 export const locationsListingAction = createAction({
   auth: ampecoAuth,
   name: 'locationsListing',
-  displayName: 'Resources - Locations - Locations Listing',
-  description: 'Get all locations. (Endpoint: GET /public-api/resources/locations/v2.0)',
+  displayName: 'Resources - Locations - Listing',
+  description: 'Get all locations.',
   props: {
         
   filter__country: Property.StaticDropdown({
@@ -276,6 +279,7 @@ export const locationsListingAction = createAction({
 
   filter__state: Property.Dropdown({
         displayName: 'State',
+        auth:ampecoAuth,
         required: false,
         refreshers: ['country'],
         options: async ({ country }) => {

@@ -7,11 +7,14 @@ import { ContactDetailsUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/contact-details/v2.0
+
 export const contactDetailsUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'contactDetailsUpdate',
   displayName: 'Resources - Contact Details - Contact Details Update',
-  description: 'Update the contact details. (Endpoint: PUT /public-api/resources/contact-details/v2.0)',
+  description: 'Update the contact details.',
   props: {
         
   email: Property.ShortText({

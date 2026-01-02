@@ -7,11 +7,14 @@ import { SettingsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/settings/v1.0
+
 export const settingsListingAction = createAction({
   auth: ampecoAuth,
   name: 'settingsListing',
   displayName: 'Resources - Settings - Settings Listing',
-  description: 'Get all settings. (Endpoint: GET /public-api/resources/settings/v1.0)',
+  description: 'Get all settings.',
   props: {
   },
   async run(context): Promise<SettingsListingResponse> {

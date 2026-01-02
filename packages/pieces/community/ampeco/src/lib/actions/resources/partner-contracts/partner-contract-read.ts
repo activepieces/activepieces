@@ -7,11 +7,14 @@ import { PartnerContractReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/partner-contracts/v1.0/{partnerContract}
+
 export const partnerContractReadAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractRead',
-  displayName: 'Resources - Partner Contracts - Partner Contract Read',
-  description: 'Get a Partner Contract. (Endpoint: GET /public-api/resources/partner-contracts/v1.0/{partnerContract})',
+  displayName: 'Resources - Partner Contracts - Read',
+  description: 'Get a Partner Contract.',
   props: {
         
   partnerContract: Property.Number({

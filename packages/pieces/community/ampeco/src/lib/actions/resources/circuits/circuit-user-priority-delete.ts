@@ -6,22 +6,23 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/circuits/v2.0/{circuit}/user-priorities/{userPriority}
+
 export const circuitUserPriorityDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUserPriorityDelete',
   displayName: 'Resources - Circuits - Circuit User Priority Delete',
-  description: 'Delete a circuit&#x27;s user priority. (Endpoint: DELETE /public-api/resources/circuits/v2.0/{circuit}/user-priorities/{userPriority})',
+  description: 'Delete a circuit&#x27;s user priority.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
   userPriority: Property.Number({
     displayName: 'User Priority',
-    description: '',
     required: true,
   }),
   },

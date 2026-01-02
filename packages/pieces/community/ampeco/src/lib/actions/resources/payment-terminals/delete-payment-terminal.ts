@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/payment-terminals/v1.0/{paymentTerminal}
+
 export const deletePaymentTerminalAction = createAction({
   auth: ampecoAuth,
   name: 'deletePaymentTerminal',
   displayName: 'Resources - Payment Terminals - Delete Payment Terminal',
-  description: 'Delete a payment terminal. (Endpoint: DELETE /public-api/resources/payment-terminals/v1.0/{paymentTerminal})',
+  description: 'Delete a payment terminal.',
   props: {
         
   paymentTerminal: Property.ShortText({

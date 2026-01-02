@@ -7,11 +7,14 @@ import { ElectricityRateEnergyMixReadResponse } from '../../../models/responses'
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/energy-mix
+
 export const electricityRateEnergyMixReadAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateEnergyMixRead',
   displayName: 'Resources - Electricity Rates - Electricity Rate Energy Mix Read',
-  description: 'Get an electricity rate energy mix. (Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/energy-mix)',
+  description: 'Get an electricity rate energy mix.',
   props: {
         
   electricityRate: Property.Number({

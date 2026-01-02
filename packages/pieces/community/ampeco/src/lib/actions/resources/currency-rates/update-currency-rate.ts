@@ -7,11 +7,14 @@ import { UpdateCurrencyRateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/currency-rates/v1.0/{currencyRate}
+
 export const updateCurrencyRateAction = createAction({
   auth: ampecoAuth,
   name: 'updateCurrencyRate',
-  displayName: 'Resources - Currency Rates - Update Currency Rate',
-  description: 'Update Currency Rate. (Endpoint: PATCH /public-api/resources/currency-rates/v1.0/{currencyRate})',
+  displayName: 'Resources - Currency Rates - Update',
+  description: 'Update Currency Rate.',
   props: {
         
   currencyRate: Property.Number({

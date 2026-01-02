@@ -7,11 +7,14 @@ import { CreatePcIdResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/provisioning-certificates/v2.0
+
 export const createPcIdAction = createAction({
   auth: ampecoAuth,
   name: 'createPcId',
   displayName: 'Resources - Provisioning Certificates - Create Pc Id',
-  description: 'Create Provisioning Certificate. (Endpoint: POST /public-api/resources/provisioning-certificates/v2.0)',
+  description: 'Create Provisioning Certificate.',
   props: {
         
   pcId: Property.ShortText({

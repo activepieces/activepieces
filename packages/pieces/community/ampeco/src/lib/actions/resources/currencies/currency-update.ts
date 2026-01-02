@@ -7,11 +7,14 @@ import { CurrencyUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/currencies/v2.0/{currency}
+
 export const currencyUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'currencyUpdate',
-  displayName: 'Resources - Currencies - Currency Update',
-  description: 'Update a currency. (Endpoint: PATCH /public-api/resources/currencies/v2.0/{currency})',
+  displayName: 'Resources - Currencies - Update',
+  description: 'Update a currency.',
   props: {
         
   currency: Property.Number({

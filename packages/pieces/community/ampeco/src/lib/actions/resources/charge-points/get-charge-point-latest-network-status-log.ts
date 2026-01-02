@@ -11,7 +11,7 @@ export const getChargePointLatestNetworkStatusLogAction = createAction({
   auth: ampecoAuth,
   name: 'getChargePointLatestNetworkStatusLog',
   displayName: 'Resources - Charge Points - Get Charge Point Latest Network Status Log',
-  description: 'Get the latest network status log entry for a charge point. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/latest-network-status-log)',
+  description: 'Get the latest network status log entry for a charge point.',
   props: {
         
   chargePoint: Property.Number({

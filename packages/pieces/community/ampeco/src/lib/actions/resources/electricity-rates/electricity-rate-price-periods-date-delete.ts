@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/date/{date}
+
 export const electricityRatePricePeriodsDateDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsDateDelete',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Price Periods Date Delete',
-  description: 'Delete the price periods for a specific date. (Endpoint: DELETE /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/date/{date})',
+  displayName: 'Resources - Electricity Rates - Price Periods Date Delete',
+  description: 'Delete the price periods for a specific date.',
   props: {
         
   electricityRate: Property.Number({

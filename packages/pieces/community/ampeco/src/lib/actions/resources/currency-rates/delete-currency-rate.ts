@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/currency-rates/v1.0/{currencyRate}
+
 export const deleteCurrencyRateAction = createAction({
   auth: ampecoAuth,
   name: 'deleteCurrencyRate',
-  displayName: 'Resources - Currency Rates - Delete Currency Rate',
-  description: 'Delete Currency Rate. (Endpoint: DELETE /public-api/resources/currency-rates/v1.0/{currencyRate})',
+  displayName: 'Resources - Currency Rates - Delete',
+  description: 'Delete Currency Rate.',
   props: {
         
   currencyRate: Property.Number({
     displayName: 'Currency Rate',
-    description: '',
     required: true,
   }),
   },

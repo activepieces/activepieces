@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/id-tags/v2.0/{idTag}
+
 export const idTagDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'idTagDelete',
-  displayName: 'Resources - Id Tags - Id Tag Delete',
-  description: 'Delete a Id Tag. (Endpoint: DELETE /public-api/resources/id-tags/v2.0/{idTag})',
+  displayName: 'Resources - Id Tags - Delete',
+  description: 'Delete a Id Tag.',
   props: {
         
   idTag: Property.Number({

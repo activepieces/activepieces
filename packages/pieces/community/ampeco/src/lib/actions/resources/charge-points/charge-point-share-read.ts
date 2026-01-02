@@ -7,22 +7,23 @@ import { ChargePointShareReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/shares/{share}
+
 export const chargePointShareReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointShareRead',
   displayName: 'Resources - Charge Points - Charge Point Share Read',
-  description: 'Get an Share from a Charge Point. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/shares/{share})',
+  description: 'Get an Share from a Charge Point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   share: Property.Number({
     displayName: 'Share',
-    description: '',
     required: true,
   }),
   },

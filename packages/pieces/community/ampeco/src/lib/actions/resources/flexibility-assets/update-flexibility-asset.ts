@@ -7,11 +7,13 @@ import { UpdateFlexibilityAssetResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset}
 export const updateFlexibilityAssetAction = createAction({
   auth: ampecoAuth,
   name: 'updateFlexibilityAsset',
-  displayName: 'Resources - Flexibility Assets - Update Flexibility Asset',
-  description: 'Update a flexibility asset. (Endpoint: PATCH /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset})',
+  displayName: 'Resources - Flexibility Assets - Update',
+  description: 'Update a flexibility asset.',
   props: {
         
   flexibilityAsset: Property.Number({

@@ -7,16 +7,18 @@ import { CircuitSocPrioritiesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/soc-priorities
+
 export const circuitSocPrioritiesListingAction = createAction({
   auth: ampecoAuth,
   name: 'circuitSocPrioritiesListing',
   displayName: 'Resources - Circuits - Circuit Soc Priorities Listing',
-  description: 'Get a circuit&#x27;s SoC priority. (Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/soc-priorities)',
+  description: 'Get a circuit&#x27;s SoC priority.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
   },

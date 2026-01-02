@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/evses/v2.1/{evse}
+
 export const evseDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'evseDelete',
   displayName: 'Resources - Evses - Evse Delete',
-  description: 'Delete an EVSE. (Endpoint: DELETE /public-api/resources/evses/v2.1/{evse})',
+  description: 'Delete an EVSE.',
   props: {
         
   evse: Property.Number({

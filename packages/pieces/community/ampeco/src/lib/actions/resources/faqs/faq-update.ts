@@ -7,11 +7,14 @@ import { FaqUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+//  Endpoint: PATCH /public-api/resources/faqs/v2.0/{faq}
+
 export const faqUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'faqUpdate',
-  displayName: 'Resources - Faqs - Faq Update',
-  description: 'FAQs. (Endpoint: PATCH /public-api/resources/faqs/v2.0/{faq})',
+  displayName: 'Resources - Faqs - Update',
+  description: 'Update FAQs.',
   props: {
         
   faq: Property.Number({

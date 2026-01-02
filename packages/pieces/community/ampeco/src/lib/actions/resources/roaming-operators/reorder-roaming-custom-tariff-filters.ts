@@ -7,11 +7,14 @@ import { ReorderRoamingCustomTariffFiltersResponse } from '../../../models/respo
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/reorder
+
 export const reorderRoamingCustomTariffFiltersAction = createAction({
   auth: ampecoAuth,
   name: 'reorderRoamingCustomTariffFilters',
   displayName: 'Resources - Roaming Operators - Reorder Roaming Custom Tariff Filters',
-  description: 'Change the ordering of custom tariff filters for a roaming operator. This operation allows partial reordering - you only need to specify the filters that need to move. Filters not included in the request will maintain their relative positions. (Endpoint: PUT /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/reorder)',
+  description: 'Change the ordering of custom tariff filters for a roaming operator. This operation allows partial reordering - you only need to specify the filters that need to move. Filters not included in the request will maintain their relative positions.',
   props: {
         
   roamingOperator: Property.Number({

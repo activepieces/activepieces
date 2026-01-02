@@ -7,11 +7,14 @@ import { ListPcIdsResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/provisioning-certificates/v2.0
+
 export const listPcIdsAction = createAction({
   auth: ampecoAuth,
   name: 'listPcIds',
   displayName: 'Resources - Provisioning Certificates - List Pc Ids',
-  description: 'Get all Provisioning Certificates. (Endpoint: GET /public-api/resources/provisioning-certificates/v2.0)',
+  description: 'Get all Provisioning Certificates.',
   props: {
         
     per_page: Property.Number({

@@ -7,22 +7,23 @@ import { CreateConfigurationTemplateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/configuration-templates/v1.0
+
 export const createConfigurationTemplateAction = createAction({
   auth: ampecoAuth,
   name: 'createConfigurationTemplate',
   displayName: 'Resources - Configuration Templates - Create Configuration Template',
-  description: 'Create new Configuration Template. (Endpoint: POST /public-api/resources/configuration-templates/v1.0)',
+  description: 'Create new Configuration Template.',
   props: {
         
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: true,
   }),
 
   ocppVersion: Property.StaticDropdown({
     displayName: 'Ocpp Version',
-    description: '',
     required: true,
     options: {
       options: [

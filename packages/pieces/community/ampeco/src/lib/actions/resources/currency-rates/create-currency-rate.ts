@@ -7,11 +7,14 @@ import { CreateCurrencyRateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/currency-rates/v1.0
+
 export const createCurrencyRateAction = createAction({
   auth: ampecoAuth,
   name: 'createCurrencyRate',
-  displayName: 'Resources - Currency Rates - Create Currency Rate',
-  description: 'Create new Currency Rate. (Endpoint: POST /public-api/resources/currency-rates/v1.0)',
+  displayName: 'Resources - Currency Rates - Create',
+  description: 'Create new Currency Rate.',
   props: {
         
   base: Property.ShortText({

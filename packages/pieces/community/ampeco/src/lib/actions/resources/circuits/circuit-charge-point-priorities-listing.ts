@@ -7,16 +7,18 @@ import { CircuitChargePointPrioritiesListingResponse } from '../../../models/res
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/charge-point-priorities
+
 export const circuitChargePointPrioritiesListingAction = createAction({
   auth: ampecoAuth,
   name: 'circuitChargePointPrioritiesListing',
   displayName: 'Resources - Circuits - Circuit Charge Point Priorities Listing',
-  description: 'Get all circuit&#x27;s charge point priorities. (Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/charge-point-priorities)',
+  description: 'Get all circuit&#x27;s charge point priorities.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
     per_page: Property.Number({

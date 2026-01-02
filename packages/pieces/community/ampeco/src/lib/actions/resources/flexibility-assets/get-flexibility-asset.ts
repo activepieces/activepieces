@@ -7,11 +7,14 @@ import { GetFlexibilityAssetResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset}
+
 export const getFlexibilityAssetAction = createAction({
   auth: ampecoAuth,
   name: 'getFlexibilityAsset',
-  displayName: 'Resources - Flexibility Assets - Get Flexibility Asset',
-  description: 'Get a flexibility asset. (Endpoint: GET /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset})',
+  displayName: 'Resources - Flexibility Assets - Get',
+  description: 'Get a flexibility asset.',
   props: {
         
   flexibilityAsset: Property.Number({

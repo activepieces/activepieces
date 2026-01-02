@@ -7,11 +7,14 @@ import { EvseCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/evses/v2.1
+
 export const evseCreateAction = createAction({
   auth: ampecoAuth,
   name: 'evseCreate',
-  displayName: 'Resources - Evses - Evse Create',
-  description: 'Create new EVSE. (Endpoint: POST /public-api/resources/evses/v2.1)',
+  displayName: 'Resources - Evses - Create',
+  description: 'Create new EVSE.',
   props: {
         
   chargePointId: Property.Number({

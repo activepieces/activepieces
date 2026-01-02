@@ -7,11 +7,14 @@ import { GetConfigurationTemplateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/configuration-templates/v1.0/{template}
+
 export const getConfigurationTemplateAction = createAction({
   auth: ampecoAuth,
   name: 'getConfigurationTemplate',
   displayName: 'Resources - Configuration Templates - Get Configuration Template',
-  description: 'Get Configuration Template. (Endpoint: GET /public-api/resources/configuration-templates/v1.0/{template})',
+  description: 'Get Configuration Template.',
   props: {
         
   template: Property.Number({

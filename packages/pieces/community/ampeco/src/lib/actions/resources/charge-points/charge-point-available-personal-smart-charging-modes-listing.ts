@@ -7,16 +7,17 @@ import { ChargePointAvailablePersonalSmartChargingModesListingResponse } from '.
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/available-personal-smart-charging-modes
 export const chargePointAvailablePersonalSmartChargingModesListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointAvailablePersonalSmartChargingModesListing',
-  displayName: 'Resources - Charge Points - Charge Point Available Personal Smart Charging Modes Listing',
-  description: 'Get all available personal smart charging modes. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/available-personal-smart-charging-modes)',
+  displayName: 'Resources - Charge Points - Available Personal Smart Charging Modes Listing',
+  description: 'Get all available personal smart charging modes.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
   },

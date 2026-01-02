@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset}
+
 export const deleteFlexibilityAssetAction = createAction({
   auth: ampecoAuth,
   name: 'deleteFlexibilityAsset',
-  displayName: 'Resources - Flexibility Assets - Delete Flexibility Asset',
-  description: 'Delete a flexibility asset. (Endpoint: DELETE /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset})',
+  displayName: 'Resources - Flexibility Assets - Delete',
+  description: 'Delete a flexibility asset.',
   props: {
         
   flexibilityAsset: Property.Number({

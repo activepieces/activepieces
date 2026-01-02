@@ -7,11 +7,13 @@ import { IdTagCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/id-tags/v2.0
 export const idTagCreateAction = createAction({
   auth: ampecoAuth,
   name: 'idTagCreate',
-  displayName: 'Resources - Id Tags - Id Tag Create',
-  description: 'Create new Id Tag. (Endpoint: POST /public-api/resources/id-tags/v2.0)',
+  displayName: 'Resources - Id Tags - Create',
+  description: 'Create new Id Tag.',
   props: {
         
   idTagUid: Property.ShortText({

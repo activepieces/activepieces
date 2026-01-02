@@ -7,16 +7,18 @@ import { ChargePointVendorReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-point-vendors/v1.0/{vendorId}
+
 export const chargePointVendorReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointVendorRead',
-  displayName: 'Resources - Charge Point Vendors - Charge Point Vendor Read',
-  description: 'Get a Charge Point Vendor. (Endpoint: GET /public-api/resources/charge-point-vendors/v1.0/{vendorId})',
+  displayName: 'Resources - Charge Point Vendors - Read',
+  description: 'Get a Charge Point Vendor.',
   props: {
         
   vendorId: Property.Number({
     displayName: 'Vendor Id',
-    description: '',
     required: true,
   }),
   },

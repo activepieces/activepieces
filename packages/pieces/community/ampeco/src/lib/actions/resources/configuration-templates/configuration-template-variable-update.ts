@@ -7,22 +7,23 @@ import { ConfigurationTemplateVariableUpdateResponse } from '../../../models/res
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/configuration-templates/v1.0/{template}/variables/{variable}
+
 export const configurationTemplateVariableUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'configurationTemplateVariableUpdate',
   displayName: 'Resources - Configuration Templates - Configuration Template Variable Update',
-  description: 'Update a Configuration Template Variable. (Endpoint: PATCH /public-api/resources/configuration-templates/v1.0/{template}/variables/{variable})',
+  description: 'Update a Configuration Template Variable.',
   props: {
         
   template: Property.Number({
     displayName: 'Template',
-    description: '',
     required: true,
   }),
 
   variable: Property.Number({
     displayName: 'Variable',
-    description: '',
     required: true,
   }),
 
@@ -41,6 +42,7 @@ export const configurationTemplateVariableUpdateAction = createAction({
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
      required: true,
+     auth:ampecoAuth,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {
         if (!requestBody_VariantType) {

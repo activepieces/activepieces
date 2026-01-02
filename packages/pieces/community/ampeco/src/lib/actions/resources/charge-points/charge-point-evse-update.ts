@@ -7,28 +7,28 @@ import { ChargePointEvseUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/charge-points/v2.0/{chargePoint}/evses/{evse}
+
 export const chargePointEvseUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseUpdate',
   displayName: 'Resources - Charge Points - Charge Point Evse Update',
-  description: 'Update an EVSE within the Charge Point. (Endpoint: PATCH /public-api/resources/charge-points/v2.0/{chargePoint}/evses/{evse})',
+  description: 'Update an EVSE within the Charge Point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   evse: Property.Number({
     displayName: 'Evse',
-    description: '',
     required: true,
   }),
 
   include: Property.StaticMultiSelectDropdown({
     displayName: 'Include',
-    description: '',
     required: false,
     options: {
       options: [
@@ -195,7 +195,6 @@ export const chargePointEvseUpdateAction = createAction({
 
   externalId: Property.ShortText({
     displayName: 'External Id',
-    description: '',
     required: false,
   }),
   },

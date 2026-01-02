@@ -7,22 +7,23 @@ import { ChargePointDowntimePeriodUpdateResponse } from '../../../models/respons
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/charge-point-downtime-periods/v1.0/{chargePointDowntimePeriod}
+
 export const chargePointDowntimePeriodUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodUpdate',
-  displayName: 'Resources - Charge Point Downtime Periods - Charge Point Downtime Period Update',
-  description: 'Update Charge Point Downtime Period. (Endpoint: PATCH /public-api/resources/charge-point-downtime-periods/v1.0/{chargePointDowntimePeriod})',
+  displayName: 'Resources - Charge Point Downtime Periods - Update',
+  description: 'Update Charge Point Downtime Period.',
   props: {
         
   chargePointDowntimePeriod: Property.Number({
     displayName: 'Charge Point Downtime Period',
-    description: '',
     required: true,
   }),
 
   noticeId: Property.Number({
     displayName: 'Notice Id',
-    description: '',
     required: false,
   }),
 

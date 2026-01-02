@@ -7,11 +7,14 @@ import { EvseDowntimePeriodsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/evse-downtime-periods/v1.0
+
 export const evseDowntimePeriodsListingAction = createAction({
   auth: ampecoAuth,
   name: 'evseDowntimePeriodsListing',
-  displayName: 'Resources - Evse Downtime Periods - Evse Downtime Periods Listing',
-  description: 'Get all EVSE Downtime Periods. (Endpoint: GET /public-api/resources/evse-downtime-periods/v1.0)',
+  displayName: 'Resources - Evse Downtime Periods - Listing',
+  description: 'Get all EVSE Downtime Periods.',
   props: {
         
   filter__evseId: Property.Number({

@@ -7,22 +7,23 @@ import { CircuitReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}
+
 export const circuitReadAction = createAction({
   auth: ampecoAuth,
   name: 'circuitRead',
-  displayName: 'Resources - Circuits - Circuit Read',
-  description: 'Get a circuit. (Endpoint: GET /public-api/resources/circuits/v2.0/{circuit})',
+  displayName: 'Resources - Circuits - Read',
+  description: 'Get a circuit.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
   include: Property.StaticMultiSelectDropdown({
     displayName: 'Include',
-    description: '',
     required: false,
     options: {
       options: [

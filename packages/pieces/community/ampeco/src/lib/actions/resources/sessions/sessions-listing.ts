@@ -7,11 +7,14 @@ import { SessionsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/sessions/v1.0
+
 export const sessionsListingAction = createAction({
   auth: ampecoAuth,
   name: 'sessionsListing',
-  displayName: 'Resources - Sessions - Sessions Listing',
-  description: 'Sessions / Listing. (Endpoint: GET /public-api/resources/sessions/v1.0)',
+  displayName: 'Resources - Sessions - Listing',
+  description: 'Sessions / Listing.',
   props: {
         
   withClockAlignedEnergyConsumption: Property.StaticDropdown({

@@ -7,11 +7,14 @@ import { PatchDowntimePeriodNoticeResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/downtime-period-notices/v1.0/{notice}
+
 export const patchDowntimePeriodNoticeAction = createAction({
   auth: ampecoAuth,
   name: 'patchDowntimePeriodNotice',
   displayName: 'Resources - Downtime Period Notices - Patch Downtime Period Notice',
-  description: 'Update Downtime Period Notice. (Endpoint: PATCH /public-api/resources/downtime-period-notices/v1.0/{notice})',
+  description: 'Update Downtime Period Notice.',
   props: {
         
   notice: Property.Number({

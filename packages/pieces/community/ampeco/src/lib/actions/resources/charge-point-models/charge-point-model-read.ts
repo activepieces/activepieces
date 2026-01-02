@@ -7,16 +7,18 @@ import { ChargePointModelReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-point-models/v1.0/{modelId}
+
 export const chargePointModelReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointModelRead',
-  displayName: 'Resources - Charge Point Models - Charge Point Model Read',
-  description: 'Get a Charge Point Model. (Endpoint: GET /public-api/resources/charge-point-models/v1.0/{modelId})',
+  displayName: 'Resources - Charge Point Models - Read',
+  description: 'Get a Charge Point Model.',
   props: {
         
   modelId: Property.Number({
     displayName: 'Model Id',
-    description: '',
     required: true,
   }),
   },

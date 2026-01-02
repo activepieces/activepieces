@@ -7,11 +7,14 @@ import { ElectricityRateReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}
+
 export const electricityRateReadAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateRead',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Read',
-  description: 'Get a single Electricity rate. (Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate})',
+  displayName: 'Resources - Electricity Rates - Read',
+  description: 'Get a single Electricity rate.',
   props: {
         
   electricityRate: Property.Number({

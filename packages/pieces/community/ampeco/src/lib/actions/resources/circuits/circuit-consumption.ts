@@ -7,11 +7,14 @@ import { CircuitConsumptionResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/consumption
+
 export const circuitConsumptionAction = createAction({
   auth: ampecoAuth,
   name: 'circuitConsumption',
   displayName: 'Resources - Circuits - Circuit Consumption',
-  description: 'Get the consumption of a circuit for each phase. (Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/consumption)',
+  description: 'Get the consumption of a circuit for each phase.',
   props: {
         
   circuit: Property.Number({

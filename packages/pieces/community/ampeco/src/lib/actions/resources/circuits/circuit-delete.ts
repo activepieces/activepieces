@@ -6,11 +6,13 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: DELETE /public-api/resources/circuits/v2.0/{circuit}
 export const circuitDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'circuitDelete',
-  displayName: 'Resources - Circuits - Circuit Delete',
-  description: 'Delete a circuit. (Endpoint: DELETE /public-api/resources/circuits/v2.0/{circuit})',
+  displayName: 'Resources - Circuits - Delete',
+  description: 'Delete a circuit.',
   props: {
         
   circuit: Property.Number({

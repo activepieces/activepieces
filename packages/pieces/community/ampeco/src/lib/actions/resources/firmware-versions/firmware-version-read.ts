@@ -7,11 +7,14 @@ import { FirmwareVersionReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/firmware-versions/v1.0/{firmwareVersion}
+
 export const firmwareVersionReadAction = createAction({
   auth: ampecoAuth,
   name: 'firmwareVersionRead',
-  displayName: 'Resources - Firmware Versions - Firmware Version Read',
-  description: 'Get a Firmware Version. (Endpoint: GET /public-api/resources/firmware-versions/v1.0/{firmwareVersion})',
+  displayName: 'Resources - Firmware Versions - Read',
+  description: 'Get a Firmware Version.',
   props: {
         
   firmwareVersion: Property.Number({

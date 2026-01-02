@@ -6,28 +6,28 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/charge-points/v2.0/{chargePoint}/evses/{evse}/connectors/{connector}
+
 export const chargePointEvseConnectorDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointEvseConnectorDelete',
   displayName: 'Resources - Charge Points - Charge Point Evse Connector Delete',
-  description: 'Delete a charge point evse&#x27;s connector. (Endpoint: DELETE /public-api/resources/charge-points/v2.0/{chargePoint}/evses/{evse}/connectors/{connector})',
+  description: 'Delete a charge point evse\'s connector.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   evse: Property.Number({
     displayName: 'Evse',
-    description: '',
     required: true,
   }),
 
   connector: Property.Number({
     displayName: 'Connector',
-    description: '',
     required: true,
   }),
   },

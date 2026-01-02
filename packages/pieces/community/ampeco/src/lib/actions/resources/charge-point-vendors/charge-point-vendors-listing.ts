@@ -7,11 +7,13 @@ import { ChargePointVendorsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-point-vendors/v1.0
 export const chargePointVendorsListingAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointVendorsListing',
-  displayName: 'Resources - Charge Point Vendors - Charge Point Vendors Listing',
-  description: 'Get all Charge Point Vendors. (Endpoint: GET /public-api/resources/charge-point-vendors/v1.0)',
+  displayName: 'Resources - Charge Point Vendors - Listing',
+  description: 'Get all Charge Point Vendors.',
   props: {
         
     per_page: Property.Number({

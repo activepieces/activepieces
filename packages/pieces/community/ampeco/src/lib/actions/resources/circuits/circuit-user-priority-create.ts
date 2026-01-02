@@ -7,16 +7,18 @@ import { CircuitUserPriorityCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/circuits/v2.0/{circuit}/user-priorities
+
 export const circuitUserPriorityCreateAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUserPriorityCreate',
   displayName: 'Resources - Circuits - Circuit User Priority Create',
-  description: 'Create a circuit&#x27;s user priority. (Endpoint: POST /public-api/resources/circuits/v2.0/{circuit}/user-priorities)',
+  description: 'Create a circuit\'s user priority.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
@@ -28,7 +30,6 @@ export const circuitUserPriorityCreateAction = createAction({
 
   type: Property.StaticDropdown({
     displayName: 'Type',
-    description: '',
     required: true,
     options: {
       options: [

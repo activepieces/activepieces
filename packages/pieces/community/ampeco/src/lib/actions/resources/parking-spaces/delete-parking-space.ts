@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/parking-spaces/v1.0/{parkingSpace}
+
 export const deleteParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'deleteParkingSpace',
-  displayName: 'Resources - Parking Spaces - Delete Parking Space',
-  description: 'Delete Parking Space. (Endpoint: DELETE /public-api/resources/parking-spaces/v1.0/{parkingSpace})',
+  displayName: 'Resources - Parking Spaces - Delete',
+  description: 'Delete Parking Space.',
   props: {
         
   parkingSpace: Property.Number({

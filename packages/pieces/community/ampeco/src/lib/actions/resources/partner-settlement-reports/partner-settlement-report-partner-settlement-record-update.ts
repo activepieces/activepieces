@@ -7,11 +7,14 @@ import { PartnerSettlementReportPartnerSettlementRecordUpdateResponse } from '..
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records/{PartnerSettlementRecord}
+
 export const partnerSettlementReportPartnerSettlementRecordUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerSettlementReportPartnerSettlementRecordUpdate',
-  displayName: 'Resources - Partner Settlement Reports - Partner Settlement Report Partner Settlement Record Update',
-  description: 'Update a single Partner Settlement Record. (Endpoint: PUT /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records/{PartnerSettlementRecord})',
+  displayName: 'Resources - Partner Settlement Reports - Update Partner Settlement Record',
+  description: 'Update a single Partner Settlement Record.',
   props: {
         
   partnerSettlementReport: Property.Number({

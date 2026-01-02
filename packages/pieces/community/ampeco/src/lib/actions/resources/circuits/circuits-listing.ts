@@ -7,16 +7,18 @@ import { CircuitsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/circuits/v2.0
+
 export const circuitsListingAction = createAction({
   auth: ampecoAuth,
   name: 'circuitsListing',
   displayName: 'Resources - Circuits - Circuits Listing',
-  description: 'Get all circuits. (Endpoint: GET /public-api/resources/circuits/v2.0)',
+  description: 'Get all circuits.',
   props: {
         
   include: Property.StaticMultiSelectDropdown({
     displayName: 'Include',
-    description: '',
     required: false,
     options: {
       options: [

@@ -7,11 +7,14 @@ import { RoamingOperatorReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/roaming-operators/v2.0/{roamingOperator}
+
 export const roamingOperatorReadAction = createAction({
   auth: ampecoAuth,
   name: 'roamingOperatorRead',
   displayName: 'Resources - Roaming Operators - Roaming Operator Read',
-  description: 'Get a Roaming Operator. (Endpoint: GET /public-api/resources/roaming-operators/v2.0/{roamingOperator})',
+  description: 'Get a Roaming Operator.',
   props: {
         
   roamingOperator: Property.Number({

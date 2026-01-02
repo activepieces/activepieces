@@ -7,16 +7,18 @@ import { ConfigurationTemplateVariableListingResponse } from '../../../models/re
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/configuration-templates/v1.0/{template}/variables
+
 export const configurationTemplateVariableListingAction = createAction({
   auth: ampecoAuth,
   name: 'configurationTemplateVariableListing',
   displayName: 'Resources - Configuration Templates - Configuration Template Variable Listing',
-  description: 'Get all Configuration Template Variables. (Endpoint: GET /public-api/resources/configuration-templates/v1.0/{template}/variables)',
+  description: 'Get all Configuration Template Variables.',
   props: {
         
   template: Property.Number({
     displayName: 'Template',
-    description: '',
     required: true,
   }),
     per_page: Property.Number({

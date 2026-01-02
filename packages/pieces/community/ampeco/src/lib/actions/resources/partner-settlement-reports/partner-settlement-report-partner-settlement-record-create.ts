@@ -1,17 +1,20 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 import { PartnerSettlementReportPartnerSettlementRecordCreateResponse } from '../../../models/responses';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records
+
 export const partnerSettlementReportPartnerSettlementRecordCreateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerSettlementReportPartnerSettlementRecordCreate',
-  displayName: 'Resources - Partner Settlement Reports - Partner Settlement Report Partner Settlement Record Create',
-  description: 'Create Partner Settlement Record. (Endpoint: POST /public-api/resources/partner-settlement-reports/v1.0/{partnerSettlementReport}/records)',
+  displayName: 'Resources - Partner Settlement Reports - Create Partner Settlement Record',
+  description: 'Create Partner Settlement Record.',
   props: {
         
   partnerSettlementReport: Property.Number({

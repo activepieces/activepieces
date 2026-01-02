@@ -7,11 +7,14 @@ import { EvseDowntimePeriodCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/evse-downtime-periods/v1.0
+
 export const evseDowntimePeriodCreateAction = createAction({
   auth: ampecoAuth,
   name: 'evseDowntimePeriodCreate',
-  displayName: 'Resources - Evse Downtime Periods - Evse Downtime Period Create',
-  description: 'Create Manual Exempt EVSE Downtime Period. (Endpoint: POST /public-api/resources/evse-downtime-periods/v1.0)',
+  displayName: 'Resources - Evse Downtime Periods - Create',
+  description: 'Create Manual Exempt EVSE Downtime Period.',
   props: {
         
   evseId: Property.Number({

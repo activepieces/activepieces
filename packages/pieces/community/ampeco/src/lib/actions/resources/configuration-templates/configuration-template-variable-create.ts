@@ -7,16 +7,18 @@ import { ConfigurationTemplateVariableCreateResponse } from '../../../models/res
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/configuration-templates/v1.0/{template}/variables
+
 export const configurationTemplateVariableCreateAction = createAction({
   auth: ampecoAuth,
   name: 'configurationTemplateVariableCreate',
   displayName: 'Resources - Configuration Templates - Configuration Template Variable Create',
-  description: 'Create a new Configuration Template Variable. (Endpoint: POST /public-api/resources/configuration-templates/v1.0/{template}/variables)',
+  description: 'Create a new Configuration Template Variable.',
   props: {
         
   template: Property.Number({
     displayName: 'Template',
-    description: '',
     required: true,
   }),
 
@@ -34,6 +36,7 @@ export const configurationTemplateVariableCreateAction = createAction({
 
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
+     auth:ampecoAuth,
      required: true,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {

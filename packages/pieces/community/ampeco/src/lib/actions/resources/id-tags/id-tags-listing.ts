@@ -7,11 +7,14 @@ import { IdTagsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/id-tags/v2.0
+
 export const idTagsListingAction = createAction({
   auth: ampecoAuth,
   name: 'idTagsListing',
-  displayName: 'Resources - Id Tags - Id Tags Listing',
-  description: 'Get all id tags. (Endpoint: GET /public-api/resources/id-tags/v2.0)',
+  displayName: 'Resources - Id Tags - Listing',
+  description: 'Get all id tags.',
   props: {
         
   filter__idTagUid: Property.Number({

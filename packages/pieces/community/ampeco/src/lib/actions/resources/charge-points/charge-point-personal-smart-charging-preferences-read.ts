@@ -7,16 +7,18 @@ import { ChargePointPersonalSmartChargingPreferencesReadResponse } from '../../.
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/personal-smart-charging-preferences
+
 export const chargePointPersonalSmartChargingPreferencesReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointPersonalSmartChargingPreferencesRead',
   displayName: 'Resources - Charge Points - Charge Point Personal Smart Charging Preferences Read',
-  description: 'Get personal smart charging preferences of the charge point. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/personal-smart-charging-preferences)',
+  description: 'Get personal smart charging preferences of the charge point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
   },

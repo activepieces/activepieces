@@ -7,11 +7,14 @@ import { ExpensesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/partner-expenses/v1.1
+
 export const expensesListingAction = createAction({
   auth: ampecoAuth,
   name: 'expensesListing',
   displayName: 'Resources - Partner Expenses - Expenses Listing',
-  description: 'Get all expenses. (Endpoint: GET /public-api/resources/partner-expenses/v1.1)',
+  description: 'Get all expenses.',
   props: {
         
   filter__partnerId: Property.Number({

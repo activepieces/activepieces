@@ -7,11 +7,14 @@ import { CircuitCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/circuits/v2.0
+
 export const circuitCreateAction = createAction({
   auth: ampecoAuth,
   name: 'circuitCreate',
-  displayName: 'Resources - Circuits - Circuit Create',
-  description: 'Create a new circuit. (Endpoint: POST /public-api/resources/circuits/v2.0)',
+  displayName: 'Resources - Circuits - Create',
+  description: 'Create a new circuit.',
   props: {
         
   name: Property.ShortText({
@@ -158,6 +161,7 @@ export const circuitCreateAction = createAction({
 
   loadBalancingIntegration__fields: Property.DynamicProperties({
      displayName: 'Fields',
+     auth:ampecoAuth,
      required: true,
      refreshers: ['loadBalancingIntegration__fields_VariantType'],
      props: async ({ loadBalancingIntegration__fields_VariantType }) => {

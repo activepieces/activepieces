@@ -7,11 +7,14 @@ import { RevenuesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/partner-revenues/v1.1
+
 export const revenuesListingAction = createAction({
   auth: ampecoAuth,
   name: 'revenuesListing',
   displayName: 'Resources - Partner Revenues - Revenues Listing',
-  description: 'Get all revenues. (Endpoint: GET /public-api/resources/partner-revenues/v1.1)',
+  description: 'Get all revenues.',
   props: {
         
   filter__partnerId: Property.Number({

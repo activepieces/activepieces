@@ -10,8 +10,8 @@ import { UpdateInstallerJobResponse } from '../../../models/responses';
 export const updateInstallerJobAction = createAction({
   auth: ampecoAuth,
   name: 'updateInstallerJob',
-  displayName: 'Resources - Installer Jobs - Update Installer Job',
-  description: 'Update Installer Job. (Endpoint: PATCH /public-api/resources/installer-jobs/v1.0/{installerJob})',
+  displayName: 'Resources - Installer Jobs - Update',
+  description: 'Update Installer Job.',
   props: {
         
   installerJob: Property.Number({

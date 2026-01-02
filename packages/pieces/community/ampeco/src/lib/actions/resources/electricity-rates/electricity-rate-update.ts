@@ -7,11 +7,14 @@ import { ElectricityRateUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/electricity-rates/v2.0/{electricityRate}
+
 export const electricityRateUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateUpdate',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Update',
-  description: 'Update a Electricity rate. (Endpoint: PATCH /public-api/resources/electricity-rates/v2.0/{electricityRate})',
+  displayName: 'Resources - Electricity Rates - Update',
+  description: 'Update a Electricity rate.',
   props: {
         
   electricityRate: Property.Number({

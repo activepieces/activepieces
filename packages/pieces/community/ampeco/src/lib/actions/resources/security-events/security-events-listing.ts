@@ -7,11 +7,14 @@ import { SecurityEventsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/security-events/v2.0
+
 export const securityEventsListingAction = createAction({
   auth: ampecoAuth,
   name: 'securityEventsListing',
   displayName: 'Resources - Security Events - Security Events Listing',
-  description: 'Get all Security Events. (Endpoint: GET /public-api/resources/security-events/v2.0)',
+  description: 'Get all Security Events.',
   props: {
         
   filter__type: Property.StaticDropdown({

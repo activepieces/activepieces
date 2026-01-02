@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: DELETE /public-api/resources/roaming-providers/v2.0/{roamingProvider}
+
 export const roamingProviderDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'roamingProviderDelete',
-  displayName: 'Resources - Roaming Providers - Roaming Provider Delete',
-  description: 'Delete a Roaming Provider. (Endpoint: DELETE /public-api/resources/roaming-providers/v2.0/{roamingProvider})',
+  displayName: 'Resources - Roaming Providers - Delete',
+  description: 'Delete a Roaming Provider.',
   props: {
         
   roamingProvider: Property.Number({

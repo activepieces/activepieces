@@ -1,21 +1,23 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, handleApiError } from '../../../common/utils';
 import { ampecoAuth } from '../../../common/auth';
 
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/charge-point-models/v1.0/{modelId}
+
 export const chargePointModelDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointModelDelete',
-  displayName: 'Resources - Charge Point Models - Charge Point Model Delete',
-  description: 'Delete a Charge Point Model. (Endpoint: DELETE /public-api/resources/charge-point-models/v1.0/{modelId})',
+  displayName: 'Resources - Charge Point Models - Delete',
+  description: 'Delete a Charge Point Model.',
   props: {
         
   modelId: Property.Number({
     displayName: 'Model Id',
-    description: '',
     required: true,
   }),
   },

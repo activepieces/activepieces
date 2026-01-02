@@ -7,11 +7,14 @@ import { FaqCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/faqs/v2.0
+
 export const faqCreateAction = createAction({
   auth: ampecoAuth,
   name: 'faqCreate',
-  displayName: 'Resources - Faqs - Faq Create',
-  description: 'Create new FAQ. (Endpoint: POST /public-api/resources/faqs/v2.0)',
+  displayName: 'Resources - Faqs - Create',
+  description: 'Create new FAQ.',
   props: {
         
   question: Property.Array({

@@ -7,11 +7,13 @@ import { TariffGroupsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/tariff-groups/v1.0
 export const tariffGroupsListingAction = createAction({
   auth: ampecoAuth,
   name: 'tariffGroupsListing',
-  displayName: 'Resources - Tariff Groups - Tariff Groups Listing',
-  description: 'Get all tariff groups. (Endpoint: GET /public-api/resources/tariff-groups/v1.0)',
+  displayName: 'Resources - Tariff Groups - Listing',
+  description: 'Get all tariff groups.',
   props: {
         
   filter__partnerId: Property.Number({

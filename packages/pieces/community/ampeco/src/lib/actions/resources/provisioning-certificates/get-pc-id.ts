@@ -7,11 +7,14 @@ import { GetPcIdResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/provisioning-certificates/v2.0/{provisioningCertificate}
+
 export const getPcIdAction = createAction({
   auth: ampecoAuth,
   name: 'getPcId',
   displayName: 'Resources - Provisioning Certificates - Get Pc Id',
-  description: 'Get a Provisioning Certificate. (Endpoint: GET /public-api/resources/provisioning-certificates/v2.0/{provisioningCertificate})',
+  description: 'Get a Provisioning Certificate.',
   props: {
         
   provisioningCertificate: Property.Number({

@@ -7,11 +7,14 @@ import { CreateParkingSpaceResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/parking-spaces/v1.0
+
 export const createParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'createParkingSpace',
-  displayName: 'Resources - Parking Spaces - Create Parking Space',
-  description: 'Create new Parking Space. (Endpoint: POST /public-api/resources/parking-spaces/v1.0)',
+  displayName: 'Resources - Parking Spaces - Create',
+  description: 'Create new Parking Space.',
   props: {
         
   label: Property.ShortText({

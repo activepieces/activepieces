@@ -7,11 +7,14 @@ import { CurrencyCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/currencies/v2.0
+
 export const currencyCreateAction = createAction({
   auth: ampecoAuth,
   name: 'currencyCreate',
-  displayName: 'Resources - Currencies - Currency Create',
-  description: 'Create currency. (Endpoint: POST /public-api/resources/currencies/v2.0)',
+  displayName: 'Resources - Currencies - Create',
+  description: 'Create currency.',
   props: {
         
   alphabeticCode: Property.StaticDropdown({

@@ -7,11 +7,14 @@ import { EvseUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/evses/v2.1/{evse}
+
 export const evseUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'evseUpdate',
-  displayName: 'Resources - Evses - Evse Update',
-  description: 'Update an EVSE. (Endpoint: PATCH /public-api/resources/evses/v2.1/{evse})',
+  displayName: 'Resources - Evses - Update',
+  description: 'Update an EVSE.',
   props: {
         
   evse: Property.Number({

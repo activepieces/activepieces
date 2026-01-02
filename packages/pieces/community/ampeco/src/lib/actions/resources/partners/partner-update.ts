@@ -7,11 +7,14 @@ import { PartnerUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/partners/v2.0/{partner}
+
 export const partnerUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerUpdate',
-  displayName: 'Resources - Partners - Partner Update',
-  description: 'Update a partner. (Endpoint: PATCH /public-api/resources/partners/v2.0/{partner})',
+  displayName: 'Resources - Partners - Update',
+  description: 'Update a partner.',
   props: {
         
   partner: Property.Number({
@@ -324,6 +327,7 @@ export const partnerUpdateAction = createAction({
 
   state: Property.Dropdown({
         displayName: 'State',
+        auth:ampecoAuth,
         required: false,
         refreshers: ['country'],
         options: async ({ country }) => {

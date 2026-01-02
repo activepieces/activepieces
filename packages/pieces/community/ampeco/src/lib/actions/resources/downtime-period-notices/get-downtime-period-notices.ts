@@ -7,11 +7,14 @@ import { GetDowntimePeriodNoticesResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/downtime-period-notices/v1.0
+
 export const getDowntimePeriodNoticesAction = createAction({
   auth: ampecoAuth,
   name: 'getDowntimePeriodNotices',
   displayName: 'Resources - Downtime Period Notices - Get Downtime Period Notices',
-  description: 'Get all Downtime Period Notices. (Endpoint: GET /public-api/resources/downtime-period-notices/v1.0)',
+  description: 'Get all Downtime Period Notices.',
   props: {
         
   filter__type: Property.StaticDropdown({

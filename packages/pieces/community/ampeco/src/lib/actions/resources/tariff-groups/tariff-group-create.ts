@@ -7,11 +7,14 @@ import { TariffGroupCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/tariff-groups/v1.0
+
 export const tariffGroupCreateAction = createAction({
   auth: ampecoAuth,
   name: 'tariffGroupCreate',
-  displayName: 'Resources - Tariff Groups - Tariff Group Create',
-  description: 'Create new tariff group. Please note that createing a new tariff group will also automatically create a free base tariff, as it is not allowed to have empty tariff groups. (Endpoint: POST /public-api/resources/tariff-groups/v1.0)',
+  displayName: 'Resources - Tariff Groups - Create',
+  description: 'Create new tariff group. Please note that createing a new tariff group will also automatically create a free base tariff, as it is not allowed to have empty tariff groups.',
   props: {
         
   name: Property.ShortText({

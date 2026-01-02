@@ -7,22 +7,23 @@ import { CircuitUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/circuits/v2.0/{circuit}
+
 export const circuitUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUpdate',
-  displayName: 'Resources - Circuits - Circuit Update',
-  description: 'Update a circuit. (Endpoint: PATCH /public-api/resources/circuits/v2.0/{circuit})',
+  displayName: 'Resources - Circuits - Update',
+  description: 'Update a circuit.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: false,
   }),
 
@@ -34,7 +35,6 @@ export const circuitUpdateAction = createAction({
 
   phases: Property.StaticDropdown({
     displayName: 'Phases',
-    description: '',
     required: false,
     options: {
       options: [
@@ -164,6 +164,7 @@ export const circuitUpdateAction = createAction({
 
   loadBalancingIntegration__fields: Property.DynamicProperties({
      displayName: 'Fields',
+     auth:ampecoAuth,
      required: true,
      refreshers: ['loadBalancingIntegration__fields_VariantType'],
      props: async ({ loadBalancingIntegration__fields_VariantType }) => {

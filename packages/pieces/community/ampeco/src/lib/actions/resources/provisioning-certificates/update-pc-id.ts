@@ -7,11 +7,14 @@ import { UpdatePcIdResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/provisioning-certificates/v2.0/{provisioningCertificate}
+
 export const updatePcIdAction = createAction({
   auth: ampecoAuth,
   name: 'updatePcId',
   displayName: 'Resources - Provisioning Certificates - Update Pc Id',
-  description: 'Update a Provisioning Certificate. (Endpoint: PATCH /public-api/resources/provisioning-certificates/v2.0/{provisioningCertificate})',
+  description: 'Update a Provisioning Certificate.',
   props: {
         
   provisioningCertificate: Property.Number({

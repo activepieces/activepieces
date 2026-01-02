@@ -7,11 +7,14 @@ import { IdTagReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/id-tags/v2.0/{idTag}
+
 export const idTagReadAction = createAction({
   auth: ampecoAuth,
   name: 'idTagRead',
-  displayName: 'Resources - Id Tags - Id Tag Read',
-  description: 'Get a Id Tag. (Endpoint: GET /public-api/resources/id-tags/v2.0/{idTag})',
+  displayName: 'Resources - Id Tags - Read',
+  description: 'Get a Id Tag.',
   props: {
         
   idTag: Property.Number({

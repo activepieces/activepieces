@@ -6,11 +6,13 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/partner-invites/v1.0/{partnerInvite}
 export const partnerInviteDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'partnerInviteDelete',
   displayName: 'Resources - Partner Invites - Partner Invite Delete',
-  description: 'Delete an invite. (Endpoint: DELETE /public-api/resources/partner-invites/v1.0/{partnerInvite})',
+  description: 'Delete an invite.',
   props: {
         
   partnerInvite: Property.Number({

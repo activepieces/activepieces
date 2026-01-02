@@ -7,22 +7,22 @@ import { ChargePointVendorUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/charge-point-vendors/v1.0/{vendorId}
 export const chargePointVendorUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointVendorUpdate',
-  displayName: 'Resources - Charge Point Vendors - Charge Point Vendor Update',
-  description: 'Charge Point Vendor. (Endpoint: PATCH /public-api/resources/charge-point-vendors/v1.0/{vendorId})',
+  displayName: 'Resources - Charge Point Vendors - Update',
+  description: 'Charge Point Vendor.',
   props: {
         
   vendorId: Property.Number({
     displayName: 'Vendor Id',
-    description: '',
     required: true,
   }),
 
   name: Property.ShortText({
     displayName: 'Name',
-    description: '',
     required: false,
   }),
   },

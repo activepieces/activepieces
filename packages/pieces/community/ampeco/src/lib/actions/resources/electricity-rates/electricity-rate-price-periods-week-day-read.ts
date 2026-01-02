@@ -7,11 +7,14 @@ import { ElectricityRatePricePeriodsWeekDayReadResponse } from '../../../models/
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/week-day/{weekDay}
+
 export const electricityRatePricePeriodsWeekDayReadAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRatePricePeriodsWeekDayRead',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Price Periods Week Day Read',
-  description: 'Get the price periods for a specific week day. (Endpoint: GET /public-api/resources/electricity-rates/v2.0/{electricityRate}/price-periods/week-day/{weekDay})',
+  displayName: 'Resources - Electricity Rates - Price Periods Week Day Read',
+  description: 'Get the price periods for a specific week day.',
   props: {
         
   electricityRate: Property.Number({

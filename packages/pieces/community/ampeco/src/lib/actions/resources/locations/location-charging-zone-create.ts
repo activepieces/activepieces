@@ -7,11 +7,14 @@ import { LocationChargingZoneCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/locations/v2.0/{location}/charging-zones
+
 export const locationChargingZoneCreateAction = createAction({
   auth: ampecoAuth,
   name: 'locationChargingZoneCreate',
-  displayName: 'Resources - Locations - Location Charging Zone Create',
-  description: 'Create a new Charging Zone. (Endpoint: POST /public-api/resources/locations/v2.0/{location}/charging-zones)',
+  displayName: 'Resources - Locations - Create Charging Zone',
+  description: 'Create a new Charging Zone.',
   props: {
         
   location: Property.Number({

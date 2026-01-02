@@ -7,16 +7,17 @@ import { BookingRequestReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/booking-requests/v1.0/{bookingRequest}
 export const bookingRequestReadAction = createAction({
   auth: ampecoAuth,
   name: 'bookingRequestRead',
-  displayName: 'Resources - Booking Requests - Booking Request Read',
-  description: 'Get information for a booking request by ID. (Endpoint: GET /public-api/resources/booking-requests/v1.0/{bookingRequest})',
+  displayName: 'Resources - Booking Requests - Read',
+  description: 'Get information for a booking request by ID.',
   props: {
         
   bookingRequest: Property.Number({
     displayName: 'Booking Request',
-    description: '',
     required: true,
   }),
   },

@@ -7,11 +7,14 @@ import { GetRoamingCustomTariffFilterResponse } from '../../../models/responses'
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/{customTariffFilter}
+
 export const getRoamingCustomTariffFilterAction = createAction({
   auth: ampecoAuth,
   name: 'getRoamingCustomTariffFilter',
   displayName: 'Resources - Roaming Operators - Get Roaming Custom Tariff Filter',
-  description: 'Get a specific custom tariff filter. (Endpoint: GET /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/{customTariffFilter})',
+  description: 'Get a specific custom tariff filter.',
   props: {
         
   roamingOperator: Property.Number({

@@ -7,11 +7,13 @@ import { SecurityEventReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/security-events/v2.0/{securityEvent}
 export const securityEventReadAction = createAction({
   auth: ampecoAuth,
   name: 'securityEventRead',
   displayName: 'Resources - Security Events - Security Event Read',
-  description: 'Get a Security Event. (Endpoint: GET /public-api/resources/security-events/v2.0/{securityEvent})',
+  description: 'Get a Security Event.',
   props: {
         
   securityEvent: Property.Number({

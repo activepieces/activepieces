@@ -7,11 +7,14 @@ import { GetTimeSeriesForecastResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset}/time-series-forecast
+
 export const getTimeSeriesForecastAction = createAction({
   auth: ampecoAuth,
   name: 'getTimeSeriesForecast',
   displayName: 'Resources - Flexibility Assets - Get Time Series Forecast',
-  description: 'Get Time Series Forecast for a Flexibility Asset. (Endpoint: GET /public-api/resources/flexibility-assets/v1.0/{flexibilityAsset}/time-series-forecast)',
+  description: 'Get Time Series Forecast for a Flexibility Asset.',
   props: {
         
   flexibilityAsset: Property.Number({

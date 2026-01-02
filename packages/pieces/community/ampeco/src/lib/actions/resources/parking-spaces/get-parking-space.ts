@@ -7,11 +7,14 @@ import { GetParkingSpaceResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/parking-spaces/v1.0/{parkingSpace}
+
 export const getParkingSpaceAction = createAction({
   auth: ampecoAuth,
   name: 'getParkingSpace',
-  displayName: 'Resources - Parking Spaces - Get Parking Space',
-  description: 'Get Parking Space. (Endpoint: GET /public-api/resources/parking-spaces/v1.0/{parkingSpace})',
+  displayName: 'Resources - Parking Spaces - Get',
+  description: 'Get Parking Space.',
   props: {
         
   parkingSpace: Property.Number({

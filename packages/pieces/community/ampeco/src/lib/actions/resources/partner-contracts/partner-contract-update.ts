@@ -7,11 +7,14 @@ import { PartnerContractUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/partner-contracts/v1.0/{partnerContract}
+
 export const partnerContractUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'partnerContractUpdate',
-  displayName: 'Resources - Partner Contracts - Partner Contract Update',
-  description: 'Update a Partner Contract. (Endpoint: PUT /public-api/resources/partner-contracts/v1.0/{partnerContract})',
+  displayName: 'Resources - Partner Contracts - Update',
+  description: 'Update a Partner Contract.',
   props: {
         
   partnerContract: Property.Number({

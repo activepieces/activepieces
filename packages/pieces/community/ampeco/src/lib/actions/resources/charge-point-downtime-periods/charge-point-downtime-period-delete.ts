@@ -6,16 +6,18 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/charge-point-downtime-periods/v1.0/{chargePointDowntimePeriod}
+
 export const chargePointDowntimePeriodDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodDelete',
-  displayName: 'Resources - Charge Point Downtime Periods - Charge Point Downtime Period Delete',
-  description: 'Delete Manual Created Charge Point Downtime Period. (Endpoint: DELETE /public-api/resources/charge-point-downtime-periods/v1.0/{chargePointDowntimePeriod})',
+  displayName: 'Resources - Charge Point Downtime Periods - Delete',
+  description: 'Delete Manual Created Charge Point Downtime Period.',
   props: {
         
   chargePointDowntimePeriod: Property.Number({
     displayName: 'Charge Point Downtime Period',
-    description: '',
     required: true,
   }),
   },

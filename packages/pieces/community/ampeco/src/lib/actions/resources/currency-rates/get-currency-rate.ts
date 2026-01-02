@@ -7,11 +7,14 @@ import { GetCurrencyRateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/currency-rates/v1.0/{currencyRate}
+
 export const getCurrencyRateAction = createAction({
   auth: ampecoAuth,
   name: 'getCurrencyRate',
-  displayName: 'Resources - Currency Rates - Get Currency Rate',
-  description: 'Get Currency Rate. (Endpoint: GET /public-api/resources/currency-rates/v1.0/{currencyRate})',
+  displayName: 'Resources - Currency Rates - Get',
+  description: 'Get Currency Rate.',
   props: {
         
   currencyRate: Property.Number({

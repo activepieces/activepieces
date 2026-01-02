@@ -7,11 +7,14 @@ import { FaqReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/faqs/v2.0/{faq}
+
 export const faqReadAction = createAction({
   auth: ampecoAuth,
   name: 'faqRead',
   displayName: 'Resources - Faqs - Faq Read',
-  description: 'Get a FAQ. (Endpoint: GET /public-api/resources/faqs/v2.0/{faq})',
+  description: 'Get a FAQ.',
   props: {
         
   faq: Property.Number({

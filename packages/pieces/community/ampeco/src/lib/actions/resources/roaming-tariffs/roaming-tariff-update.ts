@@ -7,11 +7,14 @@ import { RoamingTariffUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/roaming-tariffs/v2.0/{roamingTariff}
+
 export const roamingTariffUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'roamingTariffUpdate',
-  displayName: 'Resources - Roaming Tariffs - Roaming Tariff Update',
-  description: 'Update Roaming Tariff. (Endpoint: PATCH /public-api/resources/roaming-tariffs/v2.0/{roamingTariff})',
+  displayName: 'Resources - Roaming Tariffs - Update',
+  description: 'Update Roaming Tariff.',
   props: {
         
   roamingTariff: Property.Number({

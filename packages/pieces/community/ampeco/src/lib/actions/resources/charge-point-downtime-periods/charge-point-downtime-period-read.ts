@@ -7,16 +7,18 @@ import { ChargePointDowntimePeriodReadResponse } from '../../../models/responses
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-point-downtime-periods/v1.0/{chargePointDowntimePeriod}
+
 export const chargePointDowntimePeriodReadAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodRead',
-  displayName: 'Resources - Charge Point Downtime Periods - Charge Point Downtime Period Read',
-  description: 'Get Charge Point Downtime Period. (Endpoint: GET /public-api/resources/charge-point-downtime-periods/v1.0/{chargePointDowntimePeriod})',
+  displayName: 'Resources - Charge Point Downtime Periods - Read',
+  description: 'Get Charge Point Downtime Period.',
   props: {
         
   chargePointDowntimePeriod: Property.Number({
     displayName: 'Charge Point Downtime Period',
-    description: '',
     required: true,
   }),
   },

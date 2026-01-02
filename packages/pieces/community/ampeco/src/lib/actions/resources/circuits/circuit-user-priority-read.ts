@@ -7,22 +7,23 @@ import { CircuitUserPriorityReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/user-priorities/{userPriority}
+
 export const circuitUserPriorityReadAction = createAction({
   auth: ampecoAuth,
   name: 'circuitUserPriorityRead',
   displayName: 'Resources - Circuits - Circuit User Priority Read',
-  description: 'Get a circuit&#x27;s user priority. (Endpoint: GET /public-api/resources/circuits/v2.0/{circuit}/user-priorities/{userPriority})',
+  description: 'Get a circuit\'s user priority.',
   props: {
         
   circuit: Property.Number({
     displayName: 'Circuit',
-    description: '',
     required: true,
   }),
 
   userPriority: Property.Number({
     displayName: 'User Priority',
-    description: '',
     required: true,
   }),
   },

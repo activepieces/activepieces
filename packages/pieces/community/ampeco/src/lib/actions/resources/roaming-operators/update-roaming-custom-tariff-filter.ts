@@ -7,11 +7,14 @@ import { UpdateRoamingCustomTariffFilterResponse } from '../../../models/respons
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/{customTariffFilter}
+
 export const updateRoamingCustomTariffFilterAction = createAction({
   auth: ampecoAuth,
   name: 'updateRoamingCustomTariffFilter',
   displayName: 'Resources - Roaming Operators - Update Roaming Custom Tariff Filter',
-  description: 'Update an existing custom tariff filter. (Endpoint: PATCH /public-api/resources/roaming-operators/v2.0/{roamingOperator}/custom-tariff-filters/{customTariffFilter})',
+  description: 'Update an existing custom tariff filter.',
   props: {
         
   roamingOperator: Property.Number({

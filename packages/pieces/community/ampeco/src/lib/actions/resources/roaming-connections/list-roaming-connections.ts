@@ -7,11 +7,14 @@ import { ListRoamingConnectionsResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/roaming-connections/v2.0
+
 export const listRoamingConnectionsAction = createAction({
   auth: ampecoAuth,
   name: 'listRoamingConnections',
   displayName: 'Resources - Roaming Connections - List Roaming Connections',
-  description: 'Get all Roaming Connections. (Endpoint: GET /public-api/resources/roaming-connections/v2.0)',
+  description: 'Get all Roaming Connections.',
   props: {
         
     per_page: Property.Number({

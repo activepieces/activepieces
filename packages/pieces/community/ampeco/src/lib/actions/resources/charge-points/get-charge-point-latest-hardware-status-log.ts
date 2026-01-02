@@ -7,16 +7,18 @@ import { GetChargePointLatestHardwareStatusLogResponse } from '../../../models/r
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/latest-hardware-status-log
+
 export const getChargePointLatestHardwareStatusLogAction = createAction({
   auth: ampecoAuth,
   name: 'getChargePointLatestHardwareStatusLog',
   displayName: 'Resources - Charge Points - Get Charge Point Latest Hardware Status Log',
-  description: 'Get the latest hardware status log entry for a charge point. (Endpoint: GET /public-api/resources/charge-points/v2.0/{chargePoint}/latest-hardware-status-log)',
+  description: 'Get the latest hardware status log entry for a charge point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
   },

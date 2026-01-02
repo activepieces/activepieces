@@ -7,11 +7,14 @@ import { RoamingProviderUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/roaming-providers/v2.0/{roamingProvider}
+
 export const roamingProviderUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'roamingProviderUpdate',
-  displayName: 'Resources - Roaming Providers - Roaming Provider Update',
-  description: 'Update Roaming Providers. (Endpoint: PATCH /public-api/resources/roaming-providers/v2.0/{roamingProvider})',
+  displayName: 'Resources - Roaming Providers - Update',
+  description: 'Update Roaming Providers.',
   props: {
         
   roamingProvider: Property.Number({
@@ -35,6 +38,7 @@ export const roamingProviderUpdateAction = createAction({
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
      required: true,
+     auth:ampecoAuth,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {
         if (!requestBody_VariantType) {

@@ -6,22 +6,22 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/charge-points/v2.0/{chargePoint}/shares/{share}
 export const charegPointShareDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'charegPointShareDelete',
   displayName: 'Resources - Charge Points - Chareg Point Share Delete',
-  description: 'Delete an Share. (Endpoint: DELETE /public-api/resources/charge-points/v2.0/{chargePoint}/shares/{share})',
+  description: 'Delete an Share.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
   share: Property.Number({
     displayName: 'Share',
-    description: '',
     required: true,
   }),
   },

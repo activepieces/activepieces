@@ -7,11 +7,14 @@ import { FaqsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/faqs/v2.0
+
 export const faqsListingAction = createAction({
   auth: ampecoAuth,
   name: 'faqsListing',
-  displayName: 'Resources - Faqs - Faqs Listing',
-  description: 'Get all FAQs. (Endpoint: GET /public-api/resources/faqs/v2.0)',
+  displayName: 'Resources - Faqs - Listing',
+  description: 'Get all FAQs.',
   props: {
         
     per_page: Property.Number({

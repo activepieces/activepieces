@@ -7,11 +7,14 @@ import { ReceiptsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/receipts/v2.0
+
 export const receiptsListingAction = createAction({
   auth: ampecoAuth,
   name: 'receiptsListing',
   displayName: 'Resources - Receipts - Receipts Listing',
-  description: 'Get all receipts. (Endpoint: GET /public-api/resources/receipts/v2.0)',
+  description: 'Get all receipts.',
   props: {
         
   filter__userId: Property.Number({

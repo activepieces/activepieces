@@ -7,16 +7,18 @@ import { ChargePointDowntimePeriodCreateResponse } from '../../../models/respons
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/charge-point-downtime-periods/v1.0
+
 export const chargePointDowntimePeriodCreateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointDowntimePeriodCreate',
-  displayName: 'Resources - Charge Point Downtime Periods - Charge Point Downtime Period Create',
-  description: 'Create Manual Exempt Charge Point Downtime Period. (Endpoint: POST /public-api/resources/charge-point-downtime-periods/v1.0)',
+  displayName: 'Resources - Charge Point Downtime Periods - Create',
+  description: 'Create Manual Exempt Charge Point Downtime Period.',
   props: {
         
   chargePointId: Property.Number({
     displayName: 'Charge Point Id',
-    description: '',
     required: true,
   }),
 
@@ -28,13 +30,11 @@ export const chargePointDowntimePeriodCreateAction = createAction({
 
   startedAt: Property.DateTime({
     displayName: 'Started At',
-    description: '',
     required: true,
   }),
 
   endedAt: Property.DateTime({
     displayName: 'Ended At',
-    description: '',
     required: true,
   }),
   },

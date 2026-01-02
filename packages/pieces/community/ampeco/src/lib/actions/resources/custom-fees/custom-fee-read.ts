@@ -7,11 +7,14 @@ import { CustomFeeReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/custom-fees/v2.0/{customFee}
+
 export const customFeeReadAction = createAction({
   auth: ampecoAuth,
   name: 'customFeeRead',
-  displayName: 'Resources - Custom Fees - Custom Fee Read',
-  description: 'Get a single custom fee. (Endpoint: GET /public-api/resources/custom-fees/v2.0/{customFee})',
+  displayName: 'Resources - Custom Fees - Read',
+  description: 'Get a single custom fee.',
   props: {
         
   customFee: Property.Number({

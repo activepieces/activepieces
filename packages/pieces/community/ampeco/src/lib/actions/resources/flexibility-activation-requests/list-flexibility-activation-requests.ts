@@ -7,11 +7,14 @@ import { ListFlexibilityActivationRequestsResponse } from '../../../models/respo
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/flexibility-activation-requests/v1.0
+
 export const listFlexibilityActivationRequestsAction = createAction({
   auth: ampecoAuth,
   name: 'listFlexibilityActivationRequests',
-  displayName: 'Resources - Flexibility Activation Requests - List Flexibility Activation Requests',
-  description: 'Get a list of Flexibility Requests. (Endpoint: GET /public-api/resources/flexibility-activation-requests/v1.0)',
+  displayName: 'Resources - Flexibility Activation Requests - List',
+  description: 'Get a list of Flexibility Requests.',
   props: {
         
   filter__assetId: Property.ShortText({

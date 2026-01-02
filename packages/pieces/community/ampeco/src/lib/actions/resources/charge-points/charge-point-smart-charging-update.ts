@@ -7,16 +7,18 @@ import { ChargePointSmartChargingUpdateResponse } from '../../../models/response
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/charge-points/v2.0/{chargePoint}/smart-charging
+
 export const chargePointSmartChargingUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'chargePointSmartChargingUpdate',
   displayName: 'Resources - Charge Points - Charge Point Smart Charging Update',
-  description: 'Update smart charging details for the charge point. (Endpoint: POST /public-api/resources/charge-points/v2.0/{chargePoint}/smart-charging)',
+  description: 'Update smart charging details for the charge point.',
   props: {
         
   chargePoint: Property.Number({
     displayName: 'Charge Point',
-    description: '',
     required: true,
   }),
 
@@ -37,6 +39,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
      required: true,
+     auth:ampecoAuth,
      refreshers: ['mode'],
      props: async ({ mode }) => {
         if (!mode) {

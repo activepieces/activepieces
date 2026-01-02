@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/configuration-templates/v1.0/{template}
+
 export const deleteConfigurationTemplateAction = createAction({
   auth: ampecoAuth,
   name: 'deleteConfigurationTemplate',
   displayName: 'Resources - Configuration Templates - Delete Configuration Template',
-  description: 'Delete Configuration Template. (Endpoint: DELETE /public-api/resources/configuration-templates/v1.0/{template})',
+  description: 'Delete Configuration Template.',
   props: {
         
   template: Property.Number({

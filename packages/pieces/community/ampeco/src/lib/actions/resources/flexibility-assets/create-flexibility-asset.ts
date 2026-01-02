@@ -7,11 +7,14 @@ import { CreateFlexibilityAssetResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/flexibility-assets/v1.0
+
 export const createFlexibilityAssetAction = createAction({
   auth: ampecoAuth,
   name: 'createFlexibilityAsset',
-  displayName: 'Resources - Flexibility Assets - Create Flexibility Asset',
-  description: 'Create new flexibility asset. (Endpoint: POST /public-api/resources/flexibility-assets/v1.0)',
+  displayName: 'Resources - Flexibility Assets - Create',
+  description: 'Create new flexibility asset.',
   props: {
         
   dlmCircuitId: Property.Number({

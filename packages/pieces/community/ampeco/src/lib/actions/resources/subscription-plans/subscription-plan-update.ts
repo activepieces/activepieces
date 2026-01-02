@@ -7,11 +7,13 @@ import { SubscriptionPlanUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/subscription-plans/v2.0/{subscriptionPlan}
 export const subscriptionPlanUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'subscriptionPlanUpdate',
-  displayName: 'Resources - Subscription Plans - Subscription Plan Update',
-  description: 'Update a Subscription plan. (Endpoint: PATCH /public-api/resources/subscription-plans/v2.0/{subscriptionPlan})',
+  displayName: 'Resources - Subscription Plans - Update',
+  description: 'Update a Subscription plan.',
   props: {
         
   subscriptionPlan: Property.Number({

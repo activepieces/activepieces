@@ -7,11 +7,14 @@ import { CurrenciesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/currencies/v2.0
+
 export const currenciesListingAction = createAction({
   auth: ampecoAuth,
   name: 'currenciesListing',
-  displayName: 'Resources - Currencies - Currencies Listing',
-  description: 'Currencies / Listing. (Endpoint: GET /public-api/resources/currencies/v2.0)',
+  displayName: 'Resources - Currencies - Listing',
+  description: 'Currencies / Listing.',
   props: {
   },
   async run(context): Promise<CurrenciesListingResponse> {

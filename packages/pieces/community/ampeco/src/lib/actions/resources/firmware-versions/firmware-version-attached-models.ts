@@ -7,11 +7,14 @@ import { FirmwareVersionAttachedModelsResponse } from '../../../models/responses
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/firmware-versions/v1.0/{firmwareVersion}/attached-models
+
 export const firmwareVersionAttachedModelsAction = createAction({
   auth: ampecoAuth,
   name: 'firmwareVersionAttachedModels',
-  displayName: 'Resources - Firmware Versions - Firmware Version Attached Models',
-  description: 'Get all charge point models attached to this firmware version. (Endpoint: GET /public-api/resources/firmware-versions/v1.0/{firmwareVersion}/attached-models)',
+  displayName: 'Resources - Firmware Versions - Get Attached Models',
+  description: 'Get all charge point models attached to this firmware version.',
   props: {
         
   firmwareVersion: Property.Number({

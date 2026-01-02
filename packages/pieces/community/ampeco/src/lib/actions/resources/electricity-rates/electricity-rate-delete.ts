@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/electricity-rates/v2.0/{electricityRate}
+
 export const electricityRateDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'electricityRateDelete',
-  displayName: 'Resources - Electricity Rates - Electricity Rate Delete',
-  description: 'Delete a Electricity rate. (Endpoint: DELETE /public-api/resources/electricity-rates/v2.0/{electricityRate})',
+  displayName: 'Resources - Electricity Rates - Delete',
+  description: 'Delete a Electricity rate.',
   props: {
         
   electricityRate: Property.Number({

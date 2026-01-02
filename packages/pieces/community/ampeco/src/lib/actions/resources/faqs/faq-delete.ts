@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/faqs/v2.0/{faq}
+
 export const faqDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'faqDelete',
   displayName: 'Resources - Faqs - Faq Delete',
-  description: 'Delete a FAQ. (Endpoint: DELETE /public-api/resources/faqs/v2.0/{faq})',
+  description: 'Delete a FAQ.',
   props: {
         
   faq: Property.Number({

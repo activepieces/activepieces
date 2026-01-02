@@ -7,11 +7,14 @@ import { RoamingTariffsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: GET /public-api/resources/roaming-tariffs/v2.0)
+
 export const roamingTariffsListingAction = createAction({
   auth: ampecoAuth,
   name: 'roamingTariffsListing',
-  displayName: 'Resources - Roaming Tariffs - Roaming Tariffs Listing',
-  description: 'Get all Roaming Tariffs. (Endpoint: GET /public-api/resources/roaming-tariffs/v2.0)',
+  displayName: 'Resources - Roaming Tariffs - Listing',
+  description: 'Get all Roaming Tariffs.',
   props: {
         
     per_page: Property.Number({

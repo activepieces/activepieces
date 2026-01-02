@@ -7,11 +7,14 @@ import { FirmwareVersionsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/firmware-versions/v1.0
+
 export const firmwareVersionsListingAction = createAction({
   auth: ampecoAuth,
   name: 'firmwareVersionsListing',
-  displayName: 'Resources - Firmware Versions - Firmware Versions Listing',
-  description: 'Get all Firmware Versions. (Endpoint: GET /public-api/resources/firmware-versions/v1.0)',
+  displayName: 'Resources - Firmware Versions - Listing',
+  description: 'Get all Firmware Versions.',
   props: {
         
   filter__vendorId: Property.Array({

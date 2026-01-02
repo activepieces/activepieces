@@ -7,11 +7,14 @@ import { IdTagUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/id-tags/v2.0/{idTag}
+
 export const idTagUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'idTagUpdate',
-  displayName: 'Resources - Id Tags - Id Tag Update',
-  description: 'Update a Id Tag. (Endpoint: PATCH /public-api/resources/id-tags/v2.0/{idTag})',
+  displayName: 'Resources - Id Tags - Update',
+  description: 'Update a Id Tag.',
   props: {
         
   idTag: Property.Number({
