@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/users/v1.0/{user}/payment-methods/{paymentMethodId}
+
 export const paymentMethodDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'paymentMethodDelete',
   displayName: 'Resources - Users - Payment Method Delete',
-  description: 'Delete Payment method. Please note that &#x60;balance&#x60; and &#x60;corporate&#x60; payment methods CANNOT be removed from this interface. (Endpoint: DELETE /public-api/resources/users/v1.0/{user}/payment-methods/{paymentMethodId})',
+  description: 'Delete Payment method. Please note that ";balance"; and ";corporate"; payment methods CANNOT be removed from this interface.',
   props: {
         
   user: Property.Number({

@@ -7,11 +7,14 @@ import { TransactionUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/transactions/v1.0/{transaction}
+
 export const transactionUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'transactionUpdate',
-  displayName: 'Resources - Transactions - Transaction Update',
-  description: 'Update a non-finalised transaction. (Endpoint: PATCH /public-api/resources/transactions/v1.0/{transaction})',
+  displayName: 'Resources - Transactions - Update',
+  description: 'Update a non-finalised transaction.',
   props: {
         
   transaction: Property.ShortText({

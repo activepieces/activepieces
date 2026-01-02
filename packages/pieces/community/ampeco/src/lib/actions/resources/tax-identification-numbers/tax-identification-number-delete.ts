@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/tax-identification-numbers/v2.0/{taxIdentificationNumber}
+
 export const taxIdentificationNumberDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'taxIdentificationNumberDelete',
-  displayName: 'Resources - Tax Identification Numbers - Tax Identification Number Delete',
-  description: 'Delete a Tax Identification Number. (Endpoint: DELETE /public-api/resources/tax-identification-numbers/v2.0/{taxIdentificationNumber})',
+  displayName: 'Resources - Tax Identification Numbers - Delete',
+  description: 'Delete a Tax Identification Number.',
   props: {
         
   taxIdentificationNumber: Property.Number({

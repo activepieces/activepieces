@@ -7,11 +7,13 @@ import { TopUpPackagesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/top-up-packages/v2.0
 export const topUpPackagesListingAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackagesListing',
-  displayName: 'Resources - Top Up Packages - Top Up Packages Listing',
-  description: 'Get all Top-Up Packages. (Endpoint: GET /public-api/resources/top-up-packages/v2.0)',
+  displayName: 'Resources - Top Up Packages - Listing',
+  description: 'Get all Top-Up Packages.',
   props: {
         
   filter__enabled: Property.ShortText({

@@ -7,11 +7,13 @@ import { TaxReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/taxes/v2.0/{tax}
 export const taxReadAction = createAction({
   auth: ampecoAuth,
   name: 'taxRead',
-  displayName: 'Resources - Taxes - Tax Read',
-  description: 'Get a Tax. (Endpoint: GET /public-api/resources/taxes/v2.0/{tax})',
+  displayName: 'Resources - Taxes - Read',
+  description: 'Get a Tax.',
   props: {
         
   tax: Property.Number({

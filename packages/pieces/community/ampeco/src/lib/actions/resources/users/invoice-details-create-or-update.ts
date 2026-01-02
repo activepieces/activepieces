@@ -7,11 +7,14 @@ import { InvoiceDetailsCreateOrUpdateResponse } from '../../../models/responses'
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/users/v1.0/{user}/invoice-details
+
 export const invoiceDetailsCreateOrUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'invoiceDetailsCreateOrUpdate',
   displayName: 'Resources - Users - Invoice Details Create Or Update',
-  description: 'Create or update user invoice details. (Endpoint: POST /public-api/resources/users/v1.0/{user}/invoice-details)',
+  description: 'Create or update user invoice details.',
   props: {
         
   user: Property.Number({
@@ -37,6 +40,7 @@ export const invoiceDetailsCreateOrUpdateAction = createAction({
   requestBody: Property.DynamicProperties({
      displayName: 'Request Body',
      required: true,
+     auth:ampecoAuth,
      refreshers: ['requestBody_VariantType'],
      props: async ({ requestBody_VariantType }) => {
         if (!requestBody_VariantType) {
@@ -381,6 +385,7 @@ export const invoiceDetailsCreateOrUpdateAction = createAction({
 
   state: Property.Dropdown({
         displayName: 'State',
+        auth:ampecoAuth,
         required: false,
         refreshers: ['country'],
         options: async ({ country }) => {

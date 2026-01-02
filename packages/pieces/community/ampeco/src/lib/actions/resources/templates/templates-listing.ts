@@ -7,11 +7,14 @@ import { TemplatesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/templates/v1.0
+
 export const templatesListingAction = createAction({
   auth: ampecoAuth,
   name: 'templatesListing',
   displayName: 'Resources - Templates - Templates Listing',
-  description: 'Get all charge points templates. (Endpoint: GET /public-api/resources/templates/v1.0)',
+  description: 'Get all charge points templates.',
   props: {
         
     per_page: Property.Number({

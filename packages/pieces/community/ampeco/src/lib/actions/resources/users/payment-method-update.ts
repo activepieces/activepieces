@@ -7,11 +7,14 @@ import { PaymentMethodUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// (Endpoint: PATCH /public-api/resources/users/v1.0/{user}/payment-methods/{paymentMethodId})
+
 export const paymentMethodUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'paymentMethodUpdate',
   displayName: 'Resources - Users - Payment Method Update',
-  description: 'Update Payment method. Please note that &#x60;balance&#x60; and &#x60;corporate&#x60; payment methods CANNOT be set as default. (Endpoint: PATCH /public-api/resources/users/v1.0/{user}/payment-methods/{paymentMethodId})',
+  description: 'Update Payment method. Please note that ";balance"; and ";corporate"; payment methods CANNOT be set as default',
   props: {
         
   user: Property.Number({

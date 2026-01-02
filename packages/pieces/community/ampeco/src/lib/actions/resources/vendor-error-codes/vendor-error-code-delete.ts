@@ -6,11 +6,13 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/vendor-error-codes/v2.0/{vendorErrorCode}
 export const vendorErrorCodeDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'vendorErrorCodeDelete',
   displayName: 'Resources - Vendor Error Codes - Vendor Error Code Delete',
-  description: 'Delete a Vendor Error Code. (Endpoint: DELETE /public-api/resources/vendor-error-codes/v2.0/{vendorErrorCode})',
+  description: 'Delete a Vendor Error Code.',
   props: {
         
   vendorErrorCode: Property.Number({

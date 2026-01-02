@@ -7,11 +7,14 @@ import { TaxIdentificationNumbersListingResponse } from '../../../models/respons
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/tax-identification-numbers/v2.0
+
 export const taxIdentificationNumbersListingAction = createAction({
   auth: ampecoAuth,
   name: 'taxIdentificationNumbersListing',
-  displayName: 'Resources - Tax Identification Numbers - Tax Identification Numbers Listing',
-  description: 'Get all Tax Identification Numbers. (Endpoint: GET /public-api/resources/tax-identification-numbers/v2.0)',
+  displayName: 'Resources - Tax Identification Numbers - Listing',
+  description: 'Get all Tax Identification Numbers.',
   props: {
         
     per_page: Property.Number({

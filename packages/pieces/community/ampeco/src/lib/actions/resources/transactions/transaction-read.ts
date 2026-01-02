@@ -7,11 +7,14 @@ import { TransactionReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/transactions/v1.0/{transaction}
+
 export const transactionReadAction = createAction({
   auth: ampecoAuth,
   name: 'transactionRead',
-  displayName: 'Resources - Transactions - Transaction Read',
-  description: 'Get a transation. (Endpoint: GET /public-api/resources/transactions/v1.0/{transaction})',
+  displayName: 'Resources - Transactions - Read',
+  description: 'Get a transation.',
   props: {
         
   transaction: Property.ShortText({

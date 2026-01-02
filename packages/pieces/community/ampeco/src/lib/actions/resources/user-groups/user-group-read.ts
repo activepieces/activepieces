@@ -7,11 +7,14 @@ import { UserGroupReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: GET /public-api/resources/user-groups/v1.0/{userGroup}
+
 export const userGroupReadAction = createAction({
   auth: ampecoAuth,
   name: 'userGroupRead',
-  displayName: 'Resources - User Groups - User Group Read',
-  description: 'Get an user group. (Endpoint: GET /public-api/resources/user-groups/v1.0/{userGroup})',
+  displayName: 'Resources - User Groups - Read',
+  description: 'Get an user group.',
   props: {
         
   userGroup: Property.Number({

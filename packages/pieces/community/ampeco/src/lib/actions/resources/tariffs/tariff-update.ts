@@ -7,11 +7,14 @@ import { TariffUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: PUT /public-api/resources/tariffs/v1.0/{tariff}
+
 export const tariffUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'tariffUpdate',
-  displayName: 'Resources - Tariffs - Tariff Update',
-  description: 'Update a tariff. (Endpoint: PUT /public-api/resources/tariffs/v1.0/{tariff})',
+  displayName: 'Resources - Tariffs - Update',
+  description: 'Update a tariff.',
   props: {
         
   tariff: Property.Number({

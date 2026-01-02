@@ -7,11 +7,14 @@ import { UserCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/users/v1.0
+
 export const userCreateAction = createAction({
   auth: ampecoAuth,
   name: 'userCreate',
   displayName: 'Resources - Users - User Create',
-  description: 'Create new User. (Endpoint: POST /public-api/resources/users/v1.0)',
+  description: 'Create new User.',
   props: {
         
   email: Property.ShortText({
@@ -331,6 +334,7 @@ export const userCreateAction = createAction({
   state: Property.Dropdown({
         displayName: 'State',
         required: false,
+        auth:ampecoAuth,
         refreshers: ['country'],
         options: async ({ country }) => {
           if (!country) {

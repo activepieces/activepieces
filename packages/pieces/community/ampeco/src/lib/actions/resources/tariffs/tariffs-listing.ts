@@ -7,11 +7,14 @@ import { TariffsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/tariffs/v1.0
+
 export const tariffsListingAction = createAction({
   auth: ampecoAuth,
   name: 'tariffsListing',
-  displayName: 'Resources - Tariffs - Tariffs Listing',
-  description: 'Get all tariff. Also you could use the &#x60;tariffGroupId&#x60; and the &#x60;userId&#x60; to &quot;resolve&quot; the concrete tariff within a group that would be applied to the specified user. (Endpoint: GET /public-api/resources/tariffs/v1.0)',
+  displayName: 'Resources - Tariffs - Listing',
+  description: 'Get all tariff. Also you could use the "tariffGroupId" and the "userId" to "resolve" the concrete tariff within a group that would be applied to the specified user.',
   props: {
         
   filter__tariffGroupId: Property.Number({

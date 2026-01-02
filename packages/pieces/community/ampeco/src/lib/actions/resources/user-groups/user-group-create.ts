@@ -7,11 +7,13 @@ import { UserGroupCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/user-groups/v1.0
 export const userGroupCreateAction = createAction({
   auth: ampecoAuth,
   name: 'userGroupCreate',
-  displayName: 'Resources - User Groups - User Group Create',
-  description: 'Create new user group. (Endpoint: POST /public-api/resources/user-groups/v1.0)',
+  displayName: 'Resources - User Groups - Create',
+  description: 'Create new user group.',
   props: {
         
   name: Property.ShortText({

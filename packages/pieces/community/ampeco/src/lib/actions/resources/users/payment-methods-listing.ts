@@ -7,11 +7,13 @@ import { PaymentMethodsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/users/v1.0/{user}/payment-methods
 export const paymentMethodsListingAction = createAction({
   auth: ampecoAuth,
   name: 'paymentMethodsListing',
   displayName: 'Resources - Users - Payment Methods Listing',
-  description: 'Get all payment methods for a user. (Endpoint: GET /public-api/resources/users/v1.0/{user}/payment-methods)',
+  description: 'Get all payment methods for a user.',
   props: {
         
   user: Property.Number({

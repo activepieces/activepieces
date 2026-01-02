@@ -7,11 +7,14 @@ import { VouchersListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/vouchers/v2.1
+
 export const vouchersListingAction = createAction({
   auth: ampecoAuth,
   name: 'vouchersListing',
   displayName: 'Resources - Vouchers - Vouchers Listing',
-  description: 'Get all Vouchers. (Endpoint: GET /public-api/resources/vouchers/v2.1)',
+  description: 'Get all Vouchers.',
   props: {
         
   filter__type: Property.StaticDropdown({

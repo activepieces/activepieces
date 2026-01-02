@@ -7,11 +7,14 @@ import { TransactionsCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/transactions/v1.0
+
 export const transactionsCreateAction = createAction({
   auth: ampecoAuth,
   name: 'transactionsCreate',
-  displayName: 'Resources - Transactions - Transactions Create',
-  description: 'Create new Transaction. (Endpoint: POST /public-api/resources/transactions/v1.0)',
+  displayName: 'Resources - Transactions - Create',
+  description: 'Create new Transaction.',
   props: {
         
   sessionId: Property.Number({

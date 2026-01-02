@@ -7,11 +7,13 @@ import { TopUpPackagCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/top-up-packages/v2.0
 export const topUpPackagCreateAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackagCreate',
-  displayName: 'Resources - Top Up Packages - Top Up Packag Create',
-  description: 'Create new Top-Up Package. (Endpoint: POST /public-api/resources/top-up-packages/v2.0)',
+  displayName: 'Resources - Top Up Packages - Create',
+  description: 'Create new Top-Up Package.',
   props: {
         
   price: Property.Number({

@@ -7,11 +7,13 @@ import { VoucherCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/vouchers/v2.1
 export const voucherCreateAction = createAction({
   auth: ampecoAuth,
   name: 'voucherCreate',
   displayName: 'Resources - Vouchers - Voucher Create',
-  description: 'Create new Voucher. (Endpoint: POST /public-api/resources/vouchers/v2.1)',
+  description: 'Create new Voucher.',
   props: {
         
   amount: Property.Number({

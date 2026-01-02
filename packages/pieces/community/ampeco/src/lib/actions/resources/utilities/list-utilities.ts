@@ -7,11 +7,13 @@ import { ListUtilitiesResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/utilities/v1.0
 export const listUtilitiesAction = createAction({
   auth: ampecoAuth,
   name: 'listUtilities',
   displayName: 'Resources - Utilities - List Utilities',
-  description: 'Get all Utilities. (Endpoint: GET /public-api/resources/utilities/v1.0)',
+  description: 'Get all Utilities.',
   props: {
         
     per_page: Property.Number({

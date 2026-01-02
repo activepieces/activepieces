@@ -7,11 +7,14 @@ import { TaxIdentificationNumberUpdateResponse } from '../../../models/responses
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/tax-identification-numbers/v2.0/{taxIdentificationNumber}
+
 export const taxIdentificationNumberUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'taxIdentificationNumberUpdate',
-  displayName: 'Resources - Tax Identification Numbers - Tax Identification Number Update',
-  description: 'Tax Identification Numbers. (Endpoint: PATCH /public-api/resources/tax-identification-numbers/v2.0/{taxIdentificationNumber})',
+  displayName: 'Resources - Tax Identification Numbers - Update',
+  description: 'Tax Identification Numbers.',
   props: {
         
   taxIdentificationNumber: Property.Number({

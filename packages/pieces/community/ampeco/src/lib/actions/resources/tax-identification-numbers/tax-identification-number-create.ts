@@ -7,11 +7,14 @@ import { TaxIdentificationNumberCreateResponse } from '../../../models/responses
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/tax-identification-numbers/v2.0
+
 export const taxIdentificationNumberCreateAction = createAction({
   auth: ampecoAuth,
   name: 'taxIdentificationNumberCreate',
-  displayName: 'Resources - Tax Identification Numbers - Tax Identification Number Create',
-  description: 'Create new Tax Identification Number. (Endpoint: POST /public-api/resources/tax-identification-numbers/v2.0)',
+  displayName: 'Resources - Tax Identification Numbers - Create',
+  description: 'Create new Tax Identification Number.',
   props: {
         
   name: Property.ShortText({

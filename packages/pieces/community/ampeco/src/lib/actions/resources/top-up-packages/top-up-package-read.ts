@@ -7,11 +7,14 @@ import { TopUpPackageReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/top-up-packages/v2.0/{topUpPackage}
+
 export const topUpPackageReadAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackageRead',
-  displayName: 'Resources - Top Up Packages - Top Up Package Read',
-  description: 'Get a Top-Up Package. (Endpoint: GET /public-api/resources/top-up-packages/v2.0/{topUpPackage})',
+  displayName: 'Resources - Top Up Packages - Read',
+  description: 'Get a Top-Up Package.',
   props: {
         
   topUpPackage: Property.Number({

@@ -7,11 +7,14 @@ import { TransactionsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/transactions/v1.0
+
 export const transactionsListingAction = createAction({
   auth: ampecoAuth,
   name: 'transactionsListing',
-  displayName: 'Resources - Transactions - Transactions Listing',
-  description: 'Get all transactions. (Endpoint: GET /public-api/resources/transactions/v1.0)',
+  displayName: 'Resources - Transactions - Listing',
+  description: 'Get all transactions.',
   props: {
         
   filter__createdAfter: Property.DateTime({

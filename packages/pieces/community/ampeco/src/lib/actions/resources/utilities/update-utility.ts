@@ -7,11 +7,14 @@ import { UpdateUtilityResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PUT /public-api/resources/utilities/v1.0/{utility}
+
 export const updateUtilityAction = createAction({
   auth: ampecoAuth,
   name: 'updateUtility',
   displayName: 'Resources - Utilities - Update Utility',
-  description: 'Update a single Utility. (Endpoint: PUT /public-api/resources/utilities/v1.0/{utility})',
+  description: 'Update a single Utility.',
   props: {
         
   utility: Property.Number({

@@ -7,11 +7,13 @@ import { TaxUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/taxes/v2.0/{tax}
 export const taxUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'taxUpdate',
-  displayName: 'Resources - Taxes - Tax Update',
-  description: 'Taxes. (Endpoint: PATCH /public-api/resources/taxes/v2.0/{tax})',
+  displayName: 'Resources - Taxes - Update',
+  description: 'Update Taxes.',
   props: {
         
   tax: Property.Number({

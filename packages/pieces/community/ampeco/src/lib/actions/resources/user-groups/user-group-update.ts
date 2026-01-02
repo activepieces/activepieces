@@ -7,11 +7,13 @@ import { UserGroupUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: PATCH /public-api/resources/user-groups/v1.0/{userGroup}
 export const userGroupUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'userGroupUpdate',
-  displayName: 'Resources - User Groups - User Group Update',
-  description: 'Update a user group. (Endpoint: PATCH /public-api/resources/user-groups/v1.0/{userGroup})',
+  displayName: 'Resources - User Groups - Update',
+  description: 'Update a user group.',
   props: {
         
   userGroup: Property.Number({

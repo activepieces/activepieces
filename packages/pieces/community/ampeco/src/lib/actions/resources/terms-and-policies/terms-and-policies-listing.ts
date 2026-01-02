@@ -7,11 +7,14 @@ import { TermsAndPoliciesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/terms-and-policies/v2.0
+
 export const termsAndPoliciesListingAction = createAction({
   auth: ampecoAuth,
   name: 'termsAndPoliciesListing',
-  displayName: 'Resources - Terms And Policies - Terms And Policies Listing',
-  description: 'Terms and policies / Listing. (Endpoint: GET /public-api/resources/terms-and-policies/v2.0)',
+  displayName: 'Resources - Terms And Policies - Listing',
+  description: 'Terms and policies / Listing.',
   props: {
         
   filter__documentId: Property.Number({

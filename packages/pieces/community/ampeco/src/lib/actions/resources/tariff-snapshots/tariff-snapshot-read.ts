@@ -7,11 +7,14 @@ import { TariffSnapshotReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/tariff-snapshots/v1.0/{tariffSnapshot}
+
 export const tariffSnapshotReadAction = createAction({
   auth: ampecoAuth,
   name: 'tariffSnapshotRead',
-  displayName: 'Resources - Tariff Snapshots - Tariff Snapshot Read',
-  description: 'Get a tariff snapshot by id. (Endpoint: GET /public-api/resources/tariff-snapshots/v1.0/{tariffSnapshot})',
+  displayName: 'Resources - Tariff Snapshots - Read Tariff Snapshot',
+  description: 'Get a tariff snapshot by id.',
   props: {
         
   tariffSnapshot: Property.Number({

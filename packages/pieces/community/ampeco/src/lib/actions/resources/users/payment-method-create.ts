@@ -7,11 +7,14 @@ import { PaymentMethodCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/users/v1.0/{user}/payment-methods
+
 export const paymentMethodCreateAction = createAction({
   auth: ampecoAuth,
   name: 'paymentMethodCreate',
   displayName: 'Resources - Users - Payment Method Create',
-  description: 'Initiate a new payment method registration, or finalize it. Note that this is a two step process! # For payment processors with web view integration You will need to initiate a call with no parameters to this endpoint to get a new request to add payment method (Step 1). Then you will have to redirect to an endpoint and wait for the client to enter his credit card details there. (Endpoint: POST /public-api/resources/users/v1.0/{user}/payment-methods)',
+  description: 'Initiate a new payment method registration, or finalize it. Note that this is a two step process! # For payment processors with web view integration You will need to initiate a call with no parameters to this endpoint to get a new request to add payment method (Step 1). Then you will have to redirect to an endpoint and wait for the client to enter his credit card details there.',
   props: {
         
   user: Property.Number({

@@ -7,11 +7,14 @@ import { InvoiceDetailsReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/users/v1.0/{user}/invoice-details
+
 export const invoiceDetailsReadAction = createAction({
   auth: ampecoAuth,
   name: 'invoiceDetailsRead',
   displayName: 'Resources - Users - Invoice Details Read',
-  description: 'Invoice details / Read. (Endpoint: GET /public-api/resources/users/v1.0/{user}/invoice-details)',
+  description: 'Invoice details / Read.',
   props: {
         
   user: Property.Number({

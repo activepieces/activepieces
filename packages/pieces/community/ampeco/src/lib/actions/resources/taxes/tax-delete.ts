@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+//Endpoint: DELETE /public-api/resources/taxes/v2.0/{tax}
+
 export const taxDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'taxDelete',
-  displayName: 'Resources - Taxes - Tax Delete',
-  description: 'Delete a Tax. (Endpoint: DELETE /public-api/resources/taxes/v2.0/{tax})',
+  displayName: 'Resources - Taxes - Delete',
+  description: 'Delete a Tax.',
   props: {
         
   tax: Property.Number({

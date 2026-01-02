@@ -7,11 +7,14 @@ import { CreateUtilityResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/utilities/v1.0
+
 export const createUtilityAction = createAction({
   auth: ampecoAuth,
   name: 'createUtility',
   displayName: 'Resources - Utilities - Create Utility',
-  description: 'Create Utility. (Endpoint: POST /public-api/resources/utilities/v1.0)',
+  description: 'Create Utility.',
   props: {
         
   name: Property.ShortText({

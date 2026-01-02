@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/top-up-packages/v2.0/{topUpPackage}
+
 export const topUpPackageDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackageDelete',
-  displayName: 'Resources - Top Up Packages - Top Up Package Delete',
-  description: 'Delete a Top-Up Package. (Endpoint: DELETE /public-api/resources/top-up-packages/v2.0/{topUpPackage})',
+  displayName: 'Resources - Top Up Packages - Delete',
+  description: 'Delete a Top-Up Package.',
   props: {
         
   topUpPackage: Property.Number({

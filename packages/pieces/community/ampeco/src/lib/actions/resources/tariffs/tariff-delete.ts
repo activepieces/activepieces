@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/tariffs/v1.0/{tariff}
+
 export const tariffDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'tariffDelete',
-  displayName: 'Resources - Tariffs - Tariff Delete',
-  description: 'Delete a tariff. (Endpoint: DELETE /public-api/resources/tariffs/v1.0/{tariff})',
+  displayName: 'Resources - Tariffs - Delete',
+  description: 'Delete a tariff.',
   props: {
         
   tariff: Property.Number({

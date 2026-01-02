@@ -7,11 +7,14 @@ import { PaymentMethodReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/users/v1.0/{user}/payment-methods/{paymentMethodId}
+
 export const paymentMethodReadAction = createAction({
   auth: ampecoAuth,
   name: 'paymentMethodRead',
   displayName: 'Resources - Users - Payment Method Read',
-  description: 'Get information for a payment method by ID. (Endpoint: GET /public-api/resources/users/v1.0/{user}/payment-methods/{paymentMethodId})',
+  description: 'Get information for a payment method by ID.',
   props: {
         
   user: Property.Number({

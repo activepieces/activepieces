@@ -7,11 +7,14 @@ import { UsersListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/users/v1.0
+
 export const usersListingAction = createAction({
   auth: ampecoAuth,
   name: 'usersListing',
   displayName: 'Resources - Users - Users Listing',
-  description: 'Get all users. (Endpoint: GET /public-api/resources/users/v1.0)',
+  description: 'Get all users.',
   props: {
         
   filter__userGroupId: Property.Number({

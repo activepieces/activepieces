@@ -7,11 +7,14 @@ import { UserUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/users/v1.0/{user}
+
 export const userUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'userUpdate',
   displayName: 'Resources - Users - User Update',
-  description: 'Update user. (Endpoint: PATCH /public-api/resources/users/v1.0/{user})',
+  description: 'Update user.',
   props: {
         
   user: Property.Number({
@@ -349,6 +352,7 @@ export const userUpdateAction = createAction({
   state: Property.Dropdown({
         displayName: 'State',
         required: false,
+        auth:ampecoAuth,
         refreshers: ['country'],
         options: async ({ country }) => {
           if (!country) {

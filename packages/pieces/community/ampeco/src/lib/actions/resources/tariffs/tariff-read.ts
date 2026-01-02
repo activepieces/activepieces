@@ -7,11 +7,13 @@ import { TariffReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/tariffs/v1.0/{tariff}
 export const tariffReadAction = createAction({
   auth: ampecoAuth,
   name: 'tariffRead',
-  displayName: 'Resources - Tariffs - Tariff Read',
-  description: 'Get a tariff. (Endpoint: GET /public-api/resources/tariffs/v1.0/{tariff})',
+  displayName: 'Resources - Tariffs - Read',
+  description: 'Get a tariff.',
   props: {
         
   tariff: Property.Number({

@@ -6,11 +6,13 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/utilities/v1.0
 export const deleteUtilityAction = createAction({
   auth: ampecoAuth,
   name: 'deleteUtility',
   displayName: 'Resources - Utilities - Delete Utility',
-  description: 'Delete a single Utility. (Endpoint: DELETE /public-api/resources/utilities/v1.0/{utility})',
+  description: 'Delete a single Utility.',
   props: {
         
   utility: Property.Number({

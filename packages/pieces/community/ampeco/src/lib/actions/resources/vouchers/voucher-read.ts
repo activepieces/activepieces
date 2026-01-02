@@ -7,11 +7,13 @@ import { VoucherReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/vouchers/v2.1/{voucher}
 export const voucherReadAction = createAction({
   auth: ampecoAuth,
   name: 'voucherRead',
   displayName: 'Resources - Vouchers - Voucher Read',
-  description: 'Get a Voucher. (Endpoint: GET /public-api/resources/vouchers/v2.1/{voucher})',
+  description: 'Get a Voucher.',
   props: {
         
   voucher: Property.Number({

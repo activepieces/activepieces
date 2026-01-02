@@ -7,11 +7,13 @@ import { TaxCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/taxes/v2.0
 export const taxCreateAction = createAction({
   auth: ampecoAuth,
   name: 'taxCreate',
-  displayName: 'Resources - Taxes - Tax Create',
-  description: 'Create new Tax. (Endpoint: POST /public-api/resources/taxes/v2.0)',
+  displayName: 'Resources - Taxes - Create',
+  description: 'Create new Tax.',
   props: {
         
   name: Property.ShortText({

@@ -7,11 +7,14 @@ import { VendorErrorCodeUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/vendor-error-codes/v2.0/{vendorErrorCode}
+
 export const vendorErrorCodeUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'vendorErrorCodeUpdate',
   displayName: 'Resources - Vendor Error Codes - Vendor Error Code Update',
-  description: 'Vendor Error Code. (Endpoint: PATCH /public-api/resources/vendor-error-codes/v2.0/{vendorErrorCode})',
+  description: 'Vendor Error Code.',
   props: {
         
   vendorErrorCode: Property.Number({

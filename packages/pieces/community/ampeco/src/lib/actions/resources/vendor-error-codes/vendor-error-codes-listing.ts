@@ -7,11 +7,13 @@ import { VendorErrorCodesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/vendor-error-codes/v2.0
 export const vendorErrorCodesListingAction = createAction({
   auth: ampecoAuth,
   name: 'vendorErrorCodesListing',
   displayName: 'Resources - Vendor Error Codes - Vendor Error Codes Listing',
-  description: 'Get all Vendor Error Codes. (Endpoint: GET /public-api/resources/vendor-error-codes/v2.0)',
+  description: 'Get all Vendor Error Codes.',
   props: {
         
     per_page: Property.Number({

@@ -7,11 +7,14 @@ import { UserGroupsListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/user-groups/v1.0
+
 export const userGroupsListingAction = createAction({
   auth: ampecoAuth,
   name: 'userGroupsListing',
-  displayName: 'Resources - User Groups - User Groups Listing',
-  description: 'Get all user groups. (Endpoint: GET /public-api/resources/user-groups/v1.0)',
+  displayName: 'Resources - User Groups - Listing',
+  description: 'Get all user groups.',
   props: {
         
   filter__noPartner: Property.ShortText({

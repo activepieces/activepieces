@@ -7,11 +7,13 @@ import { VoucherUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/vouchers/v2.1/{voucher}
 export const voucherUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'voucherUpdate',
   displayName: 'Resources - Vouchers - Voucher Update',
-  description: 'Update a Voucher. (Endpoint: PATCH /public-api/resources/vouchers/v2.1/{voucher})',
+  description: 'Update a Voucher.',
   props: {
         
   voucher: Property.Number({

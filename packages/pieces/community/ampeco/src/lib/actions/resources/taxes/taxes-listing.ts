@@ -7,11 +7,14 @@ import { TaxesListingResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/taxes/v2.0
+
 export const taxesListingAction = createAction({
   auth: ampecoAuth,
   name: 'taxesListing',
-  displayName: 'Resources - Taxes - Taxes Listing',
-  description: 'Get all Taxes. (Endpoint: GET /public-api/resources/taxes/v2.0)',
+  displayName: 'Resources - Taxes - Listing',
+  description: 'Get all Taxes.',
   props: {
         
     per_page: Property.Number({

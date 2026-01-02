@@ -6,11 +6,14 @@ import { ampecoAuth } from '../../../common/auth';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: DELETE /public-api/resources/user-groups/v1.0/{userGroup}
+
 export const userGroupDeleteAction = createAction({
   auth: ampecoAuth,
   name: 'userGroupDelete',
-  displayName: 'Resources - User Groups - User Group Delete',
-  description: 'Delete a user group. (Endpoint: DELETE /public-api/resources/user-groups/v1.0/{userGroup})',
+  displayName: 'Resources - User Groups - Delete',
+  description: 'Delete a user group.',
   props: {
         
   userGroup: Property.Number({

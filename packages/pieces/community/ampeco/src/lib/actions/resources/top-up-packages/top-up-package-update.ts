@@ -7,11 +7,14 @@ import { TopUpPackageUpdateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: PATCH /public-api/resources/top-up-packages/v2.0/{topUpPackage}
+
 export const topUpPackageUpdateAction = createAction({
   auth: ampecoAuth,
   name: 'topUpPackageUpdate',
-  displayName: 'Resources - Top Up Packages - Top Up Package Update',
-  description: 'Top-Up Packages. (Endpoint: PATCH /public-api/resources/top-up-packages/v2.0/{topUpPackage})',
+  displayName: 'Resources - Top Up Packages - Update',
+  description: 'Top-Up Packages.',
   props: {
         
   topUpPackage: Property.Number({

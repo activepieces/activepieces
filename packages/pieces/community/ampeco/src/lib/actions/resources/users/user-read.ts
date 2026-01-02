@@ -7,11 +7,14 @@ import { UserReadResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: GET /public-api/resources/users/v1.0/{user}
+
 export const userReadAction = createAction({
   auth: ampecoAuth,
   name: 'userRead',
   displayName: 'Resources - Users - User Read',
-  description: 'Get a user. (Endpoint: GET /public-api/resources/users/v1.0/{user})',
+  description: 'Get a user.',
   props: {
         
   user: Property.Number({

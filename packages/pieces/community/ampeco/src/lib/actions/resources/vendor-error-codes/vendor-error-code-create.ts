@@ -7,11 +7,13 @@ import { VendorErrorCodeCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/vendor-error-codes/v2.0
 export const vendorErrorCodeCreateAction = createAction({
   auth: ampecoAuth,
   name: 'vendorErrorCodeCreate',
   displayName: 'Resources - Vendor Error Codes - Vendor Error Code Create',
-  description: 'Create new Vendor Error Code. (Endpoint: POST /public-api/resources/vendor-error-codes/v2.0)',
+  description: 'Create new Vendor Error Code.',
   props: {
         
   vendorId: Property.ShortText({

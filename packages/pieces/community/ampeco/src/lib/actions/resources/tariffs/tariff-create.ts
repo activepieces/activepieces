@@ -7,11 +7,14 @@ import { TariffCreateResponse } from '../../../models/responses';
 /**
  * Generated from API version: 3.96.4
  */
+
+// Endpoint: POST /public-api/resources/tariffs/v1.0
+
 export const tariffCreateAction = createAction({
   auth: ampecoAuth,
   name: 'tariffCreate',
-  displayName: 'Resources - Tariffs - Tariff Create',
-  description: 'Create new tariff. (Endpoint: POST /public-api/resources/tariffs/v1.0)',
+  displayName: 'Resources - Tariffs - Create',
+  description: 'Create new tariff.',
   props: {
         
   name: Property.ShortText({
