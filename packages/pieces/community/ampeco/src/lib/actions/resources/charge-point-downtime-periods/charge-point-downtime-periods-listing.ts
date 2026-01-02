@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
 import { ChargePointDowntimePeriodsListingResponse } from '../../../models/responses';
 
 /**
@@ -51,13 +51,13 @@ export const chargePointDowntimePeriodsListingAction = createAction({
 
   filter__startedAfter: Property.DateTime({
     displayName: 'Filter - Started After',
-    description: 'ISO 8601 formatted date. Resources with \`startedAt >= startedAfter\`.',
+    description: 'ISO 8601 formatted date. Resources with `startedAt >= startedAfter`.',
     required: false,
   }),
 
   filter__stoppedBefore: Property.DateTime({
     displayName: 'Filter - Stopped Before',
-    description: 'ISO 8601 formatted date. Resources with \`stoppedAt <= stoppedBefore\`.',
+    description: 'ISO 8601 formatted date. Resources with `stoppedAt <= stoppedBefore`.',
     required: false,
   }),
 

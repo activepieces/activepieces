@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 
 /**
  * Generated from API version: 3.96.4
@@ -23,13 +23,13 @@ export const chargePointUpdateFirmwareAction = createAction({
 
   url: Property.ShortText({
     displayName: 'URL',
-    description: 'Location (URL) from which to retrieve the firmware. Either this or \`firmwareVersionId\` must be provided.',
+    description: 'Location (URL) from which to retrieve the firmware. Either this or `firmwareVersionId` must be provided.',
     required: false,
   }),
 
   firmwareVersionId: Property.Number({
     displayName: 'Firmware Version Id',
-    description: 'ID of a Firmware Version. Either this or \`url\` must be provided.',
+    description: 'ID of a Firmware Version. Either this or `url` must be provided.',
     required: false,
   }),
 
@@ -65,13 +65,13 @@ export const chargePointUpdateFirmwareAction = createAction({
 
   signingCertificate: Property.ShortText({
     displayName: 'Signing Certificate',
-    description: 'Required if \"signed\" is true.',
+    description: 'Required if "signed" is true.',
     required: false,
   }),
 
   signature: Property.ShortText({
     displayName: 'Signature',
-    description: 'Required if \"signed\" is true.',
+    description: 'Required if "signed" is true.',
     required: false,
   }),
 

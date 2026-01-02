@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { CircuitCreateResponse } from '../../../models/responses';
 
 /**
@@ -76,7 +76,7 @@ export const circuitCreateAction = createAction({
 
   electricalConfiguration: Property.StaticDropdown({
     displayName: 'Electrical Configuration',
-    description: 'Defines the type of electrical configuration of the circuit. A circuit must have the same electrical configuration as its parent circuit. To maintain safety and compatibility, only charge points with an identical electrical configuration to the circuit can be added. To modify a circuit\'s electrical configuration, all charge points with a different configuration must first be removed through Actions / Detach Charge Point. The available options are </br> \`star\` - TN system - Star (Y) (default)</br> \`delta\` - IT system - Delta (Δ)</br>',
+    description: 'Defines the type of electrical configuration of the circuit. A circuit must have the same electrical configuration as its parent circuit. To maintain safety and compatibility, only charge points with an identical electrical configuration to the circuit can be added. To modify a circuit\'s electrical configuration, all charge points with a different configuration must first be removed through Actions / Detach Charge Point. The available options are </br> `star` - TN system - Star (Y) (default)</br> `delta` - IT system - Delta (Δ)</br>',
     required: false,
     options: {
       options: [
@@ -143,7 +143,7 @@ export const circuitCreateAction = createAction({
 
   loadBalancingIntegration__id: Property.Number({
     displayName: 'Load Balancing Integration - Id',
-    description: 'The id of the load balancing integration (can be found in the Ampeco backend). Provide \`null\` if you want to disable any load balancing integration and revert back to the Ampeco built-in load balancing.',
+    description: 'The id of the load balancing integration (can be found in the Ampeco backend). Provide `null` if you want to disable any load balancing integration and revert back to the Ampeco built-in load balancing.',
     required: false,
   }),
 

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { ChargePointReserveResponse } from '../../../models/responses';
 
 /**
@@ -33,7 +33,7 @@ export const chargePointReserveAction = createAction({
 
   reason: Property.ShortText({
     displayName: 'Reason',
-    description: 'In case reason is empty, following text \"Activated via API\" will be added automatically',
+    description: 'In case reason is empty, following text "Activated via API" will be added automatically',
     required: false,
   }),
   },

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, paginate, prepareQueryParams, processPathParameters } from '../../../common/utils';
 import { AuthorizationsListingResponse } from '../../../models/responses';
 
 /**
@@ -43,13 +43,13 @@ export const authorizationsListingAction = createAction({
 
   filter__status: Property.ShortText({
     displayName: 'Filter - Status',
-    description: 'Lists only authorizations with one of the following statuses: \"accepted\", \"rejected\", \"pending\"',
+    description: 'Lists only authorizations with one of the following statuses: "accepted", "rejected", "pending"',
     required: false,
   }),
 
   filter__method: Property.ShortText({
     displayName: 'Filter - Method',
-    description: 'Lists only authorizations with one of the following methods: \"mobile_device\", \"rfid_tag\", \"admin_account\", \"plug_and_charge\", \"plug_and_charge_iso15118\", \"roaming\", \"payment_terminal\"',
+    description: 'Lists only authorizations with one of the following methods: "mobile_device", "rfid_tag", "admin_account", "plug_and_charge", "plug_and_charge_iso15118", "roaming", "payment_terminal"',
     required: false,
   }),
 

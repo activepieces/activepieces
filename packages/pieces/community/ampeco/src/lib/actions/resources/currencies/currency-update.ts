@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { CurrencyUpdateResponse } from '../../../models/responses';
 
 /**
@@ -250,7 +250,7 @@ export const currencyUpdateAction = createAction({
 
   minorUnitSign: Property.ShortText({
     displayName: 'Minor Unit Sign',
-    description: 'The sign or letter for the minor currency unit. For US dollar, for example, this could be \"¢\" or \"c\" for cents.',
+    description: 'The sign or letter for the minor currency unit. For US dollar, for example, this could be "¢" or "c" for cents.',
     required: false,
   }),
   },

@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { ChargePointDowntimePeriodUpdateResponse } from '../../../models/responses';
 
 /**
@@ -29,13 +29,13 @@ export const chargePointDowntimePeriodUpdateAction = createAction({
 
   startedAt: Property.DateTime({
     displayName: 'Started At',
-    description: 'Allowed only for downtime period with \`type = exempt AND entryMode = manual\`',
+    description: 'Allowed only for downtime period with `type = exempt AND entryMode = manual`',
     required: false,
   }),
 
   endedAt: Property.DateTime({
     displayName: 'Ended At',
-    description: 'Allowed only for downtime period with \`type = exempt AND entryMode = manual\`',
+    description: 'Allowed only for downtime period with `type = exempt AND entryMode = manual`',
     required: false,
   }),
   },

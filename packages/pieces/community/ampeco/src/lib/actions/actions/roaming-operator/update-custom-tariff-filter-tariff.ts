@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 
 /**
  * Generated from API version: 3.96.4
@@ -124,8 +124,54 @@ export const updateCustomTariffFilterTariffAction = createAction({
          
   price_components: Property.Json({
     displayName: 'Price Components',
-    description: `List of price components that describe the pricing of this tariff element.\n\n{\n  \"type\": \"array\",\n  \"minItems\": 1,\n  \"description\": \"List of price components that describe the pricing of this tariff element.\",\n  \"items\": {\n    \"type\": \"object\",\n    \"required\": [\n      \"type\",\n      \"price\",\n      \"step_size\"\n    ],\n    \"properties\": {\n      \"type\": {\n        \"type\": \"string\",\n        \"enum\": [\n          \"ENERGY\",\n          \"FLAT\",\n          \"PARKING_TIME\",\n          \"TIME\"\n        ],\n        \"description\": \"Type of tariff dimension.\"\n      },\n      \"price\": {\n        \"type\": \"number\",\n        \"format\": \"float\",\n        \"minimum\": 0,\n        \"description\": \"Price per unit (excluding VAT) for this tariff dimension.\",\n        \"example\": 0.25\n      },\n      \"vat\": {\n        \"type\": \"number\",\n        \"format\": \"float\",\n        \"minimum\": 0,\n        \"maximum\": 100,\n        \"description\": \"Applicable VAT percentage for this tariff dimension. If omitted, no VAT is applicable.\",\n        \"example\": 21\n      },\n      \"step_size\": {\n        \"type\": \"integer\",\n        \"minimum\": 1,\n        \"description\": \"Minimum amount to be billed. This unit will be billed in this step_size.\",\n        \"example\": 1\n      }\n    }\n  }\n}`,
+    description: `List of price components that describe the pricing of this tariff element.`,
     required: true,
+    defaultValue:{
+  "type": "array",
+  "minItems": 1,
+  "description": "List of price components that describe the pricing of this tariff element.",
+  "items": {
+    "type": "object",
+    "required": [
+      "type",
+      "price",
+      "step_size"
+    ],
+    "properties": {
+      "type": {
+        "type": "string",
+        "enum": [
+          "ENERGY",
+          "FLAT",
+          "PARKING_TIME",
+          "TIME"
+        ],
+        "description": "Type of tariff dimension."
+      },
+      "price": {
+        "type": "number",
+        "format": "float",
+        "minimum": 0,
+        "description": "Price per unit (excluding VAT) for this tariff dimension.",
+        "example": 0.25
+      },
+      "vat": {
+        "type": "number",
+        "format": "float",
+        "minimum": 0,
+        "maximum": 100,
+        "description": "Applicable VAT percentage for this tariff dimension. If omitted, no VAT is applicable.",
+        "example": 21
+      },
+      "step_size": {
+        "type": "integer",
+        "minimum": 1,
+        "description": "Minimum amount to be billed. This unit will be billed in this step_size.",
+        "example": 1
+      }
+    }
+  }
+}
   }),
 
   restrictions__start_time: Property.ShortText({

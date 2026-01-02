@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { ChargePointSmartChargingUpdateResponse } from '../../../models/responses';
 
 /**
@@ -58,7 +58,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   periods: Property.Array({
     displayName: 'Periods',
-    description: 'The time period must be the same for every single day through the week and should be always 60 min. The \`startAt\` and \`endAt\` must comply with this restriction.',
+    description: 'The time period must be the same for every single day through the week and should be always 60 min. The `startAt` and `endAt` must comply with this restriction.',
     required: false,
     properties: { 
          
@@ -82,7 +82,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   elements: Property.Json({
     displayName: 'Elements',
-    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"required\": [\n      \"startAt\",\n      \"endAt\"\n    ],\n    \"properties\": {\n      \"startAt\": {\n        \"type\": \"string\",\n        \"format\": \"time\",\n        \"example\": \"00:00\",\n        \"description\": \"The 24-hour format should be used.</br>\\nExample \`00:00\`\\n\"\n      },\n      \"endAt\": {\n        \"type\": \"string\",\n        \"format\": \"time\",\n        \"example\": \"00:00\",\n        \"description\": \"The 24-hour format should be used.</br>\\nExample \`01:00\`\\n\"\n      },\n      \"maxCurrent\": {\n        \"type\": \"number\",\n        \"nullable\": true\n      }\n    }\n  }\n}`,
+    description: `{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"required\": [\n      \"startAt\",\n      \"endAt\"\n    ],\n    \"properties\": {\n      \"startAt\": {\n        \"type\": \"string\",\n        \"format\": \"time\",\n        \"example\": \"00:00\",\n        \"description\": \"The 24-hour format should be used.</br>\\nExample '00:00'\\n\"\n      },\n      \"endAt\": {\n        \"type\": \"string\",\n        \"format\": \"time\",\n        \"example\": \"00:00\",\n        \"description\": \"The 24-hour format should be used.</br>\\nExample '01:00'\\n\"\n      },\n      \"maxCurrent\": {\n        \"type\": \"number\",\n        \"nullable\": true\n      }\n    }\n  }\n}`,
     required: true,
   }), 
     },
@@ -96,7 +96,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   minCurrent: Property.Number({
     displayName: 'Min Current',
-    description: 'minCurrent is always REQUIRED for \`user_controlled_schedule\`.',
+    description: 'minCurrent is always REQUIRED for `user_controlled_schedule`.',
     required: false,
   }),
 
@@ -133,7 +133,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   electricalConfiguration: Property.StaticDropdown({
     displayName: 'Electrical Configuration',
-    description: 'Defines the type of electrical configuration of the charge point. The available options are </br> \`star\` - TN system - Star (Y) (default)</br> \`delta\` - IT system - Delta (Δ)</br>.',
+    description: 'Defines the type of electrical configuration of the charge point. The available options are </br> `star` - TN system - Star (Y) (default)</br> `delta` - IT system - Delta (Δ)</br>.',
     required: false,
     options: {
       options: [
@@ -158,7 +158,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   phaseRotation: Property.StaticDropdown({
     displayName: 'Phase Rotation',
-    description: '\`R\` stands for \`L1\`, </br> \`S\` - for \`L2\` </br> \`T\` - for \`L3\` </br> So for example \`RST\` = \`L1\`, \`L2\`, \`L3\`, while \`RTS\` = \`L1\`, \`L3\`, \`L2\`, etc.',
+    description: '`R` stands for `L1`, </br> `S` - for `L2` </br> `T` - for `L3` </br> So for example `RST` = `L1`, `L2`, `L3`, while `RTS` = `L1`, `L3`, `L2`, etc.',
     required: true,
     options: {
       options: [
@@ -202,7 +202,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   minCurrent: Property.Number({
     displayName: 'Min Current',
-    description: 'minCurrent is always REQUIRED for \`user_controlled_schedule\`.',
+    description: 'minCurrent is always REQUIRED for `user_controlled_schedule`.',
     required: false,
   }),
 
@@ -239,7 +239,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   electricalConfiguration: Property.StaticDropdown({
     displayName: 'Electrical Configuration',
-    description: 'Defines the type of electrical configuration of the charge point. The available options are </br> \`star\` - TN system - Star (Y) (default)</br> \`delta\` - IT system - Delta (Δ)</br>.',
+    description: 'Defines the type of electrical configuration of the charge point. The available options are </br> `star` - TN system - Star (Y) (default)</br> `delta` - IT system - Delta (Δ)</br>.',
     required: false,
     options: {
       options: [
@@ -264,7 +264,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   phaseRotation: Property.StaticDropdown({
     displayName: 'Phase Rotation',
-    description: '\`R\` stands for \`L1\`, </br> \`S\` - for \`L2\` </br> \`T\` - for \`L3\` </br> So for example \`RST\` = \`L1\`, \`L2\`, \`L3\`, while \`RTS\` = \`L1\`, \`L3\`, \`L2\`, etc.',
+    description: '`R` stands for `L1`, </br> `S` - for `L2` </br> `T` - for `L3` </br> So for example `RST` = `L1`, `L2`, `L3`, while `RTS` = `L1`, `L3`, `L2`, etc.',
     required: true,
     options: {
       options: [
@@ -308,7 +308,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   minCurrent: Property.Number({
     displayName: 'Min Current',
-    description: 'minCurrent is always REQUIRED for \`user_controlled_schedule\`.',
+    description: 'minCurrent is always REQUIRED for `user_controlled_schedule`.',
     required: true,
   }),
 
@@ -345,7 +345,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   electricalConfiguration: Property.StaticDropdown({
     displayName: 'Electrical Configuration',
-    description: 'Defines the type of electrical configuration of the charge point. The available options are </br> \`star\` - TN system - Star (Y) (default)</br> \`delta\` - IT system - Delta (Δ)</br>.',
+    description: 'Defines the type of electrical configuration of the charge point. The available options are </br> `star` - TN system - Star (Y) (default)</br> `delta` - IT system - Delta (Δ)</br>.',
     required: false,
     options: {
       options: [
@@ -370,7 +370,7 @@ export const chargePointSmartChargingUpdateAction = createAction({
 
   phaseRotation: Property.StaticDropdown({
     displayName: 'Phase Rotation',
-    description: '\`R\` stands for \`L1\`, </br> \`S\` - for \`L2\` </br> \`T\` - for \`L3\` </br> So for example \`RST\` = \`L1\`, \`L2\`, \`L3\`, while \`RTS\` = \`L1\`, \`L3\`, \`L2\`, etc.',
+    description: '`R` stands for `L1`, </br> `S` - for `L2` </br> `T` - for `L3` </br> So for example `RST` = `L1`, `L2`, `L3`, while `RTS` = `L1`, `L3`, `L2`, etc.',
     required: true,
     options: {
       options: [

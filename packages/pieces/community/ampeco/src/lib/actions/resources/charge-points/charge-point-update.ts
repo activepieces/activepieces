@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { ChargePointUpdateResponse } from '../../../models/responses';
 
 /**
@@ -125,7 +125,7 @@ export const chargePointUpdateAction = createAction({
 
   managedByOperator: Property.StaticDropdown({
     displayName: 'Managed By Operator',
-    description: `This flag indicates whether the operator can actively manage the charge point. If the flag is set to \`false\` the charge point can still be shown to users, but they can\'t request to start a session on it.\n\nDeprecated. Please use \`communicationMode\` instead. The \`communicationMode\` can only be set when creating a charge point.\n`,
+    description: `This flag indicates whether the operator can actively manage the charge point. If the flag is set to 'false' the charge point can still be shown to users, but they can\'t request to start a session on it.\n\nDeprecated. Please use \`communicationMode\` instead. The \`communicationMode\` can only be set when creating a charge point.\n`,
     required: false,
     options: {
       options: [
@@ -218,7 +218,7 @@ export const chargePointUpdateAction = createAction({
 
   security__desiredProfile: Property.Number({
     displayName: 'Security - Desired Profile',
-    description: 'The backend will try to set it 3 times at boot notification. If the charge point does not support it, the backend will use the highest security profile the charge point could use. </br> The following security profiles are supported: </br> 0: \`No Authentication\` </br> 1: \`Unsecured Trasport with Basic Authentication (Plain-back Authentication)\` - It does not include authentication for the CSMS, or measures to set up a secure communication channel.',
+    description: 'The backend will try to set it 3 times at boot notification. If the charge point does not support it, the backend will use the highest security profile the charge point could use. </br> The following security profiles are supported: </br> 0: `No Authentication` </br> 1: `Unsecured Trasport with Basic Authentication (Plain-back Authentication)` - It does not include authentication for the CSMS, or measures to set up a secure communication channel.',
     required: false,
   }),
 
@@ -286,7 +286,7 @@ export const chargePointUpdateAction = createAction({
 
   partner__accessType: Property.StaticDropdown({
     displayName: 'Partner - Access Type',
-    description: '\`private_view_private_use\` - only users invited by the partner with the option to access private charge points could view this charge point on the map and use it.',
+    description: '`private_view_private_use` - only users invited by the partner with the option to access private charge points could view this charge point on the map and use it.',
     required: false,
     options: {
       options: [
@@ -299,7 +299,7 @@ export const chargePointUpdateAction = createAction({
 
   partner__notice: Property.Array({
     displayName: 'Partner - Notice',
-    description: 'The notice is only available if the charge point is of type \`private\` and the accessType is \`public_view_private_use\`.',
+    description: 'The notice is only available if the charge point is of type `private` and the accessType is `public_view_private_use`.',
     required: false,
     properties: { 
          
@@ -331,7 +331,7 @@ export const chargePointUpdateAction = createAction({
 
   enabledRandomisedDelay: Property.StaticDropdown({
     displayName: 'Enabled Randomised Delay',
-    description: 'Applicable only for personal charge points. For \`public\` and \`private\` charge points will be omitted',
+    description: 'Applicable only for personal charge points. For `public` and `private` charge points will be omitted',
     required: false,
     options: {
       options: [

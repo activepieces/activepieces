@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, processPathParameters } from '../../../common/utils';
 
 /**
  * Generated from API version: 3.96.4
@@ -24,7 +24,7 @@ export const electricityRatePricePeriodsWeekDayDeleteAction = createAction({
 
   weekDay: Property.StaticDropdown({
     displayName: 'Week Day',
-    description: 'Can be one of the listed days of the week or \`any\`.',
+     description: 'Can be one of the listed days of the week or `any`.',
     required: true,
     options: {
       options: [

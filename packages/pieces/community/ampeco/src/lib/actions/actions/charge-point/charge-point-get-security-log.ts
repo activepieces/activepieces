@@ -1,7 +1,7 @@
-import { createAction, Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { makeAmpecoApiCall, processPathParameters, prepareQueryParams, prepareRequestBody, paginate, handleApiError } from '../../../common/utils';
+import { createAction, Property } from '@activepieces/pieces-framework';
 import { ampecoAuth } from '../../../common/auth';
+import { handleApiError, makeAmpecoApiCall, prepareQueryParams, prepareRequestBody, processPathParameters } from '../../../common/utils';
 import { ChargePointGetSecurityLogResponse } from '../../../models/responses';
 
 /**
@@ -48,13 +48,13 @@ export const chargePointGetSecurityLogAction = createAction({
 
   startTime: Property.ShortText({
     displayName: 'Start Time',
-    description: 'This contains the date and time of the oldest logging information to include in the diagnostics. Please provide the value in the following format \`Y-m-d H:i:s\`.',
+    description: 'This contains the date and time of the oldest logging information to include in the diagnostics. Please provide the value in the following format `Y-m-d H:i:s`.',
     required: false,
   }),
 
   stopTime: Property.ShortText({
     displayName: 'Stop Time',
-    description: 'This contains the date and time of the latest logging information to include in the diagnostics. Please provide the value in the following format \`Y-m-d H:i:s\`.',
+    description: 'This contains the date and time of the latest logging information to include in the diagnostics. Please provide the value in the following format `Y-m-d H:i:s`.',
     required: false,
   }),
   },
