@@ -160,12 +160,12 @@ async function createInitialBilling(platformId: string, log: FastifyBaseLogger):
     const plan = getInitialPlanByEdition()
 
     const platformPlan: Omit<PlatformPlan, 'created' | 'updated'> = {
+        ...plan,
         id: apId(),
         platformId,
         stripeCustomerId,
         stripeSubscriptionStartDate: defaultStartDate,
         stripeSubscriptionEndDate: defaultEndDate,
-        ...plan,
         aiCreditsAutoTopUpState: plan.aiCreditsAutoTopUpState ?? AiCreditsAutoTopUpState.DISABLED,
     }
     const savedPlatformPlan = await platformPlanRepo().save(platformPlan)
