@@ -2,11 +2,12 @@ import { securityAccess } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, PrincipalType, UpdatePlatformReportRequest, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
+import { Type } from '@sinclair/typebox'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { userService } from '../user/user-service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
-import { platformAnalyticsReportService } from './platform-analytics-report.service'
+import { platformAnalyticsReportService, TimePeriod } from './platform-analytics-report.service'
 
 export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
@@ -19,7 +20,8 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', PlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
+        const timePeriod = (request.query as { timePeriod?: TimePeriod })?.timePeriod || 'monthly'
+        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id, timePeriod)
     })
 
     app.post('/', UpdatePlatformReportRequestSchema, async (request) => {
@@ -31,7 +33,8 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).refreshReport(platform.id)
+        const timePeriod = (request.query as { timePeriod?: TimePeriod })?.timePeriod || 'monthly'
+        return platformAnalyticsReportService(request.log).refreshReport(platform.id, timePeriod)
     })
 
 }
@@ -61,10 +64,28 @@ const RefreshPlatformAnalyticsRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
+    schema: {
+        querystring: Type.Object({
+            timePeriod: Type.Optional(Type.Union([
+                Type.Literal('weekly'),
+                Type.Literal('monthly'),
+                Type.Literal('all-time'),
+            ])),
+        }),
+    },
 }
 
 const PlatformAnalyticsRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+    schema: {
+        querystring: Type.Object({
+            timePeriod: Type.Optional(Type.Union([
+                Type.Literal('weekly'),
+                Type.Literal('monthly'),
+                Type.Literal('all-time'),
+            ])),
+        }),
     },
 }

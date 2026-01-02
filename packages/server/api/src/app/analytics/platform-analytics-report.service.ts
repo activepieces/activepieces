@@ -12,13 +12,15 @@ import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entit
 
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 
+export type TimePeriod = 'weekly' | 'monthly' | 'all-time'
+
 export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
-    refreshReport: async (platformId: PlatformId) => {
+    refreshReport: async (platformId: PlatformId, timePeriod: TimePeriod = 'monthly') => {
         await distributedLock(log).runExclusive({
             key: `platform-analytics-report-${platformId}`,
             timeoutInSeconds: 400,
             fn: async () => {
-                await refreshReport(platformId, log)
+                await refreshReport(platformId, log, timePeriod)
             },
         })
         return platformAnalyticsReportRepo().findOneBy({ platformId })
@@ -29,22 +31,16 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             outdated: request.outdated,
         })
     },
-    getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
-        const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
-        if (report && !report.outdated) {
-            return report
-        }
-        return refreshReport(platformId, log)
+    getOrGenerateReport: async (platformId: PlatformId, timePeriod: TimePeriod = 'monthly'): Promise<PlatformAnalyticsReport> => {
+        return refreshReport(platformId, log, timePeriod)
     },
 })
 
 
 
-const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Promise<PlatformAnalyticsReport> => {
+const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger, timePeriod: TimePeriod = 'monthly'): Promise<PlatformAnalyticsReport> => {
     const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
-    if (!isNil(report) && dayjs(report.updated).add(5, 'minute').isAfter(dayjs())) {
-        return report
-    }
+
     const estimatedTimeSavedPerStep = report?.estimatedTimeSavedPerStep ?? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
     const flows = await listAllFlows(log, platformId)
 
@@ -52,10 +48,10 @@ const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Pr
     const topPieces = analyzePieces(flows, pieceMetadataMap)
 
     const runsUsage = await analyzeRuns(platformId, estimatedTimeSavedPerStep)
-    const flowsDetails = await analyzeFlowsDetails(platformId, estimatedTimeSavedPerStep)
+    const flowsDetails = await analyzeFlowsDetails(platformId, estimatedTimeSavedPerStep, timePeriod)
     const users = await analyzeUsers(platformId)
 
-    return platformAnalyticsReportRepo().save({
+    const reportData: PlatformAnalyticsReport = {
         estimatedTimeSavedPerStep: report?.estimatedTimeSavedPerStep,
         outdated: false,
         users,
@@ -66,8 +62,13 @@ const refreshReport = async (platformId: PlatformId, log: FastifyBaseLogger): Pr
         created: dayjs().toISOString(),
         updated: dayjs().toISOString(),
         id: report?.id ?? apId(),
-    })
+    }
 
+    if (timePeriod === 'monthly') {
+        return platformAnalyticsReportRepo().save(reportData)
+    }
+    
+    return reportData
 }
 
 
@@ -158,11 +159,14 @@ async function analyzeRuns(platformId: PlatformId, estimatedTimeSavedPerStep: nu
     }))
 }
 
-async function analyzeFlowsDetails(platformId: PlatformId, estimatedTimeSavedPerStep: number): Promise<AnalyticsFlowReportItem[]> {
+async function analyzeFlowsDetails(platformId: PlatformId, estimatedTimeSavedPerStep: number, timePeriod: TimePeriod = 'monthly'): Promise<AnalyticsFlowReportItem[]> {
     if (isNil(estimatedTimeSavedPerStep)) {
         throw new Error('Estimated time saved per step is required')
     }
-    const flowData = await flowRunRepo()
+    
+    
+    
+    const queryBuilder = flowRunRepo()
         .createQueryBuilder('flow_run')
         .select('flow.id', 'flowId')
         .addSelect('flow.status', 'status')
@@ -178,6 +182,14 @@ async function analyzeFlowsDetails(platformId: PlatformId, estimatedTimeSavedPer
         .innerJoin('flow_version', 'latest_version', 'latest_version."flowId" = flow.id AND latest_version.id = (SELECT fv.id FROM flow_version fv WHERE fv."flowId" = flow.id ORDER BY fv.created DESC LIMIT 1)')
         .where('project."platformId" = :platformId', { platformId })
         .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+
+    if (timePeriod === 'weekly') {
+        queryBuilder.andWhere('flow_run.created >= now() - interval \'7 days\'')
+    } else if (timePeriod === 'monthly') {
+        queryBuilder.andWhere('flow_run.created >= now() - interval \'1 month\'')
+    }
+    
+    const flowData = await queryBuilder
         .groupBy('flow.id')
         .addGroupBy('latest_version."displayName"')
         .addGroupBy('project.id')
