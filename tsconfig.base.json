@@ -380,6 +380,9 @@
       "@activepieces/piece-octopush-sms": [
         "packages/pieces/community/octopush-sms/src/index.ts"
       ],
+      "@activepieces/piece-twitch": [
+        "packages/pieces/community/twitch/src/index.ts"
+      ],
       "@activepieces/piece-moonclerk": [
         "packages/pieces/community/moonclerk/src/index.ts"
       ],
