@@ -21,32 +21,11 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
         outdated: {
             type: Boolean,
         },
-        totalFlows: {
-            type: Number,
-        },
-        activeFlows: {
-            type: Number,
-        },
-        totalUsers: {
-            type: Number,
-        },
-        activeUsers: {
-            type: Number,
-        },
-        totalProjects: {
-            type: Number,
-        },
-        activeFlowsWithAI: {
-            type: Number,
-        },
-        totalFlowRuns: {
-            type: Number,
-        },
-        topPieces: {
+        users: {
             type: 'jsonb',
             nullable: false,
         },
-        topProjects: {
+        topPieces: {
             type: 'jsonb',
             nullable: false,
         },

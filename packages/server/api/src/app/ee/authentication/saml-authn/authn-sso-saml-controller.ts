@@ -3,7 +3,7 @@ import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/serve
 import { assertNotNullOrUndefined, SAMLAuthnProviderConfig } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
-import { eventsHooks } from '../../../helper/application-events'
+import { applicationEvents } from '../../../helper/application-events'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
 import { platformUtils } from '../../../platform/platform.utils'
@@ -24,7 +24,7 @@ export const authnSsoSamlController: FastifyPluginAsyncTypebox = async (app) => 
         })
         const url = new URL('/authenticate', `${req.protocol}://${req.hostname}`)
         url.searchParams.append('response', JSON.stringify(response))
-        eventsHooks.get(req.log).sendUserEvent({
+        applicationEvents.sendUserEvent({
             platformId,
             userId: response.id,
             projectId: response.projectId,
