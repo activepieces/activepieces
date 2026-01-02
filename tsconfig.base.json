@@ -409,6 +409,9 @@
       ],
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@activepieces/piece-ampeco":[
+        "packages/pieces/community/ampeco/src/index.ts"
       ]
     },
     "resolveJsonModule": true
