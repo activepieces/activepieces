@@ -1,8 +1,4 @@
-import {
-  httpClient,
-  HttpMethod,
-  AuthenticationType,
-} from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth } from '@activepieces/pieces-framework';
 
 const CRYPTOLENS_API_BASE_URL = 'https://api.cryptolens.io/api';

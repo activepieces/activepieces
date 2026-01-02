@@ -16,7 +16,8 @@ export const createKey = createAction({
     }),
     period: Property.Number({
       displayName: 'Validity Period (days)',
-      description: 'The number of days from today the license key should be valid. Default is 0 (no expiration).',
+      description:
+        'The number of days from today the license key should be valid. Default is 0 (no expiration).',
       required: false,
     }),
     f1: Property.Checkbox({
@@ -61,7 +62,8 @@ export const createKey = createAction({
     }),
     notes: Property.LongText({
       displayName: 'Notes',
-      description: 'Additional notes about the license key (max 500 characters)',
+      description:
+        'Additional notes about the license key (max 500 characters)',
       required: false,
     }),
     block: Property.Checkbox({
@@ -81,12 +83,14 @@ export const createKey = createAction({
     }),
     maxNoOfMachines: Property.Number({
       displayName: 'Max Number of Machines',
-      description: 'The maximum number of computers that can activate the key. Default is 0 (unlimited).',
+      description:
+        'The maximum number of computers that can activate the key. Default is 0 (unlimited).',
       required: false,
     }),
     allowedMachines: Property.LongText({
       displayName: 'Allowed Machines',
-      description: 'A list of machine codes (separated by new lines) that will be prioritized during activation',
+      description:
+        'A list of machine codes (separated by new lines) that will be prioritized during activation',
       required: false,
     }),
     resellerId: Property.Number({
@@ -96,7 +100,8 @@ export const createKey = createAction({
     }),
     noOfKeys: Property.Number({
       displayName: 'Number of Keys',
-      description: 'The number of keys to generate. Default is 1. Maximum 1000 per request.',
+      description:
+        'The number of keys to generate. Default is 1. Maximum 1000 per request.',
       required: false,
     }),
   },
@@ -105,7 +110,10 @@ export const createKey = createAction({
       ProductId: String(context.propsValue.productId),
     });
 
-    if (context.propsValue.period !== undefined && context.propsValue.period !== null) {
+    if (
+      context.propsValue.period !== undefined &&
+      context.propsValue.period !== null
+    ) {
       params.append('Period', String(context.propsValue.period));
     }
 
@@ -126,7 +134,10 @@ export const createKey = createAction({
       params.append('Block', 'true');
     }
 
-    if (context.propsValue.customerId !== undefined && context.propsValue.customerId !== null) {
+    if (
+      context.propsValue.customerId !== undefined &&
+      context.propsValue.customerId !== null
+    ) {
       params.append('CustomerId', String(context.propsValue.customerId));
     }
 
@@ -134,19 +145,31 @@ export const createKey = createAction({
       params.append('TrialActivation', 'true');
     }
 
-    if (context.propsValue.maxNoOfMachines !== undefined && context.propsValue.maxNoOfMachines !== null) {
-      params.append('MaxNoOfMachines', String(context.propsValue.maxNoOfMachines));
+    if (
+      context.propsValue.maxNoOfMachines !== undefined &&
+      context.propsValue.maxNoOfMachines !== null
+    ) {
+      params.append(
+        'MaxNoOfMachines',
+        String(context.propsValue.maxNoOfMachines)
+      );
     }
 
     if (context.propsValue.allowedMachines) {
       params.append('AllowedMachines', context.propsValue.allowedMachines);
     }
 
-    if (context.propsValue.resellerId !== undefined && context.propsValue.resellerId !== null) {
+    if (
+      context.propsValue.resellerId !== undefined &&
+      context.propsValue.resellerId !== null
+    ) {
       params.append('ResellerId', String(context.propsValue.resellerId));
     }
 
-    if (context.propsValue.noOfKeys !== undefined && context.propsValue.noOfKeys !== null) {
+    if (
+      context.propsValue.noOfKeys !== undefined &&
+      context.propsValue.noOfKeys !== null
+    ) {
       params.append('NoOfKeys', String(context.propsValue.noOfKeys));
     }
 
