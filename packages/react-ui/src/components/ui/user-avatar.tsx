@@ -18,14 +18,19 @@ export function UserAvatar({
   const tooltip = `${name} (${email})`;
 
   const avatarElement = (
-    <Avatar
-      name={email}
-      size={size}
-      colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
-      variant="bauhaus"
-      square
-      className="rounded-full"
-    />
+    <div
+      className="rounded-full overflow-hidden shrink-0"
+      style={{ width: size, height: size }}
+    >
+      <Avatar
+        name={email}
+        size={size}
+        colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
+        variant="bauhaus"
+        square
+        className="rounded-full"
+      />
+    </div>
   );
 
   if (disableTooltip) {
