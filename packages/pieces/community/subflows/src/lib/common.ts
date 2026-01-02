@@ -62,3 +62,8 @@ type ListParams = {
     flowsContext: FlowsContext,
     params?: ListFlowsContextParams
 }
+
+export type FlowValue = {
+  externalId: string;
+  exampleData: unknown;
+};

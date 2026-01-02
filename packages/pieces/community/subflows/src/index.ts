@@ -2,6 +2,7 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { callFlow } from './lib/actions/call-flow';
 import { callableFlow } from './lib/triggers/callable-flow';
 import { response } from './lib/actions/respond';
+import { batchProcess } from './lib/actions/batch-process';
 import { PieceCategory } from '@activepieces/shared';
 
 export const flows = createPiece({
@@ -12,6 +13,6 @@ export const flows = createPiece({
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   logoUrl: 'https://cdn.activepieces.com/pieces/flows.svg',
   authors: ['hazemadelkhalel'],
-  actions: [callFlow, response],
+  actions: [callFlow, response, batchProcess],
   triggers: [callableFlow],
 });
