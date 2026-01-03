@@ -28,10 +28,10 @@ import { ProjectAvatar } from '../project-avatar';
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
-import { useGeneralSettingsMutation } from './general/hook';
 import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
+import { toast } from 'sonner';
 
 type TabId =
   | 'general'
@@ -78,14 +78,17 @@ export function ProjectSettingsDialog({
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
-  const projectMutation = useGeneralSettingsMutation(project.id, form);
 
   const handleSave = (values: FormValues) => {
-    projectMutation.mutate({
+    projectCollectionUtils.update(project.id, {
       displayName: values.projectName,
-      icon: values.icon,
       externalId: values.externalId,
+      icon: values.icon,
     });
+    toast.success(t('Your changes have been saved.'), {
+      duration: 3000,
+    });
+    onClose();
   };
 
   useEffect(() => {
@@ -153,7 +156,7 @@ export function ProjectSettingsDialog({
     switch (activeTab) {
       case 'general':
         return (
-          <GeneralSettings form={form} isSaving={projectMutation.isPending} />
+          <GeneralSettings form={form} isSaving={false} />
         );
       case 'members':
         return <MembersSettings />;
@@ -187,23 +190,16 @@ export function ProjectSettingsDialog({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={projectMutation.isPending}
+            disabled={false}
           >
             {t('Close')}
           </Button>
           <Button
-            disabled={projectMutation.isPending}
+            disabled={false}
             size="sm"
             onClick={form.handleSubmit(handleSave)}
           >
-            {projectMutation.isPending ? (
-              <>
-                <LoadingSpinner className="w-4 h-4 mr-2" />
-                {t('Saving...')}
-              </>
-            ) : (
-              t('Save Changes')
-            )}
+            {t('Save Changes')}
           </Button>
         </div>
       </div>

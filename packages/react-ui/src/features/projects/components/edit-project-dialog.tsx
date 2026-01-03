@@ -20,19 +20,13 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
-import { api } from '@/lib/api';
-import { projectApi } from '@/lib/project-api';
 import {
   Permission,
   PlatformRole,
-  ProjectWithLimits,
-  ApErrorParams,
-  ErrorCode,
   TeamProjectsLimit,
 } from '@activepieces/shared';
 
@@ -57,14 +51,13 @@ type FormValues = {
 export function EditProjectDialog({
   open,
   onClose,
+  projectId,
   initialValues,
   renameOnly = false,
 }: EditProjectDialogProps) {
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
-  const queryClient = useQueryClient();
-  const { project } = projectCollectionUtils.useCurrentProject();
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -81,45 +74,6 @@ export function EditProjectDialog({
     }
   }, [open]);
 
-  const mutation = useMutation<
-    ProjectWithLimits,
-    Error,
-    {
-      displayName: string;
-      externalId?: string;
-    }
-  >({
-    mutationFn: (request) => {
-      return projectApi.update(project.id, request);
-    },
-    onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), {
-        duration: 3000,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['current-project'],
-      });
-      onClose();
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        const apError = error.response?.data as ApErrorParams;
-        switch (apError.code) {
-          case ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS: {
-            form.setError('root.serverError', {
-              message: t('The external ID is already taken.'),
-            });
-            break;
-          }
-          default: {
-            internalErrorToast();
-            break;
-          }
-        }
-      }
-    },
-  });
-
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-md w-full">
@@ -134,12 +88,16 @@ export function EditProjectDialog({
         <Form {...form}>
           <form
             className="space-y-4"
-            onSubmit={form.handleSubmit((values) =>
-              mutation.mutate({
+            onSubmit={form.handleSubmit((values) => {
+              projectCollectionUtils.update(projectId, {
                 displayName: values.projectName,
                 externalId: values.externalId,
-              }),
-            )}
+              });
+              toast.success(t('Your changes have been saved.'), {
+                duration: 3000,
+              });
+              onClose();
+            })}
           >
             <FormField
               name="projectName"

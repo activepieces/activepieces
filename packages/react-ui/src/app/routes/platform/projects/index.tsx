@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
@@ -26,10 +26,9 @@ import {
 } from '@/components/ui/tooltip';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollection, projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { platformProjectApi } from '@/lib/platform-project-api';
-import { projectApi } from '@/lib/project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import {
   ProjectType,
@@ -87,15 +86,6 @@ export default function ProjectsPage() {
     useState<any>(null);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
 
-  const bulkDeleteMutation = useMutation({
-    mutationFn: async (ids: string[]) => {
-      await Promise.all(ids.map((id) => projectApi.delete(id)));
-    },
-    onSuccess: () => {
-      refetch();
-    },
-    onError: () => {},
-  });
 
   const columns = useMemo(
     () => projectsTableColumns({ platform, currentUserId: currentUser?.id }),
@@ -235,7 +225,7 @@ export default function ProjectsPage() {
                       row.id !== currentProject?.id &&
                       row.type !== ProjectType.PERSONAL,
                   );
-                  await bulkDeleteMutation.mutateAsync(
+                  projectCollectionUtils.delete(
                     deletableProjects.map((row) => row.id),
                   );
                   resetSelection();
@@ -265,7 +255,7 @@ export default function ProjectsPage() {
         },
       },
     ],
-    [selectedRows, currentProject, bulkDeleteMutation],
+    [selectedRows, currentProject],
   );
 
   const errorToastMessage = (error: unknown): string | undefined => {

@@ -150,12 +150,9 @@ export function ProjectDashboardSidebar() {
   );
 
   const handleProjectSelect = async (projectId: string) => {
-    const project = displayProjects?.find((p) => p.id === projectId);
-    if (project) {
-      await projectCollectionUtils.setCurrentProject(project.id);
-      navigate(`/projects/${project.id}/flows`);
-      setSearchOpen(false);
-    }
+    await projectCollectionUtils.setCurrentProject(projectId);
+    navigate(`/projects/${projectId}/flows`);
+    setSearchOpen(false);
   };
 
   return (
