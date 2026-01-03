@@ -8,22 +8,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { platformHooks } from '../../../hooks/platform-hooks';
-import { projectHooks } from '../../../hooks/project-hooks';
 
 export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
-  const { data: allProjects } = projectHooks.useProjectsForPlatforms();
+  const { data: allProjects } = projectCollectionUtils.useAll();
   const { platform: currentPlatform } = platformHooks.useCurrentPlatform();
 
   const platforms = React.useMemo(() => {
     if (!allProjects) return [];
     return allProjects.map((platform) => ({
-      name: platform.platformName,
-      id: platform.projects[0]?.platformId,
+      name: platform.displayName,
+      id: platform.id,
     }));
   }, [allProjects]);
 

@@ -5,12 +5,12 @@ import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { projectApi } from '@/lib/project-api';
 import { cn } from '@/lib/utils';
 
 const ReleaseCard = () => {
-  const { project, refetch } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
 
   const { mutate } = useMutation({
     mutationFn: () => {
@@ -19,7 +19,6 @@ const ReleaseCard = () => {
       });
     },
     onSuccess: () => {
-      refetch();
       toast.success(
         !project.releasesEnabled
           ? t('Releases Enabled')

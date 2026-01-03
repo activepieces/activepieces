@@ -1,11 +1,8 @@
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
-    ListProjectRequestForUserQueryParams,
     PrincipalType,
-    ProjectWithLimits,
     ProjectWithLimitsWithPlatform,
-    SeekPage,
 } from '@activepieces/shared'
 import {
     FastifyPluginAsyncTypebox,
@@ -21,20 +18,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
     fastify,
 ) => {
 
-    fastify.get('/:id', GetProjectRequestForUser, async (request) => {
-        return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
-    })
 
-    fastify.get('/', ListProjectRequestForUser, async (request) => {
-        return platformProjectService(request.log).getAllForPlatform({
-            platformId: request.principal.platform.id,
-            userId: request.principal.id,
-            cursorRequest: request.query.cursor ?? null,
-            displayName: request.query.displayName,
-            limit: request.query.limit ?? 10,
-            types: request.query.types,
-        })
-    })
 
     fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
         const loggedInUser = await userService.getOneOrFail({ id: request.principal.id })
@@ -66,28 +50,6 @@ async function getPlatformsForUser(identityId: string, platformId: string) {
     }
     const platforms = await platformService.listPlatformsForIdentityWithAtleastProject({ identityId })
     return platforms.filter((platform) => !platformUtils.isCustomerOnDedicatedDomain(platform))
-}
-
-const GetProjectRequestForUser = {
-    config: {
-        security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
-            undefined, {
-                type: ProjectResourceType.PARAM,
-                paramKey: 'id',
-            }),
-    },
-}
-const ListProjectRequestForUser = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
-    },
-    schema: {
-        response: {
-            [StatusCodes.OK]: SeekPage(ProjectWithLimits),
-        },
-        querystring: ListProjectRequestForUserQueryParams,
-    },
 }
 
 const ListProjectsForPlatforms = {

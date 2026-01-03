@@ -1,4 +1,3 @@
-import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
   Compass,
@@ -38,7 +37,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -56,13 +55,7 @@ import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar() {
-  const {
-    data: projectPages,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch: refetchProjects,
-  } = projectHooks.useProjectsInfinite(20);
+  const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
   const { state } = useSidebar();
   const location = useLocation();
@@ -70,34 +63,17 @@ export function ProjectDashboardSidebar() {
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { setCurrentProject } = projectHooks.useCurrentProject();
   const projectsScrollRef = useRef<HTMLDivElement>(null);
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const {
-    data: searchResults,
-    isLoading: isSearching,
-    refetch: refetchSearchResults,
-  } = projectHooks.useProjects({
-    displayName: debouncedSearchQuery,
-    limit: 100,
-  });
+  const { data: searchResults } = projectCollectionUtils.useAll();
 
   useEffect(() => {
     if (!searchOpen) {
       setSearchQuery('');
     }
   }, [searchOpen]);
-
-  const allProjects = useMemo(() => {
-    const projects = projectPages?.pages.flatMap((page) => page.data) ?? [];
-    const uniqueProjects = Array.from(
-      new Map(projects.map((project) => [project.id, project])).values(),
-    );
-    return uniqueProjects;
-  }, [projectPages]);
 
   const shouldShowNewProjectButton = useMemo(() => {
     if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
@@ -115,13 +91,13 @@ export function ProjectDashboardSidebar() {
 
   const shouldDisableNewProjectButton = useMemo(() => {
     if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
-      const teamProjects = allProjects.filter(
+      const teamProjects = projects.filter(
         (project) => project.type === ProjectType.TEAM,
       );
       return teamProjects.length >= 1;
     }
     return false;
-  }, [platform.plan.teamProjectsLimit, allProjects]);
+  }, [platform.plan.teamProjectsLimit, projects]);
 
   const isSearchMode = debouncedSearchQuery.length > 0;
 
@@ -129,33 +105,8 @@ export function ProjectDashboardSidebar() {
     if (isSearchMode) {
       return searchResults ?? [];
     }
-    return allProjects;
-  }, [isSearchMode, searchResults, allProjects]);
-
-  useEffect(() => {
-    const scrollContainer = projectsScrollRef.current;
-    if (!scrollContainer || isSearchMode) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-      const scrollThreshold = 100;
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-
-      if (
-        distanceFromBottom < scrollThreshold &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
-        fetchNextPage();
-      }
-    };
-
-    scrollContainer.addEventListener('scroll', handleScroll);
-
-    handleScroll();
-
-    return () => scrollContainer.removeEventListener('scroll', handleScroll);
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isSearchMode]);
+    return projects;
+  }, [isSearchMode, searchResults, projects]);
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -201,8 +152,8 @@ export function ProjectDashboardSidebar() {
   const handleProjectSelect = async (projectId: string) => {
     const project = displayProjects?.find((p) => p.id === projectId);
     if (project) {
-      await setCurrentProject(queryClient, project);
-      navigate('/');
+      await projectCollectionUtils.setCurrentProject(project.id);
+      navigate(`/projects/${project.id}/flows`);
       setSearchOpen(false);
     }
   };
@@ -246,12 +197,7 @@ export function ProjectDashboardSidebar() {
                   {shouldShowNewProjectButton && (
                     <>
                       {!shouldDisableNewProjectButton ? (
-                        <NewProjectDialog
-                          onCreate={() => {
-                            refetchProjects();
-                            refetchSearchResults();
-                          }}
-                        >
+                        <NewProjectDialog onCreate={() => {}}>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -353,19 +299,17 @@ export function ProjectDashboardSidebar() {
                     handleProjectSelect={handleProjectSelect}
                   />
                 ))}
-                {(isFetchingNextPage || (isSearchMode && isSearching)) && (
+                {isSearchMode && (
                   <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     {state === 'expanded' && <span>{t('Loading...')}</span>}
                   </div>
                 )}
-                {isSearchMode &&
-                  !isSearching &&
-                  displayProjects.length === 0 && (
-                    <div className="px-2 py-2 text-sm text-muted-foreground">
-                      {state === 'expanded' && t('No projects found.')}
-                    </div>
-                  )}
+                {isSearchMode && displayProjects.length === 0 && (
+                  <div className="px-2 py-2 text-sm text-muted-foreground">
+                    {state === 'expanded' && t('No projects found.')}
+                  </div>
+                )}
               </SidebarMenu>
             </div>
           </SidebarGroup>

@@ -35,7 +35,7 @@ import {
 import { auditEventsApi } from '@/features/platform-admin/lib/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/utils';
 import {
   ApplicationEvent,
@@ -47,7 +47,7 @@ import { isNil } from '@activepieces/shared';
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
-  const { data: projects } = projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
 
   const filters: DataTableFilters<keyof ApplicationEvent>[] = [

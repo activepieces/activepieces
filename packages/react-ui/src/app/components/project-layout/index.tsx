@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectHooks } from '@/hooks/project-collection';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';

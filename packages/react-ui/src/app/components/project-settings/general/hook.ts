@@ -1,18 +1,13 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { UseFormReturn } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollection } from '@/hooks/project-collection';
 import { api } from '@/lib/api';
-import { projectApi } from '@/lib/project-api';
-import {
-  ApErrorParams,
-  ErrorCode,
-  ProjectIcon,
-  ProjectWithLimits,
-} from '@activepieces/shared';
+import { UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
+import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { FormValues } from '.';
 
@@ -20,35 +15,24 @@ export const useGeneralSettingsMutation = (
   projectId: string,
   form: UseFormReturn<FormValues>,
 ) => {
-  const queryClient = useQueryClient();
-  const { updateCurrentProject } = projectHooks.useCurrentProject();
-
-  return useMutation<
-    ProjectWithLimits,
-    Error,
-    {
-      displayName: string;
-      icon: ProjectIcon;
-      externalId?: string;
-    }
-  >({
-    mutationFn: (request) => {
-      updateCurrentProject(queryClient, request);
-      return projectApi.update(projectId!, {
-        ...request,
-        externalId:
-          request.externalId?.trim() !== '' ? request.externalId : undefined,
+  return useMutation<void, Error, UpdateProjectPlatformRequest>({
+    mutationFn: async (request) => {
+      const tx = await projectCollection.update(projectId, (draft) => {
+        if (request.displayName) {
+          draft.displayName = request.displayName;
+        }
+        if (request.icon) {
+          draft.icon = request.icon;
+        }
+        if (request.externalId && request.externalId.trim() !== '') {
+          draft.externalId = request.externalId;
+        }
       });
+      await tx.isPersisted.promise;
     },
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), {
         duration: 3000,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['current-project'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['projects'],
       });
     },
     onError: (error) => {
@@ -66,6 +50,8 @@ export const useGeneralSettingsMutation = (
             break;
           }
         }
+      } else {
+        console.error(error);
       }
     },
   });

@@ -23,7 +23,7 @@ import { Label } from '@/components/ui/label';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import { projectApi } from '@/lib/project-api';
@@ -57,7 +57,6 @@ type FormValues = {
 export function EditProjectDialog({
   open,
   onClose,
-  projectId,
   initialValues,
   renameOnly = false,
 }: EditProjectDialogProps) {
@@ -65,7 +64,7 @@ export function EditProjectDialog({
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
   const queryClient = useQueryClient();
-  const { updateCurrentProject } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
 
   const form = useForm<FormValues>({
     defaultValues: {
@@ -91,12 +90,7 @@ export function EditProjectDialog({
     }
   >({
     mutationFn: (request) => {
-      updateCurrentProject(queryClient, request);
-      return projectApi.update(projectId, {
-        ...request,
-        externalId:
-          request.externalId?.trim() !== '' ? request.externalId : undefined,
-      });
+      return projectApi.update(project.id, request);
     },
     onSuccess: () => {
       toast.success(t('Your changes have been saved.'), {

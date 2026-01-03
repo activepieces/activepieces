@@ -23,7 +23,7 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
@@ -33,7 +33,7 @@ import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
 import { ProjectDashboardLayoutHeaderTab } from '.';
 
 export const ProjectDashboardLayoutHeader = () => {
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const { checkAccess } = useAuthorization();
   const { embedState } = useEmbedding();

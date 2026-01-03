@@ -11,7 +11,7 @@ import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -59,7 +59,7 @@ export function ProjectSettingsDialog({
 }: ProjectSettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const previousOpenRef = useRef(open);
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);

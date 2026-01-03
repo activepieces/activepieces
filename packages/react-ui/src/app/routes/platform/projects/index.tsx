@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/tooltip';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { platformProjectApi } from '@/lib/platform-project-api';
 import { projectApi } from '@/lib/project-api';
@@ -42,11 +42,10 @@ import { NewProjectDialog } from './new-project-dialog';
 
 export default function ProjectsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
-  const queryClient = useQueryClient();
-  const { setCurrentProject } = projectHooks.useCurrentProject();
   const navigate = useNavigate();
   const isEnabled = platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE;
-  const { data: currentProject } = projectHooks.useCurrentProject();
+  const { project: currentProject } =
+    projectCollectionUtils.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -345,7 +344,7 @@ export default function ProjectsPage() {
           )}
           emptyStateIcon={<Package className="size-14" />}
           onRowClick={async (project) => {
-            await setCurrentProject(queryClient, project);
+            await projectCollectionUtils.setCurrentProject(project.id);
             navigate('/');
           }}
           filters={[
