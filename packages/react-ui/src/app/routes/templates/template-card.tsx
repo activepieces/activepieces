@@ -23,8 +23,9 @@ export const ExploreTemplateCard = ({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-lg transition-shadow h-full w-[320px] flex flex-col"
       onClick={() => onTemplateSelect(template)}
+      variant={'interactive'}
+      className="h-full w-[320px] flex flex-col"
     >
       <CardContent className="pt-5 pb-2 px-4 flex flex-col gap-3 flex-1">
         <h3 className="font-semibold text-lg leading-tight line-clamp-2">
