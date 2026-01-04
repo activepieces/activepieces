@@ -199,7 +199,9 @@ export function ProjectDashboardSidebar() {
 
   const platformAdminLink: SidebarItemType = {
     type: 'link',
-    to: isNil(platform.plan.licenseKey) ? '/platform' : '/platform/setup/onboarding',
+    to: isNil(platform.plan.licenseKey)
+      ? '/platform'
+      : '/platform/setup/onboarding',
     label: t('Platform Admin'),
     icon: ShieldCheck,
     hide: edition !== ApEdition.ENTERPRISE,

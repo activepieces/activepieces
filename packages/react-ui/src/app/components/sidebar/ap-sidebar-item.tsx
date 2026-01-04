@@ -33,15 +33,15 @@ export type SidebarItemType = {
 };
 
 export const ApSidebarItem = (item: SidebarItemType) => {
-  if (item.hide) {
-    return null
-  }
-
   const location = useLocation();
   const { state } = useSidebar();
   const isLinkActive =
     location.pathname.startsWith(item.to) || item.isActive?.(location.pathname);
   const isCollapsed = state === 'collapsed';
+
+  if (item.hide) {
+    return null;
+  }
 
   return (
     <SidebarMenuItem

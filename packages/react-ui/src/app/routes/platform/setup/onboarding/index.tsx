@@ -16,10 +16,10 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t('Give every team — and every user — a place to build'),
     bullets: [
       t(
-        'Personal Projects Every user gets their own private space to build personal productivity agents and flows — safe to experiment, and adopt quickly.'
+        'Personal Projects Every user gets their own private space to build personal productivity agents and flows — safe to experiment, and adopt quickly.',
       ),
       t(
-        'Team Projects Organize your platform by team — Marketing, HR, IT, and more. Each project keeps data isolated and management simple.'
+        'Team Projects Organize your platform by team — Marketing, HR, IT, and more. Each project keeps data isolated and management simple.',
       ),
     ],
     ctaLink: '/platform/projects',
@@ -33,10 +33,10 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t('Fine-grained permissions, your way'),
     bullets: [
       t(
-        'Create project-level roles to control who can access, edit, and execute within each project.'
+        'Create project-level roles to control who can access, edit, and execute within each project.',
       ),
       t(
-        'By default, you get two roles: Project Admin and Project Operator. Edit these or create your own custom roles with full role-based access control.'
+        'By default, you get two roles: Project Admin and Project Operator. Edit these or create your own custom roles with full role-based access control.',
       ),
     ],
     ctaLink: '/platform/security/project-roles',
@@ -49,13 +49,13 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t('Seamless onboarding with SSO and SCIM'),
     bullets: [
       t(
-        'Bring your team onto Activepieces. Use SSO for seamless login, or connect SCIM to sync directly with your employee management system.'
+        'Bring your team onto Activepieces. Use SSO for seamless login, or connect SCIM to sync directly with your employee management system.',
       ),
       t('Their assigned Team Project'),
       t('A Personal Project to build their own workflows'),
       t('Our templates library with step-by-step setup guides'),
       t(
-        'Everything they need to start getting value from Activepieces right away.'
+        'Everything they need to start getting value from Activepieces right away.',
       ),
     ],
     ctaLink: '/platform/users',
@@ -68,13 +68,13 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t('Connect once, power everything'),
     bullets: [
       t(
-        'Connect your AI provider or gateway — like Cloudflare or OpenRouter — to power AI agents and unified AI tools across the platform.'
+        'Connect your AI provider or gateway — like Cloudflare or OpenRouter — to power AI agents and unified AI tools across the platform.',
       ),
       t(
-        'Your team can start building AI workflows immediately, no API keys to generate, no admin requests.'
+        'Your team can start building AI workflows immediately, no API keys to generate, no admin requests.',
       ),
       t(
-        'Activepieces sends flow and project metadata to your gateway, so you can set up usage limits, routing rules, and analytics directly within your provider.'
+        'Activepieces sends flow and project metadata to your gateway, so you can set up usage limits, routing rules, and analytics directly within your provider.',
       ),
     ],
     ctaLink: '/platform/setup/ai',
@@ -87,7 +87,7 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t("Choose what's available, add what's missing"),
     bullets: [
       t(
-        'Pieces are the building blocks of any flow — integrations with everyday apps and internal tools that make automation possible.'
+        'Pieces are the building blocks of any flow — integrations with everyday apps and internal tools that make automation possible.',
       ),
       t("Hide pieces from all projects to restrict what's available"),
       t('Add custom pieces for internal apps or proprietary tools'),
@@ -103,13 +103,13 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t('One connection, many projects'),
     bullets: [
       t(
-        'Global connections let you set up a connection once and make it available across all or selected projects.'
+        'Global connections let you set up a connection once and make it available across all or selected projects.',
       ),
       t(
-        'For example, create a Salesforce connection and let users across multiple teams use it in their flows — no need for each person to authenticate separately.'
+        'For example, create a Salesforce connection and let users across multiple teams use it in their flows — no need for each person to authenticate separately.',
       ),
       t(
-        'All pieces support multiple authentication methods, so you can use service accounts or whatever complies with your internal policies.'
+        'All pieces support multiple authentication methods, so you can use service accounts or whatever complies with your internal policies.',
       ),
     ],
     ctaLink: '/platform/setup/connections',
@@ -122,19 +122,19 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t('Gamify building, prove impact'),
     bullets: [
       t(
-        'Activepieces helps you create a culture of builders — so you can lead AI adoption, not just follow.'
+        'Activepieces helps you create a culture of builders — so you can lead AI adoption, not just follow.',
       ),
       t(
-        'Leaderboard See which users and projects are building the most active flows. Spot champions fast and celebrate your most active teams.'
+        'Leaderboard See which users and projects are building the most active flows. Spot champions fast and celebrate your most active teams.',
       ),
       t(
-        'Impact Track the results of everything you build — ROI, time saved, number of flows, and growth over time.'
+        'Impact Track the results of everything you build — ROI, time saved, number of flows, and growth over time.',
       ),
       t(
-        'Templates The most advanced templates library in the industry. Each template includes a step-by-step setup guide with calculated ROI and time saved — organized by department.'
+        'Templates The most advanced templates library in the industry. Each template includes a step-by-step setup guide with calculated ROI and time saved — organized by department.',
       ),
       t(
-        "Achievement Badges Add a fun element to building. Badges push users to achieve more and share what they've accomplished."
+        "Achievement Badges Add a fun element to building. Badges push users to achieve more and share what they've accomplished.",
       ),
     ],
     ctaLink: '/impact',
@@ -147,10 +147,10 @@ const STEPS: (StepData & { step: OnboardingStep })[] = [
     description: t('Keep your self-hosted setup running smooth.'),
     bullets: [
       t(
-        "If you're self-hosting Activepieces, use this page to monitor your infrastructure."
+        "If you're self-hosting Activepieces, use this page to monitor your infrastructure.",
       ),
       t(
-        'Check whether your disk, CPU, and RAM are sufficient to run smoothly — especially as your organization grows and builds more flows.'
+        'Check whether your disk, CPU, and RAM are sufficient to run smoothly — especially as your organization grows and builds more flows.',
       ),
     ],
     ctaLink: '/platform/infrastructure/health',
@@ -193,7 +193,7 @@ export default function GettingStartedPage() {
           </h2>
           <p className="text-xs text-muted-foreground">
             {t(
-              'Finish these setup steps so your platform is fully configured and ready to use.'
+              'Finish these setup steps so your platform is fully configured and ready to use.',
             )}
           </p>
         </div>

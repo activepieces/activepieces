@@ -26,7 +26,9 @@ export function OnboardingProgressCircle({
   const colorClass = isCompleted ? 'stroke-green-500' : 'stroke-[#6e41e2]';
   const bgColorClass = isCompleted ? 'bg-green-100' : 'bg-[#EFECFF]';
   const textColorClass = isCompleted ? 'text-green-700' : 'text-[#6e41e2]';
-  const circleBgClass = isCompleted ? 'stroke-green-500/20' : 'stroke-[#6e41e2]/20';
+  const circleBgClass = isCompleted
+    ? 'stroke-green-500/20'
+    : 'stroke-[#6e41e2]/20';
 
   return (
     <div
