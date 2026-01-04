@@ -103,14 +103,15 @@ const SidebarUsageLimits = React.memo(() => {
               {t('Unlimited')}
             </Badge>
           </div>
-          <UsageProgress
-            name={t('AI Credits')}
-            value={Math.floor(platform.usage?.aiCredits ?? 0)}
-            max={
-              platform.plan.includedAiCredits +
-              (platform.plan.aiCreditsOverageLimit ?? 0)
-            }
-          />
+          <div className="flex items-center justify-between w-full text-xs">
+            <span className="font-bold">{t('AI Credits')}</span>
+            <span>
+              {Math.round(
+                platform.usage?.aiCreditsRemaining ?? 0,
+              ).toLocaleString()}{' '}
+              {t('remaining')}
+            </span>
+          </div>
           <UsageProgress
             name={t('Active Flows')}
             value={platform.usage?.activeFlows ?? 0}
@@ -125,7 +126,7 @@ const SidebarUsageLimits = React.memo(() => {
             )}{' '}
           </span>
           {isPlatformAdmin && (
-            <FlagGuard flag={ApFlagId.SHOW_BILLING}>
+            <FlagGuard flag={ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR}>
               <Link to={'/platform/setup/billing'} className="w-fit">
                 <span className="text-xs text-primary underline">
                   {t('Manage')}

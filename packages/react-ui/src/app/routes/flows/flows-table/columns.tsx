@@ -1,21 +1,25 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { EllipsisVertical } from 'lucide-react';
+import {
+  EllipsisVertical,
+  Tag,
+  Blocks,
+  Clock,
+  ToggleLeft,
+  User,
+} from 'lucide-react';
 import { Dispatch, SetStateAction } from 'react';
 
 import FlowActionMenu from '@/app/components/flow-actions-menu';
+import { ApAvatar } from '@/components/custom/ap-avatar';
 import { Button } from '@/components/ui/button';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { FlowStatusToggle } from '@/features/flows/components/flow-status-toggle';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { PopulatedFlow } from '@activepieces/shared';
+import { isNil, PopulatedFlow } from '@activepieces/shared';
 
 type FlowsTableColumnsProps = {
   refetch: () => void;
@@ -32,29 +36,20 @@ export const flowsTableColumns = ({
 })[] => [
   {
     accessorKey: 'name',
+    size: 200,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Name')} />
+      <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
     ),
     cell: ({ row }) => {
       const displayName = row.original.version.displayName;
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="text-left truncate max-w-[250px]">
-              {displayName}
-            </div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{displayName}</p>
-          </TooltipContent>
-        </Tooltip>
-      );
+      return <TruncatedColumnTextValue value={displayName} />;
     },
   },
   {
     accessorKey: 'steps',
+    size: 150,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Steps')} />
+      <DataTableColumnHeader column={column} title={t('Steps')} icon={Blocks} />
     ),
     cell: ({ row }) => {
       return (
@@ -68,14 +63,38 @@ export const flowsTableColumns = ({
   {
     accessorKey: 'updated',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Last modified')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Last modified')}
+        icon={Clock}
+      />
     ),
     cell: ({ row }) => {
       const updated = row.original.updated;
       return (
         <FormattedDate
           date={new Date(updated)}
-          className="text-left font-medium min-w-[150px]"
+          className="text-left font-medium"
+        />
+      );
+    },
+  },
+  {
+    accessorKey: 'owner',
+    size: 150,
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+    ),
+    cell: ({ row }) => {
+      return isNil(row.original.ownerId) ? (
+        <span className="text-muted-foreground">—</span>
+      ) : (
+        <ApAvatar
+          type="user"
+          id={row.original.ownerId}
+          size="small"
+          includeAvatar={true}
+          includeName={true}
         />
       );
     },
@@ -83,7 +102,11 @@ export const flowsTableColumns = ({
   {
     accessorKey: 'status',
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Status')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('Status')}
+        icon={ToggleLeft}
+      />
     ),
     cell: ({ row }) => {
       return (

@@ -29,7 +29,7 @@ const ApStepNodeStatus = ({ stepName }: { stepName: string }) => {
     <div className="absolute right-[1px]  h-[20px] -top-[28px]">
       <div
         className={cn(
-          'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center  justify-center',
+          'flex gap-1 animate-in fade-in slide-in-from-bottom-2 duration-500 items-center  justify-center px-2 py-1',
           flowRunUtils.getStatusContainerClassName(variant),
         )}
       >

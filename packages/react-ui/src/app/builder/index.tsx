@@ -18,7 +18,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { RunStatus } from '@/features/flow-runs/components/run-status';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -37,11 +36,16 @@ import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
+import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
+import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
+import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
+import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
+import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
-const animateResizeClassName = `transition-all duration-200`;
+const animateResizeClassName = `transition-all `;
 
 const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
   const handleRef = useRef<ImperativePanelHandle>(null);
@@ -138,8 +142,9 @@ const BuilderPage = () => {
             <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
-
-            <RunStatus run={run} />
+            <PublishFlowReminderWidget />
+            <RunInfoWidget />
+            <ViewingOldVersionWidget />
             {middlePanelRef.current &&
               middlePanelRef.current.clientWidth > 0 && (
                 <CanvasControls
@@ -181,21 +186,26 @@ const BuilderPage = () => {
             [minWidthOfSidebar]: rightSidebar !== RightSideBarType.NONE,
             [animateResizeClassName]: !isDraggingHandle,
           })}
+          style={{
+            transitionDuration: `${flowCanvasUtils.sidebarAnimationDuration}ms`,
+          }}
         >
           <div ref={rightSidePanelRef} className="h-full w-full">
             {rightSidebar === RightSideBarType.PIECE_SETTINGS &&
               memorizedSelectedStep && (
-                <StepSettingsProvider
-                  pieceModel={pieceModel}
-                  selectedStep={memorizedSelectedStep}
-                  key={constructContainerKey({
-                    flowVersionId: flowVersion.id,
-                    step: memorizedSelectedStep,
-                    hasPieceModelLoaded: !!pieceModel,
-                  })}
-                >
-                  <StepSettingsContainer />
-                </StepSettingsProvider>
+                <ResizableVerticalPanelsProvider>
+                  <StepSettingsProvider
+                    pieceModel={pieceModel}
+                    selectedStep={memorizedSelectedStep}
+                    key={constructContainerKey({
+                      flowVersionId: flowVersion.id,
+                      step: memorizedSelectedStep,
+                      hasPieceModelLoaded: !!pieceModel,
+                    })}
+                  >
+                    <StepSettingsContainer />
+                  </StepSettingsProvider>
+                </ResizableVerticalPanelsProvider>
               )}
             {rightSidebar === RightSideBarType.RUNS && <RunsList />}
             {rightSidebar === RightSideBarType.VERSIONS && <FlowVersionsList />}

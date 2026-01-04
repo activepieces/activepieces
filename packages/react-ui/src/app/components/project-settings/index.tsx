@@ -130,6 +130,12 @@ export function ProjectSettingsDialog({
         !showAlerts,
     },
     {
+      id: 'mcp' as TabId,
+      label: t('MCP Server'),
+      icon: <McpSvg className="w-4 h-4" />,
+      disabled: false,
+    },
+    {
       id: 'pieces' as TabId,
       label: t('Pieces'),
       icon: <Puzzle className="w-4 h-4" />,
@@ -140,12 +146,6 @@ export function ProjectSettingsDialog({
       label: t('Environment'),
       icon: <GitBranch className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
-    },
-    {
-      id: 'mcp' as TabId,
-      label: t('MCP Server'),
-      icon: <McpSvg className="w-4 h-4" />,
-      disabled: false,
     },
   ].filter((tab) => !tab.disabled);
 

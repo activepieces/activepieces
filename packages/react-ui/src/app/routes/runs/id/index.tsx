@@ -12,7 +12,6 @@ import { FlowRun, PopulatedFlow } from '@activepieces/shared';
 
 const FlowRunPage = () => {
   const { runId, projectId } = useParams();
-
   const { data, isLoading } = useQuery<
     {
       run: FlowRun;
@@ -31,8 +30,6 @@ const FlowRunPage = () => {
         flow: flow,
       };
     },
-    staleTime: 0,
-    gcTime: 0,
     enabled: runId !== undefined,
   });
 

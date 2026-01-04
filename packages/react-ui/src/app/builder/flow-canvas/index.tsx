@@ -7,6 +7,8 @@ import {
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
+  getNodesBounds,
+  CoordinateExtent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -22,6 +24,7 @@ import {
 import {
   doesSelectionRectangleExist,
   NODE_SELECTION_RECT_CLASS_NAME,
+  RightSideBarType,
   useBuilderStateContext,
   useFocusOnStep,
   useHandleKeyPressOnCanvas,
@@ -40,6 +43,7 @@ import {
 } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
+import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
@@ -92,6 +96,7 @@ export const FlowCanvas = React.memo(
       selectedStep,
       panningMode,
       selectStepByName,
+      rightSidebar,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -100,10 +105,10 @@ export const FlowCanvas = React.memo(
         state.selectedStep,
         state.panningMode,
         state.selectStepByName,
+        state.rightSidebar,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
-
     useShowChevronNextToSelection();
     useFocusOnStep();
     useHandleKeyPressOnCanvas();
@@ -154,7 +159,11 @@ export const FlowCanvas = React.memo(
           const showStepContextMenu =
             stepElement || targetIsSelectionRect || targetIsSelectionChevron;
           if (showStepContextMenu) {
-            setContextMenuType(ContextMenuType.STEP);
+            if (rightSidebar === RightSideBarType.NONE) {
+              setTimeout(() => setContextMenuType(ContextMenuType.STEP), 10000);
+            } else {
+              setContextMenuType(ContextMenuType.STEP);
+            }
           } else {
             setContextMenuType(ContextMenuType.CANVAS);
           }
@@ -167,7 +176,12 @@ export const FlowCanvas = React.memo(
           }
         }
       },
-      [setSelectedNodes, selectedNodes, doesSelectionRectangleExist],
+      [
+        setSelectedNodes,
+        selectedNodes,
+        doesSelectionRectangleExist,
+        rightSidebar,
+      ],
     );
 
     const onSelectionEnd = useCallback(() => {
@@ -196,6 +210,26 @@ export const FlowCanvas = React.memo(
         .addSelectedNodes(selectedSteps.map((step) => step.name));
     }, [selectedNodes, storeApi, selectedStep]);
     const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+
+    const translateExtent = useMemo(() => {
+      const nodes = graph.nodes;
+      const graphRectangle = getNodesBounds(nodes);
+      const stepWidth = flowUtilConsts.AP_NODE_SIZE.STEP.width;
+      const start = {
+        x: -graphRectangle.width - 5 * stepWidth,
+        y: -graphRectangle.height,
+      };
+      const end = {
+        x: 2.5 * graphRectangle.width + 5 * stepWidth,
+        y: 2 * graphRectangle.height,
+      };
+      const extent: CoordinateExtent = [
+        [start.x, start.y],
+        [end.x, end.y],
+      ];
+      return extent;
+    }, [graphKey]);
+
     return (
       <div
         ref={containerRef}
@@ -209,6 +243,7 @@ export const FlowCanvas = React.memo(
               onPaneClick={() => {
                 storeApi.getState().unselectNodesAndEdges();
               }}
+              translateExtent={translateExtent}
               nodeTypes={flowUtilConsts.nodeTypes}
               nodes={graph.nodes}
               edgeTypes={flowUtilConsts.edgeTypes}
@@ -246,6 +281,7 @@ export const FlowCanvas = React.memo(
                 bgColor={`var(--builder-background)`}
                 color={`var(--builder-background-pattern)`}
               />
+              <Minimap key={graphKey} />
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>
