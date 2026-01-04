@@ -36,6 +36,7 @@ import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
+import { CursorPositionProvider } from './flow-canvas/cursor-position-context';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
 import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
@@ -139,9 +140,12 @@ const BuilderPage = () => {
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-            <FlowCanvas
-              setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-            ></FlowCanvas>
+            <CursorPositionProvider>
+              <FlowCanvas
+                setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
+              ></FlowCanvas>
+            </CursorPositionProvider>
+
             <PublishFlowReminderWidget />
             <RunInfoWidget />
             <ViewingOldVersionWidget />
