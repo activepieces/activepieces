@@ -277,7 +277,7 @@ const TemplateDetailsPage = () => {
 
                 <div className="flex flex-col gap-2">
                   <span className="text-sm font-semibold">
-                    {t('Tools & Services')}
+                    {t('Used Pieces')}
                   </span>
                   <div className="flex flex-wrap gap-2">
                     {template.pieces.map((pieceName, index) => (
