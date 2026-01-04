@@ -1,6 +1,8 @@
 import { Badge } from '@/components/ui/badge';
+import { LineChart, Clock } from 'lucide-react';
 
 type TagWithBrightProps = {
+  index?: number;
   prefix?: string;
   title: string;
   color: string;
@@ -9,6 +11,7 @@ type TagWithBrightProps = {
 };
 
 export const TagWithBright = ({
+  index,
   prefix,
   title,
   color,
@@ -18,7 +21,7 @@ export const TagWithBright = ({
     <>
       <style>{`
         @keyframes shine {
-          0%, 80% {
+          0%, 70% {
             transform: translateX(-100%);
           }
           100% {
@@ -39,12 +42,18 @@ export const TagWithBright = ({
         <span
           className="absolute inset-0"
           style={{
-            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.6) 50%, transparent 100%)`,
-            animation: 'shine 5s ease-out infinite',
+            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 50%, transparent 100%)`,
+            animation: 'shine 2.5s ease-out infinite',
             width: '100%',
             transform: 'translateX(-100%)',
           }}
         />
+        {index === 0 && (
+          <LineChart className="relative z-10 font-medium mr-1.5 w-3.5 h-3.5" />
+        )}
+        {index === 1 && (
+          <Clock className="relative z-10 font-medium mr-1.5 w-3.5 h-3.5" />
+        )}
         {prefix && (
           <span className="relative z-10 font-medium mr-1">{prefix}</span>
         )}

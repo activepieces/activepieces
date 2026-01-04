@@ -220,6 +220,7 @@ const TemplateDetailsPage = () => {
               <div className="flex gap-2 flex-wrap">
                 {template.tags.map((tag, index) => (
                   <TagWithBright
+                    index={index}
                     key={index}
                     prefix={t('Save')}
                     title={tag.title}

@@ -80,7 +80,6 @@ const TemplatesPage = () => {
 
   return (
     <div>
-      <ProjectDashboardPageHeader title={t('Templates')} />
       <div>
         <div className="mb-6">
           <InputWithIcon
