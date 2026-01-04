@@ -166,7 +166,7 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: '/explore',
+    to: '/templates',
     label: t('Explore'),
     show: true,
     icon: Compass,
