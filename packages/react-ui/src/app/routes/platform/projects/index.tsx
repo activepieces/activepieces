@@ -1,10 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { CheckIcon, Package, Pencil, Plus, Trash } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useEffectOnce } from 'react-use';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -13,9 +11,7 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
-  CURSOR_QUERY_PARAM,
   DataTable,
-  LIMIT_QUERY_PARAM,
   RowDataWithActions,
   BulkAction,
 } from '@/components/ui/data-table';
@@ -26,9 +22,8 @@ import {
 } from '@/components/ui/tooltip';
 import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectCollection, projectCollectionUtils } from '@/hooks/project-collection';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
-import { platformProjectApi } from '@/lib/platform-project-api';
 import { formatUtils, validationUtils } from '@/lib/utils';
 import {
   ProjectType,
@@ -46,39 +41,7 @@ export default function ProjectsPage() {
   const { project: currentProject } =
     projectCollectionUtils.useCurrentProject();
   const { data: currentUser } = userHooks.useCurrentUser();
-
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  useEffectOnce(() => {
-    const types = searchParams.getAll('type');
-    if (types.length === 0) {
-      setSearchParams(
-        (prev) => {
-          const newParams = new URLSearchParams(prev);
-          newParams.append('type', ProjectType.TEAM);
-          return newParams;
-        },
-        { replace: true },
-      );
-    }
-  });
-
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['projects', searchParams.toString()],
-    staleTime: 0,
-    queryFn: async () => {
-      const cursor = searchParams.get(CURSOR_QUERY_PARAM);
-      const limit = searchParams.get(LIMIT_QUERY_PARAM);
-      const displayName = searchParams.get('displayName') ?? undefined;
-      const types = searchParams.getAll('type') as ProjectType[];
-      return await platformProjectApi.list({
-        cursor: cursor ?? undefined,
-        limit: limit ? parseInt(limit) : undefined,
-        displayName,
-        types: types.length > 0 ? types : undefined,
-      });
-    },
-  });
+  const { data: allProjects } = projectCollectionUtils.useAll();
 
   const [selectedRows, setSelectedRows] = useState<ProjectWithLimits[]>([]);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -317,7 +280,7 @@ export default function ProjectsPage() {
           title={t('Projects')}
           description={t('Manage your automation projects')}
         >
-          <NewProjectDialog onCreate={() => refetch()}>
+          <NewProjectDialog>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
@@ -359,8 +322,9 @@ export default function ProjectsPage() {
             },
           ]}
           columns={columnsWithCheckbox}
-          page={data}
-          isLoading={isLoading}
+          page={{ data: allProjects, next: null, previous: null }}
+          isLoading={false}
+          clientPagination={true}
           bulkActions={bulkActions}
           actions={actions}
         />
@@ -368,7 +332,6 @@ export default function ProjectsPage() {
           open={editDialogOpen}
           onClose={() => {
             setEditDialogOpen(false);
-            refetch();
           }}
           initialValues={editDialogInitialValues}
           projectId={editDialogProjectId}

@@ -9,10 +9,9 @@ import { QueryClient, useMutation } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useEmbedding } from '@/components/embed-provider';
 import { authenticationSession } from '@/lib/authentication-session';
-import { projectApi } from '@/lib/project-api';
-import { isNil, ProjectType, ProjectWithLimits } from '@activepieces/shared';
+import { isNil, ProjectType, ProjectWithLimits, SeekPage } from '@activepieces/shared';
 import { api } from '@/lib/api';
-import { CreatePlatformProjectRequest, UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
+import { CreatePlatformProjectRequest, ListProjectRequestForPlatformQueryParams, UpdateProjectPlatformRequest } from '@activepieces/ee-shared';
 
 const collectionQueryClient = new QueryClient();
 
@@ -21,10 +20,11 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
         queryKey: ['projects'],
         queryClient: collectionQueryClient,
         queryFn: async () => {
-            const response = await projectApi.list({
+            const request: ListProjectRequestForPlatformQueryParams = {
                 cursor: undefined,
-                limit: 10000,
-            });
+                limit: 30000,
+            };
+            const response = await api.get<SeekPage<ProjectWithLimits>>('/v1/projects', request);
             return response.data;
         },
         getKey: (item) => item.id,

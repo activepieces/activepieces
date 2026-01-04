@@ -17,15 +17,13 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { projectApi } from '@/lib/project-api';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { toast } from 'sonner';
 import { internalErrorToast } from '@/components/ui/sonner';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
-  onCreate: () => void;
+  onCreate?: () => void;
 };
 
 export const NewProjectDialog = ({
@@ -45,7 +43,7 @@ export const NewProjectDialog = ({
   });
 
   const { mutate, isPending } = projectCollectionUtils.useCreateProject(() => {
-    onCreate();
+    onCreate?.();
     setOpen(false);
   }, (error) => {
     console.error(error);
