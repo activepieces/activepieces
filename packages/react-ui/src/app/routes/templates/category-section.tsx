@@ -42,15 +42,15 @@ export const CategorySection = ({
           <h2 className="text-2xl font-semibold">
             {CATEGORY_DISPLAY_NAMES[category]}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center">
             <Button
               variant="ghost"
               onClick={() => onCategorySelect(category)}
-              className="flex items-center gap-1"
+              className="flex items-center"
             >
-              {t('View All')}
+              {t('View all')}
             </Button>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center">
               <CarouselPrevious
                 variant="ghost"
                 className="static translate-y-0 h-8 w-8"
