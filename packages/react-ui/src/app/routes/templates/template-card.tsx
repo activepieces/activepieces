@@ -68,8 +68,8 @@ export const ExploreTemplateCard = ({
           <PieceIconList
             trigger={template.flows![0]?.trigger}
             maxNumberOfIconsToShow={4}
-            size="lg"
-            className="flex gap-2"
+            size="md"
+            className="flex gap-0.5"
             circle={false}
             background="white"
             excludeCore={true}
