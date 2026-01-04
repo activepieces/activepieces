@@ -2,13 +2,12 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
 import {
   ArrowLeft,
-  Download,
-  Share2,
   BookOpen,
   User,
   Calendar,
   Users,
   ArrowRight,
+  Link,
 } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import {
@@ -146,17 +145,6 @@ const TemplateDetailsPage = () => {
     return count.toString();
   };
 
-  const handleExportJson = () => {
-    const dataStr = JSON.stringify(template, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${template.name}.json`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
   const handleUseTemplate = () => {
     setIsDialogOpen(true);
   };
@@ -199,16 +187,10 @@ const TemplateDetailsPage = () => {
             <span className="text-sm font-semibold">{t('Back')}</span>
           </Button>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleExportJson}>
-            <Download className="w-4 h-4 mr-2" />
-            {t('Export Json')}
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleShare}>
-            <Share2 className="w-4 h-4 mr-2" />
-            {t('Share')}
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" onClick={handleShare}>
+          <Link className="w-4 h-4" />
+          {t('Share')}
+        </Button>
       </div>
 
       <div className="flex-1 min-h-0">

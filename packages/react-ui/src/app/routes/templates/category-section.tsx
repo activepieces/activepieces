@@ -11,6 +11,7 @@ import {
 import { CATEGORY_DISPLAY_NAMES, Template, TemplateCategory } from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type CategorySectionProps = {
   category: TemplateCategory;
@@ -53,11 +54,15 @@ export const CategorySection = ({
               <CarouselPrevious
                 variant="ghost"
                 className="static translate-y-0 h-8 w-8"
-              />
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </CarouselPrevious>
               <CarouselNext
                 variant="ghost"
                 className="static translate-y-0 h-8 w-8"
-              />
+              >
+                <ChevronRight className="h-4 w-4" />
+              </CarouselNext>
             </div>
           </div>
         </div>
