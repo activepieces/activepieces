@@ -35,6 +35,7 @@ import {
   CanvasContextMenu,
   ContextMenuType,
 } from './context-menu/canvas-context-menu';
+import { useCursorPosition } from './cursor-position-context';
 import { FlowDragLayer } from './flow-drag-layer';
 import {
   flowUtilConsts,
@@ -45,7 +46,6 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-import { useCursorPosition } from './cursor-position-context';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -230,7 +230,7 @@ export const FlowCanvas = React.memo(
       ];
       return extent;
     }, [graphKey]);
-    console.log('canvas')
+    console.log('canvas');
     return (
       <div
         ref={containerRef}

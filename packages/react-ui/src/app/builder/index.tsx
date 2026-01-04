@@ -36,6 +36,7 @@ import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
+import { CursorPositionProvider } from './flow-canvas/cursor-position-context';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
 import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
@@ -44,7 +45,6 @@ import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
-import { CursorPositionProvider } from './flow-canvas/cursor-position-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
@@ -140,11 +140,11 @@ const BuilderPage = () => {
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-          <CursorPositionProvider>
-          <FlowCanvas
-              setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-            ></FlowCanvas>
-          </CursorPositionProvider>
+            <CursorPositionProvider>
+              <FlowCanvas
+                setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
+              ></FlowCanvas>
+            </CursorPositionProvider>
 
             <PublishFlowReminderWidget />
             <RunInfoWidget />

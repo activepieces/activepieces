@@ -1,21 +1,20 @@
 import { t } from 'i18next';
+import { useEffect, useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
-import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
 import { useCursorPosition } from './cursor-position-context';
-import { useEffect, useState } from 'react';
+import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
 
-const StepDragOverlay = ({
-  step,
-}: {
-  step: FlowAction | FlowTrigger;
-}) => {
+const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { open } = useSidebar();
   const { cursorPosition } = useCursorPosition();
-  const [overlayPosition, setOverlayPosition] = useState<{ x: number; y: number }>(cursorPosition);
+  const [overlayPosition, setOverlayPosition] = useState<{
+    x: number;
+    y: number;
+  }>(cursorPosition);
   const builderNavigationBar = document.getElementById(
     BUILDER_NAVIGATION_SIDEBAR_ID,
   );
@@ -41,7 +40,7 @@ const StepDragOverlay = ({
     return () => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
-  },[])
+  }, []);
   return (
     <div
       className={

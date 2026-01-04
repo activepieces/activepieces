@@ -1,7 +1,6 @@
 import {
   DndContext,
   DragEndEvent,
-  DragMoveEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
@@ -25,13 +24,8 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
-import { useCursorPosition } from './cursor-position-context';
 
-const FlowDragLayer = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const viewport = useViewport();
   const [previousViewPort, setPreviousViewPort] = useState(viewport);
   const [
@@ -133,7 +127,7 @@ const FlowDragLayer = ({
       }
     }
   };
- 
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -155,11 +149,7 @@ const FlowDragLayer = ({
         <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
 
-      {draggedStep && (
-        <StepDragOverlay
-          step={draggedStep}
-        ></StepDragOverlay>
-      )}
+      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
     </>
   );
 };
