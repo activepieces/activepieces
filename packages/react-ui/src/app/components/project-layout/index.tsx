@@ -52,7 +52,7 @@ export function ProjectDashboardLayout({
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
-      to: '/explore',
+      to: '/templates',
       label: t('Explore'),
       show: !isEmbedded,
       icon: Compass,
