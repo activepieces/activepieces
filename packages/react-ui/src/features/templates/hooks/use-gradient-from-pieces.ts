@@ -245,4 +245,3 @@ export const useGradientFromPieces = (
 
   return gradient;
 };
-
