@@ -184,7 +184,7 @@ const TemplateDetailsPage = () => {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-semibold">{t('Back')}</span>
+            <span className="text-sm font-semibold">{t('All Templates')}</span>
           </Button>
         </div>
         <Button variant="outline" size="sm" onClick={handleShare}>
