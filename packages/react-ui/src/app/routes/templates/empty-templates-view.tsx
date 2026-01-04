@@ -18,7 +18,9 @@ export const EmptyTemplatesView = () => {
         </EmptyMedia>
         <EmptyTitle>{t('No templates found')}</EmptyTitle>
         <EmptyDescription>
-          {t('No templates match your search criteria. Try adjusting your search terms.')}
+          {t(
+            'No templates match your search criteria. Try adjusting your search terms.',
+          )}
         </EmptyDescription>
       </EmptyHeader>
     </Empty>

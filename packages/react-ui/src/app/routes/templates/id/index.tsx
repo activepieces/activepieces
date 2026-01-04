@@ -22,6 +22,7 @@ import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
 import { FlowCanvas } from '@/app/builder/flow-canvas';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { Button } from '@/components/ui/button';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar-shadcn';
@@ -40,10 +41,9 @@ import {
   TemplateType,
 } from '@activepieces/shared';
 
-import { PieceCard } from './piece-card';
-import { LoadingScreen } from '@/components/ui/loading-screen';
-import { UseTemplateDialog } from './use-template-dialog';
 import { FlowCard } from './flow-card';
+import { PieceCard } from './piece-card';
+import { UseTemplateDialog } from './use-template-dialog';
 
 const TemplateDetailsPage = () => {
   const { templateId } = useParams<{ templateId: string }>();
@@ -113,7 +113,7 @@ const TemplateDetailsPage = () => {
   useEffect(() => {
     setHasCanvasBeenInitialised(false);
     const timer = setTimeout(() => {
-      setRenderKey(prev => prev + 1);
+      setRenderKey((prev) => prev + 1);
     }, 50);
     return () => clearTimeout(timer);
   }, [selectedFlowIndex]);
@@ -213,9 +213,12 @@ const TemplateDetailsPage = () => {
               </div>
 
               <div className="flex flex-col gap-8">
-
                 <div className="flex flex-row justify-center gap-3">
-                  <Button onClick={handleUseTemplate} size="xl" className="flex-1">
+                  <Button
+                    onClick={handleUseTemplate}
+                    size="xl"
+                    className="flex-1"
+                  >
                     {t('Use Template')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -242,7 +245,7 @@ const TemplateDetailsPage = () => {
                 {template.flows && template.flows.length > 1 && (
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-semibold">
-                      {t('What\'s included?')}
+                      {t("What's included?")}
                     </span>
 
                     <div className="grid grid-cols-1 gap-3">
@@ -268,7 +271,6 @@ const TemplateDetailsPage = () => {
                     ))}
                   </div>
                 </div>
-
 
                 <Separator className="my-2" />
 
@@ -307,9 +309,7 @@ const TemplateDetailsPage = () => {
                     </div>
                   </div>
                 </div>
-
               </div>
-
             </div>
           </ScrollArea>
 
@@ -352,7 +352,11 @@ const TemplateDetailsPage = () => {
           </div>
         </div>
       </div>
-      <UseTemplateDialog template={template} open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+      <UseTemplateDialog
+        template={template}
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+      />
     </div>
   );
 };

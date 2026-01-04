@@ -82,9 +82,9 @@ export const TemplateCard = ({
         <div className="flex items-center gap-2 p-4">
           <PieceIconList
             trigger={template.flows![0]?.trigger}
-              maxNumberOfIconsToShow={2}
-            />
-          </div>
+            maxNumberOfIconsToShow={2}
+          />
+        </div>
       )}
       <div className="text-sm font-medium px-4 min-h-16">{template.name}</div>
       <div className="py-2 px-4 gap-1 flex items-center">

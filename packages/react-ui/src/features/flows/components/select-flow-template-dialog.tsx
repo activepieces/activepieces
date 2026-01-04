@@ -32,9 +32,8 @@ const SelectFlowTemplateDialog = ({
   children: React.ReactNode;
   folderId?: string;
 }) => {
-  const { templates, isLoading, search, setSearch } = templatesHooks.useTemplates(
-    TemplateType.CUSTOM,
-  );
+  const { templates, isLoading, search, setSearch } =
+    templatesHooks.useTemplates(TemplateType.CUSTOM);
   const carousel = useRef<CarouselApi>();
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(
     null,

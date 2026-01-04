@@ -1,5 +1,6 @@
-import { Badge } from '@/components/ui/badge';
 import { LineChart, Clock } from 'lucide-react';
+
+import { Badge } from '@/components/ui/badge';
 
 type TagWithBrightProps = {
   index?: number;
@@ -54,9 +55,7 @@ export const TagWithBright = ({
         {index === 1 && (
           <Clock className="relative font-medium mr-1.5 w-3.5 h-3.5" />
         )}
-        {prefix && (
-          <span className="relative font-medium mr-1">{prefix}</span>
-        )}
+        {prefix && <span className="relative font-medium mr-1">{prefix}</span>}
         <span className="relative font-bold">{title}</span>
       </Badge>
     </>

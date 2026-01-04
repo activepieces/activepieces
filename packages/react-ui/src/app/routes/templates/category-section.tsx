@@ -1,4 +1,5 @@
 import { t } from 'i18next';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -8,10 +9,13 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { CATEGORY_DISPLAY_NAMES, Template, TemplateCategory } from '@activepieces/shared';
+import {
+  CATEGORY_DISPLAY_NAMES,
+  Template,
+  TemplateCategory,
+} from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type CategorySectionProps = {
   category: TemplateCategory;

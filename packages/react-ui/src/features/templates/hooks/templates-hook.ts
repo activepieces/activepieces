@@ -2,7 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import { Template, TemplateType, TemplateCategory, GetFlowTemplateRequestQuery } from '@activepieces/shared';
+import {
+  Template,
+  TemplateType,
+  TemplateCategory,
+  GetFlowTemplateRequestQuery,
+} from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 
@@ -16,13 +21,14 @@ export const templatesHooks = {
 
   useTemplates: (type?: TemplateType) => {
     const [searchParams, setSearchParams] = useSearchParams();
-  
+
     const search = searchParams.get('search') ?? '';
     const category =
-      (searchParams.get('category') as TemplateCategory | undefined) ?? undefined;
-  
+      (searchParams.get('category') as TemplateCategory | undefined) ??
+      undefined;
+
     const [debouncedSearch] = useDebounce(search, 300);
-  
+
     const { data: templates, isLoading } = useQuery<Template[], Error>({
       queryKey: ['templates', debouncedSearch, category],
       queryFn: async () => {
@@ -35,7 +41,7 @@ export const templatesHooks = {
       },
       staleTime: 5 * 60 * 1000,
     });
-  
+
     const setSearch = (newSearch: string) => {
       setSearchParams((prev) => {
         const params = new URLSearchParams(prev);
@@ -47,7 +53,7 @@ export const templatesHooks = {
         return params;
       });
     };
-  
+
     const setCategory = (newCategory: TemplateCategory | 'All') => {
       setSearchParams((prev) => {
         const params = new URLSearchParams(prev);
@@ -59,7 +65,7 @@ export const templatesHooks = {
         return params;
       });
     };
-  
+
     return {
       templates,
       isLoading,
@@ -68,6 +74,5 @@ export const templatesHooks = {
       category: category || 'All',
       setCategory,
     };
-  }
-}
-
+  },
+};

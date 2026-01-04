@@ -410,12 +410,7 @@ export const routesThatRequireProjectId = {
 };
 
 const rgbToHex = (r: number, g: number, b: number): string => {
-  return (
-    '#' +
-    [r, g, b]
-      .map((x) => x.toString(16).padStart(2, '0'))
-      .join('')
-  );
+  return '#' + [r, g, b].map((x) => x.toString(16).padStart(2, '0')).join('');
 };
 
 const colorDistance = (c1: number[], c2: number[]): number => {
@@ -424,7 +419,12 @@ const colorDistance = (c1: number[], c2: number[]): number => {
   );
 };
 
-const shouldSkipPixel = (r: number, g: number, b: number, a: number): boolean => {
+const shouldSkipPixel = (
+  r: number,
+  g: number,
+  b: number,
+  a: number,
+): boolean => {
   if (a < 125) return true;
   if (r > 240 && g > 240 && b > 240) return true;
   if (r < 15 && g < 15 && b < 15) return true;
@@ -449,7 +449,12 @@ const buildColorMap = (pixels: Uint8ClampedArray) => {
   const colorMap = new Map<string, { rgb: number[]; count: number }>();
 
   for (let i = 0; i < pixels.length; i += 4) {
-    const [r, g, b, a] = [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]];
+    const [r, g, b, a] = [
+      pixels[i],
+      pixels[i + 1],
+      pixels[i + 2],
+      pixels[i + 3],
+    ];
 
     if (shouldSkipPixel(r, g, b, a)) continue;
 
@@ -514,9 +519,7 @@ const extractColorsFromImage = async (imageUrl: string): Promise<string[]> => {
           .sort((a, b) => b.count - a.count)
           .slice(0, 2)
           .map((cluster) =>
-            rgbToHex(
-              ...(cluster.rgb as [number, number, number]),
-            ),
+            rgbToHex(...(cluster.rgb as [number, number, number])),
           );
 
         resolve(topColors);

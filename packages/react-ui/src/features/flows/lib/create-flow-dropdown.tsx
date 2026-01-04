@@ -42,7 +42,8 @@ export const CreateFlowDropdown = ({
   const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const [refresh, setRefresh] = useState(0);
   const { embedState } = useEmbedding();
-  const { mutate: createFlow, isPending: isCreateFlowPending } = flowHooks.useStartFromScratch(folderId);
+  const { mutate: createFlow, isPending: isCreateFlowPending } =
+    flowHooks.useStartFromScratch(folderId);
 
   return (
     <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteFlow}>

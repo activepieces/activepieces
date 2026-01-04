@@ -44,7 +44,7 @@ export const CATEGORY_DISPLAY_NAMES: Record<TemplateCategory, string> = {
     [TemplateCategory.MARKETING]: 'Marketing',
     [TemplateCategory.PRODUCTIVITY]: 'Productivity',
     [TemplateCategory.SALES]: 'Sales',
-  };
+}
 
 export const FlowVersionTemplate = Type.Composite([Type.Omit(
     FlowVersion,

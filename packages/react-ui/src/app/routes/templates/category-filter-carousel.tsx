@@ -1,3 +1,5 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Carousel,
@@ -8,7 +10,6 @@ import {
   useCarousel,
 } from '@/components/ui/carousel';
 import { CATEGORY_DISPLAY_NAMES, TemplateCategory } from '@activepieces/shared';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type CategoryFilterCarouselProps = {
   categories: (TemplateCategory | 'All')[];
@@ -57,18 +58,12 @@ const CarouselContentWithButtons = ({
         })}
       </CarouselContent>
       {canScrollPrev && (
-        <CarouselPrevious
-          variant="ghost"
-          className="left-0 z-10"
-        >
+        <CarouselPrevious variant="ghost" className="left-0 z-10">
           <ChevronLeft className="h-4 w-4" />
         </CarouselPrevious>
       )}
       {canScrollNext && (
-        <CarouselNext
-          variant="ghost"
-          className="right-0 z-10"
-        >
+        <CarouselNext variant="ghost" className="right-0 z-10">
           <ChevronRight className="h-4 w-4" />
         </CarouselNext>
       )}

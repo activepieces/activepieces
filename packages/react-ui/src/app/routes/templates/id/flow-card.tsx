@@ -1,8 +1,9 @@
+import { Workflow } from 'lucide-react';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { useGradientFromPieces } from '@/lib/utils';
 import { FlowVersionTemplate } from '@activepieces/shared';
-import { Workflow } from 'lucide-react';
 
 type FlowCardProps = {
   flow: FlowVersionTemplate;
@@ -56,4 +57,3 @@ export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
     </Card>
   );
 };
-
