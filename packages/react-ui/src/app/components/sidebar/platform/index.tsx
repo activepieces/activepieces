@@ -35,10 +35,8 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { onboardingHooks } from '@/hooks/onboarding-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { OnboardingStep } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
@@ -47,6 +45,7 @@ import {
 } from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
+import { OnboardingProgressCircle } from '../progress-circle';
 import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
@@ -56,13 +55,6 @@ export function PlatformSidebar() {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
-
-  const { data: onboardingStatus } = onboardingHooks.useOnboarding();
-
-  const completedCount = onboardingStatus
-    ? Object.values(onboardingStatus).filter(Boolean).length
-    : 0;
-  const totalSteps = Object.keys(OnboardingStep).length;
 
   const groups: {
     label: string;
@@ -83,34 +75,7 @@ export function PlatformSidebar() {
           to: '/platform/setup/onboarding',
           label: t('Getting Started'),
           icon: Sparkles,
-          suffix: (
-            <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-[#EFECFF] text-[#6e41e2] whitespace-nowrap">
-              <svg className="w-3 h-3 transform -rotate-90" viewBox="0 0 12 12">
-                <circle
-                  cx="6"
-                  cy="6"
-                  r="5"
-                  className="stroke-[#6e41e2]/20"
-                  strokeWidth="2"
-                  fill="none"
-                />
-                <circle
-                  cx="6"
-                  cy="6"
-                  r="5"
-                  className="stroke-[#6e41e2] transition-all duration-500 ease-in-out"
-                  strokeWidth="2"
-                  fill="none"
-                  strokeDasharray={31.4}
-                  strokeDashoffset={31.4 - (31.4 * completedCount) / totalSteps}
-                  strokeLinecap="round"
-                />
-              </svg>
-              <span className="text-xs font-bold leading-none">
-                {completedCount}/{totalSteps}
-              </span>
-            </div>
-          ),
+          suffix: <OnboardingProgressCircle />,
         },
       ],
     },

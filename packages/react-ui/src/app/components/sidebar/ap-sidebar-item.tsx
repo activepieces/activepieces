@@ -27,12 +27,16 @@ export type SidebarItemType = {
   newWindow?: boolean;
   isActive?: (pathname: string) => boolean;
   isSubItem?: boolean;
-  show?: boolean;
+  hide?: boolean;
   hasPermission?: boolean;
   suffix?: ReactNode;
 };
 
 export const ApSidebarItem = (item: SidebarItemType) => {
+  if (item.hide) {
+    return null
+  }
+
   const location = useLocation();
   const { state } = useSidebar();
   const isLinkActive =

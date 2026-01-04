@@ -7,6 +7,13 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 
 export type StepData = {
@@ -64,7 +71,7 @@ const OnboardingStepCard = ({
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="p-6 pt-0 border-t mt-4 flex flex-col md:flex-row gap-8 animate-in slide-in-from-top-2 fade-in duration-200">
+        <div className="p-6 pt-0 border-t flex flex-col md:flex-row gap-8 animate-in slide-in-from-top-2 fade-in duration-200">
           <div className="w-full md:w-[70%] space-y-6">
             <ul className="space-y-4 pt-4">
               {stepData.bullets.map((bullet, i) => (
@@ -82,13 +89,29 @@ const OnboardingStepCard = ({
             </Button>
           </div>
           <div className="hidden md:block md:w-[30%] shrink-0 pt-4">
-            <div className="rounded-lg overflow-hidden border shadow-sm bg-muted/20 flex items-center justify-center">
-              <img
-                src={stepData.image}
-                alt={stepData.title}
-                className="max-h-[300px] object-contain"
-              />
-            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <div className="rounded-lg overflow-hidden border shadow-sm bg-muted/20 flex items-center justify-center cursor-pointer hover:border-primary transition-colors group">
+                  <img
+                    src={stepData.image}
+                    alt={stepData.title}
+                    className="max-h-[300px] object-contain transition-transform group-hover:scale-[1.02]"
+                  />
+                </div>
+              </DialogTrigger>
+              <DialogContent className="max-w-5xl h-fit max-h-[95vh] p-0 overflow-hidden border-none bg-transparent shadow-none">
+                <DialogHeader className="sr-only">
+                  <DialogTitle>{stepData.title}</DialogTitle>
+                </DialogHeader>
+                <div className="w-full h-full flex items-center justify-center p-2">
+                  <img
+                    src={stepData.image}
+                    alt={stepData.title}
+                    className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl border"
+                  />
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
       </CollapsibleContent>
