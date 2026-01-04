@@ -1,5 +1,5 @@
 import { LockKeyhole } from 'lucide-react';
-import { ComponentType, SVGProps } from 'react';
+import { ComponentType, ReactNode, SVGProps } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { buttonVariants } from '@/components/ui/button';
@@ -29,6 +29,7 @@ export type SidebarItemType = {
   isSubItem?: boolean;
   show?: boolean;
   hasPermission?: boolean;
+  suffix?: ReactNode;
 };
 
 export const ApSidebarItem = (item: SidebarItemType) => {
@@ -91,6 +92,7 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                   <span className="text-sm">{item.label}</span>
                 </div>
               </div>
+              {item.suffix}
               {item.locked && <LockKeyhole className="size-3.5" />}
             </div>
             {item.notification && !item.locked && (

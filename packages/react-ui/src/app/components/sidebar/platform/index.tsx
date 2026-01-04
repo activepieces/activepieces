@@ -16,6 +16,9 @@ import {
   Settings2,
   FileHeart,
   MousePointerClick,
+  Rocket,
+  Sparkle,
+  Sparkles,
 } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -34,9 +37,16 @@ import {
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { onboardingHooks } from '@/hooks/onboarding-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import { OnboardingStep, PlatformOnboarding } from '@activepieces/ee-shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
@@ -49,15 +59,63 @@ export function PlatformSidebar() {
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
 
+  const { data: onboardingStatus } = onboardingHooks.useOnboarding();
+
+  const completedCount = onboardingStatus
+    ? Object.values(onboardingStatus).filter(Boolean).length
+    : 0;
+  const totalSteps = Object.keys(OnboardingStep).length;
+
   const groups: {
     label: string;
+    hidden?: boolean;
     items: {
       to: string;
       label: string;
       icon?: ComponentType<SVGProps<SVGSVGElement>>;
       locked?: boolean;
+      suffix?: React.ReactNode;
     }[];
   }[] = [
+    {
+      label: t(''),
+      hidden: !isNil(platform.plan.licenseKey),
+      items: [
+        {
+          to: '/platform/setup/onboarding',
+          label: t('Getting Started'),
+          icon: Sparkles,
+          suffix: (
+            <div className="flex items-center gap-1.5 px-1.5 py-0.5 rounded-md bg-[#EFECFF] text-[#6e41e2] whitespace-nowrap">
+              <svg className="w-3 h-3 transform -rotate-90" viewBox="0 0 12 12">
+                <circle
+                  cx="6"
+                  cy="6"
+                  r="5"
+                  className="stroke-[#6e41e2]/20"
+                  strokeWidth="2"
+                  fill="none"
+                />
+                <circle
+                  cx="6"
+                  cy="6"
+                  r="5"
+                  className="stroke-[#6e41e2] transition-all duration-500 ease-in-out"
+                  strokeWidth="2"
+                  fill="none"
+                  strokeDasharray={31.4}
+                  strokeDashoffset={31.4 - (31.4 * completedCount) / totalSteps}
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="text-xs font-bold leading-none">
+                {completedCount}/{totalSteps}
+              </span>
+            </div>
+          ),
+        },
+      ],
+    },
     {
       label: t('General'),
       items: [
@@ -200,26 +258,32 @@ export function PlatformSidebar() {
       </SidebarHeader>
       <ScrollArea className="h-full">
         <SidebarContent>
-          {groups.map((group, idx) => (
-            <SidebarGroup
-              key={group.label}
-              className={cn('px-0 pt-4 list-none gap-2', {
-                'border-t border-gray-300 ': idx > 0,
-              })}
-            >
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-              {group.items.map((item) => (
-                <ApSidebarItem
-                  type="link"
-                  key={item.label}
-                  to={item.to}
-                  label={item.label}
-                  icon={item.icon}
-                  locked={item.locked}
-                />
-              ))}
-            </SidebarGroup>
-          ))}
+          {groups
+            .filter((g) => !g.hidden)
+            .map((group, idx) => (
+              <SidebarGroup
+                key={group.label}
+                className={cn('px-0 pt-4 list-none gap-2', {
+                  'border-t border-gray-300 ': idx > 0,
+                })}
+              >
+                {group.label && (
+                  <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                )}
+
+                {group.items.map((item) => (
+                  <ApSidebarItem
+                    type="link"
+                    key={item.label}
+                    to={item.to}
+                    label={item.label}
+                    icon={item.icon}
+                    locked={item.locked}
+                    suffix={item.suffix}
+                  />
+                ))}
+              </SidebarGroup>
+            ))}
         </SidebarContent>
       </ScrollArea>
 

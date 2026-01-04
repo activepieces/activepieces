@@ -3,6 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,6 +37,7 @@ export const ActivateLicenseDialog = ({
   onOpenChange,
 }: ActivateLicenseDialogProps) => {
   const queryClinet = useQueryClient();
+  const navigate = useNavigate();
 
   const form = useForm<LicenseKeySchema>({
     resolver: typeboxResolver(LicenseKeySchema),
@@ -51,7 +53,10 @@ export const ActivateLicenseDialog = ({
   const handleSubmit = (data: LicenseKeySchema) => {
     form.clearErrors();
     activateLicenseKey(data.tempLicenseKey, {
-      onSuccess: () => handleClose(),
+      onSuccess: () => {
+        handleClose();
+        navigate('/platform/setup/onboarding#first-access');
+      },
     });
   };
 

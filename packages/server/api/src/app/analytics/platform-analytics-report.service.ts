@@ -1,9 +1,11 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
 import { AnalyticsFlowReportItem, AnalyticsPieceReportItem, AnalyticsRunsUsageItem, apId, DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, flowPieceUtil, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment, spreadIfDefined, UpdatePlatformReportRequest, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
+import { onboardingService } from '../ee/platform/onboarding/onboarding.service'
 import { flowService } from '../flows/flow/flow.service'
 import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
@@ -30,6 +32,8 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
         })
     },
     getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
+        await onboardingService(log).completeStep(platformId, OnboardingStep.EXPLORED_ADOPTION)
+
         const report = await platformAnalyticsReportRepo().findOneBy({ platformId })
         if (report && !report.outdated) {
             return report
