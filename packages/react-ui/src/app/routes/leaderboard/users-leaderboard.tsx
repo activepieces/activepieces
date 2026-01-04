@@ -78,8 +78,8 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       />
     ),
     cell: ({ row }) => (
-      <div className="text-right">{row.original.flowCount}</div>
-    ),
+      <div className="text-left">{row.original.flowCount}</div>
+    ),  
   },
   {
     accessorKey: 'minutesSaved',
@@ -92,7 +92,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
       />
     ),
     cell: ({ row }) => (
-      <div className="text-right">
+      <div className="text-left">
         {formatUtils.formatToHoursAndMinutes(row.original.minutesSaved)}
       </div>
     ),
