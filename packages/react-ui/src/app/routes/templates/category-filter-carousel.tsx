@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/carousel';
 import { formatUtils } from '@/lib/utils';
 import { TemplateCategory } from '@activepieces/shared';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type CategoryFilterCarouselProps = {
   categories: (TemplateCategory | 'All')[];
@@ -31,6 +32,7 @@ export const CategoryFilterCarousel = ({
         opts={{
           align: 'start',
           loop: false,
+          slidesToScroll: 'auto',
         }}
         className="w-full"
       >
@@ -54,8 +56,12 @@ export const CategoryFilterCarousel = ({
             );
           })}
         </CarouselContent>
-        <CarouselPrevious variant="ghost" />
-        <CarouselNext variant="ghost" />
+        <CarouselPrevious variant="ghost">
+          <ChevronLeft className="h-4 w-4" />
+        </CarouselPrevious>
+        <CarouselNext variant="ghost">
+          <ChevronRight className="h-4 w-4" />
+        </CarouselNext>
       </Carousel>
     </div>
   );
