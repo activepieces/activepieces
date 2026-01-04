@@ -1,16 +1,24 @@
 import { PieceMetadataModel } from '@activepieces/pieces-framework'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { AnalyticsFlowReportItem, AnalyticsPieceReportItem, AnalyticsRunsUsageItem, apId, DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP, flowPieceUtil, FlowVersionState, isNil, PlatformAnalyticsReport, PlatformId, PopulatedFlow, RunEnvironment, spreadIfDefined, UpdatePlatformReportRequest, UserWithMetaInformation } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
+import { withStatementTimeout } from '../database/database-common'
 import { distributedLock } from '../database/redis-connections'
 import { flowService } from '../flows/flow/flow.service'
-import { flowRunRepo } from '../flows/flow-run/flow-run-service'
+import { FlowRunEntity } from '../flows/flow-run/flow-run-entity'
+import { system } from '../helper/system/system'
 import { pieceMetadataService } from '../pieces/metadata/piece-metadata-service'
 import { userRepo } from '../user/user-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
+
+const getAnalyticsTimeout = (): number => {
+    const statementTimeout = system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
+    return statementTimeout * 3
+}
 
 export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     refreshReport: async (platformId: PlatformId) => {
@@ -137,20 +145,27 @@ async function analyzeRuns(platformId: PlatformId, estimatedTimeSavedPerStep: nu
     if (isNil(estimatedTimeSavedPerStep)) {
         throw new Error('Estimated time saved per step is required')
     }
-    const runsData = await flowRunRepo()
-        .createQueryBuilder('flow_run')
-        .select('DATE(flow_run.created)', 'day')
-        .addSelect('COUNT(*)::int', 'totalRuns')
-        .addSelect('COALESCE(SUM(COALESCE(flow."timeSavedPerRun", flow_run."stepsCount" * :estimatedTimeSavedPerStep)), 0)::int', 'minutesSaved')
-        .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
-        .innerJoin('flow', 'flow', 'flow_run."flowId" = flow.id')
-        .where('project."platformId" = :platformId', { platformId })
-        .andWhere('flow_run.created >= now() - interval \'3 months\'')
-        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
-        .groupBy('DATE(flow_run.created)')
-        .orderBy('DATE(flow_run.created)', 'ASC')
-        .setParameters({ estimatedTimeSavedPerStep })
-        .getRawMany()
+
+    const runsData = await withStatementTimeout({
+        timeoutMs: getAnalyticsTimeout(),
+        fn: async (entityManager) => {
+            return entityManager
+                .createQueryBuilder(FlowRunEntity, 'flow_run')
+                .select('DATE(flow_run.created)', 'day')
+                .addSelect('COUNT(*)::int', 'totalRuns')
+                .addSelect('COALESCE(SUM(COALESCE(flow."timeSavedPerRun", flow_run."stepsCount" * :estimatedTimeSavedPerStep)), 0)::int', 'minutesSaved')
+                .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
+                .innerJoin('flow', 'flow', 'flow_run."flowId" = flow.id')
+                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('project.deleted IS NULL')
+                .andWhere('flow_run.created >= now() - interval \'3 months\'')
+                .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+                .groupBy('DATE(flow_run.created)')
+                .orderBy('DATE(flow_run.created)', 'ASC')
+                .setParameters({ estimatedTimeSavedPerStep })
+                .getRawMany()
+        },
+    })
     return runsData.map((row) => ({
         day: row.day,
         totalRuns: parseInt(row.totalRuns),
@@ -162,30 +177,35 @@ async function analyzeFlowsDetails(platformId: PlatformId, estimatedTimeSavedPer
     if (isNil(estimatedTimeSavedPerStep)) {
         throw new Error('Estimated time saved per step is required')
     }
-    const flowData = await flowRunRepo()
-        .createQueryBuilder('flow_run')
-        .select('flow.id', 'flowId')
-        .addSelect('flow.status', 'status')
-        .addSelect('flow."ownerId"', 'ownerId')
-        .addSelect('latest_version."displayName"', 'flowName')
-        .addSelect('project.id', 'projectId')
-        .addSelect('project."displayName"', 'projectName')
-        .addSelect('COUNT(*)::int', 'runs')
-        .addSelect('flow."timeSavedPerRun"', 'timeSavedPerRun')
-        .addSelect('COALESCE(SUM(COALESCE(flow."timeSavedPerRun", flow_run."stepsCount" * :estimatedTimeSavedPerStep)), 0)::int', 'minutesSaved')
-        .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
-        .innerJoin('flow', 'flow', 'flow_run."flowId" = flow.id')
-        .innerJoin('flow_version', 'latest_version', 'latest_version."flowId" = flow.id AND latest_version.id = (SELECT fv.id FROM flow_version fv WHERE fv."flowId" = flow.id ORDER BY fv.created DESC LIMIT 1)')
-        .where('project."platformId" = :platformId', { platformId })
-        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
-        .groupBy('flow.id')
-        .addGroupBy('latest_version."displayName"')
-        .addGroupBy('project.id')
-        .addGroupBy('project."displayName"')
-        .orderBy('COUNT(*)', 'DESC')
-        .setParameters({ estimatedTimeSavedPerStep })
-        .getRawMany()
 
+    const flowData = await withStatementTimeout({
+        timeoutMs: getAnalyticsTimeout(),
+        fn: async (entityManager) => {
+            return entityManager
+                .createQueryBuilder(FlowRunEntity, 'flow_run')
+                .select('flow.id', 'flowId')
+                .addSelect('flow.status', 'status')
+                .addSelect('flow."ownerId"', 'ownerId')
+                .addSelect('latest_version."displayName"', 'flowName')
+                .addSelect('project.id', 'projectId')
+                .addSelect('project."displayName"', 'projectName')
+                .addSelect('COUNT(*)::int', 'runs')
+                .addSelect('flow."timeSavedPerRun"', 'timeSavedPerRun')
+                .addSelect('COALESCE(SUM(COALESCE(flow."timeSavedPerRun", flow_run."stepsCount" * :estimatedTimeSavedPerStep)), 0)::int', 'minutesSaved')
+                .innerJoin('project', 'project', 'flow_run."projectId" = project.id')
+                .innerJoin('flow', 'flow', 'flow_run."flowId" = flow.id')
+                .innerJoin('flow_version', 'latest_version', 'latest_version."flowId" = flow.id AND latest_version.id = (SELECT fv.id FROM flow_version fv WHERE fv."flowId" = flow.id ORDER BY fv.created DESC LIMIT 1)')
+                .where('project."platformId" = :platformId', { platformId })
+                .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+                .groupBy('flow.id')
+                .addGroupBy('latest_version."displayName"')
+                .addGroupBy('project.id')
+                .addGroupBy('project."displayName"')
+                .orderBy('COUNT(*)', 'DESC')
+                .setParameters({ estimatedTimeSavedPerStep })
+                .getRawMany()
+        },
+    })
 
     return flowData.map((row) => ({
         flowId: row.flowId,
