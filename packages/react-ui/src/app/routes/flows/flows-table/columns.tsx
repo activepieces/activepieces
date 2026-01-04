@@ -81,21 +81,25 @@ export const flowsTableColumns = ({
   },
   {
     accessorKey: 'owner',
-    size: 150,
+    size: 100,
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
     ),
     cell: ({ row }) => {
-      return isNil(row.original.ownerId) ? (
-        <span className="text-muted-foreground">—</span>
-      ) : (
-        <ApAvatar
-          type="user"
-          id={row.original.ownerId}
-          size="small"
-          includeAvatar={true}
-          includeName={true}
-        />
+      return (
+        <div className="w-full flex justify-center">
+          {isNil(row.original.ownerId) ? (
+            <span className="text-muted-foreground">—</span>
+          ) : (
+            <ApAvatar
+              type="user"
+              id={row.original.ownerId}
+              size="small"
+              includeAvatar={true}
+              includeName={false}
+            />
+          )}
+        </div>
       );
     },
   },

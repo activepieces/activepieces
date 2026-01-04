@@ -44,20 +44,7 @@ export const FolderActions = ({
       className="flex items-center justify-center relative ml-auto"
     >
       {showFlowCount && (
-        <span
-          className={cn(
-            'text-muted-foreground text-xs! font-semibold! self-end transition-opacity duration-150',
-            buttonVariants({ size: 'icon', variant: 'ghost' }),
-            {
-              'opacity-100 group-hover/item:opacity-0':
-                hasOverlayBehavior && !isActionMenuOpen,
-              'opacity-0': hasOverlayBehavior && isActionMenuOpen,
-              'opacity-100': !hasOverlayBehavior,
-            },
-          )}
-        >
-          {folder.numberOfFlows}
-        </span>
+        <span></span>
       )}
 
       {showDropdown && (

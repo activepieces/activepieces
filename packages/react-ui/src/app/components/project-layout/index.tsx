@@ -1,5 +1,5 @@
 import { Compass, LineChart, Trophy } from 'lucide-react';
-import React, { ComponentType, SVGProps } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
@@ -14,12 +14,13 @@ import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
-import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
+import { ProjectDashboardPageHeader } from './project-dashboard-page-header';
+import { ProjectNavigation } from './project-navigation';
 
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
   label: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  icon: React.ElementType;
   hasPermission: boolean;
   show: boolean;
 };
@@ -45,7 +46,8 @@ export function ProjectDashboardLayout({
   const { t } = useTranslation();
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
-  const isEmbedded = useEmbedding().embedState.isEmbedded;
+  const { embedState } = useEmbedding();
+  const isEmbedded = embedState.isEmbedded;
   if (isNil(currentProjectId) || currentProjectId === '') {
     return <Navigate to="/sign-in" replace />;
   }
@@ -78,6 +80,16 @@ export function ProjectDashboardLayout({
     itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
     isPlatformPage;
 
+  // Pages that should show the navigation sidebar
+  const showNavigation =
+    !hideHeader &&
+    !embedState.hideFolders &&
+    (location.pathname.includes('/flows') ||
+      location.pathname.includes('/tables') ||
+      location.pathname.includes('/runs') ||
+      location.pathname.includes('/connections') ||
+      location.pathname.includes('/releases'));
+
   return (
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
       <SidebarProvider>
@@ -86,11 +98,14 @@ export function ProjectDashboardLayout({
           <div className="flex flex-col">
             {!hideHeader && (
               <>
-                <ProjectDashboardLayoutHeader />
+                <ProjectDashboardPageHeader />
                 <Separator className="mb-5" />
               </>
             )}
-            <div className="px-4"> {children} </div>
+            <div className="px-4 flex flex-row gap-8">
+              {showNavigation && <ProjectNavigation />}
+              <div className="flex-1 overflow-hidden">{children}</div>
+            </div>
           </div>
         </SidebarInset>
       </SidebarProvider>

@@ -1,31 +1,30 @@
-import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Folder, Shapes, TableProperties } from 'lucide-react';
-import { useEffect } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
+import {
+  Folder,
+  History,
+  Link2,
+  Package,
+  Table2,
+  Workflow,
+} from 'lucide-react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { useEmbedding } from '@/components/embed-provider';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TextWithIcon } from '@/components/ui/text-with-icon';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
+import { FolderActions } from '@/features/folders/component/folder-actions';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { platformHooks } from '@/hooks/platform-hooks';
+import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
-import {
-  FolderDto,
-  isNil,
-  Permission,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
-
-import { foldersHooks } from '../lib/folders-hooks';
-import { foldersUtils } from '../lib/folders-utils';
-
-import { CreateFolderDialog } from './create-folder-dialog';
-import { FolderActions } from './folder-actions';
+import { FolderDto, Permission } from '@activepieces/shared';
 
 const FolderIcon = () => {
   return <Folder className="w-4 h-4" />;
@@ -49,7 +48,7 @@ const FolderItem = ({
       <Button
         variant="ghost"
         className={cn(
-          'w-full  items-center justify-start group/item gap-2 pl-4 pr-0',
+          'w-full items-center justify-start group/item gap-2 pl-4 pr-0',
           {
             'bg-accent dark:bg-accent/50': selectedFolderId === folder.id,
           },
@@ -79,12 +78,64 @@ const FolderItem = ({
   );
 };
 
-const FolderFilterList = ({ refresh }: { refresh: number }) => {
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ElementType;
+  show: boolean;
+  hasPermission: boolean;
+};
+
+export const folderIdParamName = 'folderId';
+
+export const ProjectNavigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const { project } = projectHooks.useCurrentProject();
+  const { embedState } = useEmbedding();
   const userHasPermissionToUpdateFolders = checkAccess(Permission.WRITE_FOLDER);
   const [searchParams, setSearchParams] = useSearchParams(location.search);
   const selectedFolderId = searchParams.get(folderIdParamName);
+
+  const navItems: NavItem[] = [
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/flows'),
+      label: t('Flows'),
+      icon: Workflow,
+      show: true,
+      hasPermission: checkAccess(Permission.READ_FLOW),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/tables'),
+      label: t('Tables'),
+      icon: Table2,
+      show: platform.plan.tablesEnabled,
+      hasPermission: checkAccess(Permission.READ_TABLE),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/runs'),
+      label: t('Runs'),
+      icon: History,
+      show: true,
+      hasPermission: checkAccess(Permission.READ_RUN),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/connections'),
+      label: t('Connections'),
+      icon: Link2,
+      show: true,
+      hasPermission: checkAccess(Permission.READ_APP_CONNECTION),
+    },
+    {
+      to: authenticationSession.appendProjectRoutePrefix('/releases'),
+      label: t('Releases'),
+      icon: Package,
+      show: project.releasesEnabled,
+      hasPermission: checkAccess(Permission.READ_PROJECT_RELEASE),
+    },
+  ];
 
   const updateSearchParams = (folderId: string | undefined) => {
     const newQueryParameters: URLSearchParams = new URLSearchParams(
@@ -106,24 +157,53 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
     refetch: refetchFolders,
   } = foldersHooks.useFolders();
 
-  const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
-    queryKey: ['flowsCount', authenticationSession.getProjectId()],
-    queryFn: () =>
-      flowsApi.count({ projectId: authenticationSession.getProjectId()! }),
-  });
+  const isNavItemActive = (to: string) => {
+    return location.pathname.includes(to);
+  };
 
-  useEffect(() => {
-    refetchFolders();
-    refetchAllFlowsCount();
-  }, [refresh]);
-
-  const isInUncategorized = selectedFolderId === UncategorizedFolderId;
-  const isInAllFlows = isNil(selectedFolderId);
+  if (embedState.hideFolders) {
+    return null;
+  }
 
   return (
-    <div className="mt-4">
+    <div className="w-[250px] shrink-0">
+  
+      <div className="flex flex-col gap-y-1 mb-4">
+        {navItems
+          .filter((item) => item.show && item.hasPermission)
+          .map((item) => (
+            <Button
+              key={item.to}
+              variant="ghost"
+              className={cn('flex w-full justify-start pl-4 pr-0', {
+                'bg-accent dark:bg-accent/50': isNavItemActive(item.to),
+              })}
+              onClick={() => navigate(item.to)}
+            >
+              <TextWithIcon
+                icon={<item.icon className="w-4 h-4" />}
+                text={
+                  <div
+                    className={cn(
+                      'grow whitespace-break-spaces break-all text-start truncate',
+                      {
+                        'font-medium': isNavItemActive(item.to),
+                      },
+                    )}
+                  >
+                    {item.label}
+                  </div>
+                }
+              />
+            </Button>
+          ))}
+      </div>
+
+      <Separator className="mb-4" />
+
+      {/* Folders Section */}
       <div className="flex flex-row items-center mb-2">
-        <span className="flex">{t('Folders')}</span>
+        <span className="flex text-sm font-medium">{t('Folders')}</span>
         <div className="grow"></div>
         <div className="flex items-center justify-center">
           <PermissionNeededTooltip
@@ -136,52 +216,7 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
           </PermissionNeededTooltip>
         </div>
       </div>
-      <div className="flex w-[250px] h-full flex-col gap-y-1">
-        <Button
-          variant="accent"
-          className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
-            'bg-muted': isInAllFlows,
-          })}
-          onClick={() => updateSearchParams(undefined)}
-        >
-          <TextWithIcon
-            icon={<TableProperties className="w-4 h-4"></TableProperties>}
-            text={
-              <div className="grow whitespace-break-spaces break-all text-start truncate">
-                {t('All flows')}
-              </div>
-            }
-          />
-          <div className="grow"></div>
-          <div className="flex flex-row -space-x-4">
-            <span className="size-9 flex items-center justify-center text-muted-foreground">
-              {allFlowsCount}
-            </span>
-          </div>
-        </Button>
-        <Button
-          variant="ghost"
-          className={cn('flex w-full justify-start bg-background pl-4 pr-0', {
-            'bg-accent dark:bg-accent/50': isInUncategorized,
-          })}
-          onClick={() => updateSearchParams(UncategorizedFolderId)}
-        >
-          <TextWithIcon
-            icon={<Shapes className="w-4 h-4"></Shapes>}
-            text={
-              <div className="grow whitespace-break-spaces break-all text-start truncate">
-                {t('Uncategorized')}
-              </div>
-            }
-          />
-          <div className="grow"></div>
-          <div className="flex flex-row -space-x-4">
-            <span className="size-9 flex items-center justify-center text-muted-foreground">
-              {foldersUtils.extractUncategorizedFlows(allFlowsCount, folders)}
-            </span>
-          </div>
-        </Button>
-        <Separator />
+      <div className="flex h-full flex-col gap-y-1">
         <ScrollArea type="auto">
           <div className="flex flex-col w-full gap-y-1 max-h-[590px]">
             {isLoading && (
@@ -210,5 +245,3 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
   );
 };
 
-const folderIdParamName = 'folderId';
-export { FolderFilterList, folderIdParamName };

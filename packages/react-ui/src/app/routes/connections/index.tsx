@@ -270,23 +270,23 @@ function AppConnectionsPage() {
     },
     {
       accessorKey: 'owner',
-      size: 180,
+      size: 120,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
       ),
       cell: ({ row }) => {
         return (
-          <div className="text-left">
+          <div className="w-full flex justify-center">
             {row.original.owner && (
               <ApAvatar
                 type="user"
                 id={row.original.owner.id}
                 includeAvatar={true}
-                includeName={true}
+                includeName={false}
                 size="small"
               />
             )}
-            {!row.original.owner && <div className="text-left">-</div>}
+            {!row.original.owner && <span className="text-muted-foreground">—</span>}
           </div>
         );
       },

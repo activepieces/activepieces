@@ -4,15 +4,11 @@ import { CheckIcon, Link2, Workflow } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
+import { folderIdParamName } from '@/app/components/project-layout/project-navigation';
 import { DataTable, DataTableFilters } from '@/components/ui/data-table';
 import { appConnectionsQueries } from '@/features/connections/lib/app-connections-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useFlowsBulkActions } from '@/features/flows/lib/use-flows-bulk-actions';
-import {
-  FolderFilterList,
-  folderIdParamName,
-} from '@/features/folders/component/folder-filter-list';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
@@ -30,7 +26,6 @@ type FlowsTableProps = {
 };
 
 export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
-  const { embedState } = useEmbedding();
   const openNewWindow = useNewWindow();
   const [searchParams] = useSearchParams();
   const projectId = authenticationSession.getProjectId()!;
@@ -136,39 +131,32 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
   });
 
   return (
-    <div className="flex flex-row gap-8">
-      {!embedState.hideFolders && (
-        <FolderFilterList key="folder-filter" refresh={refresh} />
-      )}
-      <div className="overflow-hidden w-full ">
-        <DataTable
-          emptyStateTextTitle={t('No flows found')}
-          emptyStateTextDescription={t('Create a workflow to start automating')}
-          emptyStateIcon={<Workflow className="size-14" />}
-          columns={columns}
-          page={data}
-          isLoading={isLoading || isLoadingConnections}
-          filters={filters}
-          selectColumn={true}
-          onSelectedRowsChange={setSelectedRows}
-          bulkActions={bulkActions}
-          onRowClick={(row, newWindow) => {
-            if (newWindow) {
-              openNewWindow(
-                authenticationSession.appendProjectRoutePrefix(
-                  `/flows/${row.id}`,
-                ),
-              );
-            } else {
-              navigate(
-                authenticationSession.appendProjectRoutePrefix(
-                  `/flows/${row.id}`,
-                ),
-              );
-            }
-          }}
-        />
-      </div>
-    </div>
+    <DataTable
+      emptyStateTextTitle={t('No flows found')}
+      emptyStateTextDescription={t('Create a workflow to start automating')}
+      emptyStateIcon={<Workflow className="size-14" />}
+      columns={columns}
+      page={data}
+      isLoading={isLoading || isLoadingConnections}
+      filters={filters}
+      selectColumn={true}
+      onSelectedRowsChange={setSelectedRows}
+      bulkActions={bulkActions}
+      onRowClick={(row, newWindow) => {
+        if (newWindow) {
+          openNewWindow(
+            authenticationSession.appendProjectRoutePrefix(
+              `/flows/${row.id}`,
+            ),
+          );
+        } else {
+          navigate(
+            authenticationSession.appendProjectRoutePrefix(
+              `/flows/${row.id}`,
+            ),
+          );
+        }
+      }}
+    />
   );
 };

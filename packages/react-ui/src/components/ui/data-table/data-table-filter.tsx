@@ -156,12 +156,6 @@ export function DataTableFilter<TData, TValue>({
           },
           { replace: true },
         );
-
-        column?.setFilterValue(
-          checked
-            ? (row: any) => row.getValue('archivedAt') !== null
-            : undefined,
-        );
       };
 
       return (
