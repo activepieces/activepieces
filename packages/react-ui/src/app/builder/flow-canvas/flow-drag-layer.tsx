@@ -24,6 +24,8 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
+import NoteCreationOverlay from './note-creation-overlay';
+import { useNotesContext } from './notes-context';
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const viewport = useViewport();
@@ -127,7 +129,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       }
     }
   };
-
+  const { showOverlay } = useNotesContext()
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -150,6 +152,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       </DndContext>
 
       {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
+      {showOverlay && <NoteCreationOverlay />}
     </>
   );
 };

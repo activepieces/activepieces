@@ -6,6 +6,7 @@ import { ApStraightLineCanvasEdge } from '../edges/straight-line-edge';
 import { ApBigAddButtonCanvasNode } from '../nodes/big-add-button-node';
 import ApGraphEndWidgetNode from '../nodes/flow-end-widget-node';
 import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
+import ApNoteCanvasNode from '../nodes/note-node';
 import { ApStepCanvasNode } from '../nodes/step-node';
 
 import { ApEdgeType, ApNodeType } from './types';
@@ -26,13 +27,15 @@ const LABEL_HEIGHT = 30;
 const LABEL_VERTICAL_PADDING = 12;
 const STEP_DRAG_OVERLAY_WIDTH = 75;
 const STEP_DRAG_OVERLAY_HEIGHT = 75;
+const NOTE_CREATION_OVERLAY_WIDTH = 200;
+const NOTE_CREATION_OVERLAY_HEIGHT = 250;
 const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
   VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
 const LINE_WIDTH = 1.5;
 const DRAGGED_STEP_TAG = 'dragged-step';
 const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
 const AP_NODE_SIZE: Record<
-  Exclude<ApNodeType, ApNodeType.GRAPH_START_WIDGET>,
+  Exclude<ApNodeType, ApNodeType.GRAPH_START_WIDGET | ApNodeType.NOTE>,
   { height: number; width: number }
 > = {
   [ApNodeType.BIG_ADD_BUTTON]: {
@@ -55,6 +58,7 @@ const AP_NODE_SIZE: Record<
     height: 0,
     width: 0,
   },
+
 };
 
 const doesNodeAffectBoundingBoxWidth: (
@@ -95,6 +99,7 @@ export const flowUtilConsts = {
     [ApNodeType.LOOP_RETURN_NODE]: ApLoopReturnCanvasNode,
     [ApNodeType.BIG_ADD_BUTTON]: ApBigAddButtonCanvasNode,
     [ApNodeType.GRAPH_END_WIDGET]: ApGraphEndWidgetNode,
+    [ApNodeType.NOTE]: ApNoteCanvasNode,
   },
   DRAGGED_STEP_TAG,
   HORIZONTAL_SPACE_BETWEEN_NODES,
@@ -102,6 +107,8 @@ export const flowUtilConsts = {
   LABEL_VERTICAL_PADDING,
   STEP_DRAG_OVERLAY_WIDTH,
   STEP_DRAG_OVERLAY_HEIGHT,
+  NOTE_CREATION_OVERLAY_WIDTH,
+  NOTE_CREATION_OVERLAY_HEIGHT,
 };
 
 export const STEP_CONTEXT_MENU_ATTRIBUTE = 'step-context-menu';

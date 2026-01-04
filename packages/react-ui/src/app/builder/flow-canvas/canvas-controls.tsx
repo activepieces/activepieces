@@ -1,6 +1,6 @@
 import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Fullscreen, Hand, Map, Minus, MousePointer, Plus } from 'lucide-react';
+import { Fullscreen, Hand, Map, Minus, MousePointer, NotebookPen, Plus } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
+import { useNotesContext } from './notes-context';
 const verticalPaddingOnFitView = 100;
 // Calculate the node's position in relation to the canvas
 const calculateNodePositionInCanvas = (
@@ -159,7 +160,7 @@ const CanvasControls = ({
       });
     }
   };
-
+  const { setShowOverlay, showOverlay } = useNotesContext();
   const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
     useBuilderStateContext((state) => {
       return [
@@ -233,6 +234,17 @@ const CanvasControls = ({
             onClick={() => setPanningMode('pan')}
           >
             <MousePointer className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Add note')}>
+        <Button
+            variant={showOverlay ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setShowOverlay(!showOverlay);
+            }}
+          >
+            <NotebookPen className="size-4" />
           </Button>
         </CanvasButtonWrapper>
       </div>

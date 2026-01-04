@@ -14,6 +14,7 @@ export enum ApNodeType {
   GRAPH_START_WIDGET = 'GRAPH_START_WIDGET',
   /**Used for calculating the loop graph width */
   LOOP_RETURN_NODE = 'LOOP_RETURN_NODE',
+  NOTE = 'NOTE',
 }
 export type ApBoundingBox = {
   width: number;
@@ -35,6 +36,24 @@ export type ApStepNode = {
   selectable?: boolean;
   style?: React.CSSProperties;
   draggable?: boolean;
+};
+
+export type ApNoteNode = {
+  id: string;
+  type: ApNodeType.NOTE;
+  position: {
+    x: number;
+    y: number;
+  };
+  data: {
+    content: string;
+    creator: string;
+    color: string;
+    size: {
+      width: number;
+      height: number;
+    };
+  };
 };
 
 export type ApLoopReturnNode = {
@@ -93,7 +112,8 @@ export type ApNode =
   | ApStepNode
   | ApGraphEndNode
   | ApBigAddButtonNode
-  | ApLoopReturnNode;
+  | ApLoopReturnNode
+  | ApNoteNode;
 
 export enum ApEdgeType {
   STRAIGHT_LINE = 'ApStraightLineEdge',

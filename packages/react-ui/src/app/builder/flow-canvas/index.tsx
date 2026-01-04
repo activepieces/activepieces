@@ -9,6 +9,7 @@ import {
   BackgroundVariant,
   getNodesBounds,
   CoordinateExtent,
+  ReactFlowInstance,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -46,6 +47,8 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
+import { Note, useNotesContext } from './notes-context';
+import { ApEdge, ApNode, ApNodeType } from './utils/types';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -67,8 +70,8 @@ const getChildrenKey = (step: Step) => {
       return '';
   }
 };
-const createGraphKey = (flowVersion: FlowVersion) => {
-  return flowStructureUtil
+const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
+  const flowGraphKey = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .reduce((acc, step) => {
       const branchesNames =
@@ -82,6 +85,8 @@ const createGraphKey = (flowVersion: FlowVersion) => {
         step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
       }-${branchesNames}-${childrenKey}}`;
     }, '');
+  const notesGraphKey = notes.map((note) => `${note.id}-${note.content}-${note.creator}-${note.color}-${note.size.width}-${note.size.height}-${note.position.x}-${note.position.y}`).join('-');
+  return `${flowGraphKey}-${notesGraphKey}`;
 };
 
 export const FlowCanvas = React.memo(
@@ -127,9 +132,10 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
-    const graphKey = createGraphKey(flowVersion);
+    const { notes,moveNote } = useNotesContext();
+    const graphKey = createGraphKey(flowVersion,notes);
     const graph = useMemo(() => {
-      return flowCanvasUtils.convertFlowVersionToGraph(flowVersion);
+      return flowCanvasUtils.createFlowGraph(flowVersion, notes);
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
       ContextMenuType.CANVAS,
@@ -230,7 +236,7 @@ export const FlowCanvas = React.memo(
       ];
       return extent;
     }, [graphKey]);
-    console.log('canvas');
+    const reactFlowRef = useRef<ReactFlowInstance<ApNode, ApEdge> | null>(null);
     return (
       <div
         ref={containerRef}
@@ -243,6 +249,9 @@ export const FlowCanvas = React.memo(
         <FlowDragLayer>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
+            onInit={(instance)=>{
+              reactFlowRef.current = instance;
+            }}
               className="bg-builder-background"
               onContextMenu={onContextMenu}
               onPaneClick={() => {
@@ -267,6 +276,15 @@ export const FlowCanvas = React.memo(
               elementsSelectable={true}
               nodesDraggable={false}
               nodesFocusable={false}
+              onNodeDrag={(ev,node)=>{
+                if(node.type === ApNodeType.NOTE){
+                  console.log('moved')
+                  const positionOnCanvas = reactFlowRef.current?.screenToFlowPosition({x: ev.clientX, y: ev.clientY});
+                  if(positionOnCanvas){
+                    moveNote(node.id, positionOnCanvas);
+                  }
+                }
+              }}
               selectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               multiSelectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               selectionOnDrag={inGrabPanningMode ? false : true}
@@ -287,6 +305,7 @@ export const FlowCanvas = React.memo(
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>
+       
       </div>
     );
   },

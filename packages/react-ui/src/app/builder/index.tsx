@@ -45,6 +45,7 @@ import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
+import { NotesProvider } from './flow-canvas/notes-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
@@ -139,6 +140,7 @@ const BuilderPage = () => {
       </div>
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
+          <NotesProvider>
           <div ref={middlePanelRef} className="relative h-full w-full">
             <CursorPositionProvider>
               <FlowCanvas
@@ -168,6 +170,8 @@ const BuilderPage = () => {
               parentWidth={middlePanelSize.width}
             ></DataSelector>
           </div>
+          </NotesProvider>
+          
         </ResizablePanel>
 
         <ResizableHandle
