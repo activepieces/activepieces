@@ -22,10 +22,16 @@ import { flagsHooks } from '../../../hooks/flags-hooks';
 import { SignInForm } from './sign-in-form';
 import { SignUpForm } from './sign-up-form';
 import { ThirdPartyLogin } from './third-party-logins';
+import { useEmbedding } from '@/components/embed-provider';
 
 const BottomNote = ({ isSignup }: { isSignup: boolean }) => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.toString();
+  const { embedState } = useEmbedding();
+
+  if (!isSignup && embedState.isEmbedded && embedState.hideSignUpPage) {
+    return null;
+  }
 
   return isSignup ? (
     <div className="mb-4 text-center text-sm">

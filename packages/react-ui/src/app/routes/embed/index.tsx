@@ -157,6 +157,7 @@ const EmbedPage = React.memo(() => {
                   hideFlowsPageNavbar:
                     event.data.data.hideFlowsPageNavbar ?? false,
                   hidePageHeader: event.data.data.hidePageHeader ?? false,
+                  hideSignUpPage: true,
                 });
               });
               memoryRouter.navigate(initialRoute);
