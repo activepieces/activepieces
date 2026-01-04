@@ -12,11 +12,7 @@ type FlowCardProps = {
 
 export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
   return (
-    <Card
-      onClick={onClick}
-      variant={'interactive'}
-      isSelected={isSelected}
-    >
+    <Card onClick={onClick} variant={'interactive'} isSelected={isSelected}>
       <CardContent className="p-4 flex items-center gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
