@@ -50,9 +50,12 @@ const TemplateDetailsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { data: template, isLoading } = templatesHooks.useTemplate(templateId ?? '', {
-    type: TemplateType.OFFICIAL,
-  });
+  const { data: template, isLoading } = templatesHooks.useTemplate(
+    templateId ?? '',
+    {
+      type: TemplateType.OFFICIAL,
+    },
+  );
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
