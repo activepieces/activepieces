@@ -287,7 +287,7 @@ const TemplateDetailsPage = () => {
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <div className="flex flex-col gap-2">
                       <span className="text-muted-foreground text-xs">
-                        {t('Created')}
+                        {t('Published')}
                       </span>
                       <span className="font-medium">
                         {formatUtils.formatDate(new Date(template.created))}

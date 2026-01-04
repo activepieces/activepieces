@@ -30,7 +30,7 @@ const CarouselContentWithButtons = ({
 
   return (
     <div
-      className="relative my-4 transition-[padding] duration-200"
+      className="relative my-4 transition-[padding] duration-200 py-3 border-b border-t"
       style={{
         paddingLeft: canScrollPrev ? '3rem' : '0',
         paddingRight: canScrollNext ? '3rem' : '0',
