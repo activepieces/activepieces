@@ -45,6 +45,7 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
+import { useCursorPosition } from './cursor-position-context';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -209,8 +210,8 @@ export const FlowCanvas = React.memo(
         .getState()
         .addSelectedNodes(selectedSteps.map((step) => step.name));
     }, [selectedNodes, storeApi, selectedStep]);
-    const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
 
+    const { setCursorPosition } = useCursorPosition();
     const translateExtent = useMemo(() => {
       const nodes = graph.nodes;
       const graphRectangle = getNodesBounds(nodes);
@@ -229,13 +230,17 @@ export const FlowCanvas = React.memo(
       ];
       return extent;
     }, [graphKey]);
-
+    console.log('canvas')
     return (
       <div
         ref={containerRef}
         className="size-full relative overflow-hidden z-30 bg-builder-background"
+        onMouseMove={(event) => {
+          const cursorPosition = { x: event.clientX, y: event.clientY };
+          setCursorPosition(cursorPosition);
+        }}
       >
-        <FlowDragLayer cursorPosition={cursorPosition}>
+        <FlowDragLayer>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               className="bg-builder-background"
@@ -262,9 +267,6 @@ export const FlowCanvas = React.memo(
               elementsSelectable={true}
               nodesDraggable={false}
               nodesFocusable={false}
-              onNodeDrag={(event) => {
-                setCursorPosition({ x: event.clientX, y: event.clientY });
-              }}
               selectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               multiSelectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               selectionOnDrag={inGrabPanningMode ? false : true}

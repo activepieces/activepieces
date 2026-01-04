@@ -44,6 +44,7 @@ import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
+import { CursorPositionProvider } from './flow-canvas/cursor-position-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
@@ -139,9 +140,12 @@ const BuilderPage = () => {
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-            <FlowCanvas
+          <CursorPositionProvider>
+          <FlowCanvas
               setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
             ></FlowCanvas>
+          </CursorPositionProvider>
+
             <PublishFlowReminderWidget />
             <RunInfoWidget />
             <ViewingOldVersionWidget />
