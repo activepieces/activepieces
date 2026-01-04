@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   User,
   Calendar,
-  Users,
   ArrowRight,
   Link,
   ExternalLink,
@@ -50,14 +49,10 @@ const TemplateDetailsPage = () => {
   const token = authenticationSession.getToken();
   const location = useLocation();
   const navigate = useNavigate();
-  if (!templateId) {
-    return <Navigate to="/templates" replace />;
-  }
 
-  const { data: template, isLoading } = templatesHooks.useTemplate(templateId, {
+  const { data: template, isLoading } = templatesHooks.useTemplate(templateId ?? '', {
     type: TemplateType.OFFICIAL,
   });
-  console.log('template', template);
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -117,6 +112,10 @@ const TemplateDetailsPage = () => {
     }, 50);
     return () => clearTimeout(timer);
   }, [selectedFlowIndex]);
+
+  if (!templateId) {
+    return <Navigate to="/templates" replace />;
+  }
 
   if (isNil(token)) {
     return (
