@@ -16,8 +16,6 @@ import {
   Settings2,
   FileHeart,
   MousePointerClick,
-  Rocket,
-  Sparkle,
   Sparkles,
 } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
@@ -40,7 +38,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { onboardingHooks } from '@/hooks/onboarding-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { OnboardingStep, PlatformOnboarding } from '@activepieces/ee-shared';
+import { OnboardingStep } from '@activepieces/ee-shared';
 import {
   ApEdition,
   ApFlagId,
