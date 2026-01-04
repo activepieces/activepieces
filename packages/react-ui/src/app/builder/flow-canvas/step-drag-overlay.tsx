@@ -1,20 +1,21 @@
 import { t } from 'i18next';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
-import { useCursorPosition } from './cursor-position-context';
+import {
+  useCursorPosition,
+  useCursorPositionEffect,
+} from './cursor-position-context';
 import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
 
 const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { open } = useSidebar();
   const { cursorPosition } = useCursorPosition();
-  const [overlayPosition, setOverlayPosition] = useState<{
-    x: number;
-    y: number;
-  }>(cursorPosition);
+  const [overlayPosition, setOverlayPosition] =
+    useState<typeof cursorPosition>(cursorPosition);
   const builderNavigationBar = document.getElementById(
     BUILDER_NAVIGATION_SIDEBAR_ID,
   );
@@ -32,15 +33,9 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      setOverlayPosition({ x: event.clientX, y: event.clientY });
-    };
-    window.addEventListener('pointermove', handleMouseMove);
-    return () => {
-      window.removeEventListener('pointermove', handleMouseMove);
-    };
-  }, []);
+  useCursorPositionEffect((position) => {
+    setOverlayPosition(position);
+  });
   return (
     <div
       className={
