@@ -1,19 +1,21 @@
 import { t } from 'i18next';
+import { useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
+import {
+  useCursorPosition,
+  useCursorPositionEffect,
+} from './cursor-position-context';
 import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
 
-const StepDragOverlay = ({
-  step,
-  cursorPosition,
-}: {
-  step: FlowAction | FlowTrigger;
-  cursorPosition: { x: number; y: number };
-}) => {
+const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { open } = useSidebar();
+  const { cursorPosition } = useCursorPosition();
+  const [overlayPosition, setOverlayPosition] =
+    useState<typeof cursorPosition>(cursorPosition);
   const builderNavigationBar = document.getElementById(
     BUILDER_NAVIGATION_SIDEBAR_ID,
   );
@@ -21,17 +23,19 @@ const StepDragOverlay = ({
     ? builderNavigationBar?.clientWidth ?? 0
     : 0;
   const left = `${
-    cursorPosition.x -
+    overlayPosition.x -
     flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
     builderNavigationBarWidth
   }px`;
   const top = `${
-    cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
+    overlayPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
   }px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
-
+  useCursorPositionEffect((position) => {
+    setOverlayPosition(position);
+  });
   return (
     <div
       className={
