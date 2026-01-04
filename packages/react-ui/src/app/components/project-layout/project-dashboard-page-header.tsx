@@ -32,11 +32,9 @@ import { ProjectSettingsDialog } from '../project-settings';
 export const ProjectDashboardPageHeader = ({
   children,
   description,
-  showPrivateProjectBadge = false,
 }: {
   children?: React.ReactNode;
   description?: React.ReactNode;
-  showPrivateProjectBadge?: boolean;
 }) => {
   const { project } = projectHooks.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
