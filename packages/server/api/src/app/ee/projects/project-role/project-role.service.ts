@@ -1,6 +1,9 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import { ActivepiecesError, apId, ApId, CreateProjectRoleRequestBody, ErrorCode, isNil, PlatformId, ProjectRole, RoleType, SeekPage, spreadIfDefined } from '@activepieces/shared'
 import { Brackets, Equal } from 'typeorm'
 import { repoFactory } from '../../../core/db/repo-factory'
+import { system } from '../../../helper/system/system'
+import { onboardingService } from '../../platform/onboarding/onboarding.service'
 import { ProjectMemberEntity } from '../project-members/project-member.entity'
 import { ProjectRoleEntity } from './project-role.entity'
 
@@ -79,11 +82,13 @@ export const projectRoleService = {
             })
         }
 
-        return projectRoleRepo().save({
+        const role = await projectRoleRepo().save({
             id: apId(),
             platformId,
             ...params,
         })
+        await onboardingService(system.globalLogger()).completeStep(platformId, OnboardingStep.MANAGED_ROLES)
+        return role
     },
 
     async update(params: UpdateParams): Promise<ProjectRole> {

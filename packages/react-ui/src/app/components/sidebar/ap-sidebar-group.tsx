@@ -52,7 +52,7 @@ export function ApSidebareGroup(item: SidebarGroupType) {
           <SidebarMenuSub>
             {item.items.map(
               (link, index) =>
-                link.show && (
+                !link.hide && (
                   <SidebarMenuSubItem key={link.label}>
                     <SidebarMenuButton asChild>
                       <ApSidebarItem

@@ -16,6 +16,7 @@ import {
   Settings2,
   FileHeart,
   MousePointerClick,
+  Sparkles,
 } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -36,9 +37,15 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
+import { OnboardingProgressCircle } from '../progress-circle';
 import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
@@ -51,13 +58,27 @@ export function PlatformSidebar() {
 
   const groups: {
     label: string;
+    hidden?: boolean;
     items: {
       to: string;
       label: string;
       icon?: ComponentType<SVGProps<SVGSVGElement>>;
       locked?: boolean;
+      suffix?: React.ReactNode;
     }[];
   }[] = [
+    {
+      label: t(''),
+      hidden: !isNil(platform.plan.licenseKey),
+      items: [
+        {
+          to: '/platform/setup/onboarding',
+          label: t('Getting Started'),
+          icon: Sparkles,
+          suffix: <OnboardingProgressCircle />,
+        },
+      ],
+    },
     {
       label: t('General'),
       items: [
@@ -200,26 +221,32 @@ export function PlatformSidebar() {
       </SidebarHeader>
       <ScrollArea className="h-full">
         <SidebarContent>
-          {groups.map((group, idx) => (
-            <SidebarGroup
-              key={group.label}
-              className={cn('px-0 pt-4 list-none gap-2', {
-                'border-t border-gray-300 ': idx > 0,
-              })}
-            >
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-              {group.items.map((item) => (
-                <ApSidebarItem
-                  type="link"
-                  key={item.label}
-                  to={item.to}
-                  label={item.label}
-                  icon={item.icon}
-                  locked={item.locked}
-                />
-              ))}
-            </SidebarGroup>
-          ))}
+          {groups
+            .filter((g) => !g.hidden)
+            .map((group, idx) => (
+              <SidebarGroup
+                key={group.label}
+                className={cn('px-0 pt-4 list-none gap-2', {
+                  'border-t border-gray-300 ': idx > 0,
+                })}
+              >
+                {group.label && (
+                  <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                )}
+
+                {group.items.map((item) => (
+                  <ApSidebarItem
+                    type="link"
+                    key={item.label}
+                    to={item.to}
+                    label={item.label}
+                    icon={item.icon}
+                    locked={item.locked}
+                    suffix={item.suffix}
+                  />
+                ))}
+              </SidebarGroup>
+            ))}
         </SidebarContent>
       </ScrollArea>
 

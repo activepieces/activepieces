@@ -1,3 +1,4 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import { PieceMetadata, PieceMetadataModel, PieceMetadataModelSummary, PiecePackageInformation, pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, filePiecesUtils } from '@activepieces/server-shared'
 import {
@@ -28,6 +29,7 @@ import semVer from 'semver'
 import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
+import { onboardingService } from '../../ee/platform/onboarding/onboarding.service'
 import { system } from '../../helper/system/system'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './local-piece-cache'
@@ -65,6 +67,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 pieces: translatedPieces,
                 suggestionType: params.suggestionType,
             })
+
+
+            if (!isNil(params.platformId)) {
+                await onboardingService(log).completeStep(params.platformId, OnboardingStep.MANAGED_PIECES)
+            }
 
             return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },

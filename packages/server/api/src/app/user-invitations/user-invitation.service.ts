@@ -1,3 +1,4 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import { ActivepiecesError, apId, assertEqual, assertNotNullOrUndefined, ErrorCode, InvitationStatus, InvitationType, isNil, Platform, PlatformRole, SeekPage, spreadIfDefined, User, UserInvitation, UserInvitationWithLink } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { IsNull } from 'typeorm'
@@ -6,6 +7,7 @@ import { repoFactory } from '../core/db/repo-factory'
 import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { smtpEmailSender } from '../ee/helper/email/email-sender/smtp-email-sender'
 import { emailService } from '../ee/helper/email/email-service'
+import { onboardingService } from '../ee/platform/onboarding/onboarding.service'
 import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { projectRoleService } from '../ee/projects/project-role/project-role.service'
 import { jwtUtils } from '../helper/jwt-utils'
@@ -123,6 +125,7 @@ export const userInvitationsService = (log: FastifyBaseLogger) => ({
             })
             return userInvitation
         }
+        await onboardingService(log).completeStep(platformId, OnboardingStep.INVITED_USERS)
         return enrichWithInvitationLink(platform, userInvitation, invitationExpirySeconds, log)
     },
     async list(params: ListUserParams): Promise<SeekPage<UserInvitation>> {
