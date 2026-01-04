@@ -4,9 +4,7 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { InputWithIcon } from '@/components/custom/input-with-icon';
-import { userHooks } from '@/hooks/user-hooks';
 import {
-  PlatformRole,
   Template,
   TemplateType,
   TemplateCategory,
@@ -27,8 +25,6 @@ const TemplatesPage = () => {
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(TemplateType.OFFICIAL);
   const selectedCategory = category as TemplateCategory | 'All';
-  const { data: user } = userHooks.useCurrentUser();
-  const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(event.target.value);
@@ -78,7 +74,7 @@ const TemplatesPage = () => {
   return (
     <div>
       <div>
-        <div className="sticky top-0 z-10 bg-background mb-6 pb-1 pt-4">
+        <div className="sticky top-0 z-100 bg-background mb-6 pb-1 pt-4">
           <InputWithIcon
             icon={<Search className="w-4 h-4" />}
             type="text"
@@ -104,10 +100,7 @@ const TemplatesPage = () => {
         ) : (
           <>
             {templates?.length === 0 && (
-              <EmptyTemplatesView
-                search={search}
-                isPlatformAdmin={isPlatformAdmin}
-              />
+              <EmptyTemplatesView />
             )}
 
             {templates && templates.length > 0 && (

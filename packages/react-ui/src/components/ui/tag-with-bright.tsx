@@ -49,15 +49,15 @@ export const TagWithBright = ({
           }}
         />
         {index === 0 && (
-          <LineChart className="relative z-10 font-medium mr-1.5 w-3.5 h-3.5" />
+          <LineChart className="relative font-medium mr-1.5 w-3.5 h-3.5" />
         )}
         {index === 1 && (
-          <Clock className="relative z-10 font-medium mr-1.5 w-3.5 h-3.5" />
+          <Clock className="relative font-medium mr-1.5 w-3.5 h-3.5" />
         )}
         {prefix && (
-          <span className="relative z-10 font-medium mr-1">{prefix}</span>
+          <span className="relative font-medium mr-1">{prefix}</span>
         )}
-        <span className="relative z-10 font-bold">{title}</span>
+        <span className="relative font-bold">{title}</span>
       </Badge>
     </>
   );

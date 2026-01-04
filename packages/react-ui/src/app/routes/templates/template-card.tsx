@@ -25,24 +25,27 @@ export const ExploreTemplateCard = ({
     <Card
       onClick={() => onTemplateSelect(template)}
       variant={'interactive'}
-      className="h-full w-[320px] flex flex-col"
+      className="h-full w-[330px] flex flex-col"
     >
-      <CardContent className="pt-5 pb-2 px-4 flex flex-col gap-3 flex-1">
-        <h3 className="font-semibold text-lg leading-tight line-clamp-2">
-          {template.name}
-        </h3>
+      <CardContent className="py-5 px-4 flex flex-col gap-1 flex-1">
+        <div className="h-14 flex flex-col justify-start">
+          <h3 className="font-semibold text-lg leading-tight line-clamp-2">
+            {template.name}
+          </h3>
+        </div>
 
-        <p className="text-muted-foreground text-sm line-clamp-3 h-[4rem]">
+        <p className="text-muted-foreground text-sm line-clamp-3 mt-1">
           {template.summary}
         </p>
 
-        <div className="h-8 flex gap-2 flex-wrap overflow-hidden">
+        <div className="h-8 flex gap-2 flex-wrap overflow-hidden mt-1">
           {displayTags.length > 0 ? (
             displayTags
               .slice(0, 1)
               .map((tag, index) => (
                 <TagWithBright
                   key={index}
+                  index={index}
                   prefix={t('Save')}
                   title={tag.title}
                   color={tag.color}
