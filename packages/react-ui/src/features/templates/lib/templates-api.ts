@@ -5,11 +5,12 @@ import {
   Template,
   SeekPage,
   UpdateTemplateRequestBody,
+  GetFlowTemplateRequestQuery,
 } from '@activepieces/shared';
 
 export const templatesApi = {
-  getTemplate(templateId: string) {
-    return api.get<Template>(`/v1/templates/${templateId}`);
+  getTemplate(templateId: string, request?: GetFlowTemplateRequestQuery) {
+    return api.get<Template>(`/v1/templates/${templateId}`, request);
   },
   create(request: CreateTemplateRequestBody) {
     return api.post<Template>(`/v1/templates`, request);
