@@ -35,7 +35,7 @@ export const createDocumentBasedOnTemplate = createAction({
       options: {
           disabled: false,
           options: [
-              { label: 'Curly Braces {{}}', value: '{{KEY}}' },
+              { label: 'Curly Braces {{}}', value: 'curly_braces' },
               { label: 'Square Brackets [[]]', value: '[[KEY]]' },
               { label: 'Single Curly Braces {}', value: '{KEY}' },
               { label: 'Single Square Brackets []', value: '[KEY]' }
@@ -46,7 +46,10 @@ export const createDocumentBasedOnTemplate = createAction({
   async run(context) {
     const documentId: string = context.propsValue.template;
     const values = context.propsValue.values;
-    const placeholder_format = context.propsValue.placeholder_format;
+    let placeholder_format = context.propsValue.placeholder_format;
+    if (placeholder_format === 'curly_braces') {
+      placeholder_format = '{{KEY}}';
+    }
 
     const authClient = new OAuth2Client();
     authClient.setCredentials(context.auth);
