@@ -95,10 +95,10 @@ const routes = [
     element: <AuthenticatePage />,
   },
   {
-    path: '/templates',
+    path: '/explore',
     element: (
       <ProjectDashboardLayout>
-        <PageTitle title="Templates">
+        <PageTitle title="Explore">
           <TemplatesPage />
         </PageTitle>
       </ProjectDashboardLayout>

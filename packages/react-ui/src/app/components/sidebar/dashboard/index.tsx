@@ -6,7 +6,7 @@ import {
   Plus,
   LineChart,
   Trophy,
-  LayoutGrid,
+  Compass,
 } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -166,10 +166,10 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: '/templates',
-    label: t('Templates'),
+    to: '/explore',
+    label: t('Explore'),
     show: true,
-    icon: LayoutGrid,
+    icon: Compass,
     hasPermission: true,
     isSubItem: false,
   };
