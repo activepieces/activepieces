@@ -73,6 +73,7 @@ const FlowBuilderPage = () => {
         flow={flow}
         flowVersion={flow!.version}
         readonly={false}
+        hideTestWidget={false}
         run={null}
         outputSampleData={sampleData ?? {}}
         inputSampleData={sampleDataInput ?? {}}

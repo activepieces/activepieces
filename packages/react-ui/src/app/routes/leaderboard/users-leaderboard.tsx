@@ -79,7 +79,7 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
     ),
     cell: ({ row }) => (
       <div className="text-left">{row.original.flowCount}</div>
-    ),  
+    ),
   },
   {
     accessorKey: 'minutesSaved',

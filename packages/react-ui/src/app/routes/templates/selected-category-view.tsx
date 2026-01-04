@@ -8,8 +8,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { formatUtils } from '@/lib/utils';
-import { Template, TemplateCategory } from '@activepieces/shared';
+import {
+  Template,
+  TemplateCategory,
+  CATEGORY_DISPLAY_NAMES,
+} from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
 
@@ -24,7 +27,7 @@ export const SelectedCategoryView = ({
   templates,
   onTemplateSelect,
 }: SelectedCategoryViewProps) => {
-  const categoryName = formatUtils.convertEnumToHumanReadable(category);
+  const categoryName = CATEGORY_DISPLAY_NAMES[category];
 
   return (
     <div className="space-y-4">
