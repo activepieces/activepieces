@@ -241,7 +241,7 @@ const TemplateDetailsPage = () => {
                 {template.flows && template.flows.length > 1 && (
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-semibold">
-                      {t('Included Flows')}
+                      {t('What\'s included?')}
                     </span>
 
                     <div className="grid grid-cols-1 gap-3">
