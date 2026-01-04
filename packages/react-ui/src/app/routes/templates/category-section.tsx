@@ -34,6 +34,7 @@ export const CategorySection = ({
         opts={{
           align: 'start',
           loop: false,
+          slidesToScroll: 'auto',
         }}
         className="w-full"
       >
