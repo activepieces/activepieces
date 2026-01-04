@@ -266,7 +266,7 @@ const TemplateDetailsPage = () => {
                     {t('Used Pieces')}
                   </span>
                   <div className="flex flex-wrap gap-2">
-                    {template.pieces.map((pieceName, index) => (
+                    {template.pieces.map((pieceName: string, index: number) => (
                       <PieceCard key={index} pieceName={pieceName} />
                     ))}
                   </div>
@@ -293,18 +293,6 @@ const TemplateDetailsPage = () => {
                       </span>
                       <span className="font-medium">
                         {formatUtils.formatDate(new Date(template.created))}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 text-sm">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-muted-foreground text-xs">
-                        {t('Used by')}
-                      </span>
-                      <span className="font-medium">
-                        {formatUsageCount(template.usageCount)} {t('users')}
                       </span>
                     </div>
                   </div>
