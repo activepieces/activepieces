@@ -11,7 +11,6 @@ type FlowCardProps = {
 };
 
 export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
-
   return (
     <Card
       onClick={onClick}
@@ -34,9 +33,7 @@ export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
         </div>
 
         {flow.trigger && (
-          <div
-            className="h-12 px-3 flex items-center rounded-md shrink-0"
-          >
+          <div className="h-12 px-3 flex items-center rounded-md shrink-0">
             <PieceIconList
               trigger={flow.trigger}
               maxNumberOfIconsToShow={3}
