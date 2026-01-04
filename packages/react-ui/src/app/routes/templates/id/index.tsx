@@ -1,13 +1,6 @@
 import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
-import {
-  ArrowLeft,
-  User,
-  Calendar,
-  ArrowRight,
-  Link,
-  ExternalLink,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Link, ExternalLink } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import {
   Navigate,
@@ -204,6 +197,15 @@ const TemplateDetailsPage = () => {
                 ))}
               </div>
 
+              <div className="flex items-center gap-1 text-xs">
+                <span>{t('By')}</span>
+                <span className="font-medium">{template.author}</span>
+                <span>•</span>
+                <span>
+                  {formatUtils.formatDate(new Date(template.created))}
+                </span>
+              </div>
+
               <div className="flex flex-col gap-8">
                 <div className="flex flex-row justify-center gap-3">
                   <Button
@@ -234,7 +236,7 @@ const TemplateDetailsPage = () => {
                   </p>
                 </div>
 
-                {template.flows && template.flows.length > 1 && (
+                {template.flows && (
                   <div className="flex flex-col gap-2">
                     <span className="text-sm font-semibold">
                       {t("What's included?")}
@@ -246,6 +248,13 @@ const TemplateDetailsPage = () => {
                           key={index}
                           flow={flow}
                           isSelected={selectedFlowIndex === index}
+                          singleFlow={
+                            !(
+                              template &&
+                              template.flows &&
+                              template.flows.length > 1
+                            )
+                          }
                           onClick={() => setSelectedFlowIndex(index)}
                         />
                       ))}
@@ -264,31 +273,7 @@ const TemplateDetailsPage = () => {
                   </div>
                 </div>
 
-                <Separator className="my-2" />
-
-                <div className="flex flex-col gap-4 mb-12">
-                  <div className="flex gap-2 text-sm">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-muted-foreground text-xs">
-                        {t('Author')}
-                      </span>
-                      <span className="font-medium">{template.author}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 text-sm">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <div className="flex flex-col gap-2">
-                      <span className="text-muted-foreground text-xs">
-                        {t('Published')}
-                      </span>
-                      <span className="font-medium">
-                        {formatUtils.formatDate(new Date(template.created))}
-                      </span>
-                    </div>
-                  </div>
-                </div>
+                <div className="mb-12" />
               </div>
             </div>
           </ScrollArea>

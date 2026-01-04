@@ -18,7 +18,7 @@ import { stepsHooks } from '../lib/steps-hooks';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center p-2 rounded-full border border-solid  select-none',
+  'flex items-center justify-center p-2 rounded-full border border-solid text-xs select-none',
   {
     variants: {
       size: {
@@ -80,7 +80,7 @@ export function PieceIconList({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className={className || 'flex gap-2'}>
+        <div className={className || 'flex gap-0.5 '}>
           {visibleMetadata.map((metadata) => (
             <PieceIcon
               logoUrl={metadata.logoUrl}
@@ -91,7 +91,6 @@ export function PieceIconList({
               displayName={metadata.displayName}
               key={metadata.logoUrl}
               background={background}
-              shadow={shadow}
             />
           ))}
           {extraPieces > 0 && (

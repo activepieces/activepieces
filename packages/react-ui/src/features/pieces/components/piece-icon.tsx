@@ -13,14 +13,14 @@ import { cn } from '@/lib/utils';
 const pieceIconVariants = cva('flex items-center justify-center   ', {
   variants: {
     circle: {
-      true: 'rounded-full  p-2',
-      false: 'rounded-md p-1',
+      true: 'rounded-full p-2',
+      false: '',
     },
     size: {
       xxl: 'size-[64px] p-4',
       xl: 'size-[48px]',
       lg: 'size-[40px]',
-      md: 'size-[36px] p-1',
+      md: 'size-[36px] p-1.5',
       sm: 'size-[25px]',
       xs: 'size-[18px]',
     },
@@ -36,7 +36,6 @@ interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
   logoUrl?: string;
   showTooltip: boolean;
   background?: string;
-  shadow?: boolean;
 }
 
 const PieceIcon = React.memo(
@@ -48,23 +47,19 @@ const PieceIcon = React.memo(
     circle = false,
     showTooltip,
     background,
-    shadow,
   }: PieceIconCircleProps) => {
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <div
-            className={cn(
-              pieceIconVariants({ border, size, circle }),
-              shadow && 'shadow-md',
-            )}
+            className={cn(pieceIconVariants({ border, size, circle }))}
             style={background ? { backgroundColor: background } : undefined}
           >
             {logoUrl ? (
               <ImageWithColorBackground
                 src={logoUrl}
                 alt={displayName}
-                className="object-contain w-full h-full p-1"
+                className="object-contain w-full h-full"
                 key={logoUrl}
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
               />

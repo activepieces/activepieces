@@ -59,7 +59,6 @@ const createColumns = (): ColumnDef<RowDataWithActions<UserStats>>[] => [
     cell: ({ row }) => (
       <div className="flex items-center gap-3">
         <ApAvatar
-          type="user"
           id={row.original.visibleId}
           size="medium"
           includeAvatar={true}
