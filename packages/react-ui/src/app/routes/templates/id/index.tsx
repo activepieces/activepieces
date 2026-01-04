@@ -2,12 +2,12 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
 import {
   ArrowLeft,
-  BookOpen,
   User,
   Calendar,
   Users,
   ArrowRight,
   Link,
+  ExternalLink,
 } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
 import {
@@ -214,8 +214,8 @@ const TemplateDetailsPage = () => {
 
               <div className="flex flex-col gap-8">
 
-                <div className="flex flex-col gap-3">
-                  <Button onClick={handleUseTemplate} size="xl">
+                <div className="flex flex-row justify-center gap-3">
+                  <Button onClick={handleUseTemplate} size="xl" className="flex-1">
                     {t('Use Template')}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -223,9 +223,10 @@ const TemplateDetailsPage = () => {
                     variant="outline"
                     onClick={handleUseWithGuide}
                     size="xl"
+                    className="flex-1"
                   >
-                    {t('Use with the guide setup')}
-                    <BookOpen className="w-4 h-4 ml-2" />
+                    {t('Setup guide')}
+                    <ExternalLink className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
 
