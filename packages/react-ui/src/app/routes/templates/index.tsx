@@ -3,7 +3,6 @@ import { Search } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ProjectDashboardPageHeader } from '@/app/components/project-layout/project-dashboard-page-header';
 import { InputWithIcon } from '@/components/custom/input-with-icon';
 import { userHooks } from '@/hooks/user-hooks';
 import {
@@ -39,12 +38,6 @@ const TemplatesPage = () => {
     navigate(`/templates/${template.id}`);
   };
 
-  const categories: (TemplateCategory | 'All')[] = [
-    'All',
-    ...Object.values(TemplateCategory),
-  ];
-
-  // Group templates by category
   const templatesByCategory = useMemo(() => {
     const grouped: Record<TemplateCategory, Template[]> = {} as Record<
       TemplateCategory,
@@ -55,21 +48,25 @@ const TemplatesPage = () => {
       grouped[category] = [];
     });
 
-    templates?.forEach((template) => {
+    templates?.forEach((template: Template) => {
       if (template.categories?.length) {
-        template.categories?.forEach((category) => {
+        template.categories?.forEach((category: TemplateCategory) => {
           if (grouped[category]) {
             grouped[category].push(template);
           }
         });
       }
-      else{
-        grouped[TemplateCategory.OTHER].push(template);
-      }
     });
 
     return grouped;
   }, [templates]);
+
+  const categories: (TemplateCategory | 'All')[] = useMemo(() => {
+    const categoriesWithTemplates = Object.values(TemplateCategory).filter(
+      (category) => templatesByCategory[category]?.length > 0,
+    );
+    return ['All', ...categoriesWithTemplates];
+  }, [templatesByCategory]);
 
   const selectedCategoryTemplates = useMemo(() => {
     if (selectedCategory === 'All') {
