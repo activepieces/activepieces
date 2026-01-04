@@ -7,28 +7,13 @@ import {
   CarouselPrevious,
   useCarousel,
 } from '@/components/ui/carousel';
-import { TemplateCategory } from '@activepieces/shared';
+import { CATEGORY_DISPLAY_NAMES, TemplateCategory } from '@activepieces/shared';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 type CategoryFilterCarouselProps = {
   categories: (TemplateCategory | 'All')[];
   selectedCategory: TemplateCategory | 'All';
   onCategorySelect: (category: TemplateCategory | 'All') => void;
-};
-
-const CATEGORY_DISPLAY_NAMES: Record<TemplateCategory, string> = {
-  [TemplateCategory.ANALYTICS]: 'Analytics',
-  [TemplateCategory.COMMUNICATION]: 'Communication',
-  [TemplateCategory.CONTENT]: 'Content',
-  [TemplateCategory.CUSTOMER_SUPPORT]: 'Customer Support',
-  [TemplateCategory.DEVELOPMENT]: 'Development',
-  [TemplateCategory.E_COMMERCE]: 'E-Commerce',
-  [TemplateCategory.FINANCE]: 'Finance',
-  [TemplateCategory.HR]: 'HR',
-  [TemplateCategory.IT_OPERATIONS]: 'IT Operations',
-  [TemplateCategory.MARKETING]: 'Marketing',
-  [TemplateCategory.PRODUCTIVITY]: 'Productivity',
-  [TemplateCategory.SALES]: 'Sales',
 };
 
 const CarouselContentWithButtons = ({

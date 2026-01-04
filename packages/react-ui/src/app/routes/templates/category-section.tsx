@@ -8,8 +8,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { formatUtils } from '@/lib/utils';
-import { Template, TemplateCategory } from '@activepieces/shared';
+import { CATEGORY_DISPLAY_NAMES, Template, TemplateCategory } from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
 
@@ -40,7 +39,7 @@ export const CategorySection = ({
       >
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold">
-            {formatUtils.convertEnumToHumanReadable(category)}
+            {CATEGORY_DISPLAY_NAMES[category]}
           </h2>
           <div className="flex items-center gap-2">
             <Button
