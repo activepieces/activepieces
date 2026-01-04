@@ -7,7 +7,6 @@ import {
   CarouselPrevious,
   useCarousel,
 } from '@/components/ui/carousel';
-import { formatUtils } from '@/lib/utils';
 import { TemplateCategory } from '@activepieces/shared';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -15,6 +14,21 @@ type CategoryFilterCarouselProps = {
   categories: (TemplateCategory | 'All')[];
   selectedCategory: TemplateCategory | 'All';
   onCategorySelect: (category: TemplateCategory | 'All') => void;
+};
+
+const CATEGORY_DISPLAY_NAMES: Record<TemplateCategory, string> = {
+  [TemplateCategory.ANALYTICS]: 'Analytics',
+  [TemplateCategory.COMMUNICATION]: 'Communication',
+  [TemplateCategory.CONTENT]: 'Content',
+  [TemplateCategory.CUSTOMER_SUPPORT]: 'Customer Support',
+  [TemplateCategory.DEVELOPMENT]: 'Development',
+  [TemplateCategory.E_COMMERCE]: 'E-Commerce',
+  [TemplateCategory.FINANCE]: 'Finance',
+  [TemplateCategory.HR]: 'HR',
+  [TemplateCategory.IT_OPERATIONS]: 'IT Operations',
+  [TemplateCategory.MARKETING]: 'Marketing',
+  [TemplateCategory.PRODUCTIVITY]: 'Productivity',
+  [TemplateCategory.SALES]: 'Sales',
 };
 
 const CarouselContentWithButtons = ({
@@ -26,7 +40,7 @@ const CarouselContentWithButtons = ({
 
   const formatCategoryName = (category: TemplateCategory | 'All') => {
     if (category === 'All') return 'All';
-    return formatUtils.convertEnumToHumanReadable(category);
+    return CATEGORY_DISPLAY_NAMES[category];
   };
 
   return (
@@ -37,7 +51,7 @@ const CarouselContentWithButtons = ({
         paddingRight: canScrollNext ? '3rem' : '0',
       }}
     >
-      <CarouselContent className="-ml-2">
+      <CarouselContent className="-ml-2 gap-1">
         {categories.map((category) => {
           const isSelected = selectedCategory === category;
           return (
@@ -45,10 +59,10 @@ const CarouselContentWithButtons = ({
               <Button
                 variant="outline"
                 onClick={() => onCategorySelect(category)}
-                className={`px-6 py-2 h-auto whitespace-nowrap transition-colors ${
+                className={`px-4 py-1.5 h-auto whitespace-nowrap transition-colors ${
                   isSelected
                     ? 'bg-black text-white border-black hover:!bg-black hover:!text-white'
-                    : 'hover:bg-primary hover:text-primary-foreground'
+                    : 'bg-transparent hover:!bg-sidebar-accent hover:!text-sidebar-accent-foreground border-none'
                 }`}
               >
                 {formatCategoryName(category)}

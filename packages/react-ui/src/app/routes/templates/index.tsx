@@ -78,7 +78,7 @@ const TemplatesPage = () => {
   return (
     <div>
       <div>
-        <div className="mb-6">
+        <div className="sticky top-0 z-10 bg-background mb-6 pb-1 pt-4">
           <InputWithIcon
             icon={<Search className="w-4 h-4" />}
             type="text"
