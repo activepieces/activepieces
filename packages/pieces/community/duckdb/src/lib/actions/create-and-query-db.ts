@@ -24,26 +24,9 @@ export const createAndQueryDB = createAction({
           description: 'Name of the table to create',
           required: true,
         }),
-        dataType: Property.StaticDropdown({
-          displayName: 'Source Data Type',
-          required: true,
-          options: {
-            disabled: false,
-            options: [
-              {
-                label: 'CSV',
-                value: 'csv',
-              },
-              {
-                label: 'JSON',
-                value: 'json',
-              },
-            ],
-          },
-        }),
         dataUrl: Property.ShortText({
-          displayName: 'Source Data URL',
-          description: 'URL to file containing the source data',
+          displayName: 'Source JSON Data URL',
+          description: 'URL to JSON file containing the source data',
           required: true,
         }),
       },
@@ -81,32 +64,12 @@ export const createAndQueryDB = createAction({
 
     const dbTables: any[] = context.propsValue.tables;
     for (const dbTable of dbTables) {
-      let createTableQuery: string;
-
-      switch (dbTable.dataType) {
-        case 'csv':
-          createTableQuery = `
-            CREATE TABLE ${dbTable.name} AS
-              SELECT *
-              FROM read_csv($sourceData,
-                delim = ',',  
-                header = true
-              );
-          `;
-          break;
-        case 'json':
-          createTableQuery = `
+      await connection.run(
+        `
             CREATE TABLE ${dbTable.name} AS
               SELECT *
               FROM read_json($sourceData);
-          `;
-          break;
-        default:
-          throw new Error(`Unsupported source data type: ${dbTable.dataType}`);
-      }
-
-      await connection.run(
-        createTableQuery,
+          `,
         {
           sourceData: dbTable.dataUrl,
         },
