@@ -1,14 +1,18 @@
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
 
-import { FlowTrigger, flowStructureUtil } from '@activepieces/shared';
+import {
+  FlowTrigger,
+  flowStructureUtil,
+  PieceCategory,
+} from '@activepieces/shared';
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { StepMetadata } from '../../../lib/types';
+import { PieceStepMetadata, StepMetadata } from '../../../lib/types';
 import { stepsHooks } from '../lib/steps-hooks';
 
 import { PieceIcon } from './piece-icon';
@@ -37,6 +41,7 @@ export function PieceIconList({
   circle = true,
   background,
   shadow,
+  excludeCore = false,
 }: {
   trigger: FlowTrigger;
   maxNumberOfIconsToShow: number;
@@ -45,6 +50,7 @@ export function PieceIconList({
   circle?: boolean;
   background?: string;
   shadow?: boolean;
+  excludeCore?: boolean;
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
   const stepsMetadata: StepMetadata[] = stepsHooks
@@ -52,7 +58,17 @@ export function PieceIconList({
     .map((data) => data.data)
     .filter((data) => !!data) as StepMetadata[];
 
-  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
+  const filteredMetadata = excludeCore
+    ? stepsMetadata.filter((metadata) => {
+        const pieceMetadata = metadata as PieceStepMetadata;
+        return (
+          !pieceMetadata.categories ||
+          !pieceMetadata.categories.includes(PieceCategory.CORE)
+        );
+      })
+    : stepsMetadata;
+
+  const uniqueMetadata: StepMetadata[] = filteredMetadata.filter(
     (item, index, self) =>
       self.findIndex(
         (secondItem) => item.displayName === secondItem.displayName,

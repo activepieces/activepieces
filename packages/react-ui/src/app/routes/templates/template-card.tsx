@@ -72,7 +72,7 @@ export const ExploreTemplateCard = ({
             className="flex gap-2"
             circle={false}
             background="white"
-            shadow={true}
+            excludeCore={true}
           />
         )}
       </div>

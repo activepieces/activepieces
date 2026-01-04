@@ -12,10 +12,11 @@ import {
   Permission,
   FlowTrigger,
   flowStructureUtil,
+  PieceCategory,
 } from '@activepieces/shared';
 
 import { authenticationSession } from './authentication-session';
-import { StepMetadata } from './types';
+import { PieceStepMetadata, StepMetadata } from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -548,7 +549,10 @@ const buildGradientFromColors = (colors: string[]): string => {
 
 const gradientCache = new Map<string, string>();
 
-export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
+export const useGradientFromPieces = (
+  trigger: FlowTrigger | undefined,
+  excludeCore: boolean = false,
+) => {
   const [gradient, setGradient] = useState<string>('');
 
   const steps = useMemo(
@@ -566,15 +570,29 @@ export const useGradientFromPieces = (trigger: FlowTrigger | undefined) => {
     [JSON.stringify(stepsMetadataResults.map((r) => r.dataUpdatedAt))],
   );
 
+  const filteredMetadata = useMemo(
+    () =>
+      excludeCore
+        ? stepsMetadata.filter((metadata) => {
+            const pieceMetadata = metadata as PieceStepMetadata;
+            return (
+              !pieceMetadata.categories ||
+              !pieceMetadata.categories.includes(PieceCategory.CORE)
+            );
+          })
+        : stepsMetadata,
+    [stepsMetadata, excludeCore],
+  );
+
   const uniqueMetadata: StepMetadata[] = useMemo(
     () =>
-      stepsMetadata.filter(
+      filteredMetadata.filter(
         (item, index, self) =>
           self.findIndex(
             (secondItem) => item.displayName === secondItem.displayName,
           ) === index,
       ),
-    [stepsMetadata.map((m) => m.displayName).join(',')],
+    [filteredMetadata.map((m) => m.displayName).join(',')],
   );
 
   const cacheKey = useMemo(

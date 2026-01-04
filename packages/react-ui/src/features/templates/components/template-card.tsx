@@ -83,6 +83,7 @@ export const TemplateCard = ({
           <PieceIconList
             trigger={template.flows![0]?.trigger}
             maxNumberOfIconsToShow={2}
+            excludeCore={true}
           />
         </div>
       )}

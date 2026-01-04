@@ -2,7 +2,6 @@ import { Workflow } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
-import { useGradientFromPieces } from '@/lib/utils';
 import { FlowVersionTemplate } from '@activepieces/shared';
 
 type FlowCardProps = {
@@ -12,7 +11,6 @@ type FlowCardProps = {
 };
 
 export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
-  const gradient = useGradientFromPieces(flow?.trigger);
 
   return (
     <Card
@@ -37,10 +35,7 @@ export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
 
         {flow.trigger && (
           <div
-            className="h-12 px-3 flex items-center rounded-md transition-all duration-300 shrink-0"
-            style={{
-              background: gradient || 'transparent',
-            }}
+            className="h-12 px-3 flex items-center rounded-md shrink-0"
           >
             <PieceIconList
               trigger={flow.trigger}
@@ -49,7 +44,7 @@ export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
               className="flex gap-1.5"
               circle={false}
               background="white"
-              shadow={true}
+              excludeCore={true}
             />
           </div>
         )}
