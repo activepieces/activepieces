@@ -31,15 +31,14 @@ import {
   usePieceSearchContext,
 } from '../../../features/pieces/lib/piece-search-context';
 
-import { AITabContent } from './ai-tab-content';
-import { ExploreTabContent } from './explore-tab-content';
+import { AITabContent } from './ai-tab-content';import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (operationType: FlowOperationType) => {
   const baseTabs = [
     {
       value: PieceSelectorTabType.EXPLORE,
-      name: t('Explore'),
+      name: t('All Apps'),
       icon: <LayoutGridIcon className="size-5" />,
     },
     {
@@ -49,7 +48,7 @@ const getTabsList = (operationType: FlowOperationType) => {
     },
     {
       value: PieceSelectorTabType.UTILITY,
-      name: t('Utility'),
+      name: t('Utilities'),
       icon: <WrenchIcon className="size-5" />,
     },
   ];
@@ -60,8 +59,8 @@ const getTabsList = (operationType: FlowOperationType) => {
     )
   ) {
     baseTabs.splice(1, 0, {
-      value: PieceSelectorTabType.AI_AND_AGENTS,
-      name: t('AI & Agents'),
+      value: PieceSelectorTabType.AI_AND_AGENTS, 
+      name: t('AI'),
       icon: <SparklesIcon className="size-5" />,
     });
   }
@@ -115,7 +114,7 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 300);
+  const listHeight = Math.min(listHeightRef.current, 400);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -192,23 +191,23 @@ const PieceSelectorContent = ({
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
-              className=" flex flex-row max-h-[300px]"
-              style={{
-                height: listHeight + 'px',
-              }}
-            >
-              <ExploreTabContent operation={operation} />
-              <AITabContent operation={operation} />
+              className=" flex flex-row max-h-[400px]"
+                style={{
+                  height: listHeight + 'px',
+                }}
+              >
+                  <ExploreTabContent operation={operation} />
+                  <AITabContent operation={operation} />
 
-              <PiecesCardList
-                //this is done to avoid debounced results when user clears search
-                searchQuery={searchQuery === '' ? '' : debouncedQuery}
-                operation={operation}
-                stepToReplacePieceDisplayName={
-                  isMobile ? undefined : stepToReplacePieceDisplayName
-                }
-              />
-            </div>
+                  <PiecesCardList
+                    //this is done to avoid debounced results when user clears search
+                    searchQuery={searchQuery === '' ? '' : debouncedQuery}
+                    operation={operation}
+                    stepToReplacePieceDisplayName={
+                      isMobile ? undefined : stepToReplacePieceDisplayName
+                    }
+                  />
+                </div>
           </>
         </PopoverContent>
       </PieceSelectorTabsProvider>
