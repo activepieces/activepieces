@@ -141,7 +141,7 @@ export const UseTemplateDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('Duplicate Template')}</DialogTitle>
+          <DialogTitle>{t('Use Template')}</DialogTitle>
           <DialogDescription>
             {hasMultipleFlows
               ? t(
@@ -149,7 +149,7 @@ export const UseTemplateDialog = ({
                   { count: flowCount },
                 )
               : t(
-                  'Select the project and folder where you want to duplicate this template.',
+                  'Select the project and folder where you want to use this template.',
                 )}
           </DialogDescription>
         </DialogHeader>
@@ -213,7 +213,7 @@ export const UseTemplateDialog = ({
             loading={isPending}
             disabled={!selectedProjectId}
           >
-            {hasMultipleFlows ? t('Create All Flows') : t('Create Flow')}
+            {t('Confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>
