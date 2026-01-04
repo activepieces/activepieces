@@ -291,6 +291,7 @@ const TemplateDetailsPage = () => {
                     flow={mockFlow}
                     flowVersion={mockFlow.version}
                     readonly={true}
+                    hideTestWidget={true}
                     run={null}
                     outputSampleData={{}}
                     inputSampleData={{}}

@@ -8,7 +8,11 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import { Template, TemplateCategory, CATEGORY_DISPLAY_NAMES } from '@activepieces/shared';
+import {
+  Template,
+  TemplateCategory,
+  CATEGORY_DISPLAY_NAMES,
+} from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
 
