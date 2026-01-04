@@ -156,10 +156,10 @@ const TemplateDetailsPage = () => {
   };
 
   return (
-    <div className="h-screen w-full flex flex-col overflow-hidden">
+    <div className="h-screen w-full flex flex-col overflow-hidden absolute inset-0">
       {/* Header */}
-      <div className="border-b py-4 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2">
+      <div className="border-b py-4 px-6 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
           <SidebarTrigger />
           <Separator orientation="vertical" className="h-5" />
           <Button
@@ -169,7 +169,9 @@ const TemplateDetailsPage = () => {
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="text-sm font-semibold">{t('All Templates')}</span>
+            <span className="text-sm font-semibold whitespace-nowrap">
+              {t('All Templates')}
+            </span>
           </Button>
         </div>
         <Button variant="outline" size="sm" onClick={handleShare}>
@@ -178,13 +180,13 @@ const TemplateDetailsPage = () => {
         </Button>
       </div>
 
-      <div className="flex-1 min-h-0">
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] h-full">
-          <ScrollArea className="h-full">
-            <div className="flex flex-col gap-4 px-6 mt-6">
+      <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] h-full w-full overflow-hidden">
+          <ScrollArea className="h-full w-full">
+            <div className="flex flex-col gap-4 px-6 mt-6 min-w-0">
               <span className="text-2xl font-bold">{template.name}</span>
 
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap min-w-0">
                 {template.tags.map((tag, index) => (
                   <TagWithBright
                     index={index}
@@ -197,17 +199,8 @@ const TemplateDetailsPage = () => {
                 ))}
               </div>
 
-              <div className="flex items-center gap-1 text-xs">
-                <span>{t('By')}</span>
-                <span className="font-medium">{template.author}</span>
-                <span>•</span>
-                <span>
-                  {formatUtils.formatDate(new Date(template.created))}
-                </span>
-              </div>
-
-              <div className="flex flex-col gap-8">
-                <div className="flex flex-row justify-center gap-3">
+              <div className="flex flex-col gap-8 min-w-0">
+                <div className="flex flex-row justify-center gap-3 min-w-0">
                   <Button
                     onClick={handleUseTemplate}
                     size="xl"
@@ -273,14 +266,21 @@ const TemplateDetailsPage = () => {
                   </div>
                 </div>
 
-                <div className="mb-12" />
+                <div className="flex items-center gap-1 text-xs mb-12">
+                  <span>{t('By')}</span>
+                  <span className="font-medium">{template.author}</span>
+                  <span>•</span>
+                  <span>
+                    {formatUtils.formatDate(new Date(template.created))}
+                  </span>
+                </div>
               </div>
             </div>
           </ScrollArea>
 
           <div
             ref={canvasContainerRef}
-            className="bg-muted/30 h-full relative overflow-hidden border-l"
+            className="bg-muted/30 h-full w-full relative overflow-hidden border-l"
           >
             {mockFlow && renderKey > 0 ? (
               <div key={renderKey} className="h-full w-full">
