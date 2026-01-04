@@ -199,6 +199,15 @@ const TemplateDetailsPage = () => {
                 ))}
               </div>
 
+              <div className="flex items-center gap-1 text-xs">
+                <span>{t('By')}</span>
+                <span className="font-medium">{template.author}</span>
+                <span>•</span>
+                <span>
+                  {formatUtils.formatDate(new Date(template.created))}
+                </span>
+              </div>
+
               <div className="flex flex-col gap-8 min-w-0">
                 <div className="flex flex-row justify-center gap-3 min-w-0">
                   <Button
@@ -266,14 +275,7 @@ const TemplateDetailsPage = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 text-xs mb-12">
-                  <span>{t('By')}</span>
-                  <span className="font-medium">{template.author}</span>
-                  <span>•</span>
-                  <span>
-                    {formatUtils.formatDate(new Date(template.created))}
-                  </span>
-                </div>
+                <div className="mb-12" />
               </div>
             </div>
           </ScrollArea>
