@@ -4,7 +4,7 @@ import { SocketProvider } from '@/components/socket-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
@@ -25,6 +25,6 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   }
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
-  projectHooks.useCurrentProject();
+  projectCollectionUtils.useCurrentProject();
   return <SocketProvider>{children}</SocketProvider>;
 };

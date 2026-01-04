@@ -20,32 +20,24 @@ type ProjectsTableColumnsProps = {
 
 export const projectsTableColumns = ({
   platform,
-  currentUserId,
 }: ProjectsTableColumnsProps): ColumnDef<
   RowDataWithActions<ProjectWithLimits>
 >[] => {
   const columns: ColumnDef<RowDataWithActions<ProjectWithLimits>>[] = [
     {
       accessorKey: 'displayName',
-      size: 200,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
         const isPersonal = row.original.type === ProjectType.PERSONAL;
-        const isOwner = row.original.ownerId === currentUserId;
 
         return (
           <div className="text-left flex items-center justify-start ">
             {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
             {isPersonal && <User className="size-4 mr-1.5"></User>}
             <span>{row.original.displayName}</span>
-            {isPersonal && isOwner && (
-              <Badge variant={'outline'} className="text-xs font-medium ml-2">
-                You
-              </Badge>
-            )}
           </div>
         );
       },
@@ -56,7 +48,6 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'users',
-      size: 120,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -75,7 +66,6 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'flows',
-      size: 120,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -94,7 +84,6 @@ export const projectsTableColumns = ({
     },
     {
       accessorKey: 'createdAt',
-      size: 150,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -115,7 +104,6 @@ export const projectsTableColumns = ({
   if (platform.plan.embeddingEnabled) {
     columns.push({
       accessorKey: 'externalId',
-      size: 120,
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -129,7 +117,7 @@ export const projectsTableColumns = ({
           row.original.externalId?.length === 0
             ? '-'
             : row.original.externalId;
-        return <div className="text-left">{displayValue}</div>;
+        return <div className="text-left truncate">{displayValue}</div>;
       },
     });
   }

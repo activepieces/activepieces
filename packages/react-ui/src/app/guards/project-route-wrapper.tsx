@@ -1,50 +1,43 @@
+import { t } from 'i18next';
 import React from 'react';
 import { Navigate, useParams, useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import {
   FROM_QUERY_PARAM,
   useDefaultRedirectPath,
 } from '@/lib/navigation-utils';
-import { determineDefaultRoute } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
-import { LoadingScreen } from '../../components/ui/loading-screen';
 import { authenticationSession } from '../../lib/authentication-session';
 import { AllowOnlyLoggedInUserOnlyGuard } from '../components/allow-logged-in-user-only-guard';
 
 export const TokenCheckerWrapper: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const {
-    isError,
-    error,
-    data: isProjectValid,
-    projectIdFromParams,
-    isLoading,
-    isFetching,
-  } = projectHooks.useSwitchToProjectInParams();
-
-  const { checkAccess } = useAuthorization();
+  const { projectId: projectIdFromParams } = useParams<{
+    projectId: string;
+  }>();
 
   if (isNil(projectIdFromParams)) {
     return <Navigate to="/sign-in" replace />;
   }
-  const failedToSwitchToProject =
-    !isProjectValid && !isNil(projectIdFromParams);
-  if (failedToSwitchToProject) {
-    const defaultRoute = determineDefaultRoute(checkAccess);
-    return <Navigate to={defaultRoute} replace />;
-  }
-  if (isError || !isProjectValid) {
-    console.log({ isError, isProjectValid, error });
+  const hasAccessToProject =
+    projectCollectionUtils.useHasAccessToProject(projectIdFromParams);
+
+  if (!hasAccessToProject) {
+    toast.error(t('Invalid Access'), {
+      description: t(
+        'You tried to access a project that you do not have access to.',
+      ),
+      duration: 10000,
+    });
     return <Navigate to="/" replace />;
   }
-  //TODO: after upgrading react, we should use (use) hook to trigger suspense instead of this
-  if (isLoading || isFetching) {
-    return <LoadingScreen></LoadingScreen>;
-  }
+
+  authenticationSession.switchToProject(projectIdFromParams);
+
   return <>{children}</>;
 };
 

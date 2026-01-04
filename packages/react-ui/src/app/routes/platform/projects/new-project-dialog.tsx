@@ -17,12 +17,13 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { projectApi } from '@/lib/project-api';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
+import { projectCollectionUtils } from '@/hooks/project-collection';
+import { internalErrorToast } from '@/components/ui/sonner';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
-  onCreate: () => void;
+  onCreate?: () => void;
 };
 
 export const NewProjectDialog = ({
@@ -41,13 +42,12 @@ export const NewProjectDialog = ({
     ),
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationKey: ['create-project'],
-    mutationFn: () => projectApi.create(form.getValues()),
-    onSuccess: () => {
-      onCreate();
-      setOpen(false);
-    },
+  const { mutate, isPending } = projectCollectionUtils.useCreateProject(() => {
+    onCreate?.();
+    setOpen(false);
+  }, (error) => {
+    console.error(error);
+    internalErrorToast();
   });
 
   return (
@@ -60,7 +60,7 @@ export const NewProjectDialog = ({
         <Form {...form}>
           <form
             className="grid space-y-4"
-            onSubmit={(e) => form.handleSubmit(() => mutate())(e)}
+            onSubmit={(e) => form.handleSubmit(() => mutate(form.getValues()))(e)}
           >
             <FormField
               name="displayName"
@@ -101,7 +101,7 @@ export const NewProjectDialog = ({
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              form.handleSubmit(() => mutate())(e);
+              form.handleSubmit(() => mutate(form.getValues()))(e);
             }}
           >
             {t('Save')}
