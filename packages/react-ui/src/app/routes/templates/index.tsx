@@ -29,6 +29,8 @@ const TemplatesPage = () => {
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(TemplateType.OFFICIAL);
   const selectedCategory = category as TemplateCategory | 'All';
+  const { data: allTemplates, isLoading: isAllTemplatesLoading } =
+    templatesHooks.useAllOfficialTemplates();
   const { mutate: createFlow, isPending: isCreateFlowPending } =
     flowHooks.useStartFromScratch(UncategorizedFolderId);
 
@@ -50,7 +52,7 @@ const TemplatesPage = () => {
       grouped[category] = [];
     });
 
-    templates?.forEach((template: Template) => {
+    allTemplates?.forEach((template: Template) => {
       if (template.categories?.length) {
         template.categories?.forEach((category: TemplateCategory) => {
           if (grouped[category]) {
@@ -61,7 +63,7 @@ const TemplatesPage = () => {
     });
 
     return grouped;
-  }, [templates]);
+  }, [allTemplates]);
 
   const categories: (TemplateCategory | 'All')[] = useMemo(() => {
     const categoriesWithTemplates = Object.values(TemplateCategory).filter(
@@ -80,7 +82,7 @@ const TemplatesPage = () => {
   return (
     <div>
       <div>
-        <div className="sticky top-0 z-100 bg-background mb-6 pt-4">
+        <div className="sticky top-0 z-10 bg-background mb-6 pt-4">
           <div className="flex flex-row w-full justify-between gap-2">
             <SidebarTrigger />
             <InputWithIcon
@@ -103,14 +105,16 @@ const TemplatesPage = () => {
               </Button>
             </div>
           </div>
-          <CategoryFilterCarousel
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategorySelect={setCategory}
-          />
+          {!isAllTemplatesLoading && (
+            <CategoryFilterCarousel
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onCategorySelect={setCategory}
+            />
+          )}
         </div>
 
-        {isLoading ? (
+        {isLoading || isAllTemplatesLoading ? (
           <>
             {selectedCategory === 'All' ? (
               <AllCategoriesViewSkeleton />

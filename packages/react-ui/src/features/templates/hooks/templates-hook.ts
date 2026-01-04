@@ -19,6 +19,19 @@ export const templatesHooks = {
     });
   },
 
+  useAllOfficialTemplates: () => {
+    return useQuery<Template[], Error>({
+      queryKey: ['templates', 'all'],
+      queryFn: async () => {
+        const result = await templatesApi.list({
+          type: TemplateType.OFFICIAL,
+        });
+        return result.data;
+      },
+      staleTime: 5 * 60 * 1000,
+    });
+  },
+
   useTemplates: (type?: TemplateType) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
