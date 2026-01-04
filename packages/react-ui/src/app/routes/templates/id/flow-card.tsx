@@ -15,7 +15,7 @@ export const FlowCard = ({ flow, isSelected, onClick }: FlowCardProps) => {
     <Card
       onClick={onClick}
       variant={'interactive'}
-      className={`${isSelected ? 'border-gray-400' : ''}`}
+      isSelected={isSelected}
     >
       <CardContent className="p-4 flex items-center gap-4">
         <div className="flex-1 min-w-0">
