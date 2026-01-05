@@ -10,6 +10,7 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import { isMac } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
 
@@ -17,7 +18,6 @@ import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
 const verticalPaddingOnFitView = 100;
-// Calculate the node's position in relation to the canvas
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
   node: Node,
@@ -175,14 +175,15 @@ const CanvasControls = ({
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
     (spacePressed || panningMode === 'grab') && !shiftPressed;
-
   return (
     <div
       id="canvas-controls"
       className="z-50 absolute bottom-2 left-0 flex items-center  w-full pointer-events-none "
     >
       <div className="flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-background border border-sidebar-border">
-        <CanvasButtonWrapper tooltip={t('Minimap')}>
+        <CanvasButtonWrapper
+          tooltip={t('Minimap' + (isMac() ? ' (⌘ + M)' : ' (Ctrl + M)'))}
+        >
           <Button
             variant={showMinimap ? 'default' : 'ghost'}
             size="icon"
