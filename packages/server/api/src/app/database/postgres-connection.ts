@@ -703,7 +703,6 @@ export const createPostgresDataSource = (): DataSource => {
         username,
         password,
         database,
-        logging: true,
         ssl: getSslConfig(),
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...commonProperties,
