@@ -1,7 +1,6 @@
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import { Lock, Mail } from 'lucide-react';
-import { BADGES, UserWithBadges } from '@activepieces/shared';
 
 import {
   Dialog,
@@ -11,9 +10,14 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { userHooks } from '@/hooks/user-hooks';
+import { BADGES, UserWithBadges } from '@activepieces/shared';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
@@ -66,10 +70,12 @@ export function AccountSettingsDialog({
               <div className="flex items-center gap-2 flex-wrap">
                 {Object.entries(BADGES).map(([badgeName, badge]) => {
                   const userWithBadges = user as UserWithBadges | null;
-                  const isUnlocked = userWithBadges?.badges?.some(
-                    (userBadge: { name: string; created: string }) => userBadge.name === badgeName
-                  ) ?? false;
-                  
+                  const isUnlocked =
+                    userWithBadges?.badges?.some(
+                      (userBadge: { name: string; created: string }) =>
+                        userBadge.name === badgeName,
+                    ) ?? false;
+
                   return (
                     <Tooltip key={badgeName}>
                       <TooltipTrigger asChild>
@@ -77,7 +83,9 @@ export function AccountSettingsDialog({
                           <img
                             src={badge.imageUrl}
                             alt={badge.title}
-                            className={`h-12 w-12 object-cover rounded ${!isUnlocked ? 'opacity-50 grayscale' : ''}`}
+                            className={`h-12 w-12 object-cover rounded ${
+                              !isUnlocked ? 'opacity-50 grayscale' : ''
+                            }`}
                           />
                           {!isUnlocked && (
                             <div className="absolute inset-0 flex items-center justify-center rounded">
@@ -90,11 +98,6 @@ export function AccountSettingsDialog({
                         <div className="flex flex-col">
                           <p className="font-semibold">{badge.title}</p>
                           <p className="text-xs">{badge.description}</p>
-                          {!isUnlocked && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {t('Locked')}
-                            </p>
-                          )}
                         </div>
                       </TooltipContent>
                     </Tooltip>
@@ -102,7 +105,7 @@ export function AccountSettingsDialog({
                 })}
               </div>
             </div>
-            
+
             <Separator />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

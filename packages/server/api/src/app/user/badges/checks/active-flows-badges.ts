@@ -1,35 +1,40 @@
 import { ApplicationEventName, FlowUpdatedEvent } from '@activepieces/ee-shared'
 import { BADGES, FlowOperationType, FlowStatus, isNil } from '@activepieces/shared'
 import { flowRepo } from '../../../flows/flow/flow.repo'
-import { BadgeCheck } from '../badge-check'
+import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
 export const flowsBadgesCheck: BadgeCheck = {
-    eval: async ({ event }) => {
-        const badges: (keyof typeof BADGES)[] = []
+    eval: async ({ event, requestInformation }): Promise<BadgeCheckResult> => {
         if (event.action !== ApplicationEventName.FLOW_UPDATED) {
-            return badges
+            return { userId: null, badges: [] }
         }
         const flowUpdatedEvent = event as FlowUpdatedEvent
         if (![FlowOperationType.LOCK_AND_PUBLISH, FlowOperationType.CHANGE_STATUS].includes(flowUpdatedEvent.data.request.type)) {
-            return badges
+            return { userId: null, badges: [] }
         }
-        const currentFlowId = flowUpdatedEvent.data.flowVersion.flowId;
+        const currentFlowId = flowUpdatedEvent.data.flowVersion.flowId
         if (isNil(currentFlowId)) {
-            return badges;
+            return { userId: null, badges: [] }
         }
-        const userId = flowUpdatedEvent.userId!
-
+        const userId = requestInformation.userId ?? null
+        if (isNil(userId)) {
+            return { userId: null, badges: [] }
+        }
+        const badges: (keyof typeof BADGES)[] = []
         const activeFlows = await flowRepo().find({
             select: ['id'],
             where: {
                 ownerId: userId,
                 status: FlowStatus.ENABLED,
             },
-        });
-        const uniqueActiveFlows = new Set(activeFlows.map(flow => flow.id));
-        const turnTheFlowOn = flowUpdatedEvent.data.request.type === FlowOperationType.CHANGE_STATUS && flowUpdatedEvent.data.request.request.status === FlowStatus.ENABLED;
+        })
+        const uniqueActiveFlows = new Set(activeFlows.map(flow => flow.id))
+        const turnTheFlowOn = flowUpdatedEvent.data.request.type === FlowOperationType.CHANGE_STATUS && flowUpdatedEvent.data.request.request.status === FlowStatus.ENABLED
         if ((flowUpdatedEvent.data.request.type === FlowOperationType.LOCK_AND_PUBLISH || turnTheFlowOn)) {
-            uniqueActiveFlows.add(currentFlowId);
+            uniqueActiveFlows.add(currentFlowId)
+        }
+        else {
+            uniqueActiveFlows.delete(currentFlowId)
         }
 
         if (uniqueActiveFlows.size >= 1) {
@@ -44,7 +49,7 @@ export const flowsBadgesCheck: BadgeCheck = {
         if (uniqueActiveFlows.size >= 50) {
             badges.push('cant-stop')
         }
-        return badges
+        return { userId, badges }
     },
 }
 

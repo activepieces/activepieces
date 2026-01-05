@@ -1,3 +1,4 @@
+import { t } from 'i18next';
 import { Mail } from 'lucide-react';
 
 import {
@@ -8,10 +9,8 @@ import {
 import { userHooks } from '@/hooks/user-hooks';
 import { BADGES, isNil } from '@activepieces/shared';
 
-
-import { UserAvatar } from '../ui/user-avatar';
 import { TooltipContent, Tooltip, TooltipTrigger } from '../ui/tooltip';
-import { t } from 'i18next';
+import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
   id: string | null;
@@ -89,30 +88,36 @@ export const ApAvatar = ({
         </div>
 
         {user.badges.length > 0 && (
-        <div className="mt-3 pt-3 border-t">
-          <h5 className="text-xs text-foreground mb-2 tracking-wide">
-            {t('Badges')}
-          </h5>
-          <div className="flex items-center gap-2">
-            {user.badges.map((badge) => (
-              <Tooltip key={badge.name}>
-                <TooltipTrigger asChild>
-                  <div className="cursor-pointer">
-                    <img
-                      src={BADGES[badge.name as keyof typeof BADGES]!.imageUrl}
-                      alt={BADGES[badge.name as keyof typeof BADGES]!.title}
-                      className="h-12 w-12 object-cover rounded"
-                    />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent className="text-left">
-                  <div className="flex flex-col">
-                    <p className="font-semibold">{BADGES[badge.name as keyof typeof BADGES]!.title}</p>
-                    <p className="text-xs">{BADGES[badge.name as keyof typeof BADGES]!.description}</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            ))}
+          <div className="mt-3 pt-3 border-t">
+            <h5 className="text-xs text-foreground mb-2 tracking-wide">
+              {t('Badges')}
+            </h5>
+            <div className="flex items-center gap-2">
+              {user.badges.map((badge) => (
+                <Tooltip key={badge.name}>
+                  <TooltipTrigger asChild>
+                    <div className="cursor-pointer">
+                      <img
+                        src={
+                          BADGES[badge.name as keyof typeof BADGES]!.imageUrl
+                        }
+                        alt={BADGES[badge.name as keyof typeof BADGES]!.title}
+                        className="h-12 w-12 object-cover rounded"
+                      />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent className="text-left">
+                    <div className="flex flex-col">
+                      <p className="font-semibold">
+                        {BADGES[badge.name as keyof typeof BADGES]!.title}
+                      </p>
+                      <p className="text-xs">
+                        {BADGES[badge.name as keyof typeof BADGES]!.description}
+                      </p>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              ))}
             </div>
           </div>
         )}

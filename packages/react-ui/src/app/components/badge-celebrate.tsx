@@ -1,10 +1,13 @@
-import { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
+import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 
 import { useSocket } from '@/components/socket-provider';
-import { BadgeAwarded, BADGES, WebsocketClientEvent } from '@activepieces/shared';
-
+import {
+  BadgeAwarded,
+  BADGES,
+  WebsocketClientEvent,
+} from '@activepieces/shared';
 
 export const BadgeCelebrate = () => {
   const socket = useSocket();
@@ -37,10 +40,10 @@ export const BadgeCelebrate = () => {
           />
         ),
         {
-          duration: 6000,
+          duration: 5000,
           className:
             'bg-background border border-border rounded-xl shadow-lg p-3',
-        }
+        },
       );
 
       if (isCelebrating.current) {
@@ -48,7 +51,7 @@ export const BadgeCelebrate = () => {
       }
       isCelebrating.current = true;
 
-      const duration = 5000;
+      const duration = 4000;
       const animationEnd = Date.now() + duration;
       const interval = setInterval(() => {
         const timeLeft = animationEnd - Date.now();
@@ -126,9 +129,7 @@ const BadgeToast = ({
       />
     </div>
     <div className="flex flex-col gap-1 min-w-0">
-      <div className="font-semibold text-foreground text-base">
-        🎉 {title}
-      </div>
+      <div className="font-semibold text-foreground text-base">🎉 {title}</div>
       <p className="text-sm text-muted-foreground leading-snug">
         {description}
       </p>

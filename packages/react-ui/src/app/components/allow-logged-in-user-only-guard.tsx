@@ -6,8 +6,9 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 
-import { BadgeCelebrate } from './badge-celebrate';
 import { authenticationSession } from '../../lib/authentication-session';
+
+import { BadgeCelebrate } from './badge-celebrate';
 
 type AllowOnlyLoggedInUserOnlyGuardProps = {
   children: React.ReactNode;

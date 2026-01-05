@@ -661,7 +661,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819,
         AnalyticsAndOwnerToFlowId1767127482383,
         AddBadges1767141831647,
-        AddFlowOwnerIndex1767610587266
+        AddFlowOwnerIndex1767610587266,
     ]
     return migrations
 }

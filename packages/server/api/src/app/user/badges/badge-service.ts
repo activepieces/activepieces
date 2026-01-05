@@ -1,55 +1,82 @@
-import { apId, isNil, WebsocketClientEvent } from '@activepieces/shared'
+import { apId, BADGES, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { websocketService } from '../../core/websockets.service'
-import { applicationEvents } from '../../helper/application-events'
+import { applicationEvents, AuditEventParam, MetaInformation } from '../../helper/application-events'
+import { BadgeCheck } from './badge-check'
 import { UserBadgeEntity } from './badge-entity'
-import { allBadges } from './checks'
+import { flowsBadgesCheck } from './checks/active-flows-badges'
+import { flowContentBadgesCheck } from './checks/flow-content'
+import { flowRunsBadgesCheck } from './checks/flow-runs-badges'
 
 export const userBadgeRepo = repoFactory(UserBadgeEntity)
+
+const userEventsChecks: BadgeCheck[] = [
+    flowsBadgesCheck,
+    flowContentBadgesCheck,
+]
+
+const workerEventsChecks: BadgeCheck[] = [
+    flowRunsBadgesCheck,
+]
+
+async function processBadgeChecks(
+    checks: BadgeCheck[],
+    requestInformation: MetaInformation,
+    event: AuditEventParam,
+    log: FastifyBaseLogger,
+): Promise<void> {
+    const checkResults = await Promise.all(checks.map(badgeCheck => badgeCheck.eval({ requestInformation, event })))
+
+    const badgesByUser = new Map<string, (keyof typeof BADGES)[]>()
+    for (const result of checkResults) {
+        if (isNil(result.userId) || result.badges.length === 0) {
+            continue
+        }
+        const existing = badgesByUser.get(result.userId) ?? []
+        badgesByUser.set(result.userId, [...existing, ...result.badges])
+    }
+
+    for (const [userId, badgesToAward] of badgesByUser) {
+        const existingBadges = await userBadgeRepo().findBy({
+            userId,
+            name: In(badgesToAward),
+        })
+        const newBadges = badgesToAward.filter(badge => !existingBadges.some(existingBadge => existingBadge.name === badge))
+        for (const badgeName of newBadges) {
+            await userBadgeRepo().upsert(
+                {
+                    id: apId(),
+                    userId,
+                    name: badgeName,
+                    created: new Date().toISOString(),
+                    updated: new Date().toISOString(),
+                },
+                ['userId', 'name'],
+            )
+            log.info({
+                message: 'Awarding badge',
+                badgeName,
+                userId,
+            })
+            websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
+                badge: badgeName,
+                userId,
+            })
+        }
+    }
+}
 
 export const userBadgeService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents.registerListeners(log, {
             userEvent: () => async (requestInformation, event) => {
-                const userId = requestInformation.userId
-                if (isNil(userId)) {
-                    return
-                }
-                const badgesToAward = (await Promise.all(allBadges.map(badgeCheck => badgeCheck.eval({ requestInformation, event })))).flatMap(badge => badge)
-                if (badgesToAward.length === 0) {
-                    return
-                }
-                const existingBadges = await userBadgeRepo().findBy({
-                    userId,
-                    name: In(badgesToAward),
-                })
-                const newBadges = badgesToAward.filter(badge => !existingBadges.some(existingBadge => existingBadge.name === badge))
-                for (const badgeName of badgesToAward) {
-                    await userBadgeRepo().upsert(
-                        {
-                            id: apId(),
-                            userId,
-                            name: badgeName,
-                            created: new Date().toISOString(),
-                            updated: new Date().toISOString(),
-                        },
-                        ['userId', 'name'],
-                    )
-                    log.info({
-                        message: 'Awarding badge',
-                        badgeName,
-                        userId,
-                    })
-                    websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
-                        badge: badgeName,
-                        userId,
-                    })
-                }
+                await processBadgeChecks(userEventsChecks, requestInformation, event, log)
             },
-            workerEvent: () => () => {
-                // No badge actions for worker events
+            workerEvent: () => async (projectId, event) => {
+                const minimalMeta: MetaInformation = { platformId: '', projectId }
+                await processBadgeChecks(workerEventsChecks, minimalMeta, event, log)
             },
         })
     },
