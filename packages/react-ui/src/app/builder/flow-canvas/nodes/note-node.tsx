@@ -4,6 +4,7 @@ import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { useNotesContext } from '../notes-context';
 import { flowUtilConsts } from '../utils/consts';
 import { ApNoteNode } from '../utils/types';
+import { useState } from 'react';
 
 const controlStyle = {
   background: 'transparent',
@@ -16,6 +17,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
       type: flowUtilConsts.DRAGGED_NOTE_TAG,
     },
   });
+  const [size, setSize] = useState(props.data.size);
   const { draggedNote, resizeNote } = useNotesContext();
   if (draggedNote?.id === props.id) {
     return null;
@@ -28,14 +30,16 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         minHeight={150}
         maxWidth={550}
         maxHeight={600}
-        onResize={(e, params) => {
+        onResize={(_, params) => {
+          // update the size locally means that we don't re-render the whole graph
+          setSize({ width: params.width, height: params.height });
           resizeNote(props.id, { width: params.width, height: params.height });
         }}
       >
         <div className="rounded-full bg-background border border-solid border-blue-300 -translate-x-1/2 -translate-y-1/2 p-2"></div>
       </NodeResizeControl>
       <div ref={setNodeRef} {...attributes} {...listeners}>
-        <NoteOverlay size={props.data.size} id={props.id}></NoteOverlay>
+        <NoteOverlay size={size} id={props.id}></NoteOverlay>
       </div>
     </>
   );
