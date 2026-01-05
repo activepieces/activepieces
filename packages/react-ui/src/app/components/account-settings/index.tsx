@@ -2,6 +2,7 @@ import { DialogTitle } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
 import { Mail } from 'lucide-react';
 
+import { UserBadges } from '@/components/custom/user-badges';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,6 @@ import { UserWithBadges } from '@activepieces/shared';
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
 import ThemeToggle from './theme-toggle';
-import { UserBadges } from '@/components/custom/user-badges';
 export interface AccountSettingsDialogProps {
   open: boolean;
   onClose: () => void;
