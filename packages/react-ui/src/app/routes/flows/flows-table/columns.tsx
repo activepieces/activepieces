@@ -90,7 +90,6 @@ export const flowsTableColumns = ({
         <span className="text-muted-foreground">—</span>
       ) : (
         <ApAvatar
-          type="user"
           id={row.original.ownerId}
           size="small"
           includeAvatar={true}
