@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { cn, isMac } from '@/lib/utils';
 
 type AboveTriggerButtonProps = {
   onClick: () => void;
@@ -28,14 +28,18 @@ const AboveTriggerButton = ({
   shortCutIsEscape = false,
   showPrimaryBg = true,
 }: AboveTriggerButtonProps) => {
-  const isMac = /(Mac)/i.test(navigator.userAgent);
+  const isMacSystem = isMac();
 
   useEffect(() => {
     const keydownHandler = (event: KeyboardEvent) => {
       const isEscapePressed = event.key === 'Escape' && shortCutIsEscape;
       const ctrlAndDPressed =
-        (isMac && event.metaKey && event.key.toLocaleLowerCase() === 'd') ||
-        (!isMac && event.ctrlKey && event.key.toLocaleLowerCase() === 'd');
+        (isMacSystem &&
+          event.metaKey &&
+          event.key.toLocaleLowerCase() === 'd') ||
+        (!isMacSystem &&
+          event.ctrlKey &&
+          event.key.toLocaleLowerCase() === 'd');
       if (isEscapePressed || ctrlAndDPressed) {
         event.preventDefault();
         event.stopPropagation();
@@ -80,7 +84,11 @@ const AboveTriggerButton = ({
                     },
                   )}
                 >
-                  {shortCutIsEscape ? 'Esc' : isMac ? '⌘ + D' : 'Ctrl + D'}
+                  {shortCutIsEscape
+                    ? 'Esc'
+                    : isMacSystem
+                    ? '⌘ + D'
+                    : 'Ctrl + D'}
                 </span>
               )}
             </div>
