@@ -15,6 +15,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -27,11 +28,15 @@
   "Ids of the lists to add the contact to.": "Kennungen der Listen zu denen der Kontakt hinzugefügt werden soll.",
   "transactional email forbidden sender for contact. Use only for email Contact ( only available if updateEnabled = true )": "transaktionaler Absender für Kontakt. Nur für E-Mail-Kontakt verwenden ( nur verfügbar, wenn updateAktiviert = true )",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "GET": "ERHALTEN",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
