@@ -1,6 +1,10 @@
 {
   "Automate your complete HR hiring and onboarding workflow. Manage applicants, job openings, interview scheduling, and track progress through hiring stages with real-time webhooks.": "Automatisez votre flux de travail complet en matière de recrutement et d'intégration RH. Gérez les candidats, les postes vacants, la planification des entrevues et suivez les progrès par des étapes d'embauche avec des webhooks en temps réel.",
+  "API Key": "Clé API",
+  "Base URL": "URL de base",
   "Enter your Fountain API key from Profile > Manage API Keys or Settings > Integrations & API Keys": "Entrez votre clé API Fountain depuis Profil > Gérer les clés API ou Paramètres > Intégrations & Clés API",
+  "The base URL for your Fountain API (default: https://api.fountain.com). For example: us-2.fountain.com/api/v2": "L'URL de base de votre API Fountain (par défaut : https://api.fountain.com). Par exemple : us-2.fountain.com/api/v2",
+  "Enter your Fountain API key and base URL": "Entrez votre clé API Fountain et l'URL de base",
   "Create Applicant": "Créer un candidat",
   "Delete Applicant": "Supprimer le candidat",
   "Get Applicant Details": "Obtenir les détails du candidat",
@@ -48,7 +52,6 @@
   "Applicant's complete phone number": "Numéro de téléphone complet du candidat",
   "Apply additional duplicate applicant blocking rules specified in company duplicate settings": "Appliquer des règles de blocage supplémentaires des requérants en double spécifiées dans les paramètres des doublons de l'entreprise",
   "The applicant to delete (shows 50 most recent applicants)": "Le candidat à supprimer (montre 50 candidats les plus récents)",
-  "The applicant to retrieve details for (shows 50 most recent applicants)": "Le demandeur pour lequel il doit récupérer les détails (montre 50 personnes les plus récentes)",
   "The applicant to get interview sessions for (shows 50 most recent applicants)": "Le candidat pour obtenir des sessions d'entrevue (montre 50 candidats les plus récents)",
   "The opening to retrieve details for": "Ouverture de récupération des détails pour",
   "The opening that contains the stage": "L'ouverture qui contient l'étape",
