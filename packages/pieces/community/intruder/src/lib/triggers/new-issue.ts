@@ -19,6 +19,9 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue, lastFetchEpochMS, auth }) => {
+    if (!lastFetchEpochMS) {
+      lastFetchEpochMS = Date.now() - 5 * 60 * 1000;
+    }
     const since = dayjs(lastFetchEpochMS).toISOString();
 
     const response = await makeRequest(

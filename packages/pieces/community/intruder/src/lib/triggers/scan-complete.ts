@@ -19,15 +19,33 @@ const polling: Polling<
 > = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ propsValue, lastFetchEpochMS, auth }) => {
-    const response = await makeRequest(
-      auth.secret_text,
-      HttpMethod.GET,
-      `/scans/?status=completed`
-    );
+    const allItems: any[] = [];
+    let offset = 0;
+    const limit = 25;
+    let hasMore = true;
 
-    const items = response.results || [];
+    while (hasMore) {
+      const response = await makeRequest(
+        auth.secret_text,
+        HttpMethod.GET,
+        `/scans/?status=completed&limit=${limit}&offset=${offset}`
+      );
 
-    return items
+      const items = response.results || [];
+
+      if (items.length === 0) {
+        hasMore = false;
+      } else {
+        allItems.push(...items);
+        offset += limit;
+
+        if (!response.next) {
+          hasMore = false;
+        }
+      }
+    }
+
+    return allItems
       .filter((item: any) => {
         const createdTime = dayjs(item.created_at).valueOf();
         return createdTime > lastFetchEpochMS;
