@@ -61,7 +61,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {
         const userId = await getUserId(request.principal)
-        return platformProjectService(request.log).getAllForPlatform({
+        return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
             cursorRequest: request.query.cursor ?? null,

@@ -9,7 +9,6 @@ import {
     ErrorCode,
     isNil,
     Metadata,
-    PlatformRole,
     Project,
     ProjectIcon,
     ProjectId,
@@ -17,10 +16,9 @@ import {
     spreadIfDefined,
     UserId,
 } from '@activepieces/shared'
-import { FindOptionsWhere, ILike, In, IsNull, Not } from 'typeorm'
+import { Brackets, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedStore } from '../database/redis-connections'
-import { projectMemberService } from '../ee/projects/project-members/project-member.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
@@ -146,6 +144,7 @@ export const projectService = {
         const projects = await this.getAllForUser({
             platformId: user.platformId,
             userId,
+            isPrivileged: userService.isUserPrivileged(user),
         })
         if (isNil(projects) || projects.length === 0) {
             throw new ActivepiecesError({
@@ -161,18 +160,33 @@ export const projectService = {
 
     async getAllForUser(params: GetAllForUserParams): Promise<Project[]> {
         assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
-        const filters = await getUsersFilters(params)
-        return projectRepo()
+        
+        const queryBuilder = projectRepo()
             .createQueryBuilder('project')
-            .where(filters)
+            .where('project."platformId" = :platformId', { platformId: params.platformId })
+            .andWhere('project.deleted IS NULL')
             .orderBy('project.type', 'ASC')
             .addOrderBy('project.displayName', 'ASC')
             .addOrderBy('project.id', 'ASC')
-            .getMany()
+
+        if (params.displayName) {
+            queryBuilder.andWhere('project."displayName" ILIKE :displayName', { displayName: `%${params.displayName}%` })
+        }
+
+        await applyProjectsAccessFilters(queryBuilder, params)
+
+        return queryBuilder.getMany()
     },
     async userHasProjects(params: GetAllForUserParams): Promise<boolean> {
-        const filters = await getUsersFilters(params)
-        return projectRepo().existsBy(filters)
+        assertNotNullOrUndefined(params.platformId, 'platformId is undefined')
+        
+        const queryBuilder = projectRepo()
+            .createQueryBuilder('project')
+            .where('project."platformId" = :platformId', { platformId: params.platformId })
+
+        await applyProjectsAccessFilters(queryBuilder, params)
+
+        return queryBuilder.getExists()
     },
     async addProjectToPlatform({ projectId, platformId }: AddProjectToPlatformParams): Promise<void> {
         const query = {
@@ -198,57 +212,36 @@ export const projectService = {
 }
 
 
-async function getUsersFilters(params: GetAllForUserParams): Promise<FindOptionsWhere<Project>[]> {
-    const user = await userService.getOneOrFail({ id: params.userId })
-    const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
-    const displayNameFilter = params.displayName ? { displayName: ILike(`%${params.displayName}%`) } : {}
-
-    if (!isPrivilegedUser) {
-        // Regular members can only see projects they're members of and their own personal project
-        const projectIds = await projectMemberService(system.globalLogger()).getIdsOfProjects({
-            platformId: params.platformId,
-            userId: params.userId,
-        })
-
-        const personalProjects = await projectRepo().findBy({
-            platformId: params.platformId,
-            ownerId: params.userId,
-            type: ProjectType.PERSONAL,
-        })
-
-        return [{
-            platformId: params.platformId,
-            id: In([...projectIds, ...personalProjects.map((project) => project.id)]),
-            ...displayNameFilter,
-        }]
+export async function applyProjectsAccessFilters<T extends ObjectLiteral>(
+    queryBuilder: SelectQueryBuilder<T>,
+    params: ApplyProjectsAccessFiltersParams,
+): Promise<void> {
+    const { platformId, userId, scope } = params
+    // Privileged users (scope=PLATFORM or isPrivileged) can see all projects
+    if (scope === EndpointScope.PLATFORM) {
+        return
     }
 
-
-    if (params.scope === EndpointScope.PLATFORM) {
-        // Platform admins and operators can see all projects inside platform
-        return [{
-            platformId: params.platformId,
-            ...displayNameFilter,
-        }]
+    let isPrivileged = params.isPrivileged
+    if (isNil(isPrivileged)) {
+        const user = await userService.getOneOrFail({ id: userId })
+        isPrivileged = userService.isUserPrivileged(user)
     }
 
-    const teamProjects = await projectRepo().findBy({
-        platformId: params.platformId,
-        type: ProjectType.TEAM,
-    })
+    if (isPrivileged) {
+        return
+    }
 
-    const myPersonalProject = await projectRepo().findOneBy({
-        platformId: params.platformId,
-        ownerId: params.userId,
-        type: ProjectType.PERSONAL,
-    })
-
-    // Platform admin but in his dashboard he can see all projects inside platform & his own personal project only
-    return [{
-        platformId: params.platformId,
-        id: In([...teamProjects.map((project) => project.id), ...(myPersonalProject?.id ? [myPersonalProject.id] : [])]),
-        ...displayNameFilter,
-    }]
+    // Non-privileged user => personal project + member projects
+    queryBuilder.andWhere(new Brackets(qb => {
+        qb.where(
+            'project."ownerId" = :userId AND project.type = :personalType',
+            { userId, personalType: ProjectType.PERSONAL },
+        ).orWhere(
+            'project.id IN (SELECT "projectId" FROM project_member WHERE "userId" = :userId AND "platformId" = :platformId)',
+            { userId, platformId },
+        )
+    }))
 }
 async function assertExternalIdIsUnique(externalId: string | undefined | null, projectId: ProjectId): Promise<void> {
     if (!isNil(externalId)) {
@@ -273,6 +266,7 @@ type GetAllForUserParams = {
     userId: string
     displayName?: string
     scope?: EndpointScope
+    isPrivileged?: boolean
 }
 
 type GetOneByOwnerAndPlatformParams = {
@@ -327,3 +321,9 @@ type AddProjectToPlatformParams = {
 
 type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>
 
+type ApplyProjectsAccessFiltersParams = {
+    platformId: string
+    userId: string
+    scope?: EndpointScope
+    isPrivileged?: boolean
+}

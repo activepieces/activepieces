@@ -218,6 +218,10 @@ export const userService = {
             platformId,
         })
     },
+
+    isUserPrivileged(user: User): boolean {
+        return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
+    },
 }
 
 
