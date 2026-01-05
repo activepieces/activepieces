@@ -27,7 +27,7 @@ export const BADGES = {
         description: 'I have 10 active flows and I\'m basically an automation pro.',
     },
     'cant-stop': {
-        imageUrl: 'https://cdn.activepieces.com/badges/cant-stop.gif',
+        imageUrl: 'https://cdn.activepieces.com/badges/can\'t-stop.gif',
         title: 'Can\'t Stop',
         description: 'I have 50 active flows and automation just happens around me.',
     },
