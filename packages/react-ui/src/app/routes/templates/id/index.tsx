@@ -10,7 +10,7 @@ import {
 } from 'react-router-dom';
 import { toast } from 'sonner';
 
-import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
+import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { FlowCanvas } from '@/app/builder/flow-canvas';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { Button } from '@/components/ui/button';

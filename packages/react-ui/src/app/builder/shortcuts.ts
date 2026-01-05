@@ -1,6 +1,6 @@
 import { flowStructureUtil, isNil, StepLocationRelativeToParent } from "@activepieces/shared";
 import { useCallback, useEffect } from "react";
-import { canvasBulkActions } from "./flow-canvas/bulk-actions";
+import { canvasBulkActions } from "./flow-canvas/utils/bulk-actions";
 import { useBuilderStateContext } from "./builder-hooks";
 import { CanvasShortcuts, CanvasShortcutsProps } from "./flow-canvas/context-menu/canvas-context-menu";
 import { flowCanvasConsts } from "./flow-canvas/utils/consts";

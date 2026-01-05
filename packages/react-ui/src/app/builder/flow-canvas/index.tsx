@@ -12,7 +12,6 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-
 import {
   FlowActionType,
   flowStructureUtil,
@@ -20,18 +19,14 @@ import {
   isNil,
   Step,
 } from '@activepieces/shared';
-
 import {
-  useBuilderStateContext,
-  useFocusOnStep,
-  useResizeCanvas,
+  useBuilderStateContext
 } from '../builder-hooks';
-
 import {
   CanvasContextMenu,
   ContextMenuType,
 } from './context-menu/canvas-context-menu';
-import { useCursorPosition } from './cursor-position-context';
+import { useCursorPosition } from '../state/cursor-position-context';
 import { FlowDragLayer } from './flow-drag-layer';
 import {
   flowCanvasConsts
@@ -42,43 +37,7 @@ import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
 import { RightSideBarType } from '@/lib/types';
 import { useHandleKeyPressOnCanvas } from '../shortcuts';
-const getChildrenKey = (step: Step) => {
-  switch (step.type) {
-    case FlowActionType.LOOP_ON_ITEMS:
-      return step.firstLoopAction ? step.firstLoopAction.name : '';
-    case FlowActionType.ROUTER:
-      return step.children.reduce((routerKey, child) => {
-        const childrenKey = child
-          ? flowStructureUtil
-              .getAllSteps(child)
-              .reduce(
-                (childKey, grandChild) => `${childKey}-${grandChild.name}`,
-                '',
-              )
-          : 'null';
-        return `${routerKey}-${childrenKey}`;
-      }, '');
-    case FlowActionType.CODE:
-    case FlowActionType.PIECE:
-      return '';
-  }
-};
-const createGraphKey = (flowVersion: FlowVersion) => {
-  return flowStructureUtil
-    .getAllSteps(flowVersion.trigger)
-    .reduce((acc, step) => {
-      const branchesNames =
-        step.type === FlowActionType.ROUTER
-          ? step.settings.branches.map((branch) => branch.branchName).join('-')
-          : '0';
-      const childrenKey = getChildrenKey(step);
-      return `${acc}-${step.displayName}-${step.type}-${
-        step.nextAction ? step.nextAction.name : ''
-      }-${
-        step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
-      }-${branchesNames}-${childrenKey}}`;
-    }, '');
-};
+import { flowCanvasHooks } from './hooks';
 
 export const FlowCanvas = React.memo(
   ({
@@ -107,9 +66,9 @@ export const FlowCanvas = React.memo(
     });
     const containerRef = useRef<HTMLDivElement>(null);
     useShowChevronNextToSelection();
-    useFocusOnStep();
+    flowCanvasHooks.useFocusOnStep();
     useHandleKeyPressOnCanvas();
-    useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
+    flowCanvasHooks.useResizeCanvas(containerRef, setHasCanvasBeenInitialised);
     const storeApi = useStoreApi();
     const isShiftKeyPressed = useKeyPress('Shift');
     const inGrabPanningMode = !isShiftKeyPressed && panningMode === 'grab';
@@ -288,3 +247,40 @@ export const FlowCanvas = React.memo(
 );
 
 FlowCanvas.displayName = 'FlowCanvas';
+const getChildrenKey = (step: Step) => {
+  switch (step.type) {
+    case FlowActionType.LOOP_ON_ITEMS:
+      return step.firstLoopAction ? step.firstLoopAction.name : '';
+    case FlowActionType.ROUTER:
+      return step.children.reduce((routerKey, child) => {
+        const childrenKey = child
+          ? flowStructureUtil
+              .getAllSteps(child)
+              .reduce(
+                (childKey, grandChild) => `${childKey}-${grandChild.name}`,
+                '',
+              )
+          : 'null';
+        return `${routerKey}-${childrenKey}`;
+      }, '');
+    case FlowActionType.CODE:
+    case FlowActionType.PIECE:
+      return '';
+  }
+};
+const createGraphKey = (flowVersion: FlowVersion) => {
+  return flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .reduce((acc, step) => {
+      const branchesNames =
+        step.type === FlowActionType.ROUTER
+          ? step.settings.branches.map((branch) => branch.branchName).join('-')
+          : '0';
+      const childrenKey = getChildrenKey(step);
+      return `${acc}-${step.displayName}-${step.type}-${
+        step.nextAction ? step.nextAction.name : ''
+      }-${
+        step.type === FlowActionType.PIECE ? step.settings.pieceName : ''
+      }-${branchesNames}-${childrenKey}}`;
+    }, '');
+};
