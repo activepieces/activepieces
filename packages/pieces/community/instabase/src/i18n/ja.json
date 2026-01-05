@@ -32,6 +32,7 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
@@ -54,7 +55,7 @@
   "The model to use to answer the question": "質問に答えるために使用するモデル",
   "Enable fast mode for quicker responses": "高速モードを有効にするとレスポンスが速くなります",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Default": "デフォルト",
   "Advanced": "高度な設定",
   "GET": "取得",
@@ -63,6 +64,10 @@
   "PUT": "PUT",
   "DELETE": "削除",
   "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw",
   "New Conversation": "新しい会話",
   "Triggers when a new conversation is created": "新しい会話が作成されたときにトリガーします"
 }
