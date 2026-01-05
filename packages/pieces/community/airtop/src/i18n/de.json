@@ -84,6 +84,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -155,7 +156,7 @@
   "Describe the element to hover, e.g. \"the search box input in the top right corner\".": "Beschreiben Sie das zu schwebende Element, z.B. \"das Suchfeld in der oberen rechten Ecke\".",
   "Wait for page navigation to complete after hovering (default: false).": "Warten Sie, bis die Seitennavigation nach dem Schweben abgeschlossen ist (Standard: falsch).",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "1280x720 (Default)": "1280x720 (Standard)",
   "1920x1080": "1920 x 1080",
   "1366x768": "1366x768",
@@ -203,5 +204,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
