@@ -10,9 +10,7 @@ import {
 } from 'react';
 import { usePrevious } from 'react-use';
 import { create, useStore } from 'zustand';
-
 import { useEmbedding } from '@/components/embed-provider';
-import { Messages } from '@/features/chat/chat-message-list';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import {
   Permission,
@@ -20,17 +18,9 @@ import {
   isNil,
   StepLocationRelativeToParent,
   FlowRunStatus,
-  apId,
-  FlowTriggerType,
 } from '@activepieces/shared';
-
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
-import {
-  ChatDrawerSource,
-  RightSideBarType,
-} from '../../lib/types';
-
 import {
   copySelectedNodes,
   deleteSelectedNodes,
@@ -49,6 +39,7 @@ import { createFlowState, FlowState } from './state/flow-state';
 import { createPieceSelectorState, PieceSelectorState } from './state/piece-selector-state';
 import { createRunState, RunState } from './state/run-state';
 import { ChatState, createChatState } from './state/chat-state';
+import { CanvasState, createCanvasState } from './state/canvas-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -62,35 +53,13 @@ export function useBuilderStateContext<T>(
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-export type BuilderState = FlowState & PieceSelectorState & RunState & ChatState &{
-  readonly: boolean;
-  hideTestWidget: boolean;
-  rightSidebar: RightSideBarType;
-  selectedStep: string | null;
-  activeDraggingStep: string | null;
-  selectedBranchIndex: number | null;
-  showMinimap: boolean;
-  setShowMinimap: (showMinimap: boolean) => void;
-  setSelectedBranchIndex: (index: number | null) => void;
-  exitStepSettings: () => void;
-  renameFlowClientSide: (newName: string) => void;
-  moveToFolderClientSide: (folderId: string) => void;
-  setRightSidebar: (rightSidebar: RightSideBarType) => void;
-  removeStepSelection: () => void;
-  selectStepByName: (stepName: string) => void;
-  setActiveDraggingStep: (stepName: string | null) => void;
+export type BuilderState = FlowState & PieceSelectorState & RunState & ChatState & CanvasState & {
   insertMention: InsertMentionHandler | null;
-  setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
-  selectedNodes: string[];
-  setSelectedNodes: (nodes: string[]) => void;
-  panningMode: 'grab' | 'pan';
-  setPanningMode: (mode: 'grab' | 'pan') => void;
   isFocusInsideListMapperModeInput: boolean;
   setIsFocusInsideListMapperModeInput: (
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
-  deselectStep: () => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -111,133 +80,17 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     const pieceSelectorState = createPieceSelectorState(get, set);
     const runState = createRunState(initialState, get, set);
     const chatState = createChatState(set);
-    const failedStepNameInRun = initialState.run?.steps
-      ? flowRunUtils.findLastStepWithStatus(
-          initialState.run.status,
-          initialState.run.steps,
-        )
-      : null;
-    const initiallySelectedStep = flowCanvasUtils.determineInitiallySelectedStep(
-      failedStepNameInRun,
-      initialState.flowVersion,
-    );
-    const isEmptyTriggerInitiallySelected =
-      initiallySelectedStep === 'trigger' &&
-      initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
+    const canvasState = createCanvasState(initialState, set);
     return {
       ...flowState,
       ...runState,
       ...pieceSelectorState,
       ...chatState,
-      showMinimap: false,
-      setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
-      readonly: initialState.readonly,
-      hideTestWidget: initialState.hideTestWidget ?? false,
-      saving: false,
-      selectedStep: initiallySelectedStep,
-      activeDraggingStep: null,
-      rightSidebar:
-        initiallySelectedStep && !isEmptyTriggerInitiallySelected
-          ? RightSideBarType.PIECE_SETTINGS
-          : RightSideBarType.NONE,
-      removeStepSelection: () =>
-        set({
-          selectedStep: null,
-          rightSidebar: RightSideBarType.NONE,
-          selectedBranchIndex: null,
-        }),
-
-      setActiveDraggingStep: (stepName: string | null) =>
-        set({
-          activeDraggingStep: stepName,
-        }),
-      setSelectedBranchIndex: (branchIndex: number | null) =>
-        set({
-          selectedBranchIndex: branchIndex,
-        }),
-      setReadOnly: (readonly: boolean) => set({ readonly }),
-      renameFlowClientSide: (newName: string) => {
-        set((state) => {
-          return {
-            flowVersion: {
-              ...state.flowVersion,
-              displayName: newName,
-            },
-          };
-        });
-      },
-      selectStepByName: (selectedStep: string) => {
-        set((state) => {
-          const selectedNodes = isNil(selectedStep) ? [] : [selectedStep];
-
-          const rightSidebar =
-            selectedStep === 'trigger' &&
-            state.flowVersion.trigger.type === FlowTriggerType.EMPTY
-              ? RightSideBarType.NONE
-              : RightSideBarType.PIECE_SETTINGS;
-
-          const isEmptyTrigger =
-            selectedStep === 'trigger' &&
-            state.flowVersion.trigger.type === FlowTriggerType.EMPTY;
-
-          return {
-            openedPieceSelectorStepNameOrAddButtonId: isEmptyTrigger
-              ? 'trigger'
-              : null,
-            selectedStep,
-            rightSidebar,
-            selectedBranchIndex: null,
-            selectedNodes,
-            chatDrawerOpenSource: null,
-          };
-        });
-      },
-      exitStepSettings: () =>
-        set((state) => ({
-          rightSidebar: RightSideBarType.NONE,
-          selectedStep: null,
-          selectedBranchIndex: null,
-        })),
-      setRightSidebar: (rightSidebar: RightSideBarType) =>
-        set({ rightSidebar }),
-      setIsPublishing: (isPublishing: boolean) =>
-        set((state) => {
-          if (isPublishing) {
-            state.removeStepSelection();
-            state.setReadOnly(true);
-          } else {
-            state.setReadOnly(false);
-          }
-          return {
-            isPublishing,
-          };
-        }),
-      isPublishing: false,
-      insertMention: null,
+      ...canvasState,
       setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
         set({ insertMention });
       },
-      selectedBranchIndex: null,
-      selectedNodes: [],
-      setSelectedNodes: (nodes) => {
-        return set(() => ({
-          selectedNodes: nodes,
-        }));
-      },
-      deselectStep: () => {
-        return set(() => ({
-          rightSidebar: RightSideBarType.NONE,
-          selectedBranchIndex: null,
-          selectedStep: null,
-        }));
-      },
-      panningMode: getPanningModeFromLocalStorage(),
-      setPanningMode: (mode: 'grab' | 'pan') => {
-        localStorage.setItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE, mode);
-        return set(() => ({
-          panningMode: mode,
-        }));
-      },
+      insertMention: null,
       isFocusInsideListMapperModeInput: false,
       setIsFocusInsideListMapperModeInput: (
         isFocusInsideListMapperModeInput: boolean,
