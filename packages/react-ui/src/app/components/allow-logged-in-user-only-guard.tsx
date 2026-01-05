@@ -6,6 +6,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectHooks } from '@/hooks/project-hooks';
 
+import { BadgeCelebrate } from './badge-celebrate';
 import { authenticationSession } from '../../lib/authentication-session';
 
 type AllowOnlyLoggedInUserOnlyGuardProps = {
@@ -26,5 +27,10 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
   projectHooks.useCurrentProject();
-  return <SocketProvider>{children}</SocketProvider>;
+  return (
+    <SocketProvider>
+      <BadgeCelebrate />
+      {children}
+    </SocketProvider>
+  );
 };
