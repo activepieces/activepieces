@@ -20,6 +20,7 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
   "Timeout (in seconds)": "タイムアウト（秒）",
@@ -27,7 +28,7 @@
   "The name of the event. This is how you'll reference the event in campaigns or segments": "イベントの名前。これはキャンペーンまたはセグメントでイベントを参照する方法です。",
   "Event information to be sent to Customer.io": "Customer.ioに送信されるイベント情報",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "Key Value": "キー値",
   "JSON": "JSON",
   "GET": "取得",
@@ -35,5 +36,8 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }
