@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata, StepMetadata } from '@/lib/types';
@@ -219,9 +219,7 @@ export const useGradientFromPieces = (
       return '';
     }
 
-    const allColors = colorQueries
-      .map((query) => query.data || [])
-      .flat();
+    const allColors = colorQueries.map((query) => query.data || []).flat();
 
     return buildGradientFromColors(allColors);
   }, [colorQueries, logosToProcess.length]);
