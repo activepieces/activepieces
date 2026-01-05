@@ -416,11 +416,14 @@
       "@activepieces/piece-cryptolens": [
         "packages/pieces/community/cryptolens/src/index.ts"
       ],
-      "@activepieces/piece-ampeco":[
+      "@activepieces/piece-ampeco": [
         "packages/pieces/community/ampeco/src/index.ts"
       ],
       "@activepieces/piece-quaderno": [
         "packages/pieces/community/quaderno/src/index.ts"
+      ],
+      "@activepieces/piece-livesession": [
+        "packages/pieces/community/livesession/src/index.ts"
       ]
     },
     "resolveJsonModule": true
