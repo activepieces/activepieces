@@ -12,10 +12,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
+import { UserWithBadges } from '@activepieces/shared';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
 import ThemeToggle from './theme-toggle';
+import { UserBadges } from '@/components/custom/user-badges';
 export interface AccountSettingsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -54,6 +56,8 @@ export function AccountSettingsDialog({
                 </div>
               </div>
             </div>
+
+            <UserBadges user={user as UserWithBadges | null} />
 
             <Separator />
 

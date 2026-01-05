@@ -12,7 +12,6 @@ import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-f
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import { AllowOnlyLoggedInUserOnlyGuard } from '../../allow-logged-in-user-only-guard';
 import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
 
@@ -49,14 +48,12 @@ export function BuilderNavigationSidebar({
   const { embedState } = useEmbedding();
 
   return (
-    <AllowOnlyLoggedInUserOnlyGuard>
-      <SidebarProvider>
-        {!embedState.isEmbedded && <BuilderSidebarContent />}
-        <SidebarInset>
-          {children}
-          {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
-        </SidebarInset>
-      </SidebarProvider>
-    </AllowOnlyLoggedInUserOnlyGuard>
+    <SidebarProvider>
+      {!embedState.isEmbedded && <BuilderSidebarContent />}
+      <SidebarInset>
+        {children}
+        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
