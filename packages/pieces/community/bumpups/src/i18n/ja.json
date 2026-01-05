@@ -24,6 +24,7 @@
   "Method": "方法",
   "Headers": "ヘッダー",
   "Query Parameters": "クエリパラメータ",
+  "Body Type": "ボディタイプ",
   "Body": "本文",
   "Response is Binary ?": "応答はバイナリですか?",
   "No Error on Failure": "失敗時にエラーはありません",
@@ -33,7 +34,7 @@
   "Preferred length of each timestamp.": "各タイムスタンプの優先される長さ。",
   "Message or query about the video (max 500 chars). If empty, defaults to \"summary\".": "ビデオについてのメッセージまたは問い合わせ（最大 500 文字）。空の場合、デフォルトは \"summary\" です。",
   "Authorization headers are injected automatically from your connection.": "認証ヘッダは接続から自動的に注入されます。",
-  "Enable for files like PDFs, images, etc..": "PDF、画像などのファイルを有効にします。",
+  "Enable for files like PDFs, images, etc.": "PDF、画像などのファイルを有効にする",
   "bump-1.0": "bump-1.0",
   "English (en)": "英語 (en)",
   "Hindi (hi)": "ヒンディー語（ひ）",
@@ -56,5 +57,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "削除",
-  "HEAD": "頭"
+  "HEAD": "頭",
+  "None": "なし",
+  "JSON": "JSON",
+  "Form Data": "フォームデータ",
+  "Raw": "Raw"
 }
