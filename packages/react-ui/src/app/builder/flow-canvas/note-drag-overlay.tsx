@@ -1,4 +1,6 @@
+import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
+
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { apId, isNil } from '@activepieces/shared';
 
@@ -6,10 +8,9 @@ import {
   useCursorPosition,
   useCursorPositionEffect,
 } from './cursor-position-context';
-import { BUILDER_NAVIGATION_SIDEBAR_ID } from './utils/consts';
-import { NoteDragOverlayMode, useNotesContext } from './notes-context';
 import { NoteOverlay } from './nodes/note-node';
-import { useReactFlow } from '@xyflow/react';
+import { NoteDragOverlayMode, useNotesContext } from './notes-context';
+import { BUILDER_NAVIGATION_SIDEBAR_ID } from './utils/consts';
 
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
@@ -22,32 +23,34 @@ const NoteDragOverlay = () => {
   const reactFlow = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
   const containerRect = containerRef.current?.getBoundingClientRect();
-  const {draggedNote, noteDragOverlayMode, addNote} = useNotesContext();
+  const { draggedNote, noteDragOverlayMode, addNote } = useNotesContext();
   const builderNavigationBarWidth = open
     ? builderNavigationBar?.clientWidth ?? 0
     : 0;
   const left = `${
-    overlayPosition.x- (containerRect?.width ?? 0)/2 -
+    overlayPosition.x -
+    (containerRect?.width ?? 0) / 2 -
     builderNavigationBarWidth
   }px`;
-  const top = `${
-    overlayPosition.y - 50 - (containerRect?.height ?? 0)/2
-  }px`;
+  const top = `${overlayPosition.y - 50 - (containerRect?.height ?? 0) / 2}px`;
   useCursorPositionEffect((position) => {
     setOverlayPosition(position);
   });
-  if(isNil(draggedNote) || isNil(noteDragOverlayMode)) {return null;}
+  if (isNil(draggedNote) || isNil(noteDragOverlayMode)) {
+    return null;
+  }
   return (
     <div
-      className={
-        'absolute left-0 top-0 opacity-75'
-      }
+      className={'absolute left-0 top-0 opacity-75'}
       ref={containerRef}
       onClick={() => {
-         if(noteDragOverlayMode === NoteDragOverlayMode.CREATE){
+        if (noteDragOverlayMode === NoteDragOverlayMode.CREATE) {
           const rect = containerRef.current?.getBoundingClientRect();
-          if(rect){
-            const positionOnCanvas = reactFlow.screenToFlowPosition({x: rect.left, y: rect.top});
+          if (rect) {
+            const positionOnCanvas = reactFlow.screenToFlowPosition({
+              x: rect.left,
+              y: rect.top,
+            });
             addNote({
               id: apId(),
               content: 'test',
@@ -57,7 +60,7 @@ const NoteDragOverlay = () => {
               color: 'yellow',
             });
           }
-         }
+        }
       }}
       style={{
         left,
@@ -66,7 +69,13 @@ const NoteDragOverlay = () => {
         width: `${draggedNote.size.width * reactFlow.getZoom()}px`,
       }}
     >
-     <NoteOverlay id={draggedNote.id} size={{width: draggedNote.size.width * reactFlow.getZoom(), height: draggedNote.size.height * reactFlow.getZoom()}}></NoteOverlay>
+      <NoteOverlay
+        id={draggedNote.id}
+        size={{
+          width: draggedNote.size.width * reactFlow.getZoom(),
+          height: draggedNote.size.height * reactFlow.getZoom(),
+        }}
+      ></NoteOverlay>
     </div>
   );
 };

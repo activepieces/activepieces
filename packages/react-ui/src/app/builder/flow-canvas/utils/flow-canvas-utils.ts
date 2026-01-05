@@ -16,6 +16,8 @@ import {
   FlowTriggerType,
 } from '@activepieces/shared';
 
+import { Note } from '../notes-context';
+
 import { flowUtilConsts } from './consts';
 import {
   ApBigAddButtonNode,
@@ -29,7 +31,6 @@ import {
   ApStepNode,
   ApStraightLineEdge,
 } from './types';
-import { Note } from '../notes-context';
 
 const createBigAddButtonGraph: (
   parentStep: LoopOnItemsAction | RouterAction,
@@ -124,9 +125,9 @@ const createStepGraph: (
   };
 };
 
-const buildFlowGraph: (step: FlowAction | FlowTrigger | undefined) => ApGraph = (
-  step,
-) => {
+const buildFlowGraph: (
+  step: FlowAction | FlowTrigger | undefined,
+) => ApGraph = (step) => {
   if (isNil(step)) {
     return {
       nodes: [],

@@ -1,6 +1,14 @@
 import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Fullscreen, Hand, Map, Minus, MousePointer, NotebookPen, Plus } from 'lucide-react';
+import {
+  Fullscreen,
+  Hand,
+  Map,
+  Minus,
+  MousePointer,
+  NotebookPen,
+  Plus,
+} from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -13,10 +21,10 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
+import { NoteDragOverlayMode, useNotesContext } from './notes-context';
 import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
-import { NoteDragOverlayMode, useNotesContext } from './notes-context';
 const verticalPaddingOnFitView = 100;
 // Calculate the node's position in relation to the canvas
 const calculateNodePositionInCanvas = (
@@ -237,18 +245,28 @@ const CanvasControls = ({
           </Button>
         </CanvasButtonWrapper>
         <CanvasButtonWrapper tooltip={t('Add note')}>
-        <Button
-            variant={noteDragOverlayMode === NoteDragOverlayMode.CREATE ? 'default' : 'ghost'}
+          <Button
+            variant={
+              noteDragOverlayMode === NoteDragOverlayMode.CREATE
+                ? 'default'
+                : 'ghost'
+            }
             size="icon"
             onClick={() => {
-              setDraggedNote({
-                id: '',
-                content: '',
-                creator: '',
-                position: {x: 0, y: 0},
-                size: {width: flowUtilConsts.NOTE_CREATION_OVERLAY_WIDTH, height: flowUtilConsts.NOTE_CREATION_OVERLAY_HEIGHT},
-                color: 'yellow',
-              }, NoteDragOverlayMode.CREATE);
+              setDraggedNote(
+                {
+                  id: '',
+                  content: '',
+                  creator: '',
+                  position: { x: 0, y: 0 },
+                  size: {
+                    width: flowUtilConsts.NOTE_CREATION_OVERLAY_WIDTH,
+                    height: flowUtilConsts.NOTE_CREATION_OVERLAY_HEIGHT,
+                  },
+                  color: 'yellow',
+                },
+                NoteDragOverlayMode.CREATE,
+              );
             }}
           >
             <NotebookPen className="size-4" />

@@ -22,11 +22,11 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import StepDragOverlay from './step-drag-overlay';
-import { ApButtonData } from './utils/types';
-import { NoteDragOverlayMode, useNotesContext } from './notes-context';
-import { flowUtilConsts } from './utils/consts';
 import NoteDragOverlay from './note-drag-overlay';
+import { NoteDragOverlayMode, useNotesContext } from './notes-context';
+import StepDragOverlay from './step-drag-overlay';
+import { flowUtilConsts } from './utils/consts';
+import { ApButtonData } from './utils/types';
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const viewport = useViewport();
@@ -42,7 +42,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     state.flowVersion,
     state.activeDraggingStep,
   ]);
-  
+
   const fixCursorSnapOffset = useCallback(
     (args: Parameters<typeof rectIntersection>[0]) => {
       // Bail out if keyboard activated
@@ -77,12 +77,12 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     : undefined;
   const { setDraggedNote, getNoteById, moveNote } = useNotesContext();
   const handleDragStart = (e: DragStartEvent) => {
-    if(e.active.data.current?.type === flowUtilConsts.DRAGGED_STEP_TAG){
+    if (e.active.data.current?.type === flowUtilConsts.DRAGGED_STEP_TAG) {
       setActiveDraggingStep(e.active.id.toString());
     }
-    if(e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG){
+    if (e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG) {
       const draggedNote = getNoteById(e.active.id.toString());
-      if(draggedNote){
+      if (draggedNote) {
         setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE);
       }
     }
@@ -138,18 +138,21 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
         });
       }
     }
-    if(e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG){
+    if (e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG) {
       const draggedNote = getNoteById(e.active.id.toString());
-      if(draggedNote){
+      if (draggedNote) {
         const element = document.getElementById(e.active.id.toString());
-        if(element){
-          const positionOnCanvas = reactFlow.screenToFlowPosition({x: element.getBoundingClientRect().left, y: element.getBoundingClientRect().top});
+        if (element) {
+          const positionOnCanvas = reactFlow.screenToFlowPosition({
+            x: element.getBoundingClientRect().left,
+            y: element.getBoundingClientRect().top,
+          });
           moveNote(draggedNote.id, positionOnCanvas);
         }
       }
     }
   };
- 
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

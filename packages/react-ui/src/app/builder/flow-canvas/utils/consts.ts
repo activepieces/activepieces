@@ -6,7 +6,7 @@ import { ApStraightLineCanvasEdge } from '../edges/straight-line-edge';
 import { ApBigAddButtonCanvasNode } from '../nodes/big-add-button-node';
 import ApGraphEndWidgetNode from '../nodes/flow-end-widget-node';
 import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
-import {ApNoteCanvasNode} from '../nodes/note-node';
+import { ApNoteCanvasNode } from '../nodes/note-node';
 import { ApStepCanvasNode } from '../nodes/step-node';
 
 import { ApEdgeType, ApNodeType } from './types';
@@ -59,7 +59,6 @@ const AP_NODE_SIZE: Record<
     height: 0,
     width: 0,
   },
-
 };
 
 const doesNodeAffectBoundingBoxWidth: (
