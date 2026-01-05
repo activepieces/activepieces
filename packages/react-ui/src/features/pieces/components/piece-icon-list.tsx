@@ -1,20 +1,24 @@
 import { cva } from 'class-variance-authority';
 import { t } from 'i18next';
 
-import { FlowTrigger, flowStructureUtil } from '@activepieces/shared';
+import {
+  FlowTrigger,
+  flowStructureUtil,
+  PieceCategory,
+} from '@activepieces/shared';
 
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { StepMetadata } from '../../../lib/types';
+import { PieceStepMetadata, StepMetadata } from '../../../lib/types';
 import { stepsHooks } from '../lib/steps-hooks';
 
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center p-2 rounded-full border border-solid  select-none',
+  'flex items-center justify-center p-2 rounded-full border border-solid text-xs select-none',
   {
     variants: {
       size: {
@@ -33,10 +37,20 @@ export function PieceIconList({
   maxNumberOfIconsToShow,
   trigger,
   size,
+  className,
+  circle = true,
+  background,
+  shadow,
+  excludeCore = false,
 }: {
   trigger: FlowTrigger;
   maxNumberOfIconsToShow: number;
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
+  className?: string;
+  circle?: boolean;
+  background?: string;
+  shadow?: boolean;
+  excludeCore?: boolean;
 }) {
   const steps = flowStructureUtil.getAllSteps(trigger);
   const stepsMetadata: StepMetadata[] = stepsHooks
@@ -44,7 +58,17 @@ export function PieceIconList({
     .map((data) => data.data)
     .filter((data) => !!data) as StepMetadata[];
 
-  const uniqueMetadata: StepMetadata[] = stepsMetadata.filter(
+  const filteredMetadata = excludeCore
+    ? stepsMetadata.filter((metadata) => {
+        const pieceMetadata = metadata as PieceStepMetadata;
+        return (
+          !pieceMetadata.categories ||
+          !pieceMetadata.categories.includes(PieceCategory.CORE)
+        );
+      })
+    : stepsMetadata;
+
+  const uniqueMetadata: StepMetadata[] = filteredMetadata.filter(
     (item, index, self) =>
       self.findIndex(
         (secondItem) => item.displayName === secondItem.displayName,
@@ -56,16 +80,17 @@ export function PieceIconList({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <div className="flex gap-2">
+        <div className={className || 'flex gap-0.5 '}>
           {visibleMetadata.map((metadata) => (
             <PieceIcon
               logoUrl={metadata.logoUrl}
               showTooltip={false}
-              circle={true}
+              circle={circle}
               size={size ?? 'md'}
               border={true}
               displayName={metadata.displayName}
               key={metadata.logoUrl}
+              background={background}
             />
           ))}
           {extraPieces > 0 && (

@@ -3,7 +3,7 @@ import { securityAccess } from '@activepieces/server-shared'
 import { ApId, CreateProjectRoleRequestBody, ListProjectMembersForProjectRoleRequestQuery, PrincipalType, ProjectRole, SeekPage, SERVICE_KEY_SECURITY_OPENAPI, UpdateProjectRoleRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { eventsHooks } from '../../../helper/application-events'
+import { applicationEvents } from '../../../helper/application-events'
 import { platformMustHaveFeatureEnabled } from '../../authentication/ee-authorization'
 import { projectMemberService } from '../project-members/project-member.service'
 import { projectRoleService } from './project-role.service'
@@ -37,7 +37,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
         await platformMustHaveFeatureEnabled((platform) => platform.plan.customRolesEnabled).call(app, req, reply)
         const projectRole = await projectRoleService.create(req.principal.platform.id, req.body)
 
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents.sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_ROLE_CREATED,
             data: {
                 projectRole,
@@ -54,7 +54,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
             name: req.body.name,
             permissions: req.body.permissions,
         })
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents.sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_ROLE_UPDATED,
             data: {
                 projectRole,
@@ -70,7 +70,7 @@ export const projectRoleController: FastifyPluginAsyncTypebox = async (app) => {
             name: req.params.name,
             platformId: req.principal.platform.id,
         })
-        eventsHooks.get(req.log).sendUserEventFromRequest(req, {
+        applicationEvents.sendUserEvent(req, {
             action: ApplicationEventName.PROJECT_ROLE_DELETED,
             data: {
                 projectRole,

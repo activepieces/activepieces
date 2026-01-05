@@ -1,6 +1,16 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Trash, Globe, Search } from 'lucide-react';
+import {
+  CheckIcon,
+  Trash,
+  Globe,
+  Search,
+  Tag,
+  Activity,
+  Clock,
+  FolderOpen,
+  Puzzle,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -75,8 +85,13 @@ const GlobalConnectionsTable = () => {
   >[] = [
     {
       accessorKey: 'pieceName',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('App')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Piece')}
+          icon={Puzzle}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -88,8 +103,9 @@ const GlobalConnectionsTable = () => {
     },
     {
       accessorKey: 'displayName',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return (
@@ -104,8 +120,13 @@ const GlobalConnectionsTable = () => {
     },
     {
       accessorKey: 'status',
+      size: 120,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Status')}
+          icon={Activity}
+        />
       ),
       cell: ({ row }) => {
         const status = row.original.status;
@@ -124,8 +145,13 @@ const GlobalConnectionsTable = () => {
     },
     {
       accessorKey: 'updated',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Connected At')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Connected At')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -138,8 +164,13 @@ const GlobalConnectionsTable = () => {
     },
     {
       accessorKey: 'projectsCount',
+      size: 100,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Projects')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Projects')}
+          icon={FolderOpen}
+        />
       ),
       cell: ({ row }) => {
         return (

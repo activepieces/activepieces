@@ -2,18 +2,15 @@ import { ApplicationEventName } from '@activepieces/ee-shared'
 import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
-    EndpointScope,
-    PlatformRole,
     PrincipalType,
     SignInRequest,
     SignUpRequest,
     SwitchPlatformRequest,
-    SwitchProjectRequest,
     UserIdentityProvider,
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { eventsHooks } from '../helper/application-events'
+import { applicationEvents } from '../helper/application-events'
 import { system } from '../helper/system/system'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
@@ -31,7 +28,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             platformId: platformId ?? null,
         })
 
-        eventsHooks.get(request.log).sendUserEvent({
+        applicationEvents.sendUserEvent({
             platformId: signUpResponse.platformId!,
             userId: signUpResponse.id,
             projectId: signUpResponse.projectId,
@@ -57,7 +54,7 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
         const responsePlatformId = response.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
-        eventsHooks.get(request.log).sendUserEvent({
+        applicationEvents.sendUserEvent({
             platformId: responsePlatformId,
             userId: response.id,
             projectId: response.projectId,
@@ -78,17 +75,6 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
         })
     })
 
-    app.post('/switch-project', SwitchProjectRequestOptions, async (request) => {
-        const user = await userService.getOneOrFail({ id: request.principal.id })
-        const isPrivilegedUser = user.platformRole === PlatformRole.ADMIN
-
-        return authenticationService(request.log).switchProject({
-            identityId: user.identityId,
-            projectId: request.body.projectId,
-            currentPlatformId: request.principal.platform.id,
-            scope: isPrivilegedUser ? EndpointScope.PLATFORM : undefined,
-        })
-    })
 }
 
 const rateLimitOptions: RateLimitOptions = {
@@ -99,15 +85,7 @@ const rateLimitOptions: RateLimitOptions = {
     timeWindow: system.getOrThrow(AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW),
 }
 
-const SwitchProjectRequestOptions = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER]),
-        rateLimit: rateLimitOptions,
-    },
-    schema: {
-        body: SwitchProjectRequest,
-    },
-}
+
 
 const SwitchPlatformRequestOptions = {
     config: {

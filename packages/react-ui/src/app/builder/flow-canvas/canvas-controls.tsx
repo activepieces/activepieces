@@ -1,6 +1,6 @@
 import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Fullscreen, Hand, Minus, MousePointer, Plus } from 'lucide-react';
+import { Fullscreen, Hand, Map, Minus, MousePointer, Plus } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -104,7 +104,10 @@ const CanvasControls = ({
           x:
             canvasWidth / 2 -
             (flowUtilConsts.AP_NODE_SIZE.STEP.width * zoomRatio) / 2,
-          y: nodes[0].position.y + verticalPaddingOnFitView * zoomRatio,
+          y:
+            nodes[0].position.y +
+            verticalPaddingOnFitView * zoomRatio +
+            flowUtilConsts.AP_NODE_SIZE.STEP.height,
           zoom: zoomRatio,
         },
         {
@@ -157,9 +160,15 @@ const CanvasControls = ({
     }
   };
 
-  const [setPanningMode, panningMode] = useBuilderStateContext((state) => {
-    return [state.setPanningMode, state.panningMode];
-  });
+  const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
+    useBuilderStateContext((state) => {
+      return [
+        state.setPanningMode,
+        state.panningMode,
+        state.showMinimap,
+        state.setShowMinimap,
+      ];
+    });
   const spacePressed = useKeyPress('Space');
   const shiftPressed = useKeyPress('Shift');
   const isInGrabMode =
@@ -168,17 +177,32 @@ const CanvasControls = ({
   return (
     <div
       id="canvas-controls"
-      className="z-50 absolute bottom-2 left-0 flex items-center justify-center w-full pointer-events-none "
+      className="z-50 absolute bottom-2 left-0 flex items-center  w-full pointer-events-none "
     >
+      <div className="flex ml-2 items-center justify-center p-1.5 pointer-events-auto rounded-lg bg-background border border-sidebar-border">
+        <CanvasButtonWrapper tooltip={t('Minimap')}>
+          <Button
+            variant={showMinimap ? 'default' : 'ghost'}
+            size="icon"
+            onClick={() => {
+              setShowMinimap(!showMinimap);
+            }}
+          >
+            <Map className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+      </div>
+      <div className="grow"></div>
+
       <div className="bg-background gap-2 flex items-center shadow-2xl justify-center border border-sidebar-border p-1.5 rounded-lg pointer-events-auto">
         <CanvasButtonWrapper tooltip={t('Zoom in')}>
           <Button variant="ghost" size="icon" onClick={handleZoomIn}>
-            <Plus className="w-4 h-4" />
+            <Plus className="size-4" />
           </Button>
         </CanvasButtonWrapper>
         <CanvasButtonWrapper tooltip={t('Zoom out')}>
           <Button variant="ghost" size="icon" onClick={handleZoomOut}>
-            <Minus className="w-4 h-4" />
+            <Minus className="size-4" />
           </Button>
         </CanvasButtonWrapper>
         <CanvasButtonWrapper tooltip={t('Fit to view')}>
@@ -187,7 +211,7 @@ const CanvasControls = ({
             size="icon"
             onClick={() => handleFitToView(false)}
           >
-            <Fullscreen className="w-4 h-4" />
+            <Fullscreen className="size-4" />
           </Button>
         </CanvasButtonWrapper>
         <div>
@@ -199,7 +223,7 @@ const CanvasControls = ({
             size="icon"
             onClick={() => setPanningMode('grab')}
           >
-            <Hand className="w-4 h-4" />
+            <Hand className="size-4" />
           </Button>
         </CanvasButtonWrapper>
         <CanvasButtonWrapper tooltip={t('Select mode')}>
@@ -208,10 +232,11 @@ const CanvasControls = ({
             size="icon"
             onClick={() => setPanningMode('pan')}
           >
-            <MousePointer className="w-4 h-4" />
+            <MousePointer className="size-4" />
           </Button>
         </CanvasButtonWrapper>
       </div>
+      <div className="grow"></div>
     </div>
   );
 };

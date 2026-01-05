@@ -1,7 +1,15 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { FileText, Pencil, Plus, Trash } from 'lucide-react';
+import {
+  FileText,
+  Pencil,
+  Plus,
+  Trash,
+  Tag,
+  Clock,
+  Puzzle,
+} from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -31,7 +39,7 @@ import { Template, TemplateType } from '@activepieces/shared';
 import { CreateTemplateDialog } from './create-template-dialog';
 import { UpdateTemplateDialog } from './update-template-dialog';
 
-export default function TemplatesPage() {
+const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const [searchParams] = useSearchParams();
@@ -62,6 +70,10 @@ export default function TemplatesPage() {
   const columnsWithCheckbox: ColumnDef<RowDataWithActions<Template>>[] = [
     {
       id: 'select',
+      accessorKey: 'select',
+      size: 40,
+      minSize: 40,
+      maxSize: 40,
       header: ({ table }) => (
         <Checkbox
           checked={
@@ -103,12 +115,12 @@ export default function TemplatesPage() {
           />
         );
       },
-      accessorKey: 'select',
     },
     {
       accessorKey: 'name',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.name}</div>;
@@ -116,8 +128,13 @@ export default function TemplatesPage() {
     },
     {
       accessorKey: 'createdAt',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -129,8 +146,13 @@ export default function TemplatesPage() {
     },
     {
       accessorKey: 'pieces',
+      size: 100,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Pieces')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Pieces')}
+          icon={Puzzle}
+        />
       ),
       cell: ({ row }) => {
         const trigger = row.original.flows?.[0]?.trigger;
@@ -239,4 +261,6 @@ export default function TemplatesPage() {
       </div>
     </LockedFeatureGuard>
   );
-}
+};
+
+export { PlatformTemplatesPage };

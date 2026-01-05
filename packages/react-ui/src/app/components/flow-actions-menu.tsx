@@ -4,7 +4,7 @@ import {
   Copy,
   CornerUpLeft,
   Download,
-  History,
+  GalleryVerticalEnd,
   Import,
   Pencil,
   Share2,
@@ -240,7 +240,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         {insideBuilder && !isRunsPage && (
           <DropdownMenuItem onClick={onVersionsListClick}>
             <div className="flex cursor-pointer  flex-row gap-2 items-center">
-              <History className="h-4 w-4" />
+              <GalleryVerticalEnd className="h-4 w-4" />
               <span>{t('Versions')}</span>
             </div>
           </DropdownMenuItem>
