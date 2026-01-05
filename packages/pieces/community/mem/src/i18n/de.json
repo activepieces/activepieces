@@ -18,6 +18,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -30,11 +31,15 @@
   "Collection titles or IDs to assign this note to. New collections will be created if they don’t exist.": "Sammlungstitel oder IDs, denen diese Notiz zugewiesen werden soll, werden neue Sammlungen erstellt, wenn sie nicht existieren.",
   "The ID of the note to delete.": "Die ID der Notiz zu löschen.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "GET": "ERHALTEN",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
