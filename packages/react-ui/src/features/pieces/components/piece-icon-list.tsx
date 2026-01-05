@@ -76,41 +76,42 @@ export function PieceIconList({
   );
   const visibleMetadata = uniqueMetadata.slice(0, maxNumberOfIconsToShow);
   const extraPieces = uniqueMetadata.length - visibleMetadata.length;
+  const extraMetadata = uniqueMetadata.slice(maxNumberOfIconsToShow);
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className={className || 'flex gap-0.5 '}>
-          {visibleMetadata.map((metadata) => (
-            <PieceIcon
-              logoUrl={metadata.logoUrl}
-              showTooltip={false}
-              circle={circle}
-              size={size ?? 'md'}
-              border={true}
-              displayName={metadata.displayName}
-              key={metadata.logoUrl}
-              background={background}
-            />
-          ))}
-          {extraPieces > 0 && (
+    <div className={className || 'flex gap-0.5 '}>
+      {visibleMetadata.map((metadata) => (
+        <PieceIcon
+          logoUrl={metadata.logoUrl}
+          showTooltip={true}
+          circle={circle}
+          size={size ?? 'md'}
+          border={true}
+          displayName={metadata.displayName}
+          key={metadata.logoUrl}
+          background={background}
+        />
+      ))}
+      {extraPieces > 0 && (
+        <Tooltip>
+          <TooltipTrigger asChild>
             <div className={extraIconVariants({ size: size ?? 'md' })}>
               +{extraPieces}
             </div>
-          )}
-        </div>
-      </TooltipTrigger>
-      <TooltipContent side="bottom">
-        {uniqueMetadata.length > 1 &&
-          uniqueMetadata
-            .map((m) => m?.displayName || '')
-            .slice(0, -1)
-            .join(', ') +
-            ` ${t('and')} ${
-              uniqueMetadata[uniqueMetadata.length - 1].displayName
-            }`}
-        {uniqueMetadata.length === 1 && uniqueMetadata[0].displayName}
-      </TooltipContent>
-    </Tooltip>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {extraMetadata.length > 1 &&
+              extraMetadata
+                .map((m) => m?.displayName || '')
+                .slice(0, -1)
+                .join(', ') +
+                ` ${t('and')} ${
+                  extraMetadata[extraMetadata.length - 1].displayName
+                }`}
+            {extraMetadata.length === 1 && extraMetadata[0].displayName}
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
   );
 }
