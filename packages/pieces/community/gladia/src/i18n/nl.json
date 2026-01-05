@@ -22,6 +22,7 @@
   "Method": "Methode",
   "Headers": "Kopteksten",
   "Query Parameters": "Query parameters",
+  "Body Type": "Type lichaam",
   "Body": "Lichaam",
   "Response is Binary ?": "Antwoord is binair?",
   "No Error on Failure": "Geen fout bij fout",
@@ -40,7 +41,7 @@
   "Add custom metadata to the transcription job": "Voeg aangepaste metadata toe aan taak op transcriptie",
   "The audio or video file to upload": "Het audio of video bestand om te uploaden",
   "Authorization headers are injected automatically from your connection.": "Autorisatie headers worden automatisch geïnjecteerd vanuit uw verbinding.",
-  "Enable for files like PDFs, images, etc..": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc..",
+  "Enable for files like PDFs, images, etc.": "Inschakelen voor bestanden zoals PDF's, afbeeldingen etc.",
   "Auto Detect": "Automatisch detecteren",
   "Afrikaans": "Afrikaanse",
   "Amharic": "Amharic",
@@ -146,5 +147,9 @@
   "PATCH": "BEKIJK",
   "PUT": "PUT",
   "DELETE": "VERWIJDEREN",
-  "HEAD": "HOOFD"
+  "HEAD": "HOOFD",
+  "None": "geen",
+  "JSON": "JSON",
+  "Form Data": "Formulieren gegevens",
+  "Raw": "Onbewerkte"
 }
