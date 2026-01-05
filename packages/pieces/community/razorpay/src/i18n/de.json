@@ -9,6 +9,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -26,7 +27,7 @@
   "Callback URL": "Callback URL",
   "Callback Method": "Rückrufmethode",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "Send notification via SMS": "Benachrichtigung per SMS senden",
   "Send notification via Email": "Benachrichtigung per E-Mail senden",
   "GET": "ERHALTEN",
@@ -34,5 +35,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
