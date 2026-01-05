@@ -3,7 +3,6 @@ import { useEffect, useRef, useState } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 
 import {
-  RightSideBarType,
   useBuilderStateContext,
   useShowBuilderIsSavingWarningBeforeLeaving,
 } from '@/app/builder/builder-hooks';
@@ -13,6 +12,7 @@ import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/show-powered-by';
 import { useSocket } from '@/components/socket-provider';
+import { RightSideBarType } from '@/lib/types';
 import {
   ResizableHandle,
   ResizablePanel,

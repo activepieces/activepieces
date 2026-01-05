@@ -29,6 +29,7 @@ import {
   ApStepNode,
   ApStraightLineEdge,
 } from './types';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 
 const createBigAddButtonGraph: (
   parentStep: LoopOnItemsAction | RouterAction,
@@ -489,6 +490,22 @@ const getStepStatus = (
   return stepOutput?.status;
 };
 
+function determineInitiallySelectedStep(
+  failedStepNameInRun: string | null,
+  flowVersion: FlowVersion,
+): string | null {
+  if (failedStepNameInRun) {
+    return failedStepNameInRun;
+  }
+  const firstInvalidStep = flowStructureUtil
+    .getAllSteps(flowVersion.trigger)
+    .find((s) => !s.valid);
+  const isNewFlow = location.search.includes(NEW_FLOW_QUERY_PARAM);
+  if (isNewFlow) {
+    return null;
+  }
+  return firstInvalidStep?.name ?? 'trigger';
+}
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
     const graph = buildGraph(version.trigger);
@@ -508,4 +525,5 @@ export const flowCanvasUtils = {
   isSkipped,
   getStepStatus,
   sidebarAnimationDuration: 200,
+  determineInitiallySelectedStep
 };
