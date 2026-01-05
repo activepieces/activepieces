@@ -3,7 +3,7 @@ import confetti from 'canvas-confetti';
 import { toast } from 'sonner';
 
 import { useSocket } from '@/components/socket-provider';
-import { BADGES } from '@activepieces/shared';
+import { BADGES, WebsocketClientEvent } from '@activepieces/shared';
 
 type BadgeAwardedEvent = {
   badgeName: string;
@@ -58,10 +58,10 @@ export const BadgeCelebrate = () => {
       });
     };
 
-    socket.on('BADGE_AWARDED', handleBadgeAwarded);
+    socket.on(WebsocketClientEvent.BADGE_AWARDED, handleBadgeAwarded);
 
     return () => {
-      socket.off('BADGE_AWARDED', handleBadgeAwarded);
+      socket.off(WebsocketClientEvent.BADGE_AWARDED, handleBadgeAwarded);
     };
   }, [socket]);
 
