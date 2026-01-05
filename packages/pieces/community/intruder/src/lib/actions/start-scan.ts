@@ -10,13 +10,13 @@ export const startScan = createAction({
   description:
     'Start a new scan. Optionally specify target addresses and/or tag names. If no targets or tags are provided, the scan will run on all targets.',
   props: {
-    targets: Property.Array({
+    target_addresses: Property.Array({
       displayName: 'Target Addresses',
       description:
         'Target addresses to scan (e.g., example.com, 192.168.1.1). Leave empty to scan all targets.',
       required: false,
     }),
-    tags: Property.Array({
+    tag_names: Property.Array({
       displayName: 'Tag Names',
       description:
         'Tag names to filter targets. Leave empty to scan all targets.',
@@ -25,16 +25,16 @@ export const startScan = createAction({
   },
   async run({ auth, propsValue }) {
     const body: {
-      targets?: string[];
-      tags?: string[];
+      target_addresses?: string[];
+      tag_names?: string[];
     } = {};
 
-    if (propsValue.targets && propsValue.targets.length > 0) {
-      body.targets = propsValue.targets as string[];
+    if (propsValue.target_addresses && propsValue.target_addresses.length > 0) {
+      body.target_addresses = propsValue.target_addresses as string[];
     }
 
-    if (propsValue.tags && propsValue.tags.length > 0) {
-      body.tags = propsValue.tags as string[];
+    if (propsValue.tag_names && propsValue.tag_names.length > 0) {
+      body.tag_names = propsValue.tag_names as string[];
     }
 
     const response = await makeRequest(

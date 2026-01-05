@@ -10,7 +10,6 @@ export async function makeRequest(
 ) {
   try {
     const url = `${BASE_URL}${path}`;
-
     const response = await httpClient.sendRequest({
       method,
       url,
