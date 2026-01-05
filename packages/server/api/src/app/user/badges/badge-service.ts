@@ -26,7 +26,7 @@ export const userBadgeService = (log: FastifyBaseLogger) => ({
                     name: In(badgesToAward),
                 })
                 const newBadges = badgesToAward.filter(badge => !existingBadges.some(existingBadge => existingBadge.name === badge))
-                for (const badgeName of newBadges) {
+                for (const badgeName of badgesToAward) {
                     await userBadgeRepo().upsert(
                         {
                             id: apId(),
@@ -37,6 +37,11 @@ export const userBadgeService = (log: FastifyBaseLogger) => ({
                         },
                         ['userId', 'name'],
                     )
+                    log.info({
+                        message: 'Awarding badge',
+                        badgeName,
+                        userId,
+                    })
                     websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
                         badge: badgeName,
                         userId,

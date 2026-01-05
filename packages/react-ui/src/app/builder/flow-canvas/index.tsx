@@ -230,7 +230,6 @@ export const FlowCanvas = React.memo(
       ];
       return extent;
     }, [graphKey]);
-    console.log('canvas');
     return (
       <div
         ref={containerRef}
