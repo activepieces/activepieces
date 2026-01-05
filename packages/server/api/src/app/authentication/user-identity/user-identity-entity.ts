@@ -56,6 +56,11 @@ export const UserIdentityEntity = new EntitySchema<UserIdentitySchema>({
             type: String,
             nullable: false,
         },
+        draft: { 
+            type: Boolean,
+            nullable: false,
+            default: false,
+        },
 
         // unused better required by better-auth
         name: {

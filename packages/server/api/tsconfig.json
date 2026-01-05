@@ -2,6 +2,8 @@
   "extends": "../tsconfig.server.json",
   "files": [],
   "include": [],
+  "module": "ESNext",
+  "esModuleInterop": true,
   "references": [
     {
       "path": "./tsconfig.app.json"
@@ -12,6 +14,6 @@
   ],
   "compilerOptions": {
     "esModuleInterop": true,
-    "noImplicitThis": true
+    "noImplicitThis": true,
   }
 }

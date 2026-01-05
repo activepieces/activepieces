@@ -15,13 +15,14 @@ export const authnSsoSamlService = (log: FastifyBaseLogger) => {
         async acs(platformId: string, samlProvider: SAMLAuthnProviderConfig, idpLoginResponse: IdpLoginResponse): Promise<AuthenticationResponse> {
             const client = await createSamlClient(platformId, samlProvider)
             const attributes = await client.parseAndValidateLoginResponse(idpLoginResponse)
-            return authenticationService(log).federatedAuthn({
-                email: attributes.email,
-                firstName: attributes.firstName,
-                lastName: attributes.lastName,
-                newsLetter: false,
-                trackEvents: true,
-                provider: UserIdentityProvider.SAML,
+            return authenticationService(log).socialSignIn({
+                // email: attributes.email,
+                // firstName: attributes.firstName,
+                // lastName: attributes.lastName,
+                // newsLetter: false,
+                // trackEvents: true,
+                // provider: UserIdentityProvider.SAML,
+                identityId: "",
                 predefinedPlatformId: platformId,
             })
         },

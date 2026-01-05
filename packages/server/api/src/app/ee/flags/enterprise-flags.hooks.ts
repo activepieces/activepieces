@@ -3,7 +3,6 @@ import { FlagsServiceHooks } from '../../flags/flags.hooks'
 import { system } from '../../helper/system/system'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
-import { federatedAuthnService } from '../authentication/federated-authn/federated-authn-service'
 import { domainHelper } from '../custom-domains/domain-helper'
 import { appearanceHelper } from '../helper/appearance-helper'
 
@@ -54,7 +53,9 @@ export const enterpriseFlagsHooks: FlagsServiceHooks = {
             path: '/v1/webhooks',
             platformId,
         })
-        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await federatedAuthnService(request.log).getThirdPartyRedirectUrl(platformId)
+        modifiedFlags[ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL] = await domainHelper.getInternalUrl({
+            path: "/redirect"
+        })
         return modifiedFlags
     },
 }

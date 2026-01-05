@@ -15,31 +15,21 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             email: params.email,
         }, 'Creating user identity')
 
-        let call = null;
-
-        switch(params.provider) {
-            case UserIdentityProvider.EMAIL:
-                call = async () => await auth.api.signUpEmail({
-                    body: {
-                        email: params.email,
-                        name: `${params.firstName } ${params.lastName}`,
-                        password: params.password,
-                        firstName: params.firstName,
-                        lastName: params.lastName,
-                        provider: params.provider,
-                        trackEvents: params.trackEvents,
-                        newsLetter: params.newsLetter,
-                        tokenVersion: nanoid(),
-                    },
-                })
-                break;
-            case UserIdentityProvider.GOOGLE:
-                break;
-        }
-
-        const response = await call?.()
+        const response = await auth.api.signUpEmail({
+            body: {
+                email: params.email,
+                name: `${params.firstName } ${params.lastName}`,
+                password: params.password,
+                firstName: params.firstName,
+                lastName: params.lastName,
+                provider: params.provider,
+                trackEvents: params.trackEvents,
+                newsLetter: params.newsLetter,
+                tokenVersion: nanoid(),
+            },
+        })
+        
         if (!response) {
-            console.error(response)
             throw new ActivepiecesError({
                 code: ErrorCode.EXISTING_USER,
                 params: {
@@ -51,7 +41,6 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
        
         return response.user as UserIdentity
     },
-
     async verifyIdentityPassword(params: VerifyIdentityPasswordParams): Promise<UserIdentity> {
         const { error, data } = await tryCatch(async () => await auth.api.signInEmail({
             body: {
@@ -89,6 +78,10 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
     async getIdentityByEmail(email: string): Promise<UserIdentity | null> {
         const cleanedEmail = email.toLowerCase().trim()
         const identity = await userIdentityRepository().findOneBy({ email: cleanedEmail })
+        return identity as UserIdentity | null
+    },
+    async getOne(params: GetOneOrFailParams): Promise<UserIdentity | null > {
+        const identity = await userIdentityRepository().findOneBy({ id: params.id })
         return identity as UserIdentity | null
     },
     async getOneOrFail(params: GetOneOrFailParams): Promise<UserIdentity> {
@@ -175,6 +168,16 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             emailVerified: true
         }
     },
+    async unDraft(id: string): Promise<UserIdentity> {
+        const identity = await userIdentityRepository().findOneByOrFail({ id })
+        await userIdentityRepository().update({ id }, {
+            draft: false
+        })
+        return {
+            ...identity as UserIdentity,
+            draft: false
+        }
+    },
     async delete(id: string, entityManager?: EntityManager): Promise<void> {
         await userIdentityRepository(entityManager).delete({ id })
     }
@@ -189,7 +192,6 @@ const getPlatformIdByEmail = async (email: string) => {
 type CreateIdentityParams =
     Pick<UserIdentity, 'email' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider'> &
     (
-        | { provider: Exclude<UserIdentityProvider, UserIdentityProvider.EMAIL> }
         | { provider: UserIdentityProvider.EMAIL | UserIdentityProvider.JWT, password: string }
     );
 

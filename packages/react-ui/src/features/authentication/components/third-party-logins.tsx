@@ -2,7 +2,6 @@ import { t } from 'i18next';
 import React from 'react';
 
 import { Button } from '@/components/ui/button';
-import { internalErrorToast } from '@/components/ui/sonner';
 import {
   ApFlagId,
   ThirdPartyAuthnProviderEnum,
@@ -12,8 +11,7 @@ import {
 import GoogleIcon from '../../../assets/img/custom/auth/google-icon.svg';
 import SamlIcon from '../../../assets/img/custom/auth/saml.svg';
 import { flagsHooks } from '../../../hooks/flags-hooks';
-import { authenticationApi } from '../../../lib/authentication-api';
-import { oauth2Utils } from '../../../lib/oauth2-utils';
+import { authClient } from '@/lib/better-auth';
 
 const ThirdPartyIcon = ({ icon }: { icon: string }) => {
   return <img src={icon} alt="icon" width={24} height={24} className="mr-2" />;
@@ -24,10 +22,6 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
     flagsHooks.useFlag<ThirdPartyAuthnProvidersToShowMap>(
       ApFlagId.THIRD_PARTY_AUTH_PROVIDERS_TO_SHOW_MAP,
     );
-  const { data: thirdPartyRedirectUrl } = flagsHooks.useFlag<string>(
-    ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-  );
-  const thirdPartyLogin = oauth2Utils.useThirdPartyLogin();
 
   const handleProviderClick = async (
     event: React.MouseEvent<HTMLButtonElement, MouseEvent>,
@@ -35,15 +29,14 @@ const ThirdPartyLogin = React.memo(({ isSignUp }: { isSignUp: boolean }) => {
   ) => {
     event.preventDefault();
     event.stopPropagation();
-    const { loginUrl } = await authenticationApi.getFederatedAuthLoginUrl(
-      providerName,
-    );
-
-    if (!loginUrl || !thirdPartyRedirectUrl) {
-      internalErrorToast();
-      return;
-    }
-    thirdPartyLogin(loginUrl, providerName);
+   
+    await authClient.signIn.social({ // redirects to provider sign page
+      provider: providerName,
+      additionalData: {
+        provider: providerName,
+        from: "/tables",
+      }
+    })
   };
 
   const signInWithSaml = () =>

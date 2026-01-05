@@ -6,12 +6,9 @@ import { toast } from 'sonner';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
-import { authenticationApi } from '@/lib/authentication-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  FROM_QUERY_PARAM,
-  LOGIN_QUERY_PARAM,
-  PROVIDER_NAME_QUERY_PARAM,
+  RESPONSE_QUERY_PARAM,
   STATE_QUERY_PARAM,
 } from '@/lib/navigation-utils';
 import { ErrorCode } from '@activepieces/shared';
@@ -28,17 +25,16 @@ const RedirectPage: React.FC = React.memo(() => {
     hasCheckedParams.current = true;
     const params = new URLSearchParams(location.search);
     const code = params.get('code');
+
+    const response = tryParseState(params.get(RESPONSE_QUERY_PARAM));
     const state = tryParseState(params.get(STATE_QUERY_PARAM));
-    if (state && state[LOGIN_QUERY_PARAM] && code) {
-      const providerName = state[PROVIDER_NAME_QUERY_PARAM];
-      const from = state[FROM_QUERY_PARAM];
+
+    if (state && response) {
+      const from = state.from ?? '/flows';
+
       const handleThirdPartyLogin = async () => {
         try {
-          const data = await authenticationApi.claimThirdPartyRequest({
-            providerName,
-            code,
-          });
-          authenticationSession.saveResponse(data, false);
+          authenticationSession.saveResponse(response, false);
           navigate(from);
         } catch (e) {
           if (

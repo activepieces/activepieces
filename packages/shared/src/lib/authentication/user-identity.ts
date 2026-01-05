@@ -21,6 +21,7 @@ export const UserIdentity = Type.Object({
     emailVerified: Type.Boolean(),
     tokenVersion: Type.Optional(Type.String()),
     provider: Type.Enum(UserIdentityProvider),
+    draft: Type.Optional(Type.Boolean()),
 })
 
 export type UserIdentity = Static<typeof UserIdentity>

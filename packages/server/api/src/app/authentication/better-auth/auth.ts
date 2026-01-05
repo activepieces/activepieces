@@ -2,6 +2,11 @@ import pg from "pg";
 import { passwordHasher } from "../lib/password-hasher";
 import { betterAuth } from "better-auth";
 import { betterAuthService } from "./better-auth-service";
+import { createAuthMiddleware } from "better-auth/api";
+import { UserIdentityProvider } from "@activepieces/shared";
+import { nanoid } from "nanoid";
+import { system } from "../../helper/system/system";
+import { cryptoUtils } from "@activepieces/server-shared";
 
 function getEnvOrThrow(key: string): string {
   const value = process.env[key]
@@ -35,7 +40,10 @@ function getConnectionString(): string {
 }
 
 const { Pool } = pg;
+
+const service = betterAuthService(system.globalLogger())
 const auth = betterAuth({
+    basePath: "/v1/better-auth",
     database: new Pool({
       connectionString: getConnectionString(),
     }),
@@ -77,15 +85,39 @@ const auth = betterAuth({
     emailAndPassword: {    
       enabled: true,
       requireEmailVerification: true,
-      sendResetPassword: betterAuthService.sendResetPassword,
+      sendResetPassword: service.sendResetPassword,
       password: {
         hash: passwordHasher.hash,
         verify: (data) => passwordHasher.compare(data.password, data.hash)
       }
     },
     emailVerification: {
-      sendVerificationEmail: betterAuthService.sendVerificationEmail,
-    }
+      sendVerificationEmail: service.sendVerificationEmail,
+    },
+    socialProviders: {
+      google: {
+        clientId: getEnvOrThrow("AP_GOOGLE_CLIENT_ID"),
+        clientSecret: getEnvOrThrow("AP_GOOGLE_CLIENT_SECRET"),
+
+        mapProfileToUser: async (profile) => {
+          return {
+            ...profile,
+            firstName: profile.given_name ?? 'john',
+            lastName: profile.family_name ?? 'doe',
+            trackEvents: true,
+            newsLetter: true,
+            provider: UserIdentityProvider.GOOGLE,
+            tokenVersion: nanoid(),
+            password: await cryptoUtils.generateRandomPassword(),
+            draft: true
+          }
+        }
+      }
+    },
+    trustedOrigins: ["*"],
+     hooks: {
+        after: createAuthMiddleware(service.afterHook),  
+    },
   });
 
 export default auth;

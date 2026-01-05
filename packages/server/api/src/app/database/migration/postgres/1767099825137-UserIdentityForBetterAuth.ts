@@ -8,6 +8,7 @@ export class UserIdentityForBetterAuth1767099825137 implements MigrationInterfac
         await queryRunner.query(`
             alter table "user_identity" add column "name" character varying not null default '';
             alter table "user_identity" add column "image" character varying;
+            alter table "user_identity" add column "draft" boolean not null default false;
         `);
         await queryRunner.query(`
             alter table "user_identity" alter column "id" type character varying;
@@ -22,14 +23,7 @@ export class UserIdentityForBetterAuth1767099825137 implements MigrationInterfac
         await queryRunner.query(`
             ALTER TABLE "user_identity" DROP COLUMN "password"
         `);
-        // await queryRunner.query(`
-        //     ALTER TABLE "user_identity"
-        //     ADD "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
-        // `);
-        // await queryRunner.query(`
-        //     ALTER TABLE "user_identity"
-        //     ADD "updatedAt" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
-        // `);
+     
         await queryRunner.query(`
             create table "session" ("id" text not null primary key, "expiresAt" timestamptz not null, "token" text not null unique, "createdAt" timestamptz default CURRENT_TIMESTAMP not null, "updatedAt" timestamptz not null, "ipAddress" text, "userAgent" text, "userId" text not null references "user_identity" ("id") on delete cascade);
         `);
