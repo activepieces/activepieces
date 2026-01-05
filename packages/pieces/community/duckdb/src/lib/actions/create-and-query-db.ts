@@ -1,14 +1,11 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { mkdirSync } from 'fs';
-import { DuckDBInstance, VARCHAR } from '@duckdb/node-api';
+import { DuckDBInstance } from '@duckdb/node-api';
 
 export const createAndQueryDB = createAction({
   name: 'createAndQueryDB',
   displayName: 'Create and Query DB',
-  description: 'Create DB from files and run query',
+  description: 'Create DB from data and run query',
   props: {
     markdown: Property.MarkDown({
       value: `
@@ -31,6 +28,19 @@ export const createAndQueryDB = createAction({
           required: true,
           defaultValue: [],
         }),
+        schema: Property.Json({
+          displayName: 'Schema in JSON format',
+          description: `
+Provide the schema as a JSON object. Note that only the specified columns would be loaded.
+Leave empty to autodetect schema, although it is recommended to specify the schema for consistency and avoid unexpected behaviour.
+
+More information on data types and accepted values:
+- https://duckdb.org/2023/03/03/json
+- https://duckdb.org/docs/stable/sql/data_types/overview
+          `.trim(),
+          required: false,
+          defaultValue: {},
+        }),
       },
     }),
     query: Property.ShortText({
@@ -46,51 +56,43 @@ export const createAndQueryDB = createAction({
     }),
   },
   async run(context) {
-    // https://duckdb.org/docs/stable/extensions/installing_extensions#installation-location
-    const tempExtensionDir = join(
-      tmpdir(),
-      `activepieces-duckdb`,
-      'extensions'
-    );
-    mkdirSync(tempExtensionDir, { recursive: true });
-
     const instance = await DuckDBInstance.create(':memory:');
     const connection = await instance.connect();
 
     await connection.run(`
       SET enable_logging = 0;
-      SET threads = 1;
-      SET extension_directory = '${tempExtensionDir}';
-      INSTALL httpfs;
-      LOAD httpfs;
-    `);
-
-    const dbTables: any[] = context.propsValue.tables;
-    for (const dbTable of dbTables) {
-      const fileUrl = await context.files.write({
-        fileName: `${dbTable.name}.json`,
-        data: Buffer.from(JSON.stringify(dbTable.data)),
-      });
-
-      await connection.run(
-        `
-            CREATE TABLE ${dbTable.name} AS
-              SELECT *
-              FROM read_json($sourceData);
-          `,
-        {
-          sourceData: fileUrl,
-        },
-        {
-          sourceData: VARCHAR,
-        }
-      );
-    }
-
-    await connection.run(`
       SET enable_external_access = false;
       SET lock_configuration = true;
     `);
+
+    const dbTables: any[] = context.propsValue.tables ?? [];
+    for (const dbTable of dbTables) {
+      const dbData = JSON.stringify(dbTable.data);
+      let dbSchema = null;
+
+      if (dbTable.schema) {
+        dbSchema = JSON.stringify([dbTable.schema]);
+      } else {
+        const schemaResult = await connection.run(
+          'SELECT json_structure($sourceData) AS schema',
+          { sourceData: dbData }
+        );
+
+        const detectedSchema = await schemaResult.getRows();
+        dbSchema = detectedSchema[0][0];
+      }
+
+      await connection.run(
+        `
+          CREATE TABLE ${dbTable.name} AS
+            SELECT UNNEST(JSON_TRANSFORM($sourceData, $sourceSchema), recursive := true);
+        `,
+        {
+          sourceData: dbData,
+          sourceSchema: dbSchema,
+        }
+      );
+    }
 
     const queryArgs = context.propsValue.args ?? [];
     const formattedArgs: Record<string, any> = {};
