@@ -1,6 +1,10 @@
 {
   "Automate your complete HR hiring and onboarding workflow. Manage applicants, job openings, interview scheduling, and track progress through hiring stages with real-time webhooks.": "完全な人事採用とオンボーディングのワークフローを自動化します。応募者、求人、面接、面接スケジューリングを管理し、リアルタイムのWebhookでの採用段階を通じて進捗状況を追跡します。",
+  "API Key": "API キー",
+  "Base URL": "ベースURL",
   "Enter your Fountain API key from Profile > Manage API Keys or Settings > Integrations & API Keys": "プロファイル>APIキーの管理または設定>連携とAPIキーのファウンテンAPIキーを入力してください",
+  "The base URL for your Fountain API (default: https://api.fountain.com). For example: us-2.fountain.com/api/v2": "Fountain API のベース URL (デフォルト: https://api.噴水.com) です。例: us-2.fountain.com/api/v2",
+  "Enter your Fountain API key and base URL": "噴水APIキーとベースURLを入力してください",
   "Create Applicant": "申請者を作成",
   "Delete Applicant": "応募者を削除",
   "Get Applicant Details": "申請者の詳細を取得",
@@ -48,7 +52,6 @@
   "Applicant's complete phone number": "申請者の完全な電話番号",
   "Apply additional duplicate applicant blocking rules specified in company duplicate settings": "会社の重複設定で指定された追加の重複申請者のブロックルールを適用します",
   "The applicant to delete (shows 50 most recent applicants)": "削除する申請者（最新の申請者50人を表示）",
-  "The applicant to retrieve details for (shows 50 most recent applicants)": "詳細を取得する申請者（最新の申請者50人を表示）",
   "The applicant to get interview sessions for (shows 50 most recent applicants)": "申請者は面接セッションを受けるために(最新の50人の応募者を示しています)",
   "The opening to retrieve details for": "詳細を取得するための開口部：",
   "The opening that contains the stage": "ステージを含む開口部。",
