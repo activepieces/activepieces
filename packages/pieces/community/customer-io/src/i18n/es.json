@@ -20,6 +20,7 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
   "Timeout (in seconds)": "Tiempo de espera (en segundos)",
@@ -27,7 +28,7 @@
   "The name of the event. This is how you'll reference the event in campaigns or segments": "El nombre del evento. Así es como referirás el evento en campañas o segmentos",
   "Event information to be sent to Customer.io": "Información del evento a enviar al cliente.io",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "Key Value": "Valor clave",
   "JSON": "JSON",
   "GET": "RECOGER",
@@ -35,5 +36,8 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }
