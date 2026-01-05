@@ -32,6 +32,7 @@
   "Method": "Méthode",
   "Headers": "Headers",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
@@ -54,7 +55,7 @@
   "The model to use to answer the question": "Le modèle à utiliser pour répondre à la question",
   "Enable fast mode for quicker responses": "Activer le mode rapide pour des réponses plus rapides",
   "Authorization headers are injected automatically from your connection.": "Les Headers d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Default": "Par défaut",
   "Advanced": "Avancé",
   "GET": "GET",
@@ -63,6 +64,10 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut",
   "New Conversation": "Nouvelle conversation",
   "Triggers when a new conversation is created": "Déclenche quand une nouvelle conversation est créée"
 }
