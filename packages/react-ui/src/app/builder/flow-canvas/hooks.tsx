@@ -196,10 +196,8 @@ const useIsFocusInsideListMapperModeInput = ({
         const { x, y, zoom } = getViewport();
         if (containerRef.current && width !== containerSizeRef.current.width) {
           const newX = x + (width - containerSizeRef.current.width) / 2;
-          // Update the viewport to keep content centered without affecting zoom
           setViewport({ x: newX, y, zoom });
         }
-        // Adjust x/y values based on the new size and keep the same zoom level
         containerSizeRef.current = {
           width,
           height,
