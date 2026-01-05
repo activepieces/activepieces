@@ -11,7 +11,7 @@ import {
   PasteLocation,
 } from '@activepieces/shared';
 
-import { BuilderState } from '../builder-hooks';
+import { BuilderState } from '../../builder-hooks';
 
 type CopyActionsRequest = {
   type: 'COPY_ACTIONS';
@@ -122,3 +122,11 @@ export function toggleSkipSelectedNodes({
     },
   });
 }
+
+export const canvasBulkActions = {
+  copySelectedNodes,
+  deleteSelectedNodes,
+  getActionsInClipboard,
+  pasteNodes,
+  toggleSkipSelectedNodes,
+};

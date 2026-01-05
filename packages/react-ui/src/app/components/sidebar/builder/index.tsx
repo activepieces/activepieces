@@ -1,4 +1,4 @@
-import { BUILDER_NAVIGATION_SIDEBAR_ID } from '@/app/builder/flow-canvas/utils/consts';
+import { flowCanvasConsts } from '@/app/builder/flow-canvas/utils/consts';
 import { useEmbedding } from '@/components/embed-provider';
 import {
   Sidebar,
@@ -21,7 +21,7 @@ import { TablesNavigation } from './tables-navigation';
 function BuilderSidebarContent() {
   return (
     <Sidebar
-      id={BUILDER_NAVIGATION_SIDEBAR_ID}
+      id={flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID}
       variant="inset"
       className="group p-1"
     >
