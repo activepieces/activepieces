@@ -39,13 +39,13 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
                 return
             }
 
-            const entities = queryRunner.connection.entityMetadatas
+            const entities = sqliteDataSource.entityMetadatas
             const sortedEntities = this.sortEntitiesByDependencies(entities)
 
             for (const entity of sortedEntities) {
                 await this.copyTableData(sqliteDataSource, queryRunner, entity)
             }
-            
+
             await sqliteDataSource.destroy()
             log.info('[MigrateSqliteToPglite] SQLite to PGLite migration completed successfully')
         }
@@ -62,7 +62,6 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
     private async hasExistingData(queryRunner: QueryRunner): Promise<boolean> {
         const result = await queryRunner.query('SELECT 1 FROM project LIMIT 1')
         return result.length > 0
-        
     }
 
     private async sqliteHasData(sqliteDataSource: ReturnType<typeof createSqlLiteDataSourceForMigrations>): Promise<boolean> {
@@ -149,7 +148,7 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
 
         const BATCH_SIZE = 100
         const repository = queryRunner.connection.getRepository(entity.target)
-            
+
         for (let i = 0; i < transformedRows.length; i += BATCH_SIZE) {
             const batch = transformedRows.slice(i, i + BATCH_SIZE)
             await repository.upsert(batch, { conflictPaths: ['id'] })
