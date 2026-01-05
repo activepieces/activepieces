@@ -82,20 +82,27 @@ export const createAPlan = createAction({
       date: context.propsValue.date,
     };
 
-    if (context.propsValue.categoryId !== undefined && context.propsValue.categoryId !== null) {
+    if (
+      context.propsValue.categoryId !== undefined &&
+      context.propsValue.categoryId !== null
+    ) {
       body['categoryId'] = context.propsValue.categoryId;
     }
     if (context.propsValue.categoryName) {
       body['categoryName'] = context.propsValue.categoryName;
     }
-    if (context.propsValue.scenarioId !== undefined && context.propsValue.scenarioId !== null) {
+    if (
+      context.propsValue.scenarioId !== undefined &&
+      context.propsValue.scenarioId !== null
+    ) {
       body['scenarioId'] = context.propsValue.scenarioId;
     }
     if (context.propsValue.scenarioName) {
       body['scenarioName'] = context.propsValue.scenarioName;
     }
     if (context.propsValue.replaceCurrentValuesForThePeriod !== undefined) {
-      body['replaceCurrentValuesForThePeriod'] = context.propsValue.replaceCurrentValuesForThePeriod;
+      body['replaceCurrentValuesForThePeriod'] =
+        context.propsValue.replaceCurrentValuesForThePeriod;
     }
 
     const response = await makeRequest(

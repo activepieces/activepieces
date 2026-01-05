@@ -2,6 +2,8 @@ import { createPiece, PieceAuth } from '@activepieces/pieces-framework';
 import { importInvoice } from './lib/actions/import-invoice';
 import { tidelyAuth } from './lib/common/auth';
 import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { create } from 'domain';
+import { createAPlan } from './lib/actions/create-a-plan';
 
 export const tidely = createPiece({
   displayName: 'Tidely',
@@ -11,6 +13,7 @@ export const tidely = createPiece({
   authors: ['sanket-a11y'],
   actions: [
     importInvoice,
+    createAPlan,
     createCustomApiCallAction({
       auth: tidelyAuth,
       baseUrl: () => 'https://api.tidely.com/api/v1',
