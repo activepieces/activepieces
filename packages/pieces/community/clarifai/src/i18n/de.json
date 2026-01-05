@@ -32,6 +32,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -48,11 +49,15 @@
   "URL of the Clarifai workflow. For example https://clarifai.com/clarifai/main/workflows/Demographics. Find more workflows at https://clarifai.com/explore/workflows": "URL des Clarifai-Workflows. Zum Beispiel https://clarifai.com/clarifai/main/workflows/Demographics. Weitere Workflows finden Sie unter https://clarifai.com/explore/workflows",
   "URL or base64 bytes of the incoming image/video/text/audio to run through the workflow. Note: must be appropriate first step of the workflow to handle that data type.": "URL oder Base64 Bytes des eingehenden Bilds/Video/Text/Audio, um den Workflow zu durchlaufen. Hinweis: must be appropriate first step of the workflow to handle that data typ.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "GET": "ERHALTEN",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
