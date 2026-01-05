@@ -67,6 +67,7 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
@@ -109,7 +110,7 @@
   "Enter a number. 1-12 - corresponds to dropdown above [Daily being 1, Weekly 2 etc..]!": "Entrez un nombre. 1-12 - correspond à la liste déroulante ci-dessus [Quotidiennement 1, Hebdomadaire 2 etc..]!",
   "Recurring Invoice ID from Invoice Ninja": "ID de facture récurrente à partir de la facture Ninja",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Unpaid Invoices": "Factures impayées",
   "Paid Invoices": "Factures payantes",
   "Overdue Invoices": "Factures en retard",
@@ -141,5 +142,9 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "TÊTE",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut"
 }
