@@ -5,6 +5,7 @@ import { useFormContext } from 'react-hook-form';
 
 import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
+import { ChatDrawerSource } from '@/lib/types';
 import { FlowTrigger, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
@@ -17,7 +18,6 @@ import { ManualWebhookTestButton } from './manual-webhook-test-button';
 import { SimulationNote } from './simulation-section';
 import { TriggerEventSelect } from './trigger-event-select';
 import { TestType, triggerEventUtils } from './trigger-event-utils';
-import { ChatDrawerSource } from '@/lib/types';
 
 type TestTriggerSectionProps = {
   isSaving: boolean;

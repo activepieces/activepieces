@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { VirtualizedScrollArea } from '@/components/ui/virtualized-scroll-area';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { authenticationSession } from '@/lib/authentication-session';
+import { RightSideBarType } from '@/lib/types';
 import {
   FlowRun,
   isFlowRunStateTerminal,
@@ -20,7 +21,6 @@ import {
 import { SidebarHeader } from '../sidebar-header';
 
 import { FLOW_CARD_HEIGHT, FlowRunCard } from './flow-run-card';
-import { RightSideBarType } from '@/lib/types';
 
 type RunsListItem =
   | { type: 'flowRun'; run: FlowRun }

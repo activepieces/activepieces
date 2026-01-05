@@ -141,7 +141,9 @@ const ApBigAddButtonCanvasNode = React.memo(
                     <path
                       d={`M ${
                         flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2
-                      } -10 v ${flowCanvasConsts.AP_NODE_SIZE.STEP.height + 14}`}
+                      } -10 v ${
+                        flowCanvasConsts.AP_NODE_SIZE.STEP.height + 14
+                      }`}
                       fill="transparent"
                       strokeWidth="1.5"
                     />

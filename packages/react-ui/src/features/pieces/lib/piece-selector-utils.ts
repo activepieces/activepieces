@@ -375,5 +375,5 @@ export const pieceSelectorUtils = {
   isMcpToolTrigger,
   isChatTrigger,
   removeHiddenActions,
-  getStepNameFromOperationType
+  getStepNameFromOperationType,
 };

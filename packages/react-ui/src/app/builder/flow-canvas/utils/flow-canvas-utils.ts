@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   FlowAction,
   FlowActionType,
@@ -29,7 +30,6 @@ import {
   ApStepNode,
   ApStraightLineEdge,
 } from './types';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 
 const createBigAddButtonGraph: (
   parentStep: LoopOnItemsAction | RouterAction,
@@ -199,7 +199,9 @@ const calculateGraphBoundingBox = (graph: ApGraph) => {
   const maxX = Math.max(
     ...graph.nodes
       .filter((node) => flowCanvasConsts.doesNodeAffectBoundingBox(node.type))
-      .map((node) => node.position.x + flowCanvasConsts.AP_NODE_SIZE.STEP.width),
+      .map(
+        (node) => node.position.x + flowCanvasConsts.AP_NODE_SIZE.STEP.width,
+      ),
   );
   const maxY = Math.max(...graph.nodes.map((node) => node.position.y));
   const width = maxX - minX;
@@ -494,20 +496,24 @@ function determineInitiallySelectedStep(
   failedStepNameInRun: string | null,
   flowVersion: FlowVersion,
 ): string | null {
-  if (failedStepNameInRun) {
-    return failedStepNameInRun;
-  }
   const firstInvalidStep = flowStructureUtil
     .getAllSteps(flowVersion.trigger)
     .find((s) => !s.valid);
-  const isNewFlow = location.search.includes(NEW_FLOW_QUERY_PARAM);
+  const isNewFlow = window.location.search.includes(NEW_FLOW_QUERY_PARAM);
+  if (failedStepNameInRun) {
+    return failedStepNameInRun;
+  }
   if (isNewFlow) {
     return null;
   }
   return firstInvalidStep?.name ?? 'trigger';
 }
 const doesSelectionRectangleExist = () => {
-  return document.querySelector(`.${flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME}`) !== null;
+  return (
+    document.querySelector(
+      `.${flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME}`,
+    ) !== null
+  );
 };
 export const flowCanvasUtils = {
   convertFlowVersionToGraph(version: FlowVersion): ApGraph {
@@ -528,5 +534,5 @@ export const flowCanvasUtils = {
   isSkipped,
   getStepStatus,
   determineInitiallySelectedStep,
-  doesSelectionRectangleExist
+  doesSelectionRectangleExist,
 };

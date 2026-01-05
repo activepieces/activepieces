@@ -129,4 +129,4 @@ export const canvasBulkActions = {
   getActionsInClipboard,
   pasteNodes,
   toggleSkipSelectedNodes,
-}
+};

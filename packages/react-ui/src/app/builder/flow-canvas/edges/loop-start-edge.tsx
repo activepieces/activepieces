@@ -15,7 +15,8 @@ export const ApLoopStartLineCanvasEdge = ({
   source,
   id,
 }: EdgeProps & ApLoopStartEdge) => {
-  const startY = sourceY + flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
+  const startY =
+    sourceY + flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;
   const verticalLineLength =
     flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS -
     2 * flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEP_AND_LINE;

@@ -2,9 +2,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
 
-import {
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
@@ -17,9 +15,7 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 
-import {
-  flowCanvasConsts,
-} from '../../utils/consts';
+import { flowCanvasConsts } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
@@ -124,7 +120,9 @@ const ApStepCanvasNode = React.memo(
     const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
     return (
       <div
-        {...{ [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
+        {...{
+          [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
+        }}
         style={{
           height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px`,
           width: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,

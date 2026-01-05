@@ -51,7 +51,9 @@ export const ApRouterEndCanvasEdge = ({
     // Optional horizontal line
     if (data.drawHorizontalLine) {
       path += `h ${horizontalLineLength} ${
-        targetX > sourceX ? flowCanvasConsts.ARC_RIGHT : flowCanvasConsts.ARC_LEFT
+        targetX > sourceX
+          ? flowCanvasConsts.ARC_RIGHT
+          : flowCanvasConsts.ARC_LEFT
       }`;
     }
 

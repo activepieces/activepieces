@@ -9,9 +9,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import {
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -32,6 +30,7 @@ import { flagsHooks } from '@/hooks/flags-hooks';
 import { getProjectName, projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
+import { RightSideBarType } from '@/lib/types';
 import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
@@ -45,7 +44,6 @@ import {
 import FlowActionMenu from '../../components/flow-actions-menu';
 
 import { BuilderFlowStatusSection } from './flow-status';
-import { RightSideBarType } from '@/lib/types';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();

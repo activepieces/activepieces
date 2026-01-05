@@ -1,13 +1,11 @@
 import { useRef, useState } from 'react';
-import {
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/show-powered-by';
-import { RightSideBarType } from '@/lib/types';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -15,6 +13,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { RightSideBarType } from '@/lib/types';
 import {
   FlowAction,
   FlowActionType,
@@ -29,27 +28,24 @@ import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
-import { CursorPositionProvider } from './state/cursor-position-context';
+import { flowCanvasHooks } from './flow-canvas/hooks';
+import { flowCanvasConsts } from './flow-canvas/utils/consts';
 import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
 import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
 import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
+import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
-import { flowCanvasConsts } from './flow-canvas/utils/consts';
-import { flowCanvasHooks } from './flow-canvas/hooks';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [flowVersion, rightSidebar, selectedStep] =
-    useBuilderStateContext((state) => [
-      state.flowVersion,
-      state.rightSidebar,
-      state.selectedStep,
-    ]);
+  const [flowVersion, rightSidebar, selectedStep] = useBuilderStateContext(
+    (state) => [state.flowVersion, state.rightSidebar, state.selectedStep],
+  );
   flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   const { memorizedSelectedStep } = useBuilderStateContext((state) => {
     const flowVersion = state.flowVersion;

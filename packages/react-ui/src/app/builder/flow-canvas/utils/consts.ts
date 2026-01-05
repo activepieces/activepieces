@@ -104,8 +104,7 @@ export const flowCanvasConsts = {
   STEP_DRAG_OVERLAY_HEIGHT,
   STEP_CONTEXT_MENU_ATTRIBUTE: 'step-context-menu',
   SELECTION_RECT_CHEVRON_ATTRIBUTE: 'selection-rect-chevron',
-  BUILDER_NAVIGATION_SIDEBAR_ID: 'builder-navigation-sidebar',  
+  BUILDER_NAVIGATION_SIDEBAR_ID: 'builder-navigation-sidebar',
   NODE_SELECTION_RECT_CLASS_NAME: 'react-flow__nodesselection-rect',
   SIDEBAR_ANIMATION_DURATION: 200,
 };
-

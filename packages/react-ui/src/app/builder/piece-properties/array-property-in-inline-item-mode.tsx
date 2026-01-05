@@ -2,13 +2,11 @@ import React, { useRef } from 'react';
 
 import { ArraySubProps } from '@activepieces/pieces-framework';
 
-import {
-  useBuilderStateContext,
-} from '../builder-hooks';
+import { useBuilderStateContext } from '../builder-hooks';
+import { flowCanvasHooks } from '../flow-canvas/hooks';
 
 import { GenericPropertiesForm } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
-import { flowCanvasHooks } from '../flow-canvas/hooks';
 
 type BaseArrayPropertyProps = {
   inputName: string;

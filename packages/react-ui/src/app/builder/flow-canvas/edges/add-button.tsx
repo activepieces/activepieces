@@ -86,7 +86,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
               <div
                 style={{
                   width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                  height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                  height:
+                    flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
                   'bg-background  border border-border border-solid relative group overflow-visible rounded-md cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',

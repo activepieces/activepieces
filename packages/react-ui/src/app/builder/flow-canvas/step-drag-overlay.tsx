@@ -9,7 +9,8 @@ import {
   useCursorPosition,
   useCursorPositionEffect,
 } from '../state/cursor-position-context';
-import {  flowCanvasConsts } from './utils/consts';
+
+import { flowCanvasConsts } from './utils/consts';
 
 const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { open } = useSidebar();

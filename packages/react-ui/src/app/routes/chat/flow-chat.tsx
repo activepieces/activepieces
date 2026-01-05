@@ -12,6 +12,7 @@ import {
   Messages,
 } from '@/features/chat/chat-message-list/index';
 import { humanInputApi } from '@/features/forms/lib/human-input-api';
+import { ChatDrawerSource } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   ApErrorParams,
@@ -22,7 +23,6 @@ import {
 } from '@activepieces/shared';
 
 import NotFoundPage from '../404-page';
-import { ChatDrawerSource } from '@/lib/types';
 
 interface FlowChatProps {
   flowId: string;

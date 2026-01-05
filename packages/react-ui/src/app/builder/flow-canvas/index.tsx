@@ -12,6 +12,8 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+
+import { RightSideBarType } from '@/lib/types';
 import {
   FlowActionType,
   flowStructureUtil,
@@ -19,25 +21,22 @@ import {
   isNil,
   Step,
 } from '@activepieces/shared';
-import {
-  useBuilderStateContext
-} from '../builder-hooks';
+
+import { useBuilderStateContext } from '../builder-hooks';
+import { useHandleKeyPressOnCanvas } from '../shortcuts';
+import { useCursorPosition } from '../state/cursor-position-context';
+
 import {
   CanvasContextMenu,
   ContextMenuType,
 } from './context-menu/canvas-context-menu';
-import { useCursorPosition } from '../state/cursor-position-context';
 import { FlowDragLayer } from './flow-drag-layer';
-import {
-  flowCanvasConsts
-} from './utils/consts';
+import { flowCanvasHooks } from './hooks';
+import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-import { RightSideBarType } from '@/lib/types';
-import { useHandleKeyPressOnCanvas } from '../shortcuts';
-import { flowCanvasHooks } from './hooks';
 
 export const FlowCanvas = React.memo(
   ({
@@ -127,16 +126,14 @@ export const FlowCanvas = React.memo(
             !targetIsSelectionRect && !targetIsSelectionChevron;
           if (shouldRemoveSelectionRect) {
             document
-              .querySelector(`.${flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME}`)
+              .querySelector(
+                `.${flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME}`,
+              )
               ?.remove();
           }
         }
       },
-      [
-        setSelectedNodes,
-        selectedNodes,
-        rightSidebar,
-      ],
+      [setSelectedNodes, selectedNodes, rightSidebar],
     );
 
     const onSelectionEnd = useCallback(() => {
@@ -184,7 +181,6 @@ export const FlowCanvas = React.memo(
       ];
       return extent;
     }, [graphKey]);
-    console.log('canvas');
     return (
       <div
         ref={containerRef}

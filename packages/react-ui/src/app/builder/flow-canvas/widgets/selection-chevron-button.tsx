@@ -15,7 +15,9 @@ const showChevronNextToSelection = (targetDiv: HTMLElement) => {
       variant="outline"
       size="icon"
       className="absolute top-[10px] -left-10 z-50"
-      {...{ [`data-${flowCanvasConsts.SELECTION_RECT_CHEVRON_ATTRIBUTE}`]: true }}
+      {...{
+        [`data-${flowCanvasConsts.SELECTION_RECT_CHEVRON_ATTRIBUTE}`]: true,
+      }}
       onClick={(e) => {
         const rightClickEvent = new MouseEvent('contextmenu', {
           bubbles: true,
@@ -43,7 +45,9 @@ export const useShowChevronNextToSelection = () => {
           if (
             node instanceof HTMLElement &&
             node.children.length > 0 &&
-            node.children[0].classList.contains(flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME)
+            node.children[0].classList.contains(
+              flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME,
+            )
           ) {
             root = showChevronNextToSelection(node.children[0] as HTMLElement);
           }
@@ -53,7 +57,9 @@ export const useShowChevronNextToSelection = () => {
           if (
             node instanceof HTMLElement &&
             node.children.length > 0 &&
-            node.children[0].classList.contains(flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME)
+            node.children[0].classList.contains(
+              flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME,
+            )
           ) {
             if (root) {
               root.unmount();
