@@ -2,7 +2,6 @@ import { Static, Type } from '@sinclair/typebox'
 import { TriggerUpdateStatusErrorParams } from '../common/activepieces-error'
 import { PopulatedFlow } from '../flows/flow'
 import { StepRunResponse } from '../flows/sample-data'
-import { UserBadge } from '../user/badges'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',

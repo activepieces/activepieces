@@ -20,7 +20,9 @@ export const UserBadges = ({
   showLockedBadges = true,
   showBorder = false,
 }: UserBadgesProps) => {
-  const { data: showBadges } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_BADGES);
+  const { data: showBadges } = flagsHooks.useFlag<boolean>(
+    ApFlagId.SHOW_BADGES,
+  );
 
   if (!showBadges) {
     return null;
@@ -42,7 +44,9 @@ export const UserBadges = ({
   return (
     <div className={showBorder ? 'mt-3 pt-3 border-t' : 'space-y-3'}>
       <h5
-        className={`text-xs text-foreground tracking-wide ${showBorder ? 'mb-2' : ''}`}
+        className={`text-xs text-foreground tracking-wide ${
+          showBorder ? 'mb-2' : ''
+        }`}
       >
         {t('Badges')}
       </h5>

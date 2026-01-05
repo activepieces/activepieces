@@ -1,6 +1,6 @@
 import { Mail } from 'lucide-react';
 
-import { UserBadges } from '@/app/components/account-settings/user-badges';
+import { UserBadges } from '@/components/custom/user-badges';
 import {
   HoverCard,
   HoverCardTrigger,
