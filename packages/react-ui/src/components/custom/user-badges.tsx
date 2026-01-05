@@ -50,7 +50,7 @@ export const UserBadges = ({
       >
         {t('Badges')}
       </h5>
-      <div className="flex items-center gap-2 flex-wrap">
+      <div className="flex items-center gap-1 flex-wrap">
         {badgesToShow.map(([badgeName, badge]) => {
           const isUnlocked = userBadges.some(
             (userBadge: { name: string; created: string }) =>
@@ -64,7 +64,7 @@ export const UserBadges = ({
                   <img
                     src={badge.imageUrl}
                     alt={badge.title}
-                    className={`h-12 w-12 object-cover rounded ${
+                    className={`h-12 w-12 object-cover rounded-md ${
                       !isUnlocked && showLockedBadges
                         ? 'opacity-50 grayscale'
                         : ''
