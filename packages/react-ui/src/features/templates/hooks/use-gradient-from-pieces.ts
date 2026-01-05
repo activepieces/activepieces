@@ -145,7 +145,7 @@ const buildGradientFromColors = (colors: string[]): string => {
   return `linear-gradient(135deg, ${gradientColors})`;
 };
 
-const gradientCache = new Map<string, string>();
+const logoColorsCache = new Map<string, string[]>();
 
 export const useGradientFromPieces = (
   trigger: FlowTrigger | undefined,
@@ -199,16 +199,9 @@ export const useGradientFromPieces = (
   );
 
   useEffect(() => {
-    if (gradientCache.has(cacheKey)) {
-      setGradient(gradientCache.get(cacheKey)!);
-      return;
-    }
-
     const extractAndBuildGradient = async () => {
       if (uniqueMetadata.length === 0) {
-        const emptyGradient = '';
-        setGradient(emptyGradient);
-        gradientCache.set(cacheKey, emptyGradient);
+        setGradient('');
         return;
       }
 
@@ -217,26 +210,34 @@ export const useGradientFromPieces = (
           .slice(0, 4)
           .filter((metadata) => metadata.logoUrl);
 
-        const colorPromises = logosToProcess.map((metadata) =>
-          extractColorsFromImage(metadata.logoUrl).catch((error) => {
+        const colorPromises = logosToProcess.map(async (metadata) => {
+          const logoUrl = metadata.logoUrl;
+          
+          if (logoColorsCache.has(logoUrl)) {
+            return logoColorsCache.get(logoUrl)!;
+          }
+
+          try {
+            const colors = await extractColorsFromImage(logoUrl);
+            logoColorsCache.set(logoUrl, colors);
+            return colors;
+          } catch (error) {
             console.error(
               `Failed to extract colors from ${metadata.displayName}:`,
               error,
             );
             return [];
-          }),
-        );
+          }
+        });
 
         const colorResults = await Promise.all(colorPromises);
         const allColors = colorResults.flat();
 
         const resultGradient = buildGradientFromColors(allColors);
         setGradient(resultGradient);
-        gradientCache.set(cacheKey, resultGradient);
       } catch (error) {
         console.error('Failed to extract colors:', error);
         setGradient('');
-        gradientCache.set(cacheKey, '');
       }
     };
 
