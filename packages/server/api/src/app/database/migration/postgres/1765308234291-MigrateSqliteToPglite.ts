@@ -39,13 +39,13 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
                 return
             }
 
-            const entities = sqliteDataSource.entityMetadatas
+            const entities = queryRunner.connection.entityMetadatas
             const sortedEntities = this.sortEntitiesByDependencies(entities)
 
             for (const entity of sortedEntities) {
                 await this.copyTableData(sqliteDataSource, queryRunner, entity)
             }
-
+            
             await sqliteDataSource.destroy()
             log.info('[MigrateSqliteToPglite] SQLite to PGLite migration completed successfully')
         }
@@ -62,6 +62,7 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
     private async hasExistingData(queryRunner: QueryRunner): Promise<boolean> {
         const result = await queryRunner.query('SELECT 1 FROM project LIMIT 1')
         return result.length > 0
+        
     }
 
     private async sqliteHasData(sqliteDataSource: ReturnType<typeof createSqlLiteDataSourceForMigrations>): Promise<boolean> {
@@ -122,6 +123,13 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         const tableName = entity.tableName
         log.info(`[MigrateSqliteToPglite] Migrating table: ${tableName}`)
 
+        // Get SQLite column names for this table
+        const sqliteColumns = await this.getSqliteColumnNames(sqliteDataSource, tableName)
+        if (sqliteColumns.length === 0) {
+            log.info(`[MigrateSqliteToPglite] Table ${tableName} does not exist in SQLite, skipping`)
+            return
+        }
+
         let rows: Record<string, unknown>[] = []
         try {
             rows = await sqliteDataSource.query(`SELECT * FROM "${tableName}"`)
@@ -141,14 +149,14 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
 
         log.info(`[MigrateSqliteToPglite] Copying ${rows.length} rows from ${tableName}`)
 
-        const transformedRows = rows.map((row) => this.transformRowForPostgres(row, entity))
+        const transformedRows = rows.map((row) => this.transformRowForPostgres(row, entity, sqliteColumns))
 
         // Disable foreign key checks for the migration
         await queryRunner.query('SET LOCAL session_replication_role = replica')
 
         const BATCH_SIZE = 100
         const repository = queryRunner.connection.getRepository(entity.target)
-
+            
         for (let i = 0; i < transformedRows.length; i += BATCH_SIZE) {
             const batch = transformedRows.slice(i, i + BATCH_SIZE)
             await repository.upsert(batch, { conflictPaths: ['id'] })
@@ -157,12 +165,29 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         log.info(`[MigrateSqliteToPglite] Successfully migrated ${rows.length} rows to ${tableName}`)
     }
 
-    private transformRowForPostgres(row: Record<string, unknown>, entity: EntityMetadata): Record<string, unknown> {
+    private async getSqliteColumnNames(sqliteDataSource: DataSource, tableName: string): Promise<string[]> {
+        try {
+            const tableInfo = await sqliteDataSource.query(`PRAGMA table_info("${tableName}")`)
+            return tableInfo.map((col: { name: string }) => col.name)
+        }
+        catch {
+            return []
+        }
+    }
+
+    private transformRowForPostgres(row: Record<string, unknown>, entity: EntityMetadata, sqliteColumns: string[]): Record<string, unknown> {
         const transformed: Record<string, unknown> = {}
+        const sqliteColumnSet = new Set(sqliteColumns)
 
         for (const column of entity.columns) {
             const columnName = column.databaseName
             const propertyName = column.propertyName
+
+            // Skip columns that don't exist in SQLite
+            if (!sqliteColumnSet.has(columnName)) {
+                continue
+            }
+
             let value = row[columnName]
 
             if (value === undefined) {
