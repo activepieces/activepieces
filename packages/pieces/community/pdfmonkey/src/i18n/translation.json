@@ -17,6 +17,7 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
@@ -24,7 +25,7 @@
   "Data to use for the Document generation.": "Data to use for the Document generation.",
   "Meta-Data to attach to the Document.": "Meta-Data to attach to the Document.",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "Draft": "Draft",
   "Pending": "Pending",
   "GET": "GET",
@@ -33,6 +34,10 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw",
   "Document Generated": "Document Generated",
   "Triggers when a document generation completes successfully.": "Triggers when a document generation completes successfully."
 }

@@ -1,11 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { Sparkles, Info, Settings, Plus } from 'lucide-react';
+import { Sparkles, Settings, Plus } from 'lucide-react';
 import { useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -102,57 +101,31 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
           <div className="p-4 rounded-lg border bg-primary/5 space-y-2">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-primary">
-                {t('Wallet Balance')}
-              </span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-sm font-medium text-primary cursor-help">
+                    {t('Wallet Balance')}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {t('You get {credits} free credits monthly', {
+                    credits: planIncludedCredits.toLocaleString(),
+                  })}
+                </TooltipContent>
+              </Tooltip>
             </div>
             <div className="flex items-baseline justify-between">
               <div className="text-3xl font-bold">
-                {Math.floor(creditsRemaining).toLocaleString()}
+                {Math.round(creditsRemaining).toLocaleString()}
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   {t('credits available')}
                 </span>
               </div>
               <div className="text-xs text-muted-foreground">
                 {t('Total lifetime usage')}:{' '}
-                {Math.floor(totalCreditsUsed).toLocaleString()}
+                {Math.round(totalCreditsUsed).toLocaleString()}
               </div>
             </div>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">
-                {t('Monthly Included Credits')}
-              </span>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Info className="w-3 h-3 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  {t('Credits included in your plan (resets monthly)')}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">
-                {usage.totalAiCreditsUsedThisMonth.toLocaleString()} /{' '}
-                {planIncludedCredits.toLocaleString()} {t('used')}
-              </span>
-              <span className="text-xs font-medium text-muted-foreground">
-                {t('Plan Limit')}
-              </span>
-            </div>
-            <Progress
-              value={Math.min(
-                100,
-                Math.round(
-                  (usage.totalAiCreditsUsedThisMonth / planIncludedCredits) *
-                    100,
-                ),
-              )}
-              className="h-2"
-            />
           </div>
         </div>
 
@@ -181,17 +154,27 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
                 {isAutoTopUpEnabled &&
                   plan.aiCreditsAutoTopUpThreshold &&
                   plan.aiCreditsAutoTopUpCreditsToAdd && (
-                    <p className="text-xs text-primary mt-1">
-                      {t(
-                        'Adds {credits} credits when balance drops below {threshold}',
-                        {
-                          credits:
-                            plan.aiCreditsAutoTopUpCreditsToAdd.toLocaleString(),
-                          threshold:
-                            plan.aiCreditsAutoTopUpThreshold.toLocaleString(),
-                        },
+                    <div className="space-y-0.5 mt-1">
+                      <p className="text-xs text-primary">
+                        {t(
+                          'Adds {credits} credits when balance drops below {threshold}',
+                          {
+                            credits:
+                              plan.aiCreditsAutoTopUpCreditsToAdd.toLocaleString(),
+                            threshold:
+                              plan.aiCreditsAutoTopUpThreshold.toLocaleString(),
+                          },
+                        )}
+                      </p>
+                      {plan.maxAutoTopUpCreditsMonthly && (
+                        <p className="text-xs text-muted-foreground">
+                          {t('Monthly spending limit: {limit} credits', {
+                            limit:
+                              plan.maxAutoTopUpCreditsMonthly.toLocaleString(),
+                          })}
+                        </p>
                       )}
-                    </p>
+                    </div>
                   )}
               </div>
               <div className="flex items-center gap-3">
@@ -216,6 +199,7 @@ export function AICreditUsage({ platformSubscription }: AiCreditUsageProps) {
           isEditing={isAutoTopUpEditing}
           currentThreshold={plan.aiCreditsAutoTopUpThreshold}
           currentCreditsToAdd={plan.aiCreditsAutoTopUpCreditsToAdd}
+          currentMaxMonthlyLimit={plan.maxAutoTopUpCreditsMonthly}
         />
       </CardContent>
     </Card>

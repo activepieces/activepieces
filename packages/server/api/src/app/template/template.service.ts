@@ -1,6 +1,6 @@
 import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, FlowVersionTemplate, isNil, ListTemplatesRequestQuery, SeekPage, spreadIfDefined, Template, TemplateStatus, TemplateType, UpdateTemplateRequestBody } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { ArrayContains, ArrayOverlap, Equal, ILike, IsNull } from 'typeorm'
+import { ArrayContains, ArrayOverlap, Equal, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { platformTemplateService } from '../ee/template/platform-template.service'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -111,7 +111,7 @@ export const templateService = (log: FastifyBaseLogger) => ({
     },  
 
     async list({ platformId, requestQuery }: ListParams): Promise<SeekPage<Template>> {
-        const { pieces, tags, search, type } = requestQuery
+        const { pieces, tags, search, type, category } = requestQuery
         const commonFilters: Record<string, unknown> = {}
         const typeFilter = type ?? TemplateType.OFFICIAL
 
@@ -121,9 +121,8 @@ export const templateService = (log: FastifyBaseLogger) => ({
         if (tags) {
             commonFilters.tags = ArrayContains(tags)
         }
-        if (search) {
-            commonFilters.name = ILike(`%${search}%`)
-            commonFilters.description = ILike(`%${search}%`)
+        if (category) {
+            commonFilters.categories = ArrayContains([category])
         }
         switch (typeFilter) {
             case TemplateType.OFFICIAL:
@@ -151,10 +150,18 @@ export const templateService = (log: FastifyBaseLogger) => ({
                 })
         }
         commonFilters.status = Equal(TemplateStatus.PUBLISHED)
-        const templates = await templateRepo()
+        const queryBuilder = templateRepo()
             .createQueryBuilder('template')
             .where(commonFilters)
-            .getMany()
+        
+        if (search) {
+            queryBuilder.andWhere(
+                '(template.name ILIKE :search OR template.summary ILIKE :search OR template.description ILIKE :search)',
+                { search: `%${search}%` },
+            )
+        }
+        
+        const templates = await queryBuilder.getMany()
         return paginationHelper.createPage(templates, null)
     },
 
