@@ -418,6 +418,9 @@
       ],
       "@activepieces/piece-ampeco":[
         "packages/pieces/community/ampeco/src/index.ts"
+      ],
+      "@activepieces/piece-quaderno": [
+        "packages/pieces/community/quaderno/src/index.ts"
       ]
     },
     "resolveJsonModule": true
