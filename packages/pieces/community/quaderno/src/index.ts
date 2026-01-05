@@ -1,18 +1,11 @@
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import { createPiece } from '@activepieces/pieces-framework';
-import { quadernoAuth } from './lib/common/auth';
+import { PieceCategory } from '@activepieces/shared';
 import { createContact } from './lib/actions/create-contact';
-import { findContact } from './lib/actions/find-contact';
 import { createExpense } from './lib/actions/create-expence';
 import { createInvoice } from './lib/actions/create-invoice';
-import { PieceCategory } from '@activepieces/shared';
-import { abandonedCheckout } from './lib/triggers/abandoned-checkout';
-import { failedCheckout } from './lib/triggers/failed-checkout';
-import { newContact } from './lib/triggers/new-contact';
-import { newInvoice } from './lib/triggers/new-invoice';
-import { newRefund } from './lib/triggers/new-refund';
-import { newSale } from './lib/triggers/new-sale';
-import { successfulCheckout } from './lib/triggers/successful-checkout';
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
+import { findContact } from './lib/actions/find-contact';
+import { quadernoAuth } from './lib/common/auth';
 
 export const quaderno = createPiece({
   displayName: 'Quaderno',
@@ -43,13 +36,5 @@ export const quaderno = createPiece({
       },
     }),
   ],
-  triggers: [
-    abandonedCheckout,
-    failedCheckout,
-    newContact,
-    newInvoice,
-    newRefund,
-    newSale,
-    successfulCheckout,
-  ],
+  triggers: [],
 });
