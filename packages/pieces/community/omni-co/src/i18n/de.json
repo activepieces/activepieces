@@ -51,6 +51,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -86,7 +87,7 @@
   "If enabled, returns the query execution plan without running the query": "Falls aktiviert, gibt den Abfrageausführungsplan zurück, ohne die Abfrage auszuführen",
   "Optional UUID to run the query as a specific user": "Optionale UUID zum Ausführen der Abfrage als bestimmter Benutzer",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "Link Only": "Nur Link",
   "PDF": "PDF",
   "PNG": "PNG",
@@ -110,5 +111,8 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
