@@ -24,6 +24,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -42,7 +43,7 @@
   "A field mask to restrict which fields on each person are returned.": "Eine Feldmaske um zu beschränken, welche Felder jeder Person zurückgegeben werden.",
   "The number of results to return. Maximum 30.": "Die Anzahl der Ergebnisse, die zurückgegeben werden sollen. Maximal 30.",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "Names": "Namen",
   "Job Title / Company": "Job Titel / Firma",
   "addresses": "adressen",
@@ -80,6 +81,10 @@
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
   "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe",
   "New Or Updated Contact": "Neuer oder aktualisierter Kontakt",
   "Triggers when there is a new or updated contact": "Wird ausgelöst, wenn ein neuer oder aktualisierter Kontakt existiert"
 }
