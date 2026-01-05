@@ -17,7 +17,8 @@ import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission } from '@activepieces/shared';
 
-import { RightSideBarType, useBuilderStateContext } from '../builder-hooks';
+import { useBuilderStateContext } from '../builder-hooks';
+import { RightSideBarType } from '@/lib/types';
 
 const OverwriteDraftDialog = ({
   onConfirm,

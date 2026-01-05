@@ -16,7 +16,6 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Messages } from '@/features/chat/chat-message-list';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import {
-  FlowOperationType,
   FlowRun,
   FlowVersion,
   Permission,
@@ -35,9 +34,7 @@ import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
 import { useAuthorization } from '../../hooks/authorization-hooks';
 import {
   ChatDrawerSource,
-  PieceSelectorOperation,
   RightSideBarType,
-  StepMetadataWithSuggestions,
 } from '../../lib/types';
 
 import {
@@ -55,6 +52,7 @@ import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 import { createFlowState, FlowState } from './state/flow-state';
+import { createPieceSelectorState, PieceSelectorState } from './state/piece-selector-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -67,10 +65,8 @@ export function useBuilderStateContext<T>(
   return useStore(store, selector);
 }
 
-
-
 type InsertMentionHandler = (propertyPath: string) => void;
-export type BuilderState = FlowState & {
+export type BuilderState = FlowState & PieceSelectorState & {
   readonly: boolean;
   hideTestWidget: boolean;
   outputSampleData: Record<string, unknown>;
@@ -114,15 +110,6 @@ export type BuilderState = FlowState & {
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
   deselectStep: () => void;
-  //Piece selector state
-  openedPieceSelectorStepNameOrAddButtonId: string | null;
-  setOpenedPieceSelectorStepNameOrAddButtonId: (
-    stepNameOrAddButtonId: string | null,
-  ) => void;
-  selectedPieceMetadataInPieceSelector: StepMetadataWithSuggestions | null;
-  setSelectedPieceMetadataInPieceSelector: (
-    metadata: StepMetadataWithSuggestions | null,
-  ) => void;
 };
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
 export type BuilderInitialState = Pick<
@@ -140,7 +127,7 @@ export type BuilderStore = ReturnType<typeof createBuilderStore>;
 export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set, get) => {
     const flowState = createFlowState(initialState, get, set);
-
+    const pieceSelectorState = createPieceSelectorState(get, set);
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
@@ -156,6 +143,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
     return {
       ...flowState,
+      ...pieceSelectorState,
       showMinimap: false,
       setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
       loopsIndexes:
@@ -413,33 +401,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         return set(() => ({
           isFocusInsideListMapperModeInput,
         }));
-      },
-      selectedPieceMetadataInPieceSelector: null,
-      setSelectedPieceMetadataInPieceSelector: (
-        metadata: StepMetadataWithSuggestions | null,
-      ) => {
-        return set(() => ({
-          selectedPieceMetadataInPieceSelector: metadata,
-        }));
-      },
-      openedPieceSelectorStepNameOrAddButtonId: isEmptyTriggerInitiallySelected
-        ? 'trigger'
-        : null,
-      setOpenedPieceSelectorStepNameOrAddButtonId: (
-        stepNameOrAddButtonId: string | null,
-      ) => {
-        return set((state) => {
-          const isReplacingEmptyTrigger =
-            state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
-            stepNameOrAddButtonId === 'trigger';
-          return {
-            openedPieceSelectorStepNameOrAddButtonId: stepNameOrAddButtonId,
-            rightSidebar: isReplacingEmptyTrigger
-              ? RightSideBarType.NONE
-              : state.rightSidebar,
-          };
-        });
-      },
+      }
     };
   });
 
@@ -701,19 +663,6 @@ export const useResizeCanvas = (
   }, [setViewport, getViewport]);
 };
 
-const getStepNameFromOperationType = (
-  operation: PieceSelectorOperation,
-  flowVersion: FlowVersion,
-) => {
-  switch (operation.type) {
-    case FlowOperationType.UPDATE_ACTION:
-      return operation.stepName;
-    case FlowOperationType.ADD_ACTION:
-      return flowStructureUtil.findUnusedName(flowVersion.trigger);
-    case FlowOperationType.UPDATE_TRIGGER:
-      return 'trigger';
-  }
-};
 
 
 export const useShowBuilderIsSavingWarningBeforeLeaving = () => {

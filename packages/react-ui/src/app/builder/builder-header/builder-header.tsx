@@ -10,7 +10,6 @@ import {
 } from 'react-router-dom';
 
 import {
-  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { PageHeader } from '@/components/custom/page-header';
@@ -46,6 +45,7 @@ import {
 import FlowActionMenu from '../../components/flow-actions-menu';
 
 import { BuilderFlowStatusSection } from './flow-status';
+import { RightSideBarType } from '@/lib/types';
 
 export const BuilderHeader = () => {
   const [queryParams] = useSearchParams();

@@ -24,7 +24,6 @@ import {
 import {
   doesSelectionRectangleExist,
   NODE_SELECTION_RECT_CLASS_NAME,
-  RightSideBarType,
   useBuilderStateContext,
   useFocusOnStep,
   useHandleKeyPressOnCanvas,
@@ -46,6 +45,7 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
+import { RightSideBarType } from '@/lib/types';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:

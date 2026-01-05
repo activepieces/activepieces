@@ -7,7 +7,7 @@ import { triggerEventHooks } from '@/features/flows/lib/trigger-event-hooks';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { FlowTrigger, isNil } from '@activepieces/shared';
 
-import { ChatDrawerSource, useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 import { McpToolTestingDialog } from '../custom-test-step/mcp-tool-testing-dialog';
 import { TestSampleDataViewer } from '../test-sample-data-viewer';
 import { testStepHooks } from '../utils/test-step-hooks';
@@ -17,6 +17,7 @@ import { ManualWebhookTestButton } from './manual-webhook-test-button';
 import { SimulationNote } from './simulation-section';
 import { TriggerEventSelect } from './trigger-event-select';
 import { TestType, triggerEventUtils } from './trigger-event-utils';
+import { ChatDrawerSource } from '@/lib/types';
 
 type TestTriggerSectionProps = {
   isSaving: boolean;

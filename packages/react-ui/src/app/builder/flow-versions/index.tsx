@@ -1,7 +1,6 @@
 import { t } from 'i18next';
 
 import {
-  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
@@ -11,6 +10,7 @@ import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { SidebarHeader } from '../sidebar-header';
 
 import { FlowVersionDetailsCard } from './flow-versions-card';
+import { RightSideBarType } from '@/lib/types';
 
 const FlowVersionsList = () => {
   const [flow, setRightSidebar, selectedFlowVersion] = useBuilderStateContext(

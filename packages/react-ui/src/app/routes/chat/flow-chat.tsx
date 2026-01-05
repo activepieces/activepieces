@@ -3,7 +3,6 @@ import { AxiosError } from 'axios';
 import { nanoid } from 'nanoid';
 import { useEffect, useRef, useState } from 'react';
 
-import { ChatDrawerSource } from '@/app/builder/builder-hooks';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ChatInput, ChatMessage } from '@/features/chat/chat-input';
 import { ChatIntro } from '@/features/chat/chat-intro';
@@ -23,6 +22,7 @@ import {
 } from '@activepieces/shared';
 
 import NotFoundPage from '../404-page';
+import { ChatDrawerSource } from '@/lib/types';
 
 interface FlowChatProps {
   flowId: string;

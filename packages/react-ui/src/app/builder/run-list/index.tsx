@@ -2,10 +2,7 @@ import { InfiniteData, useInfiniteQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import React, { useMemo } from 'react';
 
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import {
   CardListEmpty,
   CardListItemSkeleton,
@@ -23,6 +20,7 @@ import {
 import { SidebarHeader } from '../sidebar-header';
 
 import { FLOW_CARD_HEIGHT, FlowRunCard } from './flow-run-card';
+import { RightSideBarType } from '@/lib/types';
 
 type RunsListItem =
   | { type: 'flowRun'; run: FlowRun }

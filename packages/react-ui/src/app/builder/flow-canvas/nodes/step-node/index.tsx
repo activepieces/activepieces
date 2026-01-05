@@ -3,12 +3,12 @@ import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
 
 import {
-  RightSideBarType,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { RightSideBarType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,

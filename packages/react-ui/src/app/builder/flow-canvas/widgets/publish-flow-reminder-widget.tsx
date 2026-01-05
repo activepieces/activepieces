@@ -20,7 +20,8 @@ import {
   Permission,
 } from '@activepieces/shared';
 
-import { RightSideBarType, useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
+import { RightSideBarType } from '@/lib/types';
 
 import LargeWidgetWrapper from './large-widget-wrapper';
 

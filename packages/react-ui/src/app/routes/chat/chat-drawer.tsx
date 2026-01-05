@@ -2,7 +2,6 @@ import { ArrowRight } from 'lucide-react';
 import { useRef } from 'react';
 
 import {
-  ChatDrawerSource,
   useBuilderStateContext,
 } from '@/app/builder/builder-hooks';
 import { useSocket } from '@/components/socket-provider';
@@ -20,6 +19,7 @@ import {
 } from '@activepieces/shared';
 
 import { FlowChat } from './flow-chat';
+import { ChatDrawerSource } from '@/lib/types';
 
 export const ChatDrawer = () => {
   const [
