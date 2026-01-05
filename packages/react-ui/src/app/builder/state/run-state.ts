@@ -32,7 +32,7 @@ export const createRunState = (
   set: StoreApi<BuilderState>['setState'],
 ): RunState => {
   return {
-    run: null,
+    run: initialState.run,
     loopsIndexes:
       initialState.run && initialState.run.steps
         ? flowRunUtils.findLoopsState(
