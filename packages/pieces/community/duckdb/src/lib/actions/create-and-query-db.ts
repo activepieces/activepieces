@@ -24,10 +24,12 @@ export const createAndQueryDB = createAction({
           description: 'Name of the table to create',
           required: true,
         }),
-        dataUrl: Property.ShortText({
-          displayName: 'Source JSON Data URL',
-          description: 'URL to JSON file containing the source data',
+        data: Property.Json({
+          displayName: 'JSON Data',
+          description:
+            'Table data in the form of a JSON array of objects. Object keys would be taken as column names.',
           required: true,
+          defaultValue: [],
         }),
       },
     }),
@@ -65,6 +67,11 @@ export const createAndQueryDB = createAction({
 
     const dbTables: any[] = context.propsValue.tables;
     for (const dbTable of dbTables) {
+      const fileUrl = await context.files.write({
+        fileName: `${dbTable.name}.json`,
+        data: Buffer.from(JSON.stringify(dbTable.data)),
+      });
+
       await connection.run(
         `
             CREATE TABLE ${dbTable.name} AS
@@ -72,7 +79,7 @@ export const createAndQueryDB = createAction({
               FROM read_json($sourceData);
           `,
         {
-          sourceData: dbTable.dataUrl,
+          sourceData: fileUrl,
         },
         {
           sourceData: VARCHAR,
