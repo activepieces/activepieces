@@ -48,6 +48,7 @@ import { textMentionUtils } from './piece-properties/text-input-with-mentions/te
 import { createFlowState, FlowState } from './state/flow-state';
 import { createPieceSelectorState, PieceSelectorState } from './state/piece-selector-state';
 import { createRunState, RunState } from './state/run-state';
+import { ChatState, createChatState } from './state/chat-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -61,23 +62,15 @@ export function useBuilderStateContext<T>(
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-export type BuilderState = FlowState & PieceSelectorState & RunState &{
+export type BuilderState = FlowState & PieceSelectorState & RunState & ChatState &{
   readonly: boolean;
   hideTestWidget: boolean;
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
   activeDraggingStep: string | null;
   selectedBranchIndex: number | null;
-  chatDrawerOpenSource: ChatDrawerSource | null;
-  chatSessionMessages: Messages;
-  chatSessionId: string | null;
   showMinimap: boolean;
   setShowMinimap: (showMinimap: boolean) => void;
-  setChatDrawerOpenSource: (source: ChatDrawerSource | null) => void;
-  setChatSessionMessages: (messages: Messages) => void;
-  addChatMessage: (message: Messages[0]) => void;
-  clearChatSession: () => void;
-  setChatSessionId: (sessionId: string | null) => void;
   setSelectedBranchIndex: (index: number | null) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
@@ -117,6 +110,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     const flowState = createFlowState(initialState, get, set);
     const pieceSelectorState = createPieceSelectorState(get, set);
     const runState = createRunState(initialState, get, set);
+    const chatState = createChatState(set);
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
@@ -134,6 +128,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       ...flowState,
       ...runState,
       ...pieceSelectorState,
+      ...chatState,
       showMinimap: false,
       setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
       readonly: initialState.readonly,
@@ -145,21 +140,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         initiallySelectedStep && !isEmptyTriggerInitiallySelected
           ? RightSideBarType.PIECE_SETTINGS
           : RightSideBarType.NONE,
-      chatDrawerOpenSource: null,
-      chatSessionMessages: [],
-      chatSessionId: apId(),
-      setChatDrawerOpenSource: (source: ChatDrawerSource | null) =>
-        set({ chatDrawerOpenSource: source }),
-      setChatSessionMessages: (messages: Messages) =>
-        set({ chatSessionMessages: messages }),
-      addChatMessage: (message: Messages[0]) =>
-        set((state) => ({
-          chatSessionMessages: [...state.chatSessionMessages, message],
-        })),
-      clearChatSession: () =>
-        set({ chatSessionMessages: [], chatSessionId: null }),
-      setChatSessionId: (sessionId: string | null) =>
-        set({ chatSessionId: sessionId }),
       removeStepSelection: () =>
         set({
           selectedStep: null,
