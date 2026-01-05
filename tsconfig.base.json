@@ -410,8 +410,11 @@
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
       ],
-      "@activepieces/piece-ampeco":[
+      "@activepieces/piece-ampeco": [
         "packages/pieces/community/ampeco/src/index.ts"
+      ],
+      "@activepieces/piece-intruder": [
+        "packages/pieces/community/intruder/src/index.ts"
       ]
     },
     "resolveJsonModule": true
