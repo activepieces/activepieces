@@ -1,6 +1,10 @@
 {
   "Automate your complete HR hiring and onboarding workflow. Manage applicants, job openings, interview scheduling, and track progress through hiring stages with real-time webhooks.": "Automatiseer uw volledige HR werving en onboarding workflow. Beheer sollicitanten, vacatureopeningen, interview planning en track progress door het inhuren van fasen met real-time webhooks.",
+  "API Key": "API Sleutel",
+  "Base URL": "Basis URL",
   "Enter your Fountain API key from Profile > Manage API Keys or Settings > Integrations & API Keys": "Voer je Fountain API-sleutel van Profiel > API-sleutels beheren > API-sleutels of instellingen > Integraties & API-sleutels",
+  "The base URL for your Fountain API (default: https://api.fountain.com). For example: us-2.fountain.com/api/v2": "De basis-URL voor uw Fountain API (standaard: https://api.fountain.com). Bijvoorbeeld: us-2.fountain.com/api/v2",
+  "Enter your Fountain API key and base URL": "Voer je Fountain API-sleutel en basis-URL in",
   "Create Applicant": "Aanvrager aanmaken",
   "Delete Applicant": "Verwijder sollicitant",
   "Get Applicant Details": "Ontvang sollicitatiegegevens",
@@ -48,7 +52,6 @@
   "Applicant's complete phone number": "Afgeronde telefoonnummer van aanvrager",
   "Apply additional duplicate applicant blocking rules specified in company duplicate settings": "Toepassen van extra dubbele aanvraagblokkeringsregels opgegeven in dubbele instellingen",
   "The applicant to delete (shows 50 most recent applicants)": "De te verwijderen kandidaat (toont 50 meest recente sollicitaties)",
-  "The applicant to retrieve details for (shows 50 most recent applicants)": "De aanvrager die de details ophaalt (toont 50 meest recente sollicitaties)",
   "The applicant to get interview sessions for (shows 50 most recent applicants)": "De aanvrager voor interview sessies (toont 50 meest recente sollicitaties)",
   "The opening to retrieve details for": "De opening om de details op te halen voor",
   "The opening that contains the stage": "De opening die het speelveld bevat",
