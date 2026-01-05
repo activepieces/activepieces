@@ -27,6 +27,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
     })
 
     fastify.get('/', ListProjectRequestForUser, async (request) => {
+        const user = await userService.getOneOrFail({ id: request.principal.id })
         return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             userId: request.principal.id,
@@ -34,6 +35,7 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
             displayName: request.query.displayName,
             limit: request.query.limit ?? 10,
             types: request.query.types,
+            isPrivileged: userService.isUserPrivileged(user),
         })
     })
 

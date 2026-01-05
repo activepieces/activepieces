@@ -5,7 +5,6 @@ import {
     apId,
     assertNotNullOrUndefined,
     ColorName,
-    EndpointScope,
     ErrorCode,
     isNil,
     Metadata,
@@ -216,23 +215,11 @@ export async function applyProjectsAccessFilters<T extends ObjectLiteral>(
     queryBuilder: SelectQueryBuilder<T>,
     params: ApplyProjectsAccessFiltersParams,
 ): Promise<void> {
-    const { platformId, userId, scope } = params
-    // Privileged users (scope=PLATFORM or isPrivileged) can see all projects
-    if (scope === EndpointScope.PLATFORM) {
-        return
-    }
-
-    let isPrivileged = params.isPrivileged
-    if (isNil(isPrivileged)) {
-        const user = await userService.getOneOrFail({ id: userId })
-        isPrivileged = userService.isUserPrivileged(user)
-    }
-
+    const { platformId, userId, isPrivileged } = params
     if (isPrivileged) {
         return
     }
 
-    // Non-privileged user => personal project + member projects
     queryBuilder.andWhere(new Brackets(qb => {
         qb.where(
             'project."ownerId" = :userId AND project.type = :personalType',
@@ -264,9 +251,8 @@ async function assertExternalIdIsUnique(externalId: string | undefined | null, p
 type GetAllForUserParams = {
     platformId: string
     userId: string
+    isPrivileged: boolean
     displayName?: string
-    scope?: EndpointScope
-    isPrivileged?: boolean
 }
 
 type GetOneByOwnerAndPlatformParams = {
@@ -324,6 +310,5 @@ type NewProject = Omit<Project, 'created' | 'updated' | 'deleted'>
 type ApplyProjectsAccessFiltersParams = {
     platformId: string
     userId: string
-    scope?: EndpointScope
-    isPrivileged?: boolean
+    isPrivileged: boolean
 }

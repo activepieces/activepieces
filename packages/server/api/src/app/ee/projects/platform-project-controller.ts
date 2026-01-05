@@ -7,7 +7,6 @@ import { ProjectResourceType, securityAccess } from '@activepieces/server-shared
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
     Permission,
     PiecesFilterType,
@@ -61,6 +60,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {
         const userId = await getUserId(request.principal)
+        const user = await userService.getOneOrFail({ id: userId })
         return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
@@ -69,7 +69,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             types: request.query.types,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             userId,
-            scope: EndpointScope.PLATFORM,
+            isPrivileged: userService.isUserPrivileged(user),
         })
     })
 

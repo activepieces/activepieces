@@ -3,7 +3,6 @@ import {
 } from '@activepieces/ee-shared'
 import {
     Cursor,
-    EndpointScope,
     isNil,
     PlatformId,
     Project,
@@ -34,7 +33,7 @@ const projectRepo = repoFactory(ProjectEntity)
 
 export const platformProjectService = (log: FastifyBaseLogger) => ({
     async getForPlatform(params: GetAllForParamsAndUser): Promise<SeekPage<ProjectWithLimits>> {
-        const { cursorRequest, limit, platformId, displayName, externalId, userId, scope, types, isPrivileged } = params
+        const { cursorRequest, limit, platformId, displayName, externalId, userId, types, isPrivileged } = params
 
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
@@ -63,7 +62,7 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             .createQueryBuilder('project')
             .where(filters)
 
-        await applyProjectsAccessFilters(queryBuilder, { platformId, userId, scope, isPrivileged })
+        await applyProjectsAccessFilters(queryBuilder, { platformId, userId, isPrivileged })
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
         const projects: ProjectWithLimits[] = await enrichProjects(data, log)
@@ -165,14 +164,13 @@ async function enrichProjects(
 
 type GetAllForParamsAndUser = {
     userId: string
-    scope?: EndpointScope
     platformId: string
     displayName?: string
     externalId?: string
     cursorRequest: Cursor | null
     limit: number
     types?: ProjectType[]
-    isPrivileged?: boolean
+    isPrivileged: boolean
 }
 
 type DeletePersonalProjectForUserParams = {
