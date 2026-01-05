@@ -14,6 +14,7 @@ To get your credentials, follow these steps:
    - Set your application name (must be unique)
    - Add an OAuth Redirect URL
    - Select a category for your application
+   - Select the Client Type as "Confidential"
    - Click Create
 
 2. **Get Your Credentials**
