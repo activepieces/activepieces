@@ -8,7 +8,7 @@ import {
 import { HttpStatusCode } from 'axios';
 import { t } from 'i18next';
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -94,13 +94,16 @@ export const projectHooks = {
   },
   useReloadPageIfProjectIdChanged: (projectId: string) => {
     const { embedState } = useEmbedding();
+    const location = useLocation();
     useEffect(() => {
       const handleVisibilityChange = () => {
         const currentProjectId = authenticationSession.getProjectId();
+        const isTemplateRoute = location.pathname.startsWith('/templates');
         if (
           currentProjectId !== projectId &&
           document.visibilityState === 'visible' &&
-          !embedState.isEmbedded
+          !embedState.isEmbedded &&
+          !isTemplateRoute
         ) {
           window.location.reload();
         }
@@ -112,7 +115,7 @@ export const projectHooks = {
           handleVisibilityChange,
         );
       };
-    }, [projectId, embedState.isEmbedded]);
+    }, [projectId, embedState.isEmbedded, location.pathname]);
   },
   useSwitchToProjectInParams: () => {
     const { projectId: projectIdFromParams } = useParams<{

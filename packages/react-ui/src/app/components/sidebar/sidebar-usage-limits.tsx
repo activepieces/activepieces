@@ -103,11 +103,15 @@ const SidebarUsageLimits = React.memo(() => {
               {t('Unlimited')}
             </Badge>
           </div>
-          <UsageProgress
-            name={t('AI Credits')}
-            value={Math.floor(platform.usage?.totalAiCreditsUsed ?? 0)}
-            max={platform.usage?.aiCreditsLimit ?? 0}
-          />
+          <div className="flex items-center justify-between w-full text-xs">
+            <span className="font-bold">{t('AI Credits')}</span>
+            <span>
+              {Math.round(
+                platform.usage?.aiCreditsRemaining ?? 0,
+              ).toLocaleString()}{' '}
+              {t('remaining')}
+            </span>
+          </div>
           <UsageProgress
             name={t('Active Flows')}
             value={platform.usage?.activeFlows ?? 0}

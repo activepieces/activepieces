@@ -7,6 +7,8 @@ import {
   PanOnScrollMode,
   useKeyPress,
   BackgroundVariant,
+  getNodesBounds,
+  CoordinateExtent,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -33,6 +35,7 @@ import {
   CanvasContextMenu,
   ContextMenuType,
 } from './context-menu/canvas-context-menu';
+import { useCursorPosition } from './cursor-position-context';
 import { FlowDragLayer } from './flow-drag-layer';
 import {
   flowUtilConsts,
@@ -41,6 +44,7 @@ import {
 } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
+import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
@@ -106,7 +110,6 @@ export const FlowCanvas = React.memo(
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
-
     useShowChevronNextToSelection();
     useFocusOnStep();
     useHandleKeyPressOnCanvas();
@@ -207,13 +210,37 @@ export const FlowCanvas = React.memo(
         .getState()
         .addSelectedNodes(selectedSteps.map((step) => step.name));
     }, [selectedNodes, storeApi, selectedStep]);
-    const [cursorPosition, setCursorPosition] = useState({ x: 0, y: 0 });
+
+    const { setCursorPosition } = useCursorPosition();
+    const translateExtent = useMemo(() => {
+      const nodes = graph.nodes;
+      const graphRectangle = getNodesBounds(nodes);
+      const stepWidth = flowUtilConsts.AP_NODE_SIZE.STEP.width;
+      const start = {
+        x: -graphRectangle.width - 5 * stepWidth,
+        y: -graphRectangle.height,
+      };
+      const end = {
+        x: 2.5 * graphRectangle.width + 5 * stepWidth,
+        y: 2 * graphRectangle.height,
+      };
+      const extent: CoordinateExtent = [
+        [start.x, start.y],
+        [end.x, end.y],
+      ];
+      return extent;
+    }, [graphKey]);
+    console.log('canvas');
     return (
       <div
         ref={containerRef}
         className="size-full relative overflow-hidden z-30 bg-builder-background"
+        onMouseMove={(event) => {
+          const cursorPosition = { x: event.clientX, y: event.clientY };
+          setCursorPosition(cursorPosition);
+        }}
       >
-        <FlowDragLayer cursorPosition={cursorPosition}>
+        <FlowDragLayer>
           <CanvasContextMenu contextMenuType={contextMenuType}>
             <ReactFlow
               className="bg-builder-background"
@@ -221,6 +248,7 @@ export const FlowCanvas = React.memo(
               onPaneClick={() => {
                 storeApi.getState().unselectNodesAndEdges();
               }}
+              translateExtent={translateExtent}
               nodeTypes={flowUtilConsts.nodeTypes}
               nodes={graph.nodes}
               edgeTypes={flowUtilConsts.edgeTypes}
@@ -239,9 +267,6 @@ export const FlowCanvas = React.memo(
               elementsSelectable={true}
               nodesDraggable={false}
               nodesFocusable={false}
-              onNodeDrag={(event) => {
-                setCursorPosition({ x: event.clientX, y: event.clientY });
-              }}
               selectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               multiSelectionKeyCode={inGrabPanningMode ? 'Shift' : null}
               selectionOnDrag={inGrabPanningMode ? false : true}
@@ -258,6 +283,7 @@ export const FlowCanvas = React.memo(
                 bgColor={`var(--builder-background)`}
                 color={`var(--builder-background-pattern)`}
               />
+              <Minimap key={graphKey} />
             </ReactFlow>
           </CanvasContextMenu>
         </FlowDragLayer>

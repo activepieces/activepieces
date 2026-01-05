@@ -1,8 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { ChevronDown, Plus, Upload, Workflow } from 'lucide-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
@@ -18,20 +16,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { foldersApi } from '@/features/folders/lib/folders-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { authenticationSession } from '@/lib/authentication-session';
-import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
-import {
-  Permission,
-  PopulatedFlow,
-  UncategorizedFolderId,
-} from '@activepieces/shared';
+import { cn } from '@/lib/utils';
+import { Permission } from '@activepieces/shared';
 
 import { ImportFlowDialog } from '../components/import-flow-dialog';
 import { SelectFlowTemplateDialog } from '../components/select-flow-template-dialog';
 
-import { flowsApi } from './flows-api';
+import { flowHooks } from './flow-hooks';
 
 type CreateFlowDropdownProps = {
   refetch: () => void | null;
@@ -49,29 +41,9 @@ export const CreateFlowDropdown = ({
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const [refresh, setRefresh] = useState(0);
-  const navigate = useNavigate();
   const { embedState } = useEmbedding();
-  const { mutate: createFlow, isPending: isCreateFlowPending } = useMutation<
-    PopulatedFlow,
-    Error,
-    void
-  >({
-    mutationFn: async () => {
-      const folder =
-        folderId !== UncategorizedFolderId
-          ? await foldersApi.get(folderId)
-          : undefined;
-      const flow = await flowsApi.create({
-        projectId: authenticationSession.getProjectId()!,
-        displayName: t('Untitled'),
-        folderName: folder?.displayName,
-      });
-      return flow;
-    },
-    onSuccess: (flow) => {
-      navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
-    },
-  });
+  const { mutate: createFlow, isPending: isCreateFlowPending } =
+    flowHooks.useStartFromScratch(folderId);
 
   return (
     <PermissionNeededTooltip hasPermission={doesUserHavePermissionToWriteFlow}>

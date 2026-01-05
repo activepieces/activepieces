@@ -15,7 +15,7 @@ import {
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
-import { eventsHooks } from '../../helper/application-events'
+import { applicationEvents } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
 
@@ -38,7 +38,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             pieceVersion: request.body.pieceVersion,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -96,7 +96,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
         })
-        eventsHooks.get(request.log).sendUserEventFromRequest(request, {
+        applicationEvents.sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,
