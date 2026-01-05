@@ -6,17 +6,20 @@ import { useSocket } from '@/components/socket-provider';
 import {
   BadgeAwarded,
   BADGES,
+  ApFlagId,
   WebsocketClientEvent,
 } from '@activepieces/shared';
+import { flagsHooks } from '@/hooks/flags-hooks';
 
 export const BadgeCelebrate = () => {
   const socket = useSocket();
   const cleanupRef = useRef<() => void>();
+  const { data: showBadges } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_BADGES);
   const isCelebrating = useRef(false);
   const celebrationTimeout = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !showBadges) return;
     if (cleanupRef.current) {
       cleanupRef.current();
     }

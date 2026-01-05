@@ -1,15 +1,14 @@
-import { t } from 'i18next';
 import { Mail } from 'lucide-react';
 
+import { UserBadges } from '@/app/components/account-settings/user-badges';
 import {
   HoverCard,
   HoverCardTrigger,
   HoverCardContent,
 } from '@/components/ui/hover-card';
 import { userHooks } from '@/hooks/user-hooks';
-import { BADGES, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
-import { TooltipContent, Tooltip, TooltipTrigger } from '../ui/tooltip';
 import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
@@ -87,40 +86,7 @@ export const ApAvatar = ({
           </div>
         </div>
 
-        {user.badges.length > 0 && (
-          <div className="mt-3 pt-3 border-t">
-            <h5 className="text-xs text-foreground mb-2 tracking-wide">
-              {t('Badges')}
-            </h5>
-            <div className="flex items-center gap-2">
-              {user.badges.map((badge) => (
-                <Tooltip key={badge.name}>
-                  <TooltipTrigger asChild>
-                    <div className="cursor-pointer">
-                      <img
-                        src={
-                          BADGES[badge.name as keyof typeof BADGES]!.imageUrl
-                        }
-                        alt={BADGES[badge.name as keyof typeof BADGES]!.title}
-                        className="h-12 w-12 object-cover rounded"
-                      />
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-left">
-                    <div className="flex flex-col">
-                      <p className="font-semibold">
-                        {BADGES[badge.name as keyof typeof BADGES]!.title}
-                      </p>
-                      <p className="text-xs">
-                        {BADGES[badge.name as keyof typeof BADGES]!.description}
-                      </p>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              ))}
-            </div>
-          </div>
-        )}
+        <UserBadges user={user} showLockedBadges={false} showBorder={true} />
       </HoverCardContent>
     </HoverCard>
   );

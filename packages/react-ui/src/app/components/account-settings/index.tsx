@@ -1,6 +1,6 @@
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { t } from 'i18next';
-import { Lock, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 import {
   Dialog,
@@ -10,18 +10,14 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
-import { BADGES, UserWithBadges } from '@activepieces/shared';
+import { UserWithBadges } from '@activepieces/shared';
 
 import { DeleteAccount } from './delete-account';
 import LanguageToggle from './language-toggle';
 import ThemeToggle from './theme-toggle';
+import { UserBadges } from './user-badges';
 export interface AccountSettingsDialogProps {
   open: boolean;
   onClose: () => void;
@@ -61,48 +57,7 @@ export function AccountSettingsDialog({
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h5 className="text-xs text-foreground tracking-wide">
-                {t('Badges')}
-              </h5>
-              <div className="flex items-center gap-2 flex-wrap">
-                {Object.entries(BADGES).map(([badgeName, badge]) => {
-                  const userWithBadges = user as UserWithBadges | null;
-                  const isUnlocked =
-                    userWithBadges?.badges?.some(
-                      (userBadge: { name: string; created: string }) =>
-                        userBadge.name === badgeName,
-                    ) ?? false;
-
-                  return (
-                    <Tooltip key={badgeName}>
-                      <TooltipTrigger asChild>
-                        <div className="cursor-pointer relative">
-                          <img
-                            src={badge.imageUrl}
-                            alt={badge.title}
-                            className={`h-12 w-12 object-cover rounded ${
-                              !isUnlocked ? 'opacity-50 grayscale' : ''
-                            }`}
-                          />
-                          {!isUnlocked && (
-                            <div className="absolute inset-0 flex items-center justify-center rounded">
-                              <Lock className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                          )}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="text-left">
-                        <div className="flex flex-col">
-                          <p className="font-semibold">{badge.title}</p>
-                          <p className="text-xs">{badge.description}</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-            </div>
+            <UserBadges user={user as UserWithBadges | null} />
 
             <Separator />
 
