@@ -1,7 +1,8 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
-import { apId, isNil } from '@activepieces/shared'
+import { apId, isNil, WebsocketClientEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
+import { websocketService } from '../../core/websockets.service'
 import { applicationEvents } from '../../helper/application-events'
 import { UserBadgeEntity } from './badge-entity'
 import { allBadges } from './checks'
@@ -12,15 +13,34 @@ export const userBadgeService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents.registerListeners(log, {
             userEvent: () => async (requestInformation, event) => {
-                if (!requestInformation.userId) {
+                const userId = requestInformation.userId
+                if (isNil(userId)) {
                     return
                 }
-                for (const badge of allBadges) {
-                    const userId = requestInformation.userId
-                    const shouldAward = !isNil(userId) && await badge.eval({ requestInformation, event })
-                    if (shouldAward) {
-                        awardBadge(userId, badge.name, log)
-                    }
+                const badgesToAward = (await Promise.all(allBadges.map(badgeCheck => badgeCheck.eval({ requestInformation, event })))).flatMap(badge => badge)
+                if (badgesToAward.length === 0) {
+                    return
+                }
+                const existingBadges = await userBadgeRepo().findBy({
+                    userId,
+                    name: In(badgesToAward),
+                })
+                const newBadges = badgesToAward.filter(badge => !existingBadges.some(existingBadge => existingBadge.name === badge))
+                for (const badgeName of newBadges) {
+                    await userBadgeRepo().upsert(
+                        {
+                            id: apId(),
+                            userId,
+                            name: badgeName,
+                            created: new Date().toISOString(),
+                            updated: new Date().toISOString(),
+                        },
+                        ['userId', 'name'],
+                    )
+                    websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
+                        badge: badgeName,
+                        userId,
+                    })
                 }
             },
             workerEvent: () => () => {
@@ -30,18 +50,3 @@ export const userBadgeService = (log: FastifyBaseLogger) => ({
     },
 })
 
-function awardBadge(userid: string, badgeName: string, log: FastifyBaseLogger) {
-    rejectedPromiseHandler(
-        userBadgeRepo().upsert(
-            {
-                id: apId(),
-                userId: userid,
-                name: badgeName,
-                created: new Date().toISOString(),
-                updated: new Date().toISOString(),
-            },
-            ['userId', 'name'],
-        ),
-        log,
-    )
-}

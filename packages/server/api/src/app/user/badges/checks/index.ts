@@ -1,6 +1,10 @@
 import { BadgeCheck } from '../badge-check'
-import { welcomeBadge } from './welcome'
+import { flowsBadgesCheck } from './active-flows-badges'
+import { flowContentBadgesCheck } from './flow-content'
+import { flowRunsBadgesCheck } from './flow-runs-badges'
 
 export const allBadges: BadgeCheck[] = [
-    welcomeBadge,
+    flowsBadgesCheck,
+    flowContentBadgesCheck,
+    flowRunsBadgesCheck,
 ]

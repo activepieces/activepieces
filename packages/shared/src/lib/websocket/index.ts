@@ -2,6 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { TriggerUpdateStatusErrorParams } from '../common/activepieces-error'
 import { PopulatedFlow } from '../flows/flow'
 import { StepRunResponse } from '../flows/sample-data'
+import { UserBadge } from '../user/badges'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -29,7 +30,7 @@ export type TodoChanged = Static<typeof TodoChanged>
 
 
 export const TodoActivityChanged = Type.Object({
-    activityId: Type.String(),  
+    activityId: Type.String(),
     todoId: Type.String(),
     content: Type.String(),
 
@@ -42,6 +43,13 @@ export const TodoActivityCreated = Type.Object({
 })
 
 export type TodoActivityCreated = Static<typeof TodoActivityCreated>
+
+export const BadgeAwarded = Type.Object({
+    badge: Type.String(),
+    userId: Type.String(),
+})
+
+export type BadgeAwarded = Static<typeof BadgeAwarded>
 
 export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
 

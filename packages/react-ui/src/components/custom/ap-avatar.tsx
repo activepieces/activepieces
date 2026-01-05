@@ -11,7 +11,6 @@ import { isNil } from '@activepieces/shared';
 import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
-  type: 'user';
   id: string | null;
   size: 'small' | 'medium';
   includeAvatar?: boolean;
@@ -20,7 +19,6 @@ interface ApAvatarProps {
 }
 
 export const ApAvatar = ({
-  type,
   id,
   includeAvatar = true,
   includeName = false,
@@ -37,15 +35,17 @@ export const ApAvatar = ({
   const content = (
     <div className="flex items-center gap-2">
       {includeAvatar && (
-        <UserAvatar
-          name={`${user.firstName} ${user.lastName}`}
-          email={user.email}
-          size={avatarSize}
-          disableTooltip={true}
-        />
+        <div className="shrink-0">
+          <UserAvatar
+            name={`${user.firstName} ${user.lastName}`}
+            email={user.email}
+            size={avatarSize}
+            disableTooltip={true}
+          />
+        </div>
       )}
       {includeName && (
-        <span className="text-sm">{`${user.firstName} ${user.lastName}`}</span>
+        <span className="text-xs truncate">{`${user.firstName}`}</span>
       )}
     </div>
   );
