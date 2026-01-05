@@ -1,6 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
-import dayjs from 'dayjs';
 import { t } from 'i18next';
 import {
   createContext,
@@ -16,18 +15,13 @@ import { useEmbedding } from '@/components/embed-provider';
 import { Messages } from '@/features/chat/chat-message-list';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import {
-  FlowRun,
-  FlowVersion,
   Permission,
-  PopulatedFlow,
   flowStructureUtil,
   isNil,
   StepLocationRelativeToParent,
   FlowRunStatus,
   apId,
   FlowTriggerType,
-  FlowActionType,
-  LoopStepOutput,
 } from '@activepieces/shared';
 
 import { flowRunUtils } from '../../features/flow-runs/lib/flow-run-utils';
@@ -53,6 +47,7 @@ import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 import { createFlowState, FlowState } from './state/flow-state';
 import { createPieceSelectorState, PieceSelectorState } from './state/piece-selector-state';
+import { createRunState, RunState } from './state/run-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -66,13 +61,9 @@ export function useBuilderStateContext<T>(
 }
 
 type InsertMentionHandler = (propertyPath: string) => void;
-export type BuilderState = FlowState & PieceSelectorState & {
+export type BuilderState = FlowState & PieceSelectorState & RunState &{
   readonly: boolean;
   hideTestWidget: boolean;
-  outputSampleData: Record<string, unknown>;
-  inputSampleData: Record<string, unknown>;
-  loopsIndexes: Record<string, number>;
-  run: FlowRun | null;
   rightSidebar: RightSideBarType;
   selectedStep: string | null;
   activeDraggingStep: string | null;
@@ -88,11 +79,9 @@ export type BuilderState = FlowState & PieceSelectorState & {
   clearChatSession: () => void;
   setChatSessionId: (sessionId: string | null) => void;
   setSelectedBranchIndex: (index: number | null) => void;
-  clearRun: (userHasPermissionToEditFlow: boolean) => void;
   exitStepSettings: () => void;
   renameFlowClientSide: (newName: string) => void;
   moveToFolderClientSide: (folderId: string) => void;
-  setRun: (run: FlowRun, flowVersion: FlowVersion) => void;
   setRightSidebar: (rightSidebar: RightSideBarType) => void;
   removeStepSelection: () => void;
   selectStepByName: (stepName: string) => void;
@@ -100,7 +89,6 @@ export type BuilderState = FlowState & PieceSelectorState & {
   insertMention: InsertMentionHandler | null;
   setReadOnly: (readOnly: boolean) => void;
   setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
-  setLoopIndex: (stepName: string, index: number) => void;
   selectedNodes: string[];
   setSelectedNodes: (nodes: string[]) => void;
   panningMode: 'grab' | 'pan';
@@ -128,6 +116,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
   create<BuilderState>((set, get) => {
     const flowState = createFlowState(initialState, get, set);
     const pieceSelectorState = createPieceSelectorState(get, set);
+    const runState = createRunState(initialState, get, set);
     const failedStepNameInRun = initialState.run?.steps
       ? flowRunUtils.findLastStepWithStatus(
           initialState.run.status,
@@ -143,24 +132,12 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       initialState.flowVersion.trigger.type === FlowTriggerType.EMPTY;
     return {
       ...flowState,
+      ...runState,
       ...pieceSelectorState,
       showMinimap: false,
       setShowMinimap: (showMinimap: boolean) => set({ showMinimap }),
-      loopsIndexes:
-        initialState.run && initialState.run.steps
-          ? flowRunUtils.findLoopsState(
-              initialState.flowVersion,
-              initialState.run,
-              {},
-            )
-          : {},
-      outputSampleData: initialState.outputSampleData,
-      inputSampleData: initialState.inputSampleData,
-      flow: initialState.flow,
-      flowVersion: initialState.flowVersion,
       readonly: initialState.readonly,
       hideTestWidget: initialState.hideTestWidget ?? false,
-      run: initialState.run,
       saving: false,
       selectedStep: initiallySelectedStep,
       activeDraggingStep: null,
@@ -235,50 +212,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         });
       },
-      moveToFolderClientSide: (folderId: string) => {
-        set((state) => {
-          return {
-            flow: {
-              ...state.flow,
-              folderId,
-            },
-          };
-        });
-      },
-      setFlow: (flow: PopulatedFlow) => set({ flow, selectedStep: null }),
-      setSampleData: ({
-        stepName,
-        value,
-        type,
-      }: {
-        stepName: string;
-        value: unknown;
-        type: 'input' | 'output';
-      }) =>
-        set((state) => {
-          if (type === 'input') {
-            return {
-              inputSampleData: {
-                ...state.inputSampleData,
-                [stepName]: value,
-              },
-            };
-          }
-          return {
-            outputSampleData: {
-              ...state.outputSampleData,
-              [stepName]: value,
-            },
-          };
-        }),
-
-      clearRun: (userHasPermissionToEditFlow: boolean) =>
-        set({
-          run: null,
-          readonly: !userHasPermissionToEditFlow,
-          loopsIndexes: {},
-          selectedBranchIndex: null,
-        }),
       exitStepSettings: () =>
         set((state) => ({
           rightSidebar: RightSideBarType.NONE,
@@ -287,30 +220,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
         })),
       setRightSidebar: (rightSidebar: RightSideBarType) =>
         set({ rightSidebar }),
-      setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
-        set((state) => {
-          const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(
-            run.status,
-            run.steps,
-          );
-          const initiallySelectedStep = run.steps
-            ? flowCanvasUtils.determineInitiallySelectedStep(lastStepWithStatus, flowVersion)
-            : state.selectedStep ?? 'trigger';
-          return {
-            loopsIndexes: flowRunUtils.findLoopsState(
-              flowVersion,
-              run,
-              state.loopsIndexes,
-            ),
-            run,
-            flowVersion,
-            rightSidebar: initiallySelectedStep
-              ? RightSideBarType.PIECE_SETTINGS
-              : RightSideBarType.NONE,
-            selectedStep: initiallySelectedStep,
-            readonly: true,
-          };
-        }),
       setIsPublishing: (isPublishing: boolean) =>
         set((state) => {
           if (isPublishing) {
@@ -324,51 +233,6 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
           };
         }),
       isPublishing: false,
-      setLoopIndex: (stepName: string, index: number) => {
-        set((state) => {
-          const parentLoop = flowStructureUtil.getStepOrThrow(
-            stepName,
-            state.flowVersion.trigger,
-          );
-          if (parentLoop.type !== FlowActionType.LOOP_ON_ITEMS) {
-            console.error(
-              `Trying to set loop index for a step that is not a loop: ${stepName}`,
-            );
-            return state;
-          }
-          const childLoops = flowStructureUtil
-            .getAllChildSteps(parentLoop)
-            .filter((c) => c.type === FlowActionType.LOOP_ON_ITEMS)
-            .filter((c) => c.name !== stepName);
-          const loopsIndexes = { ...state.loopsIndexes };
-
-          loopsIndexes[stepName] = index;
-
-          childLoops.forEach((childLoop) => {
-            const childLoopOutput = flowRunUtils.extractStepOutput(
-              childLoop.name,
-              loopsIndexes,
-              state.run?.steps ?? {},
-              state.flowVersion.trigger,
-            ) as LoopStepOutput | undefined;
-
-            if (isNil(childLoopOutput) || isNil(childLoopOutput.output)) {
-              loopsIndexes[childLoop.name] = 0;
-            } else {
-              loopsIndexes[childLoop.name] = Math.max(
-                Math.min(
-                  loopsIndexes[childLoop.name],
-                  childLoopOutput.output.iterations.length - 1,
-                ),
-                0,
-              );
-            }
-          });
-          return {
-            loopsIndexes,
-          };
-        });
-      },
       insertMention: null,
       setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
         set({ insertMention });
