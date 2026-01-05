@@ -57,8 +57,6 @@ export function AccountSettingsDialog({
               </div>
             </div>
 
-            <Separator />
-
             <div className="space-y-3">
               <h5 className="text-xs text-foreground tracking-wide">
                 {t('Badges')}
@@ -90,11 +88,6 @@ export function AccountSettingsDialog({
                         <div className="flex flex-col">
                           <p className="font-semibold">{badge.title}</p>
                           <p className="text-xs">{badge.description}</p>
-                          {!isUnlocked && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {t('Locked')}
-                            </p>
-                          )}
                         </div>
                       </TooltipContent>
                     </Tooltip>
