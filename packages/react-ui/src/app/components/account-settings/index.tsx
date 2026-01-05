@@ -61,8 +61,6 @@ export function AccountSettingsDialog({
               </div>
             </div>
 
-            <Separator />
-
             <div className="space-y-3">
               <h5 className="text-xs text-foreground tracking-wide">
                 {t('Badges')}
