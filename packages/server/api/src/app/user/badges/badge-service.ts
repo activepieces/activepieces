@@ -8,7 +8,7 @@ import { BadgeCheck } from './badge-check'
 import { UserBadgeEntity } from './badge-entity'
 import { flowsBadgesCheck } from './checks/active-flows-badges'
 import { flowContentBadgesCheck } from './checks/flow-content'
-import { flowRunsBadgesCheck } from './checks/flow-runs-badges'
+//import { flowRunsBadgesCheck } from './checks/flow-runs-badges'
 
 export const userBadgeRepo = repoFactory(UserBadgeEntity)
 
@@ -17,9 +17,9 @@ const userEventsChecks: BadgeCheck[] = [
     flowContentBadgesCheck,
 ]
 
-const workerEventsChecks: BadgeCheck[] = [
+/*const workerEventsChecks: BadgeCheck[] = [
     flowRunsBadgesCheck,
-]
+]*/
 
 async function processBadgeChecks(
     checks: BadgeCheck[],
@@ -74,9 +74,9 @@ export const userBadgeService = (log: FastifyBaseLogger) => ({
             userEvent: () => async (requestInformation, event) => {
                 await processBadgeChecks(userEventsChecks, requestInformation, event, log)
             },
-            workerEvent: () => async (projectId, event) => {
-                const minimalMeta: MetaInformation = { platformId: '', projectId }
-                await processBadgeChecks(workerEventsChecks, minimalMeta, event, log)
+            workerEvent: () => async (_projectId, _event) => {
+                // const minimalMeta: MetaInformation = { platformId: '', projectId }
+                //await processBadgeChecks(workerEventsChecks, minimalMeta, event, log)
             },
         })
     },
