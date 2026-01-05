@@ -255,8 +255,15 @@ export function DataTable<
       (prev) => {
         const newParams = new URLSearchParams(prev);
 
-        newParams.set('cursor', currentCursor ?? '');
-        newParams.set('limit', `${table.getState().pagination.pageSize}`);
+        if (!isNil(currentCursor) && currentCursor !== '') {
+          newParams.set('cursor', currentCursor);
+        } else {
+          newParams.delete('cursor');
+        }
+        const pageSize = table.getState().pagination.pageSize;
+        if (pageSize) {
+          newParams.set('limit', `${pageSize}`);
+        }
         return newParams;
       },
       { replace: true },
@@ -394,12 +401,13 @@ export function DataTable<
                         }
                       >
                         <div
-                          className={cn('flex items-center', {
+                          className={cn('flex w-full items-center', {
                             'justify-end': cell.column.id === 'actions',
                             'justify-start': cell.column.id !== 'actions',
                           })}
                         >
                           <div
+                            className="w-full"
                             onClick={(e) => {
                               if (cell.column.id === 'select') {
                                 e.preventDefault();

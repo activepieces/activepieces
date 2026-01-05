@@ -412,6 +412,9 @@
       ],
       "@activepieces/piece-cryptolens": [
         "packages/pieces/community/cryptolens/src/index.ts"
+      ],
+      "@activepieces/piece-ampeco":[
+        "packages/pieces/community/ampeco/src/index.ts"
       ]
     },
     "resolveJsonModule": true

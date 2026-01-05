@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, Nullable } from '../common/base-model'
-import { UserWithMetaInformation } from '../user'
 import { FlowStatus } from '../flows/flow'
+import { UserWithMetaInformation } from '../user'
 
 export const DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP = 2
 

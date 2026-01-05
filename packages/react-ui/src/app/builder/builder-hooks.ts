@@ -90,6 +90,7 @@ export type BuilderState = {
   flow: PopulatedFlow;
   flowVersion: FlowVersion;
   readonly: boolean;
+  hideTestWidget: boolean;
   outputSampleData: Record<string, unknown>;
   inputSampleData: Record<string, unknown>;
   loopsIndexes: Record<string, number>;
@@ -183,6 +184,7 @@ export type BuilderInitialState = Pick<
   | 'flow'
   | 'flowVersion'
   | 'readonly'
+  | 'hideTestWidget'
   | 'run'
   | 'outputSampleData'
   | 'inputSampleData'
@@ -228,6 +230,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
       flow: initialState.flow,
       flowVersion: initialState.flowVersion,
       readonly: initialState.readonly,
+      hideTestWidget: initialState.hideTestWidget ?? false,
       run: initialState.run,
       saving: false,
       selectedStep: initiallySelectedStep,
