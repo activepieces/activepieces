@@ -50,7 +50,7 @@ const ProjectSideBarItem = ({
       <User className="size-5 flex items-center justify-center cursor-pointer" />
     );
   return (
-    <SidebarMenuItem onClick={(e) => e.stopPropagation()}>
+    <SidebarMenuItem>
       {state === 'collapsed' ? (
         <TooltipProvider delayDuration={0}>
           <Tooltip>

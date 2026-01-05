@@ -181,11 +181,7 @@ function TodosPage() {
         const authorName = todoUtils.getAuthorName(row.original);
         return (
           <div className="text-left flex items-center gap-2">
-            <ApAvatar
-              size="small"
-              type="user"
-              id={row.original.createdByUser?.id ?? ''}
-            />
+            <ApAvatar size="small" id={row.original.createdByUser?.id ?? ''} />
             <div>{authorName}</div>
           </div>
         );
@@ -206,7 +202,6 @@ function TodosPage() {
           <div className="text-left">
             {row.original.assignee && (
               <ApAvatar
-                type="user"
                 size="small"
                 includeName={true}
                 id={row.original.assignee.id}

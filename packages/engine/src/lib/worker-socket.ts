@@ -42,7 +42,7 @@ export const workerSocket = {
             reconnection: true,
         })
 
-        // Redirect console.log/error to socket
+        // Redirect console.log/error/warn to socket
         const originalLog = console.log
         console.log = function (...args): void {
             const engineStdout: EngineStdout = {
@@ -50,6 +50,15 @@ export const workerSocket = {
             }
             socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
             originalLog.apply(console, args)
+        }
+
+        const originalWarn = console.warn
+        console.warn = function (...args): void {
+            const engineStdout: EngineStdout = {
+                message: args.join(' ') + '\n',
+            }
+            socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
+            originalWarn.apply(console, args)
         }
 
         const originalError = console.error
@@ -107,4 +116,3 @@ export const workerSocket = {
         })
     },
 }
-

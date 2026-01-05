@@ -401,3 +401,7 @@ export const routesThatRequireProjectId = {
   releases: '/releases',
   singleRelease: '/releases/:releaseId',
 };
+
+export const isMac = () => {
+  return /(Mac)/i.test(navigator.userAgent);
+};

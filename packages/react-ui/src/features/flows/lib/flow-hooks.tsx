@@ -7,12 +7,13 @@ import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-er
 import { useSocket } from '@/components/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { downloadFile } from '@/lib/utils';
+import { downloadFile, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -29,6 +30,7 @@ import {
   isNil,
   ErrorCode,
   SeekPage,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -310,6 +312,26 @@ export const flowHooks = {
       ? flowVersions.data.length -
           flowVersions.data.findIndex((version) => version.id === versionId)
       : '';
+  },
+  useStartFromScratch: (folderId: string) => {
+    const navigate = useNavigate();
+    return useMutation<PopulatedFlow, Error, void>({
+      mutationFn: async () => {
+        const folder =
+          folderId !== UncategorizedFolderId
+            ? await foldersApi.get(folderId)
+            : undefined;
+        const flow = await flowsApi.create({
+          projectId: authenticationSession.getProjectId()!,
+          displayName: t('Untitled'),
+          folderName: folder?.displayName,
+        });
+        return flow;
+      },
+      onSuccess: (flow) => {
+        navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
+      },
+    });
   },
 };
 
