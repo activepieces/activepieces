@@ -14,6 +14,7 @@
   "Method": "Método",
   "Headers": "Encabezados",
   "Query Parameters": "Parámetros de consulta",
+  "Body Type": "Tipo de cuerpo",
   "Body": "Cuerpo",
   "Response is Binary ?": "¿Respuesta es binaria?",
   "No Error on Failure": "No hay ningún error en fallo",
@@ -24,11 +25,15 @@
   "Maximum number of tokens to generate.": "Número máximo de tokens a generar.",
   "Controls diversity via nucleus sampling (0-1).": "Controla la diversidad mediante muestreo de núcleos (0-1).",
   "Authorization headers are injected automatically from your connection.": "Las cabeceras de autorización se inyectan automáticamente desde tu conexión.",
-  "Enable for files like PDFs, images, etc..": "Activar para archivos como PDFs, imágenes, etc.",
+  "Enable for files like PDFs, images, etc.": "Activar para archivos como PDFs, imágenes, etc.",
   "GET": "RECOGER",
   "POST": "POST",
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "BORRAR",
-  "HEAD": "LIMPIO"
+  "HEAD": "LIMPIO",
+  "None": "Ninguna",
+  "JSON": "JSON",
+  "Form Data": "Datos de Formulario",
+  "Raw": "Rápido"
 }
