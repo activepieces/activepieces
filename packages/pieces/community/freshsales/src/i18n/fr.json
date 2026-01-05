@@ -35,6 +35,7 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
@@ -63,11 +64,15 @@
   "ID of the contact status that the contact belongs to": "ID du statut du contact auquel appartient le contact",
   "ID of the primary account that the contact belongs to": "ID du compte principal auquel appartient le contact",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "GET": "OBTENIR",
   "POST": "POSTER",
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "TÊTE",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut"
 }
