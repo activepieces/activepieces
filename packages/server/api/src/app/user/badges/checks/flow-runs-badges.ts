@@ -1,5 +1,5 @@
 import { ApplicationEventName, FlowRunEvent } from '@activepieces/ee-shared'
-import { BADGES, FlowRunStatus, isFailedState, isNil } from '@activepieces/shared'
+import { BADGES, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
 import { flowRepo } from '../../../flows/flow/flow.repo'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
@@ -10,8 +10,10 @@ export const flowRunsBadgesCheck: BadgeCheck = {
         if (event.action !== ApplicationEventName.FLOW_RUN_FINISHED) {
             return { userId: null, badges }
         }
-
         const flowRunEvent = event as FlowRunEvent
+        if (flowRunEvent.data.flowRun.environment !== RunEnvironment.PRODUCTION) {
+            return { userId: null, badges }
+        }
         const flow = await flowRepo().findOne({
             select: ['ownerId'],
             where: {
