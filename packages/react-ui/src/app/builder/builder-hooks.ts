@@ -32,7 +32,7 @@ import {
   CanvasShortcuts,
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
-import { STEP_CONTEXT_MENU_ATTRIBUTE } from './flow-canvas/utils/consts';
+import { flowCanvasConsts } from './flow-canvas/utils/consts';
 import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
 import { textMentionUtils } from './piece-properties/text-input-with-mentions/text-input-utils';
 import { createFlowState, FlowState } from './state/flow-state';
@@ -40,6 +40,7 @@ import { createPieceSelectorState, PieceSelectorState } from './state/piece-sele
 import { createRunState, RunState } from './state/run-state';
 import { ChatState, createChatState } from './state/chat-state';
 import { CanvasState, createCanvasState } from './state/canvas-state';
+import { createStepFormState, StepFormState } from './state/step-form-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -52,16 +53,7 @@ export function useBuilderStateContext<T>(
   return useStore(store, selector);
 }
 
-type InsertMentionHandler = (propertyPath: string) => void;
-export type BuilderState = FlowState & PieceSelectorState & RunState & ChatState & CanvasState & {
-  insertMention: InsertMentionHandler | null;
-  setInsertMentionHandler: (handler: InsertMentionHandler | null) => void;
-  isFocusInsideListMapperModeInput: boolean;
-  setIsFocusInsideListMapperModeInput: (
-    isFocusInsideListMapperModeInput: boolean,
-  ) => void;
-};
-const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
+export type BuilderState = FlowState & PieceSelectorState & RunState & ChatState & CanvasState & StepFormState;
 export type BuilderInitialState = Pick<
   BuilderState,
   | 'flow'
@@ -81,164 +73,16 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     const runState = createRunState(initialState, get, set);
     const chatState = createChatState(set);
     const canvasState = createCanvasState(initialState, set);
+    const stepFormState = createStepFormState(set);
     return {
       ...flowState,
       ...runState,
       ...pieceSelectorState,
       ...chatState,
       ...canvasState,
-      setInsertMentionHandler: (insertMention: InsertMentionHandler | null) => {
-        set({ insertMention });
-      },
-      insertMention: null,
-      isFocusInsideListMapperModeInput: false,
-      setIsFocusInsideListMapperModeInput: (
-        isFocusInsideListMapperModeInput: boolean,
-      ) => {
-        return set(() => ({
-          isFocusInsideListMapperModeInput,
-        }));
-      }
+      ...stepFormState,
     };
   });
-
-export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
-  return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
-    'grab'
-    ? 'grab'
-    : 'pan';
-}
-
-const shortcutHandler = (
-  event: KeyboardEvent,
-  handlers: Record<keyof CanvasShortcutsProps, () => void>,
-) => {
-  const shortcutActivated = Object.entries(CanvasShortcuts).find(
-    ([_, shortcut]) =>
-      shortcut.shortcutKey?.toLowerCase() === event.key.toLowerCase() &&
-      !!(
-        shortcut.withCtrl === event.ctrlKey ||
-        shortcut.withCtrl === event.metaKey
-      ) &&
-      !!shortcut.withShift === event.shiftKey,
-  );
-  if (shortcutActivated) {
-    if (
-      isNil(shortcutActivated[1].shouldNotPreventDefault) ||
-      !shortcutActivated[1].shouldNotPreventDefault
-    ) {
-      event.preventDefault();
-    }
-    event.stopPropagation();
-    handlers[shortcutActivated[0] as keyof CanvasShortcutsProps]();
-  }
-};
-
-export const NODE_SELECTION_RECT_CLASS_NAME = 'react-flow__nodesselection-rect';
-export const doesSelectionRectangleExist = () => {
-  return document.querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`) !== null;
-};
-export const useHandleKeyPressOnCanvas = () => {
-  const [
-    selectedNodes,
-    flowVersion,
-    selectedStep,
-    exitStepSettings,
-    applyOperation,
-    readonly,
-  ] = useBuilderStateContext((state) => [
-    state.selectedNodes,
-    state.flowVersion,
-    state.selectedStep,
-    state.exitStepSettings,
-    state.applyOperation,
-    state.readonly,
-  ]);
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLElement &&
-        (e.target === document.body ||
-          e.target.classList.contains(NODE_SELECTION_RECT_CLASS_NAME) ||
-          e.target.closest(`[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`)) &&
-        !readonly
-      ) {
-        const selectedNodesWithoutTrigger = selectedNodes.filter(
-          (node) => node !== flowVersion.trigger.name,
-        );
-        shortcutHandler(e, {
-          Copy: () => {
-            if (
-              selectedNodesWithoutTrigger.length > 0 &&
-              document.getSelection()?.toString() === ''
-            ) {
-              copySelectedNodes({
-                selectedNodes: selectedNodesWithoutTrigger,
-                flowVersion,
-              });
-            }
-          },
-          Delete: () => {
-            if (selectedNodes.length > 0) {
-              deleteSelectedNodes({
-                exitStepSettings,
-                selectedStep,
-                selectedNodes,
-                applyOperation,
-              });
-            }
-          },
-          Skip: () => {
-            if (selectedNodesWithoutTrigger.length > 0) {
-              toggleSkipSelectedNodes({
-                selectedNodes: selectedNodesWithoutTrigger,
-                flowVersion,
-                applyOperation,
-              });
-            }
-          },
-          Paste: () => {
-            getActionsInClipboard().then((actions) => {
-              if (actions.length > 0) {
-                const lastStep = [
-                  flowVersion.trigger,
-                  ...flowStructureUtil.getAllNextActionsWithoutChildren(
-                    flowVersion.trigger,
-                  ),
-                ].at(-1)!.name;
-                const lastSelectedNode =
-                  selectedNodes.length === 1 ? selectedNodes[0] : null;
-                pasteNodes(
-                  flowVersion,
-                  {
-                    parentStepName: lastSelectedNode ?? lastStep,
-                    stepLocationRelativeToParent:
-                      StepLocationRelativeToParent.AFTER,
-                  },
-                  applyOperation,
-                );
-              }
-            });
-          },
-        });
-      }
-    },
-    [
-      selectedNodes,
-      flowVersion,
-      applyOperation,
-      selectedStep,
-      exitStepSettings,
-      readonly,
-    ],
-  );
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [handleKeyDown]);
-};
 
 export const useSwitchToDraft = () => {
   const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(

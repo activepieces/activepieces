@@ -21,7 +21,7 @@ import {
 } from '../../../../components/ui/dropdown-menu';
 import { cn } from '../../../../lib/utils';
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasConsts } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 
 type BaseBranchLabel = {
@@ -85,8 +85,8 @@ const BranchLabel = (props: BaseBranchLabel) => {
       <div
         className="bg-builder-background"
         style={{
-          paddingTop: flowUtilConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
-          paddingBottom: flowUtilConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
+          paddingTop: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
+          paddingBottom: flowCanvasConsts.LABEL_VERTICAL_PADDING / 2 + 'px',
         }}
       >
         <div
@@ -99,8 +99,8 @@ const BranchLabel = (props: BaseBranchLabel) => {
             },
           )}
           style={{
-            height: flowUtilConsts.LABEL_HEIGHT + 'px',
-            maxWidth: flowUtilConsts.AP_NODE_SIZE.STEP.width - 10 + 'px',
+            height: flowCanvasConsts.LABEL_HEIGHT + 'px',
+            maxWidth: flowCanvasConsts.AP_NODE_SIZE.STEP.width - 10 + 'px',
           }}
           onClick={() => {
             if (

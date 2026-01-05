@@ -45,6 +45,7 @@ import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
+import { flowCanvasConsts } from './flow-canvas/utils/consts';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
@@ -191,7 +192,7 @@ const BuilderPage = () => {
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{
-            transitionDuration: `${flowCanvasUtils.sidebarAnimationDuration}ms`,
+            transitionDuration: `${flowCanvasConsts.SIDEBAR_ANIMATION_DURATION}ms`,
           }}
         >
           <div ref={rightSidePanelRef} className="h-full w-full">

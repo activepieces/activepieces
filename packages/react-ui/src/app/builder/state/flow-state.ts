@@ -65,7 +65,7 @@ export type FlowState = {
     customLogoUrl?: string;
   }) => string;
 };
-export type BuilderInitialState = Pick<
+export type FlowInitialState = Pick<
   FlowState,
   | 'flow'
   | 'flowVersion'
@@ -73,7 +73,7 @@ export type BuilderInitialState = Pick<
   | 'inputSampleData'
 >;
 
-export const createFlowState = (initialState: BuilderInitialState, get: StoreApi<BuilderState>['getState'], set: StoreApi<BuilderState>['setState']): FlowState =>
+export const createFlowState = (initialState: FlowInitialState, get: StoreApi<BuilderState>['getState'], set: StoreApi<BuilderState>['setState']): FlowState =>
   {
     const flowUpdatesQueue = new PromiseQueue();
     const debouncedAddToFlowUpdatesQueue = debounce(

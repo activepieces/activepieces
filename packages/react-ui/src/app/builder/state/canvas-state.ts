@@ -154,7 +154,7 @@ export const createCanvasState = (initialState: CanvasStateInitialState, set: St
 }
 
 const DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE = 'defaultPanningMode';
-export function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
+function getPanningModeFromLocalStorage(): 'grab' | 'pan' {
     return localStorage.getItem(DEFAULT_PANNING_MODE_KEY_IN_LOCAL_STORAGE) ===
       'grab'
       ? 'grab'

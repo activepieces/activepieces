@@ -122,3 +122,11 @@ export function toggleSkipSelectedNodes({
     },
   });
 }
+
+export const canvasBulkActions = {
+  copySelectedNodes,
+  deleteSelectedNodes,
+  getActionsInClipboard,
+  pasteNodes,
+  toggleSkipSelectedNodes,
+}

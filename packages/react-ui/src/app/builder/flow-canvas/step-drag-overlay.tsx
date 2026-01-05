@@ -9,7 +9,7 @@ import {
   useCursorPosition,
   useCursorPositionEffect,
 } from './cursor-position-context';
-import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
+import {  flowCanvasConsts } from './utils/consts';
 
 const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { open } = useSidebar();
@@ -17,18 +17,18 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const [overlayPosition, setOverlayPosition] =
     useState<typeof cursorPosition>(cursorPosition);
   const builderNavigationBar = document.getElementById(
-    BUILDER_NAVIGATION_SIDEBAR_ID,
+    flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID,
   );
   const builderNavigationBarWidth = open
     ? builderNavigationBar?.clientWidth ?? 0
     : 0;
   const left = `${
     overlayPosition.x -
-    flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
+    flowCanvasConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
     builderNavigationBarWidth
   }px`;
   const top = `${
-    overlayPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
+    overlayPosition.y - flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
   }px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
@@ -44,8 +44,8 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
       style={{
         left,
         top,
-        height: `${flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`,
-        width: `${flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH}px`,
+        height: `${flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT}px`,
+        width: `${flowCanvasConsts.STEP_DRAG_OVERLAY_WIDTH}px`,
       }}
     >
       <img

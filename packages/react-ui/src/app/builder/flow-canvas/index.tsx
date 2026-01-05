@@ -22,11 +22,8 @@ import {
 } from '@activepieces/shared';
 
 import {
-  doesSelectionRectangleExist,
-  NODE_SELECTION_RECT_CLASS_NAME,
   useBuilderStateContext,
   useFocusOnStep,
-  useHandleKeyPressOnCanvas,
   useResizeCanvas,
 } from '../builder-hooks';
 
@@ -37,15 +34,14 @@ import {
 import { useCursorPosition } from './cursor-position-context';
 import { FlowDragLayer } from './flow-drag-layer';
 import {
-  flowUtilConsts,
-  SELECTION_RECT_CHEVRON_ATTRIBUTE,
-  STEP_CONTEXT_MENU_ATTRIBUTE,
+  flowCanvasConsts
 } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
 import { RightSideBarType } from '@/lib/types';
+import { useHandleKeyPressOnCanvas } from '../shortcuts';
 const getChildrenKey = (step: Step) => {
   switch (step.type) {
     case FlowActionType.LOOP_ON_ITEMS:
@@ -141,10 +137,10 @@ export const FlowCanvas = React.memo(
           ev.target instanceof SVGElement
         ) {
           const stepElement = ev.target.closest(
-            `[data-${STEP_CONTEXT_MENU_ATTRIBUTE}]`,
+            `[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`,
           );
           const stepName = stepElement?.getAttribute(
-            `data-${STEP_CONTEXT_MENU_ATTRIBUTE}`,
+            `data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`,
           );
 
           if (stepElement && stepName) {
@@ -152,10 +148,10 @@ export const FlowCanvas = React.memo(
             storeApi.getState().addSelectedNodes([stepName]);
           }
           const targetIsSelectionChevron = ev.target.closest(
-            `[data-${SELECTION_RECT_CHEVRON_ATTRIBUTE}]`,
+            `[data-${flowCanvasConsts.SELECTION_RECT_CHEVRON_ATTRIBUTE}]`,
           );
           const targetIsSelectionRect = ev.target.classList.contains(
-            NODE_SELECTION_RECT_CLASS_NAME,
+            flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME,
           );
           const showStepContextMenu =
             stepElement || targetIsSelectionRect || targetIsSelectionChevron;
@@ -172,7 +168,7 @@ export const FlowCanvas = React.memo(
             !targetIsSelectionRect && !targetIsSelectionChevron;
           if (shouldRemoveSelectionRect) {
             document
-              .querySelector(`.${NODE_SELECTION_RECT_CLASS_NAME}`)
+              .querySelector(`.${flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME}`)
               ?.remove();
           }
         }
@@ -180,7 +176,6 @@ export const FlowCanvas = React.memo(
       [
         setSelectedNodes,
         selectedNodes,
-        doesSelectionRectangleExist,
         rightSidebar,
       ],
     );
@@ -215,7 +210,7 @@ export const FlowCanvas = React.memo(
     const translateExtent = useMemo(() => {
       const nodes = graph.nodes;
       const graphRectangle = getNodesBounds(nodes);
-      const stepWidth = flowUtilConsts.AP_NODE_SIZE.STEP.width;
+      const stepWidth = flowCanvasConsts.AP_NODE_SIZE.STEP.width;
       const start = {
         x: -graphRectangle.width - 5 * stepWidth,
         y: -graphRectangle.height,
@@ -249,9 +244,9 @@ export const FlowCanvas = React.memo(
                 storeApi.getState().unselectNodesAndEdges();
               }}
               translateExtent={translateExtent}
-              nodeTypes={flowUtilConsts.nodeTypes}
+              nodeTypes={flowCanvasConsts.nodeTypes}
               nodes={graph.nodes}
-              edgeTypes={flowUtilConsts.edgeTypes}
+              edgeTypes={flowCanvasConsts.edgeTypes}
               edges={graph.edges}
               draggable={false}
               edgesFocusable={false}
