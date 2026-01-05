@@ -57,7 +57,8 @@ export const createAndQueryDB = createAction({
 
     await connection.run(`
       SET enable_logging = 0;
-      SET extension_directory='${tempExtensionDir}';
+      SET threads = 1;
+      SET extension_directory = '${tempExtensionDir}';
       INSTALL httpfs;
       LOAD httpfs;
     `);
@@ -81,6 +82,7 @@ export const createAndQueryDB = createAction({
 
     await connection.run(`
       SET enable_external_access = false;
+      SET lock_configuration = true;
     `);
 
     const queryArgs = context.propsValue.args ?? [];
