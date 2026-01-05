@@ -1,11 +1,18 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Form, FormField } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { ActionBase, PieceProperty } from '@activepieces/pieces-framework';
@@ -13,7 +20,7 @@ import { isNil } from '@activepieces/shared';
 
 import { ConnectionDropdown } from '../../../../features/agents/agent-tools/piece-tool-dialog/connection-select';
 import { useAgentToolsStore } from '../../../../features/agents/agent-tools/store';
-import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
+import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
   Type.Object(
@@ -32,6 +39,8 @@ type PredefinedInputsPropsForm = {
   action: ActionBase;
   piece: PieceStepMetadataWithSuggestions;
 };
+
+type FieldControlMode = 'agent-decide' | 'choose-yourself' | 'leave-empty';
 
 export const PredefinedInputsForm = ({
   action,
@@ -58,35 +67,68 @@ export const PredefinedInputsForm = ({
     defaultValues: predefinedInputs,
   });
 
+  const [fieldControlModes, setFieldControlModes] = useState<
+    Record<string, FieldControlMode>
+  >({});
+
   useEffect(() => {
     const subscription = form.watch((_, { name }) => {
       if (pieceHasAuth && name !== 'auth') {
         form.trigger('auth');
       }
 
-      const values = form.getValues();
+      const { auth, ...values } = form.getValues();
       const cleaned: Record<string, unknown> = {};
+
+      if (!isNil(auth)) {
+        cleaned.auth = auth;
+      }
 
       for (const key in values) {
         const value = values[key];
-        if (isNil(value)) continue;
-        cleaned[key] = value;
+        const mode = fieldControlModes[key];
+
+        if (mode === 'agent-decide') {
+          continue;
+        } else if (mode === 'choose-yourself') {
+          if (!isNil(value)) {
+            cleaned[key] = value;
+          }
+        } else if (mode === 'leave-empty') {
+          cleaned[key] = undefined;
+        }
       }
 
       setPredefinedInputs(cleaned);
     });
 
     return () => subscription.unsubscribe();
-  }, [form, setPredefinedInputs, pieceHasAuth]);
-  const propsWithoutRequired = Object.fromEntries(
+  }, [form, setPredefinedInputs, pieceHasAuth, fieldControlModes]);
+
+  const props = Object.fromEntries(
     Object.entries(action.props).map(([propertyName, property]) => [
       propertyName,
       {
         ...property,
+        allowEmptyValue: !property.required,
         required: false,
-      } as PieceProperty,
+      } as PieceProperty & { allowEmptyValue: boolean },
     ]),
   );
+
+  const handleFieldControlModeChange = (
+    propertyName: string,
+    mode: FieldControlMode,
+  ) => {
+    setFieldControlModes((prev) => ({ ...prev, [propertyName]: mode }));
+
+    if (mode === 'agent-decide') {
+      form.setValue(propertyName, undefined);
+    } else if (mode === 'leave-empty') {
+      form.setValue(propertyName, null);
+    }
+  };
+
   return (
     <Form {...form}>
       <ScrollArea className="h-full">
@@ -129,22 +171,87 @@ export const PredefinedInputsForm = ({
             />
           )}
 
-          <GenericPropertiesForm
-            prefixValue={''}
-            props={propsWithoutRequired}
-            propertySettings={null}
-            disabled={false}
-            useMentionTextInput={true}
-            markdownVariables={undefined}
-            dynamicPropsInfo={{
-              pieceName: piece.pieceName,
-              pieceVersion: piece.pieceVersion,
-              actionOrTriggerName: action.name,
-              placedInside: 'predefinedAgentInputs',
-              updateFormSchema: null,
-              updatePropertySettingsSchema: null,
-            }}
-          ></GenericPropertiesForm>
+          {Object.keys(props).length > 0 && (
+            <div className="flex flex-col gap-4 w-full">
+              {Object.entries(props).map(([propertyName, property]) => {
+                const currentMode =
+                  fieldControlModes[propertyName] || 'agent-decide';
+                const allowEmptyValue = property.allowEmptyValue;
+
+                return (
+                  <div key={propertyName} className="space-y-2">
+                    <h1 className="text-sm font-medium">
+                      {property.displayName}
+                    </h1>
+
+                    <Select
+                      value={currentMode}
+                      onValueChange={(value: FieldControlMode) =>
+                        handleFieldControlModeChange(propertyName, value)
+                      }
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="agent-decide">
+                          {t('Let your agent generate a value for this')}
+                        </SelectItem>
+                        <SelectItem value="choose-yourself">
+                          Choose yourself
+                        </SelectItem>
+                        {allowEmptyValue && (
+                          <SelectItem value="leave-empty">
+                            Leave field empty
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+
+                    {currentMode === 'choose-yourself' && (
+                      <FormField
+                        name={propertyName}
+                        control={form.control}
+                        render={({ field }) => {
+                          return (
+                            <div>
+                              {selectGenericFormComponentForProperty({
+                                field: {
+                                  ...field,
+                                  onChange: (value) => {
+                                    field.onChange(value);
+                                  },
+                                },
+                                hideLabel: true,
+                                propertyName,
+                                inputName: propertyName,
+                                property: props[propertyName],
+                                allowDynamicValues: false,
+                                markdownVariables: {},
+                                useMentionTextInput: true,
+                                disabled: false,
+                                dynamicInputModeToggled: false,
+                                form,
+                                dynamicPropsInfo: {
+                                  pieceName: piece.pieceName,
+                                  pieceVersion: piece.pieceVersion,
+                                  actionOrTriggerName: action.name,
+                                  placedInside: 'predefinedAgentInputs',
+                                  updateFormSchema: null,
+                                  updatePropertySettingsSchema: null,
+                                },
+                                propertySettings: null,
+                              })}
+                            </div>
+                          );
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </ScrollArea>
     </Form>
