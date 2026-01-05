@@ -22,6 +22,8 @@ export const useHandleKeyPressOnCanvas = () => {
     exitStepSettings,
     applyOperation,
     readonly,
+    setShowMinimap,
+    showMinimap,
   ] = useBuilderStateContext((state) => [
     state.selectedNodes,
     state.flowVersion,
@@ -29,6 +31,8 @@ export const useHandleKeyPressOnCanvas = () => {
     state.exitStepSettings,
     state.applyOperation,
     state.readonly,
+    state.setShowMinimap,
+    state.showMinimap,
   ]);
 
   const handleKeyDown = useCallback(
@@ -48,6 +52,9 @@ export const useHandleKeyPressOnCanvas = () => {
           (node) => node !== flowVersion.trigger.name,
         );
         shortcutHandler(e, {
+          Minimap: () => {
+            setShowMinimap(!showMinimap);
+          },
           Copy: () => {
             if (
               selectedNodesWithoutTrigger.length > 0 &&
@@ -111,6 +118,8 @@ export const useHandleKeyPressOnCanvas = () => {
       selectedStep,
       exitStepSettings,
       readonly,
+      setShowMinimap,
+      showMinimap,
     ],
   );
 
