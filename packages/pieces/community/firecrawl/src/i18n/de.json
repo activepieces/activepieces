@@ -37,6 +37,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -63,7 +64,7 @@
   "Include and crawl pages from subdomains of the target website (e.g., blog.example.com, shop.example.com) in addition to the main domain.": "Fügen Sie neben der Haupt-Domain auch Seiten aus Subdomains der Ziel-Website (z.B. blog.example.com, shop.example.com) hinzu und crawl Seiten aus Subdomains der Ziel-Website (z.B. blog.example.com, shop.example.com).",
   "Maximum number of links to return (max: 100,000)": "Maximale Anzahl der zurückzugebenden Links (max: 100.000)",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "Simple": "Einfach",
   "Advanced": "Erweitert",
   "GET": "ERHALTEN",
@@ -71,5 +72,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
