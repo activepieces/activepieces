@@ -13,17 +13,16 @@ import {
 import { makeRequest } from '../common/client';
 import { cryptolensAuth } from '../common/auth';
 import { HttpMethod } from '@activepieces/pieces-common';
-import dayjs from 'dayjs';
 
-interface WebAPILogEvent {
+interface ObjectLog {
   Id: number;
-  Pid?: number;
-  Key?: number;
-  IP: string;
-  Time: string;
-  State: number;
-  MachineCode?: string;
-  FriendlyName?: string;
+  Created: number;
+  ResourceType: number;
+  ResourceAction: number;
+  AffectedObjectId: number;
+  ObjectOwnerUserId: number;
+  PerformedByUserId: string;
+  Data?: string;
 }
 
 const props = {
@@ -85,6 +84,11 @@ const polling: Polling<
         gte: Math.floor(lastFetchEpochMS / 1000),
       });
       params.append('Time', timeFilter);
+    } else {
+      // On first run, fetch events from the last hour to avoid missing recent events
+      const oneHourAgo = Math.floor((Date.now() - 3600 * 1000) / 1000);
+      const timeFilter = JSON.stringify({ gte: oneHourAgo });
+      params.append('Time', timeFilter);
     }
 
     const response = await makeRequest(
@@ -95,15 +99,16 @@ const polling: Polling<
 
     const responseBody: {
       result: number;
-      Logs: WebAPILogEvent[];
+      message?: string;
+      Events: ObjectLog[];
     } = response;
 
-    if (responseBody.result !== 0 || !responseBody.Logs) {
+    if (responseBody.result !== 0 || !responseBody.Events) {
       return [];
     }
 
-    return responseBody.Logs.map((log) => ({
-      epochMilliSeconds: dayjs(log.Time).valueOf(),
+    return responseBody.Events.map((log) => ({
+      epochMilliSeconds: log.Created * 1000,
       data: log,
     }));
   },
@@ -118,13 +123,13 @@ export const newApiEvent = createTrigger({
   props,
   sampleData: {
     Id: 1,
-    Pid: 2196,
-    Key: 18543,
-    IP: '90.227.166.132',
-    Time: '2015-03-17T21:23:32.153',
-    State: 2010,
-    MachineCode: 'machine-code-example',
-    FriendlyName: 'User Device',
+    Created: 1426545812,
+    ResourceType: 3,
+    ResourceAction: 1,
+    AffectedObjectId: 12345,
+    ObjectOwnerUserId: 999,
+    PerformedByUserId: 'user123',
+    Data: '{"key": "value"}',
   },
   type: TriggerStrategy.POLLING,
   async test(context) {
