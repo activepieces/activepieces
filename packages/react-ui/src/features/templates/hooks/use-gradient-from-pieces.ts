@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useQueries } from '@tanstack/react-query';
 
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadata, StepMetadata } from '@/lib/types';
@@ -145,14 +146,10 @@ const buildGradientFromColors = (colors: string[]): string => {
   return `linear-gradient(135deg, ${gradientColors})`;
 };
 
-const logoColorsCache = new Map<string, string[]>();
-
 export const useGradientFromPieces = (
   trigger: FlowTrigger | undefined,
   excludeCore = false,
 ) => {
-  const [gradient, setGradient] = useState<string>('');
-
   const steps = useMemo(
     () => (trigger ? flowStructureUtil.getAllSteps(trigger) : []),
     [trigger],
@@ -193,56 +190,41 @@ export const useGradientFromPieces = (
     [filteredMetadata.map((m) => m.displayName).join(',')],
   );
 
-  const cacheKey = useMemo(
-    () => uniqueMetadata.map((m) => m.logoUrl).join(','),
+  const logosToProcess = useMemo(
+    () =>
+      uniqueMetadata
+        .slice(0, 4)
+        .filter((metadata) => metadata.logoUrl)
+        .map((metadata) => metadata.logoUrl),
     [uniqueMetadata],
   );
 
-  useEffect(() => {
-    const extractAndBuildGradient = async () => {
-      if (uniqueMetadata.length === 0) {
-        setGradient('');
-        return;
-      }
+  const colorQueries = useQueries({
+    queries: logosToProcess.map((logoUrl) => ({
+      queryKey: ['logo-colors', logoUrl],
+      queryFn: () => extractColorsFromImage(logoUrl),
+      staleTime: Infinity,
+      gcTime: 1000 * 60 * 60 * 24,
+      retry: false,
+    })),
+  });
 
-      try {
-        const logosToProcess = uniqueMetadata
-          .slice(0, 4)
-          .filter((metadata) => metadata.logoUrl);
+  const gradient = useMemo(() => {
+    if (logosToProcess.length === 0) {
+      return '';
+    }
 
-        const colorPromises = logosToProcess.map(async (metadata) => {
-          const logoUrl = metadata.logoUrl;
-          
-          if (logoColorsCache.has(logoUrl)) {
-            return logoColorsCache.get(logoUrl)!;
-          }
+    const allLoaded = colorQueries.every((query) => query.isSuccess);
+    if (!allLoaded) {
+      return '';
+    }
 
-          try {
-            const colors = await extractColorsFromImage(logoUrl);
-            logoColorsCache.set(logoUrl, colors);
-            return colors;
-          } catch (error) {
-            console.error(
-              `Failed to extract colors from ${metadata.displayName}:`,
-              error,
-            );
-            return [];
-          }
-        });
+    const allColors = colorQueries
+      .map((query) => query.data || [])
+      .flat();
 
-        const colorResults = await Promise.all(colorPromises);
-        const allColors = colorResults.flat();
-
-        const resultGradient = buildGradientFromColors(allColors);
-        setGradient(resultGradient);
-      } catch (error) {
-        console.error('Failed to extract colors:', error);
-        setGradient('');
-      }
-    };
-
-    extractAndBuildGradient();
-  }, [cacheKey, uniqueMetadata]);
+    return buildGradientFromColors(allColors);
+  }, [colorQueries, logosToProcess.length]);
 
   return gradient;
 };
