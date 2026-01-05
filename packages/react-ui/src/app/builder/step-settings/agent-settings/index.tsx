@@ -109,7 +109,6 @@ const selectAgentFormComponentForProperty = (
       );
     }
     default: {
-      console.log(params.inputName);
       return selectGenericFormComponentForProperty(params);
     }
   }

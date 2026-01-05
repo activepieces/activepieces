@@ -53,6 +53,7 @@
   "Method": "Method",
   "Headers": "Headers",
   "Query Parameters": "Query Parameters",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
@@ -67,7 +68,7 @@
   "URI's of the items to add": "URI's of the items to add",
   "URI's of the items to remove": "URI's of the items to remove",
   "Authorization headers are injected automatically from your connection.": "Authorization headers are injected automatically from your connection.",
-  "Enable for files like PDFs, images, etc..": "Enable for files like PDFs, images, etc..",
+  "Enable for files like PDFs, images, etc.": "Enable for files like PDFs, images, etc.",
   "Albums": "Albums",
   "Artists": "Artists",
   "Playlists": "Playlists",
@@ -77,6 +78,10 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "None": "None",
+  "JSON": "JSON",
+  "Form Data": "Form Data",
+  "Raw": "Raw",
   "Playlist Items Changed": "Playlist Items Changed",
   "Triggers when the items of a playlist change": "Triggers when the items of a playlist change"
 }

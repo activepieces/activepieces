@@ -6,6 +6,7 @@ import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorizati
 import { auditLogService } from './audit-event-service'
 
 export const auditEventModule: FastifyPluginAsyncTypebox = async (app) => {
+    auditLogService(app.log).setup()
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.auditLogEnabled))
     await app.register(auditEventController, { prefix: '/v1/audit-events' })
 }

@@ -12,13 +12,19 @@ import { isNil, FlowTriggerType } from '@activepieces/shared';
 import { AboveTriggerButton } from './above-trigger-button';
 
 const TestFlowWidget = () => {
-  const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
-    useBuilderStateContext((state) => [
-      state.setChatDrawerOpenSource,
-      state.flowVersion,
-      state.readonly,
-      state.setRun,
-    ]);
+  const [
+    setChatDrawerOpenSource,
+    flowVersion,
+    readonly,
+    hideTestWidget,
+    setRun,
+  ] = useBuilderStateContext((state) => [
+    state.setChatDrawerOpenSource,
+    state.flowVersion,
+    state.readonly,
+    state.hideTestWidget,
+    state.setRun,
+  ]);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === FlowTriggerType.PIECE &&
@@ -37,6 +43,10 @@ const TestFlowWidget = () => {
   });
 
   if (!flowVersion.valid) {
+    return null;
+  }
+
+  if (hideTestWidget) {
     return null;
   }
 

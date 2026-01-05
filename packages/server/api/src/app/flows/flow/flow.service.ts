@@ -49,13 +49,14 @@ import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 
 export const flowService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, request, externalId }: CreateParams): Promise<PopulatedFlow> {
+    async create({ projectId, request, externalId, ownerId }: CreateParams): Promise<PopulatedFlow> {
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
             projectId,
             folderId,
             status: FlowStatus.DISABLED,
+            ownerId,
             publishedVersionId: null,
             externalId: externalId ?? apId(),
             metadata: request.metadata,
@@ -712,6 +713,7 @@ const assertFlowIsNotNull: <T extends Flow>(
 type CreateParams = {
     projectId: ProjectId
     request: CreateFlowRequest
+    ownerId?: UserId
     externalId?: string
 }
 

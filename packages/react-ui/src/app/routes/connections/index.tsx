@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Globe,
-  AppWindow,
   Tag,
   User,
   Replace,
@@ -12,6 +11,7 @@ import {
   Clock,
   Activity,
   Workflow,
+  Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -150,7 +150,7 @@ function AppConnectionsPage() {
       type: 'select',
       title: t('Pieces'),
       accessorKey: 'pieceName',
-      icon: AppWindow,
+      icon: Puzzle,
       options: pieceOptions,
     },
     {
@@ -178,8 +178,8 @@ function AppConnectionsPage() {
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
-          title={t('App')}
-          icon={AppWindow}
+          title={t('Piece')}
+          icon={Puzzle}
         />
       ),
       cell: ({ row }) => {
@@ -279,15 +279,10 @@ function AppConnectionsPage() {
           <div className="text-left">
             {row.original.owner && (
               <ApAvatar
-                type="user"
+                id={row.original.owner.id}
+                includeAvatar={true}
                 includeName={true}
                 size="small"
-                userEmail={row.original.owner.email}
-                fullName={
-                  row.original.owner.firstName +
-                  ' ' +
-                  row.original.owner.lastName
-                }
               />
             )}
             {!row.original.owner && <div className="text-left">-</div>}

@@ -1,13 +1,14 @@
 import { AppSystemProp, apVersionUtil, rejectedPromiseHandler } from '@activepieces/server-shared'
-import { groupBy, PieceSyncMode } from '@activepieces/shared'
+import { groupBy, PieceSyncMode, PieceType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
 import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
-import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
+import { localPieceCache } from './metadata/local-piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
+import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
@@ -42,7 +43,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                     name: true,
                     version: true,
                     pieceType: true,
-                }
+                },
             }), listCloudPieces()])
             const added = await installNewPieces(cloudPieces, dbPieces, log)
             const deleted = await deletePiecesIfNotOnCloud(dbPieces, cloudPieces, log)
@@ -52,6 +53,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
                 deleted,
                 durationMs: Math.floor(performance.now() - startTime),
             }, 'Piece synchronization completed')
+            await localPieceCache(log).refresh()
         }
         catch (error) {
             log.error({ error }, 'Error syncing pieces')
@@ -61,7 +63,7 @@ export const pieceSyncService = (log: FastifyBaseLogger) => ({
 
 async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPieces: PieceRegistryResponse[], log: FastifyBaseLogger): Promise<number> {
     const cloudMap = new Map<string, true>(cloudPieces.map(cloudPiece => [`${cloudPiece.name}:${cloudPiece.version}`, true]))
-    const piecesToDelete = dbPieces.filter(piece => !cloudMap.has(`${piece.name}:${piece.version}`))
+    const piecesToDelete = dbPieces.filter(piece => piece.pieceType === PieceType.OFFICIAL && !cloudMap.has(`${piece.name}:${piece.version}`))
     await pieceMetadataService(log).bulkDelete(piecesToDelete.map(piece => ({ name: piece.name, version: piece.version })))
     return piecesToDelete.length
 }
@@ -69,7 +71,7 @@ async function deletePiecesIfNotOnCloud(dbPieces: PieceMetadataOnly[], cloudPiec
 async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: PieceMetadataOnly[], log: FastifyBaseLogger): Promise<number> {
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
-    const batchSize = 5;
+    const batchSize = 5
     for (let i = 0; i < newPiecesToFetch.length; i += batchSize) {
         const currentBatch = newPiecesToFetch.slice(i, i + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
@@ -116,7 +118,7 @@ async function listCloudPieces(): Promise<PieceRegistryResponse[]> {
 
 function sortByVersionDesc(items: PieceRegistryResponse[]) {
     return [...items].sort((a, b) =>
-        semver.rcompare(a.version, b.version)
+        semver.rcompare(a.version, b.version),
     )
 }
 
