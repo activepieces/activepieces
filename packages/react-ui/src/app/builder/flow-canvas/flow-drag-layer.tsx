@@ -9,7 +9,7 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { useViewport } from '@xyflow/react';
+import { useReactFlow, useViewport } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
@@ -24,8 +24,9 @@ import { useBuilderStateContext } from '../builder-hooks';
 
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
-import NoteCreationOverlay from './note-creation-overlay';
-import { useNotesContext } from './notes-context';
+import { NoteDragOverlayMode, useNotesContext } from './notes-context';
+import { flowUtilConsts } from './utils/consts';
+import NoteDragOverlay from './note-drag-overlay';
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const viewport = useViewport();
@@ -41,7 +42,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     state.flowVersion,
     state.activeDraggingStep,
   ]);
-
+  
   const fixCursorSnapOffset = useCallback(
     (args: Parameters<typeof rectIntersection>[0]) => {
       // Bail out if keyboard activated
@@ -74,16 +75,25 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
-
+  const { setDraggedNote, getNoteById, moveNote } = useNotesContext();
   const handleDragStart = (e: DragStartEvent) => {
-    setActiveDraggingStep(e.active.id.toString());
+    if(e.active.data.current?.type === flowUtilConsts.DRAGGED_STEP_TAG){
+      setActiveDraggingStep(e.active.id.toString());
+    }
+    if(e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG){
+      const draggedNote = getNoteById(e.active.id.toString());
+      if(draggedNote){
+        setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE);
+      }
+    }
     setPreviousViewPort(viewport);
   };
 
   const handleDragCancel = () => {
     setActiveDraggingStep(null);
+    setDraggedNote(null, null);
   };
-
+  const reactFlow = useReactFlow();
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
     if (
@@ -128,8 +138,18 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
         });
       }
     }
+    if(e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG){
+      const draggedNote = getNoteById(e.active.id.toString());
+      if(draggedNote){
+        const element = document.getElementById(e.active.id.toString());
+        if(element){
+          const positionOnCanvas = reactFlow.screenToFlowPosition({x: element.getBoundingClientRect().left, y: element.getBoundingClientRect().top});
+          moveNote(draggedNote.id, positionOnCanvas);
+        }
+      }
+    }
   };
-  const { showOverlay } = useNotesContext()
+ 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -152,7 +172,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       </DndContext>
 
       {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
-      {showOverlay && <NoteCreationOverlay />}
+      <NoteDragOverlay />
     </>
   );
 };

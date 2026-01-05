@@ -6,7 +6,7 @@ import { ApStraightLineCanvasEdge } from '../edges/straight-line-edge';
 import { ApBigAddButtonCanvasNode } from '../nodes/big-add-button-node';
 import ApGraphEndWidgetNode from '../nodes/flow-end-widget-node';
 import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
-import ApNoteCanvasNode from '../nodes/note-node';
+import {ApNoteCanvasNode} from '../nodes/note-node';
 import { ApStepCanvasNode } from '../nodes/step-node';
 
 import { ApEdgeType, ApNodeType } from './types';
@@ -33,6 +33,7 @@ const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
   VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
 const LINE_WIDTH = 1.5;
 const DRAGGED_STEP_TAG = 'dragged-step';
+const DRAGGED_NOTE_TAG = 'dragged-note';
 const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
 const AP_NODE_SIZE: Record<
   Exclude<ApNodeType, ApNodeType.GRAPH_START_WIDGET | ApNodeType.NOTE>,
@@ -102,6 +103,7 @@ export const flowUtilConsts = {
     [ApNodeType.NOTE]: ApNoteCanvasNode,
   },
   DRAGGED_STEP_TAG,
+  DRAGGED_NOTE_TAG,
   HORIZONTAL_SPACE_BETWEEN_NODES,
   HANDLE_STYLING: { opacity: 0, cursor: 'default' },
   LABEL_VERTICAL_PADDING,

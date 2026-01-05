@@ -16,7 +16,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { flowUtilConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
-import { useNotesContext } from './notes-context';
+import { NoteDragOverlayMode, useNotesContext } from './notes-context';
 const verticalPaddingOnFitView = 100;
 // Calculate the node's position in relation to the canvas
 const calculateNodePositionInCanvas = (
@@ -160,7 +160,7 @@ const CanvasControls = ({
       });
     }
   };
-  const { setShowOverlay, showOverlay } = useNotesContext();
+  const { noteDragOverlayMode, setDraggedNote } = useNotesContext();
   const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
     useBuilderStateContext((state) => {
       return [
@@ -238,10 +238,17 @@ const CanvasControls = ({
         </CanvasButtonWrapper>
         <CanvasButtonWrapper tooltip={t('Add note')}>
         <Button
-            variant={showOverlay ? 'default' : 'ghost'}
+            variant={noteDragOverlayMode === NoteDragOverlayMode.CREATE ? 'default' : 'ghost'}
             size="icon"
             onClick={() => {
-              setShowOverlay(!showOverlay);
+              setDraggedNote({
+                id: '',
+                content: '',
+                creator: '',
+                position: {x: 0, y: 0},
+                size: {width: flowUtilConsts.NOTE_CREATION_OVERLAY_WIDTH, height: flowUtilConsts.NOTE_CREATION_OVERLAY_HEIGHT},
+                color: 'yellow',
+              }, NoteDragOverlayMode.CREATE);
             }}
           >
             <NotebookPen className="size-4" />
