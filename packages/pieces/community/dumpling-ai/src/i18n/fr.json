@@ -42,6 +42,7 @@
   "Method": "Méthode",
   "Headers": "En-têtes",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Corps",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
@@ -74,7 +75,7 @@
   "The prompt describing what data to extract from the document.": "L'invite décrivant quelles données extraire du document.",
   "Whether to return the result in JSON format.": "Renvoie ou non le résultat au format JSON.",
   "Authorization headers are injected automatically from your connection.": "Les en-têtes d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Any Time": "À tout moment",
   "Past Hour": "Dernière heure",
   "Past Day": "Dernier jour",
@@ -109,5 +110,8 @@
   "PATCH": "PATCH",
   "PUT": "EFFACER",
   "DELETE": "SUPPRIMER",
-  "HEAD": "TÊTE"
+  "HEAD": "TÊTE",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire"
 }
