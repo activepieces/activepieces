@@ -185,6 +185,7 @@
   "Method": "Methode",
   "Headers": "Kopfzeilen",
   "Query Parameters": "Abfrageparameter",
+  "Body Type": "Körpertyp",
   "Body": "Körper",
   "Response is Binary ?": "Antwort ist binär?",
   "No Error on Failure": "Kein Fehler bei Fehler",
@@ -311,7 +312,7 @@
   "Filter leads by a list of tags": "Leads nach einer Liste von Tags filtern",
   "The type to convert the lead to. Must be either 'estimate' or 'job'": "Der Typ, in den das Lead umgewandelt werden soll. Muss entweder \"schätzen\" oder \"Job\" sein",
   "Authorization headers are injected automatically from your connection.": "Autorisierungs-Header werden automatisch von Ihrer Verbindung injiziert.",
-  "Enable for files like PDFs, images, etc..": "Aktivieren für Dateien wie PDFs, Bilder, etc..",
+  "Enable for files like PDFs, images, etc.": "Aktivieren für Dateien wie PDFs, Bilder usw.",
   "Attachments": "Anhänge",
   "Do Not Service": "Nicht Service",
   "Created At": "Erstellt am",
@@ -344,5 +345,9 @@
   "PATCH": "PATCH",
   "PUT": "PUT",
   "DELETE": "LÖSCHEN",
-  "HEAD": "HEAD"
+  "HEAD": "HEAD",
+  "None": "Keine",
+  "JSON": "JSON",
+  "Form Data": "Formulardaten",
+  "Raw": "Rohe"
 }
