@@ -5,7 +5,6 @@ import { useDebounce } from 'use-debounce';
 import {
   Template,
   TemplateType,
-  TemplateCategory,
   GetFlowTemplateRequestQuery,
 } from '@activepieces/shared';
 
@@ -37,8 +36,7 @@ export const templatesHooks = {
 
     const search = searchParams.get('search') ?? '';
     const category =
-      (searchParams.get('category') as TemplateCategory | undefined) ??
-      undefined;
+      (searchParams.get('category') as string | undefined) ?? undefined;
 
     const [debouncedSearch] = useDebounce(search, 300);
 
@@ -67,7 +65,7 @@ export const templatesHooks = {
       });
     };
 
-    const setCategory = (newCategory: TemplateCategory | 'All') => {
+    const setCategory = (newCategory: string) => {
       setSearchParams((prev) => {
         const params = new URLSearchParams(prev);
         if (newCategory && newCategory !== 'All') {

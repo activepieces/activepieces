@@ -9,12 +9,29 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
     app,
 ) => {
 
+    app.get('/categories', GetCategoriesRequest, async () => {
+        return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+    })
+
     app.post('/categories', UpdateTemplatesCategoriesFlagRequest, async (request) => {
         return flagService.save({
             id: ApFlagId.TEMPLATES_CATEGORIES,
             value: request.body.value,
         })
     })
+
+    app.get('/:id', GetTemplateRequest, async (request) => {
+        const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
+        
+        if (template.type !== TemplateType.OFFICIAL) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: { message: 'Only official templates are supported to being retrieved' },
+            })
+        }
+        return template
+    })
+    
 
     app.post('/', CreateTemplateRequest, async (request) => {
         const { type } = request.body
@@ -56,6 +73,23 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
 
         return templateService(app.log).delete({ id: request.params.id })
     })
+}
+
+const GetCategoriesRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+}
+
+const GetTemplateRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+    },
 }
 
 const UpdateTemplatesCategoriesFlagRequest = {

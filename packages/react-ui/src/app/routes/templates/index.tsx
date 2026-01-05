@@ -11,7 +11,6 @@ import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import {
   Template,
   TemplateType,
-  TemplateCategory,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 
@@ -28,7 +27,7 @@ const TemplatesPage = () => {
   const navigate = useNavigate();
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(TemplateType.OFFICIAL);
-  const selectedCategory = category as TemplateCategory | 'All';
+  const selectedCategory = category as string;
   const { data: allTemplates, isLoading: isAllTemplatesLoading } =
     templatesHooks.useAllOfficialTemplates();
   const { mutate: createFlow, isPending: isCreateFlowPending } =
@@ -43,21 +42,15 @@ const TemplatesPage = () => {
   };
 
   const templatesByCategory = useMemo(() => {
-    const grouped: Record<TemplateCategory, Template[]> = {} as Record<
-      TemplateCategory,
-      Template[]
-    >;
-
-    Object.values(TemplateCategory).forEach((category) => {
-      grouped[category] = [];
-    });
+    const grouped: Record<string, Template[]> = {};
 
     allTemplates?.forEach((template: Template) => {
       if (template.categories?.length) {
-        template.categories?.forEach((category: TemplateCategory) => {
-          if (grouped[category]) {
-            grouped[category].push(template);
+        template.categories?.forEach((category: string) => {
+          if (!grouped[category]) {
+            grouped[category] = [];
           }
+          grouped[category].push(template);
         });
       }
     });
@@ -65,8 +58,8 @@ const TemplatesPage = () => {
     return grouped;
   }, [allTemplates]);
 
-  const categories: (TemplateCategory | 'All')[] = useMemo(() => {
-    const categoriesWithTemplates = Object.values(TemplateCategory).filter(
+  const categories: string[] = useMemo(() => {
+    const categoriesWithTemplates = Object.keys(templatesByCategory).filter(
       (category) => templatesByCategory[category]?.length > 0,
     );
     return ['All', ...categoriesWithTemplates];

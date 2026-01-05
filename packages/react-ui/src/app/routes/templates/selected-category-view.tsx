@@ -8,16 +8,12 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
-import {
-  Template,
-  TemplateCategory,
-  CATEGORY_DISPLAY_NAMES,
-} from '@activepieces/shared';
+import { Template } from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
 
 type SelectedCategoryViewProps = {
-  category: TemplateCategory;
+  category: string;
   templates: Template[];
   onTemplateSelect: (template: Template) => void;
 };
@@ -27,12 +23,10 @@ export const SelectedCategoryView = ({
   templates,
   onTemplateSelect,
 }: SelectedCategoryViewProps) => {
-  const categoryName = CATEGORY_DISPLAY_NAMES[category];
-
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2">
-        <h2 className="text-2xl font-semibold">{categoryName}</h2>
+        <h2 className="text-2xl font-semibold">{category}</h2>
       </div>
 
       {templates.length === 0 ? (

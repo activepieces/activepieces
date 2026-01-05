@@ -9,18 +9,14 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import {
-  CATEGORY_DISPLAY_NAMES,
-  Template,
-  TemplateCategory,
-} from '@activepieces/shared';
+import { Template } from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
 
 type CategorySectionProps = {
-  category: TemplateCategory;
+  category: string;
   templates: Template[];
-  onCategorySelect: (category: TemplateCategory) => void;
+  onCategorySelect: (category: string) => void;
   onTemplateSelect: (template: Template) => void;
 };
 
@@ -43,9 +39,7 @@ export const CategorySection = ({
         className="w-full"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold">
-            {CATEGORY_DISPLAY_NAMES[category]}
-          </h2>
+          <h2 className="text-2xl font-semibold">{category}</h2>
           <div className="flex items-center">
             <Button
               variant="ghost"

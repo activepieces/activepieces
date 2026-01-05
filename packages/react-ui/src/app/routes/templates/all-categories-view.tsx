@@ -1,10 +1,10 @@
-import { Template, TemplateCategory } from '@activepieces/shared';
+import { Template } from '@activepieces/shared';
 
 import { CategorySection } from './category-section';
 
 type AllCategoriesViewProps = {
-  templatesByCategory: Record<TemplateCategory, Template[]>;
-  onCategorySelect: (category: TemplateCategory) => void;
+  templatesByCategory: Record<string, Template[]>;
+  onCategorySelect: (category: string) => void;
   onTemplateSelect: (template: Template) => void;
 };
 
@@ -15,7 +15,7 @@ export const AllCategoriesView = ({
 }: AllCategoriesViewProps) => {
   return (
     <div className="space-y-6">
-      {Object.values(TemplateCategory).map((category) => {
+      {Object.keys(templatesByCategory).map((category) => {
         const categoryTemplates = templatesByCategory[category];
 
         return (
