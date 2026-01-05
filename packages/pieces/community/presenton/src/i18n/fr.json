@@ -26,6 +26,7 @@
   "Method": "Méthode",
   "Headers": "Headers",
   "Query Parameters": "Paramètres de requête",
+  "Body Type": "Body Type",
   "Body": "Body",
   "Response is Binary ?": "La réponse est Binaire ?",
   "No Error on Failure": "Aucune erreur en cas d'échec",
@@ -49,7 +50,7 @@
   "Export format": "Format d'exportation",
   "Whether to trigger subscribed webhooks": "Activer ou non les webhooks abonnés",
   "Authorization headers are injected automatically from your connection.": "Les Headers d'autorisation sont injectés automatiquement à partir de votre connexion.",
-  "Enable for files like PDFs, images, etc..": "Activer pour les fichiers comme les PDFs, les images, etc.",
+  "Enable for files like PDFs, images, etc.": "Activer pour les fichiers comme les PDFs, les images, etc.",
   "Default": "Par défaut",
   "Casual": "Décontracté",
   "Professional": "Professionnel",
@@ -72,6 +73,10 @@
   "PUT": "PUT",
   "DELETE": "DELETE",
   "HEAD": "HEAD",
+  "None": "Aucun",
+  "JSON": "JSON",
+  "Form Data": "Données du formulaire",
+  "Raw": "Brut",
   "New Presentation": "Nouvelle présentation",
   "Triggers when a new presentation is created in Presenton.": "Déclenche quand une nouvelle présentation est créée dans Presenton."
 }
