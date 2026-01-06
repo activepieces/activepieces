@@ -165,7 +165,9 @@ export const projectHooks = {
     return useQuery<ProjectWithLimitsWithPlatform[], Error>({
       queryKey: ['projects-for-platforms'],
       queryFn: async () => {
-        return api.get<ProjectWithLimitsWithPlatform[]>('/v1/users/projects/platforms');
+        return api.get<ProjectWithLimitsWithPlatform[]>(
+          '/v1/users/projects/platforms',
+        );
       },
     });
   },
