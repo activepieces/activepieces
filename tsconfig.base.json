@@ -445,6 +445,9 @@
       ],
       "@activepieces/piece-insta-charts": [
         "packages/pieces/community/insta-charts/src/index.ts"
+      ],
+      "@activepieces/piece-pinch-payments": [
+        "packages/pieces/community/pinch-payments/src/index.ts"
       ]
     },
     "resolveJsonModule": true
