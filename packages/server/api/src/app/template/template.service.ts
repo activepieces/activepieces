@@ -10,6 +10,9 @@ import { TemplateEntity } from './template.entity'
 const templateRepo = repoFactory<Template>(TemplateEntity)
 
 export const templateService = (log: FastifyBaseLogger) => ({
+    async getOne({ id }: GetParams): Promise<Template | null> {
+        return templateRepo().findOneBy({ id })
+    },
     async getOneOrThrow({ id }: GetParams): Promise<Template> {
         const template = await templateRepo().findOneBy({ id })
         if (isNil(template)) {

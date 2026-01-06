@@ -7,7 +7,6 @@ import {
     CreateTemplateRequestBody,    
     ErrorCode,    
     FlowVersionTemplate,
-    GetFlowTemplateRequestQuery,
     isNil,
     ListTemplatesRequestQuery,
     Principal,
@@ -31,10 +30,21 @@ const edition = system.getEdition()
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
-        if (request.query.type === TemplateType.OFFICIAL && edition !== ApEdition.CLOUD) {
-            return communityTemplates.get(request.params.id)
+        const template = await templateService(app.log).getOne({ id: request.params.id })
+        if (!isNil(template)) {
+            return template
         }
-        return templateService(app.log).getOneOrThrow({ id: request.params.id })
+        if (edition !== ApEdition.CLOUD) {
+            return communityTemplates.getOrThrow(request.params.id)
+        }
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'template',
+                entityId: request.params.id,
+                message: `Template ${request.params.id} not found`,
+            },
+        })
     })
 
     app.get('/categories', GetCategoriesParams, async () => {
@@ -169,7 +179,6 @@ const GetParams = {
         description: 'Get a template.',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
-        querystring: GetFlowTemplateRequestQuery,
     },
 }
 

@@ -41,6 +41,7 @@ import { systemJobsSchedule } from '../../helper/system-jobs/system-job'
 import { telemetry } from '../../helper/telemetry.utils'
 import { projectService } from '../../project/project-service'
 import { triggerSourceService } from '../../trigger/trigger-source/trigger-source-service'
+import { userService } from '../../user/user-service'
 import { flowVersionMigrationService } from '../flow-version/flow-version-migration.service'
 import { flowVersionRepo, flowVersionService } from '../flow-version/flow-version.service'
 import { flowFolderService } from '../folder/folder.service'
@@ -526,6 +527,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
     async getTemplate({
         flowId,
+        userId,
         versionId,
         projectId,
     }: GetTemplateParams): Promise<SharedTemplate> {
@@ -537,6 +539,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
             removeSampleData: true,
         })
 
+        const userMetaData = await userService.getMetaInformation({ id: userId })
+
         const template: SharedTemplate = {
             name: flow.version.displayName,
             summary: '',
@@ -546,7 +550,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             tags: [],
             blogUrl: '',
             metadata: null,
-            author: '',
+            author: `${userMetaData.firstName} ${userMetaData.lastName}`,
             categories: [],
             type: TemplateType.SHARED,
             status: TemplateStatus.PUBLISHED,
@@ -778,6 +782,7 @@ type GetOnePopulatedParams = GetOneParams & {
 
 type GetTemplateParams = {
     flowId: FlowId
+    userId: UserId
     projectId: ProjectId
     versionId: FlowVersionId | undefined
 }

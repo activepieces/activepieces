@@ -147,6 +147,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
+            userId: request.principal.id,
             projectId: request.projectId,
             versionId: undefined,
         })

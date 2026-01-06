@@ -59,7 +59,6 @@ import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
 import { TemplatesPage } from '../routes/templates';
-import { TemplateDetailsPage } from '../routes/templates/id';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
 
@@ -70,6 +69,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { TemplateDetailsWrapper } from './template-details-wrapper';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -174,13 +174,7 @@ const routes = [
   }),
   {
     path: '/templates/:templateId',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Template Details">
-          <TemplateDetailsPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
+    element: <TemplateDetailsWrapper />,
   },
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRelease,
