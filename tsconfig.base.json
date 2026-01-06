@@ -425,6 +425,9 @@
       "@activepieces/piece-quaderno": [
         "packages/pieces/community/quaderno/src/index.ts"
       ],
+      "@activepieces/piece-waitwhile": [
+        "packages/pieces/community/waitwhile/src/index.ts"
+      ],
       "@activepieces/piece-baremetrics": [
         "packages/pieces/community/baremetrics/src/index.ts"
       ],
