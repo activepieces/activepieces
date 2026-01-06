@@ -2,11 +2,9 @@ import {
     UpdateProjectPlatformRequest,
 } from '@activepieces/ee-shared'
 import {
-    ActivepiecesError,
     assertNotNullOrUndefined,
     Cursor,
     EndpointScope,
-    ErrorCode,
     FlowStatus,
     isNil,
     PlatformId,
@@ -17,10 +15,11 @@ import {
     SeekPage,
     spreadIfDefined,
     TeamProjectsLimit,
+    UserId,
     UserStatus,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EntityManager, Equal, ILike, In } from 'typeorm'
+import { Equal, ILike, In } from 'typeorm'
 import { appConnectionService } from '../../app-connection/app-connection-service/app-connection-service'
 import { repoFactory } from '../../core/db/repo-factory'
 import { transaction } from '../../core/db/transaction'
@@ -88,15 +87,19 @@ export const platformProjectService = (log: FastifyBaseLogger) => ({
             log,
         )
     },
-
+    async deletePersonalProjectForUser({ userId, platformId }: DeletePersonalProjectForUserParams): Promise<void> {
+        const personalProject = await projectRepo().findOneBy({
+            platformId,
+            ownerId: userId,
+            type: ProjectType.PERSONAL,
+        })
+        if (!isNil(personalProject)) {
+            await this.hardDelete({ id: personalProject.id, platformId })
+        }
+    },
 
     async hardDelete({ id, platformId }: HardDeleteParams): Promise<void> {
         await transaction(async (entityManager) => {
-            await assertAllProjectFlowsAreDisabled({
-                projectId: id,
-                entityManager,
-            }, log)
-
             const allFlows = await flowRepo(entityManager).find({
                 where: {
                     projectId: id,
@@ -169,6 +172,10 @@ async function getProjects(params: GetAllParams & { projectIds?: string[] }, log
     return paginationHelper.createPage<ProjectWithLimits>(projects, cursor)
 }
 
+type DeletePersonalProjectForUserParams = {
+    userId: UserId
+    platformId: PlatformId
+}
 type GetAllForParamsAndUser = {
     userId: string
     scope?: EndpointScope
@@ -224,37 +231,11 @@ async function enrichProject(
     }
 }
 
-const assertAllProjectFlowsAreDisabled = async (
-    params: AssertAllProjectFlowsAreDisabledParams,
-    log: FastifyBaseLogger,
-): Promise<void> => {
-    const { projectId, entityManager } = params
-
-    const projectHasEnabledFlows = await flowService(log).existsByProjectAndStatus({
-        projectId,
-        status: FlowStatus.ENABLED,
-        entityManager,
-    })
-
-    if (projectHasEnabledFlows) {
-        throw new ActivepiecesError({
-            code: ErrorCode.VALIDATION,
-            params: {
-                message: 'PROJECT_HAS_ENABLED_FLOWS',
-            },
-        })
-    }
-}
 
 type UpdateParams = {
     projectId: ProjectId
     request: UpdateProjectPlatformRequest
     platformId?: PlatformId
-}
-
-type AssertAllProjectFlowsAreDisabledParams = {
-    projectId: ProjectId
-    entityManager: EntityManager
 }
 
 type HardDeleteParams = {
