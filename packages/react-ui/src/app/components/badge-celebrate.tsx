@@ -53,7 +53,7 @@ export const BadgeCelebrate = () => {
           />
         ),
         {
-          duration: 6000,
+          duration: 10000,
           className:
             'bg-background border border-border rounded-xl shadow-lg p-3',
         },
