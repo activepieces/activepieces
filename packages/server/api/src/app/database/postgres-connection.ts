@@ -323,6 +323,7 @@ import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migr
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -662,6 +663,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AnalyticsAndOwnerToFlowId1767127482383,
         AddBadges1767141831647,
         AddFlowOwnerIndex1767610587266,
+        AddTriggeredBy1767697998391,
     ]
     return migrations
 }
