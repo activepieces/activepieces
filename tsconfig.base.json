@@ -427,6 +427,12 @@
       ],
       "@activepieces/piece-waitwhile": [
         "packages/pieces/community/waitwhile/src/index.ts"
+      ],
+      "@activepieces/piece-baremetrics": [
+        "packages/pieces/community/baremetrics/src/index.ts"
+      ],
+      "@activepieces/piece-chartly": [
+        "packages/pieces/community/chartly/src/index.ts"
       ]
     },
     "resolveJsonModule": true
