@@ -451,6 +451,9 @@
       ],
       "@activepieces/piece-just-invoice": [
         "packages/pieces/community/just-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-billplz": [
+        "packages/pieces/community/billplz/src/index.ts"
       ]
     },
     "resolveJsonModule": true
