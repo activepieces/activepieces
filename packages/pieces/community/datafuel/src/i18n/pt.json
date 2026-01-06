@@ -17,6 +17,7 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
@@ -26,11 +27,15 @@
   "The maximum number of pages to scrape": "O número máximo de páginas para scrape",
   "JSON schema definition for structured data extraction.Format should follow OpenAI's function calling schema format (https://platform.openai.com/docs/guides/structured-outputs)": "Definição do esquema JSON para extracção de dados estruturada.Format deve seguir o formato de função de chamada do OpenIA (https://platform.openai.com/docs/guides/structured-outputs)",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "GET": "OBTER",
   "POST": "POSTAR",
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "JSON": "JSON",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }
