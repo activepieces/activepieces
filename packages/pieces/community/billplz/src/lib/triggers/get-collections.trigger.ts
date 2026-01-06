@@ -11,7 +11,7 @@ import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-com
 
 type BillplzAuth = AppConnectionValueForAuthProperty<typeof billplzAuth>;
 
-const polling: Polling<BillplzAuth, StaticPropsValue<{}>> = {
+const polling: Polling<BillplzAuth, StaticPropsValue<Record<string, never>>> = {
   strategy: DedupeStrategy.LAST_ITEM,
   items: async ({ auth }) => {
     try {
