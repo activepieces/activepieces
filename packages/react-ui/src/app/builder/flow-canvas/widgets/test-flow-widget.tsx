@@ -1,12 +1,10 @@
 import { t } from 'i18next';
 
 import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
-import {
-  ChatDrawerSource,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { ChatDrawerSource } from '@/lib/types';
 import { isNil, FlowTriggerType } from '@activepieces/shared';
 
 import { AboveTriggerButton } from './above-trigger-button';
