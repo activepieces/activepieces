@@ -1,33 +1,25 @@
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-import { ImperativePanelHandle } from 'react-resizable-panels';
+import { useRef, useState } from 'react';
 
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-  useShowBuilderIsSavingWarningBeforeLeaving,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { DataSelector } from '@/app/builder/data-selector';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { StepSettingsProvider } from '@/app/builder/step-settings/step-settings-context';
 import { ChatDrawer } from '@/app/routes/chat/chat-drawer';
 import { ShowPoweredBy } from '@/components/show-powered-by';
-import { useSocket } from '@/components/socket-provider';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from '@/components/ui/resizable-panel';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
+import { RightSideBarType } from '@/lib/types';
 import {
   FlowAction,
   FlowActionType,
   FlowTrigger,
   FlowTriggerType,
   FlowVersionState,
-  WebsocketClientEvent,
   flowStructureUtil,
   isNil,
 } from '@activepieces/shared';
@@ -36,44 +28,25 @@ import { cn, useElementSize } from '../../lib/utils';
 
 import { BuilderHeader } from './builder-header/builder-header';
 import { FlowCanvas } from './flow-canvas';
-import { flowCanvasUtils } from './flow-canvas/utils/flow-canvas-utils';
+import { flowCanvasHooks } from './flow-canvas/hooks';
+import { flowCanvasConsts } from './flow-canvas/utils/consts';
 import PublishFlowReminderWidget from './flow-canvas/widgets/publish-flow-reminder-widget';
 import { RunInfoWidget } from './flow-canvas/widgets/run-info-widget';
 import { ViewingOldVersionWidget } from './flow-canvas/widgets/viewing-old-version-widget';
 import { FlowVersionsList } from './flow-versions';
 import { RunsList } from './run-list';
+import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
-const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
-  const handleRef = useRef<ImperativePanelHandle>(null);
-  const sidebarClosed = sidebarValue === RightSideBarType.NONE;
-  useEffect(() => {
-    const sidebarSize = handleRef.current?.getSize() ?? 0;
-    if (sidebarClosed) {
-      handleRef.current?.resize(0);
-    } else if (sidebarSize === 0) {
-      handleRef.current?.resize(25);
-    }
-  }, [handleRef, sidebarValue, sidebarClosed]);
-  return handleRef;
-};
-
 const BuilderPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const [setRun, flowVersion, rightSidebar, run, selectedStep] =
-    useBuilderStateContext((state) => [
-      state.setRun,
-      state.flowVersion,
-      state.rightSidebar,
-      state.run,
-      state.selectedStep,
-    ]);
-
-  useShowBuilderIsSavingWarningBeforeLeaving();
-
+  const [flowVersion, rightSidebar, selectedStep] = useBuilderStateContext(
+    (state) => [state.flowVersion, state.rightSidebar, state.selectedStep],
+  );
+  flowCanvasHooks.useShowBuilderIsSavingWarningBeforeLeaving();
   const { memorizedSelectedStep } = useBuilderStateContext((state) => {
     const flowVersion = state.flowVersion;
     if (isNil(state.selectedStep) || isNil(flowVersion)) {
@@ -85,7 +58,6 @@ const BuilderPage = () => {
       state.selectedStep,
       flowVersion.trigger,
     );
-
     return {
       memorizedSelectedStep: step,
     };
@@ -93,7 +65,7 @@ const BuilderPage = () => {
   const middlePanelRef = useRef<HTMLDivElement>(null);
   const middlePanelSize = useElementSize(middlePanelRef);
   const [isDraggingHandle, setIsDraggingHandle] = useState(false);
-  const rightHandleRef = useAnimateSidebar(rightSidebar);
+  const rightHandleRef = flowCanvasHooks.useAnimateSidebar(rightSidebar);
   const rightSidePanelRef = useRef<HTMLDivElement>(null);
   const { pieceModel, refetch: refetchPiece } =
     piecesHooks.usePieceModelForStepSettings({
@@ -104,30 +76,7 @@ const BuilderPage = () => {
         memorizedSelectedStep?.type === FlowTriggerType.PIECE,
       getExactVersion: flowVersion.state === FlowVersionState.LOCKED,
     });
-  const socket = useSocket();
-  const { mutate: fetchAndUpdateRun } = useMutation({
-    mutationFn: flowRunsApi.getPopulated,
-  });
-  useEffect(() => {
-    socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
-      refetchPiece();
-    });
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (data) => {
-      const runId = data?.runId;
-      if (run && run?.id === runId) {
-        fetchAndUpdateRun(runId, {
-          onSuccess: (run) => {
-            setRun(run, flowVersion);
-          },
-        });
-      }
-    });
-    return () => {
-      socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
-      socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
-    };
-  }, [socket.id, run?.id]);
-
+  flowCanvasHooks.useSetSocketListener(refetchPiece);
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
 
@@ -139,9 +88,12 @@ const BuilderPage = () => {
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
-            <FlowCanvas
-              setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
-            ></FlowCanvas>
+            <CursorPositionProvider>
+              <FlowCanvas
+                setHasCanvasBeenInitialised={setHasCanvasBeenInitialised}
+              ></FlowCanvas>
+            </CursorPositionProvider>
+
             <PublishFlowReminderWidget />
             <RunInfoWidget />
             <ViewingOldVersionWidget />
@@ -187,7 +139,7 @@ const BuilderPage = () => {
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{
-            transitionDuration: `${flowCanvasUtils.sidebarAnimationDuration}ms`,
+            transitionDuration: `${flowCanvasConsts.SIDEBAR_ANIMATION_DURATION}ms`,
           }}
         >
           <div ref={rightSidePanelRef} className="h-full w-full">
