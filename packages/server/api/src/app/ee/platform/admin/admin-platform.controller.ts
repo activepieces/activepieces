@@ -1,6 +1,6 @@
 import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
 import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
-import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, IncreaseAICreditsForPlatformRequestBody, ExactVersionType, isNil, PackageType, PieceCategory, PieceType, PrincipalType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { FastifyReply, FastifyRequest } from 'fastify'
@@ -53,6 +53,10 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         return res.status(StatusCodes.OK).send()
     })
 
+    app.post('/platforms/increase-ai-credits', IncreaseAICreditsForPlatformRequest, async (req, res) => {
+        await adminPlatformService(req.log).increaseAiCredits(req.body)
+        return res.status(StatusCodes.OK).send()
+    })
 
     app.post('/platforms/dedicated-workers', ConfigureDedicatedWorkersRequest, async (req, res) => {
         await dedicatedWorkers(req.log).updateWorkerConfig({
@@ -94,6 +98,15 @@ const ApplyLicenseKeyByEmailRequest = {
     },
     config: {
         security: securityAccess.public(),
+    },
+}
+
+const IncreaseAICreditsForPlatformRequest = {
+    schema: {
+        body: IncreaseAICreditsForPlatformRequestBody,
+    },
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE]),
     },
 }
 
