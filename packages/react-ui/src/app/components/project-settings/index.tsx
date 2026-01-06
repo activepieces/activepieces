@@ -2,12 +2,12 @@ import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
@@ -31,7 +31,6 @@ import { GeneralSettings, FormValues } from './general';
 import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
-import { toast } from 'sonner';
 
 type TabId =
   | 'general'
@@ -77,7 +76,6 @@ export function ProjectSettingsDialog({
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
-
 
   const handleSave = (values: FormValues) => {
     projectCollectionUtils.update(project.id, {
@@ -155,9 +153,7 @@ export function ProjectSettingsDialog({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
-        return (
-          <GeneralSettings form={form} isSaving={false} />
-        );
+        return <GeneralSettings form={form} isSaving={false} />;
       case 'members':
         return <MembersSettings />;
       case 'alerts':

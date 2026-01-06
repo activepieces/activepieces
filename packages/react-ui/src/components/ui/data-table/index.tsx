@@ -487,7 +487,11 @@ export function DataTable<
                 setCurrentCursor(previousPageCursor);
               }
             }}
-            disabled={clientPagination ? !table.getCanPreviousPage() : !previousPageCursor}
+            disabled={
+              clientPagination
+                ? !table.getCanPreviousPage()
+                : !previousPageCursor
+            }
           >
             {t('Previous')}
           </Button>
@@ -501,7 +505,9 @@ export function DataTable<
                 setCurrentCursor(nextPageCursor);
               }
             }}
-            disabled={clientPagination ? !table.getCanNextPage() : !nextPageCursor}
+            disabled={
+              clientPagination ? !table.getCanNextPage() : !nextPageCursor
+            }
           >
             {t('Next')}
           </Button>

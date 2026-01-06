@@ -49,7 +49,6 @@ export default function ProjectsPage() {
     useState<any>(null);
   const [editDialogProjectId, setEditDialogProjectId] = useState<string>('');
 
-
   const columns = useMemo(
     () => projectsTableColumns({ platform, currentUserId: currentUser?.id }),
     [platform, currentUser?.id],

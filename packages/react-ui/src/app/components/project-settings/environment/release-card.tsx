@@ -1,4 +1,3 @@
-
 import { t } from 'i18next';
 import { Package } from 'lucide-react';
 
@@ -25,9 +24,11 @@ const ReleaseCard = () => {
         <div className="flex flex-row justify-center items-center gap-1">
           <Button
             variant={'basic'}
-            onClick={() => projectCollectionUtils.update(project.id, {
-              releasesEnabled: !project.releasesEnabled,
-            })}
+            onClick={() =>
+              projectCollectionUtils.update(project.id, {
+                releasesEnabled: !project.releasesEnabled,
+              })
+            }
             className={cn('', {
               'text-destructive': project.releasesEnabled,
             })}

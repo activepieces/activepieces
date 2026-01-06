@@ -17,9 +17,9 @@ import {
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 import { internalErrorToast } from '@/components/ui/sonner';
+import { projectCollectionUtils } from '@/hooks/project-collection';
+import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
@@ -42,13 +42,16 @@ export const NewProjectDialog = ({
     ),
   });
 
-  const { mutate, isPending } = projectCollectionUtils.useCreateProject(() => {
-    onCreate?.();
-    setOpen(false);
-  }, (error) => {
-    console.error(error);
-    internalErrorToast();
-  });
+  const { mutate, isPending } = projectCollectionUtils.useCreateProject(
+    () => {
+      onCreate?.();
+      setOpen(false);
+    },
+    (error) => {
+      console.error(error);
+      internalErrorToast();
+    },
+  );
 
   return (
     <Dialog open={open} onOpenChange={(open) => setOpen(open)}>
@@ -60,7 +63,9 @@ export const NewProjectDialog = ({
         <Form {...form}>
           <form
             className="grid space-y-4"
-            onSubmit={(e) => form.handleSubmit(() => mutate(form.getValues()))(e)}
+            onSubmit={(e) =>
+              form.handleSubmit(() => mutate(form.getValues()))(e)
+            }
           >
             <FormField
               name="displayName"

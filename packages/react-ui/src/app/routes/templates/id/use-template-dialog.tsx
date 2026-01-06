@@ -25,7 +25,6 @@ import {
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
@@ -34,6 +33,8 @@ import {
   UncategorizedFolderId,
   isNil,
 } from '@activepieces/shared';
+import { projectCollectionUtils } from '@/hooks/project-collection';
+
 
 type UseTemplateDialogProps = {
   template: Template;
@@ -50,7 +51,7 @@ export const UseTemplateDialog = ({
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
   const [selectedFolderId, setSelectedFolderId] = useState<string>('');
 
-  const { data: projects } = projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
   const { folders } = foldersHooks.useFolders();
 
   useEffect(() => {
