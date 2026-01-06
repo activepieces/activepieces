@@ -3,10 +3,10 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApEdition,
+    ApFlagId,
     CreateTemplateRequestBody,    
     ErrorCode,    
     FlowVersionTemplate,
-    GetFlowTemplateRequestQuery,
     isNil,
     ListTemplatesRequestQuery,
     Principal,
@@ -19,6 +19,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
@@ -29,10 +30,28 @@ const edition = system.getEdition()
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
-        if (request.query.type === TemplateType.OFFICIAL) {
-            return communityTemplates.get(request.params.id)
+        const template = await templateService(app.log).getOne({ id: request.params.id })
+        if (!isNil(template)) {
+            return template
         }
-        return templateService(app.log).getOneOrThrow({ id: request.params.id })
+        if (edition !== ApEdition.CLOUD) {
+            return communityTemplates.getOrThrow(request.params.id)
+        }
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'template',
+                entityId: request.params.id,
+                message: `Template ${request.params.id} not found`,
+            },
+        })
+    })
+
+    app.get('/categories', GetCategoriesParams, async () => {
+        if (edition === ApEdition.CLOUD) {
+            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+        }
+        return communityTemplates.getCategories()
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
@@ -140,6 +159,16 @@ const GetIdParams = Type.Object({
 })
 type GetIdParams = Static<typeof GetIdParams>
 
+const GetCategoriesParams = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['templates'],
+        description: 'Get categories of templates.',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
 
 const GetParams = {
     config: {
@@ -150,7 +179,6 @@ const GetParams = {
         description: 'Get a template.',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
-        querystring: GetFlowTemplateRequestQuery,
     },
 }
 

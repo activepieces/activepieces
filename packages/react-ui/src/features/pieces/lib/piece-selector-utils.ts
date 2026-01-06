@@ -3,6 +3,7 @@ import { useRef } from 'react';
 
 import {
   PieceSelectorItem,
+  PieceSelectorOperation,
   PieceSelectorPieceItem,
   PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
@@ -25,6 +26,8 @@ import {
   FlowTriggerType,
   PropertyExecutionType,
   DEFAULT_SAMPLE_DATA_SETTINGS,
+  FlowVersion,
+  FlowOperationType,
 } from '@activepieces/shared';
 
 import { formUtils } from './form-utils';
@@ -353,10 +356,24 @@ const isChatTrigger = (pieceName: string, triggerName: string) => {
     triggerName === 'chat_submission'
   );
 };
+const getStepNameFromOperationType = (
+  operation: PieceSelectorOperation,
+  flowVersion: FlowVersion,
+) => {
+  switch (operation.type) {
+    case FlowOperationType.UPDATE_ACTION:
+      return operation.stepName;
+    case FlowOperationType.ADD_ACTION:
+      return flowStructureUtil.findUnusedName(flowVersion.trigger);
+    case FlowOperationType.UPDATE_TRIGGER:
+      return 'trigger';
+  }
+};
 export const pieceSelectorUtils = {
   getDefaultStepValues,
   useAdjustPieceListHeightToAvailableSpace,
   isMcpToolTrigger,
   isChatTrigger,
   removeHiddenActions,
+  getStepNameFromOperationType,
 };

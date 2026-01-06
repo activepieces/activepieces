@@ -1,6 +1,6 @@
 {
   "name": "activepieces",
-  "version": "0.75.0",
+  "version": "0.76.0",
   "rcVersion": "0.75.0-rc.0",
   "scripts": {
     "prepare": "husky install",
@@ -113,6 +113,8 @@
     "@socket.io/redis-adapter": "8.3.0",
     "@tailwindcss/postcss": "4.1.17",
     "@tailwindcss/vite": "4.1.17",
+    "@tanstack/query-db-collection": "1.0.12",
+    "@tanstack/react-db": "0.1.60",
     "@tanstack/react-query": "5.51.1",
     "@tanstack/react-table": "8.19.2",
     "@tanstack/react-virtual": "3.13.11",
@@ -124,6 +126,7 @@
     "@tiptap/starter-kit": "2.5.4",
     "@tiptap/suggestion": "2.5.4",
     "@types/amqplib": "0.10.5",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/docusign-esign": "5.19.9",
     "@types/imapflow": "1.0.23",
     "@types/js-yaml": "4.0.9",
@@ -140,6 +143,7 @@
     "boring-avatars": "1.11.2",
     "bullmq": "5.61.0",
     "bullmq-otel": "1.0.1",
+    "canvas-confetti": "^1.9.4",
     "checkly": "6.1.1",
     "chokidar": "4.0.3",
     "class-variance-authority": "0.7.0",

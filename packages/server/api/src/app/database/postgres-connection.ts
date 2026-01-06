@@ -322,6 +322,8 @@ import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1
 import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migration/postgres/1767016169819-AddMaxAutoTopUpCreditsMonthlyToPlatformPlan'
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
+import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -660,13 +662,15 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819,
         AnalyticsAndOwnerToFlowId1767127482383,
         AddBadges1767141831647,
+        AddFlowOwnerIndex1767610587266,
+        AddTriggeredBy1767697998391,
     ]
     return migrations
 }
 
 
 export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig: MigrationConfig =  {
+    const migrationConfig: MigrationConfig = {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),

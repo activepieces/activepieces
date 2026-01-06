@@ -3,7 +3,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
-import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
+import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';

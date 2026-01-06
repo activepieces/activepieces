@@ -1,10 +1,14 @@
-import { AuditEventParam, MetaInformation } from '../../helper/application-events'
+import { BADGES } from '@activepieces/shared'
+import { AuditEventParam } from '../../helper/application-events'
 
-export type BadgeCheck = {
-    name: string
-    eval: (params: {
-        requestInformation: MetaInformation
-        event: AuditEventParam
-    }) => Promise<boolean>
+export type BadgeCheckResult = {
+    userId: string | null
+    badges: (keyof typeof BADGES)[]
 }
 
+export type BadgeCheck = {
+    eval: (params: {
+        userId?: string
+        event: AuditEventParam
+    }) => Promise<BadgeCheckResult>
+}

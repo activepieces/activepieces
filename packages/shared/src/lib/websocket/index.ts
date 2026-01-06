@@ -10,6 +10,7 @@ export enum WebsocketClientEvent {
     REFRESH_PIECE = 'REFRESH_PIECE',
     FLOW_RUN_PROGRESS = 'FLOW_RUN_PROGRESS',
     TODO_CHANGED = 'TODO_CHANGED',
+    BADGE_AWARDED = 'BADGE_AWARDED',
     TODO_ACTIVITY_CHANGED = 'TODO_ACTIVITY_CHANGED',
     TODO_ACTIVITY_CREATED = 'TODO_ACTIVITY_CREATED',
     FLOW_STATUS_UPDATED = 'FLOW_STATUS_UPDATED',
@@ -28,7 +29,7 @@ export type TodoChanged = Static<typeof TodoChanged>
 
 
 export const TodoActivityChanged = Type.Object({
-    activityId: Type.String(),  
+    activityId: Type.String(),
     todoId: Type.String(),
     content: Type.String(),
 
@@ -41,6 +42,13 @@ export const TodoActivityCreated = Type.Object({
 })
 
 export type TodoActivityCreated = Static<typeof TodoActivityCreated>
+
+export const BadgeAwarded = Type.Object({
+    badge: Type.String(),
+    userId: Type.String(),
+})
+
+export type BadgeAwarded = Static<typeof BadgeAwarded>
 
 export type EmitTestStepProgressRequest = StepRunResponse & { projectId: string }
 

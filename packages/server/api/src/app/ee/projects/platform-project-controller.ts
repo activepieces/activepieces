@@ -7,7 +7,6 @@ import { ProjectResourceType, securityAccess } from '@activepieces/server-shared
 import {
     ActivepiecesError,
     assertNotNullOrUndefined,
-    EndpointScope,
     ErrorCode,
     Permission,
     PiecesFilterType,
@@ -33,6 +32,13 @@ import { projectLimitsService } from './project-plan/project-plan.service'
 const DEFAULT_LIMIT_SIZE = 50
 
 export const platformProjectController: FastifyPluginAsyncTypebox = async (app) => {
+
+
+    app.get('/:id', GetProjectRequest, async (request) => {
+        return platformProjectService(request.log).getWithPlanAndUsageOrThrow(request.projectId)
+    })
+
+
     app.post('/', CreateProjectRequest, async (request, reply) => {
         const platformId = request.principal.platform.id
         assertNotNullOrUndefined(platformId, 'platformId')
@@ -61,7 +67,8 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
 
     app.get('/', ListProjectRequestForPlatform, async (request, _reply) => {
         const userId = await getUserId(request.principal)
-        return platformProjectService(request.log).getAllForPlatform({
+        const user = await userService.getOneOrFail({ id: userId })
+        return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             externalId: request.query.externalId,
             cursorRequest: request.query.cursor ?? null,
@@ -69,7 +76,7 @@ export const platformProjectController: FastifyPluginAsyncTypebox = async (app) 
             types: request.query.types,
             limit: request.query.limit ?? DEFAULT_LIMIT_SIZE,
             userId,
-            scope: EndpointScope.PLATFORM,
+            isPrivileged: userService.isUserPrivileged(user),
         })
     })
 
@@ -168,6 +175,17 @@ async function assertMaximumNumberOfProjectsReachedByEdition(platformId: string)
     }
 }
 
+const GetProjectRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE],
+            undefined, {
+                type: ProjectResourceType.PARAM,
+                paramKey: 'id',
+            }),
+    },
+}
+
 const UpdateProjectRequest = {
     config: {
         security: securityAccess.project([PrincipalType.USER, PrincipalType.SERVICE], Permission.WRITE_PROJECT, {
@@ -204,7 +222,7 @@ const CreateProjectRequest = {
 
 const ListProjectRequestForPlatform = {
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
+        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
     },
     schema: {
         response: {

@@ -1,38 +1,13 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Package } from 'lucide-react';
-import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { projectHooks } from '@/hooks/project-hooks';
-import { projectApi } from '@/lib/project-api';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { cn } from '@/lib/utils';
 
 const ReleaseCard = () => {
-  const { project, refetch } = projectHooks.useCurrentProject();
-
-  const { mutate } = useMutation({
-    mutationFn: () => {
-      return projectApi.update(project.id, {
-        releasesEnabled: !project.releasesEnabled,
-      });
-    },
-    onSuccess: () => {
-      refetch();
-      toast.success(
-        !project.releasesEnabled
-          ? t('Releases Enabled')
-          : t('Releases Disabled'),
-        {
-          description: !project.releasesEnabled
-            ? t('You have successfully enabled releases')
-            : t('You have successfully disabled releases'),
-          duration: 3000,
-        },
-      );
-    },
-  });
+  const { project } = projectCollectionUtils.useCurrentProject();
 
   return (
     <Card className="w-full px-4 py-4">
@@ -49,7 +24,11 @@ const ReleaseCard = () => {
         <div className="flex flex-row justify-center items-center gap-1">
           <Button
             variant={'basic'}
-            onClick={() => mutate()}
+            onClick={() =>
+              projectCollectionUtils.update(project.id, {
+                releasesEnabled: !project.releasesEnabled,
+              })
+            }
             className={cn('', {
               'text-destructive': project.releasesEnabled,
             })}
