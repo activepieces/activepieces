@@ -20,12 +20,12 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { communityTemplates } from './community-flow-template.service'
 import { templateService } from './template.service'
-import { flagService } from '../flags/flag.service'
 
 const edition = system.getEdition()
 
