@@ -25,7 +25,7 @@ export const chartlyAuth = PieceAuth.SecretText({
             }
 
             const data = await response.json();
-            if (data.status !== 'healthy') {
+            if (data.status !== 'ok') {
                 return {
                     valid: false,
                     error: 'Chartly service is currently unhealthy',
