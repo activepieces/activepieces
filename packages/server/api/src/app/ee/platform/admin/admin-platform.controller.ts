@@ -106,7 +106,7 @@ const IncreaseAICreditsForPlatformRequest = {
         body: IncreaseAICreditsForPlatformRequestBody,
     },
     config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.ENGINE, PrincipalType.SERVICE]),
+        security: securityAccess.public(),
     },
 }
 
