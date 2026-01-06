@@ -91,6 +91,7 @@ export const RunsMetadataUpsertData = Type.Composite([
         'flowId',
         'flowVersionId',
         'environment',
+        'triggeredBy',
         'startTime',
         'finishTime',
         'status',

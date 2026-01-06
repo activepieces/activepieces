@@ -323,6 +323,7 @@ import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migr
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -662,21 +663,31 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AnalyticsAndOwnerToFlowId1767127482383,
         AddBadges1767141831647,
         AddFlowOwnerIndex1767610587266,
+        AddTriggeredBy1767697998391,
     ]
     return migrations
 }
 
 
-export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig: MigrationConfig = {
-        migrationsRun: true,
+export const createPostgresDataSource = (params?: { forMigration?: boolean }): DataSource => {
+    const forMigration = params?.forMigration ?? false
+    
+    const migrationConfig: MigrationConfig =  {
+        migrationsRun: false,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),
         synchronize: false,
     }
 
-    const url = system.get(AppSystemProp.POSTGRES_URL)
+    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
+    const statementTimeout = forMigration ? undefined : system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
 
+    const extra = {
+        idleTimeoutMillis,
+        ...spreadIfDefined('statement_timeout', statementTimeout),
+    }
+
+    const url = system.get(AppSystemProp.POSTGRES_URL)
     if (!isNil(url)) {
         return new DataSource({
             type: 'postgres',
@@ -685,6 +696,7 @@ export const createPostgresDataSource = (): DataSource => {
             ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
             ...migrationConfig,
             ...commonProperties,
+            extra,
         })
     }
 
@@ -693,7 +705,6 @@ export const createPostgresDataSource = (): DataSource => {
     const password = system.getOrThrow(AppSystemProp.POSTGRES_PASSWORD)
     const serializedPort = system.getOrThrow(AppSystemProp.POSTGRES_PORT)
     const port = Number.parseInt(serializedPort, 10)
-    const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
     const username = system.getOrThrow(AppSystemProp.POSTGRES_USERNAME)
 
     return new DataSource({
@@ -707,9 +718,7 @@ export const createPostgresDataSource = (): DataSource => {
         ...spreadIfDefined('poolSize', system.get(AppSystemProp.POSTGRES_POOL_SIZE)),
         ...commonProperties,
         ...migrationConfig,
-        extra: {
-            idleTimeoutMillis,
-        },
+        extra,
     })
 }
 

@@ -12,6 +12,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import Paginator from '../../helper/pagination/paginator'
 import { platformService } from '../../platform/platform.service'
 import { platformUtils } from '../../platform/platform.utils'
 import { userService } from '../../user/user-service'
@@ -26,13 +27,15 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
     })
 
     fastify.get('/', ListProjectRequestForUser, async (request) => {
-        return platformProjectService(request.log).getAllForPlatform({
+        const user = await userService.getOneOrFail({ id: request.principal.id })
+        return platformProjectService(request.log).getForPlatform({
             platformId: request.principal.platform.id,
             userId: request.principal.id,
             cursorRequest: request.query.cursor ?? null,
             displayName: request.query.displayName,
             limit: request.query.limit ?? 10,
             types: request.query.types,
+            isPrivileged: userService.isUserPrivileged(user),
         })
     })
 
@@ -42,12 +45,13 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
         const projects = await Promise.all(platforms.map(async (platform) => {
             const platformUser = await userService.getOneByIdentityAndPlatform({ identityId: loggedInUser.identityId, platformId: platform.id })
             assertNotNullOrUndefined(platformUser, `Platform user not found for platform ${platform.id}`)
-            const projects = await platformProjectService(request.log).getAllForPlatform({
+            const projects = await platformProjectService(request.log).getForPlatform({
                 platformId: platform.id,
                 userId: platformUser.id,
                 cursorRequest: null,
                 displayName: undefined,
-                limit: 1000,
+                limit: Paginator.NO_LIMIT,
+                isPrivileged: userService.isUserPrivileged(platformUser),
             }).then((projects) => projects.data)
             return {
                 platformName: platform.name,
