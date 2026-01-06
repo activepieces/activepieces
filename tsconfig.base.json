@@ -413,6 +413,9 @@
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
       ],
+      "@activepieces/piece-tidely": [
+        "packages/pieces/community/tidely/src/index.ts"
+      ],
       "@activepieces/piece-cryptolens": [
         "packages/pieces/community/cryptolens/src/index.ts"
       ],
@@ -424,6 +427,9 @@
       ],
       "@activepieces/piece-baremetrics": [
         "packages/pieces/community/baremetrics/src/index.ts"
+      ],
+      "@activepieces/piece-chartly": [
+        "packages/pieces/community/chartly/src/index.ts"
       ]
     },
     "resolveJsonModule": true
