@@ -18,7 +18,7 @@ export const ai = createPiece({
     PieceCategory.UNIVERSAL_AI,
   ],
   logoUrl: "https://cdn.activepieces.com/pieces/text-ai.svg",
-  authors: ['anasbarg', 'amrdb'],
+  authors: ['anasbarg', 'amrdb', 'Louai-Zokerburg'],
   actions: [askAI, summarizeText, generateImageAction, classifyText, extractStructuredData, runAgent],
   triggers: [],
 });
