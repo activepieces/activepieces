@@ -104,14 +104,17 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await aiProviderRepo().upsert({
-            id: providerId ?? apId(),
-            auth: await encryptUtils.encryptObject(request.auth),
-            config: request.config,
-            provider: aiProvider.provider,
+        const auth = !isNil(request.auth)
+            ? await encryptUtils.encryptObject(request.auth)
+            : aiProvider.auth
+
+        const config = !isNil(request.config) ? request.config : aiProvider.config
+
+        await aiProviderRepo().update(providerId, {
+            auth,
+            config,
             displayName: request.displayName,
-            platformId,
-        }, ['id'])
+        })
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
