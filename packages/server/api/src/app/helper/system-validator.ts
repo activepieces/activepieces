@@ -98,8 +98,6 @@ const systemPropValidators: {
     [AppSystemProp.POSTGRES_POOL_SIZE]: numberValidator,
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: numberValidator,
     [AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS]: numberValidator,
-    [AppSystemProp.POSTGRES_MIGRATION_LOCK_TIMEOUT_MS]: numberValidator,
-    [AppSystemProp.POSTGRES_MIGRATION_RETRY_ATTEMPTS]: numberValidator,
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_UI_ENABLED]: booleanValidator,
     [AppSystemProp.QUEUE_UI_PASSWORD]: stringValidator,

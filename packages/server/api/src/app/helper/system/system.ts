@@ -60,8 +60,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.ISSUE_ARCHIVE_DAYS]: '7',
     [AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS]: '300000',
     [AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS]: '5000',
-    [AppSystemProp.POSTGRES_MIGRATION_LOCK_TIMEOUT_MS]: '1000',
-    [AppSystemProp.POSTGRES_MIGRATION_RETRY_ATTEMPTS]: '30',
 }
 
 let globalLogger: FastifyBaseLogger

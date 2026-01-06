@@ -673,18 +673,12 @@ export const createPostgresDataSource = (params?: { forMigration?: boolean }): D
         synchronize: false,
     }
 
-    const statementTimeout = system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
-    const lockTimeout = system.getNumberOrThrow(AppSystemProp.POSTGRES_MIGRATION_LOCK_TIMEOUT_MS)
     const idleTimeoutMillis = system.getNumberOrThrow(AppSystemProp.POSTGRES_IDLE_TIMEOUT_MS)
+    const statementTimeout = forMigration ? undefined : system.getNumberOrThrow(AppSystemProp.POSTGRES_STATEMENT_TIMEOUT_MS)
 
     const extra = {
         idleTimeoutMillis,
-        ...(forMigration && {
-            lock_timeout: lockTimeout,
-        }),
-        ...(!forMigration && {
-            statement_timeout: statementTimeout,
-        }),
+        ...spreadIfDefined('statement_timeout', statementTimeout),
     }
 
     const url = system.get(AppSystemProp.POSTGRES_URL)
