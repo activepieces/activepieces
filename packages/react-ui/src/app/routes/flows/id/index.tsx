@@ -6,7 +6,7 @@ import { useEffect, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
-import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
+import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { buttonVariants } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { LoadingSpinner } from '@/components/ui/spinner';
