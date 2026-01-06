@@ -1,8 +1,7 @@
 import { AppSystemProp, DatabaseType } from '@activepieces/server-shared'
 import { ApEdition } from '@activepieces/shared'
-import { EntityManager, EntitySchemaColumnOptions } from 'typeorm'
+import { EntitySchemaColumnOptions } from 'typeorm'
 import { system } from '../helper/system/system'
-import { databaseConnection } from './database-connection'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -32,15 +31,4 @@ export const BaseColumnSchemaPart = {
 
 export function isNotOneOfTheseEditions(editions: ApEdition[]): boolean {
     return !editions.includes(system.getEdition())
-}
-
-export async function withStatementTimeout<T>(params: {
-    timeoutMs: number
-    fn: (entityManager: EntityManager) => Promise<T>
-}): Promise<T> {
-    const { timeoutMs, fn } = params
-    return databaseConnection().transaction(async (entityManager) => {
-        await entityManager.query(`SET LOCAL statement_timeout = ${timeoutMs}`)
-        return fn(entityManager)
-    })
 }
