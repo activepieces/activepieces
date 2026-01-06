@@ -1,0 +1,20 @@
+{
+  "ClicData enables True Performance with an end-to-end data analytics platform: connect, transform, automate, visualize and share data from 300+ sources.": "ClicData activeert True Prestaties met een end-to-end data-analytics platform: verbinden, transformeren, automatiseren, visualiseren en delen van gegevens van 300+ bronnen.",
+  "Insert Row": "Rijen invoegen",
+  "Refresh Table": "Tabel vernieuwen",
+  "Insert rows into a ClicData table (maximum 500 rows)": "Rijen invoegen in een ClicData tabel (maximaal 500 rijen)",
+  "Refresh the selected table depending on the refresh mode": "Vernieuw de geselecteerde tabel afhankelijk van de ververs modus",
+  "Table": "Tabel",
+  "Row Data": "Rij gegevens",
+  "API Version": "API versie",
+  "Refresh Mode": "Ververs modus",
+  "Select the table to insert data into": "Selecteer de tabel om gegevens in te voegen",
+  "Array of objects representing rows to insert. Each object should have column names as keys. Maximum 500 rows.": "Array van objecten die rijen vertegenwoordigen om in te voegen. Elk object moet kolomnamen hebben als sleutels. Maximaal 500 rijen.",
+  "Defaults to 2022.01": "Standaard ingesteld op 2022.01",
+  "Select the refresh mode for the table": "Selecteer de verversingsmodus voor de tabel",
+  "Reload": "Reload",
+  "Rebuild": "Herbouwen",
+  "Update": "Vernieuwen",
+  "Append": "Toevoegen",
+  "Update + Append": "Update + Toevoegen"
+}
