@@ -57,7 +57,7 @@ export const applicationEvents = {
             if (!principal || principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER) {
                 return
             }
-            authenticationUtils.extractUserIdFromPrincipal(principal).then((userId) => {
+            authenticationUtils.extractUserIdFromRequest(request).then((userId) => {
                 const meta: MetaInformation = {
                     platformId: principal.platform.id,
                     projectId: principal.projectId,
