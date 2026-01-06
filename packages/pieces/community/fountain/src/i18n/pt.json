@@ -1,6 +1,10 @@
 {
   "Automate your complete HR hiring and onboarding workflow. Manage applicants, job openings, interview scheduling, and track progress through hiring stages with real-time webhooks.": "Automatize sua contratação de RH completa e seu fluxo de trabalho. Gerencie candidatos, oportunidades de trabalho, agendamento de entrevistas e acompanhe o progresso através de fases de contratação com webhooks em tempo real.",
+  "API Key": "Chave de API",
+  "Base URL": "URL Base",
   "Enter your Fountain API key from Profile > Manage API Keys or Settings > Integrations & API Keys": "Digite sua chave de API Fountain de perfil > Gerenciar chaves API ou configurações > Integrações & Chaves API",
+  "The base URL for your Fountain API (default: https://api.fountain.com). For example: us-2.fountain.com/api/v2": "O URL base para a sua API de fonte (padrão: https://api.fountain.com). Por exemplo: us-2.fountain.com/api/v2",
+  "Enter your Fountain API key and base URL": "Digite sua chave de API de fonte e URL base",
   "Create Applicant": "Criar Aplicativo",
   "Delete Applicant": "Excluir Aplicativo",
   "Get Applicant Details": "Obter Detalhes do Applicativo",
@@ -48,7 +52,6 @@
   "Applicant's complete phone number": "Número de telefone completo do aplicativo",
   "Apply additional duplicate applicant blocking rules specified in company duplicate settings": "Aplicar regras de bloqueio de candidatos duplicadas adicionais especificadas nas configurações duplicadas da empresa",
   "The applicant to delete (shows 50 most recent applicants)": "O candidato a excluir (mostra 50 candidatos mais recentes)",
-  "The applicant to retrieve details for (shows 50 most recent applicants)": "O candidato para recuperar detalhes sobre (mostra 50 aplicativos mais recentes)",
   "The applicant to get interview sessions for (shows 50 most recent applicants)": "O candidato para receber sessões entrevistas para (mostra 50 dos mais recentes)",
   "The opening to retrieve details for": "A abertura para recuperar detalhes para",
   "The opening that contains the stage": "A abertura que contém o estágio",
