@@ -29,7 +29,7 @@ const edition = system.getEdition()
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
-        if (request.query.type === TemplateType.OFFICIAL) {
+        if (request.query.type === TemplateType.OFFICIAL && edition !== ApEdition.CLOUD) {
             return communityTemplates.get(request.params.id)
         }
         return templateService(app.log).getOneOrThrow({ id: request.params.id })

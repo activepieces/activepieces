@@ -9,10 +9,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -36,6 +33,7 @@ import {
 } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
+import { RightSideBarType } from '@/lib/types';
 import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,

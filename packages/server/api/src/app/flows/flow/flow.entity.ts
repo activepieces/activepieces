@@ -79,6 +79,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             unique: false,
         },
         {
+            name: 'idx_flow_owner_id',
+            columns: ['ownerId'],
+            unique: false,
+        },
+        {
             name: 'idx_flow_folder_id',
             columns: ['folderId'],
             unique: false,

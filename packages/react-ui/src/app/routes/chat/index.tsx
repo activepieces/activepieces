@@ -3,10 +3,10 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useSearchParam } from 'react-use';
 
-import { ChatDrawerSource } from '@/app/builder/builder-hooks';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Messages } from '@/features/chat/chat-message-list';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { ChatDrawerSource } from '@/lib/types';
 import { isNil, USE_DRAFT_QUERY_PARAM_NAME } from '@activepieces/shared';
 
 import { ChatNotFound, FlowChat } from './flow-chat';

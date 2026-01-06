@@ -18,6 +18,7 @@ import {
     ProjectRole,
     SeekPage,
     UserId,
+    UserStatus,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -196,15 +197,12 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
     async getIdsOfProjects({
         userId,
         platformId,
-        isPrivilegedUser,
     }: GetIdsOfProjectsParams): Promise<string[]> {
         const edition = system.getEdition()
         if (edition === ApEdition.COMMUNITY) {
             return []
         }
-        const members = isPrivilegedUser ? await repo().findBy({
-            platformId: Equal(platformId),
-        }) : await repo().findBy({
+        const members = await repo().findBy({
             userId,
             platformId: Equal(platformId),
         })
@@ -215,6 +213,34 @@ export const projectMemberService = (log: FastifyBaseLogger) => ({
         invitationId: ProjectMemberId,
     ): Promise<void> {
         await repo().delete({ projectId, id: invitationId })
+    },
+    async countTotalUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
+        if (projectIds.length === 0) return new Map()
+        
+        const result = await repo()
+            .createQueryBuilder('project_member')
+            .select('project_member.projectId', 'projectId')
+            .addSelect('COUNT(*)', 'count')
+            .where('project_member.projectId IN (:...projectIds)', { projectIds })
+            .groupBy('project_member.projectId')
+            .getRawMany()
+        
+        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
+    },
+    async countActiveUsersByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
+        if (projectIds.length === 0) return new Map()
+        
+        const result = await repo()
+            .createQueryBuilder('project_member')
+            .select('project_member.projectId', 'projectId')
+            .addSelect('COUNT(DISTINCT user.id)', 'count')
+            .leftJoin('user', 'user', '"user"."id" = "project_member"."userId"')
+            .where('project_member.projectId IN (:...projectIds)', { projectIds })
+            .andWhere('user.status = :activeStatus', { activeStatus: UserStatus.ACTIVE })
+            .groupBy('project_member.projectId')
+            .getRawMany()
+        
+        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
     },
 })
 
@@ -229,7 +255,6 @@ type ListParams = {
 type GetIdsOfProjectsParams = {
     userId: UserId
     platformId: PlatformId
-    isPrivilegedUser?: boolean
 }
 
 type UpsertParams = {

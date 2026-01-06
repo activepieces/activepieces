@@ -405,12 +405,13 @@ export function DataTable<
                         }
                       >
                         <div
-                          className={cn('flex items-center', {
+                          className={cn('flex w-full items-center', {
                             'justify-end': cell.column.id === 'actions',
                             'justify-start': cell.column.id !== 'actions',
                           })}
                         >
                           <div
+                            className="w-full"
                             onClick={(e) => {
                               if (cell.column.id === 'select') {
                                 e.preventDefault();

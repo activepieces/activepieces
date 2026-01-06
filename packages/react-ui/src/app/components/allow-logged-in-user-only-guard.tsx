@@ -8,6 +8,8 @@ import { projectCollectionUtils } from '@/hooks/project-collection';
 
 import { authenticationSession } from '../../lib/authentication-session';
 
+import { BadgeCelebrate } from './badge-celebrate';
+
 type AllowOnlyLoggedInUserOnlyGuardProps = {
   children: React.ReactNode;
 };
@@ -26,5 +28,10 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   platformHooks.useCurrentPlatform();
   flagsHooks.useFlags();
   projectCollectionUtils.useCurrentProject();
-  return <SocketProvider>{children}</SocketProvider>;
+  return (
+    <SocketProvider>
+      <BadgeCelebrate />
+      {children}
+    </SocketProvider>
+  );
 };
