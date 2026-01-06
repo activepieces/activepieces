@@ -144,7 +144,7 @@ describe('Project API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users/projects',
+                url: '/v1/projects',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -528,7 +528,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users/projects',
+                url: '/v1/projects',
                 headers: {
                     authorization: `Bearer ${operatorToken}`,
                 },
@@ -608,7 +608,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users/projects',
+                url: '/v1/projects',
                 headers: {
                     authorization: `Bearer ${memberToken}`,
                 },

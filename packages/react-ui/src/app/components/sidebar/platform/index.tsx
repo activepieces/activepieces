@@ -48,6 +48,45 @@ export function PlatformSidebar() {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
+  const isEmbeddingEnabled = platform.plan.embeddingEnabled;
+
+  const setupItems = [
+    {
+      to: '/platform/setup/ai',
+      label: t('AI'),
+      icon: Bot,
+    },
+    {
+      to: '/platform/setup/branding',
+      label: t('Branding'),
+      icon: Palette,
+      locked: !platform.plan.customAppearanceEnabled,
+    },
+    {
+      to: '/platform/setup/connections',
+      label: t('Global Connections'),
+      icon: Unplug,
+      locked: !platform.plan.globalConnectionsEnabled,
+    },
+    {
+      to: '/platform/setup/pieces',
+      label: t('Pieces'),
+      icon: Puzzle,
+      locked: !platform.plan.managePiecesEnabled,
+    },
+    {
+      to: '/platform/setup/templates',
+      label: t('Templates'),
+      icon: LayoutGrid,
+      locked: !platform.plan.manageTemplatesEnabled,
+    },
+    {
+      to: '/platform/setup/billing',
+      label: t('Billing'),
+      icon: Receipt,
+      locked: edition === ApEdition.COMMUNITY,
+    },
+  ].filter((item) => !(item.label === t('AI') && isEmbeddingEnabled));
 
   const groups: {
     label: string;
@@ -76,43 +115,7 @@ export function PlatformSidebar() {
     },
     {
       label: t('Setup'),
-      items: [
-        {
-          to: '/platform/setup/ai',
-          label: t('AI'),
-          icon: Bot,
-        },
-        {
-          to: '/platform/setup/branding',
-          label: t('Branding'),
-          icon: Palette,
-          locked: !platform.plan.customAppearanceEnabled,
-        },
-        {
-          to: '/platform/setup/connections',
-          label: t('Global Connections'),
-          icon: Unplug,
-          locked: !platform.plan.globalConnectionsEnabled,
-        },
-        {
-          to: '/platform/setup/pieces',
-          label: t('Pieces'),
-          icon: Puzzle,
-          locked: !platform.plan.managePiecesEnabled,
-        },
-        {
-          to: '/platform/setup/templates',
-          label: t('Templates'),
-          icon: LayoutGrid,
-          locked: !platform.plan.manageTemplatesEnabled,
-        },
-        {
-          to: '/platform/setup/billing',
-          label: t('Billing'),
-          icon: Receipt,
-          locked: edition === ApEdition.COMMUNITY,
-        },
-      ],
+      items: setupItems,
     },
     {
       label: t('Security'),
