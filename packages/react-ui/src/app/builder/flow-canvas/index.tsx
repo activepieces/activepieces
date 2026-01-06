@@ -284,7 +284,7 @@ const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
   const notesGraphKey = notes
     .map(
       (note) =>
-        `${note.id}-${note.content}-${note.creator}-${note.color}-${note.position.x}-${note.position.y}`,
+        `${note.id}-${note.position.x}-${note.position.y}`,
     )
     .join('-');
   return `${flowGraphKey}-${notesGraphKey}`;

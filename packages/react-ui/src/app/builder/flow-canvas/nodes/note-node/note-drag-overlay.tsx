@@ -5,11 +5,12 @@ import { apId, isNil } from '@activepieces/shared';
 import {
   useCursorPosition,
   useCursorPositionEffect,
-} from './cursor-position-context';
-import { NoteOverlay } from './nodes/note-node';
-import { NoteDragOverlayMode } from '../state/notes-state';
-import { flowCanvasConsts } from './utils/consts';
-import { useBuilderStateContext } from '../builder-hooks';
+} from '../../cursor-position-context';
+import { NoteContent } from '.';
+import { NoteDragOverlayMode } from '../../../state/notes-state';
+import { flowCanvasConsts } from '../../utils/consts';
+import { useBuilderStateContext } from '../../../builder-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
@@ -41,6 +42,8 @@ const NoteDragOverlay = () => {
     setOverlayPosition(position);
   });
   const hideOverlay = isNil(draggedNote) || isNil(noteDragOverlayMode)
+  const { data: user } = userHooks.useCurrentUser();
+  const userFullName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email;
   if(hideOverlay) {
     return null;
   }
@@ -58,8 +61,8 @@ const NoteDragOverlay = () => {
             });
             addNote({
               id: apId(),
-              content: 'test',
-              creator: '',
+              content: flowCanvasConsts.DEFAULT_NOTE_CONTENT,
+              creator: userFullName ??'',
               position: positionOnCanvas,
               size: draggedNote.size,
               color: 'yellow',
@@ -74,13 +77,15 @@ const NoteDragOverlay = () => {
         width: `${draggedNote.size.width * reactFlow.getZoom()}px`,
       }}
     >
-     <NoteOverlay
+     <NoteContent
         id={draggedNote.id}
+        content={draggedNote.content}
+        creator={draggedNote.creator}
         size={{
           width: draggedNote.size.width * reactFlow.getZoom(),
           height: draggedNote.size.height * reactFlow.getZoom(),
         }}
-      ></NoteOverlay>
+      ></NoteContent>
     </div>
   );
 };
