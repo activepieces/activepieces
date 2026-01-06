@@ -51,6 +51,7 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
@@ -86,7 +87,7 @@
   "If enabled, returns the query execution plan without running the query": "Se ativado, retorna o plano de execução da consulta sem executar a consulta",
   "Optional UUID to run the query as a specific user": "UUID opcional para executar a consulta como um usuário específico",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "Link Only": "Apenas Link",
   "PDF": "Pdf",
   "PNG": "PNG",
@@ -110,5 +111,8 @@
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }
