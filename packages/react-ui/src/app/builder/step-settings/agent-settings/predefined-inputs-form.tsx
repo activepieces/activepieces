@@ -1,7 +1,7 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { Form, FormField } from '@/components/ui/form';
@@ -13,13 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ConnectionDropdown } from '@/features/agents/agent-tools/piece-tool-dialog/connection-select';
+import { useAgentToolsStore } from '@/features/agents/agent-tools/store';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 import { ActionBase, PieceProperty } from '@activepieces/pieces-framework';
-import { isNil } from '@activepieces/shared';
+import {
+  FieldControlMode,
+  isNil,
+  PredefinedInputField,
+  PredefinedInputsStructure,
+} from '@activepieces/shared';
 
-import { ConnectionDropdown } from '../../../../features/agents/agent-tools/piece-tool-dialog/connection-select';
-import { useAgentToolsStore } from '../../../../features/agents/agent-tools/store';
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
@@ -40,13 +45,13 @@ type PredefinedInputsPropsForm = {
   piece: PieceStepMetadataWithSuggestions;
 };
 
-type FieldControlMode = 'agent-decide' | 'choose-yourself' | 'leave-empty';
-
 export const PredefinedInputsForm = ({
   action,
   piece,
 }: PredefinedInputsPropsForm) => {
   const { predefinedInputs, setPredefinedInputs } = useAgentToolsStore();
+
+  const isUpdatingMode = useRef(false);
 
   const { pieces } = piecesHooks.usePieces({});
   const selectedPiece = pieces?.find((p) => p.name === piece.pieceName);
@@ -60,73 +65,143 @@ export const PredefinedInputsForm = ({
   );
   type PredefinedInputsForm = Static<typeof formSchema>;
 
+  const initialFormValues = useMemo(() => {
+    const values: Record<string, unknown> = {};
+
+    if (pieceHasAuth && predefinedInputs?.auth) {
+      values.auth = predefinedInputs.auth;
+    }
+
+    if (predefinedInputs?.fields) {
+      Object.entries(predefinedInputs.fields).forEach(([key, field]) => {
+        if (
+          field.mode === FieldControlMode.CHOOSE_YOURSELF &&
+          field.value !== undefined
+        ) {
+          values[key] = field.value;
+        }
+      });
+    }
+
+    return values;
+  }, [predefinedInputs, pieceHasAuth]);
+
   const form = useForm<PredefinedInputsForm>({
     mode: 'all',
     reValidateMode: 'onChange',
     resolver: typeboxResolver(formSchema),
-    defaultValues: predefinedInputs,
+    defaultValues: initialFormValues,
   });
 
-  const [fieldControlModes, setFieldControlModes] = useState<
-    Record<string, FieldControlMode>
-  >({});
+  const props = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(action.props).map(([propertyName, property]) => [
+          propertyName,
+          {
+            ...property,
+            allowEmptyValue: !property.required,
+            required: false,
+          } as PieceProperty & { allowEmptyValue: boolean },
+        ]),
+      ),
+    [action.props],
+  );
 
   useEffect(() => {
-    const subscription = form.watch((_, { name }) => {
-      if (pieceHasAuth && name !== 'auth') {
-        form.trigger('auth');
+    const subscription = form.watch((formValues, { name }) => {
+      if (isUpdatingMode.current) {
+        return;
       }
 
-      const { auth, ...values } = form.getValues();
-      const cleaned: Record<string, unknown> = {};
+      const { auth, ...fieldValues } = formValues;
 
-      if (!isNil(auth)) {
-        cleaned.auth = auth;
+      const newPredefinedInputs: PredefinedInputsStructure = {
+        fields: {},
+      };
+
+      if (pieceHasAuth && auth) {
+        newPredefinedInputs.auth = auth as string;
       }
 
-      for (const key in values) {
-        const value = values[key];
-        const mode = fieldControlModes[key];
+      const existingFields = predefinedInputs?.fields || {};
 
-        if (mode === 'agent-decide') {
-          continue;
-        } else if (mode === 'choose-yourself') {
-          if (!isNil(value)) {
-            cleaned[key] = value;
-          }
-        } else if (mode === 'leave-empty') {
-          cleaned[key] = undefined;
-        }
-      }
+      Object.keys(props).forEach((propertyName) => {
+        const existingField = existingFields[propertyName];
+        const mode = existingField?.mode || FieldControlMode.AGENT_DECIDE;
 
-      setPredefinedInputs(cleaned);
+        newPredefinedInputs.fields[propertyName] = {
+          mode,
+          value:
+            mode === FieldControlMode.CHOOSE_YOURSELF
+              ? fieldValues[propertyName]
+              : existingField?.value,
+        };
+      });
+
+      setPredefinedInputs(newPredefinedInputs);
     });
 
     return () => subscription.unsubscribe();
-  }, [form, setPredefinedInputs, pieceHasAuth, fieldControlModes]);
-
-  const props = Object.fromEntries(
-    Object.entries(action.props).map(([propertyName, property]) => [
-      propertyName,
-      {
-        ...property,
-        allowEmptyValue: !property.required,
-        required: false,
-      } as PieceProperty & { allowEmptyValue: boolean },
-    ]),
-  );
+  }, [
+    form,
+    setPredefinedInputs,
+    pieceHasAuth,
+    props,
+    predefinedInputs?.fields,
+  ]);
 
   const handleFieldControlModeChange = (
     propertyName: string,
     mode: FieldControlMode,
   ) => {
-    setFieldControlModes((prev) => ({ ...prev, [propertyName]: mode }));
+    isUpdatingMode.current = true;
 
-    if (mode === 'agent-decide') {
+    const currentFormValue = form.getValues(propertyName);
+
+    const existingFields = predefinedInputs?.fields || {};
+    const updatedFields: Record<string, PredefinedInputField> = {};
+
+    Object.keys(props).forEach((key) => {
+      if (key === propertyName) {
+        updatedFields[key] = {
+          mode,
+          value:
+            mode === FieldControlMode.CHOOSE_YOURSELF
+              ? currentFormValue
+              : undefined,
+        };
+      } else if (existingFields[key]) {
+        updatedFields[key] = existingFields[key];
+      } else {
+        updatedFields[key] = {
+          mode: FieldControlMode.AGENT_DECIDE,
+          value: undefined,
+        };
+      }
+    });
+
+    setPredefinedInputs({
+      ...predefinedInputs,
+      fields: updatedFields,
+    });
+
+    if (mode === FieldControlMode.LEAVE_EMPTY) {
+      form.setValue(propertyName, '');
+    } else if (mode === FieldControlMode.AGENT_DECIDE) {
       form.setValue(propertyName, undefined);
-    } else if (mode === 'leave-empty') {
-      form.setValue(propertyName, null);
     }
+
+    setTimeout(() => {
+      isUpdatingMode.current = false;
+    }, 0);
+  };
+
+  const getCurrentMode = (propertyName: string): FieldControlMode => {
+    return (
+      predefinedInputs?.fields?.[propertyName]?.mode ||
+      FieldControlMode.AGENT_DECIDE
+    );
   };
 
   return (
@@ -174,8 +249,7 @@ export const PredefinedInputsForm = ({
           {Object.keys(props).length > 0 && (
             <div className="flex flex-col gap-4 w-full">
               {Object.entries(props).map(([propertyName, property]) => {
-                const currentMode =
-                  fieldControlModes[propertyName] || 'agent-decide';
+                const currentMode = getCurrentMode(propertyName);
                 const allowEmptyValue = property.allowEmptyValue;
 
                 return (
@@ -194,21 +268,21 @@ export const PredefinedInputsForm = ({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="agent-decide">
+                        <SelectItem value={FieldControlMode.AGENT_DECIDE}>
                           {t('Let your agent generate a value for this')}
                         </SelectItem>
-                        <SelectItem value="choose-yourself">
+                        <SelectItem value={FieldControlMode.CHOOSE_YOURSELF}>
                           Choose yourself
                         </SelectItem>
                         {allowEmptyValue && (
-                          <SelectItem value="leave-empty">
+                          <SelectItem value={FieldControlMode.LEAVE_EMPTY}>
                             Leave field empty
                           </SelectItem>
                         )}
                       </SelectContent>
                     </Select>
 
-                    {currentMode === 'choose-yourself' && (
+                    {currentMode === FieldControlMode.CHOOSE_YOURSELF && (
                       <FormField
                         name={propertyName}
                         control={form.control}
