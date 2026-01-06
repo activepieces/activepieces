@@ -59,7 +59,6 @@ import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
 import { TemplatesPage } from '../routes/templates';
-import { TemplateDetailsPage } from '../routes/templates/id';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
 

@@ -10,8 +10,8 @@ export const authorizationMiddleware = async (request: FastifyRequest): Promise<
     const securityAccessRequest = await convertToSecurityAccessRequest(request)
     await authorizeOrThrow(request.principal, securityAccessRequest, request.log)
 
-    const requestPath = request.routeOptions.config.url;
-    const bullmqRoute = requestPath.startsWith('/ui');
+    const requestPath = request.routeOptions.config.url
+    const bullmqRoute = requestPath.startsWith('/ui')
     if (bullmqRoute) {
         return
     }
