@@ -1,0 +1,17 @@
+{
+  "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API.": "Analysieren Sie Dokumente und extrahieren Sie Daten aus PDFs, DOCX-Dateien, Bildern und Webseiten mit der leistungsstarken API von Parser Expert.",
+  "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.": "Ihr Parser Expert API-Schlüssel. Diesen finden Sie in Ihrem Dashboard unter Integration -> Neuer API-Schlüssel.",
+  "Upload Document": "Dokument hochladen",
+  "Get Extracted Data": "Extrahierte Daten abrufen",
+  "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).": "Ein Dokument hochladen oder eine Webseiten-URL angeben. Unterstützte Formate: PDF, DOCX, Image, Txt-Datei (maximal 10 Seiten pro Dokument).",
+  "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.": "Rufen Sie die extrahierten Daten mit der Parser-ID und Bucket ID ab. Die Parser-ID wird zurückgegeben, wenn Sie ein Dokument hochladen.",
+  "Bucket ID": "Eimer-ID",
+  "File": "Datei",
+  "Webpage URL": "URL der Webseite",
+  "Parser ID": "Parser ID",
+  "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.": "Die ID der Gruppe, in der die Daten gespeichert werden. Diese finden Sie in Ihrem Dashboard unter Gruppe verwalten.",
+  "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.": "Die hochzuladende Datei. Unterstützte Formate: PDF, DOCX, Image, Txt-Datei (maximal 10 Seiten pro Dokument). Dies wird ignoriert, wenn die URL der Webseite angegeben wird.",
+  "The URL of the webpage to extract content from. This will be ignored if file is provided.": "Die URL der Webseite, von der Inhalte extrahiert werden sollen. Dies wird ignoriert, wenn die Datei angegeben wird.",
+  "The ID of the parser. This is returned when content is uploaded.": "Die ID des Parsers. Diese wird zurückgegeben, wenn der Inhalt hochgeladen wird.",
+  "The ID of the bucket where the data is stored.": "Die ID des Buckets, in dem die Daten gespeichert werden."
+}
