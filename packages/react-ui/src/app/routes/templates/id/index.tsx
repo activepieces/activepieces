@@ -2,7 +2,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { t } from 'i18next';
 import { ArrowLeft, ArrowRight, Link, ExternalLink } from 'lucide-react';
 import { useMemo, useState, useRef, useEffect } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { FlowCanvas } from '@/app/builder/flow-canvas';
@@ -47,6 +47,7 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
   const [renderKey, setRenderKey] = useState(0);
   const { setOpen } = useSidebar();
   const hasClosedSidebar = useRef(false);
+  const isNotAuthenticated = isNil(token);
 
   const mockFlow = useMemo<PopulatedFlow | null>(() => {
     if (!template || !template.flows || template.flows.length === 0) {
@@ -98,19 +99,6 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
     }, 50);
     return () => clearTimeout(timer);
   }, [selectedFlowIndex]);
-
-  if (!template) {
-    return <Navigate to="/templates" replace />;
-  }
-
-  if (isNil(token) && template.type !== TemplateType.SHARED) {
-    return (
-      <Navigate
-        to={`/sign-in?${FROM_QUERY_PARAM}=${location.pathname}${location.search}`}
-        replace
-      />
-    );
-  }
 
   const handleUseTemplate = () => {
     if (isNil(token)) {
@@ -312,11 +300,13 @@ const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
           </div>
         </div>
       </div>
-      <UseTemplateDialog
-        template={template}
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-      />
+      {!isNotAuthenticated && (
+        <UseTemplateDialog
+          template={template}
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+        />
+      )}
     </div>
   );
 };
