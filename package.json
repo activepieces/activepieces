@@ -14,6 +14,8 @@
     "dev:frontend": "concurrently -n \"GUI,API,ENG\" -c \"bgBlue.bold,bgGreen.bold,bgRed.bold\" \"npm:serve:frontend\" \"npm:serve:backend\" \"npm:serve:engine\"",
     "start": "node tools/setup-dev.js && npm run dev",
     "test:e2e": "nx run tests-e2e:test-e2e",
+    "typecheck:all": "npx tsc --noEmit --project tsconfig.base.json",
+    "lint:biome": "npx biome check",
     "cli": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts",
     "create-piece": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts pieces create",
     "create-action": "npx ts-node -r tsconfig-paths/register --project packages/cli/tsconfig.json  packages/cli/src/index.ts actions create",
@@ -34,8 +36,8 @@
     "@ai-sdk/anthropic": "2.0.3",
     "@ai-sdk/azure": "2.0.12",
     "@ai-sdk/google": "2.0.6",
-    "@ai-sdk/openai": "2.0.12",
     "@ai-sdk/mcp": "1.0.1 ",
+    "@ai-sdk/openai": "2.0.12",
     "@ai-sdk/openai-compatible": "1.0.29",
     "@ai-sdk/provider": "2.0.0",
     "@ai-sdk/replicate": "1.0.3",
@@ -288,6 +290,7 @@
     "zustand": "4.5.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.9.4",
     "@commitlint/cli": "17.7.1",
     "@commitlint/config-conventional": "17.7.0",
     "@faker-js/faker": "8.2.0",

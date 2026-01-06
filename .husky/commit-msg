@@ -10,4 +10,6 @@ if ! grep -q "^Merge" "$1"; then
   fi
 fi
 
+# npm run lint:biome
+
 npx --no -- commitlint --edit ${1}
