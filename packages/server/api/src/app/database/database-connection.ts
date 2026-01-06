@@ -133,7 +133,7 @@ export const databaseConnection = (params?: { forMigration?: boolean }): DataSou
     const forMigration = params?.forMigration ?? false
     
     if (forMigration) {
-        return createPostgresDataSource({ forMigration: true })
+        return createDataSource({ forMigration: true })
     }
     
     if (isNil(_databaseConnection)) {
