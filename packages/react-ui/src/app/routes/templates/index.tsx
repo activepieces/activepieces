@@ -25,6 +25,7 @@ import {
 
 const TemplatesPage = () => {
   const navigate = useNavigate();
+  const { data: templatesCategories } = templatesHooks.useTemplateCategories();
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(TemplateType.OFFICIAL);
   const selectedCategory = category as string;
@@ -42,28 +43,38 @@ const TemplatesPage = () => {
   };
 
   const templatesByCategory = useMemo(() => {
-    const grouped: Record<string, Template[]> = {};
+    const grouped: Record<string, Template[]> = {} as Record<
+      string,
+      Template[]
+    >;
+
+    if (Array.isArray(templatesCategories)) {
+      templatesCategories.forEach((category) => {
+        grouped[category] = [];
+      });
+    }
 
     allTemplates?.forEach((template: Template) => {
-      if (template.categories?.length) {
-        template.categories?.forEach((category: string) => {
-          if (!grouped[category]) {
-            grouped[category] = [];
+      if (template.categories?.length && Array.isArray(templatesCategories)) {
+        template.categories.forEach((category: string) => {
+          if (grouped[category]) {
+            grouped[category].push(template);
           }
-          grouped[category].push(template);
         });
       }
     });
 
     return grouped;
-  }, [allTemplates]);
+  }, [allTemplates, templatesCategories]);
 
   const categories: string[] = useMemo(() => {
-    const categoriesWithTemplates = Object.keys(templatesByCategory).filter(
-      (category) => templatesByCategory[category]?.length > 0,
-    );
+    const categoriesWithTemplates = Array.isArray(templatesCategories)
+      ? templatesCategories.filter(
+          (category) => templatesByCategory[category]?.length > 0,
+        )
+      : [];
     return ['All', ...categoriesWithTemplates];
-  }, [templatesByCategory]);
+  }, [templatesByCategory, templatesCategories]);
 
   const selectedCategoryTemplates = useMemo(() => {
     if (selectedCategory === 'All') {

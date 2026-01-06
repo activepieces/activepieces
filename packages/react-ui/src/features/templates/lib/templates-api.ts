@@ -27,4 +27,7 @@ export const templatesApi = {
   incrementUsageCount(templateId: string) {
     return api.post<void>(`/v1/templates/${templateId}/increment-usage-count`);
   },
+  getCategories() {
+    return api.get<string[]>(`/v1/templates/categories`);
+  },
 };

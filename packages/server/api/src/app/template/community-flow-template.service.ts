@@ -31,6 +31,21 @@ export const communityTemplates = {
         const template = await response.json()
         return template
     },
+    getCategories: async (): Promise<string[]> => {
+        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
+        if (isNil(templateSource)) {
+            return []
+        }
+        const url = `${templateSource}/categories`
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        const categories = await response.json()
+        return categories
+    },
     list: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {

@@ -11,6 +11,13 @@ import {
 import { templatesApi } from '../lib/templates-api';
 
 export const templatesHooks = {
+  useTemplateCategories: () => {
+    return useQuery<string[], Error>({
+      queryKey: ['template', 'categories'],
+      queryFn: () => templatesApi.getCategories(),
+    });
+  },  
+  
   useTemplate: (id: string, request?: GetFlowTemplateRequestQuery) => {
     return useQuery<Template, Error>({
       queryKey: ['template', id],

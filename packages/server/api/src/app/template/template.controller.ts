@@ -3,6 +3,7 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApEdition,
+    ApFlagId,
     CreateTemplateRequestBody,    
     ErrorCode,    
     FlowVersionTemplate,
@@ -24,6 +25,7 @@ import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { communityTemplates } from './community-flow-template.service'
 import { templateService } from './template.service'
+import { flagService } from '../flags/flag.service'
 
 const edition = system.getEdition()
 
@@ -92,6 +94,13 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => { 
         await templateService(app.log).incrementUsageCount({ id: request.params.id })
         return reply.status(StatusCodes.OK).send()
+    })
+
+    app.get('/categories', GetCategoriesParams, async () => {
+        if (edition === ApEdition.CLOUD) {
+            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+        }
+        return communityTemplates.getCategories()
     })
 
     app.delete('/:id', DeleteParams, async (request, reply) => {
@@ -163,6 +172,17 @@ const ListTemplatesParams = {
         description: 'List templates.',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListTemplatesRequestQuery,
+    },
+}
+
+const GetCategoriesParams = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['templates'],
+        description: 'Get categories of templates.',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 

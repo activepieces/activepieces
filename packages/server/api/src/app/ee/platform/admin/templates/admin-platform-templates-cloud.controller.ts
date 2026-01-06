@@ -9,10 +9,6 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
     app,
 ) => {
 
-    app.get('/categories', GetCategoriesRequest, async () => {
-        return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
-    })
-
     app.post('/categories', UpdateTemplatesCategoriesFlagRequest, async (request) => {
         return flagService.save({
             id: ApFlagId.TEMPLATES_CATEGORIES,
@@ -73,12 +69,6 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
 
         return templateService(app.log).delete({ id: request.params.id })
     })
-}
-
-const GetCategoriesRequest = {
-    config: {
-        security: securityAccess.public(),
-    },
 }
 
 const GetTemplateRequest = {
