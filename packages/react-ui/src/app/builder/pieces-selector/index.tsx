@@ -22,6 +22,7 @@ import {
   PieceSelectorTabType,
 } from '@/features/pieces/lib/piece-selector-tabs-provider';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { platformHooks } from '@/hooks/platform-hooks';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { PieceSelectorOperation } from '@/lib/types';
 import { FlowOperationType, FlowTriggerType } from '@activepieces/shared';
@@ -35,7 +36,10 @@ import { AITabContent } from './ai-tab-content';
 import { ExploreTabContent } from './explore-tab-content';
 import { PiecesCardList } from './pieces-card-list';
 
-const getTabsList = (operationType: FlowOperationType) => {
+const getTabsList = (
+  operationType: FlowOperationType,
+  isEmbeddingEnabled: boolean,
+) => {
   const baseTabs = [
     {
       value: PieceSelectorTabType.EXPLORE,
@@ -54,11 +58,12 @@ const getTabsList = (operationType: FlowOperationType) => {
     },
   ];
 
-  if (
-    [FlowOperationType.ADD_ACTION, FlowOperationType.UPDATE_ACTION].includes(
-      operationType,
-    )
-  ) {
+  const replaceOrAddAction = [
+    FlowOperationType.ADD_ACTION,
+    FlowOperationType.UPDATE_ACTION,
+  ].includes(operationType);
+
+  if (replaceOrAddAction && !isEmbeddingEnabled) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
       name: t('AI & Agents'),
@@ -130,7 +135,11 @@ const PieceSelectorContent = ({
     setSelectedPieceMetadataInPieceSelector(null);
   };
 
-  const tabsList = useMemo(() => getTabsList(operation.type), [operation.type]);
+  const { platform } = platformHooks.useCurrentPlatform();
+  const tabsList = useMemo(
+    () => getTabsList(operation.type, platform?.plan.embeddingEnabled ?? false),
+    [operation.type, platform?.plan.embeddingEnabled],
+  );
 
   return (
     <Popover
