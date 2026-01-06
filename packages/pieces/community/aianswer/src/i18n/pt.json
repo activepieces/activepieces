@@ -23,6 +23,7 @@
   "Method": "Método",
   "Headers": "Cabeçalhos",
   "Query Parameters": "Parâmetros da consulta",
+  "Body Type": "Tipo de Corpo",
   "Body": "Conteúdo",
   "Response is Binary ?": "A resposta é binária ?",
   "No Error on Failure": "Nenhum erro no Failure",
@@ -33,11 +34,15 @@
   "Timezone of the scheduled call (e.g., Asia/Calcutta)": "Fuso horário da chamada agendada (por exemplo, Ásia/Calcutta)",
   "Optional prospect details with key-value pairs (e.g., customer_id, priority)": "Detalhes opcionais de perspectiva com pares de chave-valor (por exemplo, customer_id, prioridade)",
   "Authorization headers are injected automatically from your connection.": "Os cabeçalhos de autorização são inseridos automaticamente a partir da sua conexão.",
-  "Enable for files like PDFs, images, etc..": "Habilitar para arquivos como PDFs, imagens, etc..",
+  "Enable for files like PDFs, images, etc.": "Habilitar para arquivos como PDFs, imagens, etc.",
   "GET": "OBTER",
   "POST": "POSTAR",
   "PATCH": "COMPRAR",
   "PUT": "COLOCAR",
   "DELETE": "EXCLUIR",
-  "HEAD": "CABEÇA"
+  "HEAD": "CABEÇA",
+  "None": "Nenhuma",
+  "JSON": "JSON",
+  "Form Data": "Dados de Formulário",
+  "Raw": "RAW"
 }
