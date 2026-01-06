@@ -1,12 +1,12 @@
 {
-  "Detect AI-generated text with GPTZero API": "用GPTZero API 检测AI生成的文本",
-  "https://app.gptzero.me/app/api to get your API key": "https://app.gptzero.me/app/api获取您的 API 密钥",
-  "Scan File": "扫描文件",
-  "Scan Text": "扫描文本",
-  "Scan a file for AI-generated content detection": "扫描一个 AI生成的内容检测文件",
-  "Scan text content for AI-generated content detection": "为 AI生成的内容检测扫描文本内容",
+  "Detect AI-generated text with GPTZero API": "Detect AI-generated text with GPTZero API",
+  "https://app.gptzero.me/app/api to get your API key": "https://app.gptzero.me/app/api to get your API key",
+  "Scan File": "Scan File",
+  "Scan Text": "Scan Text",
+  "Scan a file for AI-generated content detection": "Scan a file for AI-generated content detection",
+  "Scan text content for AI-generated content detection": "Scan text content for AI-generated content detection",
   "File": "文件",
   "Text": "文本",
-  "The file to scan for AI-generated content": "要扫描 AI生成的内容的文件",
-  "The text content to scan for AI-generated content": "要扫描 AI生成的内容的文本内容"
+  "The file to scan for AI-generated content": "The file to scan for AI-generated content",
+  "The text content to scan for AI-generated content": "The text content to scan for AI-generated content"
 }
