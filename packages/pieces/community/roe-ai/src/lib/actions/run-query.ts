@@ -22,7 +22,6 @@ export const runQuery = createAction({
       description: 'Optional worksheet ID',
       required: false,
     }),
-
     use_admin: Property.Checkbox({
       displayName: 'Use Admin Privileges',
       description: 'Use admin privileges for the query',

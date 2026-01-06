@@ -16,7 +16,7 @@ export const roeAi = createPiece({
     runQuery,
     createCustomApiCallAction({
       auth: roeAiAuth,
-      baseUrl: (auth) => 'https://api.roe-ai.com/v1',
+      baseUrl: () => 'https://api.roe-ai.com/v1',
       authMapping: async (auth) => {
         return {
           Authorization: `Bearer ${auth.props.apiKey}`,
