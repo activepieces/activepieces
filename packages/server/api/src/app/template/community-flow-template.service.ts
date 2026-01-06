@@ -1,5 +1,7 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
+    ActivepiecesError,
+    ErrorCode,
     isNil,
     ListTemplatesRequestQuery,
     SeekPage,
@@ -9,43 +11,35 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 
 export const communityTemplates = {
-    get: async (id: string): Promise<Template | null> => {
-        try {
-            const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-            if (isNil(templateSource)) {
-                return null
-            }
-            const url = `${templateSource}/${id}`
-            const response = await fetch(url, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            })
-            if (!response.ok) {
-                return null
-            }
-            const template = await response.json()
-            return template
-        }
-        catch (error) {
-            return null
-        }
-    },
-    getCategories: async (): Promise<string[]> => {
+    getOrThrow: async (id: string): Promise<Template> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {
-            return []
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'Templates source URL is not set',
+                },
+            })
         }
-        const url = `${templateSource}/categories`
+        const url = `${templateSource}/${id}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
         })
-        const categories = await response.json()
-        return categories
+        if (!response.ok) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'template',
+                    entityId: id,
+                    message: `Template ${id} not found`,
+                },
+            })
+        }
+        const template = await response.json()
+        return template
     },
     getCategories: async (): Promise<string[]> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)

@@ -30,13 +30,21 @@ const edition = system.getEdition()
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
-        if (edition !== ApEdition.CLOUD) {
-            const template = await communityTemplates.get(request.params.id)
-            if (!isNil(template)) {
-                return template
-            }
+        const template = await templateService(app.log).getOne({ id: request.params.id })
+        if (!isNil(template)) {
+            return template
         }
-        return templateService(app.log).getOneOrThrow({ id: request.params.id })
+        if (edition !== ApEdition.CLOUD) {
+            return communityTemplates.getOrThrow(request.params.id)
+        }
+        throw new ActivepiecesError({
+            code: ErrorCode.ENTITY_NOT_FOUND,
+            params: {
+                entityType: 'template',
+                entityId: request.params.id,
+                message: `Template ${request.params.id} not found`,
+            },
+        })
     })
 
     app.get('/categories', GetCategoriesParams, async () => {
