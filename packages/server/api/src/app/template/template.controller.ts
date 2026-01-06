@@ -3,6 +3,7 @@ import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
     ApEdition,
+    ApFlagId,
     CreateTemplateRequestBody,    
     ErrorCode,    
     FlowVersionTemplate,
@@ -19,6 +20,7 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
+import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
@@ -33,6 +35,13 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
             return communityTemplates.get(request.params.id)
         }
         return templateService(app.log).getOneOrThrow({ id: request.params.id })
+    })
+
+    app.get('/categories', GetCategoriesParams, async () => {
+        if (edition === ApEdition.CLOUD) {
+            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+        }
+        return communityTemplates.getCategories()
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
@@ -140,6 +149,16 @@ const GetIdParams = Type.Object({
 })
 type GetIdParams = Static<typeof GetIdParams>
 
+const GetCategoriesParams = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['templates'],
+        description: 'Get categories of templates.',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
 
 const GetParams = {
     config: {
