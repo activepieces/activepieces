@@ -20,30 +20,28 @@ export const getEmployeeSystemId = createAction({
     const { email } = context.propsValue;
     const auth = context.auth as OmniHrAuth;
     const headers = await getAuthHeaders(auth);
-    let nextUrl: string | null = 'https://api.omnihr.co/api/v1/employee/list';
 
-    while (nextUrl) {
-      const listResponse: any = await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: nextUrl,
-        headers,
-      });
+    const listResponse = await httpClient.sendRequest({
+      method: HttpMethod.GET,
+      url: 'https://api.omnihr.co/api/v1/employee/list/min-v2',
+      headers,
+      queryParams: {
+        exclude_self: 'false',
+      },
+    });
 
-      const employee = listResponse.body.results.find(
-        (emp: any) =>
-          emp.primary_email.value.toLowerCase() === email.toLowerCase()
-      );
+    const employee = listResponse.body.find(
+      (emp: any) =>
+        emp.primary_email.value.toLowerCase() === email.toLowerCase()
+    );
 
-      if (employee) {
-        return {
-          system_id: employee.system_id,
-          user_id: employee.id,
-          full_name: employee.full_name,
-          email: employee.primary_email.value,
-        };
-      }
-
-      nextUrl = listResponse.body.next;
+    if (employee) {
+      return {
+        system_id: employee.system_id,
+        user_id: employee.id,
+        full_name: employee.full_name,
+        email: employee.primary_email.value,
+      };
     }
 
     throw new Error(`Employee with email "${email}" not found`);
