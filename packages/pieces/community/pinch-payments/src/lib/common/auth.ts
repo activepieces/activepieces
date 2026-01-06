@@ -15,6 +15,7 @@ export interface PinchPaymentsTokenResponse {
 export async function getPinchPaymentsToken(
   credentials: PinchPaymentsAuthCredentials
 ): Promise<PinchPaymentsTokenResponse> {
+
   const response = await httpClient.sendRequest({
     method: HttpMethod.POST,
     url: 'https://auth.getpinch.com.au/connect/token',

@@ -1,4 +1,4 @@
-import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { getPinchPaymentsToken, PinchPaymentsAuthCredentials } from './auth';
 
 const BASE_URL = 'https://api.getpinch.com.au';
