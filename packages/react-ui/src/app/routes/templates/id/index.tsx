@@ -5,7 +5,6 @@ import { useMemo, useState, useRef, useEffect } from 'react';
 import {
   Navigate,
   useLocation,
-  useParams,
   useNavigate,
 } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -14,12 +13,10 @@ import { FlowCanvas } from '@/app/builder/flow-canvas';
 import { CanvasControls } from '@/app/builder/flow-canvas/canvas-controls';
 import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { Button } from '@/components/ui/button';
-import { LoadingScreen } from '@/components/ui/loading-screen';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar-shadcn';
 import { TagWithBright } from '@/components/ui/tag-with-bright';
-import { templatesHooks } from '@/features/templates/hooks/templates-hook';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
 import { formatUtils } from '@/lib/utils';
@@ -31,19 +28,21 @@ import {
   FlowStatus,
   FlowOperationStatus,
   TemplateType,
+  Template,
 } from '@activepieces/shared';
 
 import { FlowCard } from './flow-card';
 import { PieceCard } from './piece-card';
 import { UseTemplateDialog } from './use-template-dialog';
 
-const TemplateDetailsPage = () => {
-  const { templateId } = useParams<{ templateId: string }>();
+type TemplateDetailsPageProps = {
+  template: Template;
+};
+
+const TemplateDetailsPage = ({ template }: TemplateDetailsPageProps) => {
   const token = authenticationSession.getToken();
   const location = useLocation();
   const navigate = useNavigate();
-
-  const { data: template, isLoading } = templatesHooks.useTemplate(templateId!);
   const [hasCanvasBeenInitialised, setHasCanvasBeenInitialised] =
     useState(false);
   const canvasContainerRef = useRef<HTMLDivElement>(null);
@@ -104,14 +103,6 @@ const TemplateDetailsPage = () => {
     return () => clearTimeout(timer);
   }, [selectedFlowIndex]);
 
-  if (!templateId) {
-    return <Navigate to="/templates" replace />;
-  }
-
-  if (isLoading) {
-    return <LoadingScreen />;
-  }
-
   if (!template) {
     return <Navigate to="/templates" replace />;
   }
@@ -147,7 +138,7 @@ const TemplateDetailsPage = () => {
   };
 
   const handleShare = async () => {
-    const shareUrl = `${window.location.origin}/templates/${templateId}`;
+    const shareUrl = `${window.location.origin}/templates/${template.id}`;
     try {
       await navigator.clipboard.writeText(shareUrl);
       toast.success(t('Link copied to clipboard!'));
