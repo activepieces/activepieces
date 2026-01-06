@@ -2,7 +2,6 @@ import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Lock, User, Tag, Users, Workflow, Clock, Hash } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/ui/formatted-date';

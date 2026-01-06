@@ -25,6 +25,7 @@ import {
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
@@ -33,8 +34,6 @@ import {
   UncategorizedFolderId,
   isNil,
 } from '@activepieces/shared';
-import { projectCollectionUtils } from '@/hooks/project-collection';
-
 
 type UseTemplateDialogProps = {
   template: Template;

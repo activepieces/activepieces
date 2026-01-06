@@ -1,6 +1,5 @@
 import { typeboxResolver } from '@hookform/resolvers/typebox';
 import { Type } from '@sinclair/typebox';
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
