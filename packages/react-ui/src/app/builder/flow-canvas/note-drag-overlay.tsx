@@ -1,16 +1,15 @@
 import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
-
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { apId, isNil } from '@activepieces/shared';
-
 import {
   useCursorPosition,
   useCursorPositionEffect,
 } from './cursor-position-context';
 import { NoteOverlay } from './nodes/note-node';
-import { NoteDragOverlayMode, useNotesContext } from './notes-context';
+import { NoteDragOverlayMode } from '../state/notes-state';
 import { flowCanvasConsts } from './utils/consts';
+import { useBuilderStateContext } from '../builder-hooks';
 
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
@@ -20,23 +19,29 @@ const NoteDragOverlay = () => {
   const builderNavigationBar = document.getElementById(
     flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID,
   );
+  const [draggedNote, noteDragOverlayMode, addNote] = useBuilderStateContext((state) => [state.draggedNote, state.noteDragOverlayMode, state.addNote]);
   const reactFlow = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
-  const containerRect = containerRef.current?.getBoundingClientRect();
-  const { draggedNote, noteDragOverlayMode, addNote } = useNotesContext();
   const builderNavigationBarWidth = open
     ? builderNavigationBar?.clientWidth ?? 0
     : 0;
+
+  const nodeSizeWithZoom = {
+    width: (draggedNote?.size.width ?? 0) * reactFlow.getZoom(),
+    height: (draggedNote?.size.height ?? 0) * reactFlow.getZoom(),
+  }
+
   const left = `${
     overlayPosition.x -
-    (containerRect?.width ?? 0) / 2 -
+    nodeSizeWithZoom.width / 2 -
     builderNavigationBarWidth
   }px`;
-  const top = `${overlayPosition.y - 50 - (containerRect?.height ?? 0) / 2}px`;
+  const top = `${overlayPosition.y - 50 - nodeSizeWithZoom.height / 2}px`;
   useCursorPositionEffect((position) => {
     setOverlayPosition(position);
   });
-  if (isNil(draggedNote) || isNil(noteDragOverlayMode)) {
+  const hideOverlay = isNil(draggedNote) || isNil(noteDragOverlayMode)
+  if(hideOverlay) {
     return null;
   }
   return (
@@ -69,7 +74,7 @@ const NoteDragOverlay = () => {
         width: `${draggedNote.size.width * reactFlow.getZoom()}px`,
       }}
     >
-      <NoteOverlay
+     <NoteOverlay
         id={draggedNote.id}
         size={{
           width: draggedNote.size.width * reactFlow.getZoom(),

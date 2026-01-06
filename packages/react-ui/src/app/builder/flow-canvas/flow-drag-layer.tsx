@@ -23,7 +23,7 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 
 import NoteDragOverlay from './note-drag-overlay';
-import { NoteDragOverlayMode, useNotesContext } from './notes-context';
+import { NoteDragOverlayMode } from '../state/notes-state';
 import StepDragOverlay from './step-drag-overlay';
 import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
@@ -36,11 +36,17 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     applyOperation,
     flowVersion,
     activeDraggingStep,
+    setDraggedNote,
+    getNoteById,
+    moveNote,
   ] = useBuilderStateContext((state) => [
     state.setActiveDraggingStep,
     state.applyOperation,
     state.flowVersion,
     state.activeDraggingStep,
+    state.setDraggedNote,
+    state.getNoteById,
+    state.moveNote,
   ]);
 
   const fixCursorSnapOffset = useCallback(
@@ -75,7 +81,6 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
-  const { setDraggedNote, getNoteById, moveNote } = useNotesContext();
   const handleDragStart = (e: DragStartEvent) => {
     if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_STEP_TAG) {
       setActiveDraggingStep(e.active.id.toString());

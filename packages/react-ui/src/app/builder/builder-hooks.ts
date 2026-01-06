@@ -10,6 +10,7 @@ import {
 } from './state/piece-selector-state';
 import { createRunState, RunState } from './state/run-state';
 import { createStepFormState, StepFormState } from './state/step-form-state';
+import { createNotesState, NotesState } from './state/notes-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -27,7 +28,7 @@ export type BuilderState = FlowState &
   RunState &
   ChatState &
   CanvasState &
-  StepFormState;
+  StepFormState & NotesState;
 export type BuilderInitialState = Pick<
   BuilderState,
   | 'flow'
@@ -48,8 +49,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     const chatState = createChatState(set);
     const canvasState = createCanvasState(initialState, set);
     const stepFormState = createStepFormState(set);
+    const notesState = createNotesState([], get, set);
     return {
       ...flowState,
+      ...notesState,
       ...runState,
       ...pieceSelectorState,
       ...chatState,

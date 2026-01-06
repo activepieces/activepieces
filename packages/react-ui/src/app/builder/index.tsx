@@ -38,7 +38,6 @@ import { RunsList } from './run-list';
 import { CursorPositionProvider } from './state/cursor-position-context';
 import { StepSettingsContainer } from './step-settings';
 import { ResizableVerticalPanelsProvider } from './step-settings/resizable-vertical-panels-context';
-import { NotesProvider } from './flow-canvas/notes-context';
 const minWidthOfSidebar = 'min-w-[max(20vw,400px)]';
 const animateResizeClassName = `transition-all `;
 
@@ -86,7 +85,6 @@ const BuilderPage = () => {
       <div className="z-50">
         <BuilderHeader />
       </div>
-      <NotesProvider>
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={100} order={2} id="flow-canvas">
           <div ref={middlePanelRef} className="relative h-full w-full">
@@ -179,7 +177,6 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-      </NotesProvider>
    
       <ChatDrawer />
     </div>

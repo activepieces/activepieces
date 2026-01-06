@@ -1,10 +1,9 @@
 import { useDraggable } from '@dnd-kit/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
-
-import { useNotesContext } from '../notes-context';
 import { flowCanvasConsts } from '../utils/consts';
 import { ApNoteNode } from '../utils/types';
 import { useState } from 'react';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 const controlStyle = {
   background: 'transparent',
@@ -18,7 +17,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
     },
   });
   const [size, setSize] = useState(props.data.size);
-  const { draggedNote, resizeNote } = useNotesContext();
+  const [draggedNote, resizeNote] = useBuilderStateContext((state) => [state.draggedNote, state.resizeNote]);
   if (draggedNote?.id === props.id) {
     return null;
   }

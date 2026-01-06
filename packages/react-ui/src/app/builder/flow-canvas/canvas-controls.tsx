@@ -25,7 +25,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
-import { NoteDragOverlayMode, useNotesContext } from './notes-context';
+import { NoteDragOverlayMode } from '../state/notes-state';
 const verticalPaddingOnFitView = 100;
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
@@ -170,7 +170,7 @@ const CanvasControls = ({
       });
     }
   };
-  const { noteDragOverlayMode, setDraggedNote } = useNotesContext();
+  const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext((state) => [state.noteDragOverlayMode, state.setDraggedNote]);
   const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
     useBuilderStateContext((state) => {
       return [

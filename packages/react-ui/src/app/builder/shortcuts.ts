@@ -24,6 +24,8 @@ export const useHandleKeyPressOnCanvas = () => {
     readonly,
     setShowMinimap,
     showMinimap,
+    setDraggedNote,
+    setDraggedStep,
   ] = useBuilderStateContext((state) => [
     state.selectedNodes,
     state.flowVersion,
@@ -33,24 +35,23 @@ export const useHandleKeyPressOnCanvas = () => {
     state.readonly,
     state.setShowMinimap,
     state.showMinimap,
+    state.setDraggedNote,
+    state.setActiveDraggingStep,
   ]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLElement &&
-        (e.target === document.body ||
-          e.target.classList.contains(
-            flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME,
-          ) ||
-          e.target.closest(
-            `[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`,
-          )) &&
-        !readonly
-      ) {
+      const insideSelectionRect = e.target instanceof HTMLElement && e.target.classList.contains(
+        flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME,
+      );
+      const insideStep = e.target instanceof HTMLElement && e.target.closest(
+        `[data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}]`,
+      );
+      const insideBody = e.target === document.body;
         const selectedNodesWithoutTrigger = selectedNodes.filter(
           (node) => node !== flowVersion.trigger.name,
         );
+        console.log(e.target)
         shortcutHandler(e, {
           Minimap: () => {
             setShowMinimap(!showMinimap);
@@ -67,6 +68,9 @@ export const useHandleKeyPressOnCanvas = () => {
             }
           },
           Delete: () => {
+            if (readonly) {
+              return;
+            }
             if (selectedNodes.length > 0) {
               canvasBulkActions.deleteSelectedNodes({
                 exitStepSettings,
@@ -77,6 +81,9 @@ export const useHandleKeyPressOnCanvas = () => {
             }
           },
           Skip: () => {
+            if (readonly) {
+              return;
+            }
             if (selectedNodesWithoutTrigger.length > 0) {
               canvasBulkActions.toggleSkipSelectedNodes({
                 selectedNodes: selectedNodesWithoutTrigger,
@@ -85,7 +92,15 @@ export const useHandleKeyPressOnCanvas = () => {
               });
             }
           },
+          ExitDrag: () => {
+            console.log('ExitDrag');
+            setDraggedNote(null,null);
+            setDraggedStep(null);
+          },
           Paste: () => {
+            if (readonly || !insideSelectionRect || !insideStep || !insideBody) {
+              return;
+            }
             canvasBulkActions.getActionsInClipboard().then((actions) => {
               if (actions.length > 0) {
                 const lastStep = [
@@ -109,7 +124,6 @@ export const useHandleKeyPressOnCanvas = () => {
             });
           },
         });
-      }
     },
     [
       selectedNodes,
@@ -120,6 +134,8 @@ export const useHandleKeyPressOnCanvas = () => {
       readonly,
       setShowMinimap,
       showMinimap,
+      setDraggedNote,
+      setDraggedStep,
     ],
   );
 

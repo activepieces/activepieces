@@ -8,10 +8,15 @@ import { ShortcutProps } from '@/components/ui/shortcut';
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
 
 export type CanvasShortcutsProps = Record<
-  'Minimap' | 'Paste' | 'Delete' | 'Copy' | 'Skip',
+  'Minimap' | 'Paste' | 'Delete' | 'Copy' | 'Skip' | 'ExitDrag',
   ShortcutProps
 >;
 export const CanvasShortcuts: CanvasShortcutsProps = {
+  ExitDrag: {
+    withCtrl: false,
+    withShift: false,
+    shortcutKey: 'Escape',
+  },
   Minimap: {
     withCtrl: true,
     withShift: false,

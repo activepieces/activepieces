@@ -30,7 +30,7 @@ import {
   ApStepNode,
   ApStraightLineEdge,
 } from './types';
-import { Note } from '../notes-context';
+import { Note } from '../../state/notes-state';
 
 const createBigAddButtonGraph: (
   parentStep: LoopOnItemsAction | RouterAction,

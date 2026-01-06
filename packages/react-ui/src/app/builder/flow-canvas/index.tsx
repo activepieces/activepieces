@@ -36,7 +36,7 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-import { Note, useNotesContext } from './notes-context';
+import { Note } from '../state/notes-state';
 
 export const FlowCanvas = React.memo(
   ({
@@ -52,6 +52,7 @@ export const FlowCanvas = React.memo(
       panningMode,
       selectStepByName,
       rightSidebar,
+      notes
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -61,6 +62,7 @@ export const FlowCanvas = React.memo(
         state.panningMode,
         state.selectStepByName,
         state.rightSidebar,
+        state.notes,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,6 @@ export const FlowCanvas = React.memo(
       },
       [setSelectedNodes, selectedStep],
     );
-    const {notes} = useNotesContext();
     const graphKey = createGraphKey(flowVersion, notes);
     const graph = useMemo(() => {
       return flowCanvasUtils.createFlowGraph(flowVersion, notes);
