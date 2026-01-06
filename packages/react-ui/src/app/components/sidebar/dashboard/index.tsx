@@ -194,9 +194,11 @@ export function ProjectDashboardSidebar() {
                   {shouldShowNewProjectButton && (
                     <>
                       {!shouldDisableNewProjectButton ? (
-                        <NewProjectDialog onCreate={(project) => {
-                          navigate(`/projects/${project.id}/flows`);
-                        }}>
+                        <NewProjectDialog
+                          onCreate={(project) => {
+                            navigate(`/projects/${project.id}/flows`);
+                          }}
+                        >
                           <Button
                             variant="ghost"
                             size="icon"

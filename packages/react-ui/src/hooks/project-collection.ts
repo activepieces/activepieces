@@ -64,10 +64,7 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
     },
     onInsert: async ({ transaction }) => {
       for (const { modified } of transaction.mutations) {
-        await api.post<ProjectWithLimits>(
-          '/v1/projects',
-          modified,
-        );
+        await api.post<ProjectWithLimits>('/v1/projects', modified);
       }
     },
     onDelete: async ({ transaction }) => {

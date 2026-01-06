@@ -23,10 +23,7 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
-import {
-  Permission,
-  PlatformRole,
-} from '@activepieces/shared';
+import { Permission, PlatformRole } from '@activepieces/shared';
 
 interface EditProjectDialogProps {
   open: boolean;
