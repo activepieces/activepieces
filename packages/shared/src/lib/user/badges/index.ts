@@ -49,11 +49,11 @@ export const BADGES = {
     'back-again': {
         imageUrl: 'https://cdn.activepieces.com/badges/back-again.gif',
         title: 'Back Again',
-        description: 'My flow failed to run… but learned something valuable.',
+        description: 'I tested my flow and it failed to run… but learned something valuable.',
     },
     'victory': {
         imageUrl: 'https://cdn.activepieces.com/badges/victory.gif',
         title: 'Victory',
-        description: 'My flow ran successfully… the joy is real!',
+        description: 'I tested my flow and it ran successfully… the joy is real!',
     },
 } as const
