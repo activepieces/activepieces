@@ -1,10 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { roeAiAuth } from '../common/auth';
 import {
-  AuthenticationType,
   httpClient,
   HttpMethod,
 } from '@activepieces/pieces-common';
+import { agentIdDropdown } from '../common/props';
 export const runAgent = createAction({
   auth: roeAiAuth,
   name: 'runAgent',
@@ -12,11 +12,7 @@ export const runAgent = createAction({
   description:
     'Execute an agent with provided inputs and return results immediately',
   props: {
-    agent_id: Property.ShortText({
-      displayName: 'Agent ID',
-      description: 'The UUID of the agent to run',
-      required: true,
-    }),
+    agent_id: agentIdDropdown,
     agent_input: Property.Object({
       displayName: 'Agent Input',
       description:
