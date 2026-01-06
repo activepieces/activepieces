@@ -1,12 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
-  Compass,
   Search,
   Loader2,
   Plus,
   LineChart,
   Trophy,
+  Compass,
 } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -166,7 +166,7 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: '/explore',
+    to: '/templates',
     label: t('Explore'),
     show: true,
     icon: Compass,
@@ -334,7 +334,9 @@ export function ProjectDashboardSidebar() {
                   ? 'flex flex-col items-center scrollbar-none'
                   : 'scrollbar-hover',
               )}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
             >
               <SidebarMenu
                 className={cn(

@@ -52,7 +52,7 @@ export function ProjectDashboardLayout({
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
-      to: '/explore',
+      to: '/templates',
       label: t('Explore'),
       show: !isEmbedded,
       icon: Compass,
@@ -82,7 +82,7 @@ export function ProjectDashboardLayout({
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
       <SidebarProvider>
         {!isEmbedded && <ProjectDashboardSidebar />}
-        <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
+        <SidebarInset className={`relative overflow-auto gap-4`}>
           <div className="flex flex-col">
             {!hideHeader && (
               <>

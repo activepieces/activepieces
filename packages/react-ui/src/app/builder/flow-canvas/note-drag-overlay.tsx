@@ -10,7 +10,7 @@ import {
 } from './cursor-position-context';
 import { NoteOverlay } from './nodes/note-node';
 import { NoteDragOverlayMode, useNotesContext } from './notes-context';
-import { BUILDER_NAVIGATION_SIDEBAR_ID } from './utils/consts';
+import { flowCanvasConsts } from './utils/consts';
 
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
@@ -18,7 +18,7 @@ const NoteDragOverlay = () => {
   const [overlayPosition, setOverlayPosition] =
     useState<typeof cursorPosition>(cursorPosition);
   const builderNavigationBar = document.getElementById(
-    BUILDER_NAVIGATION_SIDEBAR_ID,
+    flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID,
   );
   const reactFlow = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);

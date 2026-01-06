@@ -2,7 +2,7 @@ import { useDraggable } from '@dnd-kit/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
 
 import { useNotesContext } from '../notes-context';
-import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasConsts } from '../utils/consts';
 import { ApNoteNode } from '../utils/types';
 import { useState } from 'react';
 
@@ -14,7 +14,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: props.id,
     data: {
-      type: flowUtilConsts.DRAGGED_NOTE_TAG,
+      type: flowCanvasConsts.DRAGGED_NOTE_TAG,
     },
   });
   const [size, setSize] = useState(props.data.size);

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { RightSideBarType } from '@/lib/types';
 import {
   FlowRun,
   FlowStatusUpdatedResponse,
@@ -20,7 +21,7 @@ import {
   Permission,
 } from '@activepieces/shared';
 
-import { RightSideBarType, useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 import LargeWidgetWrapper from './large-widget-wrapper';
 

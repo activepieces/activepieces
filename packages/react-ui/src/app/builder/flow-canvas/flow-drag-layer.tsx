@@ -25,7 +25,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import NoteDragOverlay from './note-drag-overlay';
 import { NoteDragOverlayMode, useNotesContext } from './notes-context';
 import StepDragOverlay from './step-drag-overlay';
-import { flowUtilConsts } from './utils/consts';
+import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
@@ -77,10 +77,10 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     : undefined;
   const { setDraggedNote, getNoteById, moveNote } = useNotesContext();
   const handleDragStart = (e: DragStartEvent) => {
-    if (e.active.data.current?.type === flowUtilConsts.DRAGGED_STEP_TAG) {
+    if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_STEP_TAG) {
       setActiveDraggingStep(e.active.id.toString());
     }
-    if (e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG) {
+    if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
       const draggedNote = getNoteById(e.active.id.toString());
       if (draggedNote) {
         setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE);
@@ -138,7 +138,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
         });
       }
     }
-    if (e.active.data.current?.type === flowUtilConsts.DRAGGED_NOTE_TAG) {
+    if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
       const draggedNote = getNoteById(e.active.id.toString());
       if (draggedNote) {
         const element = document.getElementById(e.active.id.toString());

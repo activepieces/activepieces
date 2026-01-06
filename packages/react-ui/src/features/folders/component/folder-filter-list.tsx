@@ -72,7 +72,11 @@ const FolderItem = ({
             </div>
           }
         >
-          <FolderActions folder={folder} refetch={refetch} />
+          <FolderActions
+            folder={folder}
+            refetch={refetch}
+            hideFlowCount={true}
+          />
         </TextWithIcon>
       </Button>
     </div>
