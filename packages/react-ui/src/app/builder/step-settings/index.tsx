@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/resizable-panel';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import {
   FlowAction,
   FlowActionType,
@@ -38,9 +38,10 @@ import { useResizableVerticalPanelsContext } from './resizable-vertical-panels-c
 import { RouterSettings } from './router-settings';
 import { StepInfo } from './step-info';
 import { useStepSettingsContext } from './step-settings-context';
+
 const StepSettingsContainer = () => {
   const { selectedStep, pieceModel, formSchema } = useStepSettingsContext();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const [
     readonly,
     exitStepSettings,

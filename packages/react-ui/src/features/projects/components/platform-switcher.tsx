@@ -8,12 +8,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { projectHooks } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { cn } from '@/lib/utils';
 
 import { ScrollArea } from '../../../components/ui/scroll-area';
 import { platformHooks } from '../../../hooks/platform-hooks';
-import { projectHooks } from '../../../hooks/project-hooks';
 
 export function PlatformSwitcher({ children }: { children: React.ReactNode }) {
   const { data: allProjects } = projectHooks.useProjectsForPlatforms();

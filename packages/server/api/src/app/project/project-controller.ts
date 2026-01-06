@@ -5,7 +5,15 @@ import { StatusCodes } from 'http-status-codes'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { projectService } from './project-service'
 
-export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) => {
+export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
+    fastify.post('/:id', UpdateProjectRequest, async (request) => {
+        const project = await projectService.getOneOrThrow(request.params.id)
+        return projectService.update(request.params.id, {
+            type: project.type,
+            ...request.body,
+        })
+    })
+
     fastify.get('/:id', {
         config: {
             security: securityAccess.project([PrincipalType.USER], undefined, {
@@ -23,16 +31,6 @@ export const userProjectController: FastifyPluginAsyncTypebox = async (fastify) 
         },
     }, async (request) => {
         return paginationHelper.createPage([await projectService.getUserProjectOrThrow(request.principal.id)], null)
-    })
-}
-
-export const projectController: FastifyPluginAsyncTypebox = async (fastify) => {
-    fastify.post('/:id', UpdateProjectRequest, async (request) => {
-        const project = await projectService.getOneOrThrow(request.params.id)
-        return projectService.update(request.params.id, {
-            type: project.type,
-            ...request.body,
-        })
     })
 }
 
