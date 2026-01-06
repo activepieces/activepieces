@@ -5,7 +5,7 @@ import {
   or,
   useLiveSuspenseQuery,
 } from '@tanstack/react-db';
-import { QueryClient, useMutation } from '@tanstack/react-query';
+import { QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -21,6 +21,7 @@ import {
   isNil,
   ProjectType,
   ProjectWithLimits,
+  ProjectWithLimitsWithPlatform,
   SeekPage,
 } from '@activepieces/shared';
 
@@ -160,6 +161,14 @@ export const getProjectName = (project: ProjectWithLimits): string => {
     : project.displayName;
 };
 export const projectHooks = {
+  useProjectsForPlatforms: () => {
+    return useQuery<ProjectWithLimitsWithPlatform[], Error>({
+      queryKey: ['projects-for-platforms'],
+      queryFn: async () => {
+        return api.get<ProjectWithLimitsWithPlatform[]>('/v1/users/projects/platforms');
+      },
+    });
+  },
   useReloadPageIfProjectIdChanged: (projectId: string) => {
     const { embedState } = useEmbedding();
     const location = useLocation();
