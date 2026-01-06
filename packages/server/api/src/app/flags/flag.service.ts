@@ -92,6 +92,12 @@ export const flagService = {
                 updated,
             },
             {
+                id: ApFlagId.SHOW_BADGES,
+                value: true,
+                created,
+                updated,
+            },
+            {
                 id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
                 value: system.getEdition() === ApEdition.CLOUD,
                 created,
