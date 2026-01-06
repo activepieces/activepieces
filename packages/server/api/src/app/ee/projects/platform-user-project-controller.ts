@@ -20,7 +20,6 @@ export const usersProjectController: FastifyPluginAsyncTypebox = async (
 ) => {
 
 
-
     fastify.get('/platforms', ListProjectsForPlatforms, async (request) => {
         const loggedInUser = await userService.getOneOrFail({ id: request.principal.id })
         const platforms = await getPlatformsForUser(loggedInUser.identityId, request.principal.platform.id)

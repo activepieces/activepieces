@@ -180,9 +180,9 @@ const GetProjectRequest = {
         security: securityAccess.project(
             [PrincipalType.USER, PrincipalType.SERVICE],
             undefined, {
-            type: ProjectResourceType.PARAM,
-            paramKey: 'id',
-        }),
+                type: ProjectResourceType.PARAM,
+                paramKey: 'id',
+            }),
     },
 }
 
