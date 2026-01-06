@@ -448,6 +448,9 @@
       ],
       "@activepieces/piece-pinch-payments": [
         "packages/pieces/community/pinch-payments/src/index.ts"
+      ],
+      "@activepieces/piece-just-invoice": [
+        "packages/pieces/community/just-invoice/src/index.ts"
       ]
     },
     "resolveJsonModule": true
