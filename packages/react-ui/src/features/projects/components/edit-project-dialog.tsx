@@ -26,7 +26,6 @@ import { userHooks } from '@/hooks/user-hooks';
 import {
   Permission,
   PlatformRole,
-  TeamProjectsLimit,
 } from '@activepieces/shared';
 
 interface EditProjectDialogProps {
@@ -35,7 +34,6 @@ interface EditProjectDialogProps {
   projectId: string;
   initialValues?: {
     projectName?: string;
-    aiCredits?: string;
     externalId?: string;
   };
   renameOnly?: boolean;
@@ -43,7 +41,6 @@ interface EditProjectDialogProps {
 
 type FormValues = {
   projectName: string;
-  aiCredits: string;
   externalId?: string;
 };
 
@@ -61,7 +58,6 @@ export function EditProjectDialog({
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
-      aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -113,39 +109,6 @@ export function EditProjectDialog({
                 </FormItem>
               )}
             />
-
-            {!renameOnly &&
-              platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE && (
-                <FormField
-                  name="aiCredits"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="number"
-                          id="aiCredits"
-                          placeholder={t('AI Credits')}
-                          className="rounded-sm pr-16"
-                        />
-                        {!field.disabled && (
-                          <Button
-                            variant="link"
-                            type="button"
-                            tabIndex={-1}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                            onClick={() => form.setValue('aiCredits', '')}
-                          >
-                            {t('Clear')}
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
 
             {!renameOnly &&
               platform.plan.embeddingEnabled &&

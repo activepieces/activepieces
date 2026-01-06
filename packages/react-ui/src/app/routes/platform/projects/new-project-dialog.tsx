@@ -19,10 +19,11 @@ import { Label } from '@/components/ui/label';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { CreatePlatformProjectRequest } from '@activepieces/ee-shared';
+import { ProjectWithLimits } from '@activepieces/shared';
 
 type NewProjectDialogProps = {
   children: React.ReactNode;
-  onCreate?: () => void;
+  onCreate?: (project: ProjectWithLimits) => void;
 };
 
 export const NewProjectDialog = ({
@@ -42,8 +43,8 @@ export const NewProjectDialog = ({
   });
 
   const { mutate, isPending } = projectCollectionUtils.useCreateProject(
-    () => {
-      onCreate?.();
+    (data) => {
+      onCreate?.(data);
       setOpen(false);
     },
     (error) => {

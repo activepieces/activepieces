@@ -62,6 +62,14 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
         );
       }
     },
+    onInsert: async ({ transaction }) => {
+      for (const { modified } of transaction.mutations) {
+        await api.post<ProjectWithLimits>(
+          '/v1/projects',
+          modified,
+        );
+      }
+    },
     onDelete: async ({ transaction }) => {
       for (const { original } of transaction.mutations) {
         await api.delete<void>(`/v1/projects/${original.id}`);
@@ -72,15 +80,15 @@ export const projectCollection = createCollection<ProjectWithLimits, string>(
 
 export const projectCollectionUtils = {
   useCreateProject: (
-    onSuccess: () => void,
+    onSuccess: (project: ProjectWithLimits) => void,
     onError: (error: Error) => void,
   ) => {
     return useMutation({
       mutationFn: (request: CreatePlatformProjectRequest) =>
         api.post<ProjectWithLimits>('/v1/projects', request),
       onSuccess: (data) => {
-        projectCollection.insert(data, { optimistic: false });
-        onSuccess();
+        projectCollection.utils.writeInsert(data);
+        onSuccess(data);
       },
       onError: (error) => {
         onError(error);
