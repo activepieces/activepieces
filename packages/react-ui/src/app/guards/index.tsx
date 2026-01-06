@@ -70,6 +70,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { TemplateDetailsWrapper } from './template-details-wrapper';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -174,13 +175,7 @@ const routes = [
   }),
   {
     path: '/templates/:templateId',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Template Details">
-          <TemplateDetailsPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
+    element: <TemplateDetailsWrapper />,
   },
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRelease,

@@ -2,20 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
-import {
-  Template,
-  TemplateType,
-  TemplateCategory,
-  GetFlowTemplateRequestQuery,
-} from '@activepieces/shared';
+import { Template, TemplateType, TemplateCategory } from '@activepieces/shared';
 
 import { templatesApi } from '../lib/templates-api';
 
 export const templatesHooks = {
-  useTemplate: (id: string, request?: GetFlowTemplateRequestQuery) => {
+  useTemplate: (id: string) => {
     return useQuery<Template, Error>({
       queryKey: ['template', id],
-      queryFn: () => templatesApi.getTemplate(id, request),
+      queryFn: () => templatesApi.getTemplate(id),
     });
   },
 
