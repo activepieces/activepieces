@@ -425,6 +425,9 @@
       "@activepieces/piece-quaderno": [
         "packages/pieces/community/quaderno/src/index.ts"
       ],
+      "@activepieces/piece-roe-ai": [
+        "packages/pieces/community/roe-ai/src/index.ts"
+      ],
       "@activepieces/piece-duckdb": [
         "packages/pieces/community/duckdb/src/index.ts"
       ],
