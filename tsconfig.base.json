@@ -428,6 +428,9 @@
       "@activepieces/piece-duckdb": [
         "packages/pieces/community/duckdb/src/index.ts"
       ],
+      "@activepieces/piece-waitwhile": [
+        "packages/pieces/community/waitwhile/src/index.ts"
+      ],
       "@activepieces/piece-baremetrics": [
         "packages/pieces/community/baremetrics/src/index.ts"
       ],
