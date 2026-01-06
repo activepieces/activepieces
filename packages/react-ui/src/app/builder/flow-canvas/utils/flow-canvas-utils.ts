@@ -497,7 +497,7 @@ function buildNotesGraph(notes: Note[]): ApGraph {
     nodes: notes.map((note) => ({
       id: note.id,
       type: ApNodeType.NOTE,
-      draggable: false,
+      draggable: true,
       position: note.position,
       data: {
         content: note.content,

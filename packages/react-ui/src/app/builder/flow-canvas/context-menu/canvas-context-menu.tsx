@@ -11,39 +11,7 @@ export type CanvasShortcutsProps = Record<
   'Minimap' | 'Paste' | 'Delete' | 'Copy' | 'Skip' | 'ExitDrag',
   ShortcutProps
 >;
-export const CanvasShortcuts: CanvasShortcutsProps = {
-  ExitDrag: {
-    withCtrl: false,
-    withShift: false,
-    shortcutKey: 'Escape',
-  },
-  Minimap: {
-    withCtrl: true,
-    withShift: false,
-    shortcutKey: 'm',
-  },
-  Paste: {
-    withCtrl: true,
-    withShift: false,
-    shortcutKey: 'v',
-  },
-  Delete: {
-    withCtrl: false,
-    withShift: true,
-    shortcutKey: 'Delete',
-  },
-  Copy: {
-    withCtrl: true,
-    withShift: false,
-    shortcutKey: 'c',
-    shouldNotPreventDefault: true,
-  },
-  Skip: {
-    withCtrl: true,
-    withShift: false,
-    shortcutKey: 'e',
-  },
-};
+
 export enum ContextMenuType {
   CANVAS = 'CANVAS',
   STEP = 'STEP',

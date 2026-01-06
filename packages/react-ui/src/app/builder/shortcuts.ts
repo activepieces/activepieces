@@ -2,13 +2,11 @@ import { useCallback, useEffect } from 'react';
 
 import {
   flowStructureUtil,
-  isNil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from './builder-hooks';
 import {
-  CanvasShortcuts,
   CanvasShortcutsProps,
 } from './flow-canvas/context-menu/canvas-context-menu';
 import { canvasBulkActions } from './flow-canvas/utils/bulk-actions';
@@ -61,6 +59,9 @@ export const useHandleKeyPressOnCanvas = () => {
               selectedNodesWithoutTrigger.length > 0 &&
               document.getSelection()?.toString() === ''
             ) {
+              e.stopPropagation();
+              e.preventDefault();
+              console.log(selectedNodesWithoutTrigger)
               canvasBulkActions.copySelectedNodes({
                 selectedNodes: selectedNodesWithoutTrigger,
                 flowVersion,
@@ -72,6 +73,8 @@ export const useHandleKeyPressOnCanvas = () => {
               return;
             }
             if (selectedNodes.length > 0) {
+              e.stopPropagation();
+              e.preventDefault();
               canvasBulkActions.deleteSelectedNodes({
                 exitStepSettings,
                 selectedStep,
@@ -93,14 +96,15 @@ export const useHandleKeyPressOnCanvas = () => {
             }
           },
           ExitDrag: () => {
-            console.log('ExitDrag');
             setDraggedNote(null,null);
             setDraggedStep(null);
           },
           Paste: () => {
-            if (readonly || !insideSelectionRect || !insideStep || !insideBody) {
+            if (readonly || (!insideSelectionRect && !insideStep && !insideBody)) {
               return;
             }
+            e.stopPropagation();
+            e.preventDefault();
             canvasBulkActions.getActionsInClipboard().then((actions) => {
               if (actions.length > 0) {
                 const lastStep = [
@@ -158,13 +162,39 @@ const shortcutHandler = (
       !!shortcut.withShift === event.shiftKey,
   );
   if (shortcutActivated) {
-    if (
-      isNil(shortcutActivated[1].shouldNotPreventDefault) ||
-      !shortcutActivated[1].shouldNotPreventDefault
-    ) {
-      event.preventDefault();
-    }
-    event.stopPropagation();
     handlers[shortcutActivated[0] as keyof CanvasShortcutsProps]();
   }
+};
+
+export const CanvasShortcuts: CanvasShortcutsProps = {
+  ExitDrag: {
+    withCtrl: false,
+    withShift: false,
+    shortcutKey: 'Escape',
+  },
+  Minimap: {
+    withCtrl: true,
+    withShift: false,
+    shortcutKey: 'm',
+  },
+  Paste: {
+    withCtrl: true,
+    withShift: false,
+    shortcutKey: 'v',
+  },
+  Delete: {
+    withCtrl: false,
+    withShift: true,
+    shortcutKey: 'Delete',
+  },
+  Copy: {
+    withCtrl: true,
+    withShift: false,
+    shortcutKey: 'c',
+  },
+  Skip: {
+    withCtrl: true,
+    withShift: false,
+    shortcutKey: 'e',
+  },
 };
