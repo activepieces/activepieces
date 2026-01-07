@@ -1,6 +1,6 @@
 import { CreateAICreditCheckoutSessionParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
-import { sleep } from '@activepieces/server-shared'
-import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan } from '@activepieces/shared'
+import { exceptionHandler, sleep } from '@activepieces/server-shared'
+import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan, tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
@@ -70,7 +70,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
         assertNotNullOrUndefined(auth.apiKeyHash, 'apiKeyHash is required')
 
-        const usage = await getOpenRouterUsageCached(auth.apiKeyHash)
+        const usage = await getOpenRouterUsageCached(auth.apiKeyHash, log)
 
         return {
             usageMonthly: usage.usage_monthly * CREDIT_PER_DOLLAR,
@@ -159,7 +159,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function getOpenRouterUsageCached(apiKeyHash: string): Promise<OpenRouterApikey> {
+async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogger): Promise<Pick<OpenRouterApikey, 'usage' | 'limit' | 'limit_remaining' | 'usage_monthly'>> {
     const cacheKey = `openrouter_usage_${apiKeyHash}`
     
     const cachedUsage = await distributedStore.get<OpenRouterApikey>(cacheKey)
@@ -167,10 +167,24 @@ async function getOpenRouterUsageCached(apiKeyHash: string): Promise<OpenRouterA
         return cachedUsage
     }
 
-    const { data: usage } = await openRouterApi.getKey({ hash: apiKeyHash })
+   
+    const { error, data: usage } = await tryCatch(async () => openRouterApi.getKey({ hash: apiKeyHash }))
+    if (!isNil(error) || isNil(usage)) {
+        exceptionHandler.handle(error, log)
+        return {
+            limit: 0,
+            limit_remaining: 0,
+            usage: 0,
+            usage_monthly: 0,
+        }
+    }
     await distributedStore.put(cacheKey, usage, USAGE_CACHE_TTL_SECONDS)
-    
-    return usage
+    return {
+        limit: usage.data.limit!,
+        limit_remaining: usage.data.limit_remaining!,
+        usage: usage.data.usage!,
+        usage_monthly: usage.data.usage_monthly!,
+    }
 }
 
 async function tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<void> {
