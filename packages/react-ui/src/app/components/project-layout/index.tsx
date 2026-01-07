@@ -54,7 +54,7 @@ export function ProjectDashboardLayout({
     {
       to: '/templates',
       label: t('Explore'),
-      show: true,
+      show: !isEmbedded,
       icon: Compass,
       hasPermission: true,
     },
