@@ -2,6 +2,19 @@ import { PieceAuth, Property } from "@activepieces/pieces-framework";
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData } from '@activepieces/shared';
 
+const chosenModelValues = [
+    "openai/gpt-5.2",
+    "openai/gpt-5.1",
+    "openai/gpt-5-mini",
+    "anthropic/claude-sonnet-4.5",
+    "anthropic/claude-opus-4.5",
+    "anthropic/claude-haiku-4.5",
+    "google/gemini-3-pro-preview",
+    "google/gemini-3-flash-preview",
+    "google/gemini-2.5-flash-preview-09-2025",
+    "google/gemini-2.5-flash-lite-preview-09-2025",
+];
+
 export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProviders }: AIPropsParams<T>) => ({
     provider: Property.Dropdown<string, true>({
         auth: PieceAuth.None(),
@@ -51,7 +64,7 @@ export const aiProps = <T extends 'text' | 'image'>({ modelType, allowedProvider
                 },
             });
 
-            const models = allModels
+            const models = allModels.filter(model => provider === 'activepieces' ? chosenModelValues.includes(model.id) : true)
                 .filter(model => model.type === modelType)
                 .filter(model => {
                     if (provider !== AIProviderName.ACTIVEPIECES) {

@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Tooltip,
   TooltipContent,
@@ -48,7 +49,18 @@ export const AgentPieceToolComponent = ({
     (p) => p.pieceName === tools[0].pieceMetadata.pieceName,
   );
 
-  if (!pieceMetadata) return null;
+  if (!pieceMetadata) {
+    return (
+      <div className="flex  w-full items-center justify-between px-3 h-12  border-b last:border-0 py-2">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-6 w-6 rounded-md" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+
+        <Skeleton className="h-4 w-4 rounded-sm" />
+      </div>
+    );
+  }
 
   const handleEditTool = (tool: AgentPieceTool) => {
     openPieceDialog({ defaultPage: 'action-selected', tool });

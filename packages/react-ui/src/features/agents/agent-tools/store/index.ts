@@ -7,6 +7,7 @@ import {
   AgentPieceTool,
   AgentToolType,
   isNil,
+  PredefinedInputsStructure,
 } from '@activepieces/shared';
 
 type SelectedDialogPage = 'pieces-list' | 'piece-selected' | 'action-selected';
@@ -21,7 +22,7 @@ interface AgentToolsState {
 
   selectedPiece: PieceStepMetadataWithSuggestions | null;
   selectedAction: ActionBase | null;
-  predefinedInputs: Record<string, unknown>;
+  predefinedInputs: PredefinedInputsStructure | null;
 
   editingPieceTool: AgentPieceTool | null;
   editingMcpTool: AgentMcpTool | null;
@@ -33,7 +34,7 @@ interface AgentToolsState {
   setSearchQuery: (query: string) => void;
   setSelectedPiece: (piece: PieceStepMetadataWithSuggestions | null) => void;
   setSelectedAction: (action: ActionBase | null) => void;
-  setPredefinedInputs: (inputs: Record<string, unknown>) => void;
+  setPredefinedInputs: (inputs: PredefinedInputsStructure) => void;
 
   openPieceDialog: ({
     defaultPage,
@@ -65,7 +66,7 @@ const initialState = {
   searchQuery: '',
   selectedPiece: null,
   selectedAction: null,
-  predefinedInputs: {},
+  predefinedInputs: null,
   editingPieceTool: null,
   editingMcpTool: null,
 };
@@ -95,7 +96,8 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       showAddPieceDialog: true,
       selectedPage: defaultPage,
       editingPieceTool: tool || null,
-      predefinedInputs: tool?.pieceMetadata.predefinedInput,
+      predefinedInputs: tool?.pieceMetadata
+        .predefinedInput as PredefinedInputsStructure,
       selectedPiece: piece,
     });
   },
@@ -120,7 +122,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       selectedPiece: null,
       selectedAction: null,
       searchQuery: '',
-      predefinedInputs: {},
+      predefinedInputs: null,
     });
   },
 
@@ -128,7 +130,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
     set({
       selectedPage: 'piece-selected',
       selectedAction: null,
-      predefinedInputs: {},
+      predefinedInputs: null,
     });
   },
 
@@ -148,7 +150,12 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
     const { selectedAction, selectedPiece, predefinedInputs, isAuthSet } =
       get();
 
-    if (!selectedAction || !selectedPiece || !isAuthSet()) {
+    if (
+      !selectedAction ||
+      !selectedPiece ||
+      !isAuthSet() ||
+      !predefinedInputs
+    ) {
       return null;
     }
 
@@ -170,7 +177,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       searchQuery: '',
       selectedPiece: null,
       selectedAction: null,
-      predefinedInputs: {},
+      predefinedInputs: null,
       editingPieceTool: null,
     });
   },
@@ -182,7 +189,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
       searchQuery: '',
       selectedPiece: null,
       selectedAction: null,
-      predefinedInputs: {},
+      predefinedInputs: null,
       editingPieceTool: null,
     });
   },
