@@ -1,7 +1,6 @@
 
 import { securityAccess } from '@activepieces/server-shared'
 import {
-    apId,
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
     FlowRun,
@@ -176,12 +175,14 @@ async function convertRequest(
     projectId: string,
     flowId: string,
 ): Promise<EventPayload> {
+    const contentType = request.headers['content-type']
+    const isBinary = isBinaryContentType(contentType) && Buffer.isBuffer(request.body)
     return {
         method: request.method,
         headers: request.headers as Record<string, string>,
         body: await convertBody(request, projectId, flowId),
         queryParams: request.query as Record<string, string>,
-        rawBody: request.rawBody,
+        rawBody: isBinary ? undefined : request.rawBody,
     }
 }
 
@@ -219,14 +220,12 @@ async function convertBody(
         }
         return jsonResult
     }
-
-    // Handle binary body (e.g., image/png, application/pdf sent directly)
     const contentType = request.headers['content-type']
     if (isBinaryContentType(contentType) && Buffer.isBuffer(request.body)) {
         const platformId = await projectService.getPlatformId(projectId)
         const extension = mime.extension(contentType?.split(';')[0] || '') || 'bin'
-        const fileName = `binary_${apId()}.${extension}`
-        
+        const fileName = `file.${extension}`
+
         const file = await stepFileService(request.log).saveAndEnrich({
             data: request.body,
             fileName,
@@ -237,7 +236,7 @@ async function convertBody(
             projectId,
         })
         return {
-            url: file.url,
+            fileUrl: file.url,
         }
     }
 
