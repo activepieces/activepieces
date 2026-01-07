@@ -80,17 +80,13 @@ export const RunsTable = () => {
       const createdBefore = searchParams.get('createdBefore');
       const archivedParam = searchParams.get('archivedAt');
 
-      let archived: boolean;
-      if (archivedParam === 'true') archived = true;
-      else archived = false;
-
       return flowRunsApi.list({
         status: status ?? undefined,
         projectId,
         flowId,
         cursor: cursor ?? undefined,
         limit,
-        archived,
+        includeArchived: (archivedParam === 'true'),
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
         failedStepName,
@@ -222,11 +218,11 @@ export const RunsTable = () => {
         status:
           status.length > 0
             ? (status.filter(
-                (s) => s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
-              ) as (
-                | typeof FlowRunStatus.PAUSED
-                | typeof FlowRunStatus.QUEUED
-              )[])
+              (s) => s === FlowRunStatus.PAUSED || s === FlowRunStatus.QUEUED,
+            ) as (
+              | typeof FlowRunStatus.PAUSED
+              | typeof FlowRunStatus.QUEUED
+            )[])
             : undefined,
         flowId,
         createdAfter,
@@ -288,15 +284,14 @@ export const RunsTable = () => {
               >
                 <Archive className="size-4 mr-1" />
                 {selectedRows.length > 0
-                  ? `${t('Archive')} ${
-                      !isDisabled
-                        ? selectedAll
-                          ? excludedRows.size > 0
-                            ? `${t('all except')} ${excludedRows.size}`
-                            : t('all')
-                          : `(${selectedRows.length})`
-                        : ''
-                    }`
+                  ? `${t('Archive')} ${!isDisabled
+                    ? selectedAll
+                      ? excludedRows.size > 0
+                        ? `${t('all except')} ${excludedRows.size}`
+                        : t('all')
+                      : `(${selectedRows.length})`
+                    : ''
+                  }`
                   : t('Archive')}
               </Button>
             </div>
@@ -338,13 +333,12 @@ export const RunsTable = () => {
                   >
                     <X className="h-3 w-4 mr-1" />
                     {selectedRows.length > 0
-                      ? `${t('Cancel')} ${
-                          selectedAll
-                            ? excludedRows.size > 0
-                              ? `${t('all except')} ${excludedRows.size}`
-                              : t('all')
-                            : `(${selectedRows.length})`
-                        }`
+                      ? `${t('Cancel')} ${selectedAll
+                        ? excludedRows.size > 0
+                          ? `${t('all except')} ${excludedRows.size}`
+                          : t('all')
+                        : `(${selectedRows.length})`
+                      }`
                       : t('Cancel')}
                   </Button>
                 </MessageTooltip>
@@ -375,15 +369,14 @@ export const RunsTable = () => {
                     >
                       <RotateCw className="size-4 mr-1" />
                       {selectedRows.length > 0
-                        ? `${t('Retry')} ${
-                            !isDisabled
-                              ? selectedAll
-                                ? excludedRows.size > 0
-                                  ? `${t('all except')} ${excludedRows.size}`
-                                  : t('all')
-                                : `(${selectedRows.length})`
-                              : ''
-                          }`
+                        ? `${t('Retry')} ${!isDisabled
+                          ? selectedAll
+                            ? excludedRows.size > 0
+                              ? `${t('all except')} ${excludedRows.size}`
+                              : t('all')
+                            : `(${selectedRows.length})`
+                          : ''
+                        }`
                         : t('Retry')}
                       <ChevronDown className="h-3 w-4 ml-1" />
                     </Button>
@@ -477,19 +470,19 @@ export const RunsTable = () => {
   const customFilters =
     retriedRunsInQueryParams.length > 0
       ? [
-          <Button
-            key="retried-runs-filter"
-            variant="outline"
-            onClick={() => {
-              navigate(authenticationSession.appendProjectRoutePrefix(`/runs`));
-            }}
-          >
-            <div className="flex flex-row gap-2 items-center">
-              {t('Viewing retried runs')} ({retriedRunsInQueryParams.length}){' '}
-              <X className="size-4" />
-            </div>
-          </Button>,
-        ]
+        <Button
+          key="retried-runs-filter"
+          variant="outline"
+          onClick={() => {
+            navigate(authenticationSession.appendProjectRoutePrefix(`/runs`));
+          }}
+        >
+          <div className="flex flex-row gap-2 items-center">
+            {t('Viewing retried runs')} ({retriedRunsInQueryParams.length}){' '}
+            <X className="size-4" />
+          </div>
+        </Button>,
+      ]
       : [];
 
   return (
