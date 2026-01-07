@@ -1,45 +1,52 @@
-import { t } from 'i18next';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams, useLocation } from 'react-router-dom';
 
 import { PageTitle } from '@/app/components/page-title';
 import { ProjectDashboardLayout } from '@/app/components/project-layout';
 import { TemplateDetailsPage } from '@/app/routes/templates/id';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
+import { ShareTemplate } from '@/features/templates/components/share-template';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
-import { useAuthorization } from '@/hooks/authorization-hooks';
-import { determineDefaultRoute } from '@/lib/utils';
-import { TemplateType } from '@activepieces/shared';
+import { authenticationSession } from '@/lib/authentication-session';
+import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
+import { TemplateType, isNil } from '@activepieces/shared';
 
 const TemplateDetailsWrapper = () => {
   const { templateId } = useParams<{ templateId: string }>();
+  const location = useLocation();
   const { data: template, isLoading } = templatesHooks.useTemplate(templateId!);
-  const { checkAccess } = useAuthorization();
-  const defaultRoute = determineDefaultRoute(checkAccess);
-
-  const useProjectLayout =
-    !isLoading && template && template.type !== TemplateType.SHARED;
-  const pageTitle = template?.name || t('Template Details');
-
-  const content = (
-    <PageTitle title={pageTitle}>
-      <TemplateDetailsPage template={template!} />
-    </PageTitle>
-  );
 
   if (isLoading) {
     return <LoadingScreen />;
   }
 
   if (!template) {
-    return <Navigate to={defaultRoute} replace />;
+    return <Navigate to="/templates" replace />;
   }
+
+  const token = authenticationSession.getToken();
+  const isNotAuthenticated = isNil(token);
+  const useProjectLayout = template.type !== TemplateType.SHARED;
+
+  if (isNotAuthenticated && useProjectLayout) {
+    return (
+      <Navigate
+        to={`/sign-in?${FROM_QUERY_PARAM}=${location.pathname}${location.search}`}
+        replace
+      />
+    );
+  }
+
+  const content = (
+    <PageTitle title={template.name}>
+      <TemplateDetailsPage template={template} />
+    </PageTitle>
+  );
 
   if (useProjectLayout) {
     return <ProjectDashboardLayout>{content}</ProjectDashboardLayout>;
   }
 
-  return <SidebarProvider>{content}</SidebarProvider>;
+  return <ShareTemplate template={template} />;
 };
 
 export { TemplateDetailsWrapper };
