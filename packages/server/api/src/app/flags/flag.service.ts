@@ -257,7 +257,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.ALLOW_NPM_PACKAGES_IN_CODE_STEP,
-                value: system.get(AppSystemProp.EXECUTION_MODE) !== ExecutionMode.SANDBOX_CODE_ONLY,
+                value: true,
                 created,
                 updated,
             },

@@ -133,16 +133,11 @@ function isPackagesAllowed(): boolean {
 
 
 async function getPackageJson(packageJson: string): Promise<string> {
-    const packagedAllowed = isPackagesAllowed()
-    if (!packagedAllowed) {
-        return '{"dependencies":{}}'
-    }
     const { data: parsedPackageJson, error: parseError } = await tryCatch(() => JSON.parse(packageJson))
     const packageJsonObject = parseError ? {} : (parsedPackageJson as Record<string, unknown>)
     return JSON.stringify({
         ...packageJsonObject,
         dependencies: {
-            '@types/node': '18.17.1',
             ...(packageJsonObject?.['dependencies'] ?? {}),
         },
     })
@@ -172,6 +167,20 @@ const compileCode = async ({
         entryFile: `${path}/index.ts`,
         outputFile: `${path}/index.js`,
     })
+
+    // Post-process: Expose 'code' globally for isolated-vm compatibility
+    // IIFE format traps everything in a closure, so we inject globalThis.code = VAR_NAME before the closing })();
+    const outputFile = `${path}/index.js`
+    const bundleContent = await fs.readFile(outputFile, 'utf8')
+
+    // Extract the actual variable name from the export pattern {code:()=>VAR_NAME}
+    // This handles both minified (e.g., {code:()=>N}) and non-minified (e.g., {code:()=>code}) code
+    const codeVarMatch = bundleContent.match(/\{code:\s*\(\)\s*=>\s*([a-zA-Z_$][a-zA-Z0-9_$]*)\}/)
+    const codeVarName = codeVarMatch ? codeVarMatch[1] : 'code'
+    
+    // Insert globalThis.code = VAR_NAME; before the closing })();
+    const bundleWithGlobal = bundleContent.replace(/\}\)\(\);?\s*$/, `globalThis.code = ${codeVarName};\n})();\n`)
+    await fs.writeFile(outputFile, bundleWithGlobal, 'utf8')
 }
 
 const handleCompilationError = async ({

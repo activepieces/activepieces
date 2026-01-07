@@ -8,6 +8,17 @@ export const noOpCodeSandbox: CodeSandbox = {
         return codeModule.code(inputs)
     },
 
+    async runBundle({ bundleCode, inputs }) {
+        // Create a function that runs the bundle and then calls code(inputs)
+        // The bundle should set globalThis.code
+        const wrappedCode = `
+            ${bundleCode}
+            return code(inputs);
+        `
+        const fn = new Function('inputs', wrappedCode)
+        return fn(inputs)
+    },
+
     async runScript({ script, scriptContext, functions }) {
         const newContext = {
             ...scriptContext,

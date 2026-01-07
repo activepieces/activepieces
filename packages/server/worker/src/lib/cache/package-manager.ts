@@ -8,6 +8,7 @@ import {
 import { tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import fs from 'node:fs/promises'
 
 export const packageManager = (log: FastifyBaseLogger) => ({
     async validate(): Promise<void> {
@@ -39,15 +40,20 @@ export const packageManager = (log: FastifyBaseLogger) => ({
         return data
     },
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
+  
         const config = [
             `${entryFile}`,
-            '--target node',
+            '--target browser',
             '--production',
-            '--format cjs',
+            '--format iife',
             `--outfile ${outputFile}`,
         ]
         log.debug({ path, entryFile, outputFile, config }, '[PackageManager#build]')
-        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
+        const result = await execPromise(`bun build ${config.join(' ')}`, { cwd: path })
+        const bundleContent = await fs.readFile(outputFile, 'utf8')
+        const bundleContentWithGlobal = 
+        await fs.writeFile(outputFile, bundleContent, 'utf8')
+        return result
     },
 
 })

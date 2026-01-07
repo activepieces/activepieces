@@ -9,6 +9,12 @@ export type CodeSandbox = {
     runCodeModule(params: RunCodeModuleParams): Promise<unknown>
 
     /**
+     * Executes a bundled code string that exposes a `code` function.
+     * The bundle should be in IIFE format with `code` assigned to globalThis.
+     */
+    runBundle(params: RunBundleParams): Promise<unknown>
+
+    /**
      * Executes a script.
      */
     runScript(params: RunScriptParams): Promise<unknown>
@@ -22,6 +28,18 @@ type RunCodeModuleParams = {
 
     /**
      * The inputs that are passed to the {@link CodeModule}.
+     */
+    inputs: Record<string, unknown>
+}
+
+type RunBundleParams = {
+    /**
+     * The bundled code string (IIFE format with globalThis.code = ...)
+     */
+    bundleCode: string
+
+    /**
+     * The inputs that are passed to the code function.
      */
     inputs: Record<string, unknown>
 }

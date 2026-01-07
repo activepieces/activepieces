@@ -42,6 +42,32 @@ export const v8IsolateCodeSandbox: CodeSandbox = {
         }
     },
 
+    async runBundle({ bundleCode, inputs }) {
+        const ivm = getIvm()
+        const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
+
+        try {
+            const isolateContext = await initIsolateContext({
+                isolate,
+                codeContext: {
+                    inputs,
+                },
+            })
+
+            // Run the bundle first (sets up globalThis.code), then call code(inputs)
+            const codeToExecute = `${bundleCode}\ncode(inputs);`
+
+            return await executeIsolate({
+                isolate,
+                isolateContext,
+                code: codeToExecute,
+            })
+        }
+        finally {
+            isolate.dispose()
+        }
+    },
+
     async runScript({ script, scriptContext, functions }) {
         const ivm = getIvm()
         const isolate = new ivm.Isolate({ memoryLimit: ONE_HUNDRED_TWENTY_EIGHT_MEGABYTES })
