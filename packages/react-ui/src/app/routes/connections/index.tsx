@@ -88,7 +88,7 @@ function AppConnectionsPage() {
   const pieceName = searchParams.get('pieceName') ?? undefined;
   const displayName = searchParams.get('displayName') ?? undefined;
 
-  const {
+  const { 
     data: connections,
     isLoading: connectionsLoading,
     refetch,
@@ -371,6 +371,13 @@ function AppConnectionsPage() {
                   message={t(
                     'Are you sure you want to delete these connections? This action cannot be undone.',
                   )}
+                  warning={
+                    <>
+                      {t('Any flows currently using these connections')}{' '}
+                      <strong>{t('will break immediately')}</strong>.{' '}
+                      {t('Please proceed with caution.')}
+                    </>
+                  }
                   mutationFn={async () => {
                     await deleteConnections(selectedRows.map((row) => row.id));
                     refetch();
