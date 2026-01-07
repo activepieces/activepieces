@@ -4,15 +4,16 @@ import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan 
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
-import { distributedLock } from '../../../database/redis-connections'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flagService } from '../../../flags/flag.service'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
-import { openRouterApi } from './openrouter/openrouter-api'
+import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
 import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
 
 const CREDIT_PER_DOLLAR = 1000
+const USAGE_CACHE_TTL_SECONDS = 180 
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
@@ -69,7 +70,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
         assertNotNullOrUndefined(auth.apiKeyHash, 'apiKeyHash is required')
 
-        const { data: usage } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
+        const usage = await getOpenRouterUsageCached(auth.apiKeyHash)
 
         return {
             usageMonthly: usage.usage_monthly * CREDIT_PER_DOLLAR,
@@ -157,6 +158,20 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
         })
     },
 })
+
+async function getOpenRouterUsageCached(apiKeyHash: string): Promise<OpenRouterApikey> {
+    const cacheKey = `openrouter_usage_${apiKeyHash}`
+    
+    const cachedUsage = await distributedStore.get<OpenRouterApikey>(cacheKey)
+    if (!isNil(cachedUsage)) {
+        return cachedUsage
+    }
+
+    const { data: usage } = await openRouterApi.getKey({ hash: apiKeyHash })
+    await distributedStore.put(cacheKey, usage, USAGE_CACHE_TTL_SECONDS)
+    
+    return usage
+}
 
 async function tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<void> {
     if (dayjs().diff(plan.lastFreeAiCreditsRenewalDate, 'month') < 1) {
