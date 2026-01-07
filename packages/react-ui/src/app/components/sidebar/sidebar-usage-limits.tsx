@@ -47,7 +47,7 @@ const SidebarUsageLimits = React.memo(() => {
 
   return (
     <div className="flex flex-col w-full p-4 bg-background rounded-md border">
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2.5">
         <UsageRow
           name={t('Runs')}
           icon={<Play className="size-4 text-foreground" />}
