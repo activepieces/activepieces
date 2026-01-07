@@ -123,24 +123,11 @@ export const aiProps = <T extends AIModelType>({
           },
         });
 
-
-    console.log("333333333333333333333")
-    console.log(allModels)
-    console.log(provider)
-    console.log(modelType)
-    console.log("333333333333333333333")
-
       const models = getAllowedModelsForProvider(
         provider,
         allModels,
         modelType
       );
-
-    console.log("333333333333333333333")
-    console.log(models)
-    console.log("333333333333333333333")
-
-
 
       return {
         placeholder: 'Select AI Model',
