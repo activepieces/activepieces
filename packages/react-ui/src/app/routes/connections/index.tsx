@@ -368,9 +368,25 @@ function AppConnectionsPage() {
               {selectedRows.length > 0 && (
                 <ConfirmationDeleteDialog
                   title={t('Delete Connections')}
-                  message={t(
-                    'Are you sure you want to delete these connections? This action cannot be undone.',
-                  )}
+                  message={
+                    <div>
+                      {t(
+                        'Are you sure you want to delete these connections? This action cannot be undone.',
+                      )}
+                      <div className="mt-4 p-3 bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 rounded-md">
+                        <p className="text-sm font-semibold text-red-900 dark:text-red-200">
+                          {t('Warning')}
+                        </p>
+                        <p className="text-sm text-red-800 dark:text-red-300 mt-1">
+                          {t('Any flows currently using these connections ')}
+                          <span className="font-bold">
+                            {t('will break immediately')}
+                          </span>
+                          {t('. Please proceed with caution.')}
+                        </p>
+                      </div>
+                    </div>
+                  }
                   mutationFn={async () => {
                     await deleteConnections(selectedRows.map((row) => row.id));
                     refetch();
