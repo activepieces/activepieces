@@ -7,7 +7,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 import { TemplateCardSkeleton } from './template-card-skeleton';
 
-export const CategorySectionSkeleton = () => {
+type CategorySectionSkeletonProps = {
+  hideTitle?: boolean;
+};
+
+export const CategorySectionSkeleton = ({
+  hideTitle = false,
+}: CategorySectionSkeletonProps) => {
   return (
     <div className="space-y-4">
       <Carousel
@@ -34,7 +40,7 @@ export const CategorySectionSkeleton = () => {
               key={index}
               className="basis-full sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 min-w-[350px]"
             >
-              <TemplateCardSkeleton />
+              <TemplateCardSkeleton hideTitle={hideTitle} />
             </CarouselItem>
           ))}
         </CarouselContent>
