@@ -14,19 +14,17 @@ import { Permission } from '@activepieces/shared';
 
 import { flowHooks } from './flow-hooks';
 
-type CreateFlowDropdownProps = {
-  refetch: () => void | null;
+type NewFlowButtonProps = {
   variant?: 'default' | 'small';
   className?: string;
   folderId: string;
 };
 
-export const CreateFlowDropdown = ({
-  refetch,
+export const NewFlowButton = ({
   variant = 'default',
   className,
   folderId,
-}: CreateFlowDropdownProps) => {
+}: NewFlowButtonProps) => {
   const { checkAccess } = useAuthorization();
   const doesUserHavePermissionToWriteFlow = checkAccess(Permission.WRITE_FLOW);
   const { mutate: createFlow, isPending: isCreateFlowPending } =
@@ -54,12 +52,15 @@ export const CreateFlowDropdown = ({
             {variant === 'small' ? (
               <Plus className="h-4 w-4" />
             ) : (
-              <span>{t('Create Flow')}</span>
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                <span>{t('New Flow')}</span>
+              </>
             )}
           </Button>
         </TooltipTrigger>
         <TooltipContent side={variant === 'small' ? 'right' : 'bottom'}>
-          {t('Create flow')}
+          {t('New flow')}
         </TooltipContent>
       </Tooltip>
     </PermissionNeededTooltip>
