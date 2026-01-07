@@ -22,9 +22,9 @@ import {
 
 import { useBuilderStateContext } from '../builder-hooks';
 
-import NoteDragOverlay from './note-drag-overlay';
+import NoteDragOverlay from './nodes/note-node/note-drag-overlay';
 import { NoteDragOverlayMode } from '../state/notes-state';
-import StepDragOverlay from './step-drag-overlay';
+import StepDragOverlay from './nodes/step-node/step-drag-overlay';
 import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
 

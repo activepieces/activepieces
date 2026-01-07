@@ -28,6 +28,7 @@ export type NotesState = {
   moveNote: (id: string, position: { x: number; y: number }) => void;
   resizeNote: (id: string, size: { width: number; height: number }) => void;
   draggedNote: Note | null;
+  updateContent: (id: string, content: string) => void;
   setDraggedNote: (note: Note | null, mode: NoteDragOverlayMode | null) => void;
   noteDragOverlayMode: NoteDragOverlayMode | null;
   setNoteDragOverlayMode: (
@@ -46,6 +47,13 @@ export const createNotesState = (notes: Note[], get: StoreApi<BuilderState>['get
     addNote: (note: Note) => {
       set((state) => {
         return { notes: [...state.notes, note], noteDragOverlayMode: null };
+      });
+    },
+    updateContent: (id: string, content: string) => {
+      set((state) => {
+        return {
+          notes: state.notes.map((note) => (note.id === id ? { ...note, content } : note)),
+        };
       });
     },
     removeNote: (id:string) => {

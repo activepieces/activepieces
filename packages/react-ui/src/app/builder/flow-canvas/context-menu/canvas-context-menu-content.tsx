@@ -37,9 +37,9 @@ import {
 
 import {
   CanvasContextMenuProps,
-  CanvasShortcuts,
   ContextMenuType,
 } from './canvas-context-menu';
+import { CanvasShortcuts } from '../../shortcuts';
 
 const ShortcutWrapper = ({
   children,
