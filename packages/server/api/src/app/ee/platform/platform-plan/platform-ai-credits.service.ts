@@ -180,10 +180,10 @@ async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogg
     }
     await distributedStore.put(cacheKey, usage, USAGE_CACHE_TTL_SECONDS)
     return {
-        limit: usage.data.limit!,
-        limit_remaining: usage.data.limit_remaining!,
-        usage: usage.data.usage!,
-        usage_monthly: usage.data.usage_monthly!,
+        limit: usage.data.limit ?? 0,
+        limit_remaining: usage.data.limit_remaining ?? 0,
+        usage: usage.data.usage ?? 0,
+        usage_monthly: usage.data.usage_monthly ?? 0,
     }
 }
 
