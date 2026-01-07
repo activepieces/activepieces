@@ -85,11 +85,14 @@ export const FlowCanvas = React.memo(
     );
     const graphKey = createGraphKey(flowVersion, notes);
     const graph = useMemo(() => {
+      console.log('graph render')
       return flowCanvasUtils.createFlowGraph(flowVersion, notes);
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
       ContextMenuType.CANVAS,
     );
+  console.log('flow canvas')
+
     const onContextMenu = useCallback(
       (ev: React.MouseEvent<HTMLDivElement>) => {
         if (
@@ -183,6 +186,7 @@ export const FlowCanvas = React.memo(
       ];
       return extent;
     }, [graphKey]);
+
     return (
       <div
         ref={containerRef}

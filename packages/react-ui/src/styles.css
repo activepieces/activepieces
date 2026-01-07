@@ -453,6 +453,7 @@
     --xy-selection-background-color-default: hsl(
       var(--primary-100) / 0.25
     ) !important;
+    --xy-resize-background-color:transparent !important;
   }
 
   .react-flow__pane.selection,
@@ -496,3 +497,4 @@
   height: 0;
   pointer-events: none;
 }
+

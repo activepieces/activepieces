@@ -5,11 +5,9 @@ import { ApNoteNode } from '../../utils/types';
 import { useState } from 'react';
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { Textarea } from '@/components/ui/textarea';
+import { useDebouncedCallback } from 'use-debounce';
+import { cn } from '@/lib/utils';
 
-const controlStyle = {
-  background: 'transparent',
-  border: 'none',
-};
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: props.id,
@@ -18,16 +16,13 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
     },
   });
   const [draggedNote, resizeNote, note] = useBuilderStateContext((state) => [state.draggedNote, state.resizeNote, state.getNoteById(props.id)]);
-  const [showResizer, setShowResizer] = useState(false);
   const [size, setSize] = useState(props.data.size);
   if (draggedNote?.id === props.id || note === null) {
     return null;
   }
   return (
-    <>
-    {
-      showResizer && ( <NodeResizeControl
-        style={controlStyle}
+    <div className='group'>
+      <NodeResizeControl
         minWidth={200}
         minHeight={180}
         maxWidth={550}
@@ -35,17 +30,20 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         onResize={(_, params) => {
           // update the size locally means that we don't re-render the whole graph
           setSize({ width: params.width, height: params.height });
+        }}
+        onResizeEnd={(_, params) => {
           resizeNote(props.id, { width: params.width, height: params.height });
         }}
       >
-        <div className="rounded-full bg-background border border-solid border-blue-300 -translate-x-1/2 -translate-y-1/2 p-1"></div>
-      </NodeResizeControl>)
-    }
+        <button className={cn("group-focus-within:block hidden cursor-nwse-resize  rounded-full bg-background border border-solid border-primary -translate-x-[50%] -translate-y-[50%] p-0.75", {
+        })}></button>
+      </NodeResizeControl>
      
-      <div ref={setNodeRef} {...attributes} {...listeners}>
-        <NoteContent onBlur={() => setShowResizer(false)} onFocus={() => setShowResizer(true)} size={size} id={props.id} content={note?.content} creator={props.data.creator}></NoteContent>
+      <div ref={setNodeRef} {...attributes} {...listeners} className={cn('p-0.5 group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md', {
+      })}>
+        <NoteContent size={size} id={props.id} content={note?.content} creator={props.data.creator}></NoteContent>
       </div>
-    </>
+    </div>
   );
 };
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
@@ -56,22 +54,30 @@ const NoteContent = ({
   id,
   content,
   creator,
-  onFocus,
-  onBlur,
 }: NoteContentProps) => {
+  const [localContent, setLocalContent] = useState(content);
   const updateContent = useBuilderStateContext((state) => state.updateContent);
+  const debouncedUpdateContent = useDebouncedCallback((id: string, content: string) => {
+    updateContent(id, content)
+  }, 500);
   return (
     <div
-      onFocus={() => onFocus?.()}
-      onBlur={() => onBlur?.()}
       id={id}
-      className="rounded-md border bg-yellow-200 border-solid shadow-sm border-yellow-500 p-2 flex flex-col gap-2"
+      className="rounded-md bg-yellow-200 border-solid shadow-sm p-2 flex flex-col gap-2"
       style={{
         width: `${width}px`,
         height: `${height}px`,
       }}
     >
-      <Textarea className='grow bg-transparent text-yellow-500 focus-visible:outline-none resize-none overflow-hidden border-none p-0' minRows={2} maxRows={10} value={content} onChange={(e) => updateContent(id, e.target.value)}>
+      <Textarea className='grow bg-transparent text-yellow-500 focus-visible:outline-none resize-none overflow-hidden border-none p-0'
+       minRows={2} 
+       maxRows={10}
+      value={localContent}
+      onChange={(e) => {
+        setLocalContent(e.target.value);
+        debouncedUpdateContent(id, e.target.value);
+      }}
+      >
       </Textarea>
       <div className="text-yellow-500 font-semibold text-xs">
         {creator}
@@ -85,6 +91,4 @@ type NoteContentProps = {
   id: string;
   content: string;
   creator: string;
-  onFocus?: () => void;
-  onBlur?: () => void;
 }

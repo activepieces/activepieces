@@ -49,7 +49,7 @@ export const useHandleKeyPressOnCanvas = () => {
         const selectedNodesWithoutTrigger = selectedNodes.filter(
           (node) => node !== flowVersion.trigger.name,
         );
-        console.log(e.target)
+      
         shortcutHandler(e, {
           Minimap: () => {
             setShowMinimap(!showMinimap);
