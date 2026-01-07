@@ -1,6 +1,6 @@
 import { ActionContext, createAction, FlowsContext, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { CallableFlowRequest, findFlowByExternalIdOrThrow, FlowValue, listEnabledFlowsWithSubflowTrigger } from '../common';
-import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, PARENT_RUN_ID_HEADER, PauseType } from '@activepieces/shared';
+import { ExecutionType, FAIL_PARENT_ON_FAILURE_HEADER, PARENT_RUN_ID_HEADER, PauseType, ProgressUpdateType } from '@activepieces/shared';
 import { nanoid } from 'nanoid';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 
@@ -12,8 +12,8 @@ type BatchItem = {
 export const batchProcess = createAction({
   auth: PieceAuth.None(),
   name: 'batchProcess',
-  displayName: 'Batch Process',
-  description: 'Automatically process large batches using an executor flow',
+  displayName: 'Batch Process Data',
+  description: 'Automatically process large batches of data using an executor flow',
   props: {
     data: Property.Array({
       displayName: 'Data',
@@ -80,34 +80,42 @@ export const batchProcess = createAction({
         await context.store.put(`batch_items/${runId}/${batchNumber}`, batchItems);
       }
 
-      if (batchItems.filter((item) => item.status === 'completed').length > 4) {
-        return {
-          message: `Completed batchItem with id: ${currentItem}`,
-          batchItems: batchItems,
-        }
+      let allCompleted = batchItems.every((item) => item.status === 'completed');
+      while (!allCompleted) {
+        // use flow pause if not all items are completed yet
+        const currentTime = new Date();
+        const futureTime = new Date(currentTime.getTime() + 2 * 60 * 1000);
+        context.run.pause({
+          pauseMetadata: {
+            type: PauseType.DELAY,
+            resumeDateTime: futureTime.toUTCString(),
+          },
+        });
+
+        return;
       }
 
-      const allCompleted = batchItems.every((item) => item.status === 'completed');
-      if (allCompleted) {
-        if ((batchNumber + 1) * batch_size! >= data.length) {
-          // All batches completed
-          await context.store.delete(`current_batch_number/${runId}`);
-          await context.store.delete(`batch_items/${runId}/${batchNumber}`);
-          return { status: 'Batch processing completed' };
-        }
-
-        // Move to the next batch
-        await context.store.put(`current_batch_number/${runId}`, batchNumber + 1);
+      if ((batchNumber + 1) * batch_size! >= data.length) {
+        // All batches completed
+        await context.store.delete(`current_batch_number/${runId}`);
         await context.store.delete(`batch_items/${runId}/${batchNumber}`);
-
-        await startBatch(context);
+        return { status: 'Batch processing completed' };
       }
 
+      // Move to the next batch
+      await context.store.put(`current_batch_number/${runId}`, batchNumber + 1);
+      await context.store.delete(`batch_items/${runId}/${batchNumber}`);
+
+      await startBatch(context);
+
+      // use flow pause if not all items are completed yet
+      const currentTime = new Date();
+      const futureTime = new Date(currentTime.getTime() + 2 * 60 * 1000);
       context.run.pause({
         pauseMetadata: {
-          type: PauseType.WEBHOOK,
-          response: {},
-        }
+          type: PauseType.DELAY,
+          resumeDateTime: futureTime.toUTCString(),
+        },
       });
 
       return;
@@ -118,7 +126,7 @@ export const batchProcess = createAction({
     context.run.pause({
       pauseMetadata: {
         type: PauseType.WEBHOOK,
-        response: {},
+        response: {}
       }
     });
 
