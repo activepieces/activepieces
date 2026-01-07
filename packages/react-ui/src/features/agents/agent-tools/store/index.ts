@@ -161,7 +161,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
 
     return {
       type: AgentToolType.PIECE,
-      toolName: selectedAction.name,
+      toolName: `${selectedPiece.pieceName}-${selectedAction.name}`,
       pieceMetadata: {
         pieceVersion: selectedPiece.pieceVersion,
         pieceName: selectedPiece.pieceName,
