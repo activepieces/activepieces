@@ -34,6 +34,7 @@ import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-r
 import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
 import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
 import { applicationEvents } from '../../helper/application-events'
+import { userService } from '../../user/user-service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
@@ -145,9 +146,10 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/:id/template', GetFlowTemplateRequestOptions, async (request) => {
+        const userMetadata = request.principal.type === PrincipalType.USER ? await userService.getMetaInformation({ id: request.principal.id }) : null
         return flowService(request.log).getTemplate({
             flowId: request.params.id,
-            userId: request.principal.id,
+            userMetadata,
             projectId: request.projectId,
             versionId: undefined,
         })
