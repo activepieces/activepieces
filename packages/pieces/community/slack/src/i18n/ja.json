@@ -19,7 +19,7 @@
   "Update Profile": "プロフィールを更新",
   "Get channel history": "チャンネル履歴を取得する",
   "Set User Status": "ユーザーステータスを設定",
-  "Markdown to Slack format": "Markdown to Slack format",
+  "Markdown to Slack format": "マークダウン形式からslack形式に変換",
   "Retrieve Thread Messages": "スレッドメッセージの取得",
   "Set Channel Topic": "チャンネルトピックを設定",
   "Get Message by Timestamp": "タイムスタンプによるメッセージの取得",
