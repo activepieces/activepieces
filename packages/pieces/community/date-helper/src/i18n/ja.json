@@ -39,7 +39,7 @@
   "Enter the starting date": "開始日を入力してください",
   "Enter the ending date": "終了日を入力してください",
   "Select the unit of difference between the two dates": "2つの日付の違いの単位を選択してください",
-  "Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).\n             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute": "以下の単位（年、月、日、時間、分、秒）を使って、足し算または引算する式を提供します。\n             \n例:\n+ 2 秒 + 1 時間 \n+ 1 年 - 3 日 - 2ヶ月 \n+ 5 分",
+  "Provide an expression to add or subtract using the following units (year , month , day , hour , minute or second).\n             \nExamples:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute": "以下の単位（年、月、日、時間、分、秒）を使って、足し算または引算する式を提供します。\n             \n例:\n+ 2 second + 1 hour \n+ 1 year - 3 day - 2 month \n+ 5 minute",
   "Optional: Set a timezone for the calculation to handle DST correctly": "オプション: DST を正しく処理する計算のタイムゾーンを設定します。",
   "Optional: Set the result to a specific time (e.g., \"10:00\" or \"14:30\"). This allows scheduling at a specific time after adding/subtracting dates. Leave empty to keep the calculated time.": "オプション: 結果を特定の時間に設定します (例: \"10:00\" または \"14:30\")。 日付を加算/減算した後の特定の時間にスケジュールすることができます。計算された時間を維持するには空のままにしてください。",
   "If checked, the current time will be used instead of the time from \"Set Time To\" field.": "チェックされている場合、現在の時刻は「時刻を設定」フィールドからの時刻の代わりに使用されます。",
