@@ -1,4 +1,4 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyRequest } from 'fastify'
 import fastifyXmlBodyParser from 'fastify-xml-body-parser'
 import { webhookController } from './webhook-controller'
 
@@ -19,6 +19,50 @@ export const webhookModule: FastifyPluginAsync = async (app) => {
                 error.statusCode = 400
                 done(error, undefined)
             }
+        },
+    )
+
+    // Add content type parsers for binary types
+    app.addContentTypeParser(
+        /^image\/.*/,
+        { parseAs: 'buffer' },
+        async (_request: FastifyRequest, payload: Buffer) => {
+            return payload
+        },
+    )
+    app.addContentTypeParser(
+        /^video\/.*/,
+        { parseAs: 'buffer' },
+        async (_request: FastifyRequest, payload: Buffer) => {
+            return payload
+        },
+    )
+    app.addContentTypeParser(
+        /^audio\/.*/,
+        { parseAs: 'buffer' },
+        async (_request: FastifyRequest, payload: Buffer) => {
+            return payload
+        },
+    )
+    app.addContentTypeParser(
+        'application/pdf',
+        { parseAs: 'buffer' },
+        async (_request: FastifyRequest, payload: Buffer) => {
+            return payload
+        },
+    )
+    app.addContentTypeParser(
+        'application/zip',
+        { parseAs: 'buffer' },
+        async (_request: FastifyRequest, payload: Buffer) => {
+            return payload
+        },
+    )
+    app.addContentTypeParser(
+        'application/gzip',
+        { parseAs: 'buffer' },
+        async (_request: FastifyRequest, payload: Buffer) => {
+            return payload
         },
     )
 

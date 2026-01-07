@@ -1,6 +1,7 @@
 
 import { securityAccess } from '@activepieces/server-shared'
 import {
+    apId,
     EventPayload,
     FAIL_PARENT_ON_FAILURE_HEADER,
     FlowRun,
@@ -12,10 +13,12 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { trace } from '@opentelemetry/api'
 import { FastifyRequest } from 'fastify'
+import mime from 'mime-types'
 import { stepFileService } from '../file/step-file/step-file.service'
 import { projectService } from '../project/project-service'
 import { triggerSourceService } from '../trigger/trigger-source/trigger-source-service'
 import { WebhookFlowVersionToRun } from './webhook-handler'
+import { isBinaryContentType } from './webhook-utils'
 import { webhookService } from './webhook.service'
 
 const tracer = trace.getTracer('webhook-controller')
@@ -216,6 +219,28 @@ async function convertBody(
         }
         return jsonResult
     }
+
+    // Handle binary body (e.g., image/png, application/pdf sent directly)
+    const contentType = request.headers['content-type']
+    if (isBinaryContentType(contentType) && Buffer.isBuffer(request.body)) {
+        const platformId = await projectService.getPlatformId(projectId)
+        const extension = mime.extension(contentType?.split(';')[0] || '') || 'bin'
+        const fileName = `binary_${apId()}.${extension}`
+        
+        const file = await stepFileService(request.log).saveAndEnrich({
+            data: request.body,
+            fileName,
+            stepName: 'trigger',
+            flowId,
+            contentLength: request.body.length,
+            platformId,
+            projectId,
+        })
+        return {
+            url: file.url,
+        }
+    }
+
     return request.body
 }
 
