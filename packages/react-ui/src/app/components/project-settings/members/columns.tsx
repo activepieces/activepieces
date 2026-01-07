@@ -27,7 +27,7 @@ import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission, UserInvitation } from '@activepieces/shared';
 
@@ -61,7 +61,7 @@ const RoleCell = ({
 
   const roles = rolesData?.data ?? [];
   const { checkAccess } = useAuthorization();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const userHasPermissionToUpdateRole =
     checkAccess(Permission.WRITE_PROJECT_MEMBER) &&
     row.original.type === 'member';
@@ -165,7 +165,7 @@ const ActionsCell = ({
   refetch: () => void;
 }) => {
   const { checkAccess } = useAuthorization();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
 
   const userHasPermissionToDelete =
     row.original.type === 'member'

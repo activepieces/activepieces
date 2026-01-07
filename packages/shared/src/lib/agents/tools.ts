@@ -11,7 +11,7 @@ export enum AgentToolType {
 
 export enum McpProtocol {
     SSE = 'sse',
-    STREAMABLE_HTTP = 'streamble-http',
+    STREAMABLE_HTTP = 'streamable-http',
     SIMPLE_HTTP = 'http',
 }
 

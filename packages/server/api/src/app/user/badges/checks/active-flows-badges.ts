@@ -4,7 +4,7 @@ import { flowRepo } from '../../../flows/flow/flow.repo'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 
 export const flowsBadgesCheck: BadgeCheck = {
-    eval: async ({ event, requestInformation }): Promise<BadgeCheckResult> => {
+    eval: async ({ event, userId }): Promise<BadgeCheckResult> => {
         if (event.action !== ApplicationEventName.FLOW_UPDATED) {
             return { userId: null, badges: [] }
         }
@@ -16,7 +16,6 @@ export const flowsBadgesCheck: BadgeCheck = {
         if (isNil(currentFlowId)) {
             return { userId: null, badges: [] }
         }
-        const userId = requestInformation.userId ?? null
         if (isNil(userId)) {
             return { userId: null, badges: [] }
         }
