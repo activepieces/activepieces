@@ -6,7 +6,7 @@ import { distributedLock } from '../database/redis-connections'
 import { flowRepo } from '../flows/flow/flow.repo'
 import { flowService } from '../flows/flow/flow.service'
 import { userRepo } from '../user/user-service'
-import { PlatformAnalyticsReportEntity } from './platform-analytics-report-cache.entity'
+import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
 
 export const platformAnalyticsReportRepo = repoFactory(PlatformAnalyticsReportEntity)
 
@@ -26,7 +26,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
                 const runs = await listRuns(flows.map((flow) => flow.projectId), currentReport?.cachedAt ?? null, cachedAt)
 
                 return platformAnalyticsReportRepo().save({
-                    id: apId(),
+                    id: currentReport?.id ?? apId(),
                     platformId,
                     cachedAt,
                     runs: mergeRuns(currentReport?.runs ?? [], runs),

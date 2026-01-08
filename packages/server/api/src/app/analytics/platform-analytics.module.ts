@@ -1,7 +1,6 @@
 import { securityAccess } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { Type } from '@sinclair/typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
