@@ -154,16 +154,16 @@ const createColumns = (
                   variant="ghost"
                   className="h-auto p-1 gap-1.5 text-foreground hover:bg-accent"
                 >
-                  <Pencil className="h-3 w-3 text-muted-foreground" />
-
                   {displayValue == null ? (
                     <span>{t('N/A')}</span>
                   ) : (
                     <span>
-                      {formatMinutes(Math.round(displayValue ?? 0))}
                       {isEstimated && '~'}
+                      {formatMinutes(Math.round(displayValue ?? 0))}
                     </span>
                   )}
+
+                  <Pencil className="h-3 w-3 text-muted-foreground" />
                 </Button>
               </EditTimeSavedPopover>
             </div>
