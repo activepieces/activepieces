@@ -5,7 +5,7 @@ import {
     EntitySchema,
 } from 'typeorm'
 import { AIProviderEntity } from '../ai/ai-provider-entity'
-import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report-cache.entity'
+import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
 import { AlertEntity } from '../ee/alerts/alerts-entity'

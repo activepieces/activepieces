@@ -324,8 +324,6 @@ import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/176
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
 import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
-import { ReportCache1767885705290 } from './migration/postgres/1767885705290-report-cache'
-import { ReportCacheMany1767886807288 } from './migration/postgres/1767886807288-report-cache-many'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -666,8 +664,6 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddBadges1767141831647,
         AddFlowOwnerIndex1767610587266,
         AddTriggeredBy1767697998391,
-        ReportCache1767885705290,
-        ReportCacheMany1767886807288,
     ]
     return migrations
 }

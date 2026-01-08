@@ -8,7 +8,7 @@ type PlatformAnalyticsReportEntity = PlatformAnalyticsReport & {
     platform: Platform
 }
 export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsReportEntity>({
-    name: 'platform_analytics_report_cache',
+    name: 'platform_analytics_report',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -18,18 +18,18 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             type: Date,
             nullable: false,
         },
-        runsUsage: {
+        runs: {
             type: 'jsonb',
             nullable: false,
         },
-        flowsDetails: {
+        flows: {
             type: 'jsonb',
             nullable: false,
         },
-        timeSaved: {
-            type: Number,
+        users: {
+            type: 'jsonb',
             nullable: false,
-        }
+        },
     },    
     relations: {
         platform: {
