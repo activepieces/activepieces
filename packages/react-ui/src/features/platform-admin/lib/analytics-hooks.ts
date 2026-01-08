@@ -2,16 +2,16 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useContext } from 'react';
 
 import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
-import { UpdatePlatformReportRequest } from '@activepieces/shared';
 
 import { RefreshAnalyticsContext } from './refresh-analytics-context';
 
 const queryKey = ['analytics'];
+
 export const platformAnalyticsHooks = {
-  useAnalytics: (timePeriod?: 'weekly' | 'monthly' | '3-months' | 'all-time') => {
+  useAnalytics: () => {
     const { data, isLoading } = useQuery({
-      queryKey: [...queryKey, timePeriod],
-      queryFn: () => analyticsApi.get(timePeriod),
+      queryKey,
+      queryFn: () => analyticsApi.get(),
     });
     return { data, isLoading };
   },
@@ -28,7 +28,7 @@ export const platformAnalyticsHooks = {
         queryClient.setQueryData(queryKey, result);
       },
       retry: true,
-      retryDelay: 1000,
+      retryDelay: 50000,
     });
   },
 };
