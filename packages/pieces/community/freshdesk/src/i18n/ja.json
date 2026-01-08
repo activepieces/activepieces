@@ -10,7 +10,7 @@
   "Get Ticket Status": "チケットのステータスを取得する",
   "Get Freshdesk Contacts": "Freshdesk の連絡先を取得",
   "Get All Tickets By Status": "すべてのチケットをステータス別に取得する",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Get Ticket instances from Freshdesk.": "Freshdeskからチケットインスタンスを取得します。",
   "Get contacts details from Freshdesk using ID number.": "Freshdeskから連絡先の詳細をID番号で取得します。",
   "Get Ticket status from Freshdesk. Returns ticket_status, assigned_status, assigned_id": "Freshdeskからチケットのステータスを取得します。ticket_status, assigned_status, assigned_id を返します。",
