@@ -17,6 +17,8 @@ import {
   FlowTriggerType,
 } from '@activepieces/shared';
 
+import { Note } from '../../state/notes-state';
+
 import { flowCanvasConsts } from './consts';
 import {
   ApBigAddButtonNode,
@@ -30,7 +32,6 @@ import {
   ApStepNode,
   ApStraightLineEdge,
 } from './types';
-import { Note } from '../../state/notes-state';
 
 const createBigAddButtonGraph: (
   parentStep: LoopOnItemsAction | RouterAction,

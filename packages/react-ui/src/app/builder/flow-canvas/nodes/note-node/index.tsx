@@ -1,15 +1,18 @@
 import { useDraggable } from '@dnd-kit/core';
+import { Editor } from '@tiptap/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
+import { useRef, useState } from 'react';
+import { useDebouncedCallback } from 'use-debounce';
+
+import { MarkdownInput } from '@/components/ui/markdown-input';
+import { cn } from '@/lib/utils';
+
+import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasConsts } from '../../utils/consts';
 import { ApNoteNode } from '../../utils/types';
-import { useRef, useState } from 'react';
-import { useBuilderStateContext } from '../../../builder-hooks';
-import { useDebouncedCallback } from 'use-debounce';
-import { cn } from '@/lib/utils';
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { MarkdownInput, MarkdownTools } from '@/components/ui/markdown-input';
-import { Editor } from '@tiptap/core';
-import { DragHandleDots2Icon } from '@radix-ui/react-icons';
+
+import { NoteFooter } from './note-footer';
+import { NoteTools } from './note-tools';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
@@ -18,13 +21,17 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
       type: flowCanvasConsts.DRAGGED_NOTE_TAG,
     },
   });
-  const [draggedNote, resizeNote, note] = useBuilderStateContext((state) => [state.draggedNote, state.resizeNote, state.getNoteById(props.id)]);
+  const [draggedNote, resizeNote, note] = useBuilderStateContext((state) => [
+    state.draggedNote,
+    state.resizeNote,
+    state.getNoteById(props.id),
+  ]);
   const [size, setSize] = useState(props.data.size);
   if (draggedNote?.id === props.id || note === null) {
     return null;
   }
   return (
-    <div className='group note-node'>
+    <div className="group note-node">
       <NodeResizeControl
         minWidth={200}
         minHeight={180}
@@ -38,67 +45,95 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
           resizeNote(props.id, { width: params.width, height: params.height });
         }}
       >
-        <button className={cn("group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75", {
-        })}></button>
+        <button
+          className={cn(
+            'group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75',
+            {},
+          )}
+        ></button>
       </NodeResizeControl>
-     
-      <div key={props.data.size.height + props.data.size.width + note.position.x + note.position.y}  ref={setNodeRef} {...attributes} {...listeners} className={cn('p-0.5 group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md', {
-      })}> 
-        <NoteContent size={size} id={props.id} content={note?.content} creator={props.data.creator}/>
-        </div>
+
+      <div
+        key={
+          props.data.size.height +
+          props.data.size.width +
+          note.position.x +
+          note.position.y
+        }
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+        className={cn(
+          'p-0.5 group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md',
+          {},
+        )}
+      >
+        <NoteContent
+          size={size}
+          id={props.id}
+          content={note?.content}
+          creator={props.data.creator}
+        />
+      </div>
     </div>
   );
 };
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
-
 
 const NoteContent = ({
   size: { width, height },
   id,
   content,
   creator,
-  isDragging
+  isDragging,
 }: NoteContentProps) => {
   const [localContent, setLocalContent] = useState(content);
-  const [updateContent,readonly] = useBuilderStateContext((state) => [state.updateContent,state.readonly]);
-  const debouncedUpdateContent = useDebouncedCallback((id: string, content: string) => {
-    updateContent(id, content)
-  }, 500);
+  const [updateContent, readonly] = useBuilderStateContext((state) => [
+    state.updateContent,
+    state.readonly,
+  ]);
+  const debouncedUpdateContent = useDebouncedCallback(
+    (id: string, content: string) => {
+      updateContent(id, content);
+    },
+    500,
+  );
   const editorRef = useRef<Editor | null>(null);
   return (
     <div
       id={id}
-      className="rounded-md bg-amber-200 border-solid shadow-md p-2 flex flex-col gap-2 relative"
+      className="rounded-md bg-amber-200 border-solid shadow-md p-2 "
       style={{
         width: `${width}px`,
         height: `${height}px`,
       }}
     >
-      {
-        !isDragging && !readonly && editorRef.current && <NoteTools editor={editorRef.current} />
-      }
-
-      <div 
-        className='grow h-full overflow-auto' 
-        onDoubleClick={(e) => {
-          e.stopPropagation();
-          editorRef.current?.commands.focus();
-        }}
-      >
-      <MarkdownInput ref={editorRef} disabled={isDragging || readonly} initialValue={localContent} className='cursor-text text-amber-700 text-sm' onChange={(value: string) => {
-        setLocalContent(value);
-        debouncedUpdateContent(id, value);
-      }} />
-
-      </div>
-    
-      <div className='flex items-center justify-between gap-2'> 
-      <TextWithTooltip tooltipMessage={creator}>
-      <div className="text-amber-700 font-semibold text-xs">
-       {creator}
-      </div>
-      </TextWithTooltip>
-      <DragHandleDots2Icon className='size-4 text-amber-700 cursor-grab' />
+      {!isDragging && !readonly && editorRef.current && (
+        <div className="opacity-0 focus-within:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
+          <NoteTools editor={editorRef.current} />
+        </div>
+      )}
+      <div className="flex flex-col gap-2 h-full">
+        <div
+          onContextMenu={(e) => e.stopPropagation()}
+          className="grow h-full overflow-auto"
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            editorRef.current?.commands.focus();
+          }}
+        >
+          <MarkdownInput
+            ref={editorRef}
+            disabled={isDragging || readonly}
+            initialValue={localContent}
+            className="cursor-text text-amber-700 text-sm"
+            onChange={(value: string) => {
+              setLocalContent(value);
+              debouncedUpdateContent(id, value);
+            }}
+          />
+        </div>
+        <NoteFooter id={id} isDragging={isDragging} creator={creator} />
       </div>
     </div>
   );
@@ -110,16 +145,6 @@ type NoteContentProps = {
   content: string;
   creator: string;
   isDragging?: boolean;
-}
+};
 
-const NoteTools = ({editor}: {editor: Editor}) => {
-  return (
-    <div className="absolute -top-[50px] w-full left-0">
-      <div className="flex items-center justify-center">
-        <div className='p-1 bg-background shadow-md rounded-md scale-75'>
-        <MarkdownTools editor={editor} />
-        </div>
-    </div>
-    </div>
-  )
-}
+ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';

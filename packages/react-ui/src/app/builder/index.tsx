@@ -107,28 +107,28 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
-              <PublishFlowReminderWidget />
-              <RunInfoWidget />
-              <ViewingOldVersionWidget />
-              {middlePanelRef.current &&
-                middlePanelRef.current.clientWidth > 0 && (
-                  <CanvasControls
-                    canvasHeight={middlePanelRef.current?.clientHeight ?? 0}
-                    canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
-                    hasCanvasBeenInitialised={hasCanvasBeenInitialised}
-                    selectedStep={selectedStep}
-                  ></CanvasControls>
-                )}
+            <PublishFlowReminderWidget />
+            <RunInfoWidget />
+            <ViewingOldVersionWidget />
+            {middlePanelRef.current &&
+              middlePanelRef.current.clientWidth > 0 && (
+                <CanvasControls
+                  canvasHeight={middlePanelRef.current?.clientHeight ?? 0}
+                  canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
+                  hasCanvasBeenInitialised={hasCanvasBeenInitialised}
+                  selectedStep={selectedStep}
+                ></CanvasControls>
+              )}
 
-              <ShowPoweredBy
-                position="absolute"
-                show={platform?.plan.showPoweredBy}
-              />
-              <DataSelector
-                parentHeight={middlePanelSize.height}
-                parentWidth={middlePanelSize.width}
-              ></DataSelector>
-            </div>
+            <ShowPoweredBy
+              position="absolute"
+              show={platform?.plan.showPoweredBy}
+            />
+            <DataSelector
+              parentHeight={middlePanelSize.height}
+              parentWidth={middlePanelSize.width}
+            ></DataSelector>
+          </div>
         </ResizablePanel>
 
         <ResizableHandle
@@ -177,7 +177,7 @@ const BuilderPage = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
-   
+
       <ChatDrawer />
     </div>
   );

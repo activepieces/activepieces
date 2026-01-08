@@ -21,11 +21,11 @@ import {
 import { isMac } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { ApNode } from './utils/types';
-import { NoteDragOverlayMode } from '../state/notes-state';
 const verticalPaddingOnFitView = 100;
 const calculateNodePositionInCanvas = (
   canvasWidth: number,
@@ -170,7 +170,9 @@ const CanvasControls = ({
       });
     }
   };
-  const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext((state) => [state.noteDragOverlayMode, state.setDraggedNote]);
+  const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext(
+    (state) => [state.noteDragOverlayMode, state.setDraggedNote],
+  );
   const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
     useBuilderStateContext((state) => {
       return [

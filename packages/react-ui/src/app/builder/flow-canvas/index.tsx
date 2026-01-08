@@ -13,7 +13,6 @@ import {
 import '@xyflow/react/dist/style.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { RightSideBarType } from '@/lib/types';
 import {
   FlowActionType,
   flowStructureUtil,
@@ -25,6 +24,8 @@ import {
 import { useBuilderStateContext } from '../builder-hooks';
 import { useHandleKeyPressOnCanvas } from '../shortcuts';
 import { useCursorPosition } from '../state/cursor-position-context';
+import { Note } from '../state/notes-state';
+
 import {
   CanvasContextMenu,
   ContextMenuType,
@@ -36,7 +37,6 @@ import { flowCanvasUtils } from './utils/flow-canvas-utils';
 import { AboveFlowWidgets } from './widgets';
 import Minimap from './widgets/minimap';
 import { useShowChevronNextToSelection } from './widgets/selection-chevron-button';
-import { Note } from '../state/notes-state';
 
 export const FlowCanvas = React.memo(
   ({
@@ -52,7 +52,7 @@ export const FlowCanvas = React.memo(
       panningMode,
       selectStepByName,
       rightSidebar,
-      notes
+      notes,
     ] = useBuilderStateContext((state) => {
       return [
         state.flowVersion,
@@ -117,11 +117,7 @@ export const FlowCanvas = React.memo(
           const showStepContextMenu =
             stepElement || targetIsSelectionRect || targetIsSelectionChevron;
           if (showStepContextMenu) {
-            if (rightSidebar === RightSideBarType.NONE) {
-              setTimeout(() => setContextMenuType(ContextMenuType.STEP), 10000);
-            } else {
-              setContextMenuType(ContextMenuType.STEP);
-            }
+            setContextMenuType(ContextMenuType.STEP);
           } else {
             setContextMenuType(ContextMenuType.CANVAS);
           }
@@ -140,9 +136,9 @@ export const FlowCanvas = React.memo(
     );
 
     const onSelectionEnd = useCallback(() => {
-      const selectedSteps = selectedNodes.map((node) =>
-        flowStructureUtil.getStep(node, flowVersion.trigger),
-      ).filter((step) => !isNil(step));
+      const selectedSteps = selectedNodes
+        .map((node) => flowStructureUtil.getStep(node, flowVersion.trigger))
+        .filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
@@ -284,10 +280,7 @@ const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
       }-${branchesNames}-${childrenKey}}`;
     }, '');
   const notesGraphKey = notes
-    .map(
-      (note) =>
-        `${note.id}-${note.position.x}-${note.position.y}`,
-    )
+    .map((note) => `${note.id}-${note.position.x}-${note.position.y}`)
     .join('-');
   return `${flowGraphKey}-${notesGraphKey}`;
 };

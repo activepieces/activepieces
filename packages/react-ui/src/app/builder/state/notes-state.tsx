@@ -1,6 +1,6 @@
-import { createContext, useContext, useState } from 'react';
-import { BuilderState } from '../builder-hooks';
 import { StoreApi } from 'zustand';
+
+import { BuilderState } from '../builder-hooks';
 
 export enum NoteDragOverlayMode {
   CREATE = 'create',
@@ -24,7 +24,7 @@ export type Note = {
 export type NotesState = {
   notes: Note[];
   addNote: (note: Note) => void;
-  removeNote: (id: string) => void;
+  deleteNote: (id: string) => void;
   moveNote: (id: string, position: { x: number; y: number }) => void;
   resizeNote: (id: string, size: { width: number; height: number }) => void;
   draggedNote: Note | null;
@@ -37,11 +37,17 @@ export type NotesState = {
   getNoteById: (id: string) => Note | null;
 };
 
-export const createNotesState = (notes: Note[], get: StoreApi<BuilderState>['getState'], set: StoreApi<BuilderState>['setState']): NotesState => {
+export const createNotesState = (
+  notes: Note[],
+  get: StoreApi<BuilderState>['getState'],
+  set: StoreApi<BuilderState>['setState'],
+): NotesState => {
   return {
     notes,
     noteDragOverlayMode: null,
-    setNoteDragOverlayMode: (noteDragOverlayMode: NoteDragOverlayMode | null) => {
+    setNoteDragOverlayMode: (
+      noteDragOverlayMode: NoteDragOverlayMode | null,
+    ) => {
       set({ noteDragOverlayMode });
     },
     addNote: (note: Note) => {
@@ -52,11 +58,13 @@ export const createNotesState = (notes: Note[], get: StoreApi<BuilderState>['get
     updateContent: (id: string, content: string) => {
       set((state) => {
         return {
-          notes: state.notes.map((note) => (note.id === id ? { ...note, content } : note)),
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, content } : note,
+          ),
         };
       });
     },
-    removeNote: (id:string) => {
+    deleteNote: (id: string) => {
       set((state) => {
         return {
           notes: state.notes.filter((note) => note.id !== id),
@@ -67,16 +75,20 @@ export const createNotesState = (notes: Note[], get: StoreApi<BuilderState>['get
     moveNote: (id: string, position: { x: number; y: number }) => {
       set((state) => {
         return {
-          notes: state.notes.map((note) => (note.id === id ? { ...note, position } : note)),
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, position } : note,
+          ),
           noteDragOverlayMode: null,
           draggedNote: null,
         };
       });
     },
-    resizeNote: ( id: string, size: { width: number; height: number }) => {
+    resizeNote: (id: string, size: { width: number; height: number }) => {
       set((state) => {
         return {
-          notes: state.notes.map((note) => (note.id === id ? { ...note, size } : note)),
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, size } : note,
+          ),
           noteDragOverlayMode: null,
         };
       });
@@ -89,4 +101,4 @@ export const createNotesState = (notes: Note[], get: StoreApi<BuilderState>['get
       return get().notes.find((note) => note.id === id) ?? null;
     },
   };
-}
+};

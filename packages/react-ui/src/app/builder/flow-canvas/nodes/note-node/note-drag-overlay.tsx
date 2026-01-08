@@ -1,16 +1,19 @@
 import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
+
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
+import { userHooks } from '@/hooks/user-hooks';
 import { apId, isNil } from '@activepieces/shared';
+
+import { useBuilderStateContext } from '../../../builder-hooks';
+import { NoteDragOverlayMode } from '../../../state/notes-state';
 import {
   useCursorPosition,
   useCursorPositionEffect,
 } from '../../cursor-position-context';
-import { NoteContent } from '.';
-import { NoteDragOverlayMode } from '../../../state/notes-state';
 import { flowCanvasConsts } from '../../utils/consts';
-import { useBuilderStateContext } from '../../../builder-hooks';
-import { userHooks } from '@/hooks/user-hooks';
+
+import { NoteContent } from '.';
 
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
@@ -20,7 +23,9 @@ const NoteDragOverlay = () => {
   const builderNavigationBar = document.getElementById(
     flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID,
   );
-  const [draggedNote, noteDragOverlayMode, addNote] = useBuilderStateContext((state) => [state.draggedNote, state.noteDragOverlayMode, state.addNote]);
+  const [draggedNote, noteDragOverlayMode, addNote] = useBuilderStateContext(
+    (state) => [state.draggedNote, state.noteDragOverlayMode, state.addNote],
+  );
   const reactFlow = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
   const builderNavigationBarWidth = open
@@ -30,21 +35,22 @@ const NoteDragOverlay = () => {
   const nodeSizeWithZoom = {
     width: (draggedNote?.size.width ?? 0) * reactFlow.getZoom(),
     height: (draggedNote?.size.height ?? 0) * reactFlow.getZoom(),
-  }
+  };
 
   const left = `${
-    overlayPosition.x -
-    nodeSizeWithZoom.width / 2 -
-    builderNavigationBarWidth
+    overlayPosition.x - nodeSizeWithZoom.width / 2 - builderNavigationBarWidth
   }px`;
   const top = `${overlayPosition.y - 50 - nodeSizeWithZoom.height / 2}px`;
   useCursorPositionEffect((position) => {
     setOverlayPosition(position);
   });
-  const hideOverlay = isNil(draggedNote) || isNil(noteDragOverlayMode)
+  const hideOverlay = isNil(draggedNote) || isNil(noteDragOverlayMode);
   const { data: user } = userHooks.useCurrentUser();
-  const userFullName = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email;
-  if(hideOverlay) {
+  const userFullName =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.email;
+  if (hideOverlay) {
     return null;
   }
   return (
@@ -62,7 +68,7 @@ const NoteDragOverlay = () => {
             addNote({
               id: apId(),
               content: flowCanvasConsts.DEFAULT_NOTE_CONTENT,
-              creator: userFullName ??'',
+              creator: userFullName ?? '',
               position: positionOnCanvas,
               size: draggedNote.size,
               color: 'yellow',
@@ -77,7 +83,7 @@ const NoteDragOverlay = () => {
         width: `${draggedNote.size.width * reactFlow.getZoom()}px`,
       }}
     >
-     <NoteContent
+      <NoteContent
         isDragging={true}
         id={draggedNote.id}
         content={draggedNote.content}

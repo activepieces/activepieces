@@ -115,5 +115,5 @@ export const flowCanvasConsts = {
   BUILDER_NAVIGATION_SIDEBAR_ID: 'builder-navigation-sidebar',
   NODE_SELECTION_RECT_CLASS_NAME: 'react-flow__nodesselection-rect',
   SIDEBAR_ANIMATION_DURATION: 200,
-  DEFAULT_NOTE_CONTENT: 'This is a note...'
+  DEFAULT_NOTE_CONTENT: 'This is a note...',
 };

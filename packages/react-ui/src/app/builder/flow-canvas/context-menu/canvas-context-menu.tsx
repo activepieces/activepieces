@@ -1,8 +1,4 @@
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuTrigger,
-} from '@/components/ui/context-menu';
+import { ContextMenu, ContextMenuTrigger } from '@/components/ui/context-menu';
 import { ShortcutProps } from '@/components/ui/shortcut';
 
 import { CanvasContextMenuContent } from './canvas-context-menu-content';
@@ -25,13 +21,11 @@ export const CanvasContextMenu = ({
   children,
 }: CanvasContextMenuProps) => {
   return (
-    <ContextMenu modal={false}>
+    <ContextMenu modal={false} onOpenChange={() => console.log('open change')}>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent>
-        <CanvasContextMenuContent
-          contextMenuType={contextMenuType}
-        ></CanvasContextMenuContent>
-      </ContextMenuContent>
+      <CanvasContextMenuContent
+        contextMenuType={contextMenuType}
+      ></CanvasContextMenuContent>
     </ContextMenu>
   );
 };

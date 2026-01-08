@@ -4,13 +4,13 @@ import { create, useStore } from 'zustand';
 import { CanvasState, createCanvasState } from './state/canvas-state';
 import { ChatState, createChatState } from './state/chat-state';
 import { createFlowState, FlowState } from './state/flow-state';
+import { createNotesState, NotesState } from './state/notes-state';
 import {
   createPieceSelectorState,
   PieceSelectorState,
 } from './state/piece-selector-state';
 import { createRunState, RunState } from './state/run-state';
 import { createStepFormState, StepFormState } from './state/step-form-state';
-import { createNotesState, NotesState } from './state/notes-state';
 
 export const BuilderStateContext = createContext<BuilderStore | null>(null);
 
@@ -28,7 +28,8 @@ export type BuilderState = FlowState &
   RunState &
   ChatState &
   CanvasState &
-  StepFormState & NotesState;
+  StepFormState &
+  NotesState;
 export type BuilderInitialState = Pick<
   BuilderState,
   | 'flow'
