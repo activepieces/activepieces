@@ -1,20 +1,54 @@
-
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { HttpMethod } from '@activepieces/pieces-common';
+import { lokaliseAuth } from '../common/auth';
+import { projectDropdown } from '../common/props';
+import { makeRequest } from '../common/client';
+
 export const translationUpdated = createTrigger({
-    // auth: check https://www.activepieces.com/docs/developers/piece-reference/authentication,
-    name: 'translationUpdated',
-    displayName: 'Translation Updated',
-    description: '',
-    props: {},
-    sampleData: {},
-    type: TriggerStrategy.WEBHOOK,
-    async onEnable(context){
-        // implement webhook creation logic
-    },
-    async onDisable(context){
-        // implement webhook deletion logic
-    },
-    async run(context){
-        return [context.payload.body]
+  auth: lokaliseAuth,
+  name: 'translationUpdated',
+  displayName: 'Translation Updated',
+  description: 'Trigger when a translation is updated in your Lokalise project',
+  props: {
+    projectId: projectDropdown,
+  },
+  sampleData: {},
+  type: TriggerStrategy.WEBHOOK,
+  async onEnable(context) {
+    const projectId = context.propsValue.projectId;
+
+    const body = {
+      url: context.webhookUrl,
+      events: ['project.translation.updated'],
+    };
+
+    const response = await makeRequest(
+      context.auth.secret_text,
+      HttpMethod.POST,
+      `/projects/${projectId}/webhooks`,
+      body
+    );
+
+    const webhookId = (response.body as any).webhook.webhook_id;
+    await context.store?.put('webhook_id', webhookId);
+  },
+  async onDisable(context) {
+    const projectId = context.propsValue.projectId;
+    const webhookId = await context.store?.get('webhook_id');
+
+    if (webhookId) {
+      try {
+        await makeRequest(
+          context.auth.secret_text,
+          HttpMethod.DELETE,
+          `/projects/${projectId}/webhooks/${webhookId}`
+        );
+      } catch (error) {
+        console.error('Error deleting webhook:', error);
+      }
     }
-})
+  },
+  async run(context) {
+    return [context.payload.body];
+  },
+});

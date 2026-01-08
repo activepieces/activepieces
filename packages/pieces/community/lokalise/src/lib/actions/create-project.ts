@@ -39,7 +39,8 @@ export const createProject = createAction({
             value: 'marketing',
           },
           {
-            label: 'Marketing Projects (Automatically translated with integrations)',
+            label:
+              'Marketing Projects (Automatically translated with integrations)',
             value: 'marketing_integrations',
           },
         ],
