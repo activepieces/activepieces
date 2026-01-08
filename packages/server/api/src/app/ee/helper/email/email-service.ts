@@ -158,15 +158,14 @@ export const emailService = (log: FastifyBaseLogger) => ({
         if (isNil(user)) {
             return
         }
-
         const badge = BADGES[badgeName as keyof typeof BADGES]
-
         await emailSender(log).send({
             emails: [user.email],
             platformId: user.platformId!,
             templateData: {
                 name: 'badge-awarded',
                 vars: {
+                    firstName: user.firstName,
                     badgeTitle: badge.title,
                     badgeDescription: badge.description,
                     badgeImageUrl: badge.imageUrl,
