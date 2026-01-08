@@ -8,10 +8,10 @@ import { RefreshAnalyticsContext } from './refresh-analytics-context';
 
 const queryKey = ['analytics'];
 export const platformAnalyticsHooks = {
-  useAnalytics: () => {
+  useAnalytics: (timePeriod?: 'weekly' | 'monthly' | '3-months' | 'all-time') => {
     const { data, isLoading } = useQuery({
-      queryKey,
-      queryFn: () => analyticsApi.get(),
+      queryKey: [...queryKey, timePeriod],
+      queryFn: () => analyticsApi.get(timePeriod),
     });
     return { data, isLoading };
   },

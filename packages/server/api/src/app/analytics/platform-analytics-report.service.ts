@@ -20,7 +20,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
         })
         return getMergedReport(platformId)
     },
-    getOrGenerateReport: async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
+    getOrGenerateReport: async (platformId: PlatformId, timePeriod?: 'weekly' | 'monthly' | '3-months' | 'all-time'): Promise<PlatformAnalyticsReport> => {
         const latestCache = await platformAnalyticsReportRepo()
             .createQueryBuilder('cache')
             .where('cache.platformId = :platformId', { platformId })
@@ -28,7 +28,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             .getOne()
         
         if (latestCache && dayjs(latestCache.cachedAt).add(5, 'minute').isAfter(dayjs())) {
-            return getMergedReport(platformId)
+            return getMergedReport(platformId, timePeriod)
         }
         
         await distributedLock(log).runExclusive({
@@ -39,7 +39,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             },
         })
         
-        return getMergedReport(platformId)
+        return getMergedReport(platformId, timePeriod)
     },
 })
 
@@ -78,14 +78,12 @@ const createNewCacheEntry = async (platformId: PlatformId, log: FastifyBaseLogge
 }
 
 
-const getMergedReport = async (platformId: PlatformId): Promise<PlatformAnalyticsReport> => {
-    const threeMonthsAgo = dayjs().subtract(3, 'month').toISOString()
+const getMergedReport = async (platformId: PlatformId, timePeriod?: 'weekly' | 'monthly' | '3-months' | 'all-time'): Promise<PlatformAnalyticsReport> => {
     const users = await analyzeUsers(platformId)
     
     const cacheEntries = await platformAnalyticsReportRepo()
         .createQueryBuilder('cache')
         .where('cache.platformId = :platformId', { platformId })
-        .andWhere('cache.cachedAt >= :threeMonthsAgo', { threeMonthsAgo })
         .orderBy('cache.cachedAt', 'ASC')
         .getMany()
     
@@ -104,9 +102,33 @@ const getMergedReport = async (platformId: PlatformId): Promise<PlatformAnalytic
         } as PlatformAnalyticsReport
     }
     
-    const mergedRunsUsage = mergeRunsUsage(cacheEntries.map(c => c.runsUsage))
-    const mergedFlowsDetails = mergeFlowsDetails(cacheEntries.map(c => c.flowsDetails))
-    const totalTimeSaved = cacheEntries.reduce((sum, cache) => sum + cache.timeSaved, 0)
+    const effectiveTimePeriod = timePeriod ?? '3-months'
+    let startDate: dayjs.Dayjs | null = null
+    if (effectiveTimePeriod === 'weekly') {
+        startDate = dayjs().subtract(7, 'day')
+    } else if (effectiveTimePeriod === 'monthly') {
+        startDate = dayjs().subtract(30, 'day')
+    } else if (effectiveTimePeriod === '3-months') {
+        startDate = dayjs().subtract(3, 'month')
+    }
+    
+    let mergedRunsUsage = mergeRunsUsage(cacheEntries.map(c => c.runsUsage))
+    let mergedFlowsDetails = mergeFlowsDetails(cacheEntries.map(c => c.flowsDetails))
+    
+    if (startDate) {
+        const startDateStartOfDay = startDate.startOf('day')
+        mergedRunsUsage = mergedRunsUsage.filter(item => {
+            const itemDate = dayjs(item.day).startOf('day')
+            return itemDate.isAfter(startDateStartOfDay) || itemDate.isSame(startDateStartOfDay)
+        })
+    }
+    
+    if (startDate) {
+        const startDateISO = startDate.toISOString()
+        mergedFlowsDetails = await analyzeFlowsDetails(platformId, startDateISO)
+    }
+    
+    const totalTimeSaved = mergedRunsUsage.reduce((sum, item) => sum + item.minutesSaved, 0)
     
     const latestCache = cacheEntries[cacheEntries.length - 1]
     

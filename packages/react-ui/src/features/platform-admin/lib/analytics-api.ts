@@ -5,8 +5,9 @@ import {
 } from '@activepieces/shared';
 
 export const analyticsApi = {
-  get(): Promise<PlatformAnalyticsReport> {
-    return api.get<PlatformAnalyticsReport>('/v1/analytics');
+  get(timePeriod?: 'weekly' | 'monthly' | '3-months' | 'all-time'): Promise<PlatformAnalyticsReport> {
+    const params = timePeriod ? { timePeriod } : undefined;
+    return api.get<PlatformAnalyticsReport>('/v1/analytics', params);
   },
   refresh(): Promise<PlatformAnalyticsReport> {
     return api.post<PlatformAnalyticsReport>('/v1/analytics/refresh');

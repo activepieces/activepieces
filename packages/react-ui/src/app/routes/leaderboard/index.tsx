@@ -1,9 +1,16 @@
 import { t } from 'i18next';
-import { Download } from 'lucide-react';
+import { Calendar, Download } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
@@ -12,8 +19,11 @@ import { downloadFile, formatUtils } from '@/lib/utils';
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 import { UsersLeaderboard, UserStats } from './users-leaderboard';
 
+export type TimePeriod = 'weekly' | 'monthly' | '3-months' | 'all-time';
+
 export default function LeaderboardPage() {
-  const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('monthly');
+  const { data, isLoading } = platformAnalyticsHooks.useAnalytics(timePeriod);
   const [activeTab, setActiveTab] = useState('creators');
 
   const peopleData = useMemo((): UserStats[] => {
@@ -137,15 +147,28 @@ export default function LeaderboardPage() {
                 {t('Projects')}
               </TabsTrigger>
             </TabsList>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownload}
-              disabled={isDownloadDisabled}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              {t('Download')}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Select value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriod)}>
+                <SelectTrigger className="w-[140px]">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="weekly">{t('Weekly')}</SelectItem>
+                  <SelectItem value="monthly">{t('Monthly')}</SelectItem>
+                  <SelectItem value="all-time">{t('All Time')}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleDownload}
+                disabled={isDownloadDisabled}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                {t('Download')}
+              </Button>
+            </div>
           </div>
 
           <TabsContent value="creators">

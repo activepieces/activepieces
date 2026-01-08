@@ -78,7 +78,7 @@ export default function AnalyticsPage() {
               loading={isRefreshing}
               disabled={isRefreshing}
             >
-              <RefreshCcwIcon className="w-4 h-4" />
+              <RefreshCcwIcon className="w-4 h-4 mr-2" />
               {t('Refresh')}
             </Button>
           )}

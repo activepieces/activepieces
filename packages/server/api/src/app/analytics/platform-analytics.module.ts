@@ -1,5 +1,6 @@
 import { securityAccess } from '@activepieces/server-shared'
 import { ActivepiecesError, ErrorCode, PrincipalType, UpdatePlatformReportRequest, UserIdentityProvider } from '@activepieces/shared'
+import { Type } from '@sinclair/typebox'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -19,7 +20,8 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/', PlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
+        const timePeriod = request.query.timePeriod as 'weekly' | 'monthly' | '3-months' | 'all-time' | undefined
+        return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id, timePeriod)
     })
 
     app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
@@ -48,6 +50,16 @@ const RefreshPlatformAnalyticsRequest = {
 }
 
 const PlatformAnalyticsRequest = {
+    schema: {
+        querystring: Type.Object({
+            timePeriod: Type.Optional(Type.Union([
+                Type.Literal('weekly'),
+                Type.Literal('monthly'),
+                Type.Literal('3-months'),
+                Type.Literal('all-time'),
+            ])),
+        }),
+    },
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
