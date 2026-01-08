@@ -42,12 +42,14 @@ export const selectGenericFormComponentForProperty = ({
   form,
   dynamicPropsInfo,
   propertySettings,
+  hideLabel,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
       return (
         <AutoFormFieldWrapper
           property={property}
+          hideLabel={hideLabel}
           propertyName={propertyName}
           field={field}
           disabled={disabled}
@@ -299,6 +301,7 @@ export const selectGenericFormComponentForProperty = ({
 
 export type SelectGenericFormComponentForPropertyParams = {
   field: ControllerRenderProps<Record<string, any>, string>;
+  hideLabel?: boolean;
   propertyName: string;
   inputName: string;
   property: PieceProperty;
