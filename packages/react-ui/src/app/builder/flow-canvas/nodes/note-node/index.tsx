@@ -2,11 +2,14 @@ import { useDraggable } from '@dnd-kit/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { flowCanvasConsts } from '../../utils/consts';
 import { ApNoteNode } from '../../utils/types';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { Textarea } from '@/components/ui/textarea';
 import { useDebouncedCallback } from 'use-debounce';
 import { cn } from '@/lib/utils';
+import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
+import { MarkdownInput, MarkdownTools } from '@/components/ui/markdown-input';
+import { Editor } from '@tiptap/core';
+import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   const { attributes, listeners, setNodeRef } = useDraggable({
@@ -21,7 +24,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
     return null;
   }
   return (
-    <div className='group'>
+    <div className='group note-node'>
       <NodeResizeControl
         minWidth={200}
         minHeight={180}
@@ -35,14 +38,14 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
           resizeNote(props.id, { width: params.width, height: params.height });
         }}
       >
-        <button className={cn("group-focus-within:block hidden cursor-nwse-resize  rounded-full bg-background border border-solid border-primary -translate-x-[50%] -translate-y-[50%] p-0.75", {
+        <button className={cn("group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75", {
         })}></button>
       </NodeResizeControl>
      
-      <div ref={setNodeRef} {...attributes} {...listeners} className={cn('p-0.5 group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md', {
-      })}>
-        <NoteContent size={size} id={props.id} content={note?.content} creator={props.data.creator}></NoteContent>
-      </div>
+      <div key={props.data.size.height + props.data.size.width + note.position.x + note.position.y}  ref={setNodeRef} {...attributes} {...listeners} className={cn('p-0.5 group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md', {
+      })}> 
+        <NoteContent size={size} id={props.id} content={note?.content} creator={props.data.creator}/>
+        </div>
     </div>
   );
 };
@@ -54,33 +57,48 @@ const NoteContent = ({
   id,
   content,
   creator,
+  isDragging
 }: NoteContentProps) => {
   const [localContent, setLocalContent] = useState(content);
-  const updateContent = useBuilderStateContext((state) => state.updateContent);
+  const [updateContent,readonly] = useBuilderStateContext((state) => [state.updateContent,state.readonly]);
   const debouncedUpdateContent = useDebouncedCallback((id: string, content: string) => {
     updateContent(id, content)
   }, 500);
+  const editorRef = useRef<Editor | null>(null);
   return (
     <div
       id={id}
-      className="rounded-md bg-yellow-200 border-solid shadow-sm p-2 flex flex-col gap-2"
+      className="rounded-md bg-amber-200 border-solid shadow-md p-2 flex flex-col gap-2 relative"
       style={{
         width: `${width}px`,
         height: `${height}px`,
       }}
     >
-      <Textarea className='grow bg-transparent text-yellow-500 focus-visible:outline-none resize-none overflow-hidden border-none p-0'
-       minRows={2} 
-       maxRows={10}
-      value={localContent}
-      onChange={(e) => {
-        setLocalContent(e.target.value);
-        debouncedUpdateContent(id, e.target.value);
-      }}
+      {
+        !isDragging && !readonly && editorRef.current && <NoteTools editor={editorRef.current} />
+      }
+
+      <div 
+        className='grow h-full overflow-auto' 
+        onDoubleClick={(e) => {
+          e.stopPropagation();
+          editorRef.current?.commands.focus();
+        }}
       >
-      </Textarea>
-      <div className="text-yellow-500 font-semibold text-xs">
-        {creator}
+      <MarkdownInput ref={editorRef} disabled={isDragging || readonly} initialValue={localContent} className='cursor-text text-amber-700 text-sm' onChange={(value: string) => {
+        setLocalContent(value);
+        debouncedUpdateContent(id, value);
+      }} />
+
+      </div>
+    
+      <div className='flex items-center justify-between gap-2'> 
+      <TextWithTooltip tooltipMessage={creator}>
+      <div className="text-amber-700 font-semibold text-xs">
+       {creator}
+      </div>
+      </TextWithTooltip>
+      <DragHandleDots2Icon className='size-4 text-amber-700 cursor-grab' />
       </div>
     </div>
   );
@@ -91,4 +109,17 @@ type NoteContentProps = {
   id: string;
   content: string;
   creator: string;
+  isDragging?: boolean;
+}
+
+const NoteTools = ({editor}: {editor: Editor}) => {
+  return (
+    <div className="absolute -top-[50px] w-full left-0">
+      <div className="flex items-center justify-center">
+        <div className='p-1 bg-background shadow-md rounded-md scale-75'>
+        <MarkdownTools editor={editor} />
+        </div>
+    </div>
+    </div>
+  )
 }

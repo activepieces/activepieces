@@ -49,7 +49,7 @@ const NoteDragOverlay = () => {
   }
   return (
     <div
-      className={'absolute left-0 top-0 opacity-75'}
+      className={'absolute left-0 top-0 opacity-75 !cursor-grabbing'}
       ref={containerRef}
       onClick={() => {
         if (noteDragOverlayMode === NoteDragOverlayMode.CREATE) {
@@ -78,6 +78,7 @@ const NoteDragOverlay = () => {
       }}
     >
      <NoteContent
+        isDragging={true}
         id={draggedNote.id}
         content={draggedNote.content}
         creator={draggedNote.creator}

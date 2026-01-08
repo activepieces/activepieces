@@ -454,6 +454,9 @@
       var(--primary-100) / 0.25
     ) !important;
     --xy-resize-background-color:transparent !important;
+    .react-flow__resize-control.handle{
+      border: 0 !important;
+    }
   }
 
   .react-flow__pane.selection,
@@ -498,3 +501,25 @@
   pointer-events: none;
 }
 
+
+.note-node {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+   background: hsla(0, 1%, 66%, 0.328);
+   border-radius: 100px;
+   border: 1px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.neutral.700');
+  }
+
+}

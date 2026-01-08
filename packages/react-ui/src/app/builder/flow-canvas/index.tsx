@@ -85,13 +85,11 @@ export const FlowCanvas = React.memo(
     );
     const graphKey = createGraphKey(flowVersion, notes);
     const graph = useMemo(() => {
-      console.log('graph render')
       return flowCanvasUtils.createFlowGraph(flowVersion, notes);
     }, [graphKey]);
     const [contextMenuType, setContextMenuType] = useState<ContextMenuType>(
       ContextMenuType.CANVAS,
     );
-  console.log('flow canvas')
 
     const onContextMenu = useCallback(
       (ev: React.MouseEvent<HTMLDivElement>) => {
@@ -143,8 +141,8 @@ export const FlowCanvas = React.memo(
 
     const onSelectionEnd = useCallback(() => {
       const selectedSteps = selectedNodes.map((node) =>
-        flowStructureUtil.getStepOrThrow(node, flowVersion.trigger),
-      );
+        flowStructureUtil.getStep(node, flowVersion.trigger),
+      ).filter((step) => !isNil(step));
       selectedSteps.forEach((step) => {
         if (
           step.type === FlowActionType.LOOP_ON_ITEMS ||
