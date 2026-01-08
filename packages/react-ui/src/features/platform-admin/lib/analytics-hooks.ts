@@ -4,7 +4,7 @@ import { useContext, useMemo } from 'react';
 import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
 
 import { RefreshAnalyticsContext } from './refresh-analytics-context';
-import { PlatformAnalyticsReport } from '@activepieces/shared';
+import { isNil, PlatformAnalyticsReport } from '@activepieces/shared';
 import dayjs from 'dayjs';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 
@@ -31,6 +31,7 @@ export type UserLeaderboardItem = {
 }
 
 export const platformAnalyticsHooks = {
+
   useUsersLeaderboard: (timePeriod: TimePeriod) => {
     const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
     if (isLoading) {
@@ -78,6 +79,25 @@ export const platformAnalyticsHooks = {
       queryFn: () => analyticsApi.get(),
     });
     return { data, isLoading };
+  },
+  useAnalyticsTimeBased: (timePeriod: TimePeriod, projectId: string): { isLoading: boolean, data: PlatformAnalyticsReport | null } => {
+    const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
+    if (isLoading || isNil(data)) {
+      return {
+        data: null,
+        isLoading: isLoading,
+      };
+    }
+    const flows = data.flows.filter(flow => flow.projectId === projectId);
+    const runs = data.runs.filter(run => flows.some(flow => flow.flowId === run.flowId));
+    return {
+      isLoading,
+      data: {
+        ...data,
+        runs: runs.filter(run => dayjs(run.day).isAfter(dayjs(getDateRange(timePeriod)))),
+        flows,
+      },
+    }
   },
   useRefreshAnalytics: () => {
     const queryClient = useQueryClient();
