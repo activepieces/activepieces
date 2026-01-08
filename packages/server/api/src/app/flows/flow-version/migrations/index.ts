@@ -3,6 +3,7 @@ import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
 import { migrateV10AiPiecesProviderId } from './migrate-v10-ai-pieces-provider-id'
 import { migrateV11TablesToV2 } from './migrate-v11-tables-to-v2'
+import { migrateV12FixPieceVersion } from './migrate-v12-fix-piece-version'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
@@ -30,6 +31,7 @@ const migrations: Migration[] = [
     migrateV9AiPieces,
     migrateV10AiPiecesProviderId,
     migrateV11TablesToV2,
+    migrateV12FixPieceVersion,
 ] as const
 
 export const flowMigrations = {
