@@ -16,7 +16,7 @@
   "Find Branch": "ブランチを検索",
   "Find Issue": "問題を探す",
   "Find User": "ユーザーを検索",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Create Issue in GitHub Repository": "GitHub リポジトリで問題を作成",
   "Grabs information from a specific issue": "特定の問題からの情報を取得します。",
   "Adds a comment to the specified issue (also works with pull requests)": "指定された課題にコメントを追加します (プルリクエストでも機能します)",
