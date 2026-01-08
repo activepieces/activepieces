@@ -50,6 +50,9 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
 
 
 async function listRuns(projectIds: string[], afterDate: string | null, currentDate: string): Promise<AnalyticsRunsUsageItem[]> {
+    if (projectIds.length === 0) {
+        return []
+    }
     let query = flowRepo().createQueryBuilder('"flow_run"')
         .select('"flow_run"."flowId"', 'flowId')
         .addSelect('DATE_TRUNC(\'day\', "flow_run"."created")', 'day')
