@@ -9,7 +9,9 @@ import { system } from './helper/system/system'
 export const setupWorker = async (app: FastifyInstance): Promise<void> => {
 
     const devPieces = system.get(AppSystemProp.DEV_PIECES)?.split(',') ?? []
-    await devPiecesBuilder(app, app.io, devPieces)
+    if (devPieces.length > 0) {
+        await devPiecesBuilder(app, app.io, devPieces)
+    }
     
     app.addHook('onClose', async () => {
         await flowWorker(app.log).close()
