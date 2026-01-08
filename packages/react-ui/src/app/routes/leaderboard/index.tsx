@@ -22,33 +22,16 @@ import { downloadFile, formatUtils } from '@/lib/utils';
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 import { UsersLeaderboard, UserStats } from './users-leaderboard';
 
-export type TimePeriod = 'weekly' | 'monthly' | '3-months' | 'all-time';
-
-function mapTimePeriodToEnum(timePeriod: TimePeriod): TimePeriodEnum {
-  switch (timePeriod) {
-    case 'weekly':
-      return TimePeriodEnum.LAST_WEEK;
-    case 'monthly':
-      return TimePeriodEnum.LAST_MONTH;
-    case '3-months':
-      return TimePeriodEnum.LAST_THREE_MONTHS;
-    case 'all-time':
-      return TimePeriodEnum.ALL_TIME;
-    default:
-      return TimePeriodEnum.LAST_MONTH;
-  }
-}
 
 export default function LeaderboardPage() {
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>('monthly');
-  const timePeriodEnum = mapTimePeriodToEnum(timePeriod);
+  const [timePeriod, setTimePeriod] = useState<TimePeriodEnum>(TimePeriodEnum.LAST_MONTH);
   const { data: analyticsData, isLoading: isAnalyticsLoading } =
     platformAnalyticsHooks.useAnalytics();
   const usersLeaderboardResult = platformAnalyticsHooks.useUsersLeaderboard(
-    timePeriodEnum,
+      timePeriod,
   );
   const projectsLeaderboardResult =
-    platformAnalyticsHooks.useProjectLeaderboard(timePeriodEnum);
+    platformAnalyticsHooks.useProjectLeaderboard(timePeriod);
   const [activeTab, setActiveTab] = useState('creators');
 
   const isLoading =
@@ -177,16 +160,15 @@ export default function LeaderboardPage() {
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
-              <Select value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriod)}>
-                <SelectTrigger className="w-[140px]">
-                  <Calendar className="h-4 w-4 mr-2" />
+              <Select value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriodEnum)}>
+                <SelectTrigger className="h-8">
+                  <Calendar className="h-3 w-3 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="weekly">{t('Weekly')}</SelectItem>
-                  <SelectItem value="monthly">{t('Monthly')}</SelectItem>
-                  <SelectItem value="3-months">{t('3 Months')}</SelectItem>
-                  <SelectItem value="all-time">{t('All Time')}</SelectItem>
+                  <SelectItem value={TimePeriodEnum.LAST_WEEK}>{t('Last 7 days')}</SelectItem>
+                  <SelectItem value={TimePeriodEnum.LAST_MONTH}>{t('Last 30 days')}</SelectItem>
+                  <SelectItem value={TimePeriodEnum.ALL_TIME}>{t('All Time')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button

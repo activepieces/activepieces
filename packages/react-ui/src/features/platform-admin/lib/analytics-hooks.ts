@@ -13,7 +13,6 @@ const queryKey = ['analytics'];
 export enum TimePeriod {
   LAST_WEEK = 'last-week',
   LAST_MONTH = 'last-month',
-  LAST_THREE_MONTHS = 'last-3-months',
   ALL_TIME = 'all-time',
 }
 
@@ -124,8 +123,6 @@ function getDateRange(timePeriod: TimePeriod): string {
       return date.subtract(1, 'week').startOf('day').toISOString();
     case TimePeriod.LAST_MONTH:
       return date.subtract(1, 'month').startOf('day').toISOString();
-    case TimePeriod.LAST_THREE_MONTHS:
-      return date.subtract(3, 'months').startOf('day').toISOString();
     case TimePeriod.ALL_TIME:
       return date.subtract(10, 'year').startOf('day').toISOString();
     default:

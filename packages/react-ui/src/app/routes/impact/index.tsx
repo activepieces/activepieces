@@ -26,7 +26,7 @@ const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
 export default function AnalyticsPage() {
   const { data: user } = userHooks.useCurrentUser();
-  const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(TimePeriod.LAST_THREE_MONTHS);
+  const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(TimePeriod.LAST_MONTH);
   const showRefreshButton = !isLoading;
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
