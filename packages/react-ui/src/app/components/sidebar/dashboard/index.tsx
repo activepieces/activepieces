@@ -1,6 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
-import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { Search, Plus, LineChart, Trophy, Compass, ShieldCheck } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -30,11 +30,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
+  ApEdition,
+  ApFlagId,
   isNil,
   PlatformRole,
   ProjectType,
@@ -44,6 +47,7 @@ import {
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
 import { ApSidebarItem, SidebarItemType } from '../ap-sidebar-item';
+import { OnboardingProgressCircle } from '../progress-circle';
 import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
@@ -61,6 +65,7 @@ export function ProjectDashboardSidebar() {
   const projectsScrollRef = useRef<HTMLDivElement>(null);
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
+  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
 
   useEffect(() => {
     if (!searchOpen) {
@@ -156,7 +161,6 @@ export function ProjectDashboardSidebar() {
     type: 'link',
     to: '/templates',
     label: t('Explore'),
-    show: true,
     icon: Compass,
     hasPermission: true,
     isSubItem: false,
@@ -167,7 +171,6 @@ export function ProjectDashboardSidebar() {
     to: '/impact',
     label: t('Impact'),
     icon: LineChart,
-    show: true,
     hasPermission: true,
     isSubItem: false,
   };
@@ -177,14 +180,31 @@ export function ProjectDashboardSidebar() {
     to: '/leaderboard',
     label: t('Leaderboard'),
     icon: Trophy,
-    show: true,
     hasPermission: true,
     isSubItem: false,
   };
 
-  const items = [exploreLink, impactLink, leaderboardLink].filter(
-    permissionFilter,
-  );
+  const platformAdminLink: SidebarItemType = {
+    type: 'link',
+    to: isNil(platform.plan.licenseKey)
+      ? '/platform'
+      : '/platform/setup/onboarding',
+    label: t('Platform Admin'),
+    icon: ShieldCheck,
+    hide: edition !== ApEdition.ENTERPRISE,
+    hasPermission: true,
+    isSubItem: false,
+    suffix: !isNil(platform.plan.licenseKey) ? (
+      <OnboardingProgressCircle hideIfCompleted={true} />
+    ) : null,
+  };
+
+  const items = [
+    exploreLink,
+    platformAdminLink,
+    impactLink,
+    leaderboardLink,
+  ].filter(permissionFilter);
 
   return (
     !embedState.hideSideNav && (

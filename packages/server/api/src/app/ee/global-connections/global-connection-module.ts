@@ -1,4 +1,4 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
+import { ApplicationEventName, OnboardingStep } from '@activepieces/ee-shared'
 import { securityAccess } from '@activepieces/server-shared'
 import {
     apId,
@@ -18,6 +18,7 @@ import { appConnectionService } from '../../app-connection/app-connection-servic
 import { applicationEvents } from '../../helper/application-events'
 import { securityHelper } from '../../helper/security-helper'
 import { platformMustHaveFeatureEnabled } from '../authentication/ee-authorization'
+import { onboardingService } from '../platform/onboarding/onboarding.service'
 
 export const globalConnectionModule: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.globalConnectionsEnabled))
@@ -44,6 +45,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
                 connection: appConnection,
             },
         })
+        await onboardingService(request.log).completeStep(request.principal.platform.id, OnboardingStep.CREATED_GLOBAL_CONNECTIONS)
         await reply
             .status(StatusCodes.CREATED)
             .send(appConnection)

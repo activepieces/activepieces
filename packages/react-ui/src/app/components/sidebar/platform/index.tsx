@@ -16,6 +16,7 @@ import {
   Settings2,
   FileHeart,
   MousePointerClick,
+  Sparkles,
 } from 'lucide-react';
 import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -37,9 +38,15 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+import {
+  ApEdition,
+  ApFlagId,
+  isNil,
+  TeamProjectsLimit,
+} from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
+import { OnboardingProgressCircle } from '../progress-circle';
 import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
@@ -91,13 +98,27 @@ export function PlatformSidebar() {
 
   const groups: {
     label: string;
+    hidden?: boolean;
     items: {
       to: string;
       label: string;
       icon?: ComponentType<SVGProps<SVGSVGElement>>;
       locked?: boolean;
+      suffix?: React.ReactNode;
     }[];
   }[] = [
+    {
+      label: t(''),
+      hidden: !isNil(platform.plan.licenseKey),
+      items: [
+        {
+          to: '/platform/setup/onboarding',
+          label: t('Getting Started'),
+          icon: Sparkles,
+          suffix: <OnboardingProgressCircle />,
+        },
+      ],
+    },
     {
       label: t('General'),
       items: [

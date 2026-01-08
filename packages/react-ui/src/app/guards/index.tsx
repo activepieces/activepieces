@@ -48,6 +48,7 @@ import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
+import GettingStartedPage from '../routes/platform/setup/onboarding';
 import { PlatformTemplatesPage } from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
@@ -543,6 +544,16 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="Platform Setup">
           <Navigate to="/platform/setup/ai" replace />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/setup/onboarding',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Getting Started">
+          <GettingStartedPage />
         </PageTitle>
       </PlatformLayout>
     ),

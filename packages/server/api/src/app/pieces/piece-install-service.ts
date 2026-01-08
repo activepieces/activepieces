@@ -1,3 +1,4 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import { PieceMetadata, PieceMetadataModel } from '@activepieces/pieces-framework'
 import {
     ActivepiecesError,
@@ -18,6 +19,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
+import { onboardingService } from '../ee/platform/onboarding/onboarding.service'
 import { fileService } from '../file/file.service'
 import { pubsub } from '../helper/pubsub'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -53,6 +55,7 @@ export const pieceInstallService = (log: FastifyBaseLogger) => ({
                 pieceType: PieceType.CUSTOM,
                 archiveId,
             })
+            await onboardingService(log).completeStep(platformId, OnboardingStep.MANAGED_PIECES)
             await pubsub.publish(REDIS_REFRESH_LOCAL_PIECES_CHANNEL, '')
             return savedPiece
         }

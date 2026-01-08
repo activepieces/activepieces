@@ -1,3 +1,4 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import { getProjectMaxConcurrentJobsKey } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -18,6 +19,7 @@ import {
 import { Brackets, IsNull, Not, ObjectLiteral, SelectQueryBuilder } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedStore } from '../database/redis-connections'
+import { onboardingService } from '../ee/platform/onboarding/onboarding.service'
 import { system } from '../helper/system/system'
 import { userService } from '../user/user-service'
 import { ProjectEntity } from './project-entity'
@@ -43,6 +45,7 @@ export const projectService = {
         if (!isNil(params.maxConcurrentJobs)) {
             await distributedStore.put(getProjectMaxConcurrentJobsKey(savedProject.id), params.maxConcurrentJobs)
         }
+        await onboardingService(system.globalLogger()).completeStep(params.platformId, OnboardingStep.CREATED_PROJECT)
         return savedProject
     },
     async getOneByOwnerAndPlatform(params: GetOneByOwnerAndPlatformParams): Promise<Project | null> {

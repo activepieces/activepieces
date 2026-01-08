@@ -1,3 +1,4 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import {
     ActivepiecesError, ActivePiecesProviderAuthConfig, AIProviderAuthConfig, AIProviderModel, AIProviderName, AIProviderWithoutSensitiveData,
     apId,
@@ -14,6 +15,7 @@ import { FastifyBaseLogger } from 'fastify'
 import cron from 'node-cron'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
+import { onboardingService } from '../ee/platform/onboarding/onboarding.service'
 import { openRouterApi } from '../ee/platform/platform-plan/openrouter/openrouter-api'
 import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { flagService } from '../flags/flag.service'
@@ -92,6 +94,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             displayName: request.displayName,
             platformId,
         })
+        await onboardingService(log).completeStep(platformId, OnboardingStep.CREATED_AI_MODELS)
     },
     async update(platformId: PlatformId, providerId: string, request: UpdateAIProviderRequest): Promise<void> {
         const aiProvider = await aiProviderRepo().findOneBy({
@@ -111,6 +114,7 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             ...spreadIfDefined('config', request.config),
             displayName: request.displayName,
         })
+        await onboardingService(log).completeStep(platformId, OnboardingStep.CREATED_AI_MODELS)
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {

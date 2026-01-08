@@ -40,6 +40,7 @@ import { oauthAppModule } from './ee/oauth-apps/oauth-app.module'
 import { platformPieceModule } from './ee/pieces/platform-piece-module'
 import { adminPlatformModule } from './ee/platform/admin/admin-platform.controller'
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
+import { onboardingModule } from './ee/platform/onboarding/onboarding.module'
 import { platformAiCreditsService } from './ee/platform/platform-plan/platform-ai-credits.service'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
@@ -275,6 +276,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(platformProjectModule)
             await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
+            await app.register(onboardingModule)
             await app.register(projectMemberModule)
             await app.register(appSumoModule)
             await app.register(customDomainModule)
@@ -300,6 +302,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
         case ApEdition.ENTERPRISE:
             await platformAiCreditsService(app.log).init()
             await app.register(platformPlanModule)
+            await app.register(onboardingModule)
             await app.register(customDomainModule)
             await app.register(platformProjectModule)
             await app.register(projectMemberModule)

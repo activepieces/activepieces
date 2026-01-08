@@ -1,7 +1,9 @@
+import { OnboardingStep } from '@activepieces/ee-shared'
 import { systemUsage } from '@activepieces/server-shared'
 import { GetSystemHealthChecksResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { databaseConnection } from '../database/database-connection'
+import { onboardingService } from '../ee/platform/onboarding/onboarding.service'
 import { system } from '../helper/system/system'
 import { machineService } from '../workers/machine/machine-service'
 
@@ -37,11 +39,13 @@ export const healthStatusService = (log: FastifyBaseLogger) => ({
         }
         return  workerHealthy && databaseHealthy
     },
-    getSystemHealthChecks: async (): Promise<GetSystemHealthChecksResponse> => {
+    getSystemHealthChecks: async (platformId: string): Promise<GetSystemHealthChecksResponse> => {
         const workers = await machineService(log).list()
         const allWorkersPassedHealthcheck = workers.every(worker => worker.information.totalCpuCores > 1)
         const allWorkersHaveEnoughRam = workers.every(worker => worker.information.totalAvailableRamInBytes > gigaBytes(4))
         const databaseHealthy = await healthStatusService(log).checkDatabaseHealth()
+        
+        await onboardingService(log).completeStep(platformId, OnboardingStep.CHECKED_HEALTH)
         
         return {
             cpu: await systemUsage.getCpuCores() >= 1 && allWorkersPassedHealthcheck,
