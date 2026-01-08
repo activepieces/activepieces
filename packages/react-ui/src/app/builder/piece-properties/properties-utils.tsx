@@ -43,6 +43,7 @@ export const selectGenericFormComponentForProperty = ({
   dynamicPropsInfo,
   propertySettings,
   hideLabel,
+  inputAsEditor = false,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -234,6 +235,7 @@ export const selectGenericFormComponentForProperty = ({
             <TextInputWithMentions
               disabled={disabled}
               initialValue={field.value}
+              inputAsEditor={inputAsEditor}
               onChange={field.onChange}
             ></TextInputWithMentions>
           ) : (
@@ -301,6 +303,7 @@ export const selectGenericFormComponentForProperty = ({
 
 export type SelectGenericFormComponentForPropertyParams = {
   field: ControllerRenderProps<Record<string, any>, string>;
+  inputAsEditor?: boolean;
   hideLabel?: boolean;
   propertyName: string;
   inputName: string;
