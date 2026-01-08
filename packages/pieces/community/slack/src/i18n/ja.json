@@ -24,7 +24,7 @@
   "Set Channel Topic": "チャンネルトピックを設定",
   "Get Message by Timestamp": "タイムスタンプによるメッセージの取得",
   "Invite User to Channel": "ユーザーをチャンネルに招待する",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Add an emoji reaction to a message.": "絵文字リアクションをメッセージに追加します。",
   "Send message to a user": "ユーザーにメッセージを送信",
   "Send message to a channel": "チャネルにメッセージを送信",
