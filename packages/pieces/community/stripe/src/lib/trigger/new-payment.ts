@@ -138,7 +138,7 @@ export const stripeNewPayment = createTrigger({
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        query: 'status:succeeded',
+        query: 'status:"succeeded"',
         limit: '5',
       },
     });

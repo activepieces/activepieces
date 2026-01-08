@@ -182,7 +182,7 @@ export const stripePaymentFailed = createTrigger({
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        query: 'status:failed',
+        query: 'status:"failed"',
         limit: '5',
       },
     });

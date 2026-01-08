@@ -121,7 +121,7 @@ export const stripeUpdatedSubscription = createTrigger({
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        status: 'failed',
+        status: 'incomplete',
         limit: '5',
       },
     });
