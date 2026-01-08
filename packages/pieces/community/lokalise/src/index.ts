@@ -12,6 +12,15 @@ import { deleteKey } from './lib/actions/delete-key';
 import { retrieveAComment } from './lib/actions/retrieve-a-comment';
 import { retrieveAProject } from './lib/actions/retrieve-a-project';
 import { retrieveAKey } from './lib/actions/retrieve-a-key';
+import { keyDeleted } from './lib/triggers/key-deleted';
+import { keyAdded } from './lib/triggers/key-added';
+import { keyUpdated } from './lib/triggers/key-updated';
+import { languageAdded } from './lib/triggers/language-added';
+import { languageRemoved } from './lib/triggers/language-removed';
+import { projectExported } from './lib/triggers/project-exported';
+import { projectImported } from './lib/triggers/project-imported';
+import { translationUpdated } from './lib/triggers/translation-updated';
+import { createCustomApiCallAction } from '@activepieces/pieces-common';
 
 export const lokalise = createPiece({
   displayName: 'Lokalise',
@@ -33,6 +42,24 @@ export const lokalise = createPiece({
     retrieveTranslation,
     updateKey,
     updateTranslation,
+    createCustomApiCallAction({
+      auth: lokaliseAuth,
+      baseUrl: () => 'https://api.lokalise.com/api2',
+      authMapping: async (auth) => {
+        return {
+          'X-Api-Token': auth.secret_text,
+        };
+      },
+    }),
   ],
-  triggers: [],
+  triggers: [
+    keyAdded,
+    keyDeleted,
+    keyUpdated,
+    languageAdded,
+    languageRemoved,
+    projectExported,
+    projectImported,
+    translationUpdated,
+  ],
 });
