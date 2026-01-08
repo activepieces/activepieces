@@ -1,6 +1,6 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateObject, LanguageModel, ToolSet } from 'ai'
+import { generateObject, LanguageModel, Tool } from 'ai'
 import { z } from 'zod/v4'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -10,7 +10,7 @@ import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
 
 export const agentTools = {
-    async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<ToolSet> {
+    async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<Record<string, Tool>> {
         const piecesTools = await Promise.all(tools.map(async (tool) => {
 
             const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({

@@ -161,7 +161,9 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
 
     return {
       type: AgentToolType.PIECE,
-      toolName: `${selectedPiece.pieceName}-${selectedAction.name}`,
+      toolName: sanitizeToolName(
+        `${selectedPiece.pieceName}-${selectedAction.name}`,
+      ),
       pieceMetadata: {
         pieceVersion: selectedPiece.pieceVersion,
         pieceName: selectedPiece.pieceName,
@@ -194,3 +196,7 @@ export const useAgentToolsStore = create<AgentToolsState>((set, get) => ({
     });
   },
 }));
+
+function sanitizeToolName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
+}
