@@ -47,15 +47,9 @@
 .tiptap h4,
 .tiptap h5,
 .tiptap h6 {
-  line-height: 1.1;
-  margin-top: 2.5rem;
-  text-wrap: pretty;
-}
-
-.tiptap h1,
-.tiptap h2 {
+  line-height: 1;
   margin-top: 1rem;
-  margin-bottom: 1rem;
+  text-wrap: pretty;
 }
 
 .tiptap h1 {
@@ -81,6 +75,6 @@
 ====================== */
 .tiptap hr {
   border: none;
-  border-top: 1px solid var(--gray-2);
+  border-top: 1px solid #adb5bd;
   margin: 2rem 0;
 }

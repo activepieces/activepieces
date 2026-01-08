@@ -1,24 +1,9 @@
 import { MentionNodeAttrs, Mention } from '@tiptap/extension-mention';
 import { Placeholder } from '@tiptap/extension-placeholder';
-import {
-  useEditor,
-  EditorContent,
-  useEditorState,
-  Editor,
-} from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import './tip-tap.css';
-import {
-  Bold,
-  Italic,
-  List,
-  ListOrdered,
-  Heading1,
-  Heading2,
-} from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import './tip-tap.css';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import { flowStructureUtil, isNil } from '@activepieces/shared';
@@ -27,84 +12,12 @@ import { useBuilderStateContext } from '../../builder-hooks';
 
 import { textMentionUtils } from './text-input-utils';
 
-function MenuBar({ editor }: { editor: Editor }) {
-  const editorState = useEditorState({
-    editor,
-    selector: (ctx) => {
-      return {
-        isBold: ctx.editor.isActive('bold') ?? false,
-        isItalic: ctx.editor.isActive('italic') ?? false,
-        isHeading1: ctx.editor.isActive('heading', { level: 1 }) ?? false,
-        isHeading2: ctx.editor.isActive('heading', { level: 2 }) ?? false,
-        isBulletList: ctx.editor.isActive('bulletList') ?? false,
-        isOrderedList: ctx.editor.isActive('orderedList') ?? false,
-      };
-    },
-  });
-
-  return (
-    <div className="flex items-center gap-1 border-b p-2">
-      <Button
-        variant={editorState.isBold ? 'secondary' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className="h-8 w-8 p-0"
-      >
-        <Bold className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={editorState.isItalic ? 'secondary' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className="h-8 w-8 p-0"
-      >
-        <Italic className="h-4 w-4" />
-      </Button>
-      <Separator orientation="vertical" className="h-6 mx-1" />
-      <Button
-        variant={editorState.isHeading1 ? 'secondary' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        className="h-8 w-8 p-0"
-      >
-        <Heading1 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={editorState.isHeading2 ? 'secondary' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        className="h-8 w-8 p-0"
-      >
-        <Heading2 className="h-4 w-4" />
-      </Button>
-      <Separator orientation="vertical" className="h-6 mx-1" />
-      <Button
-        variant={editorState.isBulletList ? 'secondary' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className="h-8 w-8 p-0"
-      >
-        <List className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={editorState.isOrderedList ? 'secondary' : 'ghost'}
-        size="sm"
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className="h-8 w-8 p-0"
-      >
-        <ListOrdered className="h-4 w-4" />
-      </Button>
-    </div>
-  );
-}
-
 type TextInputWithMentionsProps = {
   className?: string;
   initialValue?: unknown;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
-  inputAsEditor?: boolean;
 };
 
 const extensions = (placeholder?: string) => {
@@ -150,7 +63,6 @@ export const TextInputWithMentions = ({
   onChange,
   disabled,
   placeholder,
-  inputAsEditor = false,
 }: TextInputWithMentionsProps) => {
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
@@ -221,11 +133,8 @@ export const TextInputWithMentions = ({
   }
 
   return (
-    <div className="w-full">
-      <div className="border rounded-sm">
-        {inputAsEditor && <MenuBar editor={editor} />}
-        <EditorContent editor={editor} />
-      </div>
+    <div className="w-full border rounded-sm">
+      <EditorContent editor={editor} />
     </div>
   );
 };

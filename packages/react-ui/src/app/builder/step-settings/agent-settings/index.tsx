@@ -108,12 +108,6 @@ const selectAgentFormComponentForProperty = (
         />
       );
     }
-    case AgentPieceProps.PROMPT: {
-      return selectGenericFormComponentForProperty({
-        ...params,
-        inputAsEditor: true,
-      });
-    }
     default: {
       return selectGenericFormComponentForProperty(params);
     }
