@@ -3,10 +3,7 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { FlowStatus } from '../flows/flow'
 import { UserWithMetaInformation } from '../user'
 
-export const DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP = 2
-
 export const UpdatePlatformReportRequest = Type.Object({
-    estimatedTimeSavedPerStep: Nullable(Type.Number()),
     outdated: Type.Boolean(),
 })
 export type UpdatePlatformReportRequest = Static<typeof UpdatePlatformReportRequest>
@@ -53,12 +50,11 @@ export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
 
 export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
-    estimatedTimeSavedPerStep: Nullable(Type.Number()),
-    outdated: Type.Boolean(),
-    users: Type.Array(UserWithMetaInformation),
-    topPieces: AnalyticsPieceReport,
+    cachedAt: Type.String(),
     runsUsage: AnalyticsRunsUsage,
     flowsDetails: AnalyticsFlowReport,
+    timeSaved: Type.Number(),
     platformId: Type.String(),
+    users: Type.Array(UserWithMetaInformation),
 })
 export type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>

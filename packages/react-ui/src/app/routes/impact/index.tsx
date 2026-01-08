@@ -15,13 +15,10 @@ import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { userHooks } from '@/hooks/user-hooks';
 import {
-  DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP,
-  isNil,
   PlatformRole,
 } from '@activepieces/shared';
 
 import { FlowsDetails } from './details';
-import { EditEstimatedTimeSavedPerStepPopover } from './edit-estimated-time-saved-per-step-popover';
 import { Summary } from './summary';
 import { Trends } from './trends';
 
@@ -45,12 +42,6 @@ export default function AnalyticsPage() {
       refreshAnalytics();
     }
   });
-
-  const resolvedEstimatedTimeSavedPerStep = isNil(
-    data?.estimatedTimeSavedPerStep,
-  )
-    ? DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP
-    : data?.estimatedTimeSavedPerStep;
 
   return (
     <div className="flex flex-col gap-2 w-full">
@@ -79,16 +70,6 @@ export default function AnalyticsPage() {
         }
       >
         <div className="flex items-center gap-2">
-          {isPlatformAdmin && !isLoading && (
-            <EditEstimatedTimeSavedPerStepPopover
-              currentValue={data?.estimatedTimeSavedPerStep}
-            >
-              <Button variant="outline">
-                {t('Estimation')}: {resolvedEstimatedTimeSavedPerStep}{' '}
-                {t('min/step')}
-              </Button>
-            </EditEstimatedTimeSavedPerStepPopover>
-          )}
           {showRefreshButton && (
             <Button
               onClick={() => {
@@ -107,7 +88,6 @@ export default function AnalyticsPage() {
       <Trends report={isLoading ? undefined : data} />
       <FlowsDetails
         flowsDetails={isLoading ? undefined : data?.flowsDetails}
-        estimatedTimeSavedPerStep={data?.estimatedTimeSavedPerStep}
         isLoading={isLoading}
       />
     </div>

@@ -31,20 +31,4 @@ export const platformAnalyticsHooks = {
       retryDelay: 1000,
     });
   },
-  useUpdatePlatformReport: ({
-    refreshOnSuccess = true,
-  }: { refreshOnSuccess?: boolean } = {}) => {
-    const { mutate: refreshAnalytics } =
-      platformAnalyticsHooks.useRefreshAnalytics();
-    return useMutation({
-      mutationFn: async (request: UpdatePlatformReportRequest) => {
-        await analyticsApi.update(request);
-      },
-      onSuccess: (result) => {
-        if (refreshOnSuccess) {
-          refreshAnalytics();
-        }
-      },
-    });
-  },
 };

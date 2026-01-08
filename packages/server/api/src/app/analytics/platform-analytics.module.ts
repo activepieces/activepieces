@@ -22,12 +22,6 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
         return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
     })
 
-    app.post('/', UpdatePlatformReportRequestSchema, async (request) => {
-        const { platform, id } = request.principal
-        await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).update(platform.id, request.body)
-    })
-
     app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
@@ -45,16 +39,6 @@ async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): 
             params: { message: 'User is not allowed to access this resource' },
         })
     }
-}
-
-
-const UpdatePlatformReportRequestSchema = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        body: UpdatePlatformReportRequest,
-    },
 }
 
 const RefreshPlatformAnalyticsRequest = {

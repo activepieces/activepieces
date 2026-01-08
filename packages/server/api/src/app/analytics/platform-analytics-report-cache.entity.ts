@@ -8,25 +8,14 @@ type PlatformAnalyticsReportEntity = PlatformAnalyticsReport & {
     platform: Platform
 }
 export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsReportEntity>({
-    name: 'platform_analytics_report',
+    name: 'platform_analytics_report_cache',
     columns: {
         ...BaseColumnSchemaPart,
-        estimatedTimeSavedPerStep: {
-            type: Number,
-            nullable: true,
-        },
         platformId: {
             type: String,
         },
-        outdated: {
-            type: Boolean,
-        },
-        users: {
-            type: 'jsonb',
-            nullable: false,
-        },
-        topPieces: {
-            type: 'jsonb',
+        cachedAt: {
+            type: Date,
             nullable: false,
         },
         runsUsage: {
@@ -37,12 +26,15 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
             type: 'jsonb',
             nullable: false,
         },
+        timeSaved: {
+            type: Number,
+            nullable: false,
+        }
     },    
     relations: {
         platform: {
             target: 'platform',
-            type: 'one-to-one',
-            cascade: true,
+            type: 'many-to-one',
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
