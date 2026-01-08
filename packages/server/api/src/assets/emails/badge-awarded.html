@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html
+  lang="en"
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:v="urn:schemas-microsoft-com:vml"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1"
+    />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="format-detection" content="date=no" />
+    <meta name="format-detection" content="address=no" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>You've earned a new badge!</title>
+    <style type="text/css" media="screen">
+      @font-face {
+        font-family: 'Graphik';
+        src: url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Regular-Web.5a0c1a002e.woff') format('woff');
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: 'Graphik';
+        src: url('https://d3e54v103j8qbb.cloudfront.net/fonts/Graphik-Medium-Web.abf6e1188f.woff') format('woff');
+        font-weight: 500;
+        font-style: normal;
+      }
+      body {
+        padding: 0 !important;
+        margin: 0 auto !important;
+        display: block !important;
+        min-width: 100% !important;
+        width: 100% !important;
+        background: #ffffff;
+        -webkit-text-size-adjust: none;
+      }
+      img {
+        -ms-interpolation-mode: bicubic;
+      }
+      @media only screen and (max-device-width: 520px),
+        only screen and (max-width: 520px) {
+        .td, .m-shell {
+          width: 100% !important;
+          min-width: 100% !important;
+        }
+        .h1 {
+          font-size: 32px !important;
+          line-height: 40px !important;
+        }
+        .p0-20 {
+          padding: 0 20px !important;
+        }
+      }
+    </style>
+  </head>
+  <body class="body" style="background: #ffffff; margin: 0 auto; width: 100%;">
+    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff">
+      <tbody>
+        <tr>
+          <td align="center">
+            
+            <table width="100%" border="0" cellspacing="0" cellpadding="0">
+              <tbody>
+                <tr>
+                  <td align="center" style="padding: 50px 20px">
+                    <table width="600" border="0" cellspacing="0" cellpadding="0" class="m-shell">
+                      <tbody>
+                        <tr>
+                          <td style="text-align: left;">
+                            <img src="{{fullLogoUrl}}" width="160" border="0" alt="{{platformName}}" />
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table role="presentation" width="600" border="0" cellspacing="0" cellpadding="0" class="m-shell">
+              <tbody>
+                <tr>
+                  <td class="p0-20" style="padding-bottom: 60px;">
+                    <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tbody>
+                        <tr>
+                          <td style="padding-bottom: 32px; color: #000000; font-family: 'Graphik', Helvetica, Arial, sans-serif; font-size: 36px; line-height: 44px; text-align: left; font-weight: 500;">
+                            Congratulations! <br/>You earned a new badge.
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td align="center" style="padding-bottom: 40px; padding-top: 20px;">
+                            <img 
+                              src="{{badgeImageUrl}}" 
+                              width="220" 
+                              alt="{{badgeTitle}}" 
+                              style="display: block; max-width: 100%; height: auto; outline: none; border: none; text-decoration: none;"
+                            />
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td style="padding-bottom: 12px; color: #000000; font-family: 'Graphik', Helvetica, Arial, sans-serif; font-size: 24px; line-height: 32px; text-align: center; font-weight: 500;">
+                            {{badgeTitle}}
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding-bottom: 40px; color: #555555; font-family: 'Graphik', Helvetica, Arial, sans-serif; font-size: 18px; line-height: 28px; text-align: center;">
+                            {{badgeDescription}}
+                          </td>
+                        </tr>
+
+                        <tr>
+                          <td style="padding-top: 30px; border-top: 1px solid #EAEAEA; color: #000001; font-family: 'Graphik', Helvetica, Arial, sans-serif; font-size: 16px; line-height: 26px;">
+                            You're doing amazing things on <strong>{{platformName}}</strong>. Keep building and unlocking more rewards!
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <table width="600" border="0" cellspacing="0" cellpadding="0" class="m-shell">
+              <tr>
+                <td style="padding-bottom: 40px;">
+                  {{> footer}}
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </body>
+</html>
