@@ -3,7 +3,7 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../core/db/repo-factory'
 import { distributedLock } from '../database/redis-connections'
-import { flowRepo } from '../flows/flow/flow.repo'
+import { flowRunRepo } from '../flows/flow-run/flow-run-service'
 import { flowService } from '../flows/flow/flow.service'
 import { userRepo } from '../user/user-service'
 import { PlatformAnalyticsReportEntity } from './platform-analytics-report.entity'
@@ -53,14 +53,14 @@ async function listRuns(projectIds: string[], afterDate: string | null, currentD
     if (projectIds.length === 0) {
         return []
     }
-    let query = flowRepo().createQueryBuilder('"flow_run"')
-        .select('"flow_run"."flowId"', 'flowId')
-        .addSelect('DATE_TRUNC(\'day\', "flow_run"."created")', 'day')
+    let query = flowRunRepo().createQueryBuilder('flow_run')
+        .select('flow_run.flowId', 'flowId')
+        .addSelect('DATE_TRUNC(\'day\', flow_run.created)', 'day')
         .addSelect('COUNT(*)', 'runs')
-        .where('"flow_run"."projectId" IN (:...projectIds)', { projectIds })
-        .where('"flow_run"."environment" = :environment', { environment: RunEnvironment.PRODUCTION })
-        .groupBy('"flow_run"."flowId"')
-        .addGroupBy('DATE_TRUNC(\'day\', "flow_run"."created")')
+        .where('flow_run.projectId IN (:...projectIds)', { projectIds })
+        .andWhere('flow_run.environment = :environment', { environment: RunEnvironment.PRODUCTION })
+        .groupBy('flow_run.flowId')
+        .addGroupBy('DATE_TRUNC(\'day\', flow_run.created)')
 
     if (!isNil(afterDate)) {
         query = query.andWhere('flow_run.created > :afterDate', {
