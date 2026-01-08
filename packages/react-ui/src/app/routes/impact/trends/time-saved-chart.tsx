@@ -25,11 +25,12 @@ export function TimeSavedChart({
   report,
   selectedDateRange,
 }: TimeSavedChartProps) {
+  
   const chartData =
-    report?.runsUsage
+    report?.runs
       .map((data) => ({
         date: data.day,
-        minutesSaved: data.minutesSaved,
+        minutesSaved: (report?.flows.find(flow => flow.flowId === data.flowId)?.timeSavedPerRun ?? 0)* data.runs
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),

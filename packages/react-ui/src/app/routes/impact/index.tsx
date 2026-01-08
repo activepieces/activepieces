@@ -11,7 +11,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
+import { platformAnalyticsHooks, TimePeriod } from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { userHooks } from '@/hooks/user-hooks';
 import {
@@ -26,7 +26,7 @@ const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
 export default function AnalyticsPage() {
   const { data: user } = userHooks.useCurrentUser();
-  const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
+  const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(TimePeriod.LAST_THREE_MONTHS);
   const showRefreshButton = !isLoading;
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
@@ -84,10 +84,10 @@ export default function AnalyticsPage() {
           )}
         </div>
       </DashboardPageHeader>
-      <Summary report={isLoading ? undefined : data} />
-      <Trends report={isLoading ? undefined : data} />
+      <Summary report={isLoading ? undefined : data ?? undefined} />
+      <Trends report={isLoading ? undefined : data ?? undefined} />
       <FlowsDetails
-        flowsDetails={isLoading ? undefined : data?.flowsDetails}
+        report={isLoading ? undefined : data ?? undefined}
         isLoading={isLoading}
       />
     </div>

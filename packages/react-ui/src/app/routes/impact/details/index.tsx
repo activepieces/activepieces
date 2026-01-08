@@ -18,17 +18,19 @@ import {
   AnalyticsFlowReportItem,
   isNil,
   PlatformRole,
+  PlatformAnalyticsReport,
 } from '@activepieces/shared';
 
 import { EditTimeSavedPopover } from './edit-time-saved-popover';
 import { FlowDetailsHeader } from './flow-details-header';
+import { formatUtils } from '@/lib/utils';
 
 type FlowsDetailsProps = {
-  flowsDetails?: AnalyticsFlowReportItem[];
+  report?: PlatformAnalyticsReport;
   isLoading: boolean;
 };
 
-type FlowDetailsWithId = AnalyticsFlowReportItem & { id: string };
+type FlowDetailsWithId = PlatformAnalyticsReport['flows'][number] & { id: string };
 
 const formatMinutes = (minutes: number) => {
   if (minutes < 60) {
@@ -44,6 +46,7 @@ const formatMinutes = (minutes: number) => {
 
 const createColumns = (
   isPlatformAdmin: boolean,
+  report?: PlatformAnalyticsReport,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -94,7 +97,7 @@ const createColumns = (
         }
       >
         <LayoutGrid className="h-3.5 w-3.5" />
-        {row.original.projectName}
+        {row.original.projectId}
       </div>
     ),
   },
@@ -105,21 +108,8 @@ const createColumns = (
     ),
     cell: ({ row }) => {
       const timeSavedPerRun = row.original.timeSavedPerRun;
-      const runs = row.original.runs;
-      const minutesSaved = row.original.minutesSaved;
-      const isEstimated = timeSavedPerRun.isEstimated;
-      const perRunValue = isEstimated
-        ? runs > 0
-          ? Math.round(minutesSaved / runs)
-          : 0
-        : timeSavedPerRun.value ?? 0;
-      const tooltipText = t(
-        'This flow ran {runs} time(s), saving {perRun} minutes per run',
-        {
-          runs: runs.toLocaleString(),
-          perRun: `${isEstimated ? '~' : ''}${perRunValue}`,
-        },
-      );
+      const runs = (report?.runs.find(run => run.flowId === row.original.flowId)?.runs ?? 0) * (row.original.timeSavedPerRun ?? 0);
+      const minutesSaved = runs;
       return (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -129,7 +119,10 @@ const createColumns = (
             </div>
           </TooltipTrigger>
           <TooltipContent side="top" className="max-w-xs">
-            {tooltipText}
+            {t('This flow ran {runs} time(s), saving {minutesSaved} minutes per run', {
+              runs: runs.toLocaleString(),
+              minutesSaved: formatUtils.formatToHoursAndMinutes(timeSavedPerRun ?? 0),
+            })}
           </TooltipContent>
         </Tooltip>
       );
@@ -138,34 +131,23 @@ const createColumns = (
 ];
 
 export function FlowsDetails({
-  flowsDetails,
+  report,
   isLoading,
 }: FlowsDetailsProps) {
-  const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
   const { data: user } = userHooks.useCurrentUser();
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const flowsDetailsWithOverrides = useMemo(() => {
-    if (!flowsDetails) return undefined;
+    if (!report) return undefined;
 
-    return flowsDetails.map((flow) => {
-      const override = timeSavedPerRunOverrides[flow.flowId];
-      if (override === undefined) {
-        return flow;
-      }
-
-      const newValue = override.value;
+    return report.flows.map((flow) => {
       return {
         ...flow,
-        timeSavedPerRun: {
-          value: newValue,
-          isEstimated: isNil(newValue),
-        },
-        minutesSaved:
-          newValue !== null ? newValue * flow.runs : flow.minutesSaved,
+        runs: report.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0,
+        minutesSaved: (flow.timeSavedPerRun ?? 0) * (report.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0),
       };
     });
-  }, [flowsDetails, timeSavedPerRunOverrides]);
+  }, [report]);
 
   if (!flowsDetailsWithOverrides && !isLoading) {
     return null;
@@ -179,11 +161,11 @@ export function FlowsDetails({
       }))
       .sort((a, b) => b.minutesSaved - a.minutesSaved) ?? [];
 
-  const columns = createColumns(isPlatformAdmin);
+  const columns = createColumns(isPlatformAdmin, report);
 
   return (
     <div className="flex flex-col gap-4 mb-8">
-      <FlowDetailsHeader flowsDetails={flowsDetailsWithOverrides} />
+      <FlowDetailsHeader report={report} />
       <DataTable
         columns={columns}
         page={{

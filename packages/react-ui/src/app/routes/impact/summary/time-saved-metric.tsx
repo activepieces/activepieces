@@ -15,8 +15,9 @@ export const TimeSavedMetric = ({
   report,
   isLoading,
 }: TimeSavedMetricProps) => {
+  
   const minutesSaved =
-    report?.flowsDetails.reduce((acc, flow) => acc + flow.minutesSaved, 0) ?? 0;
+    report?.flows.reduce((acc, flow) => acc + (flow.timeSavedPerRun ?? 0) * (report?.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0), 0) ?? 0;
   const equivalentWorkdays = Math.round(minutesSaved / 8 / 60);
 
   if (isLoading) {

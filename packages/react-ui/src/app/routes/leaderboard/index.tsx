@@ -12,7 +12,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
+import {
+  platformAnalyticsHooks,
+  TimePeriod as TimePeriodEnum,
+} from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { downloadFile, formatUtils } from '@/lib/utils';
 
@@ -21,64 +24,90 @@ import { UsersLeaderboard, UserStats } from './users-leaderboard';
 
 export type TimePeriod = 'weekly' | 'monthly' | '3-months' | 'all-time';
 
+function mapTimePeriodToEnum(timePeriod: TimePeriod): TimePeriodEnum {
+  switch (timePeriod) {
+    case 'weekly':
+      return TimePeriodEnum.LAST_WEEK;
+    case 'monthly':
+      return TimePeriodEnum.LAST_MONTH;
+    case '3-months':
+      return TimePeriodEnum.LAST_THREE_MONTHS;
+    case 'all-time':
+      return TimePeriodEnum.ALL_TIME;
+    default:
+      return TimePeriodEnum.LAST_MONTH;
+  }
+}
+
 export default function LeaderboardPage() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('monthly');
-  const { data, isLoading } = platformAnalyticsHooks.useAnalytics(timePeriod);
+  const timePeriodEnum = mapTimePeriodToEnum(timePeriod);
+  const { data: analyticsData, isLoading: isAnalyticsLoading } =
+    platformAnalyticsHooks.useAnalytics();
+  const usersLeaderboardResult = platformAnalyticsHooks.useUsersLeaderboard(
+    timePeriodEnum,
+  );
+  const projectsLeaderboardResult =
+    platformAnalyticsHooks.useProjectLeaderboard(timePeriodEnum);
   const [activeTab, setActiveTab] = useState('creators');
 
+  const isLoading =
+    isAnalyticsLoading ||
+    (typeof usersLeaderboardResult === 'object' &&
+      'isLoading' in usersLeaderboardResult &&
+      usersLeaderboardResult.isLoading) ||
+    (typeof projectsLeaderboardResult === 'object' &&
+      'isLoading' in projectsLeaderboardResult &&
+      projectsLeaderboardResult.isLoading);
+
   const peopleData = useMemo((): UserStats[] => {
-    if (!data?.flowsDetails || !data?.users) return [];
+    if (
+      isLoading ||
+      !analyticsData?.users ||
+      !Array.isArray(usersLeaderboardResult)
+    ) {
+      return [];
+    }
 
-    const userMap = new Map(data.users.map((user) => [user.id, user]));
-    const creatorStatsMap = new Map<string, UserStats>();
+    const userMap = new Map(
+      analyticsData.users.map((user) => [user.id, user]),
+    );
 
-    data.flowsDetails.forEach((flow) => {
-      if (!flow.ownerId) return;
-      const user = userMap.get(flow.ownerId);
-      if (!user) return;
+    return usersLeaderboardResult
+      .map((item) => {
+        const user = userMap.get(item.userId);
+        if (!user) return null;
 
-      const existing = creatorStatsMap.get(flow.ownerId);
-      if (existing) {
-        existing.flowCount += 1;
-        existing.minutesSaved += flow.minutesSaved;
-      } else {
-        creatorStatsMap.set(flow.ownerId, {
-          id: flow.ownerId,
-          visibleId: flow.ownerId,
-          userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
+        return {
+          id: item.userId,
+          visibleId: item.userId,
+          userName:
+            `${user.firstName} ${user.lastName}`.trim() || user.email,
           userEmail: user.email,
-          flowCount: 1,
-          minutesSaved: flow.minutesSaved,
-        });
-      }
-    });
-
-    return Array.from(creatorStatsMap.values());
-  }, [data?.flowsDetails, data?.users]);
+          flowCount: item.flowCount ?? 0,
+          minutesSaved: item.minutesSaved ?? 0,
+        };
+      })
+      .filter((item): item is UserStats => item !== null);
+  }, [
+    analyticsData?.users,
+    usersLeaderboardResult,
+    isLoading,
+  ]);
 
   const projectsData = useMemo((): ProjectStats[] => {
-    if (!data?.flowsDetails) return [];
+    if (isLoading || !Array.isArray(projectsLeaderboardResult)) {
+      return [];
+    }
 
-    const projectStatsMap = new Map<string, ProjectStats>();
-
-    data.flowsDetails.forEach((flow) => {
-      const existing = projectStatsMap.get(flow.projectId);
-      if (existing) {
-        existing.flowCount += 1;
-        existing.minutesSaved += flow.minutesSaved;
-      } else {
-        projectStatsMap.set(flow.projectId, {
-          id: flow.projectId,
-          projectId: flow.projectId,
-          projectName: flow.projectName,
-          flowCount: 1,
-          minutesSaved: flow.minutesSaved,
-        });
-      }
-    });
-
-    return Array.from(projectStatsMap.values());
-  }, [data?.flowsDetails]);
+    return projectsLeaderboardResult.map((item) => ({
+      id: item.projectId,
+      projectId: item.projectId,
+      projectName: item.projectName,
+      flowCount: item.flowCount ?? 0,
+      minutesSaved: item.minutesSaved ?? 0,
+    }));
+  }, [projectsLeaderboardResult, isLoading]);
 
   const handleDownload = () => {
     if (activeTab === 'creators') {
@@ -90,7 +119,7 @@ export default function LeaderboardPage() {
           (person) =>
             `"${person.userName}","${person.userEmail}",${
               person.flowCount
-            },"${formatUtils.formatToHoursAndMinutes(person.minutesSaved)}"`,
+            },"${formatUtils.formatToHoursAndMinutes(person.minutesSaved || 0)}"`,
         )
         .join('\n');
 
@@ -108,7 +137,7 @@ export default function LeaderboardPage() {
           (project) =>
             `"${project.projectName}",${
               project.flowCount
-            },"${formatUtils.formatToHoursAndMinutes(project.minutesSaved)}"`,
+            },"${formatUtils.formatToHoursAndMinutes(project.minutesSaved || 0)}"`,
         )
         .join('\n');
 
@@ -156,6 +185,7 @@ export default function LeaderboardPage() {
                 <SelectContent>
                   <SelectItem value="weekly">{t('Weekly')}</SelectItem>
                   <SelectItem value="monthly">{t('Monthly')}</SelectItem>
+                  <SelectItem value="3-months">{t('3 Months')}</SelectItem>
                   <SelectItem value="all-time">{t('All Time')}</SelectItem>
                 </SelectContent>
               </Select>

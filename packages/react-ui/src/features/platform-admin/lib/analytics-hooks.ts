@@ -80,7 +80,7 @@ export const platformAnalyticsHooks = {
     });
     return { data, isLoading };
   },
-  useAnalyticsTimeBased: (timePeriod: TimePeriod, projectId: string): { isLoading: boolean, data: PlatformAnalyticsReport | null } => {
+  useAnalyticsTimeBased: (timePeriod: TimePeriod, projectId?: string): { isLoading: boolean, data: PlatformAnalyticsReport | null } => {
     const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
     if (isLoading || isNil(data)) {
       return {
@@ -88,7 +88,7 @@ export const platformAnalyticsHooks = {
         isLoading: isLoading,
       };
     }
-    const flows = data.flows.filter(flow => flow.projectId === projectId);
+    const flows = data.flows.filter(flow => projectId ? flow.projectId === projectId : true);
     const runs = data.runs.filter(run => flows.some(flow => flow.flowId === run.flowId));
     return {
       isLoading,

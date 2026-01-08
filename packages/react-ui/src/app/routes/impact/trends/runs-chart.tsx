@@ -22,10 +22,10 @@ type RunsChartProps = {
 
 export function RunsChart({ report, selectedDateRange }: RunsChartProps) {
   const chartData =
-    report?.runsUsage
+    report?.runs
       .map((data) => ({
         date: data.day,
-        runs: data.totalRuns,
+        runs: data.runs,
       }))
       .sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
