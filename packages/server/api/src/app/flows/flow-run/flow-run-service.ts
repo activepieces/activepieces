@@ -75,9 +75,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             environment: RunEnvironment.PRODUCTION,
         })
 
-        if (!isNil(params.archived)) {
+        if (!params.includeArchived) {
             query = query.andWhere({
-                archivedAt: params.archived ? Not(IsNull()) : IsNull(),
+                archivedAt: IsNull(),
             })
         }
 
@@ -640,7 +640,7 @@ type ListParams = {
     createdBefore?: string
     failedStepName?: string
     flowRunIds?: FlowRunId[]
-    archived?: boolean
+    includeArchived?: boolean
 }
 
 type GetOneParams = {
