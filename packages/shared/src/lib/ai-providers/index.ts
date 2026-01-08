@@ -93,15 +93,15 @@ export const AIProviderAuthConfig = Type.Union([
     ActivePiecesProviderAuthConfig,
 ])
 export type AIProviderAuthConfig = Static<typeof AIProviderAuthConfig>
-
+// Order matters, put schemas with required fields first, empty ones last. This is to avoid empty objects matching any object.
 export const AIProviderConfig = Type.Union([
-    AnthropicProviderConfig,
+    OpenAICompatibleProviderConfig,
+    CloudflareGatewayProviderConfig,
     AzureProviderConfig,
+    AnthropicProviderConfig,
     GoogleProviderConfig,
     OpenAIProviderConfig,
     OpenRouterProviderConfig,
-    CloudflareGatewayProviderConfig,
-    OpenAICompatibleProviderConfig,
     ActivePiecesProviderConfig,
 ])
 export type AIProviderConfig = Static<typeof AIProviderConfig>

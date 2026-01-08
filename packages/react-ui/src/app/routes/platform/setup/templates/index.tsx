@@ -39,7 +39,7 @@ import { Template, TemplateType } from '@activepieces/shared';
 import { CreateTemplateDialog } from './create-template-dialog';
 import { UpdateTemplateDialog } from './update-template-dialog';
 
-export default function TemplatesPage() {
+const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const [searchParams] = useSearchParams();
@@ -261,4 +261,6 @@ export default function TemplatesPage() {
       </div>
     </LockedFeatureGuard>
   );
-}
+};
+
+export { PlatformTemplatesPage };

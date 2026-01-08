@@ -1,37 +1,42 @@
 import { t } from 'i18next';
+import { useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { FlowAction, FlowTrigger } from '@activepieces/shared';
 
-import { BUILDER_NAVIGATION_SIDEBAR_ID, flowUtilConsts } from './utils/consts';
+import {
+  useCursorPosition,
+  useCursorPositionEffect,
+} from '../state/cursor-position-context';
 
-const StepDragOverlay = ({
-  step,
-  cursorPosition,
-}: {
-  step: FlowAction | FlowTrigger;
-  cursorPosition: { x: number; y: number };
-}) => {
+import { flowCanvasConsts } from './utils/consts';
+
+const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   const { open } = useSidebar();
+  const { cursorPosition } = useCursorPosition();
+  const [overlayPosition, setOverlayPosition] =
+    useState<typeof cursorPosition>(cursorPosition);
   const builderNavigationBar = document.getElementById(
-    BUILDER_NAVIGATION_SIDEBAR_ID,
+    flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID,
   );
   const builderNavigationBarWidth = open
     ? builderNavigationBar?.clientWidth ?? 0
     : 0;
   const left = `${
-    cursorPosition.x -
-    flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
+    overlayPosition.x -
+    flowCanvasConsts.STEP_DRAG_OVERLAY_WIDTH / 2 -
     builderNavigationBarWidth
   }px`;
   const top = `${
-    cursorPosition.y - flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
+    overlayPosition.y - flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT - 20
   }px`;
   const { stepMetadata } = stepsHooks.useStepMetadata({
     step,
   });
-
+  useCursorPositionEffect((position) => {
+    setOverlayPosition(position);
+  });
   return (
     <div
       className={
@@ -40,8 +45,8 @@ const StepDragOverlay = ({
       style={{
         left,
         top,
-        height: `${flowUtilConsts.STEP_DRAG_OVERLAY_HEIGHT}px`,
-        width: `${flowUtilConsts.STEP_DRAG_OVERLAY_WIDTH}px`,
+        height: `${flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT}px`,
+        width: `${flowCanvasConsts.STEP_DRAG_OVERLAY_WIDTH}px`,
       }}
     >
       <img

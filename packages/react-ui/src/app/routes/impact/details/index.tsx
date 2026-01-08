@@ -76,7 +76,6 @@ const createColumns = (
     cell: ({ row }) => {
       return (
         <ApAvatar
-          type="user"
           id={row.original.ownerId ?? ''}
           size="small"
           includeAvatar={true}

@@ -25,13 +25,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
 
-const FlowDragLayer = ({
-  children,
-  cursorPosition,
-}: {
-  children: React.ReactNode;
-  cursorPosition: { x: number; y: number };
-}) => {
+const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const viewport = useViewport();
   const [previousViewPort, setPreviousViewPort] = useState(viewport);
   const [
@@ -155,12 +149,7 @@ const FlowDragLayer = ({
         <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
 
-      {draggedStep && (
-        <StepDragOverlay
-          cursorPosition={cursorPosition}
-          step={draggedStep}
-        ></StepDragOverlay>
-      )}
+      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
     </>
   );
 };

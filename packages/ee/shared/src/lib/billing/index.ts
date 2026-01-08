@@ -1,4 +1,4 @@
-import { AiCreditsAutoTopUpState, isNil, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '@activepieces/shared'
+import { AiCreditsAutoTopUpState, isNil, Nullable, PiecesFilterType, PlanName, PlatformPlanWithOnlyLimits, PlatformUsageMetric, TeamProjectsLimit } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
 export const PRICE_PER_EXTRA_ACTIVE_FLOWS = 5
@@ -45,6 +45,7 @@ export const UpdateAICreditsAutoTopUpParamsSchema = Type.Union([
         state: Type.Literal(AiCreditsAutoTopUpState.ENABLED),
         minThreshold: Type.Number(),
         creditsToAdd: Type.Number(),
+        maxMonthlyLimit: Nullable(Type.Number()),
     }),
     Type.Object({
         state: Type.Literal(AiCreditsAutoTopUpState.DISABLED),

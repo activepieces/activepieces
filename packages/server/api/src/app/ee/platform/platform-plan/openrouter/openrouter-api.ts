@@ -1,4 +1,3 @@
-import { httpClient, HttpMethod } from '@activepieces/pieces-common'
 import { AppSystemProp } from '@activepieces/server-shared'
 import { system } from '../../../../helper/system/system'
 
@@ -8,9 +7,8 @@ export const openRouterApi = {
     async createKey(request: CreateKeyRequest): Promise<CreateKeyResponse> {
         const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
 
-        const res = await httpClient.sendRequest<CreateKeyResponse>({
-            url: `${OPENROUTER_BASE_URL}/keys`,
-            method: HttpMethod.POST,
+        const res = await fetch(`${OPENROUTER_BASE_URL}/keys`, {
+            method: 'POST',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
@@ -18,17 +16,20 @@ export const openRouterApi = {
             body: JSON.stringify(request),
         })
 
-        return res.body
+        if (!res.ok) {
+            const text = await res.text()
+            throw new Error(`[OpenRouter] createKey error: ${res.status} ${text}`)
+        }
+
+        return res.json()
     },
 
     async updateKey(request: UpdateKeyRequest): Promise<UpdateKeyResponse> {
         const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
-
         const { hash, ...rest } = request
 
-        const res = await httpClient.sendRequest<UpdateKeyResponse>({
-            url: `${OPENROUTER_BASE_URL}/keys/${hash}`,
-            method: HttpMethod.PATCH,
+        const res = await fetch(`${OPENROUTER_BASE_URL}/keys/${hash}`, {
+            method: 'PATCH',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
@@ -36,45 +37,58 @@ export const openRouterApi = {
             body: JSON.stringify(rest),
         })
 
-        return res.body
+        if (!res.ok) {
+            const text = await res.text()
+            throw new Error(`[OpenRouter] updateKey error: ${res.status} ${text}`)
+        }
+
+        return res.json()
     },
 
     async getKey(request: GetKeyRequest): Promise<GetKeyResponse> {
         const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
 
-        const res = await httpClient.sendRequest<GetKeyResponse>({
-            url: `${OPENROUTER_BASE_URL}/keys/${request.hash}`,
-            method: HttpMethod.GET,
+        const res = await fetch(`${OPENROUTER_BASE_URL}/keys/${request.hash}`, {
+            method: 'GET',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 'Content-Type': 'application/json',
             },
         })
 
-        return res.body
+        if (!res.ok) {
+            const text = await res.text()
+            throw new Error(`[OpenRouter] getKey error: ${res.status} ${text}`)
+        }
+
+        return res.json()
     },
 
     async listKeys(request: ListKeysRequest): Promise<ListKeysResponse> {
         const apiKey = system.getOrThrow(AppSystemProp.OPENROUTER_PROVISION_KEY)
 
         const params = new URLSearchParams()
-
         if (request.offset !== undefined) {
             params.set('offset', request.offset.toString())
         }
         if (request.include_disabled !== undefined) {
             params.set('include_disabled', String(request.include_disabled))
         }
+        const url = `${OPENROUTER_BASE_URL}/keys?${params.toString()}`
 
-        const res = await httpClient.sendRequest<ListKeysResponse>({
-            url: `${OPENROUTER_BASE_URL}/keys?${params.toString()}`,
-            method: HttpMethod.GET,
+        const res = await fetch(url, {
+            method: 'GET',
             headers: {
                 Authorization: `Bearer ${apiKey}`,
             },
         })
 
-        return res.body
+        if (!res.ok) {
+            const text = await res.text()
+            throw new Error(`[OpenRouter] listKeys error: ${res.status} ${text}`)
+        }
+
+        return res.json()
     },
 }
 

@@ -12,6 +12,9 @@ import { authenticationApi } from './authentication-api';
 const tokenKey = 'token';
 const projectIdKey = 'projectId';
 export const authenticationSession = {
+  setProjectId(projectId: string) {
+    ApStorage.getInstance().setItem(projectIdKey, projectId);
+  },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
       ApStorage.setInstanceToSessionStorage();

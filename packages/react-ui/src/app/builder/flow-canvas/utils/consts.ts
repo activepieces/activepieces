@@ -66,7 +66,7 @@ const doesNodeAffectBoundingBoxWidth: (
   type === ApNodeType.BIG_ADD_BUTTON ||
   type === ApNodeType.STEP ||
   type === ApNodeType.LOOP_RETURN_NODE;
-export const flowUtilConsts = {
+export const flowCanvasConsts = {
   ARC_LENGTH,
   ARC_LEFT,
   ARC_RIGHT,
@@ -102,9 +102,9 @@ export const flowUtilConsts = {
   LABEL_VERTICAL_PADDING,
   STEP_DRAG_OVERLAY_WIDTH,
   STEP_DRAG_OVERLAY_HEIGHT,
+  STEP_CONTEXT_MENU_ATTRIBUTE: 'step-context-menu',
+  SELECTION_RECT_CHEVRON_ATTRIBUTE: 'selection-rect-chevron',
+  BUILDER_NAVIGATION_SIDEBAR_ID: 'builder-navigation-sidebar',
+  NODE_SELECTION_RECT_CLASS_NAME: 'react-flow__nodesselection-rect',
+  SIDEBAR_ANIMATION_DURATION: 200,
 };
-
-export const STEP_CONTEXT_MENU_ATTRIBUTE = 'step-context-menu';
-export const SELECTION_RECT_CHEVRON_ATTRIBUTE = 'selection-rect-chevron';
-export const EMPTY_STEP_PARENT_NAME = 'empty-step-parent';
-export const BUILDER_NAVIGATION_SIDEBAR_ID = 'builder-navigation-sidebar';

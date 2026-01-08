@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
-import { flowUtilConsts } from '../utils/consts';
+import { flowCanvasConsts } from '../utils/consts';
 import { flowCanvasUtils } from '../utils/flow-canvas-utils';
 import { ApButtonData } from '../utils/types';
 
@@ -23,7 +23,7 @@ const ApAddButton = React.memo((props: ApButtonData) => {
   const { setNodeRef } = useDroppable({
     id: props.edgeId,
     data: {
-      accepts: flowUtilConsts.DRAGGED_STEP_TAG,
+      accepts: flowCanvasConsts.DRAGGED_STEP_TAG,
       ...props,
     },
   });
@@ -44,8 +44,8 @@ const ApAddButton = React.memo((props: ApButtonData) => {
       {showDropIndicator && !readonly && (
         <div
           style={{
-            width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-            height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+            width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+            height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
           }}
           className={cn('transition-all bg-primary/90  rounded-md', {
             'shadow-add-button': isStepInsideDropZone,
@@ -53,10 +53,10 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         >
           <div
             style={{
-              width: flowUtilConsts.AP_NODE_SIZE.STEP.width + 'px',
-              height: flowUtilConsts.AP_NODE_SIZE.STEP.height + 'px',
-              left: `${-flowUtilConsts.AP_NODE_SIZE.STEP.width / 2}px`,
-              top: `${-flowUtilConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2}px`,
+              width: flowCanvasConsts.AP_NODE_SIZE.STEP.width + 'px',
+              height: flowCanvasConsts.AP_NODE_SIZE.STEP.height + 'px',
+              left: `${-flowCanvasConsts.AP_NODE_SIZE.STEP.width / 2}px`,
+              top: `${-flowCanvasConsts.VERTICAL_SPACE_BETWEEN_STEPS / 2}px`,
             }}
             className={cn(' absolute    rounded-md box-content ')}
             ref={setNodeRef}
@@ -70,14 +70,14 @@ const ApAddButton = React.memo((props: ApButtonData) => {
         >
           <div
             style={{
-              width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-              height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+              width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+              height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
             }}
           >
             <div
               style={{
-                width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+                height: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
               }}
               className={cn('rounded-md cursor-pointer transition-all z-50', {
                 'shadow-add-button': isPieceSelectorOpen,
@@ -85,8 +85,9 @@ const ApAddButton = React.memo((props: ApButtonData) => {
             >
               <div
                 style={{
-                  width: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
-                  height: flowUtilConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
+                  width: flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.width + 'px',
+                  height:
+                    flowCanvasConsts.AP_NODE_SIZE.ADD_BUTTON.height + 'px',
                 }}
                 className={cn(
                   'bg-background  border border-border border-solid relative group overflow-visible rounded-md cursor-pointer  flex items-center justify-center  transition-all duration-300 ease-in-out',

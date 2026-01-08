@@ -6,6 +6,7 @@ import {
     GetProviderConfigResponse,
     isNil,
     PlatformId,
+    spreadIfDefined,
     UpdateAIProviderRequest,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
@@ -104,14 +105,12 @@ export const aiProviderService = (log: FastifyBaseLogger) => ({
             })
         }
 
-        await aiProviderRepo().upsert({
-            id: providerId ?? apId(),
-            auth: await encryptUtils.encryptObject(request.auth),
-            config: request.config,
-            provider: aiProvider.provider,
+        const encryptedAuth = !isNil(request.auth) ? await encryptUtils.encryptObject(request.auth) : undefined
+        await aiProviderRepo().update(providerId, {
+            ...spreadIfDefined('auth', encryptedAuth),
+            ...spreadIfDefined('config', request.config),
             displayName: request.displayName,
-            platformId,
-        }, ['id'])
+        })
     },
 
     async delete(platformId: PlatformId, providerId: string): Promise<void> {
