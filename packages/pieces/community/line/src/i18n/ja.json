@@ -1,7 +1,7 @@
 {
   "Build chatbots for LINE": "LINE 用のチャットボットを構築",
-  "Push Message": "Push Message",
-  "Custom API Call": "カスタムAPI通話",
+  "Push Message": "メッセージを送信",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Push message to the line account": "ラインアカウントにメッセージを送る",
   "Make a custom API call to a specific endpoint": "特定のエンドポイントへのカスタム API コールを実行します。",
   "User Id": "ユーザー ID",
