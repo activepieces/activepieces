@@ -39,7 +39,7 @@ export const NoteTools = ({
 export const NoteColorVariantToTailwind = {
   [NoteColorVariant.ORANGE]: 'bg-orange-200 text-orange-700',
   [NoteColorVariant.RED]: 'bg-red-200 text-red-700',
-  [NoteColorVariant.GREEN]: 'bg-emerald-200 text-emrald-700',
+  [NoteColorVariant.GREEN]: 'bg-emerald-200 text-emerald-700',
   [NoteColorVariant.BLUE]: 'bg-sky-200 text-sky-700',
   [NoteColorVariant.PURPLE]: 'bg-indigo-200 text-indigo-700',
   [NoteColorVariant.YELLOW]: 'bg-amber-200 text-amber-700',

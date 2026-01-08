@@ -21,7 +21,7 @@ export const CanvasContextMenu = ({
   children,
 }: CanvasContextMenuProps) => {
   return (
-    <ContextMenu modal={false} onOpenChange={() => console.log('open change')}>
+    <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <CanvasContextMenuContent
         contextMenuType={contextMenuType}

@@ -63,7 +63,7 @@ export const useHandleKeyPressOnCanvas = () => {
           ) {
             e.stopPropagation();
             e.preventDefault();
-            console.log(selectedNodesWithoutTrigger);
+            
             canvasBulkActions.copySelectedNodes({
               selectedNodes: selectedNodesWithoutTrigger,
               flowVersion,

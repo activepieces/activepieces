@@ -107,18 +107,7 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
-            <PublishFlowReminderWidget />
-            <RunInfoWidget />
-            <ViewingOldVersionWidget />
-            {middlePanelRef.current &&
-              middlePanelRef.current.clientWidth > 0 && (
-                <CanvasControls
-                  canvasHeight={middlePanelRef.current?.clientHeight ?? 0}
-                  canvasWidth={middlePanelRef.current?.clientWidth ?? 0}
-                  hasCanvasBeenInitialised={hasCanvasBeenInitialised}
-                  selectedStep={selectedStep}
-                ></CanvasControls>
-              )}
+           
 
             <ShowPoweredBy
               position="absolute"

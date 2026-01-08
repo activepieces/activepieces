@@ -42,5 +42,5 @@ export const useCursorPositionEffect = (
     return () => {
       window.removeEventListener('pointermove', handleMouseMove);
     };
-  }, []);
+  }, [callback]);
 };

@@ -52,10 +52,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         }}
       >
         <button
-          className={cn(
-            'group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75',
-            {},
-          )}
+          className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"
         ></button>
       </NodeResizeControl>
 
@@ -158,4 +155,3 @@ type NoteContentProps = {
   isDragging: boolean;
 };
 
-ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
