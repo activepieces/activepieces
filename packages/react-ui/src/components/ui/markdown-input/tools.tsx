@@ -67,7 +67,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
   }, [isStrikeActive, isBoldActive, isItalicActive, isUnderlineActive]);
   const containerRef = useRef<HTMLDivElement>(null);
   return (
-    <div ref={containerRef} className="flex items-center gap-2">
+    <div ref={containerRef} className="flex items-center gap-2 text-foreground">
       <ImageTool editor={editor} containerRef={containerRef} />
       <Button
         onClick={handleStrike}

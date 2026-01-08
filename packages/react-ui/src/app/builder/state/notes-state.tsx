@@ -6,6 +6,14 @@ export enum NoteDragOverlayMode {
   CREATE = 'create',
   MOVE = 'move',
 }
+export enum NoteColorVariant {
+  ORANGE = 'orange',
+  RED = 'red',
+  GREEN = 'green',
+  BLUE = 'blue',
+  PURPLE = 'purple',
+  YELLOW = 'yellow',
+}
 export type Note = {
   content: string;
   creator: string;
@@ -17,7 +25,7 @@ export type Note = {
     width: number;
     height: number;
   };
-  color: string;
+  color: NoteColorVariant;
   id: string;
 };
 
@@ -29,6 +37,7 @@ export type NotesState = {
   resizeNote: (id: string, size: { width: number; height: number }) => void;
   draggedNote: Note | null;
   updateContent: (id: string, content: string) => void;
+  updateNoteColor: (id: string, color: NoteColorVariant) => void;
   setDraggedNote: (note: Note | null, mode: NoteDragOverlayMode | null) => void;
   noteDragOverlayMode: NoteDragOverlayMode | null;
   setNoteDragOverlayMode: (
@@ -99,6 +108,15 @@ export const createNotesState = (
     },
     getNoteById: (id: string) => {
       return get().notes.find((note) => note.id === id) ?? null;
+    },
+    updateNoteColor: (id: string, color: NoteColorVariant) => {
+      set((state) => {
+        return {
+          notes: state.notes.map((note) =>
+            note.id === id ? { ...note, color } : note,
+          ),
+        };
+      });
     },
   };
 };

@@ -4,6 +4,7 @@ import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
+import { Note, NoteColorVariant } from '@/app/builder/state/notes-state';
 import { MarkdownInput } from '@/components/ui/markdown-input';
 import { cn } from '@/lib/utils';
 
@@ -12,20 +13,25 @@ import { flowCanvasConsts } from '../../utils/consts';
 import { ApNoteNode } from '../../utils/types';
 
 import { NoteFooter } from './note-footer';
-import { NoteTools } from './note-tools';
+import { NoteColorVariantToTailwind, NoteTools } from './note-tools';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
+  const [draggedNote, resizeNote, note, readonly] = useBuilderStateContext(
+    (state) => [
+      state.draggedNote,
+      state.resizeNote,
+      state.getNoteById(props.id),
+      state.readonly,
+    ],
+  );
   const { attributes, listeners, setNodeRef } = useDraggable({
     id: props.id,
     data: {
       type: flowCanvasConsts.DRAGGED_NOTE_TAG,
     },
+    disabled: readonly,
   });
-  const [draggedNote, resizeNote, note] = useBuilderStateContext((state) => [
-    state.draggedNote,
-    state.resizeNote,
-    state.getNoteById(props.id),
-  ]);
+
   const [size, setSize] = useState(props.data.size);
   if (draggedNote?.id === props.id || note === null) {
     return null;
@@ -69,10 +75,11 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         )}
       >
         <NoteContent
-          size={size}
-          id={props.id}
-          content={note?.content}
-          creator={props.data.creator}
+          note={{
+            ...note,
+            size,
+          }}
+          isDragging={false}
         />
       </div>
     </div>
@@ -80,18 +87,13 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
 };
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
 
-const NoteContent = ({
-  size: { width, height },
-  id,
-  content,
-  creator,
-  isDragging,
-}: NoteContentProps) => {
-  const [localContent, setLocalContent] = useState(content);
-  const [updateContent, readonly] = useBuilderStateContext((state) => [
-    state.updateContent,
-    state.readonly,
-  ]);
+const NoteContent = ({ note, isDragging }: NoteContentProps) => {
+  const { id, creator, color, size } = note;
+  const { width, height } = size;
+  const [localNote, setLocalNote] = useState(note);
+  const [updateContent, readonly, updateNoteColor] = useBuilderStateContext(
+    (state) => [state.updateContent, state.readonly, state.updateNoteColor],
+  );
   const debouncedUpdateContent = useDebouncedCallback(
     (id: string, content: string) => {
       updateContent(id, content);
@@ -102,7 +104,10 @@ const NoteContent = ({
   return (
     <div
       id={id}
-      className="rounded-md bg-amber-200 border-solid shadow-md p-2 "
+      className={cn(
+        'rounded-md bg-amber-200 border-solid shadow-md p-2 ',
+        NoteColorVariantToTailwind[color],
+      )}
       style={{
         width: `${width}px`,
         height: `${height}px`,
@@ -110,7 +115,13 @@ const NoteContent = ({
     >
       {!isDragging && !readonly && editorRef.current && (
         <div className="opacity-0 focus-within:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
-          <NoteTools editor={editorRef.current} />
+          <NoteTools
+            editor={editorRef.current}
+            currentColor={note.color}
+            setCurrentColor={(color: NoteColorVariant) =>
+              updateNoteColor(id, color)
+            }
+          />
         </div>
       )}
       <div className="flex flex-col gap-2 h-full">
@@ -125,10 +136,13 @@ const NoteContent = ({
           <MarkdownInput
             ref={editorRef}
             disabled={isDragging || readonly}
-            initialValue={localContent}
-            className="cursor-text text-amber-700 text-sm"
+            initialValue={localNote.content}
+            className={cn(
+              'cursor-text text-sm',
+              NoteColorVariantToTailwind[color],
+            )}
             onChange={(value: string) => {
-              setLocalContent(value);
+              setLocalNote({ ...localNote, content: value });
               debouncedUpdateContent(id, value);
             }}
           />
@@ -140,11 +154,8 @@ const NoteContent = ({
 };
 export { ApNoteCanvasNode, NoteContent };
 type NoteContentProps = {
-  size: { width: number; height: number };
-  id: string;
-  content: string;
-  creator: string;
-  isDragging?: boolean;
+  note: Note;
+  isDragging: boolean;
 };
 
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';

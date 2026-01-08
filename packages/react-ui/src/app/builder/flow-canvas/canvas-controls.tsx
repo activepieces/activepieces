@@ -21,7 +21,7 @@ import {
 import { isMac } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
-import { NoteDragOverlayMode } from '../state/notes-state';
+import { NoteColorVariant, NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -268,7 +268,7 @@ const CanvasControls = ({
                     width: flowCanvasConsts.NOTE_CREATION_OVERLAY_WIDTH,
                     height: flowCanvasConsts.NOTE_CREATION_OVERLAY_HEIGHT,
                   },
-                  color: 'yellow',
+                  color: NoteColorVariant.YELLOW,
                 },
                 NoteDragOverlayMode.CREATE,
               );

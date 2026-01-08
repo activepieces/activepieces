@@ -6,7 +6,10 @@ import { userHooks } from '@/hooks/user-hooks';
 import { apId, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import { NoteDragOverlayMode } from '../../../state/notes-state';
+import {
+  NoteColorVariant,
+  NoteDragOverlayMode,
+} from '../../../state/notes-state';
 import {
   useCursorPosition,
   useCursorPositionEffect,
@@ -71,7 +74,7 @@ const NoteDragOverlay = () => {
               creator: userFullName ?? '',
               position: positionOnCanvas,
               size: draggedNote.size,
-              color: 'yellow',
+              color: NoteColorVariant.YELLOW,
             });
           }
         }
@@ -85,12 +88,12 @@ const NoteDragOverlay = () => {
     >
       <NoteContent
         isDragging={true}
-        id={draggedNote.id}
-        content={draggedNote.content}
-        creator={draggedNote.creator}
-        size={{
-          width: draggedNote.size.width * reactFlow.getZoom(),
-          height: draggedNote.size.height * reactFlow.getZoom(),
+        note={{
+          ...draggedNote,
+          size: {
+            width: draggedNote.size.width * reactFlow.getZoom(),
+            height: draggedNote.size.height * reactFlow.getZoom(),
+          },
         }}
       ></NoteContent>
     </div>

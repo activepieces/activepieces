@@ -25,7 +25,7 @@ export const NoteFooter = ({
   return (
     <div className="flex items-center justify-between gap-2">
       <TextWithTooltip tooltipMessage={creator}>
-        <div className="text-amber-700 font-semibold text-xs">{creator}</div>
+        <div className=" font-semibold text-xs">{creator}</div>
       </TextWithTooltip>
       {!isDragging && (
         <div className="flex items-center gap-1">
@@ -44,7 +44,7 @@ export const NoteFooter = ({
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <DragHandleDots2Icon className="size-4 text-amber-700 cursor-grab" />
+              <DragHandleDots2Icon className="size-4 cursor-grab" />
             </TooltipTrigger>
             <TooltipContent>{t('Move')}</TooltipContent>
           </Tooltip>
