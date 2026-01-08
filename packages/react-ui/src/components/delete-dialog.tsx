@@ -84,7 +84,7 @@ export const ConfirmationDeleteDialog = ({
           <DialogDescription className="pt-2">{message}</DialogDescription>
         </DialogHeader>
         {warning && (
-          <Alert variant="warning" className="mt-4">
+          <Alert variant="warning">
             <TriangleAlert className="h-4 w-4" />
             <AlertDescription>{warning}</AlertDescription>
           </Alert>
