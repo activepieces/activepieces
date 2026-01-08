@@ -30,7 +30,7 @@
   "Update Record": "更新記録",
   "Batch Upsert (Advanced)": "一括アップサート（上級）",
   "Bulk Upsert (Advanced)": "一括アップセルト（上級）",
-  "Custom API Call": "カスタムでAPIを設定する",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Add a contact to a campaign.": "キャンペーンに連絡先を追加します。",
   "Uploads a file and attaches it to an existing record.": "ファイルをアップロードし、既存のレコードに添付します。",
   "Adds an existing lead to an existing campaign.": "既存キャンペーンに既存のリードを追加します。",
