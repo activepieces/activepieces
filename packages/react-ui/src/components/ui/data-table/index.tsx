@@ -4,6 +4,7 @@ import {
   ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   SortingState,
   useReactTable,
@@ -83,6 +84,7 @@ interface DataTableProps<
   emptyStateIcon: React.ReactNode;
   selectColumn?: boolean;
   initialSorting?: SortingState;
+  clientPagination?: boolean;
 }
 
 export type DataTableFilters<Keys extends string> = DataTableFilterProps & {
@@ -116,6 +118,7 @@ export function DataTable<
   customFilters,
   selectColumn = false,
   initialSorting = [],
+  clientPagination = false,
 }: DataTableProps<TData, TValue, Keys>) {
   const selectColumnDef: ColumnDef<RowDataWithActions<TData>, TValue> = {
     id: 'select',
@@ -221,9 +224,10 @@ export function DataTable<
   const table = useReactTable({
     data: tableData,
     columns,
-    manualPagination: true,
+    manualPagination: !clientPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    ...(clientPagination && { getPaginationRowModel: getPaginationRowModel() }),
     getRowId: () => apId(),
     initialState: {
       pagination: {
@@ -401,12 +405,13 @@ export function DataTable<
                         }
                       >
                         <div
-                          className={cn('flex items-center', {
+                          className={cn('flex w-full items-center', {
                             'justify-end': cell.column.id === 'actions',
                             'justify-start': cell.column.id !== 'actions',
                           })}
                         >
                           <div
+                            className="w-full"
                             onClick={(e) => {
                               if (cell.column.id === 'select') {
                                 e.preventDefault();
@@ -456,7 +461,9 @@ export function DataTable<
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
               table.setPageSize(Number(value));
-              setCurrentCursor(undefined);
+              if (!clientPagination) {
+                setCurrentCursor(undefined);
+              }
             }}
           >
             <SelectTrigger className="h-9 min-w-[70px] w-auto">
@@ -473,8 +480,18 @@ export function DataTable<
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setCurrentCursor(previousPageCursor)}
-            disabled={!previousPageCursor}
+            onClick={() => {
+              if (clientPagination) {
+                table.previousPage();
+              } else {
+                setCurrentCursor(previousPageCursor);
+              }
+            }}
+            disabled={
+              clientPagination
+                ? !table.getCanPreviousPage()
+                : !previousPageCursor
+            }
           >
             {t('Previous')}
           </Button>
@@ -482,9 +499,15 @@ export function DataTable<
             variant="outline"
             size="sm"
             onClick={() => {
-              setCurrentCursor(nextPageCursor);
+              if (clientPagination) {
+                table.nextPage();
+              } else {
+                setCurrentCursor(nextPageCursor);
+              }
             }}
-            disabled={!nextPageCursor}
+            disabled={
+              clientPagination ? !table.getCanNextPage() : !nextPageCursor
+            }
           >
             {t('Next')}
           </Button>

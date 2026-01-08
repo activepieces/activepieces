@@ -16,7 +16,10 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { getProjectName, projectHooks } from '@/hooks/project-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
@@ -36,7 +39,7 @@ export const ProjectDashboardPageHeader = ({
   children?: React.ReactNode;
   description?: React.ReactNode;
 }) => {
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);

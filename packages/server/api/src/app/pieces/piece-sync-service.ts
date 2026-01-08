@@ -72,8 +72,8 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5
-    for (let i = 0; i < newPiecesToFetch.length; i += batchSize) {
-        const currentBatch = newPiecesToFetch.slice(i, i + batchSize)
+    for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
+        const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
@@ -87,8 +87,11 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
             })
-
         }))
+        if (done % 500 === 0) {
+            await localPieceCache(log).refresh()
+        }
+
     }
     return newPiecesToFetch.length
 }

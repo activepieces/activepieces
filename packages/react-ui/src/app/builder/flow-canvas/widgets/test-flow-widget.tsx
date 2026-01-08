@@ -1,24 +1,28 @@
 import { t } from 'i18next';
 
 import { EditFlowOrViewDraftButton } from '@/app/builder/builder-header/flow-status/view-draft-or-edit-flow-button';
-import {
-  ChatDrawerSource,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
+import { ChatDrawerSource } from '@/lib/types';
 import { isNil, FlowTriggerType } from '@activepieces/shared';
 
 import { AboveTriggerButton } from './above-trigger-button';
 
 const TestFlowWidget = () => {
-  const [setChatDrawerOpenSource, flowVersion, readonly, setRun] =
-    useBuilderStateContext((state) => [
-      state.setChatDrawerOpenSource,
-      state.flowVersion,
-      state.readonly,
-      state.setRun,
-    ]);
+  const [
+    setChatDrawerOpenSource,
+    flowVersion,
+    readonly,
+    hideTestWidget,
+    setRun,
+  ] = useBuilderStateContext((state) => [
+    state.setChatDrawerOpenSource,
+    state.flowVersion,
+    state.readonly,
+    state.hideTestWidget,
+    state.setRun,
+  ]);
 
   const triggerHasSampleData =
     flowVersion.trigger.type === FlowTriggerType.PIECE &&
@@ -37,6 +41,10 @@ const TestFlowWidget = () => {
   });
 
   if (!flowVersion.valid) {
+    return null;
+  }
+
+  if (hideTestWidget) {
     return null;
   }
 

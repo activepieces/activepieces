@@ -34,7 +34,6 @@ import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
 import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
-import { ExplorePage } from '../routes/explore';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
@@ -50,7 +49,7 @@ import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import GettingStartedPage from '../routes/platform/setup/onboarding';
-import TemplatesPage from '../routes/platform/setup/templates';
+import { PlatformTemplatesPage } from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
 import { ProjectReleasesPage } from '../routes/project-release';
 import ViewRelease from '../routes/project-release/view-release';
@@ -60,7 +59,7 @@ import { SignInPage } from '../routes/sign-in';
 import { SignUpPage } from '../routes/sign-up';
 import { ApTablesPage } from '../routes/tables';
 import { ApTableEditorPage } from '../routes/tables/id';
-import { ShareTemplatePage } from '../routes/templates/share-template';
+import { TemplatesPage } from '../routes/templates';
 import { TodosPage } from '../routes/todos';
 import { TodoTestingPage } from '../routes/todos/id';
 
@@ -71,6 +70,7 @@ import {
   ProjectRouterWrapper,
   TokenCheckerWrapper,
 } from './project-route-wrapper';
+import { TemplateDetailsWrapper } from './template-details-wrapper';
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();
@@ -96,11 +96,11 @@ const routes = [
     element: <AuthenticatePage />,
   },
   {
-    path: '/explore',
+    path: '/templates',
     element: (
       <ProjectDashboardLayout>
-        <PageTitle title="Explore">
-          <ExplorePage />
+        <PageTitle title="Templates">
+          <TemplatesPage />
         </PageTitle>
       </ProjectDashboardLayout>
     ),
@@ -175,11 +175,7 @@ const routes = [
   }),
   {
     path: '/templates/:templateId',
-    element: (
-      <PageTitle title="Share Template">
-        <ShareTemplatePage />
-      </PageTitle>
-    ),
+    element: <TemplateDetailsWrapper />,
   },
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.singleRelease,
@@ -387,7 +383,7 @@ const routes = [
     element: (
       <PlatformLayout>
         <PageTitle title="Templates">
-          <TemplatesPage />
+          <PlatformTemplatesPage />
         </PageTitle>
       </PlatformLayout>
     ),

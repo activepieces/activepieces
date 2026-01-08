@@ -18,15 +18,6 @@ if (requiredVersions.some(version=>nodeVersion.startsWith(version))) {
   process.exit(1);
 }
 
-// Proceed with your commands
-if (os === 'win32') {
-  if (fs.existsSync('node_modules')) {
-    execSync('rmdir node_modules /s /q');
-  }
-}
-else {
-  execSync('rm -rf node_modules');
-}
 
 
 try {

@@ -3,6 +3,24 @@ import { DiscriminatedUnion } from '../common'
 
 export const TASK_COMPLETION_TOOL_NAME = 'updateTaskStatus'
 
+export enum FieldControlMode {
+    AGENT_DECIDE = 'agent-decide',
+    CHOOSE_YOURSELF = 'choose-yourself',
+    LEAVE_EMPTY = 'leave-empty',
+}
+
+export const PredefinedInputField = Type.Object({
+    mode: Type.Enum(FieldControlMode),
+    value: Type.Unknown(),
+})
+export type PredefinedInputField = Static<typeof PredefinedInputField>
+
+export const PredefinedInputsStructure = Type.Object({
+    auth: Type.Optional(Type.String()),
+    fields: Type.Record(Type.String(), PredefinedInputField),
+})
+export type PredefinedInputsStructure = Static<typeof PredefinedInputsStructure>
+
 export enum AgentToolType {
     PIECE = 'PIECE',
     FLOW = 'FLOW',
@@ -11,7 +29,7 @@ export enum AgentToolType {
 
 export enum McpProtocol {
     SSE = 'sse',
-    STREAMABLE_HTTP = 'streamble-http',
+    STREAMABLE_HTTP = 'streamable-http',
     SIMPLE_HTTP = 'http',
 }
 
@@ -54,11 +72,12 @@ export const McpAuthConfig = Type.Union([
 ])
 export type McpAuthConfig = Static<typeof McpAuthConfig>
 
+// Updated AgentPieceToolMetadata to use the new structure
 export const AgentPieceToolMetadata = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     actionName: Type.String(),
-    predefinedInput: Type.Record(Type.String(), Type.Unknown()),
+    predefinedInput: PredefinedInputsStructure,
 })
 export type AgentPieceToolMetadata = Static<typeof AgentPieceToolMetadata>
 

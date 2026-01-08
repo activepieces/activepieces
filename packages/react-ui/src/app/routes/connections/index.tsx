@@ -279,7 +279,6 @@ function AppConnectionsPage() {
           <div className="text-left">
             {row.original.owner && (
               <ApAvatar
-                type="user"
                 id={row.original.owner.id}
                 includeAvatar={true}
                 includeName={true}

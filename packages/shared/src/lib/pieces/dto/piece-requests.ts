@@ -104,15 +104,10 @@ export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
 export enum PieceScope {
     PLATFORM = 'PLATFORM',
-    // TODO: all users have their own platform, so we can remove this
-    // @deprecated
-    PROJECT = 'PROJECT',
-
 }
 
 export const AddPieceRequestBody = Type.Union([
     Type.Object({
-        projectId: Type.String(),
         packageType: Type.Literal(PackageType.ARCHIVE),
         scope: Type.Literal(PieceScope.PLATFORM),
         pieceName: Type.String({

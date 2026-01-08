@@ -380,6 +380,9 @@
       "@activepieces/piece-octopush-sms": [
         "packages/pieces/community/octopush-sms/src/index.ts"
       ],
+      "@activepieces/piece-twitch": [
+        "packages/pieces/community/twitch/src/index.ts"
+      ],
       "@activepieces/piece-moonclerk": [
         "packages/pieces/community/moonclerk/src/index.ts"
       ],
@@ -409,6 +412,48 @@
       ],
       "@activepieces/piece-barcode-lookup": [
         "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@activepieces/piece-tidely": [
+        "packages/pieces/community/tidely/src/index.ts"
+      ],
+      "@activepieces/piece-cryptolens": [
+        "packages/pieces/community/cryptolens/src/index.ts"
+      ],
+      "@activepieces/piece-ampeco": [
+        "packages/pieces/community/ampeco/src/index.ts"
+      ],
+      "@activepieces/piece-quaderno": [
+        "packages/pieces/community/quaderno/src/index.ts"
+      ],
+      "@activepieces/piece-livesession": [
+        "packages/pieces/community/livesession/src/index.ts"
+      ],
+      "@activepieces/piece-roe-ai": [
+        "packages/pieces/community/roe-ai/src/index.ts"
+      ],
+      "@activepieces/piece-duckdb": [
+        "packages/pieces/community/duckdb/src/index.ts"
+      ],
+      "@activepieces/piece-waitwhile": [
+        "packages/pieces/community/waitwhile/src/index.ts"
+      ],
+      "@activepieces/piece-baremetrics": [
+        "packages/pieces/community/baremetrics/src/index.ts"
+      ],
+      "@activepieces/piece-chartly": [
+        "packages/pieces/community/chartly/src/index.ts"
+      ],
+      "@activepieces/piece-insta-charts": [
+        "packages/pieces/community/insta-charts/src/index.ts"
+      ],
+      "@activepieces/piece-pinch-payments": [
+        "packages/pieces/community/pinch-payments/src/index.ts"
+      ],
+      "@activepieces/piece-just-invoice": [
+        "packages/pieces/community/just-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-billplz": [
+        "packages/pieces/community/billplz/src/index.ts"
       ]
     },
     "resolveJsonModule": true

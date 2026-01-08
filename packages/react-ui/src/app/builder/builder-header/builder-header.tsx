@@ -9,10 +9,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -30,9 +27,13 @@ import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { getProjectName, projectHooks } from '@/hooks/project-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
+import { RightSideBarType } from '@/lib/types';
 import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
@@ -74,7 +75,7 @@ export const BuilderHeader = () => {
   ]);
 
   const { embedState } = useEmbedding();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
 
   const { data: folderData } = foldersHooks.useFolder(
     flow.folderId ?? UncategorizedFolderId,

@@ -7,14 +7,16 @@ import { Button } from '@/components/ui/button';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { FlowVersionState, Permission } from '@activepieces/shared';
 
-import { useBuilderStateContext, useSwitchToDraft } from '../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
+import { flowCanvasHooks } from '../../flow-canvas/hooks';
 import { AboveTriggerButton } from '../../flow-canvas/widgets/above-trigger-button';
 
 const EditFlowOrViewDraftButton = ({ onCanvas }: { onCanvas: boolean }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { checkAccess } = useAuthorization();
-  const { switchToDraft, isSwitchingToDraftPending } = useSwitchToDraft();
+  const { switchToDraft, isSwitchingToDraftPending } =
+    flowCanvasHooks.useSwitchToDraft();
   const [flowVersion, flowId, readonly, run] = useBuilderStateContext(
     (state) => [state.flowVersion, state.flow.id, state.readonly, state.run],
   );

@@ -75,9 +75,9 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             environment: RunEnvironment.PRODUCTION,
         })
 
-        if (!isNil(params.archived)) {
+        if (!params.includeArchived) {
             query = query.andWhere({
-                archivedAt: params.archived ? Not(IsNull()) : IsNull(),
+                archivedAt: IsNull(),
             })
         }
 
@@ -314,7 +314,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
         })
     },
 
-    async test({ projectId, flowVersionId, parentRunId, stepNameToTest }: TestParams): Promise<FlowRun> {
+    async test({ projectId, flowVersionId, parentRunId, stepNameToTest, triggeredBy }: TestParams): Promise<FlowRun> {
         const flowVersion = await flowVersionService(log).getOneOrThrow(flowVersionId)
 
         const triggerPayload = await sampleDataService(log).getOrReturnEmpty({
@@ -331,6 +331,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
             parentRunId,
             failParentOnFailure: undefined,
             stepNameToTest,
+            triggeredBy,
         }, log)
         return addToQueue({
             flowRun,
@@ -604,6 +605,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
         created: now,
         updated: now,
         steps: {},
+        triggeredBy: params.triggeredBy,
     }
     switch (params.environment) {
         case RunEnvironment.TESTING:
@@ -619,6 +621,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
 type CreateParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
+    triggeredBy?: string
     parentRunId?: FlowRunId
     failParentOnFailure: boolean | undefined
     stepNameToTest?: string
@@ -637,7 +640,7 @@ type ListParams = {
     createdBefore?: string
     failedStepName?: string
     flowRunIds?: FlowRunId[]
-    archived?: boolean
+    includeArchived?: boolean
 }
 
 type GetOneParams = {
@@ -681,6 +684,7 @@ type StartParams = {
 type TestParams = {
     projectId: ProjectId
     flowVersionId: FlowVersionId
+    triggeredBy: string
     parentRunId?: FlowRunId
     stepNameToTest?: string
 }

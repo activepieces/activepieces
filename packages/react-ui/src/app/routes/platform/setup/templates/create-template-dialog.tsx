@@ -152,6 +152,21 @@ export const CreateTemplateDialog = ({
               )}
             />
             <FormField
+              name="summary"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="summary">{t('Summary')}</Label>
+                  <Input
+                    {...field}
+                    id="summary"
+                    placeholder={t('Template Summary')}
+                    className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
               name="description"
               render={({ field }) => (
                 <FormItem className="grid space-y-2">

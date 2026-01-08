@@ -11,7 +11,7 @@ import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
 
 export const communityTemplates = {
-    get: async (id: string): Promise<Template> => {
+    getOrThrow: async (id: string): Promise<Template> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
         if (isNil(templateSource)) {
             throw new ActivepiecesError({
@@ -28,8 +28,33 @@ export const communityTemplates = {
                 'Content-Type': 'application/json',
             },
         })
+        if (!response.ok) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'template',
+                    entityId: id,
+                    message: `Template ${id} not found`,
+                },
+            })
+        }
         const template = await response.json()
         return template
+    },
+    getCategories: async (): Promise<string[]> => {
+        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
+        if (isNil(templateSource)) {
+            return []
+        }
+        const url = `${templateSource}/categories`
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        const categories = await response.json()
+        return categories
     },
     list: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
         const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
