@@ -6,7 +6,7 @@
   "Delays the execution of the next action until a given timestamp": "指定したタイムスタンプまで次のアクションの実行を遅らせます。",
   "Markdown": "Markdown",
   "Unit": "単位",
-  "Amount": "待機時間",
+  "Amount": "数",
   "Date and Time": "日付と時刻",
   "\n**Note:** The maximum duration per step is {{pausedFlowTimeoutDays}} days.\n": "\n**注意:** ステップあたりの最大期間は {{pausedFlowTimeoutDays}} 日です。\n",
   "The unit of time to delay the execution of the next action": "次のアクションの実行を遅らせる時間の単位",
