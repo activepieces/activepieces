@@ -88,7 +88,7 @@ function AppConnectionsPage() {
   const pieceName = searchParams.get('pieceName') ?? undefined;
   const displayName = searchParams.get('displayName') ?? undefined;
 
-  const { 
+  const {
     data: connections,
     isLoading: connectionsLoading,
     refetch,
