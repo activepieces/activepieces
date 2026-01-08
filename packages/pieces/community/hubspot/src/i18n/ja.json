@@ -44,7 +44,7 @@
   "Get Owner by Email": "Eメールでオーナーを取得",
   "Get Owner by ID": "所有者IDで取得",
   "Get Pipeline Stage Details": "パイプラインステージの詳細を取得する",
-  "Custom API Call": "カスタムAPI通話",
+  "Custom API Call": "カスタムAPI呼び出し",
   "Add contact to list": "リストに連絡先を追加",
   "Adds a contact to a specified workflow in your HubSpot account.": "HubSpotアカウントの指定されたワークフローに連絡先を追加します。",
   "Creates associations between objects": "オブジェクト間の関連を作成",
