@@ -2,7 +2,6 @@ import { securityAccess } from '@activepieces/server-shared'
 import {
     ApEdition,
     SERVICE_KEY_SECURITY_OPENAPI,
-    TemplateTag,
     TemplateType,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
