@@ -1,4 +1,4 @@
-import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest } from '@activepieces/shared'
+import { assertNotNullOrUndefined, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, GetStepOutputRequest, isNil, SaveStepOutputRequest, SendFlowResponseRequest, StepOutput, UpdateRunProgressRequest, UpdateStepProgressRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { type Socket, Server as SocketIOServer } from 'socket.io'
 
@@ -115,6 +115,8 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             updateRunProgress,
             updateStepProgress,
             sendFlowResponse,
+            saveStepState,
+            getStepState,
         }: {
             workerId: string
             onResult: (result: EngineResponse<unknown>) => void
@@ -123,6 +125,8 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
             updateRunProgress: (data: UpdateRunProgressRequest, log: FastifyBaseLogger) => Promise<void>
             updateStepProgress: (data: UpdateStepProgressRequest, log: FastifyBaseLogger) => Promise<void>
             sendFlowResponse: (data: SendFlowResponseRequest, log: FastifyBaseLogger) => Promise<void>
+            saveStepState: (data: SaveStepOutputRequest, log: FastifyBaseLogger) => Promise<void>
+            getStepState: (data: GetStepOutputRequest, log: FastifyBaseLogger) => Promise<StepOutput>
         }): void {
             const socket = sockets[workerId]
             assertNotNullOrUndefined(socket, 'sockets[workerId]')
@@ -158,6 +162,16 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 await sendFlowResponse(data, log)
                 callback()
             })
+
+            socket.on(EngineSocketEvent.SAVE_STEP_OUTPUT, async (data: SaveStepOutputRequest, callback: () => void) => {
+                await saveStepState(data, log)
+                callback()
+            })
+
+            socket.on(EngineSocketEvent.GET_STEP_OUTPUT, async (data: GetStepOutputRequest, callback: ({ stepOutput }: { stepOutput: StepOutput }) => void) => {
+                const stepOutput = await getStepState(data, log)
+                callback?.({ stepOutput })
+            })
         },
 
         unsubscribe(workerId: string): void {
@@ -169,6 +183,10 @@ export const engineRunnerSocket = (log: FastifyBaseLogger) => {
                 socket.removeAllListeners(EngineSocketEvent.UPDATE_RUN_PROGRESS)
                 socket.removeAllListeners(EngineSocketEvent.UPDATE_STEP_PROGRESS)
                 socket.removeAllListeners(EngineSocketEvent.SEND_FLOW_RESPONSE)
+
+                socket.removeAllListeners(EngineSocketEvent.SAVE_STEP_OUTPUT)
+                socket.removeAllListeners(EngineSocketEvent.GET_STEP_OUTPUT)
+
             }
         },
 

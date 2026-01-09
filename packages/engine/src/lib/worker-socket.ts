@@ -94,11 +94,11 @@ export const workerSocket = {
 
     },
 
-    sendToWorkerWithAck: async (
+    sendToWorkerWithAck: async <Response = unknown>(
         type: EngineSocketEvent,
         data: unknown,
-    ): Promise<void> => {
-        await emitWithAck(socket, type, data, {
+    ): Promise<Response> => {
+        return await emitWithAck<Response>(socket, type, data, {
             timeoutMs: 4000,
             retries: 4,
             retryDelayMs: 1000,

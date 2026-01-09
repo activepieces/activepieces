@@ -43,8 +43,10 @@ export const enum EngineSocketEvent {
     UPDATE_RUN_PROGRESS = 'update-run-progress',
     SEND_FLOW_RESPONSE = 'send-flow-response',
     UPDATE_STEP_PROGRESS = 'update-step-progress',
-}
 
+    SAVE_STEP_OUTPUT = 'save-step-output',
+    GET_STEP_OUTPUT = 'get-step-output',
+}
 
 export const EngineStdout = Type.Object({
     message: Type.String(),

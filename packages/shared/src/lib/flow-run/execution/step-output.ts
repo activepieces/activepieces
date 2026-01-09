@@ -1,6 +1,7 @@
 import { isNil } from '../../common'
 import { FlowActionType } from '../../flows/actions/action'
 import { FlowTriggerType } from '../../flows/triggers/trigger'
+import { FlowExecutorSteps } from './flow-execution'
 
 export enum StepOutputStatus {
     FAILED = 'FAILED',
@@ -119,7 +120,7 @@ RouterStepResult
 export type LoopStepResult = {
     item: unknown
     index: number
-    iterations: Record<string, StepOutput>[]
+    iterations: FlowExecutorSteps[]
 }
 
 export class LoopStepOutput extends GenericStepOutput<
@@ -145,7 +146,7 @@ LoopStepResult
         })
     }
 
-    setIterations(iterations: Record<string, StepOutput>[]): LoopStepOutput {
+    setIterations(iterations: FlowExecutorSteps[]): LoopStepOutput {
         return new LoopStepOutput({
             ...this,
             output: {

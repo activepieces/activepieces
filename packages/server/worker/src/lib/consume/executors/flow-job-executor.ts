@@ -37,7 +37,12 @@ async function prepareInput(
                 triggerPayload: jobData.payload,
                 executionType: ExecutionType.BEGIN,
                 executionState: {
-                    steps,
+                    // @TODO(chaker): we need to pass promises to steps , we get them by the runId
+                    steps: Object.fromEntries(Object.entries(steps).map(([key, value]) => [key, {
+                        path: [],
+                        runId: jobData.runId,
+                        stepName: key,
+                    }])),
                 },
                 sampleData: jobData.sampleData,
                 executeTrigger: jobData.executeTrigger ?? false,
@@ -60,7 +65,12 @@ async function prepareInput(
                 serverHandlerId: jobData.synchronousHandlerId ?? null,
                 executionType: ExecutionType.RESUME,
                 executionState: {
-                    steps,
+                    // @TODO(chaker): temp
+                    steps: Object.fromEntries(Object.entries(steps).map(([key, value]) => [key, {
+                        path: [],
+                        runId: jobData.runId,
+                        stepName: key,
+                    }])),
                 },
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,

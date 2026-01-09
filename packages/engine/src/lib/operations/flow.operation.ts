@@ -6,8 +6,10 @@ import {
     ExecuteTriggerResponse,
     ExecutionType,
     FlowActionType,
+    FlowExecutorSteps,
     flowStructureUtil,
     GenericStepOutput,
+    GetStepOutputRequest,
     isNil,
     LoopStepOutput,
     StepOutput,
@@ -21,12 +23,14 @@ import { testExecutionContext } from '../handler/context/test-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
+import { flowStateService } from '../services/flow-state.service'
 
 export const flowOperation = {
     execute: async (operation: ExecuteFlowOperation): Promise<EngineResponse<undefined>> => {
         const input = operation as ExecuteFlowOperation
         const constants = EngineConstants.fromExecuteFlowInput(input)
         const output: FlowExecutorContext = (await executieSingleStepOrFlowOperation(input)).finishExecution()
+
         await progressService.sendUpdate({
             engineConstants: constants,
             flowExecutorContext: output,
@@ -60,7 +64,7 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
         })
     }
     return flowExecutor.executeFromTrigger({
-        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty()),
+        executionState: await getFlowExecutionState(input, FlowExecutorContext.empty(input.flowRunId)),
         constants,
         input,
     })
@@ -70,7 +74,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
     switch (input.executionType) {
         case ExecutionType.BEGIN: {
             const newPayload = await runOrReturnPayload(input)
-            flowContext = flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
+            flowContext = await flowContext.upsertStep(input.flowVersion.trigger.name, GenericStepOutput.create({
                 type: input.flowVersion.trigger.type,
                 status: StepOutputStatus.SUCCEEDED,
                 input: {},
@@ -82,12 +86,12 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
         }
     }
 
-    for (const [step, output] of Object.entries(input.executionState.steps)) {
-        if ([StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(output.status)) {
-            const newOutput = await insertSuccessStepsOrPausedRecursively(output)
-            if (!isNil(newOutput)) {
-                flowContext = flowContext.upsertStep(step, newOutput)
-            }
+    for (const [step, request] of Object.entries(input.executionState.steps)) {
+        const newRequest = await insertSuccessStepsOrPausedRecursively(request)
+        if (!isNil(newRequest)) {
+            console.debug('5:', newRequest);
+            const newOutput = await flowStateService.getStepOutputOrThrow(newRequest)
+            flowContext = await flowContext.upsertStep(step, newOutput)
         }
     }
     return flowContext
@@ -110,26 +114,44 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
     return newPayload.output[0] as TriggerPayload
 }
 
-
-async function insertSuccessStepsOrPausedRecursively(stepOutput: StepOutput): Promise<StepOutput | null> {
+async function insertSuccessStepsOrPausedRecursively(req: GetStepOutputRequest): Promise<GetStepOutputRequest | null> {
+    console.debug('6:', req);
+    const stepOutput = await flowStateService.getStepOutputOrThrow(req)
     if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
         return null
     }
+    
     if (stepOutput.type === FlowActionType.LOOP_ON_ITEMS) {
         const loopOutput = new LoopStepOutput(stepOutput)
         const iterations = loopOutput.output?.iterations ?? []
-        const newIterations: Record<string, StepOutput>[] = []
-        for (const iteration of iterations) {
-            const newSteps: Record<string, StepOutput> = {}
-            for (const [step, output] of Object.entries(iteration)) {
-                const newOutput = await insertSuccessStepsOrPausedRecursively(output)
-                if (!isNil(newOutput)) {
-                    newSteps[step] = newOutput
+        
+        const newIterations = await Promise.all(
+            iterations.map(async (iteration) => {
+                const stepEntries = await Promise.all(
+                    Object.entries(iteration).map(async ([step, request]) => {
+                        const newRequest = await insertSuccessStepsOrPausedRecursively(request)
+                        return { step, request: newRequest }
+                    })
+                )
+                
+                const newSteps: FlowExecutorSteps = {}
+                for (const { step, request } of stepEntries) {
+                    if (!isNil(request)) {
+                        newSteps[step] = request
+                    }
                 }
-            }
-            newIterations.push(newSteps)
-        }
-        return loopOutput.setIterations(newIterations)
+                return newSteps
+            })
+        )
+        
+        await flowStateService.saveStepOutput({
+            stepName: req.stepName,
+            path: req.path,
+            runId: req.runId,
+            stepOutput: loopOutput.setIterations(newIterations),
+        })
+        return req
     }
-    return stepOutput
+    
+    return req
 }

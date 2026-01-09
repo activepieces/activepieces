@@ -7,6 +7,7 @@ import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
+import { flowStateService } from './flow-state.service'
 
 
 let lastScheduledUpdateId: NodeJS.Timeout | null = null
@@ -45,16 +46,12 @@ export const progressService = {
         })
     },
     createOutputContext: (params: CreateOutputContextParams): OutputContext => {
-        const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
+        const { engineConstants, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-                const trimmedSteps = await flowExecutorContext
-                    .upsertStep(stepName, stepOutput.setOutput(params.data))
-                    .trimmedSteps()
                 const stepResponse = extractStepResponse({
-                    steps: trimmedSteps,
+                    stepOutput,
                     runId: engineConstants.flowRunId,
-                    stepName,
                 })
                 await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_STEP_PROGRESS, {
                     projectId: engineConstants.projectId,
@@ -90,12 +87,17 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         }
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
-        const trimmedSteps = await flowExecutorContext.trimmedSteps()
+
+        // TODO(@chaker): more upload to worker
+        const first = Object.keys(flowExecutorContext.steps)[0]
+        const firstOutput = flowExecutorContext.steps[first] ? await flowStateService.getStepOutputOrThrow(flowExecutorContext.steps[first]) : undefined
+        const trimmedSteps = firstOutput ? { [first]: firstOutput } : {}
         const executionState = await logSerializer.serialize({
             executionState: {
                 steps: trimmedSteps,
             },
         })
+
         if (isNil(engineConstants.logsUploadUrl)) {
             throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
         }
@@ -104,11 +106,10 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
             throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
         }
 
-        const stepResponse = extractStepResponse({
-            steps: trimmedSteps,
+        const stepResponse = engineConstants.stepNameToTest ? extractStepResponse({
+            stepOutput: trimmedSteps[first],
             runId: engineConstants.flowRunId,
-            stepName: engineConstants.stepNameToTest,
-        })
+        }) : undefined
 
         const request: UpdateRunProgressRequest = {
             runId: engineConstants.flowRunId,
@@ -166,11 +167,11 @@ const uploadExecutionState = async (uploadUrl: string, executionState: Buffer, f
 
 
 const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | undefined => {
-    if (isNil(params.stepName)) {
+
+    const stepOutput = params.stepOutput
+    if (isNil(stepOutput)) {
         return undefined
     }
-
-    const stepOutput = params.steps?.[params.stepName]
     const isSuccess = stepOutput?.status === StepOutputStatus.SUCCEEDED || stepOutput?.status === StepOutputStatus.PAUSED
     return {
         runId: params.runId,
@@ -190,7 +191,6 @@ type UpdateStepProgressParams = {
 }
 
 type ExtractStepResponse = {
-    steps: Record<string, StepOutput>
+    stepOutput?: StepOutput,
     runId: string
-    stepName?: string
 }

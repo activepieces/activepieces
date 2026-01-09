@@ -2,8 +2,9 @@ import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import { FlowRunStatus, PauseMetadata } from '../flow-run/execution/flow-execution'
 import { FailedStep } from '../flow-run/flow-run'
-import { StepRunResponse } from '../flows/sample-data'
-import { ProgressUpdateType } from './engine-operation'
+import { StepExecutionPath, StepRunResponse } from '../flows/sample-data'
+import { EngineSocketEvent, ProgressUpdateType } from './engine-operation'
+import { StepOutput } from '../flow-run/execution/step-output'
 
 
 
@@ -31,6 +32,9 @@ export type UpdateRunProgressRequest = Static<typeof UpdateRunProgressRequest>
 export const UpdateStepProgressRequest = Type.Object({
     projectId: Type.String(),
     stepResponse: StepRunResponse,
+    stepName: Type.String(),
+    path: StepExecutionPath,
+    runId: Type.String(),
 })
 export type UpdateStepProgressRequest = Static<typeof UpdateStepProgressRequest>
 
@@ -68,3 +72,14 @@ export const GetFlowVersionForWorkerRequest = Type.Object({
 })
 
 export type GetFlowVersionForWorkerRequest = Static<typeof GetFlowVersionForWorkerRequest>
+
+export const GetStepOutputRequest = Type.Object({
+    runId: Type.String(),
+    stepName: Type.String(),
+    path: Type.Readonly(StepExecutionPath),
+})
+export type GetStepOutputRequest = Static<typeof GetStepOutputRequest>
+
+export type SaveStepOutputRequest = GetStepOutputRequest & {
+    stepOutput: StepOutput
+}

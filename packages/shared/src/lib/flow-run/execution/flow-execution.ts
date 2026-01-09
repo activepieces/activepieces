@@ -1,6 +1,7 @@
 
 import { Static, Type } from '@sinclair/typebox'
-import { ProgressUpdateType } from '../../engine'
+import { GetStepOutputRequest, ProgressUpdateType } from '../../engine'
+import { StepOutput } from './step-output'
 
 export enum FlowRunStatus {
     FAILED = 'FAILED',
@@ -89,3 +90,5 @@ export const FAILED_STATES = [
 export const isFailedState = (status: FlowRunStatus): boolean => {
     return FAILED_STATES.includes(status)
 }
+
+export type FlowExecutorSteps = Record<string, GetStepOutputRequest>

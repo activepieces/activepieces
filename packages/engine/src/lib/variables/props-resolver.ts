@@ -21,7 +21,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: unresolvedInput,
                 }
             }
-            const currentState = executionState.currentState()
+            // TODO(@chaker): do not load all steps
+            const currentState = await executionState.currentState()
             const resolveOptions = {
                 engineToken,
                 projectId,

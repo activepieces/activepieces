@@ -1,10 +1,11 @@
 import { pubsubFactory } from '@activepieces/server-shared'
-import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
+import { EngineHttpResponse, FlowRunStatus, GetStepOutputRequest, isFlowRunStateTerminal, isNil, SaveStepOutputRequest, SendFlowResponseRequest, StepExecutionPath, StepOutput, UpdateRunProgressRequest, UpdateStepProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { appSocket } from '../../app-socket'
 import { runsMetadataQueue } from '../../flow-worker'
 import { workerRedisConnections } from '../../utils/worker-redis'
+import { flowStateService } from '../flow-state/flow-state-service'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
@@ -61,17 +62,20 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
         }
     },
     updateStepProgress: async (request: UpdateStepProgressRequest): Promise<void> => {
-        const { projectId, stepResponse } = request
-        await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS, { projectId, ...stepResponse })
-
+        const { projectId, stepResponse: step, path, stepName, runId } = request
+        await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS, { projectId, ...step })
     },
+
+
+    saveStepState: async (request: SaveStepOutputRequest): Promise<void> => {
+        await flowStateService(log).save(request)
+    },
+
+    getStepState: async (request: GetStepOutputRequest): Promise<StepOutput> => {
+        return await flowStateService(log).get(request)
+    },
+
 })
-
-type UpdateStepProgressRequest = {
-    projectId: string
-    stepResponse: StepRunResponse
-}
-
 
 async function publishEngineResponse<T>(log: FastifyBaseLogger, request: PublishEngineResponseRequest<T>): Promise<void> {
     const { requestId, workerServerId, response } = request

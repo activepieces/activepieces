@@ -26,6 +26,7 @@
     "socket.io-client": "4.8.1",
     "jsonwebtoken": "9.0.1",
     "socket.io": "4.8.1",
-    "http-status-codes": "2.2.0"
+    "http-status-codes": "2.2.0",
+    "level": "10.0.0"
   }
 }

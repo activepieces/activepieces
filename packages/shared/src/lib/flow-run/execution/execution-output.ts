@@ -1,5 +1,5 @@
-import { Type } from '@sinclair/typebox'
-import { TriggerPayload } from '../../engine'
+import { Static, Type } from '@sinclair/typebox'
+import { GetStepOutputRequest, TriggerPayload } from '../../engine'
 import { StepOutput } from './step-output'
 
 export enum ExecutionType {
@@ -7,16 +7,18 @@ export enum ExecutionType {
     RESUME = 'RESUME',
 }
 
-export type ExecutionState = {
+export type PopulatedExecutionState = {
     steps: Record<string, StepOutput>
 }
 
 export const ExecutionState = Type.Object({
-    steps: Type.Record(Type.String(), Type.Unknown()),
+    steps: Type.Record(Type.String(), GetStepOutputRequest),
 })
 
+export type ExecutionState = Static<typeof ExecutionState>
+
 export type ExecutioOutputFile = {
-    executionState: ExecutionState
+    executionState: PopulatedExecutionState
 }
 
 export type ResumePayload = TriggerPayload

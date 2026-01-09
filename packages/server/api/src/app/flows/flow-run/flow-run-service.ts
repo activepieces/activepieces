@@ -143,7 +143,7 @@ export const flowRunService = (log: FastifyBaseLogger) => ({
                 const latestFlowVersion = await flowVersionService(log).getLatestLockedVersionOrThrow(
                     oldFlowRun.flowId,
                 )
-                const payload = oldFlowRun.steps ? oldFlowRun.steps[latestFlowVersion.trigger.name]?.output : undefined
+                const payload = oldFlowRun.steps ? await oldFlowRun.steps[latestFlowVersion.trigger.name] : undefined
                 return this.start({
                     flowId: oldFlowRun.flowId,
                     payload,

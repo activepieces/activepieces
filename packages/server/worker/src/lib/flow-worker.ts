@@ -9,6 +9,7 @@ import { engineRunnerSocket } from './compute/engine-runner-socket'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
+import { flowStateService } from './compute/flow-state/flow-state-service'
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,
@@ -31,6 +32,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
                 await initRunsMetadataQueue(log)
                 await markAsHealthy()
                 await registryPieceManager(log).distributedWarmup()
+                await flowStateService(log).init()
             },
         })
     },

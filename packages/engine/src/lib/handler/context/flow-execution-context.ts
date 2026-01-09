@@ -1,8 +1,9 @@
-import { assertEqual, EngineGenericError, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, assertNotNullOrUndefined, EngineGenericError, FailedStep, FlowActionType, FlowExecutorSteps, FlowRunStatus, GenericStepOutput, GetStepOutputRequest, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
 import { StepExecutionPath } from './step-execution-path'
+import { flowStateService } from '../../services/flow-state.service'
 
 
 export type FlowVerdict = {
@@ -18,9 +19,11 @@ export type FlowVerdict = {
     status: FlowRunStatus.RUNNING
 } 
 
+
 export class FlowExecutorContext {
+    runId: string
     tags: readonly string[]
-    steps: Readonly<Record<string, StepOutput>>
+    steps: Readonly<FlowExecutorSteps>
     pauseRequestId: string
     verdict: FlowVerdict
     currentPath: StepExecutionPath
@@ -32,7 +35,9 @@ export class FlowExecutorContext {
      */
     duration: number
 
-    constructor(copyFrom?: FlowExecutorContext) {
+    constructor(copyFrom?: { runId: string } & Partial<FlowExecutorContext>) {
+        if (copyFrom) assertNotNullOrUndefined(copyFrom.runId, 'runId')
+        this.runId = copyFrom?.runId ?? ""
         this.tags = copyFrom?.tags ?? []
         this.steps = copyFrom?.steps ?? {}
         this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
@@ -43,8 +48,10 @@ export class FlowExecutorContext {
         this.stepsCount = copyFrom?.stepsCount ?? 0
     }
 
-    static empty(): FlowExecutorContext {
-        return new FlowExecutorContext()
+    static empty(runId: string): FlowExecutorContext {
+        return new FlowExecutorContext({
+            runId,
+        })
     }
 
     public setPauseRequestId(pauseRequestId: string): FlowExecutorContext {
@@ -71,14 +78,13 @@ export class FlowExecutorContext {
         return this
     }
 
-    public trimmedSteps(): Promise<Record<string, StepOutput>> {
-        return loggingUtils.trimExecution(this.steps)
-    }
+    // public trimmedSteps(): Promise<Record<string, StepOutput>> {
+    //     return loggingUtils.trimExecution(this.steps)
+    // }
 
-
-    public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
-        const stepOutput = stateAtPath[stepName]
+    public async getLoopStepOutput({ stepName }: { stepName: string }): Promise<LoopStepOutput | undefined> {
+        const { result: stateAtPath } = await getStateAtPath(this)
+        const stepOutput = stateAtPath?.[stepName]
         if (isNil(stepOutput)) {
             return undefined
         }
@@ -87,8 +93,8 @@ export class FlowExecutorContext {
         return new LoopStepOutput(stepOutput as GenericStepOutput<FlowActionType.LOOP_ON_ITEMS, LoopStepResult>)
     }
 
-    public isCompleted({ stepName }: { stepName: string }): boolean {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+    public async isCompleted({ stepName }: { stepName: string }): Promise<boolean> {
+        const { result: stateAtPath } = await getStateAtPath(this)
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -96,8 +102,8 @@ export class FlowExecutorContext {
         return stepOutput.status !== StepOutputStatus.PAUSED
     }
 
-    public isPaused({ stepName }: { stepName: string }): boolean {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+    public async isPaused({ stepName }: { stepName: string }): Promise<boolean> {
+        const { result: stateAtPath } = await getStateAtPath(this)
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -122,12 +128,23 @@ export class FlowExecutorContext {
         })
     }
 
-    public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
+    public async upsertStep(stepName: string, stepOutput: StepOutput): Promise<FlowExecutorContext> {
         const steps = {
             ...this.steps,
         }
-        const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
-        targetMap[stepName] = stepOutput
+        const { targetMap } = await getStateAtPath(this)
+        await flowStateService.saveStepOutput({
+            runId: this.runId,
+            stepName,
+            path: this.currentPath.path as [string, number][],
+            stepOutput,
+        })
+
+        targetMap[stepName] = {
+            runId: this.runId,
+            stepName,
+            path: this.currentPath.path as [string, number][],
+        }
 
         return new FlowExecutorContext({
             ...this,
@@ -135,8 +152,9 @@ export class FlowExecutorContext {
         })
     }
 
-    public getStepOutput(stepName: string): StepOutput | undefined {
-        const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
+    public async getStepOutput(stepName: string): Promise<StepOutput | undefined> {
+        const { result: stateAtPath } = await getStateAtPath(this)
+
         return stateAtPath[stepName]
     }
 
@@ -171,23 +189,41 @@ export class FlowExecutorContext {
     }
 
    
-    public currentState(): Record<string, unknown> {
-        let flattenedSteps: Record<string, unknown> = extractOutput(this.steps)
-        let targetMap = this.steps
-        this.currentPath.path.forEach(([stepName, iteration]) => {
-            const stepOutput = targetMap[stepName]
+    // TODO(@chaker): to be removed
+    public async currentState(): Promise<Record<string, unknown>> {
+        const resolvedSteps = await Promise.all(
+            Object.entries(this.steps).map(async ([stepName, request]) =>  [stepName, await flowStateService.getStepOutputOrThrow(request)] as [string, StepOutput])
+        )
+        const stepsMap: Record<string, StepOutput> = Object.fromEntries(resolvedSteps)
+        
+        let flattenedSteps: Record<string, unknown> = extractOutput(stepsMap)
+        let targetMap: FlowExecutorSteps = this.steps
+        
+        for (const [stepName, iteration] of this.currentPath.path) {
+            const stepOutput = await flowStateService.getStepOutputOrThrow(targetMap[stepName])
+            
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-                throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
+                throw new EngineGenericError(
+                    'NotInstanceOfLoopOnItemsStepOutputError',
+                    `[ExecutionState#currentState] Not instance of Loop On Items step output: ${stepOutput.type}`
+                )
             }
+            
             targetMap = stepOutput.output.iterations[iteration]
+            
+            const iterationResolvedSteps = await Promise.all(
+                Object.entries(targetMap).map(async ([stepName, request]) => [stepName, await flowStateService.getStepOutputOrThrow(request)] as [string, StepOutput])
+            )
+            const iterationStepsMap: Record<string, StepOutput> = Object.fromEntries(iterationResolvedSteps)
+            
             flattenedSteps = {
                 ...flattenedSteps,
-                ...extractOutput(targetMap),
+                ...extractOutput(iterationStepsMap),
             }
-        })
+        }
+        
         return flattenedSteps
     }
-
 
 }
 
@@ -198,16 +234,32 @@ function extractOutput(steps: Record<string, StepOutput>): Record<string, unknow
     }, {} as Record<string, unknown>)
 }
 
-function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath, steps: Record<string, StepOutput> }): Record<string, StepOutput> {
+async function getStateAtPath({ currentPath, steps, runId }: FlowExecutorContext): Promise<{
+    targetMap: FlowExecutorSteps // reference to the record with step promises
+    result: Record<string, StepOutput> // direct step outputs at the current path
+}> {
     let targetMap = steps
-    currentPath.path.forEach(([stepName, iteration]) => {
-        const stepOutput = targetMap[stepName]
+    let result: Record<string, StepOutput> = {}
+
+    if (currentPath.path.length === 0) {
+        return { targetMap, result }
+    }
+    const stepPromises = currentPath.path.map(([stepName]) => flowStateService.getStepOutputOrThrow(targetMap[stepName]))
+    const stepOutputs = await Promise.all(stepPromises)
+
+    for (let i = 0; i < currentPath.path.length; i++) {
+        const [stepName, iteration] = currentPath.path[i]
+        const stepOutput = stepOutputs[i]
+
         if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
             throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', `[ExecutionState#getTargetMap] Not instance of Loop On Items step output: ${stepOutput.type}`)
         }
         targetMap = stepOutput.output.iterations[iteration]
-    })
-    return targetMap
+        result[stepName] = stepOutput
+    }
+
+    return { targetMap, result }
 }
+
 
 

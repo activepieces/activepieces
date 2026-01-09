@@ -36,6 +36,7 @@ export const triggerHelper = {
             engineToken: constants.engineToken,
             devPieces: constants.devPieces,
             propertySettings,
+            flowRunId: constants.flowRunId,
         })
         const isOldVersionOrNotSupported = isNil(pieceTrigger.onStart)
         if (isOldVersionOrNotSupported) {
@@ -89,6 +90,7 @@ export const triggerHelper = {
             engineToken: params.engineToken,
             devPieces: constants.devPieces,
             propertySettings,
+            flowRunId: constants.flowRunId,
         })
 
         const appListeners: Listener[] = []
@@ -272,7 +274,7 @@ type ExecuteTriggerParams = {
     constants: EngineConstants
 }
 
-async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, devPieces }: PrepareTriggerExecutionParams) {
+async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, input, propertySettings, projectId, apiUrl, engineToken, devPieces, flowRunId }: PrepareTriggerExecutionParams) {
     const { piece, pieceTrigger } = await pieceLoader.getPieceAndTriggerOrThrow({
         pieceName,
         pieceVersion,
@@ -287,7 +289,7 @@ async function prepareTriggerExecution({ pieceName, pieceVersion, triggerName, i
         contextVersion: piece.getContextInfo?.().version,
     }).resolve<StaticPropsValue<PiecePropertyMap>>({
         unresolvedInput: input,
-        executionState: FlowExecutorContext.empty(),
+        executionState: FlowExecutorContext.empty(flowRunId),
     })
 
     const { processedInput, errors } = await propsProcessor.applyProcessorsAndValidators(resolvedInput, pieceTrigger.props, piece.auth, pieceTrigger.requireAuth, propertySettings)
@@ -309,4 +311,5 @@ type PrepareTriggerExecutionParams = {
     apiUrl: string
     engineToken: string
     devPieces: string[]
+    flowRunId: string
 }

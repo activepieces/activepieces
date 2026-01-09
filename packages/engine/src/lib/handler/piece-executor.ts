@@ -24,7 +24,7 @@ export const pieceExecutor: BaseExecutor<PieceAction> = {
         executionState,
         constants,
     }) {
-        if (executionState.isCompleted({ stepName: action.name })) {
+        if (await executionState.isCompleted({ stepName: action.name })) {
             return executionState
         }
         const resultExecution = await runWithExponentialBackoff(executionState, action, constants, executeAction)
@@ -80,11 +80,11 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             stepOutput,
         })
 
-        const isPaused = executionState.isPaused({ stepName: action.name })
+        const isPaused = await executionState.isPaused({ stepName: action.name })
         if (!isPaused) {
             await progressService.sendUpdate({
                 engineConstants: constants,
-                flowExecutorContext: executionState.upsertStep(action.name, stepOutput),
+                flowExecutorContext: await executionState.upsertStep(action.name, stepOutput),
             })
         }
         const context: ActionContext<PieceAuthProperty, InputPropertyMap> = {
@@ -158,7 +158,7 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
         const testSingleStepMode = !isNil(constants.stepNameToTest)
         const runMethodToExecute = (testSingleStepMode && !isNil(pieceAction.test)) ? pieceAction.test : pieceAction.run
         const output = await runMethodToExecute(backwardCompatibleContext)
-        const newExecutionContext = executionState.addTags(params.hookResponse.tags)
+        let newExecutionContext = executionState.addTags(params.hookResponse.tags)
 
         const webhookResponse = getResponse(params.hookResponse)
         const isSamePiece = constants.triggerPieceName === action.settings.pieceName
@@ -180,7 +180,9 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 throw new EngineGenericError('StopResponseNotSetError', 'Stop response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({
+            newExecutionContext = await newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime))
+
+            return newExecutionContext.incrementStepsExecuted().setVerdict({
                 status: FlowRunStatus.SUCCEEDED,
                 stopResponse: (params.hookResponse.response as StopHookParams).response,
             })
@@ -190,13 +192,15 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
                 throw new EngineGenericError('PauseResponseNotSetError', 'Pause response is not set')
             }
 
-            return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted()
+            newExecutionContext = await newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.PAUSED).setDuration(stepEndTime - stepStartTime))
+            return newExecutionContext.incrementStepsExecuted()
                 .setVerdict({
                     status: FlowRunStatus.PAUSED,
                     pauseMetadata: (params.hookResponse.response as PauseHookParams).pauseMetadata,
                 })
         }
-        return newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime)).incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
+        newExecutionContext = await newExecutionContext.upsertStep(action.name, stepOutput.setOutput(output).setStatus(StepOutputStatus.SUCCEEDED).setDuration(stepEndTime - stepStartTime))
+        return newExecutionContext.incrementStepsExecuted().setVerdict({ status: FlowRunStatus.RUNNING })
 
     }))
 
@@ -206,8 +210,8 @@ const executeAction: ActionHandler<PieceAction> = async ({ action, executionStat
             .setErrorMessage(utils.formatError(executionStateError))
             .setDuration(performance.now() - stepStartTime)
 
-        return executionState
-            .upsertStep(action.name, failedStepOutput)
+        return (await executionState
+            .upsertStep(action.name, failedStepOutput))
             .setVerdict({
                 status: FlowRunStatus.FAILED, failedStep: {
                     name: action.name,

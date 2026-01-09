@@ -8,6 +8,7 @@ import { flowExecutor } from '../handler/flow-executor'
 import { pieceHelper } from '../helper/piece-helper'
 import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
+import { flowStateService } from '../services/flow-state.service'
 
 export const agentTools = {
     async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<ToolSet> {
@@ -172,13 +173,14 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
         valid: true,
     }
 
+    const engineConstants = EngineConstants.fromExecuteActionInput(operation)
     const output = await flowExecutor.getExecutorForAction(step.type).handle({
         action: step,
-        executionState: FlowExecutorContext.empty(),
-        constants: EngineConstants.fromExecuteActionInput(operation),
+        executionState: FlowExecutorContext.empty(engineConstants.flowRunId),
+        constants: engineConstants,
     })
 
-    const { output: stepOutput, errorMessage, status } = output.steps[operation.actionName]
+    const { output: stepOutput, errorMessage, status } = await flowStateService.getStepOutputOrThrow(output.steps[operation.actionName])
 
     return {
         status: status === StepOutputStatus.FAILED ? ExecutionToolStatus.FAILED : ExecutionToolStatus.SUCCESS,
