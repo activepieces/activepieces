@@ -51,9 +51,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
           resizeNote(props.id, { width: params.width, height: params.height });
         }}
       >
-        <button
-          className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"
-        ></button>
+        <button className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"></button>
       </NodeResizeControl>
 
       <div
@@ -154,4 +152,3 @@ type NoteContentProps = {
   note: Note;
   isDragging: boolean;
 };
-

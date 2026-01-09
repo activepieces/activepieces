@@ -46,7 +46,7 @@ export const NoteFooter = ({
             <TooltipTrigger asChild>
               <DragHandleDots2Icon className="size-4 cursor-grab" />
             </TooltipTrigger>
-            <TooltipContent>{t('Move')}</TooltipContent>
+            <TooltipContent>{t('Drag')}</TooltipContent>
           </Tooltip>
         </div>
       )}

@@ -1,29 +1,20 @@
 import { Bold } from '@tiptap/extension-bold';
-import { HardBreak } from '@tiptap/extension-hard-break';
+import Document from '@tiptap/extension-document';
 import { Image } from '@tiptap/extension-image';
 import { Italic } from '@tiptap/extension-italic';
+import { BulletList, ListItem, OrderedList } from '@tiptap/extension-list';
+import { Paragraph } from '@tiptap/extension-paragraph';
 import { Strike } from '@tiptap/extension-strike';
 import { TableKit } from '@tiptap/extension-table';
+import Text from '@tiptap/extension-text';
 import { Underline } from '@tiptap/extension-underline';
 import { Focus } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
 import { Editor, EditorContent, useEditor } from '@tiptap/react';
-import { StarterKit } from '@tiptap/starter-kit';
 import React, { useImperativeHandle } from 'react';
 
 import { cn } from '@/lib/utils';
 
-const convertToHtmlWithBlankLines = (text: string): string => {
-  const lines = text.split('\n\n');
-  return lines
-    .map((line) => {
-      if (line.trim() === '') {
-        return '<p></p>';
-      }
-      return line;
-    })
-    .join('');
-};
 export const MarkdownInput = React.forwardRef<
   Editor | null,
   MarkdownInputProps
@@ -34,7 +25,11 @@ export const MarkdownInput = React.forwardRef<
   ) => {
     const editor = useEditor({
       extensions: [
-        StarterKit,
+        Document,
+        BulletList,
+        OrderedList,
+        Text,
+        ListItem,
         Focus.configure({
           className: 'has-focus',
           mode: 'all',
@@ -48,9 +43,9 @@ export const MarkdownInput = React.forwardRef<
         Bold,
         Italic,
         Underline,
-        HardBreak,
+        EmptyLineParagraphExtension,
       ],
-      content: convertToHtmlWithBlankLines(initialValue),
+      content: initialValue,
       contentType: 'markdown',
       editable: !disabled,
       onUpdate: ({ editor }) => {
@@ -105,3 +100,14 @@ type MarkdownInputProps = {
 };
 
 MarkdownInput.displayName = 'MarkdownInput';
+
+//https://github.com/ueberdosis/tiptap/issues/7269#issuecomment-3669021079
+const EmptyLineParagraphExtension = Paragraph.extend({
+  renderMarkdown: (node, helpers) => {
+    const view = helpers.renderChildren(node.content ?? []);
+    if (!view || view.trim() === '') {
+      return '<br>';
+    }
+    return view;
+  },
+});

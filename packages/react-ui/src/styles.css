@@ -501,6 +501,20 @@
   pointer-events: none;
 }
 
+.tiptap ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+}
+
+.tiptap li {
+  display: list-item;
+}
+
 
 .note-node {
   ::-webkit-scrollbar {

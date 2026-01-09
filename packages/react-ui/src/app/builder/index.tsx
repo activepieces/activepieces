@@ -107,8 +107,6 @@ const BuilderPage = () => {
                 ></CanvasControls>
               )}
 
-           
-
             <ShowPoweredBy
               position="absolute"
               show={platform?.plan.showPoweredBy}

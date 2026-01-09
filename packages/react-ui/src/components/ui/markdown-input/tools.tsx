@@ -111,7 +111,11 @@ const ImageTool = ({
   const [open, setOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const handleAddImage = () => {
-    editor.chain().focus().setImage({ src: imageUrl }).run();
+    editor
+      .chain()
+      .focus()
+      .setImage({ src: imageUrl, alt: 'note-img-' + Date.now() })
+      .run();
     editor.commands.focus();
     setImageUrl('');
     setOpen(false);
