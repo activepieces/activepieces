@@ -118,17 +118,18 @@ async function listRuns(projectIds: string[], afterDate: string | null, currentD
     })
 }
 
-function mergeRuns(runs: AnalyticsRunsUsageItem[], newRuns: AnalyticsRunsUsageItem[]): AnalyticsRunsUsageItem[] {
-    return newRuns.map((newRun) => {
-        const existing = runs.find((run) => run.flowId === newRun.flowId && run.day === newRun.day)
-        if (existing) {
-            return {
-                ...newRun,
-                runs: newRun.runs + existing.runs,
-            }
+function mergeRuns(existing: AnalyticsRunsUsageItem[], incoming: AnalyticsRunsUsageItem[]): AnalyticsRunsUsageItem[] {
+    const map = new Map(existing.map(run => [`${run.flowId}-${run.day}`, { ...run }]))
+    for (const run of incoming) {
+        const key = `${run.flowId}-${run.day}`
+        if (map.has(key)) {
+            map.get(key)!.runs += run.runs
         }
-        return newRun
-    })
+        else {
+            map.set(key, { ...run })
+        }
+    }
+    return Array.from(map.values())
 }
 async function listFlows(platformId: PlatformId, log: FastifyBaseLogger): Promise<AnalyticsFlowReportItem[]> {
     const { data } = await flowService(log).list({
