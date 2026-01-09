@@ -4,6 +4,7 @@ import {
     FlowRun,
     FlowVersion,
     Project,
+    User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
@@ -16,6 +17,7 @@ type FlowRunSchema = FlowRun & {
     flow: Flow
     flowVersion: FlowVersion
     logsFile: File
+    triggeredByUser?: User
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -52,6 +54,10 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
         startTime: {
             type: 'timestamp with time zone',
+            nullable: true,
+        },
+        triggeredBy: {
+            type: String,
             nullable: true,
         },
         finishTime: {
@@ -116,6 +122,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
     ],
     relations: {
+        triggeredByUser: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'SET NULL',
+            joinColumn: {
+                name: 'triggeredBy',
+                foreignKeyConstraintName: 'fk_flow_run_triggered_by_user_id',
+            },
+        },
         project: {
             type: 'many-to-one',
             target: 'project',

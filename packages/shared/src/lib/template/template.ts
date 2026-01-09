@@ -31,10 +31,27 @@ export enum TemplateCategory {
     SALES = 'SALES',
 }
 
-export const FlowVersionTemplate = Type.Omit(
+export const CATEGORY_DISPLAY_NAMES: Record<TemplateCategory, string> = {
+    [TemplateCategory.ANALYTICS]: 'Analytics',
+    [TemplateCategory.COMMUNICATION]: 'Communication',
+    [TemplateCategory.CONTENT]: 'Content',
+    [TemplateCategory.CUSTOMER_SUPPORT]: 'Customer Support',
+    [TemplateCategory.DEVELOPMENT]: 'Development',
+    [TemplateCategory.E_COMMERCE]: 'E-Commerce',
+    [TemplateCategory.FINANCE]: 'Finance',
+    [TemplateCategory.HR]: 'HR',
+    [TemplateCategory.IT_OPERATIONS]: 'IT Operations',
+    [TemplateCategory.MARKETING]: 'Marketing',
+    [TemplateCategory.PRODUCTIVITY]: 'Productivity',
+    [TemplateCategory.SALES]: 'Sales',
+}
+
+export const FlowVersionTemplate = Type.Composite([Type.Omit(
     FlowVersion,
     ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
-)
+), Type.Object({
+    description: Type.Optional(Type.String()),
+})])
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 
 export enum TemplateStatus {

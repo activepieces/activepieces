@@ -1,18 +1,19 @@
 import { CreateAICreditCheckoutSessionParamsSchema, UpdateAICreditsAutoTopUpParamsSchema } from '@activepieces/ee-shared'
-import { sleep } from '@activepieces/server-shared'
-import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan } from '@activepieces/shared'
+import { exceptionHandler, sleep } from '@activepieces/server-shared'
+import { AiCreditsAutoTopUpState, assertNotNullOrUndefined, isNil, PlatformPlan, tryCatch } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { aiProviderService } from '../../../ai/ai-provider-service'
-import { distributedLock } from '../../../database/redis-connections'
+import { distributedLock, distributedStore } from '../../../database/redis-connections'
 import { flagService } from '../../../flags/flag.service'
 import { SystemJobName } from '../../../helper/system-jobs/common'
 import { systemJobHandlers } from '../../../helper/system-jobs/job-handlers'
-import { openRouterApi } from './openrouter/openrouter-api'
+import { openRouterApi, OpenRouterApikey } from './openrouter/openrouter-api'
 import { platformPlanService } from './platform-plan.service'
 import { StripeCheckoutType, stripeHelper } from './stripe-helper'
 
 const CREDIT_PER_DOLLAR = 1000
+const USAGE_CACHE_TTL_SECONDS = 180
 
 export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
@@ -69,7 +70,7 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
 
         assertNotNullOrUndefined(auth.apiKeyHash, 'apiKeyHash is required')
 
-        const { data: usage } = await openRouterApi.getKey({ hash: auth.apiKeyHash })
+        const usage = await getOpenRouterUsageCached(auth.apiKeyHash, log)
 
         return {
             usageMonthly: usage.usage_monthly * CREDIT_PER_DOLLAR,
@@ -94,18 +95,19 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
             platformId,
             aiCreditsAutoTopUpCreditsToAdd: request.creditsToAdd,
             aiCreditsAutoTopUpThreshold: request.minThreshold,
+            maxAutoTopUpCreditsMonthly: request.maxMonthlyLimit,
         })
 
         assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
         const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
-        if (!isNil(paymentMethod)) {    
+        if (!isNil(paymentMethod)) {
             await platformPlanService(log).update({
                 platformId,
                 aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.ENABLED,
             })
 
             return {}
-        }        
+        }
 
         const stripeCheckoutUrl = await stripeHelper(log).createNewAICreditAutoTopUpCheckoutSession({
             platformId,
@@ -157,6 +159,34 @@ export const platformAiCreditsService = (log: FastifyBaseLogger) => ({
     },
 })
 
+async function getOpenRouterUsageCached(apiKeyHash: string, log: FastifyBaseLogger): Promise<Pick<OpenRouterApikey, 'usage' | 'limit' | 'limit_remaining' | 'usage_monthly'>> {
+    const cacheKey = `openrouter_usage_${apiKeyHash}`
+
+    const cachedUsage = await distributedStore.get<OpenRouterApikey>(cacheKey)
+    if (!isNil(cachedUsage)) {
+        return cachedUsage
+    }
+
+    const { error, data: usage } = await tryCatch(async () => openRouterApi.getKey({ hash: apiKeyHash }))
+    if (!isNil(error) || isNil(usage)) {
+        exceptionHandler.handle(error, log)
+        return {
+            limit: 0,
+            limit_remaining: 0,
+            usage: 0,
+            usage_monthly: 0,
+        }
+    }
+    const value = {
+        limit: usage.data.limit ?? 0,
+        limit_remaining: usage.data.limit_remaining ?? 0,
+        usage: usage.data.usage ?? 0,
+        usage_monthly: usage.data.usage_monthly ?? 0,
+    }
+    await distributedStore.put(cacheKey, value, USAGE_CACHE_TTL_SECONDS)
+    return value
+}
+
 async function tryResetPlanIncludedCredits(plan: PlatformPlan, apiKeyHash: string, log: FastifyBaseLogger): Promise<void> {
     if (dayjs().diff(plan.lastFreeAiCreditsRenewalDate, 'month') < 1) {
         return
@@ -182,16 +212,34 @@ async function tryAutoTopUpPlan(plan: PlatformPlan, apiKeyHash: string, log: Fas
         return false
     }
 
-    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
-
-    const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
-    if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold!) {
-        return false
-    }
-
     assertNotNullOrUndefined(plan.stripeCustomerId, 'Stripe customer id is not set')
     assertNotNullOrUndefined(plan.aiCreditsAutoTopUpCreditsToAdd, 'Auto Topup Credits To add is not set')
     assertNotNullOrUndefined(plan.aiCreditsAutoTopUpThreshold, 'Auto Topup Threashold is not set')
+
+    const { data: key } = await openRouterApi.getKey({ hash: apiKeyHash })
+
+    const creditsRemaining = key.limit_remaining! * CREDIT_PER_DOLLAR
+    if (creditsRemaining > plan.aiCreditsAutoTopUpThreshold) {
+        return false
+    }
+
+
+    if (!isNil(plan.maxAutoTopUpCreditsMonthly) && plan.maxAutoTopUpCreditsMonthly > 0) {
+        const totalAmountThisMonth = await stripeHelper(log).getAutoTopUpInvoicesTotalThisMonth(plan.stripeCustomerId, plan.platformId)
+        const totalCreditsThisMonth = totalAmountThisMonth * CREDIT_PER_DOLLAR
+
+        const autoTopUpCreditsThisMonthAfterThisTopUp = totalCreditsThisMonth + plan.aiCreditsAutoTopUpCreditsToAdd
+
+        if (autoTopUpCreditsThisMonthAfterThisTopUp > plan.maxAutoTopUpCreditsMonthly) {
+            log.info({
+                platformId: plan.platformId,
+                totalCreditsThisMonth,
+                creditsToAdd: plan.aiCreditsAutoTopUpCreditsToAdd,
+                maxMonthlyLimit: plan.maxAutoTopUpCreditsMonthly,
+            }, '(tryAutoTopUpPlan) AI credit auto top-up limit reached this month')
+            return false
+        }
+    }
 
     const paymentMethod = await stripeHelper(log).getPaymentMethod(plan.stripeCustomerId)
 

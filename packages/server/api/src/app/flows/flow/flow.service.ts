@@ -28,6 +28,7 @@ import {
     TriggerSource,
     UncategorizedFolderId,
     UserId,
+    UserWithMetaInformation,
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
@@ -526,6 +527,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
 
     async getTemplate({
         flowId,
+        userMetadata,
         versionId,
         projectId,
     }: GetTemplateParams): Promise<SharedTemplate> {
@@ -546,7 +548,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             tags: [],
             blogUrl: '',
             metadata: null,
-            author: '',
+            author: userMetadata ? `${userMetadata.firstName} ${userMetadata.lastName}` : '',
             categories: [],
             type: TemplateType.SHARED,
             status: TemplateStatus.PUBLISHED,
@@ -652,6 +654,35 @@ export const flowService = (log: FastifyBaseLogger) => ({
             },
         })
     },
+
+    async countFlowsByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
+        if (projectIds.length === 0) return new Map()
+        
+        const result = await flowRepo()
+            .createQueryBuilder('flow')
+            .select('flow.projectId', 'projectId')
+            .addSelect('COUNT(*)', 'count')
+            .where('flow.projectId IN (:...projectIds)', { projectIds })
+            .groupBy('flow.projectId')
+            .getRawMany()
+        
+        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
+    },
+
+    async countActiveFlowsByProjects(projectIds: ProjectId[]): Promise<Map<ProjectId, number>> {
+        if (projectIds.length === 0) return new Map()
+        
+        const result = await flowRepo()
+            .createQueryBuilder('flow')
+            .select('flow.projectId', 'projectId')
+            .addSelect('COUNT(*)', 'count')
+            .where('flow.projectId IN (:...projectIds)', { projectIds })
+            .andWhere('flow.status = :status', { status: FlowStatus.ENABLED })
+            .groupBy('flow.projectId')
+            .getRawMany()
+        
+        return new Map(result.map(r => [r.projectId, parseInt(r.count)]))
+    },
 })
 
 
@@ -749,6 +780,7 @@ type GetOnePopulatedParams = GetOneParams & {
 
 type GetTemplateParams = {
     flowId: FlowId
+    userMetadata: UserWithMetaInformation | null
     projectId: ProjectId
     versionId: FlowVersionId | undefined
 }

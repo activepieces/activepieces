@@ -6,9 +6,9 @@ import { system } from '../helper/system/system'
 import { SystemJobName } from '../helper/system-jobs/common'
 import { systemJobHandlers } from '../helper/system-jobs/job-handlers'
 import { systemJobsSchedule } from '../helper/system-jobs/system-job'
+import { localPieceCache } from './metadata/local-piece-cache'
 import { PieceMetadataSchema } from './metadata/piece-metadata-entity'
 import { pieceMetadataService, pieceRepos } from './metadata/piece-metadata-service'
-import { localPieceCache } from './metadata/local-piece-cache'
 
 const CLOUD_API_URL = 'https://cloud.activepieces.com/api/v1/pieces'
 const syncMode = system.get<PieceSyncMode>(AppSystemProp.PIECES_SYNC_MODE)
@@ -72,8 +72,8 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
     const dbMap = new Map<string, true>(dbPieces.map(dbPiece => [`${dbPiece.name}:${dbPiece.version}`, true]))
     const newPiecesToFetch = cloudPieces.filter(piece => !dbMap.has(`${piece.name}:${piece.version}`))
     const batchSize = 5
-    for (let i = 0; i < newPiecesToFetch.length; i += batchSize) {
-        const currentBatch = newPiecesToFetch.slice(i, i + batchSize)
+    for (let done = 0; done < newPiecesToFetch.length; done += batchSize) {
+        const currentBatch = newPiecesToFetch.slice(done, done + batchSize)
         await Promise.all(currentBatch.map(async (piece) => {
             const url = `${CLOUD_API_URL}/${piece.name}${piece.version ? '?version=' + piece.version : ''}`
             const response = await fetch(url)
@@ -87,8 +87,11 @@ async function installNewPieces(cloudPieces: PieceRegistryResponse[], dbPieces: 
                 packageType: pieceMetadata.packageType,
                 pieceType: pieceMetadata.pieceType,
             })
-
         }))
+        if (done % 500 === 0) {
+            await localPieceCache(log).refresh()
+        }
+
     }
     return newPiecesToFetch.length
 }

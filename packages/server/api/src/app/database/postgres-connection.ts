@@ -319,8 +319,11 @@ import { RemoveOpenRounterKeysFromPlatformPlan1766094015801 } from './migration/
 import { AddPlatformAiCreditsPaymentTable1766186963979 } from './migration/postgres/1766186963979-addPlatformAiCreditsPaymentTable'
 import { AddAuthConfigInAiProviders1766328841463 } from './migration/postgres/1766328841463-addAuthConfigInAiProviders'
 import { PlatformIdAndProviderUnique1766375959255 } from './migration/postgres/1766375959255-PlatformIdAndProviderUnique'
+import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migration/postgres/1767016169819-AddMaxAutoTopUpCreditsMonthlyToPlatformPlan'
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
+import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -656,15 +659,18 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         DropLegacyTables1766015156683,
         RecreateMcpToolTable1766072572000,
         PlatformIdAndProviderUnique1766375959255,
+        AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819,
         AnalyticsAndOwnerToFlowId1767127482383,
         AddBadges1767141831647,
+        AddFlowOwnerIndex1767610587266,
+        AddTriggeredBy1767697998391,
     ]
     return migrations
 }
 
 
 export const createPostgresDataSource = (): DataSource => {
-    const migrationConfig: MigrationConfig =  {
+    const migrationConfig: MigrationConfig = {
         migrationsRun: true,
         migrationsTransactionMode: 'each',
         migrations: getMigrations(),

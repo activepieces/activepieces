@@ -144,7 +144,7 @@ describe('Project API', () => {
 
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users/projects',
+                url: '/v1/projects',
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -427,7 +427,7 @@ describe('Project API', () => {
             expect(deletedProject?.deleted).not.toBeNull()
         })
 
-        it('Fails if project has enabled flows', async () => {
+        it('Succeeds if project has enabled flows', async () => {
             // arrange
             const { mockOwner, mockPlatform, mockProject } = await mockAndSaveBasicSetup()
 
@@ -456,10 +456,7 @@ describe('Project API', () => {
             })
 
             // assert
-            expect(response?.statusCode).toBe(StatusCodes.CONFLICT)
-            const responseBody = response?.json()
-            expect(responseBody?.code).toBe('VALIDATION')
-            expect(responseBody?.params?.message).toBe('PROJECT_HAS_ENABLED_FLOWS')
+            expect(response?.statusCode).toBe(StatusCodes.NO_CONTENT)
         })
 
         it('Requires user to be platform owner', async () => {
@@ -531,7 +528,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users/projects',
+                url: '/v1/projects',
                 headers: {
                     authorization: `Bearer ${operatorToken}`,
                 },
@@ -611,7 +608,7 @@ describe('Project API', () => {
             // act - list projects
             const response = await app?.inject({
                 method: 'GET',
-                url: '/v1/users/projects',
+                url: '/v1/projects',
                 headers: {
                     authorization: `Bearer ${memberToken}`,
                 },

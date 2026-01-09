@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-import { flowUtilConsts } from '../../utils/consts';
+import { flowCanvasConsts } from '../../utils/consts';
 
 const StepInvalidOrSkippedIcon = ({
   isValid,
@@ -20,7 +20,7 @@ const StepInvalidOrSkippedIcon = ({
   return (
     <div
       className="absolute flex items-center -left-[22px] bg-builder-background "
-      style={{ height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px` }}
+      style={{ height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px` }}
     >
       <Tooltip>
         <TooltipTrigger asChild>

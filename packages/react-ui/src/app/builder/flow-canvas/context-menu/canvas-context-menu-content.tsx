@@ -33,7 +33,7 @@ import {
   getLastLocationAsPasteLocation,
   pasteNodes,
   toggleSkipSelectedNodes,
-} from '../bulk-actions';
+} from '../utils/bulk-actions';
 
 import {
   CanvasContextMenuProps,

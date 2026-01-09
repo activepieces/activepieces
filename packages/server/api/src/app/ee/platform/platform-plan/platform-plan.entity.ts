@@ -29,6 +29,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: 'timestamp with time zone',
             nullable: true,
         },
+        maxAutoTopUpCreditsMonthly: {
+            type: Number,
+            nullable: true,
+        },
         aiCreditsAutoTopUpThreshold: {
             type: Number,
             nullable: true,
