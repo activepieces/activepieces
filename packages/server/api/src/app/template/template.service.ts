@@ -113,10 +113,8 @@ export const templateService = (log: FastifyBaseLogger) => ({
         await templateRepo().increment({ id }, 'usageCount', 1)
     },
 
-    async list({ platformId, requestQuery }: ListParams): Promise<SeekPage<Template>> {
-        const { pieces, tags, search, type, category } = requestQuery
+    async list({ platformId, pieces, tags, search, type, category }: ListParams): Promise<SeekPage<Template>> {
         const commonFilters: Record<string, unknown> = {}
-        const typeFilter = type ?? TemplateType.OFFICIAL
 
         if (pieces) {
             commonFilters.pieces = ArrayOverlap(pieces)
@@ -124,7 +122,7 @@ export const templateService = (log: FastifyBaseLogger) => ({
         if (category) {
             commonFilters.categories = ArrayContains([category])
         }
-        switch (typeFilter) {
+        switch (type) {
             case TemplateType.OFFICIAL:
                 commonFilters.type = Equal(TemplateType.OFFICIAL)
                 commonFilters.platformId = IsNull()
@@ -187,9 +185,9 @@ type CreateParams = {
 
 type NewTemplate = Omit<Template, 'created' | 'updated'>
 
-type ListParams = {
+type ListParams = Omit<ListTemplatesRequestQuery, 'type'> & {
     platformId: string | null
-    requestQuery: ListTemplatesRequestQuery
+    type: TemplateType
 }
 
 type DeleteParams = {
