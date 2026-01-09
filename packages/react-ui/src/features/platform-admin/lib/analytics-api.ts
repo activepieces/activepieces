@@ -1,7 +1,6 @@
 import { api } from '@/lib/api';
 import {
   PlatformAnalyticsReport,
-  UpdatePlatformReportRequest,
 } from '@activepieces/shared';
 
 export const analyticsApi = {
@@ -10,10 +9,5 @@ export const analyticsApi = {
   },
   refresh(): Promise<PlatformAnalyticsReport> {
     return api.post<PlatformAnalyticsReport>('/v1/analytics/refresh');
-  },
-  update(
-    request: UpdatePlatformReportRequest,
-  ): Promise<PlatformAnalyticsReport> {
-    return api.post<PlatformAnalyticsReport>('/v1/analytics', request);
   },
 };

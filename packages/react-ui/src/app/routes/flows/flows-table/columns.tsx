@@ -147,6 +147,10 @@ export const flowsTableColumns = ({
               setRefresh(refresh + 1);
               refetch();
             }}
+            onOwnerChange={() => {
+              setRefresh(refresh + 1);
+              refetch();
+            }}
           >
             <Button variant="ghost" size="icon" className="mr-8">
               <EllipsisVertical className="h-4 w-4" />

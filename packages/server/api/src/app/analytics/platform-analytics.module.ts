@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, PrincipalType, UpdatePlatformReportRequest, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, PrincipalType, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
@@ -22,12 +22,6 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
         return platformAnalyticsReportService(request.log).getOrGenerateReport(platform.id)
     })
 
-    app.post('/', UpdatePlatformReportRequestSchema, async (request) => {
-        const { platform, id } = request.principal
-        await assertUserIsNotEmbedded(id, request.log)
-        return platformAnalyticsReportService(request.log).update(platform.id, request.body)
-    })
-
     app.post('/refresh', RefreshPlatformAnalyticsRequest, async (request) => {
         const { platform, id } = request.principal
         await assertUserIsNotEmbedded(id, request.log)
@@ -47,16 +41,6 @@ async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): 
     }
 }
 
-
-const UpdatePlatformReportRequestSchema = {
-    config: {
-        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-    },
-    schema: {
-        body: UpdatePlatformReportRequest,
-    },
-}
-
 const RefreshPlatformAnalyticsRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
@@ -64,6 +48,8 @@ const RefreshPlatformAnalyticsRequest = {
 }
 
 const PlatformAnalyticsRequest = {
+    schema: {
+    },
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
