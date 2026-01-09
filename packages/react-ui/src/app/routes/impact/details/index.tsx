@@ -98,7 +98,7 @@ const createColumns = (
         }
       >
         <LayoutGrid className="h-3.5 w-3.5" />
-        {row.original.projectId}
+        {row.original.projectName}
       </div>
     ),
   },

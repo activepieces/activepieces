@@ -75,7 +75,14 @@ export const platformAnalyticsHooks = {
   useAnalytics: () => {
     const { data, isLoading } = useQuery({
       queryKey,
-      queryFn: () => analyticsApi.get(),
+      queryFn: async () => {
+        const analytics = await analyticsApi.get();
+        const projects = projectCollectionUtils.useAll();
+        return {
+          ...analytics,
+          flows: analytics.flows.map(flow => ({ ...flow, projectName: projects.data.find(project => project.id === flow.projectId)?.displayName ?? '' })),
+        };
+      },
     });
     return { data, isLoading };
   },

@@ -15,6 +15,7 @@ export type AnalyticsRunsUsage = Static<typeof AnalyticsRunsUsage>
 
 export const AnalyticsFlowReportItem = Type.Object({
     flowId: Type.String(),
+    projectName: Nullable(Type.String()),
     flowName: Type.String(),
     projectId: Type.String(),
     status: Type.Enum(FlowStatus),
