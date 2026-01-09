@@ -16,9 +16,9 @@ export const templateService = (log: FastifyBaseLogger) => ({
     async getOneOrThrow({ id }: GetParams): Promise<Template> {
         const template = await templateRepo().findOneBy({ id })
         if (isNil(template)) {
-            throw new ActivepiecesError({ 
-                code: ErrorCode.ENTITY_NOT_FOUND, 
-                params: { 
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
                     entityType: 'template',
                     entityId: id,
                     message: `Template ${id} not found`,
@@ -28,12 +28,12 @@ export const templateService = (log: FastifyBaseLogger) => ({
         return template
     },
     async create({ platformId, params }: CreateParams): Promise<Template> {
-        const preparedTemplate = await templateValidator.validateAndPrepare({ 
-            flows: params.flows, 
-            platformId, 
+        const preparedTemplate = await templateValidator.validateAndPrepare({
+            flows: params.flows,
+            platformId,
             log,
         })
-        
+
         const { flows, pieces } = preparedTemplate
         const { name, summary, description, tags, blogUrl, metadata, author, categories, type } = params
 
@@ -72,19 +72,19 @@ export const templateService = (log: FastifyBaseLogger) => ({
         const template = await this.getOneOrThrow({ id })
 
         const newTags = tags ?? []
-        
+
         let sanatizedFlows: FlowVersionTemplate[] | undefined = undefined
         let pieces: string[] | undefined = undefined
         if (!isNil(params.flows) && params.flows.length > 0) {
-            const preparedTemplate = await templateValidator.validateAndPrepare({ 
-                flows: params.flows, 
-                platformId: undefined, 
+            const preparedTemplate = await templateValidator.validateAndPrepare({
+                flows: params.flows,
+                platformId: undefined,
                 log,
             })
             sanatizedFlows = preparedTemplate.flows
             pieces = preparedTemplate.pieces
         }
-        
+
         switch (template.type) {
             case TemplateType.OFFICIAL:
             case TemplateType.SHARED: {
@@ -111,7 +111,7 @@ export const templateService = (log: FastifyBaseLogger) => ({
 
     async incrementUsageCount({ id }: IncrementUsageCountParams): Promise<void> {
         await templateRepo().increment({ id }, 'usageCount', 1)
-    },  
+    },
 
     async list({ platformId, requestQuery }: ListParams): Promise<SeekPage<Template>> {
         const { pieces, tags, search, type, category } = requestQuery
@@ -120,9 +120,6 @@ export const templateService = (log: FastifyBaseLogger) => ({
 
         if (pieces) {
             commonFilters.pieces = ArrayOverlap(pieces)
-        }
-        if (tags) {
-            commonFilters.tags = ArrayContains(tags)
         }
         if (category) {
             commonFilters.categories = ArrayContains([category])
@@ -156,14 +153,20 @@ export const templateService = (log: FastifyBaseLogger) => ({
         const queryBuilder = templateRepo()
             .createQueryBuilder('template')
             .where(commonFilters)
-        
+
+        if (tags && tags.length > 0) {
+            queryBuilder.andWhere(
+                '(SELECT array_agg(tag->>\'title\') FROM jsonb_array_elements(template.tags) tag) @> :tags::text[]',
+                { tags },
+            )
+        }
         if (search) {
             queryBuilder.andWhere(
                 '(template.name ILIKE :search OR template.summary ILIKE :search OR template.description ILIKE :search)',
                 { search: `%${search}%` },
             )
         }
-        
+
         const templates = await queryBuilder.getMany()
         return paginationHelper.createPage(templates, null)
     },

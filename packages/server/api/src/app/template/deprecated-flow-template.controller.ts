@@ -30,7 +30,7 @@ export const deprecatedFlowTemplateController: FastifyPluginAsyncTypebox = async
 
 const ListFlowTemplatesRequestQuery = Type.Object({
     pieces: Type.Optional(Type.Array(Type.String())),
-    tags: Type.Optional(Type.Array(TemplateTag)),
+    tags: Type.Optional(Type.Array(Type.String())),
     search: Type.Optional(Type.String()),
 })
 type ListFlowTemplatesRequestQuery = Static<typeof ListFlowTemplatesRequestQuery>
