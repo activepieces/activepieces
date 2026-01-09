@@ -37,6 +37,7 @@ export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
     cachedAt: Type.String(),
     runs: AnalyticsRunsUsage,
+    outdated: Type.Boolean(),
     flows: AnalyticsFlowReport,
     platformId: Type.String(),
     users: Type.Array(UserWithMetaInformation),

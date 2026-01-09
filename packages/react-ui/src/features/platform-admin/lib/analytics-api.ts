@@ -13,6 +13,9 @@ export const analyticsApi = {
   refresh(): Promise<PlatformAnalyticsReport> {
     return api.post<PlatformAnalyticsReport>('/v1/analytics/refresh');
   },
+  markAsOutdated(): Promise<void> {
+    return api.post<void>('/v1/analytics/mark-outdated');
+  },
   getProjectLeaderboard(
     timePeriod: AnalyticsTimePeriod,
   ): Promise<ProjectLeaderboardItem[]> {

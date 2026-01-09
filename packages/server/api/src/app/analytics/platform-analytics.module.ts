@@ -43,6 +43,12 @@ const platformAnalyticsController: FastifyPluginAsyncTypebox = async (app) => {
         return platformAnalyticsReportService(request.log).getUserLeaderboard(platform.id, timePeriod)
     })
 
+    app.post('/mark-outdated', MarkAsOutdatedRequest, async (request) => {
+        const { platform, id } = request.principal
+        await assertUserIsNotEmbedded(id, request.log)
+        await platformAnalyticsReportService(request.log).markAsOutdated(platform.id)
+    })
+
 }
 
 async function assertUserIsNotEmbedded(userId: string, log: FastifyBaseLogger): Promise<void> {
@@ -84,6 +90,12 @@ const UserLeaderboardRequest = {
     schema: {
         querystring: LeaderboardRequest,
     },
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
+}
+
+const MarkAsOutdatedRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },

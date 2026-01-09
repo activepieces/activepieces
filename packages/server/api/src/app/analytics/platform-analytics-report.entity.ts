@@ -14,6 +14,10 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
         platformId: {
             type: String,
         },
+        outdated: {
+            type: Boolean,
+            nullable: false,
+        },
         cachedAt: {
             type: Date,
             nullable: false,

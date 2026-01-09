@@ -20,9 +20,6 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
             timeoutInSeconds: 400,
             fn: async () => {
                 const currentReport = await platformAnalyticsReportRepo().findOneBy({ platformId })
-                if (currentReport && dayjs(currentReport.cachedAt).add(2, 'minute').isAfter(dayjs())) {
-                    return currentReport
-                }
                 const cachedAt = dayjs().toISOString()
                 const users = await listUsers(platformId)
                 const flows = await listFlows(platformId, log)
@@ -36,14 +33,18 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
                     flows,
                     users,
                     created: cachedAt,
+                    outdated: false,
                     updated: cachedAt,
                 })
             },
         })
     },
+    markAsOutdated: async (platformId: PlatformId) => {
+        return platformAnalyticsReportRepo().update({ platformId }, { outdated: true })
+    },
     getOrGenerateReport: async (platformId: PlatformId, timePeriod?: AnalyticsTimePeriod): Promise<PlatformAnalyticsReport> => {
         let report = await platformAnalyticsReportRepo().findOneBy({ platformId })
-        if (isNil(report)) {
+        if (isNil(report) || report.outdated) {
             report = await platformAnalyticsReportService(log).refreshReport(platformId)
         }
         return filterReportByTimePeriod(report, timePeriod)
