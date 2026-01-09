@@ -9,7 +9,7 @@ export const livesession = createPiece({
   auth: livesessionAuth,
   minimumSupportedRelease: '0.36.1',
   description:
-    'LLiveSession is the analytics platform that helps businesses scale up based on data.',
+    'LiveSession is the analytics platform that helps businesses scale up based on data.',
   categories: [PieceCategory.ARTIFICIAL_INTELLIGENCE],
   logoUrl: 'https://cdn.activepieces.com/pieces/livesession.png',
   authors: ['sanket-a11y'],
