@@ -23,7 +23,7 @@ export const addSubscriptionAction = createAction({
           };
         }
 
-        const credentials = auth.props as { username: string; password: string };
+        const credentials = auth.props as { username: string; password: string; environment: string };
         const response = await listPlans(credentials, { pageSize: 500 });
 
         return {
@@ -50,7 +50,7 @@ export const addSubscriptionAction = createAction({
           };
         }
 
-        const credentials = auth.props as { username: string; password: string };
+        const credentials = auth.props as { username: string; password: string; environment: string };
         const response = await listPayers(credentials, { pageSize: 500 });
 
         return {
@@ -114,6 +114,7 @@ export const addSubscriptionAction = createAction({
       {
         username: context.auth.props.username,
         password: context.auth.props.password,
+        environment: context.auth.props.environment
       },
       subscriptionData as any
     );
