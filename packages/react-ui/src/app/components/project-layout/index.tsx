@@ -86,7 +86,7 @@ export function ProjectDashboardLayout({
           <div className="flex flex-col">
             {!hideHeader && (
               <>
-                <ProjectDashboardLayoutHeader />
+                <ProjectDashboardLayoutHeader key={currentProjectId} />
                 <Separator className="mb-5" />
               </>
             )}

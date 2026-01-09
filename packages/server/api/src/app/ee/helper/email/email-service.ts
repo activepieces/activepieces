@@ -1,5 +1,5 @@
 import { AlertChannel, OtpType } from '@activepieces/ee-shared'
-import { ApEdition, assertNotNullOrUndefined, InvitationType, UserIdentity, UserInvitation } from '@activepieces/shared'
+import { ApEdition, BADGES, assertNotNullOrUndefined, InvitationType, isNil, UserIdentity, UserInvitation } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { system } from '../../../helper/system/system'
 import { platformService } from '../../../platform/platform.service'
@@ -8,6 +8,7 @@ import { alertsService } from '../../alerts/alerts-service'
 import { domainHelper } from '../../custom-domains/domain-helper'
 import { projectRoleService } from '../../projects/project-role/project-role.service'
 import { emailSender, EmailTemplateData } from './email-sender/email-sender'
+import { userService } from '../../../user/user-service'
 
 const EDITION = system.getEdition()
 const EDITION_IS_NOT_PAID = ![ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(EDITION)
@@ -151,6 +152,27 @@ export const emailService = (log: FastifyBaseLogger) => ({
         })
     },
 
+    async sendBadgeAwardedEmail(userId: string, badgeName: string): Promise<void> {
+        const user = await userService.getMetaInformation({ id: userId })
+
+        if (isNil(user)) {
+            return
+        }
+        const badge = BADGES[badgeName as keyof typeof BADGES]
+        await emailSender(log).send({
+            emails: [user.email],
+            platformId: user.platformId!,
+            templateData: {
+                name: 'badge-awarded',
+                vars: {
+                    firstName: user.firstName,
+                    badgeTitle: badge.title,
+                    badgeDescription: badge.description,
+                    badgeImageUrl: badge.imageUrl,
+                },
+            },
+        })
+    },
 })
 
 async function getEntityNameForInvitation(userInvitation: UserInvitation): Promise<{ name: string, role: string }> {
