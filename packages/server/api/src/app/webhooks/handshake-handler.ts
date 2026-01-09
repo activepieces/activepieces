@@ -5,16 +5,44 @@ import { projectService } from '../project/project-service'
 import { triggerUtils } from '../trigger/trigger-source/trigger-utils'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
 
+type HandshakeCheckResult = boolean | 'NEEDS_EVALUATION'
+
 export const handshakeHandler = (log: FastifyBaseLogger) => ({
     async handleHandshakeRequest(params: HandleHandshakeRequestParams): Promise<WebhookHandshakeResponse | null> {
         const { payload, handshakeConfiguration } = params
 
-        if (!isHandshakeRequest({ payload, handshakeConfiguration })) {
+        const staticCheck = isHandshakeRequest({ payload, handshakeConfiguration })
+        
+        if (staticCheck === false) {
             return null
         }
 
-       
         const platformId = await projectService.getPlatformId(params.projectId)
+
+        if (staticCheck === 'NEEDS_EVALUATION') {
+            const shouldHandshakeResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.SHOULD_HANDSHAKE>>>({
+                jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
+                hookType: TriggerHookType.SHOULD_HANDSHAKE,
+                flowId: params.flowId,
+                flowVersionId: params.flowVersionId,
+                projectId: params.projectId,
+                test: false,
+                platformId,
+                triggerPayload: payload,
+            })
+            
+            if (shouldHandshakeResponse.status !== EngineResponseStatus.OK) {
+                return null
+            }
+
+            if (shouldHandshakeResponse.result?.response) {
+                return shouldHandshakeResponse.result.response
+            }
+
+            if (!shouldHandshakeResponse.result?.shouldHandshake) {
+                return null
+            }
+        }
 
         const engineHelperResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperTriggerResult<TriggerHookType.HANDSHAKE>>>({
             jobType: WorkerJobType.EXECUTE_TRIGGER_HOOK,
@@ -50,14 +78,22 @@ export const handshakeHandler = (log: FastifyBaseLogger) => ({
 })  
 
 
-function isHandshakeRequest(params: IsHandshakeRequestParams): boolean {
+function isHandshakeRequest(params: IsHandshakeRequestParams): HandshakeCheckResult {
     const { payload, handshakeConfiguration } = params
 
-    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy) || isNil(handshakeConfiguration.paramName)) {
+    if (isNil(handshakeConfiguration) || isNil(handshakeConfiguration.strategy)) {
         return false
     }
 
     const { strategy, paramName } = handshakeConfiguration
+
+    if (strategy === WebhookHandshakeStrategy.CUSTOM) {
+        return 'NEEDS_EVALUATION'
+    }
+
+    if (isNil(paramName)) {
+        return false
+    }
 
     switch (strategy) {
         case WebhookHandshakeStrategy.HEADER_PRESENT:
