@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { templatesHooks } from '@/features/templates/hooks/templates-hook';
+import { platformHooks } from '@/hooks/platform-hooks';
 import {
   Template,
   TemplateType,
@@ -26,10 +27,14 @@ import {
 
 const TemplatesPage = () => {
   const navigate = useNavigate();
+  const { platform } = platformHooks.useCurrentPlatform();
+  const isShowingOfficialTemplates = !platform.plan.manageTemplatesEnabled;
   const { templates, isLoading, search, setSearch, category, setCategory } =
-    templatesHooks.useTemplates(TemplateType.OFFICIAL);
+    templatesHooks.useTemplates(
+      isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM,
+    );
   const selectedCategory = category as TemplateCategory | 'All';
-  const { data: allTemplates, isLoading: isAllTemplatesLoading } =
+  const { data: allOfficialTemplates, isLoading: isAllTemplatesLoading } =
     templatesHooks.useAllOfficialTemplates();
   const { mutate: createFlow, isPending: isCreateFlowPending } =
     flowHooks.useStartFromScratch(UncategorizedFolderId);
@@ -52,18 +57,20 @@ const TemplatesPage = () => {
       grouped[category] = [];
     });
 
-    allTemplates?.forEach((template: Template) => {
-      if (template.categories?.length) {
-        template.categories?.forEach((category: TemplateCategory) => {
-          if (grouped[category]) {
-            grouped[category].push(template);
-          }
-        });
-      }
-    });
+    if (isShowingOfficialTemplates) {
+      allOfficialTemplates?.forEach((template: Template) => {
+        if (template.categories?.length) {
+          template.categories?.forEach((category: TemplateCategory) => {
+            if (grouped[category]) {
+              grouped[category].push(template);
+            }
+          });
+        }
+      });
+    }
 
     return grouped;
-  }, [allTemplates]);
+  }, [allOfficialTemplates, isShowingOfficialTemplates]);
 
   const categories: (TemplateCategory | 'All')[] = useMemo(() => {
     const categoriesWithTemplates = Object.values(TemplateCategory).filter(
@@ -105,7 +112,7 @@ const TemplatesPage = () => {
               </Button>
             </div>
           </div>
-          {!isAllTemplatesLoading && (
+          {isShowingOfficialTemplates && !isAllTemplatesLoading && (
             <CategoryFilterCarousel
               categories={categories}
               selectedCategory={selectedCategory}
@@ -114,12 +121,16 @@ const TemplatesPage = () => {
           )}
         </div>
 
-        {isLoading || isAllTemplatesLoading ? (
+        {isLoading || (isShowingOfficialTemplates && isAllTemplatesLoading) ? (
           <>
-            {selectedCategory === 'All' ? (
-              <AllCategoriesViewSkeleton />
+            {isShowingOfficialTemplates && selectedCategory === 'All' ? (
+              <AllCategoriesViewSkeleton
+                hideTitle={!isShowingOfficialTemplates}
+              />
             ) : (
-              <SelectedCategoryViewSkeleton />
+              <SelectedCategoryViewSkeleton
+                hideTitle={!isShowingOfficialTemplates}
+              />
             )}
           </>
         ) : (
@@ -128,7 +139,7 @@ const TemplatesPage = () => {
 
             {templates && templates.length > 0 && (
               <>
-                {selectedCategory === 'All' ? (
+                {isShowingOfficialTemplates && selectedCategory === 'All' ? (
                   <AllCategoriesView
                     templatesByCategory={templatesByCategory}
                     onCategorySelect={setCategory}
@@ -136,7 +147,11 @@ const TemplatesPage = () => {
                   />
                 ) : (
                   <SelectedCategoryView
-                    category={selectedCategory}
+                    category={
+                      isShowingOfficialTemplates && selectedCategory !== 'All'
+                        ? selectedCategory
+                        : undefined
+                    }
                     templates={selectedCategoryTemplates}
                     onTemplateSelect={handleTemplateSelect}
                   />
