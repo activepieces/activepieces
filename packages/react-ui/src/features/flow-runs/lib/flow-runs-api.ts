@@ -52,7 +52,7 @@ export const flowRunsApi = {
     onUpdate(initialRun);
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
-    const { socket, request, onProgress, onFinish: onFinish } = params;
+    const { socket, request, onProgress, onFinish } = params;
     const stepRun = await api.post<FlowRun>(
       '/v1/sample-data/test-step',
       request,
@@ -61,7 +61,6 @@ export const flowRunsApi = {
     return new Promise<StepRunResponse>((resolve, reject) => {
       const handleStepFinished = (response: StepRunResponse) => {
         if (response.runId === stepRun.id) {
-          debugger;
           onFinish?.();
           socket.off(
             WebsocketClientEvent.TEST_STEP_FINISHED,
