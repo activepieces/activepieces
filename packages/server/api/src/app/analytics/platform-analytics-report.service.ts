@@ -137,9 +137,12 @@ async function listFlows(platformId: PlatformId, log: FastifyBaseLogger): Promis
         versionState: FlowVersionState.DRAFT,
         includeTriggerSource: false,
     })
+    const projects = await listProjects(platformId)
+        
     return data.map((flow) => {
         return {
             flowId: flow.id,
+            projectName: projects.find((project) => project.id === flow.projectId)?.displayName ?? '',
             flowName: flow.version.displayName,
             projectId: flow.projectId,
             status: flow.status,

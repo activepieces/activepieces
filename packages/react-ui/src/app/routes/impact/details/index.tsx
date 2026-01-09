@@ -46,7 +46,6 @@ const formatMinutes = (minutes: number) => {
 };
 
 const createColumns = (
-  isPlatformAdmin: boolean,
   report?: PlatformAnalyticsReport,
   projects?: ProjectWithLimits[],
   timeSavedPerRunOverrides?: Record<string, { value: number | null }>,
@@ -92,18 +91,34 @@ const createColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Project')} />
     ),
-    cell: ({ row }) => (
-      <div
-        className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
-        onClick={() =>
-          window.open(`/projects/${row.original.projectId}`, '_blank')
-        }
-      >
-        <LayoutGrid className="h-3.5 w-3.5" />
-        {projects?.find((project) => project.id === row.original.projectId)
-          ?.displayName ?? ''}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const project = projects?.find(
+        (project) => project.id === row.original.projectId,
+      );
+      const userHasAccess = !!project;
+      const projectName = project?.displayName ?? row.original.projectName;
+
+      if (userHasAccess) {
+        return (
+          <div
+            className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
+            onClick={() =>
+              window.open(`/projects/${row.original.projectId}`, '_blank')
+            }
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+            {projectName}
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <LayoutGrid className="h-3.5 w-3.5" />
+          {projectName}
+        </div>
+      );
+    },
   },
   {
     accessorKey: 'timeSavedPerRun',
@@ -187,9 +202,7 @@ const createColumns = (
 ];
 
 export function FlowsDetails({ report, isLoading }: FlowsDetailsProps) {
-  const { data: user } = userHooks.useCurrentUser();
   const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
-  const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const flowsDetailsWithOverrides = useMemo(() => {
     if (!report) return undefined;
@@ -222,7 +235,6 @@ export function FlowsDetails({ report, isLoading }: FlowsDetailsProps) {
 
   const projects = projectCollectionUtils.useAll();
   const columns = createColumns(
-    isPlatformAdmin,
     report,
     projects.data,
     timeSavedPerRunOverrides,

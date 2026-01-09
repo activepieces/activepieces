@@ -23,6 +23,7 @@ export const AnalyticsFlowReportItem = Type.Object({
     flowId: Type.String(),
     flowName: Type.String(),
     projectId: Type.String(),
+    projectName: Type.String(),
     status: Type.Enum(FlowStatus),
     timeSavedPerRun: Nullable(Type.Number()),
     ownerId: Nullable(Type.String()),
