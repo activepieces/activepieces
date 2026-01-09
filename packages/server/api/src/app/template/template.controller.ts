@@ -55,7 +55,27 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
-        const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type ?? TemplateType.OFFICIAL)
+        if (isNil(request.query.type)) {
+            const officialTemplates = edition === ApEdition.CLOUD
+                ? await templateService(app.log).list({ platformId: null, requestQuery: { ...request.query, type: TemplateType.OFFICIAL } })
+                : await communityTemplates.list({ ...request.query, type: TemplateType.OFFICIAL })
+
+            if (request.principal.type !== PrincipalType.UNKNOWN && request.principal.type !== PrincipalType.WORKER) {
+                const platform = await platformService.getOneWithPlanOrThrow(request.principal.platform.id)
+                if (platform.plan.manageTemplatesEnabled) {
+                    const customTemplates = await templateService(app.log).list({ platformId: platform.id, requestQuery: { ...request.query, type: TemplateType.CUSTOM } })
+                    return {
+                        data: [...officialTemplates.data, ...customTemplates.data],
+                        next: null,
+                        previous: null,
+                    }
+                }
+            }
+
+            return officialTemplates
+        }
+
+        const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type)
         if (isNil(platformId)) {
             if (edition === ApEdition.CLOUD) {
                 return templateService(app.log).list({ platformId: null, requestQuery: request.query })
