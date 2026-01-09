@@ -18,21 +18,28 @@ export const keyAdded = createTrigger({
   },
   sampleData: {
     event: 'project.key.added',
-    timestamp: '2023-01-01T12:00:00Z',
-    project_id: '3002780358964f9bab5a92.87762498',
     key: {
-      key_id: 331223,
-      key_name: {
-        ios: 'index.welcome',
-        android: 'index.welcome',
-        web: 'index.welcome',
-        other: 'index.welcome',
+      id: 783570856,
+      name: 'index.welcome',
+      base_value: null,
+      filenames: {
+        ios: null,
+        android: null,
+        web: null,
+        other: null,
       },
-      description: 'Index app welcome',
-      platforms: ['web'],
-      tags: ['ui', 'home'],
-      created_at: '2023-01-01T12:00:00Z',
+      tags: [],
     },
+    project: {
+      id: 'aasasasasas',
+      name: 'test',
+    },
+    user: {
+      full_name: 'fadse',
+      email: 'sasdf@gmail.com',
+    },
+    created_at: '2026-01-09 07:38:20',
+    created_at_timestamp: 1767940700,
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
@@ -42,7 +49,7 @@ export const keyAdded = createTrigger({
       url: context.webhookUrl,
       events: ['project.key.added'],
     };
-
+    console.log('Creating webhook with body:', body, projectId);
     const response = await makeRequest(
       context.auth.secret_text,
       HttpMethod.POST,

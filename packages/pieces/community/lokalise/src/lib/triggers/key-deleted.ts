@@ -1,4 +1,3 @@
-
 import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { lokaliseAuth } from '../common/auth';
@@ -15,20 +14,22 @@ export const keyDeleted = createTrigger({
   },
   sampleData: {
     event: 'project.keys.deleted',
-    timestamp: '2023-01-01T12:00:00Z',
-    project_id: '3002780358964f9bab5a92.87762498',
+    action: '',
     keys: [
       {
-        key_id: 331223,
-        key_name: {
-          ios: 'index.welcome',
-          android: 'index.welcome',
-          web: 'index.welcome',
-          other: 'index.welcome',
-        },
-        description: 'Index app welcome',
+        id: 782130622,
+        name: 'test update key',
+        base_value: 'Hello world!',
+        filenames: { ios: null, android: null, web: null, other: null },
       },
     ],
+    project: { id: '30473913695e05bascfe965.32690341', name: 'test' },
+    user: {
+      full_name: 'jon',
+      email: 'jon@example.com',
+    },
+    created_at: '2026-01-09 07:46:03',
+    created_at_timestamp: 1767941163,
   },
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {

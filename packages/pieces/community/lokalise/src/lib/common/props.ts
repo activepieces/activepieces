@@ -73,7 +73,11 @@ export const keyIdProp = Property.Dropdown({
       return {
         disabled: false,
         options: keys.map((key: any) => ({
-          label: key.description,
+          label:
+            key.key_name.other ||
+            key.key_name.ios ||
+            key.key_name.android ||
+            key.key_name.web,
           value: key.key_id,
         })),
       };
