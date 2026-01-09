@@ -23,7 +23,7 @@ type State = {
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         await updateCache(log)
-        cron.schedule('*/15 * * * *', () => {
+        cron.schedule('15,30,45 * * * *', () => {
             log.info('[localPieceCache] Refreshing pieces cache via cron job')
             rejectedPromiseHandler(updateCache(log), log)
         })
