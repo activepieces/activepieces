@@ -13,10 +13,8 @@ import {
 } from '@/components/ui/tooltip';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import { userHooks } from '@/hooks/user-hooks';
 import { formatUtils } from '@/lib/utils';
 import {
-  PlatformRole,
   PlatformAnalyticsReport,
   ProjectWithLimits,
 } from '@activepieces/shared';
@@ -50,158 +48,158 @@ const createColumns = (
   projects?: ProjectWithLimits[],
   timeSavedPerRunOverrides?: Record<string, { value: number | null }>,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
-    {
-      accessorKey: 'flowName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flow')} />
-      ),
-      cell: ({ row }) => (
-        <div
-          className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
-          onClick={() =>
-            window.open(
-              `/projects/${row.original.projectId}/flows/${row.original.flowId}`,
-              '_blank',
-            )
-          }
-        >
-          <Workflow className="h-3.5 w-3.5" />
-          {row.original.flowName}
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'owner',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <ApAvatar
-            id={row.original.ownerId ?? ''}
-            size="small"
-            includeAvatar={true}
-            includeName={true}
-          />
-        );
-      },
-    },
-    {
-      accessorKey: 'projectName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Project')} />
-      ),
-      cell: ({ row }) => {
-        const project = projects?.find(
-          (project) => project.id === row.original.projectId,
-        );
-        const userHasAccess = !!project;
-        const projectName = project?.displayName ?? row.original.projectName;
-
-        if (userHasAccess) {
-          return (
-            <div
-              className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
-              onClick={() =>
-                window.open(`/projects/${row.original.projectId}`, '_blank')
-              }
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              {projectName}
-            </div>
-          );
+  {
+    accessorKey: 'flowName',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Flow')} />
+    ),
+    cell: ({ row }) => (
+      <div
+        className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
+        onClick={() =>
+          window.open(
+            `/projects/${row.original.projectId}/flows/${row.original.flowId}`,
+            '_blank',
+          )
         }
+      >
+        <Workflow className="h-3.5 w-3.5" />
+        {row.original.flowName}
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'owner',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
+    ),
+    cell: ({ row }) => {
+      return (
+        <ApAvatar
+          id={row.original.ownerId ?? ''}
+          size="small"
+          includeAvatar={true}
+          includeName={true}
+        />
+      );
+    },
+  },
+  {
+    accessorKey: 'projectName',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Project')} />
+    ),
+    cell: ({ row }) => {
+      const project = projects?.find(
+        (project) => project.id === row.original.projectId,
+      );
+      const userHasAccess = !!project;
+      const projectName = project?.displayName ?? row.original.projectName;
 
+      if (userHasAccess) {
         return (
-          <div className="flex items-center gap-1 text-muted-foreground">
+          <div
+            className="flex items-center gap-1 text-foreground hover:underline cursor-pointer"
+            onClick={() =>
+              window.open(`/projects/${row.original.projectId}`, '_blank')
+            }
+          >
             <LayoutGrid className="h-3.5 w-3.5" />
             {projectName}
           </div>
         );
-      },
+      }
+
+      return (
+        <div className="flex items-center gap-1 text-muted-foreground">
+          <LayoutGrid className="h-3.5 w-3.5" />
+          {projectName}
+        </div>
+      );
     },
-    {
-      accessorKey: 'timeSavedPerRun',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Time Saved Per Run')} />
-      ),
-      cell: ({ row }) => {
-        const override = timeSavedPerRunOverrides?.[row.original.flowId];
-        const timeSavedPerRun = override?.value ?? row.original.timeSavedPerRun;
-        const displayValue = timeSavedPerRun
-          ? formatUtils.formatToHoursAndMinutes(timeSavedPerRun)
-          : t('Not set');
+  },
+  {
+    accessorKey: 'timeSavedPerRun',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Time Saved Per Run')} />
+    ),
+    cell: ({ row }) => {
+      const override = timeSavedPerRunOverrides?.[row.original.flowId];
+      const timeSavedPerRun = override?.value ?? row.original.timeSavedPerRun;
+      const displayValue = timeSavedPerRun
+        ? formatUtils.formatToHoursAndMinutes(timeSavedPerRun)
+        : t('Not set');
 
-        const userHasAccessToProject = projects?.some(
-          (project) => project.id === row.original.projectId,
-        );
+      const userHasAccessToProject = projects?.some(
+        (project) => project.id === row.original.projectId,
+      );
 
-        if (!userHasAccessToProject) {
-          return (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 text-muted-foreground cursor-not-allowed">
-                  <Pencil className="h-3.5 w-3.5" />
-                  <span>{displayValue}</span>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {t("You don't have permission to edit this flow")}
-              </TooltipContent>
-            </Tooltip>
-          );
-        }
-
-        return (
-          <EditTimeSavedPopover
-            flowId={row.original.flowId}
-            currentValue={timeSavedPerRun}
-          >
-            <div className="flex items-center gap-1.5 cursor-pointer hover:text-primary">
-              <Pencil className="h-3.5 w-3.5" />
-              <span>{displayValue}</span>
-            </div>
-          </EditTimeSavedPopover>
-        );
-      },
-    },
-    {
-      accessorKey: 'minutesSaved',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Total Time Saved')} />
-      ),
-      cell: ({ row }) => {
-        const timeSavedPerRun = row.original.timeSavedPerRun;
-        const totalRuns = report?.runs
-          .filter((run) => run.flowId === row.original.flowId)
-          .reduce((sum, run) => sum + (run.runs ?? 0), 0);
-
-        const runs = (totalRuns ?? 0) * (row.original.timeSavedPerRun ?? 0);
-        const minutesSaved = runs;
+      if (!userHasAccessToProject) {
         return (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                <span>{formatMinutes(minutesSaved)}</span>
+              <div className="flex items-center gap-1.5 text-muted-foreground cursor-not-allowed">
+                <Pencil className="h-3.5 w-3.5" />
+                <span>{displayValue}</span>
               </div>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs">
-              {t(
-                'This flow ran {runs} time(s), saving {minutesSaved} minutes per run',
-                {
-                  runs: runs.toLocaleString(),
-                  minutesSaved: formatUtils.formatToHoursAndMinutes(
-                    timeSavedPerRun ?? 0,
-                  ),
-                },
-              )}
+            <TooltipContent side="top">
+              {t("You don't have permission to edit this flow")}
             </TooltipContent>
           </Tooltip>
         );
-      },
+      }
+
+      return (
+        <EditTimeSavedPopover
+          flowId={row.original.flowId}
+          currentValue={timeSavedPerRun}
+        >
+          <div className="flex items-center gap-1.5 cursor-pointer hover:text-primary">
+            <Pencil className="h-3.5 w-3.5" />
+            <span>{displayValue}</span>
+          </div>
+        </EditTimeSavedPopover>
+      );
     },
-  ];
+  },
+  {
+    accessorKey: 'minutesSaved',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Total Time Saved')} />
+    ),
+    cell: ({ row }) => {
+      const timeSavedPerRun = row.original.timeSavedPerRun;
+      const totalRuns = report?.runs
+        .filter((run) => run.flowId === row.original.flowId)
+        .reduce((sum, run) => sum + (run.runs ?? 0), 0);
+
+      const runs = (totalRuns ?? 0) * (row.original.timeSavedPerRun ?? 0);
+      const minutesSaved = runs;
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5" />
+              <span>{formatMinutes(minutesSaved)}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-xs">
+            {t(
+              'This flow ran {runs} time(s), saving {minutesSaved} minutes per run',
+              {
+                runs: runs.toLocaleString(),
+                minutesSaved: formatUtils.formatToHoursAndMinutes(
+                  timeSavedPerRun ?? 0,
+                ),
+              },
+            )}
+          </TooltipContent>
+        </Tooltip>
+      );
+    },
+  },
+];
 
 export function FlowsDetails({ report, isLoading }: FlowsDetailsProps) {
   const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);

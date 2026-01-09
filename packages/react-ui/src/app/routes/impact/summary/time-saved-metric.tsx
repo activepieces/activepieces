@@ -26,11 +26,11 @@ export const TimeSavedMetric = ({
   const atLeastOneTimeSavedSet = flowsWithTimeSaved.length > 0;
 
   const minutesSaved = atLeastOneTimeSavedSet
-    ? flowsWithTimeSaved.reduce(
-      (acc, flow) => {
-        const totalRuns = report?.runs
-          .filter((run) => run.flowId === flow.flowId)
-          .reduce((sum, run) => sum + (run.runs ?? 0), 0) ?? 0;
+    ? flowsWithTimeSaved.reduce((acc, flow) => {
+        const totalRuns =
+          report?.runs
+            .filter((run) => run.flowId === flow.flowId)
+            .reduce((sum, run) => sum + (run.runs ?? 0), 0) ?? 0;
         return acc + (flow.timeSavedPerRun ?? 0) * totalRuns;
       }, 0)
     : 0;

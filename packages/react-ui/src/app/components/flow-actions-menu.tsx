@@ -222,7 +222,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
             </MoveFlowDialog>
           </PermissionNeededTooltip>
         )}
-        {!readonly && hasProjectMembers && (
+        {!readonly && hasProjectMembers && !embedState.isEmbedded && (
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >

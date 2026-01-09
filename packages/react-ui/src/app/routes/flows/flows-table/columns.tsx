@@ -25,12 +25,14 @@ type FlowsTableColumnsProps = {
   refetch: () => void;
   refresh: number;
   setRefresh: Dispatch<SetStateAction<number>>;
+  isEmbedded: boolean;
 };
 
 export const flowsTableColumns = ({
   refetch,
   refresh,
   setRefresh,
+  isEmbedded,
 }: FlowsTableColumnsProps): (ColumnDef<RowDataWithActions<PopulatedFlow>> & {
   accessorKey: string;
 })[] => [
@@ -79,25 +81,33 @@ export const flowsTableColumns = ({
       );
     },
   },
-  {
-    accessorKey: 'owner',
-    size: 150,
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Owner')} icon={User} />
-    ),
-    cell: ({ row }) => {
-      return isNil(row.original.ownerId) ? (
-        <span className="text-muted-foreground">—</span>
-      ) : (
-        <ApAvatar
-          id={row.original.ownerId}
-          size="small"
-          includeAvatar={true}
-          includeName={true}
-        />
-      );
-    },
-  },
+  ...(isEmbedded
+    ? []
+    : [
+        {
+          accessorKey: 'owner',
+          size: 150,
+          header: ({ column }: { column: any }) => (
+            <DataTableColumnHeader
+              column={column}
+              title={t('Owner')}
+              icon={User}
+            />
+          ),
+          cell: ({ row }: { row: any }) => {
+            return isNil(row.original.ownerId) ? (
+              <span className="text-muted-foreground">—</span>
+            ) : (
+              <ApAvatar
+                id={row.original.ownerId}
+                size="small"
+                includeAvatar={true}
+                includeName={true}
+              />
+            );
+          },
+        },
+      ]),
   {
     accessorKey: 'status',
     header: ({ column }) => (
