@@ -47,6 +47,7 @@ const formatMinutes = (minutes: number) => {
 const createColumns = (
   isPlatformAdmin: boolean,
   report?: PlatformAnalyticsReport,
+  timeSavedPerRunOverrides?: Record<string, { value: number | null }>,
 ): ColumnDef<RowDataWithActions<FlowDetailsWithId>>[] => [
   {
     accessorKey: 'flowName',
@@ -102,6 +103,40 @@ const createColumns = (
     ),
   },
   {
+    accessorKey: 'timeSavedPerRun',
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title={t('Time Saved Per Run')} />
+    ),
+    cell: ({ row }) => {
+      const override = timeSavedPerRunOverrides?.[row.original.flowId];
+      const timeSavedPerRun = override?.value ?? row.original.timeSavedPerRun;
+      const displayValue = timeSavedPerRun 
+        ? formatUtils.formatToHoursAndMinutes(timeSavedPerRun)
+        : t('Not set');
+
+      if (isPlatformAdmin) {
+        return (
+          <EditTimeSavedPopover
+            flowId={row.original.flowId}
+            currentValue={timeSavedPerRun}
+          >
+            <div className="flex items-center gap-1.5 cursor-pointer hover:text-primary">
+              <Pencil className="h-3.5 w-3.5" />
+              <span>{displayValue}</span>
+            </div>
+          </EditTimeSavedPopover>
+        );
+      }
+
+      return (
+        <div className="flex items-center gap-1.5">
+          <Clock className="h-3.5 w-3.5" />
+          <span>{displayValue}</span>
+        </div>
+      );
+    },
+  },
+  {
     accessorKey: 'minutesSaved',
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title={t('Total Time Saved')} />
@@ -135,19 +170,24 @@ export function FlowsDetails({
   isLoading,
 }: FlowsDetailsProps) {
   const { data: user } = userHooks.useCurrentUser();
+  const { timeSavedPerRunOverrides } = useContext(RefreshAnalyticsContext);
   const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const flowsDetailsWithOverrides = useMemo(() => {
     if (!report) return undefined;
 
     return report.flows.map((flow) => {
+      const override = timeSavedPerRunOverrides[flow.flowId];
+      const timeSavedPerRun = override?.value ?? flow.timeSavedPerRun;
+      const runs = report.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0;
       return {
         ...flow,
-        runs: report.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0,
-        minutesSaved: (flow.timeSavedPerRun ?? 0) * (report.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0),
+        timeSavedPerRun,
+        runs,
+        minutesSaved: (timeSavedPerRun ?? 0) * runs,
       };
     });
-  }, [report]);
+  }, [report, timeSavedPerRunOverrides]);
 
   if (!flowsDetailsWithOverrides && !isLoading) {
     return null;
@@ -161,7 +201,7 @@ export function FlowsDetails({
       }))
       .sort((a, b) => b.minutesSaved - a.minutesSaved) ?? [];
 
-  const columns = createColumns(isPlatformAdmin, report);
+  const columns = createColumns(isPlatformAdmin, report, timeSavedPerRunOverrides);
 
   return (
     <div className="flex flex-col gap-4 mb-8">

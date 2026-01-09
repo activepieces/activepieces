@@ -15,13 +15,43 @@ export const TimeSavedMetric = ({
   report,
   isLoading,
 }: TimeSavedMetricProps) => {
-  
-  const minutesSaved =
-    report?.flows.reduce((acc, flow) => acc + (flow.timeSavedPerRun ?? 0) * (report?.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0), 0) ?? 0;
+  const flows = report?.flows ?? [];
+
+  const flowsWithTimeSaved = flows.filter(
+    (flow) => flow.timeSavedPerRun !== null && flow.timeSavedPerRun !== undefined && flow.timeSavedPerRun !== 0
+  );
+  const atLeastOneTimeSavedSet = flowsWithTimeSaved.length > 0;
+
+  const minutesSaved = atLeastOneTimeSavedSet
+    ? flowsWithTimeSaved.reduce(
+        (acc, flow) =>
+          acc +
+          (flow.timeSavedPerRun ?? 0) *
+            (report?.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0),
+        0
+      )
+    : 0;
   const equivalentWorkdays = Math.round(minutesSaved / 8 / 60);
 
   if (isLoading) {
     return <MetricCardSkeleton />;
+  }
+
+  if (!atLeastOneTimeSavedSet) {
+    return (
+      <MetricCard
+        icon={Clock}
+        title={t('Time Saved')}
+        value="N/A"
+        description={t(
+          'Estimated hours saved through automation in the last 3 months. Each automated task saves valuable employee time that can be redirected to high-impact work.',
+        )}
+        subtitle={t('Equivalent to {days} workdays saved', {
+          days: 'N/A',
+        })}
+        iconColor="text-emerald-600"
+      />
+    );
   }
 
   return (
