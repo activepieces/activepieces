@@ -55,6 +55,7 @@ type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
     badgeTitle: string
     badgeDescription: string
     badgeImageUrl: string
+    firstName: string
 }>
 
 export type EmailTemplateData =
