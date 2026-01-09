@@ -665,7 +665,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddBadges1767141831647,
         AddFlowOwnerIndex1767610587266,
         AddTriggeredBy1767697998391,
-        UpdateCacheStructure1767904545112
+        UpdateCacheStructure1767904545112,
     ]
     return migrations
 }
