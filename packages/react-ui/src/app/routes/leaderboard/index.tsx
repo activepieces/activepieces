@@ -1,6 +1,6 @@
 import { t } from 'i18next';
-import { Calendar, Download } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Calendar, Download, RefreshCcwIcon } from 'lucide-react';
+import { useContext, useMemo, useState } from 'react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,10 @@ import {
   platformAnalyticsHooks,
   TimePeriod as TimePeriodEnum,
 } from '@/features/platform-admin/lib/analytics-hooks';
-import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
+import {
+  RefreshAnalyticsContext,
+  RefreshAnalyticsProvider,
+} from '@/features/platform-admin/lib/refresh-analytics-context';
 import { downloadFile, formatUtils } from '@/lib/utils';
 
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
@@ -33,6 +36,10 @@ export default function LeaderboardPage() {
   const projectsLeaderboardResult =
     platformAnalyticsHooks.useProjectLeaderboard(timePeriod);
   const [activeTab, setActiveTab] = useState('creators');
+
+  const { mutate: refreshAnalytics } =
+    platformAnalyticsHooks.useRefreshAnalytics();
+  const { isRefreshing } = useContext(RefreshAnalyticsContext);
 
   const isLoading =
     isAnalyticsLoading ||
@@ -171,6 +178,18 @@ export default function LeaderboardPage() {
                   <SelectItem value={TimePeriodEnum.ALL_TIME}>{t('All Time')}</SelectItem>
                 </SelectContent>
               </Select>
+              <Button
+                onClick={() => {
+                  refreshAnalytics();
+                }}
+                loading={isRefreshing}
+                disabled={isRefreshing}
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCcwIcon className="w-4 h-4 mr-2" />
+                {t('Refresh')}
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
