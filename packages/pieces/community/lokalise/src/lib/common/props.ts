@@ -3,7 +3,7 @@ import { lokaliseAuth } from './auth';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
 
-export const projectDropdown = Property.Dropdown({
+export const projectDropdown = Property.Dropdown<string,true,typeof lokaliseAuth>({
   auth: lokaliseAuth,
   displayName: 'Project',
   description: 'Select the Lokalise project',

@@ -1,8 +1,41 @@
-import { createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import {
+  AppConnectionValueForAuthProperty,
+  createTrigger,
+  TriggerStrategy,
+} from '@activepieces/pieces-framework';
+import {
+  DedupeStrategy,
+  HttpMethod,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
 import { lokaliseAuth } from '../common/auth';
 import { projectDropdown } from '../common/props';
 import { makeRequest } from '../common/client';
+
+const polling: Polling<
+  AppConnectionValueForAuthProperty<typeof lokaliseAuth>,
+  { projectId: string }
+> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, propsValue, lastFetchEpochMS }) => {
+    const translations = (await makeRequest(
+      auth.secret_text,
+      HttpMethod.GET,
+      `/projects/${propsValue.projectId}/translations`
+    )) as any;
+
+    return translations.translations
+      .filter(
+        (translation: { modified_at_timestamp: number }) =>
+          translation.modified_at_timestamp * 1000 > lastFetchEpochMS
+      )
+      .map((translation: any) => ({
+        epochMilliSeconds: translation.modified_at_timestamp * 1000,
+        data: translation,
+      }));
+  },
+};
 
 export const translationUpdated = createTrigger({
   auth: lokaliseAuth,
@@ -13,42 +46,20 @@ export const translationUpdated = createTrigger({
     projectId: projectDropdown,
   },
   sampleData: {},
-  type: TriggerStrategy.WEBHOOK,
+  type: TriggerStrategy.POLLING,
+  async test(context) {
+    return await pollingHelper.test(polling, context);
+  },
+
   async onEnable(context) {
-    const projectId = context.propsValue.projectId;
-
-    const body = {
-      url: context.webhookUrl,
-      events: ['project.translation.updated'],
-    };
-
-    const response = await makeRequest(
-      context.auth.secret_text,
-      HttpMethod.POST,
-      `/projects/${projectId}/webhooks`,
-      body
-    );
-
-    const webhookId = (response.body as any).webhook.webhook_id;
-    await context.store?.put('webhook_id', webhookId);
+    await pollingHelper.onEnable(polling, context);
   },
+
   async onDisable(context) {
-    const projectId = context.propsValue.projectId;
-    const webhookId = await context.store?.get('webhook_id');
-
-    if (webhookId) {
-      try {
-        await makeRequest(
-          context.auth.secret_text,
-          HttpMethod.DELETE,
-          `/projects/${projectId}/webhooks/${webhookId}`
-        );
-      } catch (error) {
-        console.error('Error deleting webhook:', error);
-      }
-    }
+    await pollingHelper.onDisable(polling, context);
   },
+
   async run(context) {
-    return [context.payload.body];
+    return await pollingHelper.poll(polling, context);
   },
 });
