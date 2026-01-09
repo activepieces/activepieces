@@ -17,7 +17,8 @@ export function FlowDetailsHeader({ report }: FlowDetailsHeaderProps) {
       'Flow Name,Project Name,Runs,Time Saved Per Run (min),Total Time Saved (min)\n';
     const csvContent = report.flows
       .map((flow) => {
-        const runs = report.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0;
+        const runs =
+          report.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0;
         const timeSavedPerRun = flow.timeSavedPerRun ?? 0;
         const minutesSaved = runs * timeSavedPerRun;
         return `"${flow.flowName}","${flow.projectId}",${runs},${timeSavedPerRun},${minutesSaved}`;

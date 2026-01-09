@@ -17,8 +17,7 @@ export function TimeSavedEncouragementBanner({
   const flows = report.flows ?? [];
   const flowsWithoutTimeSaved = flows.filter(
     (flow) =>
-      flow.timeSavedPerRun === null ||
-      flow.timeSavedPerRun === undefined
+      flow.timeSavedPerRun === null || flow.timeSavedPerRun === undefined,
   );
 
   if (flowsWithoutTimeSaved.length === 0) {
@@ -33,12 +32,17 @@ export function TimeSavedEncouragementBanner({
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm text-foreground">
-            {t('You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!', {
-              count: flowsWithoutTimeSaved.length,
-            })}
+            {t(
+              'You have {count} {count, plural, one {flow} other {flows}} without time saved per run. Add it to see your complete automation impact!',
+              {
+                count: flowsWithoutTimeSaved.length,
+              },
+            )}
           </p>
           <p className="mt-1.5 text-xs text-muted-foreground">
-            {t('Click the')} <Pencil className="h-3 w-3 inline-block align-middle mx-0.5" /> {t('pencil icon in the table below to set time saved per run')}
+            {t('Click the')}{' '}
+            <Pencil className="h-3 w-3 inline-block align-middle mx-0.5" />{' '}
+            {t('pencil icon in the table below to set time saved per run')}
           </p>
         </div>
       </div>

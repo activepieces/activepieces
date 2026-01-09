@@ -13,27 +13,30 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  platformAnalyticsHooks,
-  TimePeriod as TimePeriodEnum,
-} from '@/features/platform-admin/lib/analytics-hooks';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import {
   RefreshAnalyticsContext,
   RefreshAnalyticsProvider,
 } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { downloadFile, formatUtils } from '@/lib/utils';
+import { AnalyticsTimePeriod } from '@activepieces/shared';
 
 import { ProjectsLeaderboard, ProjectStats } from './projects-leaderboard';
 import { UsersLeaderboard, UserStats } from './users-leaderboard';
 
-
 export default function LeaderboardPage() {
-  const [timePeriod, setTimePeriod] = useState<TimePeriodEnum>(TimePeriodEnum.LAST_MONTH);
+  const [timePeriod, setTimePeriod] = useState<AnalyticsTimePeriod>(
+    AnalyticsTimePeriod.LAST_MONTH,
+  );
   const { data: analyticsData, isLoading: isAnalyticsLoading } =
     platformAnalyticsHooks.useAnalytics();
-  const usersLeaderboardResult = platformAnalyticsHooks.useUsersLeaderboard(
-      timePeriod,
-  );
-  const projectsLeaderboardResult =
+  const { data: usersLeaderboardData, isLoading: isUsersLoading } =
+    platformAnalyticsHooks.useUsersLeaderboard(timePeriod);
+  const { data: projectsLeaderboardData, isLoading: isProjectsLoading } =
     platformAnalyticsHooks.useProjectLeaderboard(timePeriod);
   const [activeTab, setActiveTab] = useState('creators');
 
@@ -41,29 +44,16 @@ export default function LeaderboardPage() {
     platformAnalyticsHooks.useRefreshAnalytics();
   const { isRefreshing } = useContext(RefreshAnalyticsContext);
 
-  const isLoading =
-    isAnalyticsLoading ||
-    (typeof usersLeaderboardResult === 'object' &&
-      'isLoading' in usersLeaderboardResult &&
-      usersLeaderboardResult.isLoading) ||
-    (typeof projectsLeaderboardResult === 'object' &&
-      'isLoading' in projectsLeaderboardResult &&
-      projectsLeaderboardResult.isLoading);
+  const isLoading = isAnalyticsLoading || isUsersLoading || isProjectsLoading;
 
   const peopleData = useMemo((): UserStats[] => {
-    if (
-      isLoading ||
-      !analyticsData?.users ||
-      !Array.isArray(usersLeaderboardResult)
-    ) {
+    if (isLoading || !analyticsData?.users || !usersLeaderboardData) {
       return [];
     }
 
-    const userMap = new Map(
-      analyticsData.users.map((user) => [user.id, user]),
-    );
+    const userMap = new Map(analyticsData.users.map((user) => [user.id, user]));
 
-    return usersLeaderboardResult
+    return usersLeaderboardData
       .map((item) => {
         const user = userMap.get(item.userId);
         if (!user) return null;
@@ -71,33 +61,28 @@ export default function LeaderboardPage() {
         return {
           id: item.userId,
           visibleId: item.userId,
-          userName:
-            `${user.firstName} ${user.lastName}`.trim() || user.email,
+          userName: `${user.firstName} ${user.lastName}`.trim() || user.email,
           userEmail: user.email,
           flowCount: item.flowCount ?? 0,
           minutesSaved: item.minutesSaved ?? 0,
         };
       })
       .filter((item): item is UserStats => item !== null);
-  }, [
-    analyticsData?.users,
-    usersLeaderboardResult,
-    isLoading,
-  ]);
+  }, [analyticsData?.users, usersLeaderboardData, isLoading]);
 
   const projectsData = useMemo((): ProjectStats[] => {
-    if (isLoading || !Array.isArray(projectsLeaderboardResult)) {
+    if (isLoading || !projectsLeaderboardData) {
       return [];
     }
 
-    return projectsLeaderboardResult.map((item) => ({
+    return projectsLeaderboardData.map((item) => ({
       id: item.projectId,
       projectId: item.projectId,
       projectName: item.projectName,
       flowCount: item.flowCount ?? 0,
       minutesSaved: item.minutesSaved ?? 0,
     }));
-  }, [projectsLeaderboardResult, isLoading]);
+  }, [projectsLeaderboardData, isLoading]);
 
   const handleDownload = () => {
     if (activeTab === 'creators') {
@@ -109,7 +94,9 @@ export default function LeaderboardPage() {
           (person) =>
             `"${person.userName}","${person.userEmail}",${
               person.flowCount
-            },"${formatUtils.formatToHoursAndMinutes(person.minutesSaved || 0)}"`,
+            },"${formatUtils.formatToHoursAndMinutes(
+              person.minutesSaved || 0,
+            )}"`,
         )
         .join('\n');
 
@@ -127,7 +114,9 @@ export default function LeaderboardPage() {
           (project) =>
             `"${project.projectName}",${
               project.flowCount
-            },"${formatUtils.formatToHoursAndMinutes(project.minutesSaved || 0)}"`,
+            },"${formatUtils.formatToHoursAndMinutes(
+              project.minutesSaved || 0,
+            )}"`,
         )
         .join('\n');
 
@@ -148,7 +137,29 @@ export default function LeaderboardPage() {
     <RefreshAnalyticsProvider>
       <div className="flex flex-col gap-2 w-full">
         <DashboardPageHeader
-          title={t('Leaderboard')}
+          title={
+            <div className="flex items-center gap-3">
+              <span>{t('Leaderboard')}</span>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => refreshAnalytics()}
+                    disabled={isRefreshing}
+                  >
+                    <RefreshCcwIcon
+                      className={`w-4 h-4 ${
+                        isRefreshing ? 'animate-spin' : ''
+                      }`}
+                    />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{t('Refresh analytics')}</TooltipContent>
+              </Tooltip>
+            </div>
+          }
           description={t('See top performers by flows created and time saved')}
         />
 
@@ -167,29 +178,28 @@ export default function LeaderboardPage() {
               </TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
-              <Select value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriodEnum)}>
+              <Select
+                value={timePeriod}
+                onValueChange={(value) =>
+                  setTimePeriod(value as AnalyticsTimePeriod)
+                }
+              >
                 <SelectTrigger className="h-8">
                   <Calendar className="h-3 w-3 mr-2" />
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={TimePeriodEnum.LAST_WEEK}>{t('Last 7 days')}</SelectItem>
-                  <SelectItem value={TimePeriodEnum.LAST_MONTH}>{t('Last 30 days')}</SelectItem>
-                  <SelectItem value={TimePeriodEnum.ALL_TIME}>{t('All Time')}</SelectItem>
+                  <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                    {t('Last 7 days')}
+                  </SelectItem>
+                  <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                    {t('Last 30 days')}
+                  </SelectItem>
+                  <SelectItem value={AnalyticsTimePeriod.ALL_TIME}>
+                    {t('All Time')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                onClick={() => {
-                  refreshAnalytics();
-                }}
-                loading={isRefreshing}
-                disabled={isRefreshing}
-                variant="outline"
-                size="sm"
-              >
-                <RefreshCcwIcon className="w-4 h-4 mr-2" />
-                {t('Refresh')}
-              </Button>
               <Button
                 variant="outline"
                 size="sm"

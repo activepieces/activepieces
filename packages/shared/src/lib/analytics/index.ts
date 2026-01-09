@@ -3,6 +3,12 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { FlowStatus } from '../flows/flow'
 import { UserWithMetaInformation } from '../user'
 
+export enum AnalyticsTimePeriod {
+    LAST_WEEK = 'last-week',
+    LAST_MONTH = 'last-month',
+    ALL_TIME = 'all-time',
+}
+
 export const AnalyticsRunsUsageItem = Type.Object({
     day: Type.String(),
     flowId: Type.String(),
@@ -35,3 +41,28 @@ export const PlatformAnalyticsReport = Type.Object({
     users: Type.Array(UserWithMetaInformation),
 })
 export type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>
+
+export const ProjectLeaderboardItem = Type.Object({
+    projectId: Type.String(),
+    projectName: Type.String(),
+    flowCount: Type.Number(),
+    minutesSaved: Nullable(Type.Number()),
+})
+export type ProjectLeaderboardItem = Static<typeof ProjectLeaderboardItem>
+
+export const UserLeaderboardItem = Type.Object({
+    userId: Type.String(),
+    flowCount: Type.Number(),
+    minutesSaved: Nullable(Type.Number()),
+})
+export type UserLeaderboardItem = Static<typeof UserLeaderboardItem>
+
+export const AnalyticsReportRequest = Type.Object({
+    timePeriod: Type.Optional(Type.Enum(AnalyticsTimePeriod)),
+})
+export type AnalyticsReportRequest = Static<typeof AnalyticsReportRequest>
+
+export const LeaderboardRequest = Type.Object({
+    timePeriod: Type.Enum(AnalyticsTimePeriod),
+})
+export type LeaderboardRequest = Static<typeof LeaderboardRequest>

@@ -226,7 +226,10 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           <PermissionNeededTooltip
             hasPermission={userHasPermissionToUpdateFlow}
           >
-            <ChangeOwnerDialog flow={flow} onOwnerChange={onOwnerChange || (() => {})}>
+            <ChangeOwnerDialog
+              flow={flow}
+              onOwnerChange={onOwnerChange || (() => {})}
+            >
               <DropdownMenuItem
                 disabled={!userHasPermissionToUpdateFlow}
                 onSelect={(e) => e.preventDefault()}

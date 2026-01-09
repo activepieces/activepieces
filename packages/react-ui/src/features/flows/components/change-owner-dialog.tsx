@@ -50,7 +50,7 @@ const ChangeOwnerDialog = ({
 }: ChangeOwnerDialogProps) => {
   const { projectMembers, isLoading } = projectMembersHooks.useProjectMembers();
   const [isDialogOpened, setIsDialogOpened] = useState(false);
-  
+
   const form = useForm<ChangeOwnerFormSchema>({
     resolver: typeboxResolver(ChangeOwnerFormSchema),
     defaultValues: {
@@ -102,7 +102,11 @@ const ChangeOwnerDialog = ({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value || undefined}
-                    disabled={isLoading || !projectMembers || projectMembers.length === 0}
+                    disabled={
+                      isLoading ||
+                      !projectMembers ||
+                      projectMembers.length === 0
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder={t('Select Owner')} />
@@ -112,7 +116,10 @@ const ChangeOwnerDialog = ({
                         {projectMembers &&
                           projectMembers.length > 0 &&
                           projectMembers.map((member) => (
-                            <SelectItem key={member.userId} value={member.userId}>
+                            <SelectItem
+                              key={member.userId}
+                              value={member.userId}
+                            >
                               {member.user.firstName} {member.user.lastName} (
                               {member.user.email})
                             </SelectItem>

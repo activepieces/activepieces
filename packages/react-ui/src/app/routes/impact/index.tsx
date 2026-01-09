@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
 import { t } from 'i18next';
-import { Calendar, CalendarDays, Folder, RefreshCcwIcon } from 'lucide-react';
-import { useContext, useMemo } from 'react';
-import { useEffectOnce } from 'react-use';
+import { Calendar, Folder, RefreshCcwIcon } from 'lucide-react';
+import { useContext } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useEffectOnce } from 'react-use';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { platformAnalyticsHooks, TimePeriod } from '@/features/platform-admin/lib/analytics-hooks';
+import { platformAnalyticsHooks } from '@/features/platform-admin/lib/analytics-hooks';
 import { RefreshAnalyticsContext } from '@/features/platform-admin/lib/refresh-analytics-context';
-import { userHooks } from '@/hooks/user-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
-import {
-  PlatformRole,
-} from '@activepieces/shared';
+import { AnalyticsTimePeriod } from '@activepieces/shared';
 
 import { FlowsDetails } from './details';
 import { Summary } from './summary';
@@ -35,17 +32,16 @@ import { Trends } from './trends';
 const REPORT_TTL_MS = 1000 * 60 * 60 * 24;
 
 export default function AnalyticsPage() {
-  const { data: user } = userHooks.useCurrentUser();
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedProjectId = searchParams.get('projectId') || undefined;
-  const selectedTimePeriod = (searchParams.get('timePeriod') as TimePeriod) || TimePeriod.LAST_MONTH;
+  const selectedTimePeriod =
+    (searchParams.get('timePeriod') as AnalyticsTimePeriod) ||
+    AnalyticsTimePeriod.LAST_MONTH;
   const { data: projects } = projectCollectionUtils.useAll();
   const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(
     selectedTimePeriod,
     selectedProjectId,
   );
-  const showRefreshButton = !isLoading;
-  const isPlatformAdmin = user?.platformRole === PlatformRole.ADMIN;
 
   const { mutate: refreshAnalytics } =
     platformAnalyticsHooks.useRefreshAnalytics();
@@ -63,26 +59,13 @@ export default function AnalyticsPage() {
 
   const handleTimePeriodChange = (timePeriod: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (timePeriod === TimePeriod.LAST_MONTH) {
+    if (timePeriod === AnalyticsTimePeriod.LAST_MONTH) {
       newParams.delete('timePeriod');
     } else {
       newParams.set('timePeriod', timePeriod);
     }
     setSearchParams(newParams, { replace: true });
   };
-
-  const timePeriodLabel = useMemo(() => {
-    switch (selectedTimePeriod) {
-      case TimePeriod.LAST_WEEK:
-        return t('Last 7 days');
-      case TimePeriod.LAST_MONTH:
-        return t('Last 30 days');
-      case TimePeriod.ALL_TIME:
-        return t('All Time');
-      default:
-        return t('Last 30 days');
-    }
-  }, [selectedTimePeriod]);
 
   useEffectOnce(() => {
     const hasAnalyticsExpired = dayjs(data?.updated)
@@ -101,14 +84,19 @@ export default function AnalyticsPage() {
             <span>{t('Analytics')}</span>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent/80 text-accent-foreground text-xs font-medium border border-border/50 cursor-help">
-                  <CalendarDays className="w-3.5 h-3.5" />
-                  {timePeriodLabel}
-                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => refreshAnalytics()}
+                  disabled={isRefreshing}
+                >
+                  <RefreshCcwIcon
+                    className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`}
+                  />
+                </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                {t('Showing insights for the selected time period')}
-              </TooltipContent>
+              <TooltipContent>{t('Refresh analytics')}</TooltipContent>
             </Tooltip>
           </div>
         }
@@ -129,9 +117,15 @@ export default function AnalyticsPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={TimePeriod.LAST_WEEK}>{t('Last 7 days')}</SelectItem>
-              <SelectItem value={TimePeriod.LAST_MONTH}>{t('Last 30 days')}</SelectItem>
-              <SelectItem value={TimePeriod.ALL_TIME}>{t('All Time')}</SelectItem>
+              <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                {t('Last 7 days')}
+              </SelectItem>
+              <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                {t('Last 30 days')}
+              </SelectItem>
+              <SelectItem value={AnalyticsTimePeriod.ALL_TIME}>
+                {t('All Time')}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Select
@@ -151,22 +145,12 @@ export default function AnalyticsPage() {
               ))}
             </SelectContent>
           </Select>
-          {showRefreshButton && (
-            <Button
-              onClick={() => {
-                refreshAnalytics();
-              }}
-              loading={isRefreshing}
-              disabled={isRefreshing}
-            >
-              <RefreshCcwIcon className="w-4 h-4 mr-2" />
-              {t('Refresh')}
-            </Button>
-          )}
         </div>
       </DashboardPageHeader>
       <Summary report={isLoading ? undefined : data ?? undefined} />
-      <TimeSavedEncouragementBanner report={isLoading ? undefined : data ?? undefined} />
+      <TimeSavedEncouragementBanner
+        report={isLoading ? undefined : data ?? undefined}
+      />
       <Trends report={isLoading ? undefined : data ?? undefined} />
       <FlowsDetails
         report={isLoading ? undefined : data ?? undefined}

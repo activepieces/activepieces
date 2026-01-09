@@ -15,7 +15,8 @@ export const FlowRunsMetric = ({ report }: FlowRunsMetricProps) => {
   }
 
   const totalFlowRuns = report.flows.reduce(
-    (acc, flow) => acc + (report?.runs.find(run => run.flowId === flow.flowId)?.runs ?? 0),
+    (acc, flow) =>
+      acc + (report?.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0),
     0,
   );
 

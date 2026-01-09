@@ -18,7 +18,10 @@ export const TimeSavedMetric = ({
   const flows = report?.flows ?? [];
 
   const flowsWithTimeSaved = flows.filter(
-    (flow) => flow.timeSavedPerRun !== null && flow.timeSavedPerRun !== undefined && flow.timeSavedPerRun !== 0
+    (flow) =>
+      flow.timeSavedPerRun !== null &&
+      flow.timeSavedPerRun !== undefined &&
+      flow.timeSavedPerRun !== 0,
   );
   const atLeastOneTimeSavedSet = flowsWithTimeSaved.length > 0;
 
@@ -28,7 +31,7 @@ export const TimeSavedMetric = ({
           acc +
           (flow.timeSavedPerRun ?? 0) *
             (report?.runs.find((run) => run.flowId === flow.flowId)?.runs ?? 0),
-        0
+        0,
       )
     : 0;
   const equivalentWorkdays = Math.round(minutesSaved / 8 / 60);

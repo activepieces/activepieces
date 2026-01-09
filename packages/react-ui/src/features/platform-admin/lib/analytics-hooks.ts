@@ -1,145 +1,120 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useContext, useMemo } from 'react';
+import { useCallback, useContext } from 'react';
 
 import { analyticsApi } from '@/features/platform-admin/lib/analytics-api';
+import {
+  AnalyticsTimePeriod,
+  PlatformAnalyticsReport,
+  ProjectLeaderboardItem,
+  UserLeaderboardItem,
+} from '@activepieces/shared';
 
 import { RefreshAnalyticsContext } from './refresh-analytics-context';
-import { isNil, PlatformAnalyticsReport } from '@activepieces/shared';
-import dayjs from 'dayjs';
-import { projectCollectionUtils } from '@/hooks/project-collection';
 
-const queryKey = ['analytics'];
-
-export enum TimePeriod {
-  LAST_WEEK = 'last-week',
-  LAST_MONTH = 'last-month',
-  ALL_TIME = 'all-time',
-}
-
-export type ProjectLeaderboardItem = {
-  projectId: string;
-  projectName: string;
-  flowCount: number;
-  minutesSaved: number;
-}
-
-export type UserLeaderboardItem = {
-  userId: string;
-  flowCount: number;
-  minutesSaved: number;
-}
+const analyticsQueryKey = ['analytics'];
+const projectLeaderboardQueryKey = (timePeriod: AnalyticsTimePeriod) => [
+  'project-leaderboard',
+  timePeriod,
+];
+const userLeaderboardQueryKey = (timePeriod: AnalyticsTimePeriod) => [
+  'user-leaderboard',
+  timePeriod,
+];
 
 export const platformAnalyticsHooks = {
-
-  useUsersLeaderboard: (timePeriod: TimePeriod) => {
-    const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
-    if (isLoading) {
-      return {
-        data: null,
-        isLoading: isLoading,
-      };
-    }
-    const users = data?.users ?? [];
-    return users.map(user => {
-      const flowCount = data?.flows.filter(flow => flow.ownerId === user.id).length;
-      const flowIds = data?.flows.map(flow => flow.flowId) ?? [];
-      const minutesSaved = calculateTimeSaved(flowIds, data!, timePeriod);
-      return {
-        userId: user.id,
-        flowCount: flowCount,
-        minutesSaved: minutesSaved,
-      };
-    });
-  },
-  useProjectLeaderboard: (timePeriod: TimePeriod) => {
-    const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
-    const projects = projectCollectionUtils.useAll();
-    if (isLoading) {
-      return {
-        data: null,
-        isLoading: isLoading,
-      };
-    }
-    return projects.data.map(project => {
-      const flowCount = data?.flows.filter(flow => flow.projectId === project.id).length;
-      const flowIds = data?.flows.map(flow => flow.flowId) ?? [];
-      const minutesSaved = calculateTimeSaved(flowIds, data!, timePeriod);
-      return {
-        projectId: project.id,
-        projectName: project.displayName,
-        flowCount: flowCount,
-        minutesSaved: minutesSaved,
-      };
-    });
-  },
-  useAnalytics: () => {
+  useUsersLeaderboard: (
+    timePeriod: AnalyticsTimePeriod,
+  ): { data: UserLeaderboardItem[] | null; isLoading: boolean } => {
     const { data, isLoading } = useQuery({
-      queryKey,
-      queryFn: async () => await analyticsApi.get()
+      queryKey: userLeaderboardQueryKey(timePeriod),
+      queryFn: () => analyticsApi.getUserLeaderboard(timePeriod),
+    });
+
+    return {
+      data: data ?? null,
+      isLoading,
+    };
+  },
+
+  useProjectLeaderboard: (
+    timePeriod: AnalyticsTimePeriod,
+  ): { data: ProjectLeaderboardItem[] | null; isLoading: boolean } => {
+    const { data, isLoading } = useQuery({
+      queryKey: projectLeaderboardQueryKey(timePeriod),
+      queryFn: () => analyticsApi.getProjectLeaderboard(timePeriod),
+    });
+
+    return {
+      data: data ?? null,
+      isLoading,
+    };
+  },
+
+  useAnalytics: (): {
+    data: PlatformAnalyticsReport | undefined;
+    isLoading: boolean;
+  } => {
+    const { data, isLoading } = useQuery({
+      queryKey: analyticsQueryKey,
+      queryFn: () => analyticsApi.get(),
     });
     return { data, isLoading };
   },
-  useAnalyticsTimeBased: (timePeriod: TimePeriod, projectId?: string): { isLoading: boolean, data: PlatformAnalyticsReport | null } => {
-    const { data, isLoading } = platformAnalyticsHooks.useAnalytics();
-    if (isLoading || isNil(data)) {
-      return {
-        data: null,
-        isLoading: isLoading,
-      };
-    }
-    const flows = data.flows.filter(flow => projectId ? flow.projectId === projectId : true);
-    const runs = data.runs.filter(run => flows.some(flow => flow.flowId === run.flowId));
+
+  useAnalyticsTimeBased: (
+    timePeriod: AnalyticsTimePeriod,
+    projectId?: string,
+  ): { isLoading: boolean; data: PlatformAnalyticsReport | null } => {
+    const selectFilteredByProject = useCallback(
+      (report: PlatformAnalyticsReport) => {
+        if (!projectId) {
+          return report;
+        }
+        const flows = report.flows.filter(
+          (flow) => flow.projectId === projectId,
+        );
+        const runs = report.runs.filter((run) =>
+          flows.some((flow) => flow.flowId === run.flowId),
+        );
+        return {
+          ...report,
+          flows,
+          runs,
+        };
+      },
+      [projectId],
+    );
+
+    const { data, isLoading } = useQuery({
+      queryKey: [...analyticsQueryKey, timePeriod],
+      queryFn: () => analyticsApi.get(timePeriod),
+      select: selectFilteredByProject,
+    });
+
     return {
       isLoading,
-      data: {
-        ...data,
-        runs: runs.filter(run => dayjs(run.day).isAfter(dayjs(getDateRange(timePeriod)))),
-        flows,
-      },
-    }
+      data: data ?? null,
+    };
   },
+
   useRefreshAnalytics: () => {
     const queryClient = useQueryClient();
     const { setIsRefreshing } = useContext(RefreshAnalyticsContext);
     return useMutation({
       mutationFn: async () => {
         setIsRefreshing(true);
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+
         return analyticsApi.refresh();
       },
-      onSuccess: (result) => {
+      onSuccess: () => {
         setIsRefreshing(false);
-        queryClient.setQueryData(queryKey, result);
+        queryClient.invalidateQueries({ queryKey: analyticsQueryKey });
+        queryClient.invalidateQueries({ queryKey: ['project-leaderboard'] });
+        queryClient.invalidateQueries({ queryKey: ['user-leaderboard'] });
       },
       retry: true,
       retryDelay: 50000,
     });
   },
 };
-
-function getDateRange(timePeriod: TimePeriod): string {
-  let date = dayjs();
-  switch (timePeriod) {
-    case TimePeriod.LAST_WEEK:
-      return date.subtract(1, 'week').startOf('day').toISOString();
-    case TimePeriod.LAST_MONTH:
-      return date.subtract(1, 'month').startOf('day').toISOString();
-    case TimePeriod.ALL_TIME:
-      return date.subtract(10, 'year').startOf('day').toISOString();
-    default:
-      throw new Error(`Invalid time period: ${timePeriod}`);
-  }
-}
-
-function calculateTimeSaved(flowIds: string[], analytics: PlatformAnalyticsReport, timePeriod: TimePeriod): number | null {
-  const flowsWithTimeSaved = analytics.flows.filter((flow) => flowIds.includes(flow.flowId) && flow.timeSavedPerRun !== null);
-  if (flowsWithTimeSaved.length === 0) {
-    return null;
-  }
-  return flowsWithTimeSaved.reduce((acc, flow) => {
-    const timeSavedPerRun = flow.timeSavedPerRun ?? 0;
-    const totalRuns = analytics.runs
-      .filter((run) => dayjs(run.day).isAfter(dayjs(getDateRange(timePeriod))) && run.flowId === flow.flowId)
-      .reduce((sum, run) => sum + (run.runs ?? 0), 0);
-    return acc + timeSavedPerRun * totalRuns;
-  }, 0);
-}
