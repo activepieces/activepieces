@@ -92,7 +92,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         },
         footerContent() {
             return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
-                    2nd floor, San Francisco, CA 94103` : ``
+                    2nd floor, San Francisco, CA 94103` : ''
         },
     },
     {
