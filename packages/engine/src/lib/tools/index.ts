@@ -51,8 +51,8 @@ async function resolveProperties(
     model: LanguageModel, 
     operation: ExecuteToolOperation,
 ): Promise<Record<string, unknown>> {
-    const auth = operation.predefinedInput.auth
-    const predefinedInputsFields = operation.predefinedInput.fields || {}
+    const auth = operation.predefinedInput?.auth
+    const predefinedInputsFields = operation.predefinedInput?.fields || {}
     
     let result: Record<string, unknown> = {}
     
@@ -61,7 +61,7 @@ async function resolveProperties(
     }
     
     for (const [propertyName, field] of Object.entries(predefinedInputsFields)) {
-        if (field.mode === FieldControlMode.CHOOSE_YOURSELF && field.value !== undefined) {
+        if (field.mode === FieldControlMode.CHOOSE_YOURSELF) {
             result[propertyName] = field.value
         }
         else if (field.mode === FieldControlMode.LEAVE_EMPTY) {
@@ -83,40 +83,29 @@ async function resolveProperties(
                 PropertyType.CUSTOM, 
                 PropertyType.MARKDOWN,
             ]
-            
-            if (skipTypes.includes(propertyType)) {
+            if (skipTypes.includes(propertyType) || property in result) {
                 continue
             }
             
-            const fieldControl = predefinedInputsFields[property]
-            const fieldMode = fieldControl?.mode || FieldControlMode.AGENT_DECIDE
-            
-            if (fieldMode === FieldControlMode.CHOOSE_YOURSELF || 
-                fieldMode === FieldControlMode.LEAVE_EMPTY) {
-                continue
+            const propertyPrompt = await buildPromptForProperty(
+                property, 
+                propertyFromAction, 
+                operation, 
+                result,
+            )
+            if (!isNil(propertyPrompt)) {
+                propertyPrompts.push(propertyPrompt)
             }
             
-            if (fieldMode === FieldControlMode.AGENT_DECIDE) {
-                const propertyPrompt = await buildPromptForProperty(
-                    property, 
-                    propertyFromAction, 
-                    operation, 
-                    result,
-                )
-                if (!isNil(propertyPrompt)) {
-                    propertyPrompts.push(propertyPrompt)
-                }
-                
-                const propertySchema = await propertyToSchema(
-                    property, 
-                    propertyFromAction, 
-                    operation, 
-                    result,
-                )
-                propertyToFill[property] = propertyFromAction.required 
-                    ? propertySchema 
-                    : propertySchema.nullish()
-            }
+            const propertySchema = await propertyToSchema(
+                property, 
+                propertyFromAction, 
+                operation, 
+                result,
+            )
+            propertyToFill[property] = propertyFromAction.required 
+                ? propertySchema 
+                : propertySchema.nullish()
         }
         
         if (Object.keys(propertyToFill).length === 0) continue
