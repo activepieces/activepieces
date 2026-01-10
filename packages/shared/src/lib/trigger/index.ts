@@ -12,6 +12,7 @@ export enum WebhookHandshakeStrategy {
     HEADER_PRESENT = 'HEADER_PRESENT',
     QUERY_PRESENT = 'QUERY_PRESENT',
     BODY_PARAM_PRESENT = 'BODY_PARAM_PRESENT',
+    CUSTOM = 'CUSTOM',
 }
 
 export enum TriggerSourceScheduleType {

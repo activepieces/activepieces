@@ -180,6 +180,28 @@ export const triggerHelper = {
                     response: handshakeResponse,
                 }
             }
+            case TriggerHookType.SHOULD_HANDSHAKE: {
+                const { data: shouldHandshakeResult, error: shouldHandshakeError } = await utils.tryCatchAndThrowOnEngineError(
+                    () => pieceTrigger.shouldHandshake?.(context) ?? Promise.resolve(false)
+                )
+
+                if (shouldHandshakeError) {
+                    console.error(shouldHandshakeError)
+                    return {
+                        shouldHandshake: false,
+                    }
+                }
+                if (shouldHandshakeResult && typeof shouldHandshakeResult === 'object' && 'status' in shouldHandshakeResult) {
+                    return {
+                        shouldHandshake: false,
+                        response: shouldHandshakeResult,
+                    }
+                }
+
+                return {
+                    shouldHandshake: shouldHandshakeResult === true,
+                }
+            }
             case TriggerHookType.TEST: {
                 const { data: testResponse, error: testResponseError } = await utils.tryCatchAndThrowOnEngineError(() => pieceTrigger.test({
                     ...context,

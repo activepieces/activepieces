@@ -21,6 +21,7 @@ export enum TriggerHookType {
     ON_ENABLE = 'ON_ENABLE',
     ON_DISABLE = 'ON_DISABLE',
     HANDSHAKE = 'HANDSHAKE',
+    SHOULD_HANDSHAKE = 'SHOULD_HANDSHAKE',
     RENEW = 'RENEW',
     RUN = 'RUN',
     TEST = 'TEST',
@@ -197,6 +198,15 @@ type ExecuteOnEnableTriggerResponse = {
     scheduleOptions?: ScheduleOptions
 }
 
+type ExecuteShouldHandshakeTriggerResponse = {
+    shouldHandshake: boolean
+    response?: {
+        status: number
+        body?: unknown
+        headers?: Record<string, string>
+    }
+}
+
 export const EngineHttpResponse = Type.Object({
     status: Type.Number(),
     body: Type.Unknown(),
@@ -207,10 +217,11 @@ export type EngineHttpResponse = Static<typeof EngineHttpResponse>
 
 export type ExecuteTriggerResponse<H extends TriggerHookType> = H extends TriggerHookType.RUN ? ExecuteTestOrRunTriggerResponse :
     H extends TriggerHookType.HANDSHAKE ? ExecuteHandshakeTriggerResponse :
-        H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
-            H extends TriggerHookType.RENEW ? Record<string, never> :
-                H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
-                    ExecuteOnEnableTriggerResponse
+        H extends TriggerHookType.SHOULD_HANDSHAKE ? ExecuteShouldHandshakeTriggerResponse :
+            H extends TriggerHookType.TEST ? ExecuteTestOrRunTriggerResponse :
+                H extends TriggerHookType.RENEW ? Record<string, never> :
+                    H extends TriggerHookType.ON_DISABLE ? Record<string, never> :
+                        ExecuteOnEnableTriggerResponse
 
 export type ExecuteToolResponse = {
     status: ExecutionToolStatus
