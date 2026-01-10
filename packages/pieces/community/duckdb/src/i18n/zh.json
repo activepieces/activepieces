@@ -1,13 +1,13 @@
 {
-  "Run SQL queries on an in-memory DuckDB database.": "Run SQL queries on an in-memory DuckDB database.",
-  "Create and Query DB": "Create and Query DB",
-  "Create DB from data and run query": "Create DB from data and run query",
+  "Run SQL queries on an in-memory DuckDB database.": "在内存DuckDB数据库上运行 SQL 查询。",
+  "Create and Query DB": "创建和查询数据库",
+  "Create DB from data and run query": "从数据创建数据库并运行查询",
   "Markdown": "Markdown",
   "Tables": "表",
-  "Query": "Query",
-  "Arguments": "Arguments",
-  "\n      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**": "\n      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**",
-  "List of tables to create in the database": "List of tables to create in the database",
-  "Please use $1, $2, etc. for parameterized queries to avoid SQL injection.": "Please use $1, $2, etc. for parameterized queries to avoid SQL injection.",
-  "Arguments to be used in the query": "Arguments to be used in the query"
+  "Query": "查询",
+  "Arguments": "参数",
+  "\n      **DO NOT** insert dynamic input directly into the query string. Instead, use $1, $2, $3 and add them in args for parameterized queries to prevent **SQL injection.**": "\n      **DO Not** 将动态输入直接输入查询字符串。 反而使用 $1, $2, $3 并将它们添加到参数化查询中，以防止**SQL 注入。**",
+  "List of tables to create in the database": "要在数据库中创建的表格列表",
+  "Please use $1, $2, etc. for parameterized queries to avoid SQL injection.": "请使用 $1, $2 等参数化查询以避免SQL 注入。",
+  "Arguments to be used in the query": "要在查询中使用的参数"
 }
