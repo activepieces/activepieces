@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { useTelemetry } from '@/components/telemetry-provider';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -250,18 +251,17 @@ const ImportFlowDialog = (
         <DialogHeader>
           <div className="flex flex-col gap-3">
             <DialogTitle>{t('Import Flow')}</DialogTitle>
-            {props.insideBuilder && (
-              <div className="flex gap-1 items-center text-muted-foreground">
-                <TriangleAlert className="w-5 h-5 stroke-warning"></TriangleAlert>
-                <div className="font-semibold">{t('Warning')}:</div>
-                <div>
-                  {t('Importing a flow will overwrite your current one.')}
-                </div>
-              </div>
-            )}
           </div>
         </DialogHeader>
         <div className="flex flex-col gap-4">
+          {props.insideBuilder && (
+            <Alert variant="warning">
+              <TriangleAlert className="h-4 w-4" />
+              <AlertDescription>
+                {t('Importing a flow will overwrite your current one.')}
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="w-full flex flex-col gap-2 justify-between items-start">
             <span className="w-16 text-sm font-medium text-gray-700">
               {t('Flow')}
