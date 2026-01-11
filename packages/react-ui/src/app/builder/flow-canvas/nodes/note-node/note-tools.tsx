@@ -59,7 +59,8 @@ const NoteColorPicker = ({
       <PopoverTrigger asChild>
         <div
           className={cn(
-            NoteColorVariantToTailwind[currentColor],
+            NoteColorVariantToTailwind[currentColor] ??
+              NoteColorVariantToTailwind[NoteColorVariant.YELLOW],
             'mx-2 size-5 shrink-0  rounded-full cursor-pointer',
           )}
           role="button"
@@ -72,13 +73,18 @@ const NoteColorPicker = ({
       >
         <div className="flex items-center cursor-default gap-1 justify-between flex-wrap w-full ">
           {Object.values(NoteColorVariant).map((color) => (
-            <div role="button" className="size-5 shrink-0 cursor-pointer grow flex items-center justify-center" onClick={() => {
-              setCurrentColor(color);
-            }}>
+            <div
+              key={color}
+              role="button"
+              className="size-5 shrink-0 cursor-pointer grow flex items-center justify-center"
+              onClick={() => {
+                setCurrentColor(color);
+              }}
+            >
               <div
-                key={color}
                 className={cn(
-                  NoteColorVariantToTailwind[color],
+                  NoteColorVariantToTailwind[color] ??
+                    NoteColorVariantToTailwind[NoteColorVariant.YELLOW],
                   'size-4 shrink-0 rounded-full',
                 )}
               ></div>

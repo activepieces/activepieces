@@ -15,9 +15,7 @@ import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  FlowOperationRequest,
   FlowOperationType,
-  Step,
   StepLocationRelativeToParent,
   flowStructureUtil,
   isNil,
@@ -105,8 +103,8 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
     setDraggedNote(null, null);
-    handleStepDragEnd({e, applyOperation, activeDraggingStep, flowVersion});
-    handleNoteDragEnd({e, getNoteById, moveNote, reactFlow});
+    handleStepDragEnd({ e, applyOperation, activeDraggingStep, flowVersion });
+    handleNoteDragEnd({ e, getNoteById, moveNote, reactFlow });
   };
 
   const sensors = useSensors(
@@ -138,14 +136,22 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
 
 export { FlowDragLayer };
 
-function handleStepDragEnd({e, applyOperation, activeDraggingStep, flowVersion}: {e: DragEndEvent} & Pick<BuilderState, 'applyOperation' | 'activeDraggingStep' | 'flowVersion'>) {
+function handleStepDragEnd({
+  e,
+  applyOperation,
+  activeDraggingStep,
+  flowVersion,
+}: { e: DragEndEvent } & Pick<
+  BuilderState,
+  'applyOperation' | 'activeDraggingStep' | 'flowVersion'
+>) {
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
-  const isOverSomething = !isNil(e.over?.data?.current) && e.over.data.current.accepts === e.active.data?.current?.type;
-  if (
-    isOverSomething
-  ) {
+  const isOverSomething =
+    !isNil(e.over?.data?.current) &&
+    e.over.data.current.accepts === e.active.data?.current?.type;
+  if (isOverSomething) {
     const droppedAtNodeData: ApButtonData | undefined = e.over?.data
       .current as unknown as ApButtonData | undefined;
     if (
@@ -184,7 +190,14 @@ function handleStepDragEnd({e, applyOperation, activeDraggingStep, flowVersion}:
   }
 }
 
-function handleNoteDragEnd({e, getNoteById, moveNote, reactFlow}: {e: DragEndEvent} & Pick<BuilderState, 'getNoteById' | 'moveNote'> & {reactFlow: ReactFlowInstance}) {
+function handleNoteDragEnd({
+  e,
+  getNoteById,
+  moveNote,
+  reactFlow,
+}: { e: DragEndEvent } & Pick<BuilderState, 'getNoteById' | 'moveNote'> & {
+    reactFlow: ReactFlowInstance;
+  }) {
   if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
     const draggedNote = getNoteById(e.active.id.toString());
     if (draggedNote) {
@@ -198,4 +211,4 @@ function handleNoteDragEnd({e, getNoteById, moveNote, reactFlow}: {e: DragEndEve
       }
     }
   }
- }
+}
