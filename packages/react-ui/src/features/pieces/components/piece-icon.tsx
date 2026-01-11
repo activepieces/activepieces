@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-const pieceIconVariants = cva('flex items-center justify-center   ', {
+const pieceIconVariants = cva('flex rounded-md items-center justify-center   ', {
   variants: {
     circle: {
       true: 'rounded-full p-2',
