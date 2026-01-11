@@ -44,7 +44,7 @@ export const platformAnalyticsReportService = (log: FastifyBaseLogger) => ({
     },
     getOrGenerateReport: async (platformId: PlatformId, timePeriod?: AnalyticsTimePeriod): Promise<PlatformAnalyticsReport> => {
         let report = await platformAnalyticsReportRepo().findOneBy({ platformId })
-        if (isNil(report) || report.outdated) {
+        if (isNil(report) || report.outdated || dayjs().diff(dayjs(report.cachedAt), 'minute') >= 5) {
             report = await platformAnalyticsReportService(log).refreshReport(platformId)
         }
         return filterReportByTimePeriod(report, timePeriod)

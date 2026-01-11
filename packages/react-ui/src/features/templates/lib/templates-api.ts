@@ -5,6 +5,7 @@ import {
   Template,
   SeekPage,
   UpdateTemplateRequestBody,
+  Flag,
 } from '@activepieces/shared';
 
 export const templatesApi = {
@@ -25,5 +26,8 @@ export const templatesApi = {
   },
   incrementUsageCount(templateId: string) {
     return api.post<void>(`/v1/templates/${templateId}/increment-usage-count`);
+  },
+  getCategories() {
+    return api.get<Flag>(`/v1/templates/categories`);
   },
 };
