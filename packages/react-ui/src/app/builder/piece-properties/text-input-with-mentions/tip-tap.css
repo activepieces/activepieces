@@ -6,20 +6,14 @@
     pointer-events: none;
   }
 
-/* Basic editor styles */
 .tiptap {
-  /* optional but recommended */
   overflow-wrap: break-word;
 }
 
-/* first child spacing */
 .tiptap > :first-child {
   margin-top: 0;
 }
 
-/* ======================
-   Lists
-====================== */
 .tiptap ul {
   list-style-type: disc;
   list-style-position: outside;
@@ -38,9 +32,6 @@
   margin: 0.25em 0;
 }
 
-/* ======================
-   Headings
-====================== */
 .tiptap h1,
 .tiptap h2,
 .tiptap h3,
@@ -68,13 +59,4 @@
 .tiptap h5,
 .tiptap h6 {
   font-size: 1rem;
-}
-
-/* ======================
-   HR
-====================== */
-.tiptap hr {
-  border: none;
-  border-top: 1px solid #adb5bd;
-  margin: 2rem 0;
 }

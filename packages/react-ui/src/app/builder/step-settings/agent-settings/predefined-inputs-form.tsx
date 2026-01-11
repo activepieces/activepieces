@@ -3,6 +3,7 @@ import { Type, Static } from '@sinclair/typebox';
 import { t } from 'i18next';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+
 import { Form, FormField } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -20,8 +21,8 @@ import {
   FieldControlMode,
   isNil,
   PredefinedInputField,
-  PredefinedInputsStructure,
 } from '@activepieces/shared';
+
 import { selectGenericFormComponentForProperty } from '../../piece-properties/properties-utils';
 const createPredefinedInputsFormSchema = (requireAuth: boolean) =>
   Type.Object(
@@ -91,7 +92,8 @@ export const PredefinedInputsForm = () => {
     const subscription = form.watch((values, { name }) => {
       if (!name || name === 'auth') return;
 
-      const currentPredefined = usePieceToolsDialogStore.getState().predefinedInputs;
+      const currentPredefined =
+        usePieceToolsDialogStore.getState().predefinedInputs;
 
       const currentFields = currentPredefined?.fields ?? {};
       const newFields = { ...currentFields };

@@ -107,7 +107,7 @@ export const TextInputWithMentions = ({
       attributes: {
         class: cn(
           className ??
-            'w-full bg-background px-3 min-h-9 py-2 text-sm rounded-sm ring-offset-background  min-h-24 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
+            'w-full bg-background px-3 py-2 text-sm rounded-sm ring-offset-background  min-h-9 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50',
           textMentionUtils.inputWithMentionsCssClass,
           {
             'cursor-not-allowed opacity-50': disabled,

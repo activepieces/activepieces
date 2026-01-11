@@ -42,7 +42,12 @@ export function AgentFlowToolDialog({
     tools.filter((tools) => tools.type === AgentToolType.FLOW),
   );
 
-  const { showAddFlowDialog, setShowAddFlowDialog, searchQuery, setSearchQuery } = useFlowToolDialogStore();
+  const {
+    showAddFlowDialog,
+    setShowAddFlowDialog,
+    searchQuery,
+    setSearchQuery,
+  } = useFlowToolDialogStore();
 
   const projectId = authenticationSession.getProjectId();
 

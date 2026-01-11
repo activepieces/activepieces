@@ -185,7 +185,7 @@ export function AgentMcpDialog({
     }
 
     form.reset();
-    closeMcpDialog()
+    closeMcpDialog();
     toast(t('MCP server added successfully'));
   };
 
@@ -203,7 +203,7 @@ export function AgentMcpDialog({
 
   const handleClose = () => {
     form.reset();
-    closeMcpDialog()
+    closeMcpDialog();
   };
 
   return (
