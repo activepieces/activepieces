@@ -5,7 +5,7 @@ export const UserBadge = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
     userId: Type.String(),
-   
+
 })
 
 export type UserBadge = Static<typeof UserBadge>
@@ -49,11 +49,11 @@ export const BADGES = {
     'back-again': {
         imageUrl: 'https://cdn.activepieces.com/badges/back-again.gif',
         title: 'Back Again',
-        description: 'My flow failed to run… but learned something valuable.',
+        description: 'I tested a flow and it failed to run... but I learned something valuable.',
     },
     'victory': {
         imageUrl: 'https://cdn.activepieces.com/badges/victory.gif',
         title: 'Victory',
-        description: 'My flow ran successfully… the joy is real!',
+        description: 'I tested a flow and it ran successfully... the joy is real!',
     },
 } as const

@@ -24,7 +24,7 @@ import {
   AgentFlowTool,
 } from '@activepieces/shared';
 
-import { useAgentToolsStore } from '../store';
+import { useFlowToolDialogStore } from '../stores/flows-tools';
 
 import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { FlowDialogContent } from './flow-dialog-content';
@@ -38,12 +38,16 @@ export function AgentFlowToolDialog({
   onToolsUpdate,
   tools,
 }: AgentFlowToolDialogProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedFlows, setSelectedFlows] = useState<AgentFlowTool[]>(
     tools.filter((tools) => tools.type === AgentToolType.FLOW),
   );
 
-  const { showAddFlowDialog, setShowAddFlowDialog } = useAgentToolsStore();
+  const {
+    showAddFlowDialog,
+    setShowAddFlowDialog,
+    searchQuery,
+    setSearchQuery,
+  } = useFlowToolDialogStore();
 
   const projectId = authenticationSession.getProjectId();
 

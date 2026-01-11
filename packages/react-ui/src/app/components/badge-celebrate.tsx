@@ -1,9 +1,11 @@
 import confetti from 'canvas-confetti';
-import { useEffect, useRef } from 'react';
+import { Trophy } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useSocket } from '@/components/socket-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
+import { userHooks } from '@/hooks/user-hooks';
 import {
   BadgeAwarded,
   BADGES,
@@ -11,14 +13,19 @@ import {
   WebsocketClientEvent,
 } from '@activepieces/shared';
 
+import { AccountSettingsDialog } from './account-settings';
+
 export const BadgeCelebrate = () => {
   const socket = useSocket();
+  const { refetch } = userHooks.useCurrentUser();
   const cleanupRef = useRef<() => void>();
   const { data: showBadges } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_BADGES,
   );
   const isCelebrating = useRef(false);
   const celebrationTimeout = useRef<number | null>(null);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const openAccountSettingsRef = useRef(() => setShowAccountSettings(true));
 
   useEffect(() => {
     if (!socket || !showBadges) return;
@@ -42,21 +49,23 @@ export const BadgeCelebrate = () => {
             imageUrl={badgeImageUrl}
             title={badgeTitle}
             description={badgeDescription}
+            onClick={openAccountSettingsRef.current}
           />
         ),
         {
-          duration: 5000,
+          duration: 10000,
           className:
             'bg-background border border-border rounded-xl shadow-lg p-3',
         },
       );
 
+      refetch();
       if (isCelebrating.current) {
         return;
       }
       isCelebrating.current = true;
 
-      const duration = 4000;
+      const duration = 6000;
       const animationEnd = Date.now() + duration;
       const interval = setInterval(() => {
         const timeLeft = animationEnd - Date.now();
@@ -107,9 +116,14 @@ export const BadgeCelebrate = () => {
     };
 
     return cleanupRef.current;
-  }, [socket]);
+  }, [socket, showBadges]);
 
-  return null;
+  return (
+    <AccountSettingsDialog
+      open={showAccountSettings}
+      onClose={() => setShowAccountSettings(false)}
+    />
+  );
 };
 
 function randomInRange(min: number, max: number) {
@@ -120,22 +134,31 @@ const BadgeToast = ({
   imageUrl,
   title,
   description,
+  onClick,
 }: {
   imageUrl: string;
   title: string;
   description: string;
+  onClick: () => void;
 }) => (
-  <div className="flex items-center gap-4 p-1">
-    <div className="flex-shrink-0">
-      <img
-        src={imageUrl}
-        alt={title}
-        className="w-16 h-16 rounded-lg object-cover shadow-md"
-      />
-    </div>
-    <div className="flex flex-col gap-1 min-w-0">
-      <div className="font-semibold text-foreground text-base">🎉 {title}</div>
-      <p className="text-sm text-muted-foreground leading-snug">
+  <div
+    className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+    onClick={onClick}
+  >
+    <img
+      src={imageUrl}
+      alt={title}
+      className="w-12 h-12 rounded-lg object-cover shadow-md flex-shrink-0"
+    />
+    <div className="flex flex-col gap-0.5 min-w-0">
+      <div className="flex items-center gap-2">
+        <span className="font-semibold text-foreground text-sm">{title}</span>
+        <span className="text-[10px] font-medium text-primary uppercase tracking-wide flex items-center gap-1">
+          <Trophy className="w-3 h-3" />
+          Badge Earned!
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground leading-snug">
         {description}
       </p>
     </div>

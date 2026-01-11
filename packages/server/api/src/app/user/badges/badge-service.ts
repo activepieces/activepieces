@@ -3,7 +3,8 @@ import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { websocketService } from '../../core/websockets.service'
-import { applicationEvents, AuditEventParam, MetaInformation } from '../../helper/application-events'
+import { emailService } from '../../ee/helper/email/email-service'
+import { applicationEvents, AuditEventParam } from '../../helper/application-events'
 import { BadgeCheck } from './badge-check'
 import { UserBadgeEntity } from './badge-entity'
 import { flowsBadgesCheck } from './checks/active-flows-badges'
@@ -23,11 +24,11 @@ const workerEventsChecks: BadgeCheck[] = [
 
 async function processBadgeChecks(
     checks: BadgeCheck[],
-    requestInformation: MetaInformation,
+    userId: string | undefined,
     event: AuditEventParam,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    const checkResults = await Promise.all(checks.map(badgeCheck => badgeCheck.eval({ requestInformation, event })))
+    const checkResults = await Promise.all(checks.map(badgeCheck => badgeCheck.eval({ userId, event })))
 
     const badgesByUser = new Map<string, (keyof typeof BADGES)[]>()
     for (const result of checkResults) {
@@ -60,6 +61,9 @@ async function processBadgeChecks(
                 badgeName,
                 userId,
             })
+
+            await emailService(log).sendBadgeAwardedEmail(userId, badgeName)
+
             websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
                 badge: badgeName,
                 userId,
@@ -72,11 +76,10 @@ export const userBadgeService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents.registerListeners(log, {
             userEvent: () => async (requestInformation, event) => {
-                await processBadgeChecks(userEventsChecks, requestInformation, event, log)
+                await processBadgeChecks(userEventsChecks, requestInformation.userId, event, log)
             },
-            workerEvent: () => async (projectId, event) => {
-                const minimalMeta: MetaInformation = { platformId: '', projectId }
-                await processBadgeChecks(workerEventsChecks, minimalMeta, event, log)
+            workerEvent: () => async (_projectId, event) => {
+                await processBadgeChecks(workerEventsChecks, undefined, event, log)
             },
         })
     },

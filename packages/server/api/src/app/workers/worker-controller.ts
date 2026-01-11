@@ -134,7 +134,7 @@ export const flowWorkerController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetFileRequestParams = {
     config: {
-        security: securityAccess.engine(),
+        security: securityAccess.worker(),
     },
     schema: {
         params: Type.Object({

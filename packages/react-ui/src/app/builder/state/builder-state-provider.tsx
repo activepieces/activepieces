@@ -7,7 +7,7 @@ import {
   createBuilderStore,
 } from '@/app/builder/builder-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectHooks } from '@/hooks/project-collection';
 import { Permission } from '@activepieces/shared';
 
 type BuilderStateProviderProps = React.PropsWithChildren<BuilderInitialState>;

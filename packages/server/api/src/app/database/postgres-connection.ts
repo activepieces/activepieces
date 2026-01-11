@@ -323,6 +323,9 @@ import { AddMaxAutoTopUpCreditsMonthlyToPlatformPlan1767016169819 } from './migr
 import { AnalyticsAndOwnerToFlowId1767127482383 } from './migration/postgres/1767127482383-AnalyticsAndOwnerToFlowId'
 import { AddBadges1767141831647 } from './migration/postgres/1767141831647-AddBadges'
 import { AddFlowOwnerIndex1767610587266 } from './migration/postgres/1767610587266-AddFlowOwnerIndex'
+import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
+import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
+import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
 import { MigrateOldTemplateCategoriesToDynamicOne1767624311536 } from './migration/postgres/1767624311536-MigrateOldTemplateCategoriesToDynamicOne'
 
 const getSslConfig = (): boolean | TlsOptions => {
@@ -663,6 +666,9 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AnalyticsAndOwnerToFlowId1767127482383,
         AddBadges1767141831647,
         AddFlowOwnerIndex1767610587266,
+        AddTriggeredBy1767697998391,
+        UpdateCacheStructure1767904545112,
+        AddOutdatedToReport1767994436597,
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
     ]
     return migrations

@@ -4,7 +4,7 @@ import { Trash } from 'lucide-react';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission } from '@activepieces/shared';
 
@@ -29,7 +29,7 @@ export function ProjectMemberCard({
   const userHasPermissionToRemoveMember = checkAccess(
     Permission.WRITE_PROJECT_MEMBER,
   );
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const deleteMember = async () => {
     await projectMembersApi.delete(member.id);
     refetch();
