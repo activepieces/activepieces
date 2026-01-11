@@ -135,6 +135,17 @@ const GetIdParams = Type.Object({
 })
 type GetIdParams = Static<typeof GetIdParams>
 
+const GetCategoriesParams = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        tags: ['templates'],
+        description: 'Get categories of templates.',
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
+
 const GetParams = {
     config: {
         security: securityAccess.public(),
@@ -156,17 +167,6 @@ const ListTemplatesParams = {
         description: 'List templates.',
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         querystring: ListTemplatesRequestQuery,
-    },
-}
-
-const GetCategoriesParams = {
-    config: {
-        security: securityAccess.public(),
-    },
-    schema: {
-        tags: ['templates'],
-        description: 'Get categories of templates.',
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
