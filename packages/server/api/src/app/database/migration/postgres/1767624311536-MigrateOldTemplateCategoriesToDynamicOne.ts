@@ -82,7 +82,7 @@ export class MigrateOldTemplateCategoriesToDynamicOne1767624311536 implements Mi
         logger.info('Finished migration MigrateOldTemplateCategoriesToDynamicOne1767624311536')
     }
 
-    public async down(queryRunner: QueryRunner): Promise<void> {
+    public async down(_queryRunner: QueryRunner): Promise<void> {
         // No down migration needed
     }
 
