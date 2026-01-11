@@ -70,12 +70,12 @@ export class MigrateOldTemplateCategoriesToDynamicOne1767624311536 implements Mi
         const templateIds = Object.keys(allUpdatedCategories)
 
         if (templateIds.length > 0) {
-            const updateStatements = Object.entries(allUpdatedCategories).map(([id, categories]) => {
-                const categoriesArray = categories.map(c => `'${c.replace(/'/g, '\'\'')}'`).join(', ')
-                return `UPDATE "template" SET "categories" = ARRAY[${categoriesArray}]::text[] WHERE "id" = '${id}'`
-            }).join('; ')
-
-            await queryRunner.query(updateStatements)
+            for (const [id, categories] of Object.entries(allUpdatedCategories)) {
+                await queryRunner.query(
+                    'UPDATE "template" SET "categories" = $1 WHERE "id" = $2',
+                    [categories, id],
+                )
+            }
             logger.info(`Migrated ${templateIds.length} templates`)
         }
 
