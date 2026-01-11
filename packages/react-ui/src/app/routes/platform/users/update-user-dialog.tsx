@@ -23,6 +23,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { platformUserApi } from '@/lib/platform-user-api';
 import {
   PlatformRole,
@@ -38,12 +43,14 @@ export const UpdateUserDialog = ({
   userId,
   role,
   externalId,
+  isAdmin,
 }: {
   children: React.ReactNode;
   onUpdate: (role: PlatformRole) => void;
   userId: string;
   role: PlatformRole;
   externalId?: string;
+  isAdmin: boolean;
 }) => {
   const [open, setOpen] = useState(false);
   const form = useForm<{ role: PlatformRole; externalId?: string }>({
@@ -84,29 +91,41 @@ export const UpdateUserDialog = ({
               render={({ field }) => (
                 <FormItem className="grid space-y-2">
                   <Label htmlFor="role">{t('Role')}</Label>
-                  <Select
-                    name="role"
-                    defaultValue={field.value}
-                    onValueChange={field.onChange}
-                    required
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {Object.values(PlatformRole).map((role) => (
-                          <SelectItem value={role} key={role}>
-                            {role === PlatformRole.ADMIN
-                              ? t('Admin')
-                              : role === PlatformRole.OPERATOR
-                              ? t('Operator')
-                              : t('Member')}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Select
+                          name="role"
+                          defaultValue={field.value}
+                          onValueChange={field.onChange}
+                          required
+                          disabled={isAdmin}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectGroup>
+                              {Object.values(PlatformRole).map((role) => (
+                                <SelectItem value={role} key={role}>
+                                  {role === PlatformRole.ADMIN
+                                    ? t('Admin')
+                                    : role === PlatformRole.OPERATOR
+                                    ? t('Operator')
+                                    : t('Member')}
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TooltipTrigger>
+                    {isAdmin && (
+                      <TooltipContent>
+                        {t('Platform owner role cannot be changed')}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
                   <FormMessage />
                 </FormItem>
               )}
