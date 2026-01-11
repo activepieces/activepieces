@@ -3436,6 +3436,9 @@
                   "finishTime": {
                     "type": "string"
                   },
+                  "triggeredBy": {
+                    "type": "string"
+                  },
                   "environment": {
                     "anyOf": [
                       {
@@ -3456,6 +3459,9 @@
                     "type": "string"
                   },
                   "flowVersionId": {
+                    "type": "string"
+                  },
+                  "stepNameToTest": {
                     "type": "string"
                   },
                   "status": {
@@ -3624,6 +3630,9 @@
                   "finishTime": {
                     "type": "string"
                   },
+                  "triggeredBy": {
+                    "type": "string"
+                  },
                   "environment": {
                     "anyOf": [
                       {
@@ -3644,6 +3653,9 @@
                     "type": "string"
                   },
                   "flowVersionId": {
+                    "type": "string"
+                  },
+                  "stepNameToTest": {
                     "type": "string"
                   },
                   "status": {
@@ -4740,6 +4752,9 @@
                 "schemaVersion": {
                   "type": "string",
                   "nullable": true
+                },
+                "description": {
+                  "type": "string"
                 }
               },
               "required": [
@@ -5303,6 +5318,10 @@
           "externalId": {
             "type": "string"
           },
+          "ownerId": {
+            "type": "string",
+            "nullable": true
+          },
           "folderId": {
             "type": "string",
             "nullable": true
@@ -5398,6 +5417,9 @@
           },
           "failParentOnFailure": {
             "type": "boolean"
+          },
+          "triggeredBy": {
+            "type": "string"
           },
           "tags": {
             "type": "array",
@@ -10818,6 +10840,10 @@
                     "externalId": {
                       "type": "string"
                     },
+                    "ownerId": {
+                      "type": "string",
+                      "nullable": true
+                    },
                     "folderId": {
                       "type": "string",
                       "nullable": true
@@ -11291,6 +11317,10 @@
                           },
                           "externalId": {
                             "type": "string"
+                          },
+                          "ownerId": {
+                            "type": "string",
+                            "nullable": true
                           },
                           "folderId": {
                             "type": "string",
@@ -14112,6 +14142,10 @@
                     "externalId": {
                       "type": "string"
                     },
+                    "ownerId": {
+                      "type": "string",
+                      "nullable": true
+                    },
                     "folderId": {
                       "type": "string",
                       "nullable": true
@@ -14797,6 +14831,9 @@
                           "schemaVersion": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "description": {
+                            "type": "string"
                           }
                         },
                         "required": [
@@ -14852,6 +14889,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "projectId": {
+                    "type": "string"
+                  },
                   "flowVersionId": {
                     "type": "string"
                   },
@@ -14860,6 +14900,7 @@
                   }
                 },
                 "required": [
+                  "projectId",
                   "flowVersionId",
                   "stepName"
                 ]
@@ -15120,7 +15161,7 @@
               "type": "boolean"
             },
             "in": "query",
-            "name": "archived",
+            "name": "includeArchived",
             "required": false
           }
         ],
@@ -15162,6 +15203,9 @@
                           },
                           "failParentOnFailure": {
                             "type": "boolean"
+                          },
+                          "triggeredBy": {
+                            "type": "string"
                           },
                           "tags": {
                             "type": "array",
@@ -15381,6 +15425,9 @@
                     },
                     "failParentOnFailure": {
                       "type": "boolean"
+                    },
+                    "triggeredBy": {
+                      "type": "string"
                     },
                     "tags": {
                       "type": "array",
@@ -16840,20 +16887,37 @@
                         "plan": {
                           "type": "string"
                         },
-                        "openRouterApiKeyHash": {
-                          "type": "string"
-                        },
-                        "openRouterApiKey": {
-                          "type": "string"
-                        },
                         "includedAiCredits": {
                           "type": "number"
                         },
-                        "aiCreditsOverageLimit": {
+                        "lastFreeAiCreditsRenewalDate": {
+                          "type": "string"
+                        },
+                        "aiCreditsAutoTopUpState": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "enabled"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "enum": [
+                                "disabled"
+                              ]
+                            }
+                          ]
+                        },
+                        "aiCreditsAutoTopUpThreshold": {
                           "type": "number"
                         },
-                        "aiCreditsOverageState": {
-                          "type": "string"
+                        "aiCreditsAutoTopUpCreditsToAdd": {
+                          "type": "number"
+                        },
+                        "maxAutoTopUpCreditsMonthly": {
+                          "type": "number",
+                          "nullable": true
                         },
                         "environmentsEnabled": {
                           "type": "boolean"
@@ -16978,6 +17042,7 @@
                       },
                       "required": [
                         "includedAiCredits",
+                        "aiCreditsAutoTopUpState",
                         "environmentsEnabled",
                         "analyticsEnabled",
                         "showPoweredBy",
@@ -17002,7 +17067,16 @@
                     "usage": {
                       "type": "object",
                       "properties": {
-                        "aiCredits": {
+                        "totalAiCreditsUsed": {
+                          "type": "number"
+                        },
+                        "totalAiCreditsUsedThisMonth": {
+                          "type": "number"
+                        },
+                        "aiCreditsRemaining": {
+                          "type": "number"
+                        },
+                        "aiCreditsLimit": {
                           "type": "number"
                         },
                         "activeFlows": {
@@ -17010,7 +17084,10 @@
                         }
                       },
                       "required": [
-                        "aiCredits",
+                        "totalAiCreditsUsed",
+                        "totalAiCreditsUsedThisMonth",
+                        "aiCreditsRemaining",
+                        "aiCreditsLimit",
                         "activeFlows"
                       ]
                     },
@@ -17112,7 +17189,7 @@
         }
       }
     },
-    "/v1/projects/{projectId}/mcp-server": {
+    "/v1/projects/{projectId}/mcp-server/{projectId}": {
       "get": {
         "tags": [
           "mcp"
@@ -17139,7 +17216,9 @@
             "description": "Default Response"
           }
         }
-      },
+      }
+    },
+    "/v1/projects/{projectId}/mcp-server": {
       "post": {
         "tags": [
           "mcp"
@@ -18220,6 +18299,14 @@
         "parameters": [
           {
             "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": {
               "type": "number"
             },
             "in": "query",
@@ -18693,6 +18780,9 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "tableId": {
+                    "type": "string"
+                  },
                   "ids": {
                     "type": "array",
                     "items": {
@@ -18701,6 +18791,7 @@
                   }
                 },
                 "required": [
+                  "tableId",
                   "ids"
                 ]
               }
@@ -19285,6 +19376,9 @@
                         "schemaVersion": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "description": {
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -19347,6 +19441,24 @@
         }
       }
     },
+    "/v1/templates/categories": {
+      "get": {
+        "tags": [
+          "templates"
+        ],
+        "description": "Get categories of templates.",
+        "security": [
+          {
+            "apiKey": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
     "/v1/templates": {
       "get": {
         "tags": [
@@ -19396,23 +19508,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "color": {
-                    "pattern": "^#[0-9A-Fa-f]{6}$",
-                    "type": "string"
-                  },
-                  "icon": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "title",
-                  "color"
-                ]
+                "type": "string"
               }
             },
             "in": "query",
@@ -19425,6 +19521,87 @@
             },
             "in": "query",
             "name": "search",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "ANALYTICS"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "COMMUNICATION"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CONTENT"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "CUSTOMER_SUPPORT"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "DEVELOPMENT"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "E_COMMERCE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "FINANCE"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "HR"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "IT_OPERATIONS"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "MARKETING"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "PRODUCTIVITY"
+                  ]
+                },
+                {
+                  "type": "string",
+                  "enum": [
+                    "SALES"
+                  ]
+                }
+              ]
+            },
+            "in": "query",
+            "name": "category",
             "required": false
           }
         ],
@@ -19739,6 +19916,9 @@
                         "schemaVersion": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "description": {
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -19824,23 +20004,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "type": "object",
-                "properties": {
-                  "title": {
-                    "type": "string"
-                  },
-                  "color": {
-                    "pattern": "^#[0-9A-Fa-f]{6}$",
-                    "type": "string"
-                  },
-                  "icon": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "title",
-                  "color"
-                ]
+                "type": "string"
               }
             },
             "in": "query",
@@ -21266,6 +21430,9 @@
                     "title": "NPM Piece",
                     "type": "object",
                     "properties": {
+                      "projectId": {
+                        "type": "string"
+                      },
                       "packageType": {
                         "type": "string",
                         "enum": [
@@ -21288,6 +21455,7 @@
                       }
                     },
                     "required": [
+                      "projectId",
                       "packageType",
                       "scope",
                       "pieceName",

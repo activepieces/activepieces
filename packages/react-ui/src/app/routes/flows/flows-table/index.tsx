@@ -87,8 +87,9 @@ export const FlowsTable = ({ refetch: parentRefetch }: FlowsTableProps) => {
       refetch: handleRefetch,
       refresh,
       setRefresh,
+      isEmbedded: embedState.isEmbedded,
     });
-  }, [refresh, handleRefetch]);
+  }, [refresh, handleRefetch, embedState.isEmbedded]);
 
   const filters: DataTableFilters<
     keyof PopulatedFlow | 'connectionExternalId' | 'name'
