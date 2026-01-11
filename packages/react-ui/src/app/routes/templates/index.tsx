@@ -22,8 +22,9 @@ import { SelectedCategoryView } from './selected-category-view';
 
 const TemplatesPage = () => {
   const navigate = useNavigate();
+  const { data: templateCategories } = templatesHooks.useTemplateCategories();
   const { platform } = platformHooks.useCurrentPlatform();
-  const isShowingOfficialTemplates = !platform.plan.manageTemplatesEnabled;
+  const isShowingOfficialTemplates = platform.plan.manageTemplatesEnabled;
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(
       isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM,
@@ -65,12 +66,9 @@ const TemplatesPage = () => {
     return grouped;
   }, [allOfficialTemplates, isShowingOfficialTemplates]);
 
-  const categories: string[] = useMemo(() => {
-    const categoriesWithTemplates = Object.keys(templatesByCategory).filter(
-      (category) => templatesByCategory[category]?.length > 0,
-    );
-    return ['All', ...categoriesWithTemplates];
-  }, [templatesByCategory]);
+  const categories = useMemo(() => {
+    return ['All', ...(templateCategories || [])];
+  }, [templateCategories]);
 
   const selectedCategoryTemplates = useMemo(() => {
     if (selectedCategory === 'All') {
@@ -110,7 +108,7 @@ const TemplatesPage = () => {
               </Button>
             </div>
           </div>
-          {isShowingOfficialTemplates && !isAllTemplatesLoading && (
+          {isShowingOfficialTemplates && categories && (
             <CategoryFilterCarousel
               categories={categories}
               selectedCategory={selectedCategory}

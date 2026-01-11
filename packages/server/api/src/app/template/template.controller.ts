@@ -52,7 +52,8 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.get('/categories', GetCategoriesParams, async () => {
         if (edition === ApEdition.CLOUD) {
-            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+            const categories = await flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
+            return categories?.value
         }
         return communityTemplates.getCategories()
     })
