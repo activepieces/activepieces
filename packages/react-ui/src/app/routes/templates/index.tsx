@@ -48,8 +48,8 @@ const TemplatesPage = () => {
   };
 
   const templatesByCategory = useMemo(() => {
-    const grouped: Record<TemplateCategory, Template[]> = {} as Record<
-      TemplateCategory,
+    const grouped: Record<string, Template[]> = {} as Record<
+      string,
       Template[]
     >;
 
@@ -60,7 +60,7 @@ const TemplatesPage = () => {
     if (isShowingOfficialTemplates) {
       allOfficialTemplates?.forEach((template: Template) => {
         if (template.categories?.length) {
-          template.categories?.forEach((category: TemplateCategory) => {
+          template.categories?.forEach((category: string) => {
             if (grouped[category]) {
               grouped[category].push(template);
             }

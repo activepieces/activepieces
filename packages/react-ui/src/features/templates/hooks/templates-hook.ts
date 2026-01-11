@@ -31,9 +31,7 @@ export const templatesHooks = {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const search = searchParams.get('search') ?? '';
-    const category =
-      (searchParams.get('category') as TemplateCategory | undefined) ??
-      undefined;
+    const category = searchParams.get('category') ?? undefined;
 
     const [debouncedSearch] = useDebounce(search, 300);
 

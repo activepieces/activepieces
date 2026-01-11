@@ -70,7 +70,7 @@ export const Template = Type.Object({
     metadata: Nullable(Metadata),
     usageCount: Type.Number(),
     author: Type.String(),
-    categories: Type.Array(Type.Enum(TemplateCategory)),
+    categories: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
     platformId: Nullable(Type.String()),
     flows: Type.Optional(Type.Array(FlowVersionTemplate)),
