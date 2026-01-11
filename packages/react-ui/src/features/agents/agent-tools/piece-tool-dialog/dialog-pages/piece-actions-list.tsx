@@ -22,14 +22,10 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
   const [debouncedQuery] = useDebounce(searchQuery, 200);
   const { handleActionSelect, selectedPiece } = usePieceToolsDialogStore();
 
-  console.log(selectedPiece);
-
   const selectedActionNames = useMemo(
     () => new Set(tools.map((tool) => tool.toolName)),
     [tools],
   );
-
-  console.log(selectedActionNames);
 
   const fuse = useMemo(() => {
     if (isNil(selectedPiece) || isNil(selectedPiece.suggestedActions))
@@ -55,8 +51,6 @@ export const PieceActionsList: React.FC<PieceActionsDialogProps> = ({
   if (isNil(selectedPiece)) {
     return <p>{t('No app is selected')}</p>;
   }
-
-  console.log(filteredActions);
 
   return (
     <ScrollArea className="overflow-y-auto">
