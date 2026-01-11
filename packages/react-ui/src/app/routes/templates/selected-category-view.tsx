@@ -8,26 +8,62 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from '@/components/ui/empty';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Template } from '@activepieces/shared';
 
 import { ExploreTemplateCard } from './template-card';
+import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
+
+type SelectedCategoryViewSkeletonProps = {
+  hideTitle?: boolean;
+};
+
+const SelectedCategoryViewSkeleton = ({
+  hideTitle = false,
+}: SelectedCategoryViewSkeletonProps) => {
+  return (
+    <div className="space-y-4">
+      {!hideTitle && (
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-48" />
+        </div>
+      )}
+
+      <div className="flex flex-row flex-wrap gap-6 pb-4">
+        {[...Array(6)].map((_, index) => (
+          <TemplateCardSkeleton key={index} hideTitle={hideTitle} />
+        ))}
+      </div>
+    </div>
+  );
+};
 
 type SelectedCategoryViewProps = {
-  category: string;
+  category?: string;
   templates: Template[];
   onTemplateSelect: (template: Template) => void;
+  isLoading?: boolean;
+  hideTitle?: boolean;
 };
 
 export const SelectedCategoryView = ({
   category,
   templates,
   onTemplateSelect,
+  isLoading = false,
+  hideTitle = false,
 }: SelectedCategoryViewProps) => {
+  if (isLoading) {
+    return <SelectedCategoryViewSkeleton hideTitle={hideTitle} />;
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <h2 className="text-2xl font-semibold">{category}</h2>
-      </div>
+      {category && (
+        <div className="flex items-center gap-2">
+          <h2 className="text-2xl font-semibold">{category}</h2>
+        </div>
+      )}
 
       {templates.length === 0 ? (
         <Empty className="min-h-[300px]">
