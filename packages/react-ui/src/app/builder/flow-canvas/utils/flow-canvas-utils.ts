@@ -15,9 +15,9 @@ import {
   StepLocationRelativeToParent,
   FlowTrigger,
   FlowTriggerType,
+  Note,
 } from '@activepieces/shared';
 
-import { Note } from '../../state/notes-state';
 
 import { flowCanvasConsts } from './consts';
 import {
@@ -502,7 +502,7 @@ function buildNotesGraph(notes: Note[]): ApGraph {
       position: note.position,
       data: {
         content: note.content,
-        creator: note.creator,
+        creatorId: note.creatorId,
         color: note.color,
         size: note.size,
       },

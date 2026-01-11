@@ -80,12 +80,18 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
         preValidation: async (request) => {
             if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
-                const migratedFlowTemplate = await migrateFlowVersionTemplate(request.body.request.trigger, request.body.request.schemaVersion)
+                const migratedFlowTemplate = await migrateFlowVersionTemplate(request.body.request.trigger, request.body.request.schemaVersion, request.body.request.notes ?? [])
                 request.body.request = {
                     ...request.body.request,
                     trigger: migratedFlowTemplate.trigger,
                     schemaVersion: migratedFlowTemplate.schemaVersion,
+                    notes: migratedFlowTemplate.notes
                 }
+            }
+        },
+        preHandler: async (request) => {
+            if(request.body?.type === FlowOperationType.ADD_NOTE) {
+                request.body.request.creatorId = request.principal?.type === PrincipalType.SERVICE ? null : request.principal.id
             }
         },
     }, async (request) => {
