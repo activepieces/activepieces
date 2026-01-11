@@ -57,6 +57,7 @@ beforeEach(async () => {
         sendTrialReminder: jest.fn(),
         sendReminderJobHandler: jest.fn(),
         sendExceedFailureThresholdAlert: jest.fn(),
+        sendBadgeAwardedEmail: jest.fn(),
     }))
 
     await databaseConnection().getRepository('flag').createQueryBuilder().delete().execute()
