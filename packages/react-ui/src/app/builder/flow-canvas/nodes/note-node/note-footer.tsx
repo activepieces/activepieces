@@ -10,24 +10,30 @@ import {
   Tooltip,
   TooltipContent,
 } from '@/components/ui/tooltip';
+import { userHooks } from '@/hooks/user-hooks';
+import { isNil } from '../../../../../../../shared/src/lib/common/utils';
 
 export const NoteFooter = ({
   id,
   isDragging,
-  creator,
+  creatorId,
 }: {
   id: string;
   isDragging?: boolean;
-  creator: string;
+  creatorId: string | null | undefined;
 }) => {
-  const [deleteNote] = useBuilderStateContext((state) => [state.deleteNote]);
-
+  const [deleteNote,readonly] = useBuilderStateContext((state) => [state.deleteNote,state.readonly]);
+  const { data: user } = userHooks.useUserById(creatorId ?? null);
+  const creator = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email;
+  if (isNil(creator)) {
+    return null;
+  }
   return (
     <div className="flex items-center justify-between gap-2">
       <TextWithTooltip tooltipMessage={creator}>
         <div className="text-xs">{creator}</div>
       </TextWithTooltip>
-      {!isDragging && (
+      {!isDragging && !readonly && (
         <div className="flex items-center gap-1">
           <Tooltip>
             <TooltipTrigger asChild>

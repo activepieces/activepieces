@@ -2,12 +2,10 @@ import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
-import { userHooks } from '@/hooks/user-hooks';
-import { apId, isNil } from '@activepieces/shared';
+import { apId, isNil, NoteColorVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import {
-  NoteColorVariant,
   NoteDragOverlayMode,
 } from '../../../state/notes-state';
 import {
@@ -17,6 +15,7 @@ import {
 import { flowCanvasConsts } from '../../utils/consts';
 
 import { NoteContent } from '.';
+import { authenticationSession } from '@/lib/authentication-session';
 
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
@@ -48,11 +47,8 @@ const NoteDragOverlay = () => {
     setOverlayPosition(position);
   });
   const hideOverlay = isNil(draggedNote) || isNil(noteDragOverlayMode);
-  const { data: user } = userHooks.useCurrentUser();
-  const userFullName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.email;
+  const userId = authenticationSession.getCurrentUserId();
+
   if (hideOverlay) {
     return null;
   }
@@ -71,7 +67,6 @@ const NoteDragOverlay = () => {
             addNote({
               id: apId(),
               content: flowCanvasConsts.DEFAULT_NOTE_CONTENT,
-              creator: userFullName ?? '',
               position: positionOnCanvas,
               size: draggedNote.size,
               color: NoteColorVariant.YELLOW,

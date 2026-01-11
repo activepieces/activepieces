@@ -1,7 +1,6 @@
 import { Editor } from '@tiptap/core';
 import { useRef } from 'react';
 
-import { NoteColorVariant } from '@/app/builder/state/notes-state';
 import { MarkdownTools } from '@/components/ui/markdown-input/tools';
 import {
   Popover,
@@ -9,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { NoteColorVariant } from '@activepieces/shared';
 
 export const NoteTools = ({
   editor,
@@ -72,11 +72,10 @@ const NoteColorPicker = ({
       >
         <div className="flex items-center cursor-default gap-1 justify-between flex-wrap w-full ">
           {Object.values(NoteColorVariant).map((color) => (
-            <div role="button" className="size-5 shrink-0 cursor-pointer grow flex items-center justify-center" onClick={() => {
+            <div     key={color}  role="button" className="size-5 shrink-0 cursor-pointer grow flex items-center justify-center" onClick={() => {
               setCurrentColor(color);
             }}>
               <div
-                key={color}
                 className={cn(
                   NoteColorVariantToTailwind[color],
                   'size-4 shrink-0 rounded-full',

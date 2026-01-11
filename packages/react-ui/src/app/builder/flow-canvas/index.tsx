@@ -18,14 +18,13 @@ import {
   flowStructureUtil,
   FlowVersion,
   isNil,
+  Note,
   Step,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { useHandleKeyPressOnCanvas } from '../shortcuts';
 import { useCursorPosition } from '../state/cursor-position-context';
-import { Note } from '../state/notes-state';
-
 import {
   CanvasContextMenu,
   ContextMenuType,
@@ -62,7 +61,7 @@ export const FlowCanvas = React.memo(
         state.panningMode,
         state.selectStepByName,
         state.rightSidebar,
-        state.notes,
+        state.flowVersion.notes,
       ];
     });
     const containerRef = useRef<HTMLDivElement>(null);
@@ -282,5 +281,5 @@ const createGraphKey = (flowVersion: FlowVersion, notes: Note[]) => {
   const notesGraphKey = notes
     .map((note) => `${note.id}-${note.position.x}-${note.position.y}`)
     .join('-');
-  return `${flowGraphKey}-${notesGraphKey}`;
+  return `${flowVersion.id}-${flowGraphKey}-${notesGraphKey}`;
 };

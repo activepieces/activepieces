@@ -3,17 +3,15 @@ import { Editor } from '@tiptap/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
-
-import { Note, NoteColorVariant } from '@/app/builder/state/notes-state';
 import { MarkdownInput } from '@/components/ui/markdown-input';
 import { cn } from '@/lib/utils';
-
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasConsts } from '../../utils/consts';
 import { ApNoteNode } from '../../utils/types';
 
 import { NoteFooter } from './note-footer';
 import { NoteColorVariantToTailwind, NoteTools } from './note-tools';
+import { Note, NoteColorVariant } from '@activepieces/shared';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   const [draggedNote, resizeNote, note, readonly] = useBuilderStateContext(
@@ -37,8 +35,9 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
     return null;
   }
   return (
-    <div className="group note-node">
-      <NodeResizeControl
+    <div className="group note-node outline-none">
+    {
+      !readonly && (  <NodeResizeControl
         minWidth={200}
         minHeight={180}
         maxWidth={550}
@@ -52,7 +51,8 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         }}
       >
         <button className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"></button>
-      </NodeResizeControl>
+      </NodeResizeControl>)
+    }
 
       <div
         key={
@@ -65,8 +65,10 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         {...attributes}
         {...listeners}
         className={cn(
-          'p-0.5 group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md',
-          {},
+          'p-0.5 outline-none group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md',
+          {
+            "!border-transparent cursor-default": readonly,
+          },
         )}
       >
         <NoteContent
@@ -83,7 +85,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
 
 const NoteContent = ({ note, isDragging }: NoteContentProps) => {
-  const { id, creator, color, size } = note;
+  const { id, creatorId, color, size } = note;
   const { width, height } = size;
   const [localNote, setLocalNote] = useState(note);
   const [updateContent, readonly, updateNoteColor] = useBuilderStateContext(
@@ -130,10 +132,11 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
         >
           <MarkdownInput
             ref={editorRef}
+            key={readonly ? 'readonly' : 'editable'}
             disabled={isDragging || readonly}
             initialValue={localNote.content}
             className={cn(
-              'cursor-text text-sm',
+              'cursor-text text-sm select-text',
               NoteColorVariantToTailwind[color],
               { '!cursor-grabbing': isDragging },
             )}
@@ -143,7 +146,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
             }}
           />
         </div>
-        <NoteFooter id={id} isDragging={isDragging} creator={creator} />
+        <NoteFooter id={id} isDragging={isDragging} creatorId={creatorId} />
       </div>
     </div>
   );
