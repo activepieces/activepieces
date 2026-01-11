@@ -21,8 +21,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: unresolvedInput,
                 }
             }
-            // TODO(@chaker): do not load all steps
-            const currentState = await executionState.currentState()
+            const referencedStepNames = extractReferencedStepNames(unresolvedInput)
+            const currentState = await executionState.getCurrentStateForSteps(referencedStepNames)
             const resolveOptions = {
                 engineToken,
                 projectId,
@@ -81,6 +81,30 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 }
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
+
+function extractReferencedStepNames(input: unknown, stepNames: Set<string> = new Set()): Set<string> {
+    if (isString(input)) {
+        const tokens = input.match(VARIABLE_PATTERN)
+        if (tokens) {
+            tokens.forEach(token => {
+                const variableName = token.substring(2, token.length - 2).trim()
+                // Extract step name (everything before the first dot or bracket)
+                if (!variableName.startsWith(CONNECTIONS)) {
+                    const stepName = variableName.split(/[\.\[]/)[0]
+                    if (stepName && stepName.length > 0) {
+                        stepNames.add(stepName)
+                    }
+                }
+            })
+        }
+    } else if (Array.isArray(input)) {
+        input.forEach(item => extractReferencedStepNames(item, stepNames))
+    } else if (typeof input === 'object' && input !== null) {
+        Object.values(input).forEach(value => extractReferencedStepNames(value, stepNames))
+    }
+    return stepNames
+}
+
 /** 
  * input: `Hello {{firstName}} {{lastName}}`
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]

@@ -83,7 +83,7 @@ export class FlowExecutorContext {
     // }
 
     public async getLoopStepOutput({ stepName }: { stepName: string }): Promise<LoopStepOutput | undefined> {
-        const { result: stateAtPath } = await getStateAtPath(this)
+        const { result: stateAtPath } = await this.getStateAtPath()
         const stepOutput = stateAtPath?.[stepName]
         if (isNil(stepOutput)) {
             return undefined
@@ -94,7 +94,7 @@ export class FlowExecutorContext {
     }
 
     public async isCompleted({ stepName }: { stepName: string }): Promise<boolean> {
-        const { result: stateAtPath } = await getStateAtPath(this)
+        const { result: stateAtPath } = await this.getStateAtPath()
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -103,7 +103,7 @@ export class FlowExecutorContext {
     }
 
     public async isPaused({ stepName }: { stepName: string }): Promise<boolean> {
-        const { result: stateAtPath } = await getStateAtPath(this)
+        const { result: stateAtPath } = await this.getStateAtPath()
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -132,7 +132,7 @@ export class FlowExecutorContext {
         const steps = {
             ...this.steps,
         }
-        const { targetMap } = await getStateAtPath(this)
+        const { targetMap } = await this.getStateAtPath()
         await flowStateService.saveStepOutput({
             runId: this.runId,
             stepName,
@@ -148,12 +148,12 @@ export class FlowExecutorContext {
 
         return new FlowExecutorContext({
             ...this,
-            steps,
+            steps: targetMap,
         })
     }
 
     public async getStepOutput(stepName: string): Promise<StepOutput | undefined> {
-        const { result: stateAtPath } = await getStateAtPath(this)
+        const { result: stateAtPath } = await this.getStateAtPath()
 
         return stateAtPath[stepName]
     }
@@ -225,6 +225,84 @@ export class FlowExecutorContext {
         return flattenedSteps
     }
 
+    public async getStateAtPath(): Promise<{
+        targetMap: FlowExecutorSteps // reference to the record with step promises
+        result: Record<string, StepOutput> // direct step outputs at the current path
+    }> {
+        const { currentPath, steps } = this
+        let targetMap = steps
+        let result: Record<string, StepOutput> = {}
+    
+        if (currentPath.path.length === 0) {
+            return { targetMap, result }
+        }
+        const stepPromises = currentPath.path.map(([stepName]) => flowStateService.getStepOutputOrThrow(targetMap[stepName]))
+        const stepOutputs = await Promise.all(stepPromises)
+    
+        for (let i = 0; i < currentPath.path.length; i++) {
+            const [stepName, iteration] = currentPath.path[i]
+            const stepOutput = stepOutputs[i]
+    
+            if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
+                throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', `[ExecutionState#getTargetMap] Not instance of Loop On Items step output: ${stepOutput.type}`)
+            }
+            targetMap = stepOutput.output.iterations[iteration]
+            result[stepName] = stepOutput
+        }
+    
+        return { targetMap, result }
+    }
+
+    public async getCurrentStateForSteps(
+        referencedStepNames: Set<string>
+    ): Promise<Record<string, unknown>> {
+        // Load only referenced steps from the top-level steps
+        const topLevelSteps: Record<string, unknown> = {}
+
+        for (const stepName of referencedStepNames) {
+            const request = this.steps[stepName]
+            if (request) {
+                const stepOutput = await flowStateService.getStepOutputOrThrow(request)
+                topLevelSteps[stepName] = stepOutput.output
+            }
+        }
+        
+        // Handle current path (loop iterations) - include all steps in current path scope
+        let targetMap: FlowExecutorSteps = this.steps
+        let flattenedSteps: Record<string, unknown> = { ...topLevelSteps }
+        
+        for (const [stepName, iteration] of this.currentPath.path) {
+            const stepOutput = await flowStateService.getStepOutputOrThrow(targetMap[stepName])
+            
+            if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
+                throw new EngineGenericError(
+                    'NotInstanceOfLoopOnItemsStepOutputError',
+                    `[ExecutionState#currentState] Not instance of Loop On Items step output: ${stepOutput.type}`
+                )
+            }
+            
+            targetMap = stepOutput.output.iterations[iteration]
+            
+            // Only load referenced steps from this iteration
+            const iterationSteps: Record<string, StepOutput> = {}
+            for (const stepName of referencedStepNames) {
+                const request = targetMap[stepName]
+                if (request) {
+                    const stepOutput = await flowStateService.getStepOutputOrThrow(request)
+                    iterationSteps[stepName] = stepOutput
+                }
+            }
+            
+            flattenedSteps = {
+                ...flattenedSteps,
+                ...extractOutput(iterationSteps),
+            }
+        }
+        
+        return flattenedSteps
+    }
+    
+
 }
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
@@ -234,32 +312,7 @@ function extractOutput(steps: Record<string, StepOutput>): Record<string, unknow
     }, {} as Record<string, unknown>)
 }
 
-async function getStateAtPath({ currentPath, steps, runId }: FlowExecutorContext): Promise<{
-    targetMap: FlowExecutorSteps // reference to the record with step promises
-    result: Record<string, StepOutput> // direct step outputs at the current path
-}> {
-    let targetMap = steps
-    let result: Record<string, StepOutput> = {}
 
-    if (currentPath.path.length === 0) {
-        return { targetMap, result }
-    }
-    const stepPromises = currentPath.path.map(([stepName]) => flowStateService.getStepOutputOrThrow(targetMap[stepName]))
-    const stepOutputs = await Promise.all(stepPromises)
-
-    for (let i = 0; i < currentPath.path.length; i++) {
-        const [stepName, iteration] = currentPath.path[i]
-        const stepOutput = stepOutputs[i]
-
-        if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
-            throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', `[ExecutionState#getTargetMap] Not instance of Loop On Items step output: ${stepOutput.type}`)
-        }
-        targetMap = stepOutput.output.iterations[iteration]
-        result[stepName] = stepOutput
-    }
-
-    return { targetMap, result }
-}
 
 
 

@@ -92,6 +92,8 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         const first = Object.keys(flowExecutorContext.steps)[0]
         const firstOutput = flowExecutorContext.steps[first] ? await flowStateService.getStepOutputOrThrow(flowExecutorContext.steps[first]) : undefined
         const trimmedSteps = firstOutput ? { [first]: firstOutput } : {}
+
+
         const executionState = await logSerializer.serialize({
             executionState: {
                 steps: trimmedSteps,
@@ -107,7 +109,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         }
 
         const stepResponse = engineConstants.stepNameToTest ? extractStepResponse({
-            stepOutput: trimmedSteps[first],
+            stepOutput: await flowStateService.getStepOutputOrThrow(flowExecutorContext.steps[engineConstants.stepNameToTest]),
             runId: engineConstants.flowRunId,
         }) : undefined
 
