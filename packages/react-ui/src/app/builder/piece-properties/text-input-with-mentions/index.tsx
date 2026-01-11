@@ -3,7 +3,6 @@ import { Placeholder } from '@tiptap/extension-placeholder';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
-import './tip-tap.css';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { cn } from '@/lib/utils';
 import { flowStructureUtil, isNil } from '@activepieces/shared';

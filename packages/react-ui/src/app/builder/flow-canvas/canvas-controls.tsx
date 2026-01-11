@@ -1,6 +1,14 @@
 import { Node, useKeyPress, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { Fullscreen, Hand, Map, Minus, MousePointer, Plus } from 'lucide-react';
+import {
+  Fullscreen,
+  Hand,
+  Map,
+  Minus,
+  MousePointer,
+  NotebookPen,
+  Plus,
+} from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -13,6 +21,7 @@ import {
 import { isMac } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
+import { NoteColorVariant, NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -161,7 +170,9 @@ const CanvasControls = ({
       });
     }
   };
-
+  const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext(
+    (state) => [state.noteDragOverlayMode, state.setDraggedNote],
+  );
   const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
     useBuilderStateContext((state) => {
       return [
@@ -236,6 +247,34 @@ const CanvasControls = ({
             onClick={() => setPanningMode('pan')}
           >
             <MousePointer className="size-4" />
+          </Button>
+        </CanvasButtonWrapper>
+        <CanvasButtonWrapper tooltip={t('Add note')}>
+          <Button
+            variant={
+              noteDragOverlayMode === NoteDragOverlayMode.CREATE
+                ? 'default'
+                : 'ghost'
+            }
+            size="icon"
+            onClick={() => {
+              setDraggedNote(
+                {
+                  id: '',
+                  content: '',
+                  creator: '',
+                  position: { x: 0, y: 0 },
+                  size: {
+                    width: flowCanvasConsts.NOTE_CREATION_OVERLAY_WIDTH,
+                    height: flowCanvasConsts.NOTE_CREATION_OVERLAY_HEIGHT,
+                  },
+                  color: NoteColorVariant.YELLOW,
+                },
+                NoteDragOverlayMode.CREATE,
+              );
+            }}
+          >
+            <NotebookPen className="size-4" />
           </Button>
         </CanvasButtonWrapper>
       </div>
