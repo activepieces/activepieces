@@ -9,18 +9,21 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { useReactFlow, useViewport } from '@xyflow/react';
+import { ReactFlowInstance, useReactFlow, useViewport } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  FlowOperationRequest,
   FlowOperationType,
+  Step,
   StepLocationRelativeToParent,
   flowStructureUtil,
+  isNil,
 } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { BuilderState, useBuilderStateContext } from '../builder-hooks';
 import { NoteDragOverlayMode } from '../state/notes-state';
 
 import NoteDragOverlay from './nodes/note-node/note-drag-overlay';
@@ -101,61 +104,9 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const reactFlow = useReactFlow();
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
-    if (
-      e.over &&
-      e.over.data.current &&
-      e.over.data.current.accepts === e.active.data?.current?.type
-    ) {
-      const droppedAtNodeData: ApButtonData = e.over.data
-        .current as ApButtonData;
-      if (
-        droppedAtNodeData &&
-        droppedAtNodeData.parentStepName &&
-        draggedStep &&
-        draggedStep.name !== droppedAtNodeData.parentStepName
-      ) {
-        const isPartOfInnerFlow = flowStructureUtil.isChildOf(
-          draggedStep,
-          droppedAtNodeData.parentStepName,
-        );
-        if (isPartOfInnerFlow) {
-          toast(t('Invalid Move'), {
-            description: t(
-              'The destination location is a child of the dragged step',
-            ),
-            duration: 3000,
-          });
-          return;
-        }
-        applyOperation({
-          type: FlowOperationType.MOVE_ACTION,
-          request: {
-            name: draggedStep.name,
-            newParentStep: droppedAtNodeData.parentStepName,
-            stepLocationRelativeToNewParent:
-              droppedAtNodeData.stepLocationRelativeToParent,
-            branchIndex:
-              droppedAtNodeData.stepLocationRelativeToParent ===
-              StepLocationRelativeToParent.INSIDE_BRANCH
-                ? droppedAtNodeData.branchIndex
-                : undefined,
-          },
-        });
-      }
-    }
-    if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
-      const draggedNote = getNoteById(e.active.id.toString());
-      if (draggedNote) {
-        const element = document.getElementById(e.active.id.toString());
-        if (element) {
-          const positionOnCanvas = reactFlow.screenToFlowPosition({
-            x: element.getBoundingClientRect().left,
-            y: element.getBoundingClientRect().top,
-          });
-          moveNote(draggedNote.id, positionOnCanvas);
-        }
-      }
-    }
+    setDraggedNote(null, null);
+    handleStepDragEnd({e, applyOperation, activeDraggingStep, flowVersion});
+    handleNoteDragEnd({e, getNoteById, moveNote, reactFlow});
   };
 
   const sensors = useSensors(
@@ -186,3 +137,65 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
 };
 
 export { FlowDragLayer };
+
+function handleStepDragEnd({e, applyOperation, activeDraggingStep, flowVersion}: {e: DragEndEvent} & Pick<BuilderState, 'applyOperation' | 'activeDraggingStep' | 'flowVersion'>) {
+  const draggedStep = activeDraggingStep
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
+    : undefined;
+  const isOverSomething = !isNil(e.over?.data?.current) && e.over.data.current.accepts === e.active.data?.current?.type;
+  if (
+    isOverSomething
+  ) {
+    const droppedAtNodeData: ApButtonData | undefined = e.over?.data
+      .current as unknown as ApButtonData | undefined;
+    if (
+      droppedAtNodeData?.parentStepName &&
+      draggedStep &&
+      draggedStep.name !== droppedAtNodeData.parentStepName
+    ) {
+      const isPartOfInnerFlow = flowStructureUtil.isChildOf(
+        draggedStep,
+        droppedAtNodeData.parentStepName,
+      );
+      if (isPartOfInnerFlow) {
+        toast(t('Invalid Move'), {
+          description: t(
+            'The destination location is a child of the dragged step',
+          ),
+          duration: 3000,
+        });
+        return;
+      }
+      applyOperation({
+        type: FlowOperationType.MOVE_ACTION,
+        request: {
+          name: draggedStep.name,
+          newParentStep: droppedAtNodeData.parentStepName,
+          stepLocationRelativeToNewParent:
+            droppedAtNodeData.stepLocationRelativeToParent,
+          branchIndex:
+            droppedAtNodeData.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_BRANCH
+              ? droppedAtNodeData.branchIndex
+              : undefined,
+        },
+      });
+    }
+  }
+}
+
+function handleNoteDragEnd({e, getNoteById, moveNote, reactFlow}: {e: DragEndEvent} & Pick<BuilderState, 'getNoteById' | 'moveNote'> & {reactFlow: ReactFlowInstance}) {
+  if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
+    const draggedNote = getNoteById(e.active.id.toString());
+    if (draggedNote) {
+      const element = document.getElementById(e.active.id.toString());
+      if (element) {
+        const positionOnCanvas = reactFlow.screenToFlowPosition({
+          x: element.getBoundingClientRect().left,
+          y: element.getBoundingClientRect().top,
+        });
+        moveNote(draggedNote.id, positionOnCanvas);
+      }
+    }
+  }
+ }
