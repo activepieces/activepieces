@@ -14,13 +14,11 @@ import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
 import AIProvidersPage from '@/app/routes/platform/setup/ai';
-import { BrandingPage } from '@/app/routes/platform/setup/branding';
-import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
+import { PlatformConnectorsPage } from '@/app/routes/platform/setup/connectors';
+import { GlobalConnectionsPage } from '@/app/routes/platform/setup/globalconnections';
 import { RedirectPage } from '@/app/routes/redirect';
 import { useEmbedding } from '@/components/embed-provider';
 import { VerifyEmail } from '@/features/authentication/components/verify-email';
-import { Error } from '@/features/billing/components/error';
-import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/members/component/accept-invitation';
 import { routesThatRequireProjectId } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
@@ -39,11 +37,9 @@ import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
-import ProjectsPage from '../routes/platform/projects';
 import AuditLogsPage from '../routes/platform/security/audit-logs';
 import { ProjectRolePage } from '../routes/platform/security/project-role';
 import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
@@ -320,78 +316,29 @@ const routes = [
       </PageTitle>
     ),
   },
+  // Admin routes - General
   {
-    path: '/platform/projects',
+    path: '/admin/analytics',
     element: (
       <PlatformLayout>
-        <PageTitle title="Projects">
-          <ProjectsPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/pieces',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Pieces">
-          <PlatformPiecesPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/analytics',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Analytics">
+        <PageTitle title="Overview">
           <AnalyticsPage />
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform',
+    path: '/admin',
     element: (
       <PlatformLayout>
-        <PageTitle title="Platform">
-          <Navigate to="/platform/analytics" />
+        <PageTitle title="Admin">
+          <Navigate to="/admin/analytics" />
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/setup/connections',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Connections">
-          <GlobalConnectionsTable />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/templates',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Templates">
-          <TemplatesPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/branding',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Branding">
-          <BrandingPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/users',
+    path: '/admin/users',
     element: (
       <PlatformLayout>
         <PageTitle title="Users">
@@ -400,8 +347,9 @@ const routes = [
       </PlatformLayout>
     ),
   },
+  // Admin routes - Setup
   {
-    path: '/platform/setup/ai',
+    path: '/admin/setup/ai',
     element: (
       <PlatformLayout>
         <PageTitle title="AI">
@@ -411,17 +359,58 @@ const routes = [
     ),
   },
   {
-    path: '/platform/security/api-keys',
+    path: '/admin/setup/connections',
     element: (
       <PlatformLayout>
-        <PageTitle title="API Keys">
-          <ApiKeysPage />
+        <PageTitle title="Global Connections">
+          <GlobalConnectionsTable />
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/security/audit-logs',
+    path: '/admin/setup/connectors',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Connectors">
+          <PlatformConnectorsPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/admin/setup/globalconnections',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Global Connections">
+          <GlobalConnectionsPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/admin/setup/templates',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Templates">
+          <TemplatesPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/admin/setup',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Admin Setup">
+          <Navigate to="/admin/setup/ai" replace />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  // Admin routes - Security
+  {
+    path: '/admin/security/audit-logs',
     element: (
       <PlatformLayout>
         <PageTitle title="Audit Logs">
@@ -431,67 +420,17 @@ const routes = [
     ),
   },
   {
-    path: '/platform/infrastructure/workers',
+    path: '/admin/security/sso',
     element: (
       <PlatformLayout>
-        <PageTitle title="Workers">
-          <SettingsWorkersPage />
+        <PageTitle title="Single Sign On">
+          <SSOPage />
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/infrastructure/health',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="System Health">
-          <SettingsHealthPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/infrastructure/triggers',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Trigger Health">
-          <TriggerHealthPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <SettingsBilling />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing/success',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Success />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing/error',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Error />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/signing-keys',
+    path: '/admin/security/signing-keys',
     element: (
       <PlatformLayout>
         <PageTitle title="Signing Keys">
@@ -501,17 +440,7 @@ const routes = [
     ),
   },
   {
-    path: '/platform/security/sso',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="SSO">
-          <SSOPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles',
+    path: '/admin/security/project-roles',
     element: (
       <PlatformLayout>
         <PageTitle title="Project Roles">
@@ -521,7 +450,7 @@ const routes = [
     ),
   },
   {
-    path: '/platform/security/project-roles/:projectRoleId',
+    path: '/admin/security/project-roles/:projectRoleId',
     element: (
       <PlatformLayout>
         <PageTitle title="Project Role Users">
@@ -531,34 +460,70 @@ const routes = [
     ),
   },
   {
-    path: '/platform/setup',
+    path: '/admin/security/api-keys',
     element: (
       <PlatformLayout>
-        <PageTitle title="Platform Setup">
-          <Navigate to="/platform/setup/ai" replace />
+        <PageTitle title="API Keys">
+          <ApiKeysPage />
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/infrastructure',
+    path: '/admin/security',
     element: (
       <PlatformLayout>
-        <PageTitle title="Platform Infrastructure">
-          <Navigate to="/platform/infrastructure/workers" replace />
+        <PageTitle title="Admin Security">
+          <Navigate to="/admin/security/audit-logs" replace />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  // Admin routes - Infrastructure
+  {
+    path: '/admin/infrastructure/workers',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Workers">
+          <SettingsWorkersPage />
         </PageTitle>
       </PlatformLayout>
     ),
   },
   {
-    path: '/platform/security',
+    path: '/admin/infrastructure/health',
     element: (
       <PlatformLayout>
-        <PageTitle title="Platform Security">
-          <Navigate to="/platform/security/audit-logs" replace />
+        <PageTitle title="System Health">
+          <SettingsHealthPage />
         </PageTitle>
       </PlatformLayout>
     ),
+  },
+  {
+    path: '/admin/infrastructure/triggers',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Trigger Health">
+          <TriggerHealthPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/admin/infrastructure',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Admin Infrastructure">
+          <Navigate to="/admin/infrastructure/workers" replace />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  // Redirect old /platform routes to /admin
+  {
+    path: '/platform/*',
+    element: <Navigate to="/admin" replace />,
   },
   {
     path: '/redirect',

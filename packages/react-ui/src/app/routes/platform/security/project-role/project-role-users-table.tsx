@@ -124,7 +124,7 @@ export const ProjectRoleUsersTable = () => {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink
-                onClick={() => navigate('/platform/security/project-roles')}
+                onClick={() => navigate('/admin/security/project-roles')}
                 className="cursor-pointer hover:text-primary hover:underline"
               >
                 {t('Roles')}

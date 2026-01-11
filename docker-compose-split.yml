@@ -1,23 +1,54 @@
 services:
-  activepieces:
+  # APP: Handles UI, API, and Webhooks
+  activepieces-app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: activepieces
+    container_name: activepieces-app
     restart: unless-stopped
-    ## Enable the following line if you already use AP_EXECUTION_MODE with SANDBOX_PROCESS or old activepieces, checking the breaking change documentation for more info.
-    ## privileged: true
     ports:
       - '8080:80'
     depends_on:
       - postgres
       - redis
     env_file: .env
+    environment:
+      # Split Mode: APP ONLY
+      - AP_CONTAINER_TYPE=APP
+      # App doesn't need worker concurrency
+      - AP_FLOW_WORKER_CONCURRENCY=0
     volumes:
       - ./cache:/usr/src/app/cache
       - ./dist/packages/pieces:/usr/src/app/dist/packages/pieces
     networks:
       - activepieces
+
+  # WORKER: Processes flow executions
+  activepieces-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: activepieces-worker
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - redis
+      - activepieces-app
+    env_file: .env
+    environment:
+      # Split Mode: WORKER ONLY
+      - AP_CONTAINER_TYPE=WORKER
+      # Worker processes jobs from Redis queue
+      - AP_FLOW_WORKER_CONCURRENCY=25
+    volumes:
+      - ./cache:/usr/src/app/cache
+      - ./dist/packages/pieces:/usr/src/app/dist/packages/pieces
+    networks:
+      - activepieces
+    # Scale workers: docker compose up --scale activepieces-worker=3
+    deploy:
+      replicas: 1
+
   postgres:
     image: 'postgres:14.4'
     container_name: postgres
@@ -33,6 +64,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - activepieces
+
   redis:
     image: 'redis:7.0.7'
     container_name: redis
@@ -43,8 +75,10 @@ services:
       - 'redis_data:/data'
     networks:
       - activepieces
+
 volumes:
   postgres_data:
   redis_data:
+
 networks:
   activepieces:

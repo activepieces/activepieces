@@ -1,15 +1,13 @@
 import { t } from 'i18next';
 import {
   ArrowLeft,
-  Palette,
+  Globe,
   LayoutGrid,
   LineChart,
   Server,
   Users,
   Bot,
   Unplug,
-  Puzzle,
-  Receipt,
   SquareDashedBottomCode,
   LogIn,
   KeyRound,
@@ -37,7 +35,6 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 
 import { ApSidebarItem } from '../ap-sidebar-item';
 import { SidebarUser } from '../sidebar-user';
@@ -45,7 +42,6 @@ import { SidebarUser } from '../sidebar-user';
 export function PlatformSidebar() {
   const navigate = useNavigate();
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
@@ -63,19 +59,13 @@ export function PlatformSidebar() {
       label: t('General'),
       items: [
         {
-          to: '/platform/analytics',
+          to: '/admin/analytics',
           label: t('Overview'),
           icon: LineChart,
           locked: !platform.plan.analyticsEnabled,
         },
         {
-          to: '/platform/projects',
-          label: t('Projects'),
-          icon: LayoutGrid,
-          locked: platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE,
-        },
-        {
-          to: '/platform/users',
+          to: '/admin/users',
           label: t('Users'),
           icon: Users,
         },
@@ -85,39 +75,33 @@ export function PlatformSidebar() {
       label: t('Setup'),
       items: [
         {
-          to: '/platform/setup/ai',
+          to: '/admin/setup/ai',
           label: t('AI'),
           icon: Bot,
         },
         {
-          to: '/platform/setup/branding',
-          label: t('Branding'),
-          icon: Palette,
-          locked: !platform.plan.customAppearanceEnabled,
-        },
-        {
-          to: '/platform/setup/connections',
+          to: '/admin/setup/connections',
           label: t('Global Connections'),
           icon: Unplug,
           locked: !platform.plan.globalConnectionsEnabled,
         },
         {
-          to: '/platform/setup/pieces',
-          label: t('Pieces'),
-          icon: Puzzle,
-          locked: !platform.plan.managePiecesEnabled,
+          to: '/admin/setup/connectors',
+          label: t('Connectors'),
+          icon: Unplug,
+          locked: !platform.plan.globalConnectionsEnabled,
         },
         {
-          to: '/platform/setup/templates',
+          to: '/admin/setup/globalconnections',
+          label: t('Global Connections 2'),
+          icon: Globe,
+          locked: !platform.plan.globalConnectionsEnabled,
+        },
+        {
+          to: '/admin/setup/templates',
           label: t('Templates'),
           icon: LayoutGrid,
           locked: !platform.plan.manageTemplatesEnabled,
-        },
-        {
-          to: '/platform/setup/billing',
-          label: t('Billing'),
-          icon: Receipt,
-          locked: edition === ApEdition.COMMUNITY,
         },
       ],
     },
@@ -125,31 +109,31 @@ export function PlatformSidebar() {
       label: t('Security'),
       items: [
         {
-          to: '/platform/security/audit-logs',
+          to: '/admin/security/audit-logs',
           label: t('Audit Logs'),
           icon: SquareDashedBottomCode,
           locked: !platform.plan.auditLogEnabled,
         },
         {
-          to: '/platform/security/sso',
+          to: '/admin/security/sso',
           label: t('Single Sign On'),
           icon: LogIn,
           locked: !platform.plan.ssoEnabled,
         },
         {
-          to: '/platform/security/signing-keys',
+          to: '/admin/security/signing-keys',
           label: t('Signing Keys'),
           icon: KeyRound,
           locked: !platform.plan.embeddingEnabled,
         },
         {
-          to: '/platform/security/project-roles',
+          to: '/admin/security/project-roles',
           label: t('Project Roles'),
           icon: Settings2,
           locked: !platform.plan.projectRolesEnabled,
         },
         {
-          to: '/platform/security/api-keys',
+          to: '/admin/security/api-keys',
           label: t('API Keys'),
           icon: FileJson2,
           locked: !platform.plan.apiKeysEnabled,
@@ -160,17 +144,17 @@ export function PlatformSidebar() {
       label: t('Infrastructure'),
       items: [
         {
-          to: '/platform/infrastructure/workers',
+          to: '/admin/infrastructure/workers',
           label: t('Workers'),
           icon: Server,
         },
         {
-          to: '/platform/infrastructure/health',
+          to: '/admin/infrastructure/health',
           label: t('Health'),
           icon: FileHeart,
         },
         {
-          to: '/platform/infrastructure/triggers',
+          to: '/admin/infrastructure/triggers',
           label: t('Triggers'),
           icon: MousePointerClick,
         },
@@ -201,7 +185,7 @@ export function PlatformSidebar() {
             className="py-5 px-2"
           >
             <ArrowLeft />
-            {t('Exit platform admin')}
+            {t('Exit admin')}
           </SidebarMenuButton>
         </SidebarMenu>
       </SidebarHeader>

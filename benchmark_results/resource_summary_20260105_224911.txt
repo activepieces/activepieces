@@ -1,0 +1,12 @@
+
+redis:
+  CPU: avg=12.66%, min=0.19%, max=16.75%
+  Memory: avg=0.09%, min=0.09%, max=0.10%
+
+postgres:
+  CPU: avg=27.12%, min=0.36%, max=37.47%
+  Memory: avg=1.63%, min=1.55%, max=1.70%
+
+activepieces:
+  CPU: avg=181.95%, min=2.98%, max=254.17%
+  Memory: avg=30.74%, min=17.23%, max=42.60%

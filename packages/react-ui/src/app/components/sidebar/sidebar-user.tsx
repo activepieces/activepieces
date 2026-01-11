@@ -57,7 +57,7 @@ export function SidebarUser() {
   const { reset } = useTelemetry();
   const { checkAccess } = useAuthorization();
   const canInviteUsers = checkAccess(Permission.WRITE_INVITATION);
-  const isInPlatformAdmin = location.pathname.startsWith('/platform');
+  const isInPlatformAdmin = location.pathname.startsWith('/admin');
   const isCollapsed = state === 'collapsed';
 
   if (!user || embedState.isEmbedded) {
@@ -184,12 +184,12 @@ function SidebarPlatformAdminButton() {
   return (
     <DropdownMenuGroup>
       <DropdownMenuItem
-        onClick={() => navigate('/platform')}
+        onClick={() => navigate('/admin')}
         className="w-full flex items-center justify-center relative"
       >
         <div className={`w-full flex items-center gap-2`}>
           <Shield className="size-4" />
-          <span className={`text-sm`}>{t('Platform Admin')}</span>
+          <span className={`text-sm`}>{t('Admin')}</span>
         </div>
       </DropdownMenuItem>
     </DropdownMenuGroup>

@@ -85,7 +85,7 @@ export const ExplorePage = () => {
                 {!search && isPlatformAdmin && (
                   <EmptyContent>
                     <Button
-                      onClick={() => navigate('/platform/setup/templates')}
+                      onClick={() => navigate('/admin/setup/templates')}
                     >
                       {t('Setup Templates')}
                     </Button>

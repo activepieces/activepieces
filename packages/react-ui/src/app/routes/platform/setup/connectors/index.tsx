@@ -25,7 +25,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { isNil, OAuth2GrantType, PieceScope } from '@activepieces/shared';
 
-const PlatformPiecesPage = () => {
+const PlatformConnectorsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const isEnabled = platform.plan.managePiecesEnabled;
   const [searchParams] = useSearchParams();
@@ -164,8 +164,10 @@ const PlatformPiecesPage = () => {
   return (
     <>
       <DashboardPageHeader
-        description={t('Manage the pieces that are available to your users')}
-        title={t('Pieces')}
+        description={t(
+          'Manage the connectors that are available to your users with sorting capabilities',
+        )}
+        title={t('Connectors')}
       >
         <div className="flex gap-3">
           <ApplyTags
@@ -184,9 +186,9 @@ const PlatformPiecesPage = () => {
       <div className="mx-auto w-full flex-col">
         {!isEnabled && (
           <LockedAlert
-            title={t('Control Pieces')}
+            title={t('Control Connectors')}
             description={t(
-              "Show the pieces that matter most to your users and hide the ones you don't like.",
+              "Show the connectors that matter most to your users and hide the ones you don't like.",
             )}
             button={
               <RequestTrial
@@ -197,16 +199,16 @@ const PlatformPiecesPage = () => {
           />
         )}
         <DataTable
-          emptyStateTextTitle={t('No pieces found')}
+          emptyStateTextTitle={t('No connectors found')}
           emptyStateTextDescription={t(
-            'Start by installing pieces that you want to use in your automations',
+            'Start by installing connectors that you want to use in your automations',
           )}
           emptyStateIcon={<Package className="size-14" />}
           columns={columns}
           filters={[
             {
               type: 'input',
-              title: t('Piece Name'),
+              title: t('Connector Name'),
               accessorKey: 'name',
               icon: CheckIcon,
             },
@@ -225,8 +227,8 @@ const PlatformPiecesPage = () => {
   );
 };
 
-PlatformPiecesPage.displayName = 'PlatformPiecesPage';
-export { PlatformPiecesPage };
+PlatformConnectorsPage.displayName = 'PlatformConnectorsPage';
+export { PlatformConnectorsPage };
 
 function shouldShowOauth2SettingForPiece(piece: PieceMetadataModelSummary) {
   const pieceAuth = Array.isArray(piece.auth)

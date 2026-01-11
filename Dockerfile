@@ -69,6 +69,9 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 # Copy source code after dependency installation
 COPY . .
 
+# Build shared package first (required by react-ui)
+RUN npx nx build shared --skip-nx-cache
+
 # Build both projects (already has NX_NO_CLOUD from base stage)
 RUN npx nx run-many --target=build --projects=react-ui,server-api --configuration production --parallel=2 --skip-nx-cache
 

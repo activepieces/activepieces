@@ -105,7 +105,7 @@ export const ProjectRolesTable = ({
                     variant="ghost"
                     className="size-8 p-0"
                     onClick={() => {
-                      navigate(`/platform/security/project-roles/${row.id}`);
+                      navigate(`/admin/security/project-roles/${row.id}`);
                     }}
                   >
                     <Users className="size-4" />

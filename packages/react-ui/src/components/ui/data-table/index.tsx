@@ -4,6 +4,8 @@ import {
   ColumnDef as TanstackColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
   useReactTable,
 } from '@tanstack/react-table';
 import { t } from 'i18next';
@@ -204,6 +206,7 @@ export function DataTable<
   const [tableData, setTableData] = useState<RowDataWithActions<TData>[]>(
     enrichPageData(page?.data ?? []),
   );
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   useDeepCompareEffect(() => {
     setNextPageCursor(page?.next ?? undefined);
@@ -216,7 +219,12 @@ export function DataTable<
     columns,
     manualPagination: true,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    onSortingChange: setSorting,
     getRowId: () => apId(),
+    state: {
+      sorting,
+    },
     initialState: {
       pagination: {
         pageSize: parseInt(startingLimit),

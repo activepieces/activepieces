@@ -75,27 +75,27 @@ export const STANDARD_CLOUD_PLAN: PlatformPlanWithOnlyLimits = {
     tablesEnabled: true,
     todosEnabled: true,
     mcpsEnabled: true,
-    embeddingEnabled: false,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
-    environmentsEnabled: false,
+    embeddingEnabled: true, // Paywall removed - always enabled
+    globalConnectionsEnabled: true, // Paywall removed - always enabled
+    customRolesEnabled: true, // Paywall removed - always enabled
+    environmentsEnabled: true, // Paywall removed - always enabled
     analyticsEnabled: true,
     showPoweredBy: false,
-    auditLogEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
+    auditLogEnabled: true, // Paywall removed - always enabled
+    managePiecesEnabled: true, // Paywall removed - always enabled
+    manageTemplatesEnabled: true, // Paywall removed - always enabled
+    customAppearanceEnabled: true, // Paywall removed - always enabled
     teamProjectsLimit: TeamProjectsLimit.ONE,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    ssoEnabled: false,
+    projectRolesEnabled: true, // Paywall removed - always enabled
+    customDomainsEnabled: true, // Paywall removed - always enabled
+    apiKeysEnabled: true, // Paywall removed - always enabled
+    ssoEnabled: true, // Paywall removed - always enabled
 }
 
 export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
-    embeddingEnabled: false,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
+    embeddingEnabled: true, // Paywall removed - always enabled
+    globalConnectionsEnabled: true, // Paywall removed - always enabled
+    customRolesEnabled: true, // Paywall removed - always enabled
     mcpsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
@@ -103,18 +103,18 @@ export const OPEN_SOURCE_PLAN: PlatformPlanWithOnlyLimits = {
     includedAiCredits: 0,
     aiCreditsOverageLimit: undefined,
     aiCreditsOverageState: AiOverageState.NOT_ALLOWED,
-    environmentsEnabled: false,
+    environmentsEnabled: true, // Paywall removed - always enabled
     analyticsEnabled: true,
     showPoweredBy: false,
-    auditLogEnabled: false,
-    managePiecesEnabled: false,
-    manageTemplatesEnabled: false,
-    customAppearanceEnabled: false,
+    auditLogEnabled: true, // Paywall removed - always enabled
+    managePiecesEnabled: true, // Paywall removed - always enabled
+    manageTemplatesEnabled: true, // Paywall removed - always enabled
+    customAppearanceEnabled: true, // Paywall removed - always enabled
     teamProjectsLimit: TeamProjectsLimit.NONE,
-    projectRolesEnabled: false,
-    customDomainsEnabled: false,
-    apiKeysEnabled: false,
-    ssoEnabled: false,
+    projectRolesEnabled: true, // Paywall removed - always enabled
+    customDomainsEnabled: true, // Paywall removed - always enabled
+    apiKeysEnabled: true, // Paywall removed - always enabled
+    ssoEnabled: true, // Paywall removed - always enabled
     stripeCustomerId: undefined,
     stripeSubscriptionId: undefined,
     stripeSubscriptionStatus: undefined,
