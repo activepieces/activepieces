@@ -18,7 +18,7 @@ import { stepsHooks } from '../lib/steps-hooks';
 import { PieceIcon } from './piece-icon';
 
 const extraIconVariants = cva(
-  'flex items-center justify-center p-2 rounded-full border border-solid text-xs select-none',
+  'flex rounded-md items-center justify-center p-2 bg-background border border-solid text-xs select-none',
   {
     variants: {
       size: {
