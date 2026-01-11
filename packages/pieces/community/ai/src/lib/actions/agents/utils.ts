@@ -14,6 +14,7 @@ import {
 } from '@activepieces/shared';
 import { z, ZodObject } from 'zod';
 import { AuthenticationType, httpClient, HttpMethod } from '@activepieces/pieces-common';
+import { Tool } from 'ai';
 
 export const agentUtils = {
   isTaskCompletionToolCall: (toolName: string) => toolName === TASK_COMPLETION_TOOL_NAME,
@@ -56,7 +57,7 @@ export const agentUtils = {
       `.trim(),
     }
   },
-  async constructFlowsTools(params: ConstructFlowsToolsParams) {
+  async constructFlowsTools(params: ConstructFlowsToolsParams): Promise<Record<string, Tool>> {
     const flowTools = params.tools
     const flowExternalIds = flowTools.map((tool) => tool.externalFlowId)
     const flows = await params.fetchFlows({ externalIds: flowExternalIds })
