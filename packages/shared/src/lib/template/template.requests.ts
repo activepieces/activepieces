@@ -1,6 +1,6 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Metadata, Nullable } from '../common'
-import { FlowVersionTemplate, TemplateCategory, TemplateStatus, TemplateTag, TemplateType } from './template'
+import { FlowVersionTemplate, TemplateStatus, TemplateTag, TemplateType } from './template'
 
 export const CreateTemplateRequestBody = Type.Object({
     name: Type.String(),
