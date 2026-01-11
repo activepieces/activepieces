@@ -1,6 +1,6 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
-import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateObject, LanguageModel, ToolSet } from 'ai'
+import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
+import { generateObject, LanguageModel, Tool } from 'ai'
 import { z } from 'zod/v4'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
@@ -10,7 +10,7 @@ import { pieceLoader } from '../helper/piece-loader'
 import { tsort } from './tsort'
 
 export const agentTools = {
-    async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<ToolSet> {
+    async tools({ engineConstants, tools, model }: ConstructToolParams): Promise<Record<string, Tool>> {
         const piecesTools = await Promise.all(tools.map(async (tool) => {
 
             const { pieceAction } = await pieceLoader.getPieceAndActionOrThrow({
@@ -51,9 +51,24 @@ async function resolveProperties(
     model: LanguageModel, 
     operation: ExecuteToolOperation,
 ): Promise<Record<string, unknown>> {
-    let result: Record<string, unknown> = { ...operation.predefinedInput }
-    const predefinedKeys = Object.keys(operation.predefinedInput)
-
+    const auth = operation.predefinedInput?.auth
+    const predefinedInputsFields = operation.predefinedInput?.fields || {}
+    
+    let result: Record<string, unknown> = {}
+    
+    if (auth) {
+        result.auth = auth
+    }
+    
+    for (const [propertyName, field] of Object.entries(predefinedInputsFields)) {
+        if (field.mode === FieldControlMode.CHOOSE_YOURSELF) {
+            result[propertyName] = field.value
+        }
+        else if (field.mode === FieldControlMode.LEAVE_EMPTY) {
+            result[propertyName] = undefined
+        }
+    }
+    
     for (const [_, properties] of Object.entries(depthToPropertyMap)) {
         const propertyToFill: Record<string, z.ZodTypeAny> = {}
         const propertyPrompts: string[] = []
@@ -61,7 +76,6 @@ async function resolveProperties(
         for (const property of properties) {
             const propertyFromAction = action.props[property]
             const propertyType = propertyFromAction.type
-
             const skipTypes = [
                 PropertyType.BASIC_AUTH, 
                 PropertyType.OAUTH2, 
@@ -69,8 +83,7 @@ async function resolveProperties(
                 PropertyType.CUSTOM, 
                 PropertyType.MARKDOWN,
             ]
-            
-            if (skipTypes.includes(propertyType) || predefinedKeys.includes(property)) {
+            if (skipTypes.includes(propertyType) || property in result) {
                 continue
             }
             
@@ -80,7 +93,6 @@ async function resolveProperties(
                 operation, 
                 result,
             )
-
             if (!isNil(propertyPrompt)) {
                 propertyPrompts.push(propertyPrompt)
             }
@@ -95,7 +107,7 @@ async function resolveProperties(
                 ? propertySchema 
                 : propertySchema.nullish()
         }
-
+        
         if (Object.keys(propertyToFill).length === 0) continue
         
         const schemaObject = z.object(propertyToFill) as z.ZodTypeAny
@@ -105,7 +117,6 @@ async function resolveProperties(
             propertyPrompts,
             result,
         )
-
         const { object } = await generateObject({
             model,
             schema: schemaObject,
@@ -113,13 +124,11 @@ async function resolveProperties(
             mode: 'json',
             output: 'object',
         })
-
         result = {
             ...result,
             ...(object as Record<string, unknown>),
         }
     }
-
     return result
 }
 
@@ -170,7 +179,6 @@ async function execute(operation: ExecuteToolOperationWithModel): Promise<Execut
         errorMessage,
     }
 }
-
 
 const constructExtractionPrompt = (
     instruction: string, 

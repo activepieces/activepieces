@@ -16,25 +16,12 @@ export enum TemplateType {
     CUSTOM = 'CUSTOM',
 }
 
-export enum TemplateCategory {
-    ANALYTICS = 'ANALYTICS',
-    COMMUNICATION = 'COMMUNICATION',
-    CONTENT = 'CONTENT',
-    CUSTOMER_SUPPORT = 'CUSTOMER_SUPPORT',
-    DEVELOPMENT = 'DEVELOPMENT',
-    E_COMMERCE = 'E_COMMERCE',
-    FINANCE = 'FINANCE',
-    HR = 'HR',
-    IT_OPERATIONS = 'IT_OPERATIONS',
-    MARKETING = 'MARKETING',
-    PRODUCTIVITY = 'PRODUCTIVITY',
-    SALES = 'SALES',
-}
-
-export const FlowVersionTemplate = Type.Omit(
+export const FlowVersionTemplate = Type.Composite([Type.Omit(
     FlowVersion,
     ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
-)
+), Type.Object({
+    description: Type.Optional(Type.String()),
+})])
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 
 export enum TemplateStatus {
@@ -53,7 +40,7 @@ export const Template = Type.Object({
     metadata: Nullable(Metadata),
     usageCount: Type.Number(),
     author: Type.String(),
-    categories: Type.Array(Type.Enum(TemplateCategory)),
+    categories: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
     platformId: Nullable(Type.String()),
     flows: Type.Optional(Type.Array(FlowVersionTemplate)),

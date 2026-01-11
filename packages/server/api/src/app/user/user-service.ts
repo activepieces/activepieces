@@ -23,6 +23,7 @@ import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
+import { platformProjectService } from '../ee/projects/platform-project-service'
 import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
@@ -167,6 +168,11 @@ export const userService = {
         }
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
+
+        await platformProjectService(system.globalLogger()).deletePersonalProjectForUser({
+            userId: id,
+            platformId,
+        })
         await userRepo().delete({
             id,
             platformId,
@@ -217,6 +223,10 @@ export const userService = {
             platformRole: PlatformRole.ADMIN,
             platformId,
         })
+    },
+
+    isUserPrivileged(user: User): boolean {
+        return user.platformRole === PlatformRole.ADMIN || user.platformRole === PlatformRole.OPERATOR
     },
 }
 

@@ -23,7 +23,6 @@ import { userHooks } from '@/hooks/user-hooks';
 import { api } from '@/lib/api';
 import {
   TemplateTag as TemplateTagType,
-  TemplateCategory,
   FlowVersionTemplate,
   TemplateType,
 } from '@activepieces/shared';
@@ -40,7 +39,7 @@ const CreateFlowTemplateSchema = Type.Object({
   blogUrl: Type.String(),
   template: FlowVersionTemplate,
   tags: Type.Optional(Type.Array(TemplateTagType)),
-  categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
+  categories: Type.Optional(Type.Array(Type.String())),
 });
 type CreateFlowTemplateSchema = Static<typeof CreateFlowTemplateSchema>;
 
@@ -145,6 +144,21 @@ export const CreateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
+                    className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="summary"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="summary">{t('Summary')}</Label>
+                  <Input
+                    {...field}
+                    id="summary"
+                    placeholder={t('Template Summary')}
                     className="rounded-sm"
                   />
                   <FormMessage />

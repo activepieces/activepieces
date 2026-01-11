@@ -17,7 +17,7 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
             },
         },
         async (_request, reply) => {
-            const isHealthy = healthStatusService(app.log).isHealthy()
+            const isHealthy = await healthStatusService(app.log).isHealthy()
             if (!isHealthy) {
                 await reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ status: 'Unhealthy' })
                 return

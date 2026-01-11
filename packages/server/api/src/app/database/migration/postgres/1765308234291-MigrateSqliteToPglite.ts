@@ -123,6 +123,13 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
         const tableName = entity.tableName
         log.info(`[MigrateSqliteToPglite] Migrating table: ${tableName}`)
 
+        // Get SQLite column names for this table
+        const sqliteColumns = await this.getSqliteColumnNames(sqliteDataSource, tableName)
+        if (sqliteColumns.length === 0) {
+            log.info(`[MigrateSqliteToPglite] Table ${tableName} does not exist in SQLite, skipping`)
+            return
+        }
+
         let rows: Record<string, unknown>[] = []
         try {
             rows = await sqliteDataSource.query(`SELECT * FROM "${tableName}"`)
@@ -142,28 +149,128 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
 
         log.info(`[MigrateSqliteToPglite] Copying ${rows.length} rows from ${tableName}`)
 
-        const transformedRows = rows.map((row) => this.transformRowForPostgres(row, entity))
+        const transformedRows = rows.map((row) => this.transformRowForPostgres(row, entity, sqliteColumns))
 
         // Disable foreign key checks for the migration
         await queryRunner.query('SET LOCAL session_replication_role = replica')
 
         const BATCH_SIZE = 100
-        const repository = queryRunner.connection.getRepository(entity.target)
             
         for (let i = 0; i < transformedRows.length; i += BATCH_SIZE) {
             const batch = transformedRows.slice(i, i + BATCH_SIZE)
-            await repository.upsert(batch, { conflictPaths: ['id'] })
+            await this.insertBatchRaw(queryRunner, tableName, batch, sqliteColumns, entity)
         }
 
         log.info(`[MigrateSqliteToPglite] Successfully migrated ${rows.length} rows to ${tableName}`)
     }
 
-    private transformRowForPostgres(row: Record<string, unknown>, entity: EntityMetadata): Record<string, unknown> {
-        const transformed: Record<string, unknown> = {}
+    private async getSqliteColumnNames(sqliteDataSource: DataSource, tableName: string): Promise<string[]> {
+        try {
+            const tableInfo = await sqliteDataSource.query(`PRAGMA table_info("${tableName}")`)
+            return tableInfo.map((col: { name: string }) => col.name)
+        }
+        catch {
+            return []
+        }
+    }
 
-        for (const column of entity.columns) {
-            const columnName = column.databaseName
-            const propertyName = column.propertyName
+    private async insertBatchRaw(
+        queryRunner: QueryRunner,
+        tableName: string,
+        batch: Record<string, unknown>[],
+        sqliteColumns: string[],
+        entity: EntityMetadata,
+    ): Promise<void> {
+        if (batch.length === 0) {
+            return
+        }
+
+        const entityColumnMap = new Map(entity.columns.map((col) => [col.databaseName, col]))
+        const columnNames = sqliteColumns.map((col) => `"${col}"`).join(', ')
+        const updateColumns = sqliteColumns
+            .filter((col) => col !== 'id')
+            .map((col) => `"${col}" = EXCLUDED."${col}"`)
+            .join(', ')
+
+        const valuePlaceholders: string[] = []
+        const parameters: unknown[] = []
+        let paramIndex = 1
+
+        for (const row of batch) {
+            const rowPlaceholders: string[] = []
+            for (const col of sqliteColumns) {
+                const value = row[col]
+                const columnMeta = entityColumnMap.get(col)
+                const isArrayColumn = columnMeta?.isArray ?? false
+
+                if (value === undefined || value === null) {
+                    rowPlaceholders.push('NULL')
+                }
+                else if (isArrayColumn && Array.isArray(value)) {
+                    // Convert JavaScript array to PostgreSQL array literal format
+                    rowPlaceholders.push(`$${paramIndex}`)
+                    parameters.push(this.toPostgresArrayLiteral(value))
+                    paramIndex++
+                }
+                else if (typeof value === 'object' && value !== null) {
+                    // JSON/JSONB columns
+                    rowPlaceholders.push(`$${paramIndex}`)
+                    parameters.push(JSON.stringify(value))
+                    paramIndex++
+                }
+                else {
+                    rowPlaceholders.push(`$${paramIndex}`)
+                    parameters.push(value)
+                    paramIndex++
+                }
+            }
+            valuePlaceholders.push(`(${rowPlaceholders.join(', ')})`)
+        }
+
+        const query = `
+            INSERT INTO "${tableName}" (${columnNames})
+            VALUES ${valuePlaceholders.join(', ')}
+            ON CONFLICT ("id") DO UPDATE SET ${updateColumns}
+        `
+
+        await queryRunner.query(query, parameters)
+    }
+
+    private toPostgresArrayLiteral(arr: unknown[]): string {
+        if (arr.length === 0) {
+            return '{}'
+        }
+        const escaped = arr.map((item) => {
+            if (item === null || item === undefined) {
+                return 'NULL'
+            }
+            const str = String(item)
+            // Escape backslashes and double quotes, then wrap in double quotes
+            const escapedStr = str.replace(/\\/g, '\\\\').replace(/"/g, '\\"')
+            return `"${escapedStr}"`
+        })
+        return `{${escaped.join(',')}}`
+    }
+
+    private transformRowForPostgres(row: Record<string, unknown>, entity: EntityMetadata, sqliteColumns: string[]): Record<string, unknown> {
+        const transformed: Record<string, unknown> = {}
+        const sqliteColumnSet = new Set(sqliteColumns)
+        const entityColumnMap = new Map(entity.columns.map((col) => [col.databaseName, col]))
+
+        for (const columnName of sqliteColumns) {
+            // Skip columns that don't exist in entity metadata
+            const column = entityColumnMap.get(columnName)
+            if (!column) {
+                // Column exists in SQLite but not in entity - copy as-is
+                transformed[columnName] = row[columnName]
+                continue
+            }
+
+            // Skip columns that don't exist in SQLite
+            if (!sqliteColumnSet.has(columnName)) {
+                continue
+            }
+
             let value = row[columnName]
 
             if (value === undefined) {
@@ -187,7 +294,7 @@ export class MigrateSqliteToPglite1765308234291 implements MigrationInterface {
                 value = value === 1 || value === '1' || value === true
             }
 
-            transformed[propertyName] = value
+            transformed[columnName] = value
         }
 
         return transformed

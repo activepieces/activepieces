@@ -42,12 +42,14 @@ export const selectGenericFormComponentForProperty = ({
   form,
   dynamicPropsInfo,
   propertySettings,
+  hideLabel,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
       return (
         <AutoFormFieldWrapper
           property={property}
+          hideLabel={hideLabel}
           propertyName={propertyName}
           field={field}
           disabled={disabled}
@@ -69,6 +71,7 @@ export const selectGenericFormComponentForProperty = ({
           property={property}
           propertyName={propertyName}
           field={field}
+          hideLabel={hideLabel}
           inputName={inputName}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
@@ -88,6 +91,7 @@ export const selectGenericFormComponentForProperty = ({
           property={property}
           propertyName={propertyName}
           disabled={disabled}
+          hideLabel={hideLabel}
           field={field}
           inputName={inputName}
           allowDynamicValues={allowDynamicValues}
@@ -119,6 +123,7 @@ export const selectGenericFormComponentForProperty = ({
           propertyName={propertyName}
           inputName={inputName}
           field={field}
+          hideLabel={hideLabel}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
@@ -140,6 +145,7 @@ export const selectGenericFormComponentForProperty = ({
           inputName={inputName}
           property={property}
           field={field}
+          hideLabel={hideLabel}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
@@ -161,6 +167,7 @@ export const selectGenericFormComponentForProperty = ({
           inputName={inputName}
           propertyName={propertyName}
           field={field}
+          hideLabel={hideLabel}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
@@ -187,6 +194,7 @@ export const selectGenericFormComponentForProperty = ({
           property={property}
           propertyName={propertyName}
           field={field}
+          hideLabel={hideLabel}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
@@ -223,6 +231,7 @@ export const selectGenericFormComponentForProperty = ({
           property={property}
           inputName={inputName}
           field={field}
+          hideLabel={hideLabel}
           propertyName={propertyName}
           disabled={disabled}
           allowDynamicValues={false}
@@ -287,6 +296,7 @@ export const selectGenericFormComponentForProperty = ({
           inputName={inputName}
           propertyName={propertyName}
           field={field}
+          hideLabel={hideLabel}
           disabled={disabled}
           allowDynamicValues={allowDynamicValues}
           dynamicInputModeToggled={dynamicInputModeToggled}
@@ -299,6 +309,7 @@ export const selectGenericFormComponentForProperty = ({
 
 export type SelectGenericFormComponentForPropertyParams = {
   field: ControllerRenderProps<Record<string, any>, string>;
+  hideLabel?: boolean;
   propertyName: string;
   inputName: string;
   property: PieceProperty;

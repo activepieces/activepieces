@@ -24,6 +24,7 @@ interface AutoTopUpConfigDialogProps {
   onOpenChange: (open: boolean) => void;
   currentThreshold?: number | null;
   currentCreditsToAdd?: number | null;
+  currentMaxMonthlyLimit?: number | null;
   isEditing?: boolean;
 }
 
@@ -32,12 +33,16 @@ export function AutoTopUpConfigDialog({
   onOpenChange,
   currentThreshold,
   currentCreditsToAdd,
+  currentMaxMonthlyLimit,
   isEditing = false,
 }: AutoTopUpConfigDialogProps) {
   const queryClient = useQueryClient();
   const [threshold, setThreshold] = useState(currentThreshold ?? 1000);
   const [creditsToAdd, setCreditsToAdd] = useState(
     currentCreditsToAdd ?? 10000,
+  );
+  const [maxMonthlyLimit, setMaxMonthlyLimit] = useState<number | null>(
+    currentMaxMonthlyLimit ?? null,
   );
 
   const { mutate: updateAutoTopUp, isPending: isUpdating } =
@@ -49,6 +54,7 @@ export function AutoTopUpConfigDialog({
     const params: UpdateAICreditsAutoTopUpParamsSchema = {
       minThreshold: threshold,
       creditsToAdd: creditsToAdd,
+      maxMonthlyLimit: maxMonthlyLimit,
       state: AiCreditsAutoTopUpState.ENABLED,
     };
 
@@ -116,6 +122,38 @@ export function AutoTopUpConfigDialog({
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{t('1,000')}</span>
                 <span>{t('500,000')}</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <div className="flex flex-col gap-0.5">
+                  <Label>{t('Monthly spending limit')}</Label>
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {t('Maximum credits to add per month')}
+                  </span>
+                </div>
+                <span className="text-sm font-medium text-primary">
+                  {maxMonthlyLimit
+                    ? t('{maxMonthlyLimit} credits (${usd})', {
+                        maxMonthlyLimit: maxMonthlyLimit.toLocaleString(),
+                        usd: ((maxMonthlyLimit / 1000) * 1).toFixed(2),
+                      })
+                    : t('No limit')}
+                </span>
+              </div>
+              <Slider
+                value={[maxMonthlyLimit ?? 0]}
+                onValueChange={(v) =>
+                  setMaxMonthlyLimit(v[0] === 0 ? null : v[0])
+                }
+                min={0}
+                max={2000000}
+                step={10000}
+              />
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{t('No limit')}</span>
+                <span>{t('2,000,000')}</span>
               </div>
             </div>
           </div>

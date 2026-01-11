@@ -1,0 +1,17 @@
+{
+  "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API.": "Parse documents and extract data from PDFs, DOCX files, images, and webpages using Parser Expert's powerful API.",
+  "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.": "Your Parser Expert API key. You can find this in your dashboard under Integration -> New API Key.",
+  "Upload Document": "Upload Document",
+  "Get Extracted Data": "Get Extracted Data",
+  "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).": "Upload a document or provide a webpage URL to parse. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document).",
+  "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.": "Retrieve the extracted data using the parser ID and bucket ID. The parser ID is returned when you upload a document.",
+  "Bucket ID": "Bucket ID",
+  "File": "File",
+  "Webpage URL": "Webpage URL",
+  "Parser ID": "Parser ID",
+  "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.": "The ID of the bucket where the data will be stored. You can find this in your dashboard under Manage Bucket.",
+  "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.": "The file to upload. Supported formats: PDF, DOCX, Image, Txt File (maximum 10 pages per document). This will be ignored if webpage URL is provided.",
+  "The URL of the webpage to extract content from. This will be ignored if file is provided.": "The URL of the webpage to extract content from. This will be ignored if file is provided.",
+  "The ID of the parser. This is returned when content is uploaded.": "The ID of the parser. This is returned when content is uploaded.",
+  "The ID of the bucket where the data is stored.": "The ID of the bucket where the data is stored."
+}

@@ -2,16 +2,16 @@ import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -28,7 +28,6 @@ import { ProjectAvatar } from '../project-avatar';
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
-import { useGeneralSettingsMutation } from './general/hook';
 import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
@@ -59,7 +58,7 @@ export function ProjectSettingsDialog({
 }: ProjectSettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const previousOpenRef = useRef(open);
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
@@ -78,14 +77,16 @@ export function ProjectSettingsDialog({
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
-  const projectMutation = useGeneralSettingsMutation(project.id, form);
-
   const handleSave = (values: FormValues) => {
-    projectMutation.mutate({
+    projectCollectionUtils.update(project.id, {
       displayName: values.projectName,
-      icon: values.icon,
       externalId: values.externalId,
+      icon: values.icon,
     });
+    toast.success(t('Your changes have been saved.'), {
+      duration: 3000,
+    });
+    onClose();
   };
 
   useEffect(() => {
@@ -152,9 +153,7 @@ export function ProjectSettingsDialog({
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
-        return (
-          <GeneralSettings form={form} isSaving={projectMutation.isPending} />
-        );
+        return <GeneralSettings form={form} isSaving={false} />;
       case 'members':
         return <MembersSettings />;
       case 'alerts':
@@ -187,23 +186,16 @@ export function ProjectSettingsDialog({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={projectMutation.isPending}
+            disabled={false}
           >
             {t('Close')}
           </Button>
           <Button
-            disabled={projectMutation.isPending}
+            disabled={false}
             size="sm"
             onClick={form.handleSubmit(handleSave)}
           >
-            {projectMutation.isPending ? (
-              <>
-                <LoadingSpinner className="w-4 h-4 mr-2" />
-                {t('Saving...')}
-              </>
-            ) : (
-              t('Save Changes')
-            )}
+            {t('Save Changes')}
           </Button>
         </div>
       </div>

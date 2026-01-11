@@ -1,0 +1,13 @@
+{
+  "You can obtain API key from [Settings](https://hastewire.com/humanizer/account/api-keys).": "You can obtain API key from [Settings](https://hastewire.com/humanizer/account/api-keys).",
+  "Detect Text": "Detect Text",
+  "Humanize Text": "Humanize Text",
+  "Analyzes text and returns the likelihood of it being AI-generated or human-written.": "Analyzes text and returns the likelihood of it being AI-generated or human-written.",
+  "Rephrases a given AI-generated text to be more human like.": "Rephrases a given AI-generated text to be more human like.",
+  "Input Text": "Input Text",
+  "Text Style": "Text Style",
+  "The desired writing style for the output.": "The desired writing style for the output.",
+  "formal": "formal",
+  "standard": "standard",
+  "academic": "academic"
+}
