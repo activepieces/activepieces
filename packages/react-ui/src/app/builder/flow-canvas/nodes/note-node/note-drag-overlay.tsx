@@ -5,9 +5,7 @@ import { useSidebar } from '@/components/ui/sidebar-shadcn';
 import { apId, isNil, NoteColorVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import {
-  NoteDragOverlayMode,
-} from '../../../state/notes-state';
+import { NoteDragOverlayMode } from '../../../state/notes-state';
 import {
   useCursorPosition,
   useCursorPositionEffect,
@@ -15,7 +13,6 @@ import {
 import { flowCanvasConsts } from '../../utils/consts';
 
 import { NoteContent } from '.';
-import { authenticationSession } from '@/lib/authentication-session';
 
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
@@ -47,14 +44,15 @@ const NoteDragOverlay = () => {
     setOverlayPosition(position);
   });
   const hideOverlay = isNil(draggedNote) || isNil(noteDragOverlayMode);
-  const userId = authenticationSession.getCurrentUserId();
 
   if (hideOverlay) {
     return null;
   }
   return (
     <div
-      className={'absolute left-0 top-0 opacity-75 !cursor-grabbing note-drag-overlay'}
+      className={
+        'absolute left-0 top-0 opacity-75 !cursor-grabbing note-drag-overlay'
+      }
       ref={containerRef}
       onClick={() => {
         if (noteDragOverlayMode === NoteDragOverlayMode.CREATE) {

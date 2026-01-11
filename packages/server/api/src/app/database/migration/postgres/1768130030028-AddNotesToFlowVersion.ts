@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddNotesToFlowVersion1768130030028 implements MigrationInterface {
     name = 'AddNotesToFlowVersion1768130030028'
@@ -8,13 +8,13 @@ export class AddNotesToFlowVersion1768130030028 implements MigrationInterface {
             ALTER TABLE "flow_version"
             ADD "notes" jsonb NOT NULL
             DEFAULT '[]'
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "flow_version" DROP COLUMN "notes"
-        `);
+        `)
     }
 
 }

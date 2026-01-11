@@ -3,15 +3,17 @@ import { Editor } from '@tiptap/core';
 import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
+
 import { MarkdownInput } from '@/components/ui/markdown-input';
 import { cn } from '@/lib/utils';
+import { Note, NoteColorVariant } from '@activepieces/shared';
+
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasConsts } from '../../utils/consts';
 import { ApNoteNode } from '../../utils/types';
 
 import { NoteFooter } from './note-footer';
 import { NoteColorVariantToTailwind, NoteTools } from './note-tools';
-import { Note, NoteColorVariant } from '@activepieces/shared';
 
 const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   const [draggedNote, resizeNote, note, readonly] = useBuilderStateContext(
@@ -36,23 +38,26 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   }
   return (
     <div className="group note-node outline-none">
-    {
-      !readonly && (  <NodeResizeControl
-        minWidth={200}
-        minHeight={180}
-        maxWidth={550}
-        maxHeight={600}
-        onResize={(_, params) => {
-          // update the size locally means that we don't re-render the whole graph
-          setSize({ width: params.width, height: params.height });
-        }}
-        onResizeEnd={(_, params) => {
-          resizeNote(props.id, { width: params.width, height: params.height });
-        }}
-      >
-        <button className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"></button>
-      </NodeResizeControl>)
-    }
+      {!readonly && (
+        <NodeResizeControl
+          minWidth={200}
+          minHeight={180}
+          maxWidth={550}
+          maxHeight={600}
+          onResize={(_, params) => {
+            // update the size locally means that we don't re-render the whole graph
+            setSize({ width: params.width, height: params.height });
+          }}
+          onResizeEnd={(_, params) => {
+            resizeNote(props.id, {
+              width: params.width,
+              height: params.height,
+            });
+          }}
+        >
+          <button className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"></button>
+        </NodeResizeControl>
+      )}
 
       <div
         key={
@@ -67,7 +72,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         className={cn(
           'p-0.5 outline-none group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md',
           {
-            "!border-transparent cursor-default": readonly,
+            '!border-transparent cursor-default': readonly,
           },
         )}
       >

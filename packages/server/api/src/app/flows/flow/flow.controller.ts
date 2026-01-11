@@ -85,12 +85,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                     ...request.body.request,
                     trigger: migratedFlowTemplate.trigger,
                     schemaVersion: migratedFlowTemplate.schemaVersion,
-                    notes: migratedFlowTemplate.notes
+                    notes: migratedFlowTemplate.notes,
                 }
             }
         },
         preHandler: async (request) => {
-            if(request.body?.type === FlowOperationType.ADD_NOTE) {
+            if (request.body?.type === FlowOperationType.ADD_NOTE) {
                 request.body.request.creatorId = request.principal?.type === PrincipalType.SERVICE ? null : request.principal.id
             }
         },

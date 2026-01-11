@@ -1,5 +1,5 @@
-import { Static, Type } from "@sinclair/typebox";
-import { Nullable } from "../common";
+import { Static, Type } from '@sinclair/typebox'
+import { Nullable } from '../common'
 export enum NoteColorVariant {
     ORANGE = 'orange',
     RED = 'red',
@@ -7,7 +7,7 @@ export enum NoteColorVariant {
     BLUE = 'blue',
     PURPLE = 'purple',
     YELLOW = 'yellow',
-  }
+}
 export const Note = Type.Object({
     id: Type.String(),
     content: Type.String(),

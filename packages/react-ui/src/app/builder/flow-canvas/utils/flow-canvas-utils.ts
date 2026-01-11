@@ -18,7 +18,6 @@ import {
   Note,
 } from '@activepieces/shared';
 
-
 import { flowCanvasConsts } from './consts';
 import {
   ApBigAddButtonNode,

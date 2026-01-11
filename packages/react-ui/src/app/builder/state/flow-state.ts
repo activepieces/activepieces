@@ -221,36 +221,23 @@ export const createFlowState = (
             break;
           }
           case FlowOperationType.UPDATE_TRIGGER:
-          case FlowOperationType.UPDATE_ACTION:
-             {
+          case FlowOperationType.UPDATE_ACTION: {
             debouncedAddToFlowUpdatesQueue(
               operation.request.name,
               updateRequest,
             );
             break;
           }
-         case FlowOperationType.ADD_NOTE:
-          {
-            debouncedAddToFlowUpdatesQueue(
-              operation.request.id,
-              updateRequest,
-            );
+          case FlowOperationType.ADD_NOTE: {
+            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
             break;
           }
-          case FlowOperationType.UPDATE_NOTE:
-          {
-            debouncedAddToFlowUpdatesQueue(
-              operation.request.id,
-              updateRequest,
-            );
+          case FlowOperationType.UPDATE_NOTE: {
+            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
             break;
           }
-          case FlowOperationType.DELETE_NOTE:
-          {
-            debouncedAddToFlowUpdatesQueue(
-              operation.request.id,
-              updateRequest,
-            );
+          case FlowOperationType.DELETE_NOTE: {
+            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
             break;
           }
           default: {

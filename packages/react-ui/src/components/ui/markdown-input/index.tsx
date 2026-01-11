@@ -86,7 +86,10 @@ export const MarkdownInput = React.forwardRef<
         onPointerUp={stopEventPropagation}
         onMouseUp={stopEventPropagation}
       >
-        <EditorContent key={disabled ? 'disabled' : 'enabled'} editor={editor} />
+        <EditorContent
+          key={disabled ? 'disabled' : 'enabled'}
+          editor={editor}
+        />
       </div>
     );
   },

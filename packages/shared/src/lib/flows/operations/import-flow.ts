@@ -86,12 +86,12 @@ function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined
     return steps
 }
 
-function _getImportOperationsForNotes(flowVersion: FlowVersion,request: ImportFlowRequest): FlowOperationRequest[] { 
+function _getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] { 
 
     const deleteOperations: DeleteNoteRequest[] = flowVersion.notes.map(note => ({
         id: note.id,
-    }));
-    const addOperations: CreateNoteRequest[] = (request.notes || []).map(note => (note));
+    }))
+    const addOperations: CreateNoteRequest[] = (request.notes || []).map(note => (note))
 
     const operations: FlowOperationRequest[] = [
         ...deleteOperations.map(operation => ({

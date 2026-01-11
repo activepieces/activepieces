@@ -69,7 +69,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             savedFlow.id,
             {
                 displayName: request.displayName,
-                notes: []
+                notes: [],
             },
         )
 
@@ -407,7 +407,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             case FlowOperationType.ADD_NOTE:
             case FlowOperationType.UPDATE_NOTE:
             case FlowOperationType.DELETE_NOTE: {
-                let lastVersion = await flowVersionService(
+                const lastVersion = await flowVersionService(
                     log,
                 ).getFlowVersionOrThrow({
                     flowId: id,
@@ -420,7 +420,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                     flowVersion: lastVersion,
                     userOperation: operation,
                 })
-                break;
+                break
             }
             default: {
                 let lastVersion = await flowVersionService(
@@ -442,7 +442,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                         log,
                     ).createEmptyVersion(id, {
                         displayName: lastVersionWithArtifacts.displayName,
-                        notes: lastVersionWithArtifacts.notes
+                        notes: lastVersionWithArtifacts.notes,
                     })
                     log.debug(`lastVersion: ${JSON.stringify(lastVersion.notes)}`)
                     // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation

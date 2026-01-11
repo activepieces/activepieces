@@ -1,14 +1,20 @@
 import { StoreApi } from 'zustand';
 
-import { BuilderState } from '../builder-hooks';
-import { CreateNoteRequest, FlowOperationType,NoteColorVariant, Note, apId } from '@activepieces/shared';
 import { authenticationSession } from '@/lib/authentication-session';
+import {
+  CreateNoteRequest,
+  FlowOperationType,
+  NoteColorVariant,
+  Note,
+  apId,
+} from '@activepieces/shared';
+
+import { BuilderState } from '../builder-hooks';
 
 export enum NoteDragOverlayMode {
   CREATE = 'create',
   MOVE = 'move',
 }
-
 
 export type NotesState = {
   addNote: (request: CreateNoteRequest) => void;
@@ -44,7 +50,7 @@ export const createNotesState = (
           ...request,
           id: apId(),
           creatorId: authenticationSession.getCurrentUserId() ?? null,
-        }
+        },
       });
       set(() => {
         return {
@@ -54,15 +60,15 @@ export const createNotesState = (
       });
     },
     updateContent: (id: string, content: string) => {
-      const note = get().getNoteById(id)
+      const note = get().getNoteById(id);
       if (!note) {
-        return
+        return;
       }
       get().applyOperation({
         type: FlowOperationType.UPDATE_NOTE,
         request: {
-            ...note,
-            content,
+          ...note,
+          content,
         },
       });
     },
@@ -81,9 +87,9 @@ export const createNotesState = (
           draggedNote: null,
         };
       });
-      const note = get().getNoteById(id)
+      const note = get().getNoteById(id);
       if (!note) {
-        return
+        return;
       }
       get().applyOperation({
         type: FlowOperationType.UPDATE_NOTE,
@@ -100,9 +106,9 @@ export const createNotesState = (
           draggedNote: null,
         };
       });
-      const note = get().getNoteById(id)
+      const note = get().getNoteById(id);
       if (!note) {
-        return
+        return;
       }
       get().applyOperation({
         type: FlowOperationType.UPDATE_NOTE,
@@ -120,9 +126,9 @@ export const createNotesState = (
       return get().flowVersion.notes.find((note) => note.id === id) ?? null;
     },
     updateNoteColor: (id: string, color: NoteColorVariant) => {
-      const note = get().getNoteById(id)
+      const note = get().getNoteById(id);
       if (!note) {
-        return
+        return;
       }
       get().applyOperation({
         type: FlowOperationType.UPDATE_NOTE,

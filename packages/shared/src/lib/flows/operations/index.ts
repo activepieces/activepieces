@@ -4,6 +4,7 @@ import { Metadata } from '../../common/metadata'
 import { BranchCondition, CodeActionSchema, LoopOnItemsActionSchema, PieceActionSchema, RouterActionSchema } from '../actions/action'
 import { FlowStatus } from '../flow'
 import { FlowVersion, FlowVersionState } from '../flow-version'
+import { Note } from '../note'
 import { SaveSampleDataRequest } from '../sample-data'
 import { EmptyTrigger, FlowTrigger, FlowTriggerType, PieceTrigger } from '../triggers/trigger'
 import { flowPieceUtil } from '../util/flow-piece-util'
@@ -17,12 +18,11 @@ import { _duplicateBranch, _duplicateStep } from './duplicate-step'
 import { _importFlow } from './import-flow'
 import { _moveAction } from './move-action'
 import { _moveBranch } from './move-branch'
+import { notesOperations } from './notes-operations'
 import { _getOperationsForPaste } from './paste-operations'
 import { _skipAction } from './skip-action'
 import { _updateAction } from './update-action'
 import { _updateTrigger } from './update-trigger'
-import { Note } from '../note'
-import { notesOperations } from './notes-operations'
 
 
 export enum FlowOperationType {
@@ -62,7 +62,7 @@ export const UpdateNoteRequest = Type.Omit(Note, [ 'createdAt', 'updatedAt'])
 export const DeleteNoteRequest = Type.Object({
     id: Type.String(),
 })
-export const CreateNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt']);
+export const CreateNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt'])
 
 export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),

@@ -72,9 +72,14 @@ const NoteColorPicker = ({
       >
         <div className="flex items-center cursor-default gap-1 justify-between flex-wrap w-full ">
           {Object.values(NoteColorVariant).map((color) => (
-            <div     key={color}  role="button" className="size-5 shrink-0 cursor-pointer grow flex items-center justify-center" onClick={() => {
-              setCurrentColor(color);
-            }}>
+            <div
+              key={color}
+              role="button"
+              className="size-5 shrink-0 cursor-pointer grow flex items-center justify-center"
+              onClick={() => {
+                setCurrentColor(color);
+              }}
+            >
               <div
                 className={cn(
                   NoteColorVariantToTailwind[color],

@@ -11,7 +11,7 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { userHooks } from '@/hooks/user-hooks';
-import { isNil } from '../../../../../../../shared/src/lib/common/utils';
+import { isNil } from '@activepieces/shared';
 
 export const NoteFooter = ({
   id,
@@ -22,9 +22,15 @@ export const NoteFooter = ({
   isDragging?: boolean;
   creatorId: string | null | undefined;
 }) => {
-  const [deleteNote,readonly] = useBuilderStateContext((state) => [state.deleteNote,state.readonly]);
+  const [deleteNote, readonly] = useBuilderStateContext((state) => [
+    state.deleteNote,
+    state.readonly,
+  ]);
   const { data: user } = userHooks.useUserById(creatorId ?? null);
-  const creator = user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : user?.email;
+  const creator =
+    user?.firstName && user?.lastName
+      ? `${user.firstName} ${user.lastName}`
+      : user?.email;
   if (isNil(creator)) {
     return null;
   }

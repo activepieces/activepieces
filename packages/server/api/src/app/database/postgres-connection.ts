@@ -669,7 +669,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTriggeredBy1767697998391,
         UpdateCacheStructure1767904545112,
         AddOutdatedToReport1767994436597,
-        AddNotesToFlowVersion1768130030028
+        AddNotesToFlowVersion1768130030028,
     ]
     return migrations
 }
