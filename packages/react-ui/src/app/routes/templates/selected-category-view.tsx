@@ -11,8 +11,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { Template } from '@activepieces/shared';
 
-import { ExploreTemplateCard } from './template-card';
 import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
+import { ExploreTemplateCard } from './template-card';
 
 type SelectedCategoryViewSkeletonProps = {
   showCategoryTitle?: boolean;
@@ -31,7 +31,10 @@ const SelectedCategoryViewSkeleton = ({
 
       <div className="flex flex-row flex-wrap gap-6 pb-4">
         {[...Array(6)].map((_, index) => (
-          <TemplateCardSkeleton key={index} showCategoryCarouselButton={showCategoryTitle} />
+          <TemplateCardSkeleton
+            key={index}
+            showCategoryCarouselButton={showCategoryTitle}
+          />
         ))}
       </div>
     </div>
@@ -51,10 +54,12 @@ export const SelectedCategoryView = ({
   templates,
   onTemplateSelect,
   isLoading = false,
-  showCategoryTitle
+  showCategoryTitle,
 }: SelectedCategoryViewProps) => {
   if (isLoading) {
-    return <SelectedCategoryViewSkeleton showCategoryTitle={showCategoryTitle} />;
+    return (
+      <SelectedCategoryViewSkeleton showCategoryTitle={showCategoryTitle} />
+    );
   }
 
   return (

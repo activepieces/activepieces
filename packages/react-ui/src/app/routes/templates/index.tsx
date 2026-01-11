@@ -49,7 +49,6 @@ const TemplatesPage = () => {
       Template[]
     >;
 
-
     if (isShowingOfficialTemplates) {
       allOfficialTemplates?.forEach((template: Template) => {
         if (template.categories?.length) {
@@ -77,10 +76,13 @@ const TemplatesPage = () => {
     return templatesByCategory[selectedCategory] || [];
   }, [selectedCategory, templates, templatesByCategory]);
 
-  const showLoading = isLoading || (isShowingOfficialTemplates && isAllTemplatesLoading);
-  const showAllCategories = isShowingOfficialTemplates && selectedCategory === 'All';
+  const showLoading =
+    isLoading || (isShowingOfficialTemplates && isAllTemplatesLoading);
+  const showAllCategories =
+    isShowingOfficialTemplates && selectedCategory === 'All';
   const hasTemplates = templates && templates.length > 0;
-  const showCategoryTitleForOfficialTemplates = isShowingOfficialTemplates && selectedCategory !== 'All';
+  const showCategoryTitleForOfficialTemplates =
+    isShowingOfficialTemplates && selectedCategory !== 'All';
 
   return (
     <div>
