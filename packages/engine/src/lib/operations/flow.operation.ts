@@ -89,7 +89,6 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
     for (const [step, request] of Object.entries(input.executionState.steps)) {
         const newRequest = await insertSuccessStepsOrPausedRecursively(request)
         if (!isNil(newRequest)) {
-            console.debug('5:', newRequest);
             const newOutput = await flowStateService.getStepOutputOrThrow(newRequest)
             flowContext = await flowContext.upsertStep(step, newOutput)
         }
@@ -115,7 +114,6 @@ async function runOrReturnPayload(input: BeginExecuteFlowOperation): Promise<Tri
 }
 
 async function insertSuccessStepsOrPausedRecursively(req: GetStepOutputRequest): Promise<GetStepOutputRequest | null> {
-    console.debug('6:', req);
     const stepOutput = await flowStateService.getStepOutputOrThrow(req)
     if (![StepOutputStatus.SUCCEEDED, StepOutputStatus.PAUSED].includes(stepOutput.status)) {
         return null
