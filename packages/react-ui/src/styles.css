@@ -516,7 +516,7 @@
 }
 
 
-.note-node {
+.note-node,.note-drag-overlay {
   ::-webkit-scrollbar {
     width: 4px;
     height: 8px;
@@ -525,15 +525,18 @@
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-
   ::-webkit-scrollbar-thumb {
-   background: hsla(0, 1%, 66%, 0.328);
-   border-radius: 100px;
-   border: 1px;
-  }
+    background: transparent;
+    border-radius: 100px;
+    border: 1px;
+   }
 
-  ::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.neutral.700');
-  }
+}
 
+.note-node:hover  {
+  ::-webkit-scrollbar-thumb {
+    background: hsla(0, 1%, 66%, 0.328);
+    border-radius: 100px;
+    border: 1px;
+   }
 }

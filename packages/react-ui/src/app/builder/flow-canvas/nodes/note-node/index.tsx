@@ -135,6 +135,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
             className={cn(
               'cursor-text text-sm',
               NoteColorVariantToTailwind[color],
+              { '!cursor-grabbing': isDragging },
             )}
             onChange={(value: string) => {
               setLocalNote({ ...localNote, content: value });
