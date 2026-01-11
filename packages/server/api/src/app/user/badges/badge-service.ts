@@ -3,6 +3,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { websocketService } from '../../core/websockets.service'
+import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents, AuditEventParam } from '../../helper/application-events'
 import { BadgeCheck } from './badge-check'
 import { UserBadgeEntity } from './badge-entity'
@@ -60,6 +61,9 @@ async function processBadgeChecks(
                 badgeName,
                 userId,
             })
+
+            await emailService(log).sendBadgeAwardedEmail(userId, badgeName)
+
             websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
                 badge: badgeName,
                 userId,

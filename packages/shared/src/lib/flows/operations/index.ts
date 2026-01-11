@@ -45,6 +45,7 @@ export enum FlowOperationType {
     MOVE_BRANCH = 'MOVE_BRANCH',
     SAVE_SAMPLE_DATA = 'SAVE_SAMPLE_DATA',
     UPDATE_MINUTES_SAVED = 'UPDATE_MINUTES_SAVED',
+    UPDATE_OWNER = 'UPDATE_OWNER',
 }
 
 export const DeleteBranchRequest = Type.Object({
@@ -180,6 +181,11 @@ export const UpdateMinutesSavedRequest = Type.Object({
     timeSavedPerRun: Nullable(Type.Number()),
 })
 export type UpdateMinutesSavedRequest = Static<typeof UpdateMinutesSavedRequest>
+
+export const UpdateOwnerRequest = Type.Object({
+    ownerId: Type.String(),
+})
+export type UpdateOwnerRequest = Static<typeof UpdateOwnerRequest>
 
 export const FlowOperationRequest = Type.Union([
     Type.Object(
@@ -363,6 +369,15 @@ export const FlowOperationRequest = Type.Union([
         },
         {
             title: 'Update Minutes Saved',
+        },
+    ),
+    Type.Object(
+        {
+            type: Type.Literal(FlowOperationType.UPDATE_OWNER),
+            request: UpdateOwnerRequest,
+        },
+        {
+            title: 'Update Owner',
         },
     ),
 ])
