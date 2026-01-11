@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useRef } from 'react';
+
 import { CardListItem } from '@/components/custom/card-list';
 import { PieceIcon } from '@/features/pieces/components/piece-icon';
 import { PieceSelectorItem, StepMetadataWithSuggestions } from '@/lib/types';
@@ -8,6 +10,48 @@ type AIActionItemProps = {
   hidePieceIconAndDescription: boolean;
   stepMetadataWithSuggestions: StepMetadataWithSuggestions;
   onClick: () => void;
+};
+
+export const MediaIcon = ({
+  src,
+  alt,
+  isHovered,
+}: {
+  src: string;
+  alt: string;
+  isHovered: boolean;
+}) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isVideo = src?.endsWith('.mp4') || src?.endsWith('.webm');
+
+  useEffect(() => {
+    if (isVideo && videoRef.current) {
+      if (isHovered) {
+        videoRef.current.play().catch(() => {});
+      } else {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    }
+  }, [isHovered, isVideo]);
+
+  if (isVideo) {
+    return (
+      <video
+        ref={videoRef}
+        src={src}
+        loop
+        muted
+        playsInline
+        preload="auto"
+        className="w-full h-full object-cover"
+      />
+    );
+  }
+
+  return (
+    <PieceIcon logoUrl={src} displayName={alt} showTooltip={false} />
+  );
 };
 
 const getPieceSelectorItemInfo = (item: PieceSelectorItem) => {
@@ -32,26 +76,35 @@ const AIActionItem = ({
   onClick,
 }: AIActionItemProps) => {
   const pieceSelectorItemInfo = getPieceSelectorItemInfo(item);
+  const [isHovered, setIsHovered] = useState(false);
 
   return (
     <CardListItem
-      className="p-4 w-full h-full rounded-md flex flex-col justify-between h-[125px]"
+      className="h-[76px] w-full rounded-xl flex items-center gap-4 bg-transparent hover:bg-accent/40 border-0 outline-none transition-all duration-200 cursor-pointer group relative overflow-hidden p-1"
       onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex flex-col gap-3">
-        <div className="flex items-center justify-center">
-          <PieceIcon
-            logoUrl={stepMetadataWithSuggestions.logoUrl}
-            displayName={stepMetadataWithSuggestions.displayName}
-            showTooltip={false}
-            size={'lg'}
-          />
+      <div className="flex-shrink-0 h-full aspect-[1.4/1] rounded-lg overflow-hidden flex items-center justify-center transition-all duration-200">
+        <MediaIcon
+          src={stepMetadataWithSuggestions.logoUrl}
+          alt={stepMetadataWithSuggestions.displayName}
+          isHovered={isHovered}
+        />
+      </div>
+      <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+        <div className="text-sm font-bold leading-tight text-foreground">
+          {pieceSelectorItemInfo.displayName}
         </div>
-        <div className="flex flex-col gap-1 text-center">
-          <div className="text-sm font-medium leading-tight">
-            {pieceSelectorItemInfo.displayName}
-          </div>
+        <div className="text-xs leading-snug text-muted-foreground line-clamp-2">
+          {pieceSelectorItemInfo.description}
         </div>
+      </div>
+      <div className="absolute inset-y-0 right-0 w-20 flex items-center justify-end pr-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-l from-accent via-accent to-transparent" />
+        <span className="relative text-sm font-bold text-foreground z-10">
+          Add
+        </span>
       </div>
     </CardListItem>
   );
