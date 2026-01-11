@@ -48,6 +48,11 @@ export const smtpEmailSender = (log: FastifyBaseLogger): SMTPEmailSender => {
             })
 
             const smtpClient = initSmtpClient()
+            log.info({
+                emails,
+                platformId,
+                templateData,
+            }, '[smtpEmailSender#send] sending email')
             await smtpClient.sendMail({
                 from: `${senderName} <${senderEmail}>`,
                 to: emails.join(','),
@@ -87,7 +92,7 @@ const renderEmailBody = async ({ platform, templateData }: RenderEmailBodyArgs):
         },
         footerContent() {
             return edition === ApEdition.CLOUD ? `   Activepieces, Inc. 398 11th Street,
-                    2nd floor, San Francisco, CA 94103` : `${platform?.name} Team.`
+                    2nd floor, San Francisco, CA 94103` : ''
         },
     },
     {
@@ -112,6 +117,7 @@ const initSmtpClient = (): Transporter => {
 const getEmailSubject = (templateName: EmailTemplateData['name'], vars: Record<string, string>): string => {
     const templateToSubject: Record<EmailTemplateData['name'], string> = {
         'invitation-email': 'You have been invited to a team',
+        'badge-awarded': 'You earned a new badge',
         'verify-email': 'Verify your email address',
         'reset-password': 'Reset your password',
         'issue-created': `[ACTION REQUIRED] New issue in ${vars.flowName}`,
