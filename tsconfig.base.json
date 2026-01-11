@@ -454,6 +454,9 @@
       ],
       "@activepieces/piece-billplz": [
         "packages/pieces/community/billplz/src/index.ts"
+      ],
+      "@activepieces/piece-digital-ocean": [
+        "packages/pieces/community/digital-ocean/src/index.ts"
       ]
     },
     "resolveJsonModule": true
