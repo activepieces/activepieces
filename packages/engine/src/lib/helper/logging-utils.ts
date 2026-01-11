@@ -17,18 +17,56 @@ export const loggingUtils = {
         if (!jsonExceedMaxSize(totalJsonSize)) {
             return steps
         }
-        return removeLeavesInTopologicalOrder(JSON.parse(JSON.stringify(steps)))
+        return removeLeavesInTopologicalOrder(steps, totalJsonSize).json
+    },
+    async trimExecutionInput(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
+        const totalJsonSize = sizeof(steps)
+        if (!jsonExceedMaxSize(totalJsonSize)) {
+            return steps
+        }
+        return trimStepInputsOnly(steps, totalJsonSize)
     },
 }
 
-function removeLeavesInTopologicalOrder(json: Record<string, unknown>): Record<string, StepOutput> {
+function trimStepInputsOnly(
+    steps: Record<string, StepOutput>,
+    initialSize: number
+): Record<string, StepOutput> {
+    let currentSize = initialSize
+
+    for (const stepName of Object.keys(steps)) {
+        if (!jsonExceedMaxSize(currentSize)) {
+            break
+        }
+
+        const step = steps[stepName]
+        if (step && step.input) {
+            const inputBefore = step.input
+            const inputSizeBefore = sizeof(inputBefore)
+            
+            if (isObject(inputBefore) || Array.isArray(inputBefore)) {
+                const inputJson = JSON.parse(JSON.stringify(inputBefore))
+                const { json, size } = removeLeavesInTopologicalOrder(inputJson, inputSizeBefore)
+                step.input = json 
+                currentSize += size - inputSizeBefore
+            } else if (typeof inputBefore === 'string' && inputBefore.length > 10) {
+                step.input = inputBefore.substring(0, 10) + TRUNCATION_TEXT_PLACEHOLDER
+                currentSize += sizeof(step.input) - inputSizeBefore
+            }
+        }
+    }
+
+    return steps as Record<string, StepOutput>
+}
+
+function removeLeavesInTopologicalOrder(json: Record<string, unknown>, size: number): {json: Record<string, StepOutput>, size: number} {
     const nodes: Node[] = traverseJsonAndConvertToNodes(json)
     const leaves = new PriorityQueue<Node>(
         undefined,
         (a: Node, b: Node) => b.size - a.size,
     )
     nodes.filter((node) => node.numberOfChildren === 0).forEach((node) => leaves.add(node))
-    let totalJsonSize = sizeof(json)
+    let totalJsonSize = size
 
     while (!leaves.empty() && jsonExceedMaxSize(totalJsonSize)) {
         const curNode = leaves.poll()
@@ -49,7 +87,7 @@ function removeLeavesInTopologicalOrder(json: Record<string, unknown>): Record<s
             }
         }
     }
-    return json as Record<string, StepOutput>
+    return {json: json as Record<string, StepOutput>, size: totalJsonSize}
 }
 
 function traverseJsonAndConvertToNodes(root: unknown) {

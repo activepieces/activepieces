@@ -90,10 +90,9 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         }
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
-        const trimmedSteps = await flowExecutorContext.trimmedSteps()
         const executionState = await logSerializer.serialize({
             executionState: {
-                steps: trimmedSteps,
+                steps: flowExecutorContext.steps,
             },
         })
         if (isNil(engineConstants.logsUploadUrl)) {
@@ -105,7 +104,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         }
 
         const stepResponse = extractStepResponse({
-            steps: trimmedSteps,
+            steps: flowExecutorContext.steps,
             runId: engineConstants.flowRunId,
             stepName: engineConstants.stepNameToTest,
         })
