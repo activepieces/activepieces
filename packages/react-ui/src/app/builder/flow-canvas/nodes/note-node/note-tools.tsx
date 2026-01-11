@@ -1,7 +1,6 @@
 import { Editor } from '@tiptap/core';
 import { useRef } from 'react';
 
-import { NoteColorVariant } from '@/app/builder/state/notes-state';
 import { MarkdownTools } from '@/components/ui/markdown-input/tools';
 import {
   Popover,
@@ -9,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { NoteColorVariant } from '@activepieces/shared';
 
 export const NoteTools = ({
   editor,

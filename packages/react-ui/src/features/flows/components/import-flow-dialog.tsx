@@ -121,6 +121,7 @@ const ImportFlowDialog = (
                 displayName: templateFlow.displayName,
                 trigger: templateFlow.trigger,
                 schemaVersion: templateFlow.schemaVersion,
+                notes: templateFlow.notes,
               },
             });
           },

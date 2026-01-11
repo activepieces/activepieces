@@ -45,7 +45,7 @@ export const flowMigrations = {
     },
 }
 
-export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger'], schemaVersion: FlowVersion['schemaVersion']): Promise<FlowVersionTemplate> => {
+export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger'], schemaVersion: FlowVersion['schemaVersion'], notes: FlowVersion['notes']): Promise<FlowVersionTemplate> => {
     return flowMigrations.apply({
         agentIds: [],
         connectionIds: [],
@@ -59,5 +59,6 @@ export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger']
         trigger,
         state: FlowVersionState.DRAFT,
         schemaVersion,
+        notes,
     })
 }

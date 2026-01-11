@@ -50,7 +50,7 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     const chatState = createChatState(set);
     const canvasState = createCanvasState(initialState, set);
     const stepFormState = createStepFormState(set);
-    const notesState = createNotesState([], get, set);
+    const notesState = createNotesState(get, set);
     return {
       ...flowState,
       ...notesState,

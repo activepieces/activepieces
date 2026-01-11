@@ -72,7 +72,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         ...CreateParams,
         preValidation: async (request) => {
             const migratedFlows = await Promise.all((request.body.flows ?? []).map(async (flow: FlowVersionTemplate) => {
-                const migratedFlow = await migrateFlowVersionTemplate(flow.trigger, flow.schemaVersion)
+                const migratedFlow = await migrateFlowVersionTemplate(flow.trigger, flow.schemaVersion, flow.notes)
                 return {
                     ...flow,
                     trigger: migratedFlow.trigger,

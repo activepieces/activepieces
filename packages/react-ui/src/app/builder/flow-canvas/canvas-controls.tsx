@@ -19,9 +19,10 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { isMac } from '@/lib/utils';
+import { NoteColorVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
-import { NoteColorVariant, NoteDragOverlayMode } from '../state/notes-state';
+import { NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -262,7 +263,8 @@ const CanvasControls = ({
                 {
                   id: '',
                   content: '',
-                  creator: '',
+                  createdAt: '',
+                  updatedAt: '',
                   position: { x: 0, y: 0 },
                   size: {
                     width: flowCanvasConsts.NOTE_CREATION_OVERLAY_WIDTH,

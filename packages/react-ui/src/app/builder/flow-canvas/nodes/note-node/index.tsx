@@ -4,9 +4,9 @@ import { NodeProps, NodeResizeControl } from '@xyflow/react';
 import { useRef, useState } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 
-import { Note, NoteColorVariant } from '@/app/builder/state/notes-state';
 import { MarkdownInput } from '@/components/ui/markdown-input';
 import { cn } from '@/lib/utils';
+import { Note, NoteColorVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { flowCanvasConsts } from '../../utils/consts';
@@ -37,22 +37,27 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
     return null;
   }
   return (
-    <div className="group note-node">
-      <NodeResizeControl
-        minWidth={200}
-        minHeight={180}
-        maxWidth={550}
-        maxHeight={600}
-        onResize={(_, params) => {
-          // update the size locally means that we don't re-render the whole graph
-          setSize({ width: params.width, height: params.height });
-        }}
-        onResizeEnd={(_, params) => {
-          resizeNote(props.id, { width: params.width, height: params.height });
-        }}
-      >
-        <button className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"></button>
-      </NodeResizeControl>
+    <div className="group note-node outline-none">
+      {!readonly && (
+        <NodeResizeControl
+          minWidth={200}
+          minHeight={180}
+          maxWidth={550}
+          maxHeight={600}
+          onResize={(_, params) => {
+            // update the size locally means that we don't re-render the whole graph
+            setSize({ width: params.width, height: params.height });
+          }}
+          onResizeEnd={(_, params) => {
+            resizeNote(props.id, {
+              width: params.width,
+              height: params.height,
+            });
+          }}
+        >
+          <button className="group-focus-within:block hidden outline-none cursor-nwse-resize  rounded-full bg-stone-50 border border-solid border-primary -translate-x-[60%] -translate-y-[60%] p-0.75"></button>
+        </NodeResizeControl>
+      )}
 
       <div
         key={
@@ -65,8 +70,10 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
         {...attributes}
         {...listeners}
         className={cn(
-          'p-0.5 group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md',
-          {},
+          'p-0.5 outline-none group-focus-within:border-solid group-focus-within:border-primary border border-transparent rounded-md',
+          {
+            '!border-transparent cursor-default': readonly,
+          },
         )}
       >
         <NoteContent
@@ -83,7 +90,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
 
 const NoteContent = ({ note, isDragging }: NoteContentProps) => {
-  const { id, creator, color, size } = note;
+  const { id, creatorId, color, size } = note;
   const { width, height } = size;
   const [localNote, setLocalNote] = useState(note);
   const [updateContent, readonly, updateNoteColor] = useBuilderStateContext(
@@ -130,10 +137,11 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
         >
           <MarkdownInput
             ref={editorRef}
+            key={readonly ? 'readonly' : 'editable'}
             disabled={isDragging || readonly}
             initialValue={localNote.content}
             className={cn(
-              'cursor-text text-sm',
+              'cursor-text text-sm select-text',
               NoteColorVariantToTailwind[color],
               { '!cursor-grabbing': isDragging },
             )}
@@ -143,7 +151,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
             }}
           />
         </div>
-        <NoteFooter id={id} isDragging={isDragging} creator={creator} />
+        <NoteFooter id={id} isDragging={isDragging} creatorId={creatorId} />
       </div>
     </div>
   );

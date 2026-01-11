@@ -17,6 +17,7 @@ import {
     FlowVersionState,
     isNil,
     LATEST_FLOW_SCHEMA_VERSION,
+    Note,
     PlatformId,
     ProjectId,
     sanitizeObjectForPostgresql,
@@ -100,6 +101,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                         trigger: previousVersion.trigger,
                         displayName: previousVersion.displayName,
                         schemaVersion: previousVersion.schemaVersion,
+                        notes: previousVersion.notes,
                     },
                 }]
                 break
@@ -292,6 +294,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
         flowId: FlowId,
         request: {
             displayName: string
+            notes: Note[]
         },
     ): Promise<FlowVersion> {
         const flowVersion: NewFlowVersion = {
@@ -310,6 +313,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
             agentIds: [],
             valid: false,
             state: FlowVersionState.DRAFT,
+            notes: request.notes,
         }
         return flowVersionRepo().save(flowVersion)
     },

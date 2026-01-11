@@ -4,6 +4,7 @@ import {
   FlowAction,
   StepLocationRelativeToParent,
   FlowTrigger,
+  Note,
 } from '@activepieces/shared';
 
 export enum ApNodeType {
@@ -45,15 +46,7 @@ export type ApNoteNode = {
     x: number;
     y: number;
   };
-  data: {
-    content: string;
-    creator: string;
-    color: string;
-    size: {
-      width: number;
-      height: number;
-    };
-  };
+  data: Pick<Note, 'content' | 'creatorId' | 'color' | 'size'>;
 };
 
 export type ApLoopReturnNode = {
