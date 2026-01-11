@@ -13,7 +13,10 @@ export const templatesHooks = {
   useTemplateCategories: () => {
     return useQuery<string[], Error>({
       queryKey: ['template', 'categories'],
-      queryFn: () => templatesApi.getCategories(),
+      queryFn: async () => {
+        const result = await templatesApi.getCategories();
+        return (result?.value ?? []) as string[];
+      },
     });
   },  
   
