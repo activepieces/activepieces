@@ -131,7 +131,7 @@ export class FlowExecutorContext {
 
         return new FlowExecutorContext({
             ...this,
-            steps,
+            steps: loggingUtils.trimExecutionInput(steps),
         })
     }
 
