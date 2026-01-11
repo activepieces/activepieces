@@ -116,13 +116,6 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send()
     })
 
-    app.get('/categories', GetCategoriesParams, async () => {
-        if (edition === ApEdition.CLOUD) {
-            return flagService.getOne(ApFlagId.TEMPLATES_CATEGORIES)
-        }
-        return communityTemplates.getCategories()
-    })
-
     app.delete('/:id', DeleteParams, async (request, reply) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
