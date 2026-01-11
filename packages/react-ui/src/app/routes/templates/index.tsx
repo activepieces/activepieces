@@ -127,7 +127,7 @@ const TemplatesPage = () => {
             onCategorySelect={setCategory}
             onTemplateSelect={handleTemplateSelect}
             isLoading={showLoading}
-            hideTitle={!isShowingOfficialTemplates}
+            hideHeader={!isShowingOfficialTemplates}
           />
         ) : (
           <SelectedCategoryView
@@ -135,7 +135,7 @@ const TemplatesPage = () => {
             templates={selectedCategoryTemplates}
             onTemplateSelect={handleTemplateSelect}
             isLoading={showLoading}
-            hideTitle={!showCategoryTitleForOfficialTemplates}
+            showCategoryTitle={showCategoryTitleForOfficialTemplates}
           />
         )}
       </div>

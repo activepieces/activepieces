@@ -15,15 +15,15 @@ import { ExploreTemplateCard } from './template-card';
 import { TemplateCardSkeleton } from './skeletons/template-card-skeleton';
 
 type SelectedCategoryViewSkeletonProps = {
-  hideTitle?: boolean;
+  showCategoryTitle?: boolean;
 };
 
 const SelectedCategoryViewSkeleton = ({
-  hideTitle = false,
+  showCategoryTitle = false,
 }: SelectedCategoryViewSkeletonProps) => {
   return (
     <div className="space-y-4">
-      {!hideTitle && (
+      {showCategoryTitle && (
         <div className="flex items-center gap-2">
           <Skeleton className="h-8 w-48" />
         </div>
@@ -31,7 +31,7 @@ const SelectedCategoryViewSkeleton = ({
 
       <div className="flex flex-row flex-wrap gap-6 pb-4">
         {[...Array(6)].map((_, index) => (
-          <TemplateCardSkeleton key={index} hideTitle={hideTitle} />
+          <TemplateCardSkeleton key={index} showCategoryCarouselButton={showCategoryTitle} />
         ))}
       </div>
     </div>
@@ -43,7 +43,7 @@ type SelectedCategoryViewProps = {
   templates: Template[];
   onTemplateSelect: (template: Template) => void;
   isLoading?: boolean;
-  hideTitle?: boolean;
+  showCategoryTitle?: boolean;
 };
 
 export const SelectedCategoryView = ({
@@ -51,10 +51,10 @@ export const SelectedCategoryView = ({
   templates,
   onTemplateSelect,
   isLoading = false,
-  hideTitle = false,
+  showCategoryTitle
 }: SelectedCategoryViewProps) => {
   if (isLoading) {
-    return <SelectedCategoryViewSkeleton hideTitle={hideTitle} />;
+    return <SelectedCategoryViewSkeleton showCategoryTitle={showCategoryTitle} />;
   }
 
   return (

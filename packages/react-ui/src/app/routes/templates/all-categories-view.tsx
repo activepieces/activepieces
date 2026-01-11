@@ -4,16 +4,16 @@ import { CategorySection } from './category-section';
 import { CategorySectionSkeleton } from './skeletons/category-section-skeleton';
 
 type AllCategoriesViewSkeletonProps = {
-  hideTitle?: boolean;
+  hideHeader?: boolean;
 };
 
 const AllCategoriesViewSkeleton = ({
-  hideTitle = false,
+  hideHeader = false,
 }: AllCategoriesViewSkeletonProps) => {
   return (
     <div className="space-y-6">
       {[...Array(4)].map((_, index) => (
-        <CategorySectionSkeleton key={index} hideTitle={hideTitle} />
+        <CategorySectionSkeleton key={index} hideHeader={hideHeader} />
       ))}
     </div>
   );
@@ -24,7 +24,7 @@ type AllCategoriesViewProps = {
   onCategorySelect: (category: string) => void;
   onTemplateSelect: (template: Template) => void;
   isLoading?: boolean;
-  hideTitle?: boolean;
+  hideHeader?: boolean;
 };
 
 export const AllCategoriesView = ({
@@ -32,10 +32,10 @@ export const AllCategoriesView = ({
   onCategorySelect,
   onTemplateSelect,
   isLoading = false,
-  hideTitle = false,
+  hideHeader = false,
 }: AllCategoriesViewProps) => {
   if (isLoading) {
-    return <AllCategoriesViewSkeleton hideTitle={hideTitle} />;
+    return <AllCategoriesViewSkeleton hideHeader={hideHeader} />;
   }
 
   return (
