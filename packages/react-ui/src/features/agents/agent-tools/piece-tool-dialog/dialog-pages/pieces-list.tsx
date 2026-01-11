@@ -7,21 +7,19 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
 
+import { usePieceToolsDialogStore } from '../../stores/pieces-tools';
+
 interface PiecesContentProps {
   isPiecesLoading: boolean;
   pieceMetadata: PieceStepMetadataWithSuggestions[];
-  onPieceSelect: (piece: PieceStepMetadataWithSuggestions) => void;
-  searchQuery: string;
-  setSearchQuery: (searchQuery: string) => void;
 }
 
 export const PiecesList: React.FC<PiecesContentProps> = ({
   isPiecesLoading,
   pieceMetadata,
-  onPieceSelect,
-  searchQuery,
-  setSearchQuery,
 }) => {
+  const { searchQuery, setSearchQuery, handlePieceSelect } =
+    usePieceToolsDialogStore();
   const isEmpty = !isPiecesLoading && pieceMetadata.length === 0;
 
   return (
@@ -38,23 +36,23 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
         </div>
       </div>
 
-      {isPiecesLoading ? (
-        <div className="grid grid-cols-3 gap-4 p-4">
-          {Array.from({ length: 22 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-lg" />
-          ))}
-        </div>
-      ) : isEmpty ? (
-        <div className="h-full flex items-center py-2 justify-center text-muted-foreground">
-          {t('No pieces found')}
-        </div>
-      ) : (
-        <ScrollArea className="flex-1 min-h-0 px-4 py-2">
+      <ScrollArea className="flex-1 min-h-0 px-4 py-2">
+        {isPiecesLoading ? (
+          <div className="grid grid-cols-3 gap-4">
+            {Array.from({ length: 22 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full rounded-lg" />
+            ))}
+          </div>
+        ) : isEmpty ? (
+          <div className="h-full flex items-center py-2 justify-center text-muted-foreground">
+            {t('No pieces found')}
+          </div>
+        ) : (
           <div className="grid grid-cols-3 gap-4">
             {pieceMetadata.map((piece, index) => (
               <div
                 key={index}
-                onClick={() => onPieceSelect(piece)}
+                onClick={() => handlePieceSelect(piece)}
                 className="p-2 flex items-center gap-x-2 hover:bg-accent cursor-pointer rounded-lg"
               >
                 <div className="size-9 flex items-center justify-center rounded-sm aspect-square border bg-background">
@@ -69,8 +67,8 @@ export const PiecesList: React.FC<PiecesContentProps> = ({
               </div>
             ))}
           </div>
-        </ScrollArea>
-      )}
+        )}
+      </ScrollArea>
     </div>
   );
 };

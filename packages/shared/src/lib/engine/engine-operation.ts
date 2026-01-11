@@ -81,7 +81,7 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
     pieceVersion: string
-    predefinedInput: PredefinedInputsStructure
+    predefinedInput?: PredefinedInputsStructure
     instruction: string
 }
 

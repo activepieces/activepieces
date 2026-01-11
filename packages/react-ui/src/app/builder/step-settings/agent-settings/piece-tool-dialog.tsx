@@ -18,13 +18,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { sanitizeToolName } from '@/features/agents/agent-tools/componenets/piece-tool';
+import { PieceActionsList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
+import { PiecesList } from '@/features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
+import { usePieceToolsDialogStore } from '@/features/agents/agent-tools/stores/pieces-tools';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
 import { PieceStepMetadataWithSuggestions } from '@/lib/types';
-import { AgentTool } from '@activepieces/shared';
-
-import { PieceActionsList } from '../../../../features/agents/agent-tools/piece-tool-dialog/dialog-pages/piece-actions-list';
-import { PiecesList } from '../../../../features/agents/agent-tools/piece-tool-dialog/dialog-pages/pieces-list';
-import { useAgentToolsStore } from '../../../../features/agents/agent-tools/store';
+import { AgentTool, isNil } from '@activepieces/shared';
 
 import { PredefinedInputsForm } from './predefined-inputs-form';
 
@@ -50,18 +50,17 @@ export function AgentPieceDialog({
     showAddPieceDialog,
     selectedPage,
     searchQuery,
-    selectedPiece,
     selectedAction,
-    editingPieceTool: editingTool,
-    setSearchQuery,
+    isPieceAuthSet,
+    selectedPiece,
+    editingPieceTool,
+    createNewPieceTool,
+    goBackToActionsList,
     handlePieceSelect,
     handleActionSelect,
     goBackToPiecesList,
-    goBackToPieceSelected,
-    isAuthSet,
-    createNewTool,
     closePieceDialog,
-  } = useAgentToolsStore();
+  } = usePieceToolsDialogStore();
 
   const [debouncedQuery] = useDebounce(searchQuery, 300);
 
@@ -83,16 +82,20 @@ export function AgentPieceDialog({
   }, [metadata]);
 
   useEffect(() => {
-    if (showAddPieceDialog && editingTool && pieceMetadata.length > 0) {
+    if (!showAddPieceDialog) return;
+
+    if (!isNil(editingPieceTool) && pieceMetadata.length > 0) {
       const piece = pieceMetadata.find(
-        (p) => p.pieceName === editingTool.pieceMetadata.pieceName,
+        (p) => p.pieceName === editingPieceTool.pieceMetadata.pieceName,
       );
 
       if (piece) {
         handlePieceSelect(piece);
 
         const action = piece.suggestedActions?.find(
-          (a) => a.name === editingTool.toolName,
+          (a) =>
+            sanitizeToolName(`${piece.pieceName}-${a.name}`) ===
+            editingPieceTool.toolName,
         );
 
         if (action) {
@@ -100,17 +103,18 @@ export function AgentPieceDialog({
         }
       }
     }
-  }, [showAddPieceDialog, editingTool, pieceMetadata]);
+  }, [showAddPieceDialog, editingPieceTool, pieceMetadata]);
 
-  const authIsSetValue = isAuthSet();
+  const authIsSetValue = isPieceAuthSet();
 
   const handleSave = () => {
-    const newTool = createNewTool();
-    if (!newTool) return;
+    const newTool = createNewPieceTool();
 
-    if (editingTool) {
+    if (isNil(newTool)) return;
+
+    if (!isNil(editingPieceTool)) {
       const updatedTools = tools.map((tool) =>
-        tool.toolName === editingTool.toolName ? newTool : tool,
+        tool.toolName === editingPieceTool.toolName ? newTool : tool,
       );
       onToolsUpdate(updatedTools);
       toast('Piece tool updated');
@@ -133,35 +137,16 @@ export function AgentPieceDialog({
       case 'pieces-list': {
         return (
           <PiecesList
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
             isPiecesLoading={isPiecesLoading}
             pieceMetadata={pieceMetadata}
-            onPieceSelect={handlePieceSelect}
           />
         );
       }
-      case 'piece-selected': {
-        return (
-          selectedPiece && (
-            <PieceActionsList
-              tools={tools}
-              setSelectedAction={handleActionSelect}
-              piece={selectedPiece}
-            />
-          )
-        );
+      case 'actions-list': {
+        return <PieceActionsList tools={tools} />;
       }
-      case 'action-selected': {
-        return (
-          selectedAction &&
-          selectedPiece && (
-            <PredefinedInputsForm
-              action={selectedAction}
-              piece={selectedPiece}
-            />
-          )
-        );
+      case 'action-inputs': {
+        return <PredefinedInputsForm />;
       }
     }
   };
@@ -171,7 +156,7 @@ export function AgentPieceDialog({
       case 'pieces-list': {
         return t('Connect apps with the agent');
       }
-      case 'piece-selected': {
+      case 'actions-list': {
         return (
           selectedPiece && (
             <div className="flex items-center justify-start gap-2">
@@ -192,7 +177,7 @@ export function AgentPieceDialog({
           )
         );
       }
-      case 'action-selected': {
+      case 'action-inputs': {
         return (
           selectedAction && (
             <div className="flex items-center justify-start gap-2">
@@ -201,7 +186,7 @@ export function AgentPieceDialog({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={goBackToPieceSelected}
+                    onClick={goBackToActionsList}
                   >
                     <ChevronLeft className="size-4" />
                   </Button>
@@ -225,7 +210,7 @@ export function AgentPieceDialog({
 
         {renderDialogMainContent()}
 
-        {selectedPage === 'action-selected' && (
+        {selectedPage === 'action-inputs' && (
           <DialogFooter className="border-t p-4 mt-auto">
             <DialogClose asChild>
               <Button type="button" variant="outline">
@@ -238,7 +223,7 @@ export function AgentPieceDialog({
               type="button"
               onClick={handleSave}
             >
-              {editingTool ? t('Update Tool') : t('Add Tool')}
+              {editingPieceTool ? t('Update Tool') : t('Add Tool')}
             </Button>
           </DialogFooter>
         )}
