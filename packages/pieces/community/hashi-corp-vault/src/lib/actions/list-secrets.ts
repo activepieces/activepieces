@@ -50,6 +50,20 @@ export const listSecrets = createAction({
         path: listPath || '/',
       };
     } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        (error as { response?: { status?: number } }).response?.status === 404
+      ) {
+        return {
+          success: true,
+          keys: [],
+          path: listPath || '/',
+          message: 'No secrets found at this path',
+        };
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to list secrets: ${errorMessage}`);

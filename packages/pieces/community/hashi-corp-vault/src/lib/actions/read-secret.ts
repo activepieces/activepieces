@@ -75,6 +75,20 @@ export const readSecret = createAction({
         };
       }
     } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        (error as { response?: { status?: number } }).response?.status === 404
+      ) {
+        return {
+          success: false,
+          data: {},
+          path: secretPath,
+          message: 'Secret not found at this path',
+        };
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to read secret: ${errorMessage}`);

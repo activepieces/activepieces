@@ -46,6 +46,20 @@ export const deleteSecret = createAction({
         path: secretPath,
       };
     } catch (error: unknown) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'response' in error &&
+        (error as { response?: { status?: number } }).response?.status === 404
+      ) {
+        return {
+          success: true,
+          deleted: false,
+          path: secretPath,
+          message: 'Secret not found at this path (may already be deleted)',
+        };
+      }
+
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error';
       throw new Error(`Failed to delete secret: ${errorMessage}`);
