@@ -362,28 +362,33 @@ export const flowHooks = {
         continue;
       }
 
-      const templateFlow = flows[0];
-      let flow: PopulatedFlow;
+      for (const templateFlow of flows) {
+        let flow: PopulatedFlow;
 
-      if (existingFlowId) {
-        flow = await flowsApi.get(existingFlowId);
-      } else {
-        flow = await flowsApi.create({
-          displayName: templateFlow.displayName,
-          projectId,
-          folderName,
+        if (existingFlowId) {
+          flow = await flowsApi.get(existingFlowId);
+        } else {
+          flow = await flowsApi.create({
+            displayName: templateFlow.displayName,
+            projectId,
+            folderName,
+          });
+        }
+
+        const oldExternalId = !isNil(template.metadata?.externalId)
+          ? (template.metadata['externalId'] as string)
+          : flow.externalId;
+
+        allFlowsToImport.push({
+          flow,
+          templateFlow,
+          oldExternalId,
         });
+
+        if (existingFlowId) {
+          break;
+        }
       }
-
-      const oldExternalId = !isNil(template.metadata?.externalId)
-        ? (template.metadata['externalId'] as string)
-        : flow.externalId;
-
-      allFlowsToImport.push({
-        flow,
-        templateFlow,
-        oldExternalId,
-      });
 
       if (existingFlowId) {
         break;
