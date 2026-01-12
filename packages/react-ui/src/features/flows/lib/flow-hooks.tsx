@@ -364,7 +364,7 @@ export const flowHooks = {
 
       const templateFlow = flows[0];
       let flow: PopulatedFlow;
-      
+
       if (existingFlowId) {
         flow = await flowsApi.get(existingFlowId);
       } else {
@@ -417,31 +417,6 @@ export const flowHooks = {
     );
 
     return await Promise.all(importPromises);
-  },
-  importFlowVersionWithExternalIdMapping: async ({
-    flowVersion,
-    targetFlow,
-    templateExternalId,
-  }: {
-    flowVersion: FlowVersion;
-    targetFlow: PopulatedFlow;
-    templateExternalId?: string;
-  }): Promise<PopulatedFlow> => {
-    const oldExternalId = templateExternalId ?? targetFlow.externalId;
-    const triggerString = JSON.stringify(flowVersion.trigger).replaceAll(
-      oldExternalId,
-      targetFlow.externalId,
-    );
-    const updatedTrigger = JSON.parse(triggerString);
-
-    return await flowsApi.update(targetFlow.id, {
-      type: FlowOperationType.IMPORT_FLOW,
-      request: {
-        displayName: flowVersion.displayName,
-        trigger: updatedTrigger,
-        schemaVersion: flowVersion.schemaVersion,
-      },
-    });
   },
 };
 
