@@ -159,7 +159,7 @@ export const hashiCorpVault = createPiece({
   auth: hashiCorpVaultAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/hashi-corp-vault.png',
-  authors: [],
+  authors: ['onyedikachi-david'],
   categories: [PieceCategory.DEVELOPER_TOOLS],
   actions: [readSecret, writeSecret, deleteSecret, listSecrets],
   triggers: [],
