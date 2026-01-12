@@ -56,7 +56,7 @@ export const stripeNewRefund = createTrigger({
     const webhook = await stripeCommon.subscribeWebhook(
       'refund.created',
       context.webhookUrl,
-      context.auth
+      context.auth.secret_text
     );
     await context.store.put<StripeWebhookInformation>('_new_refund_trigger', {
       webhookId: webhook.id,
@@ -70,20 +70,19 @@ export const stripeNewRefund = createTrigger({
     if (webhookInfo !== null && webhookInfo !== undefined) {
       await stripeCommon.unsubscribeWebhook(
         webhookInfo.webhookId,
-        context.auth
+        context.auth.secret_text
       );
     }
   },
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/checkout/refunds',
+      url: 'https://api.stripe.com/v1/refunds',
       headers: {
-        Authorization: 'Bearer ' + context.auth,
+        Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        
         limit: '5',
       },
     });

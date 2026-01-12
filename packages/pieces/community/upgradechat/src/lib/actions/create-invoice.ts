@@ -456,9 +456,9 @@ export const createInvoice = createAction({
 
     const res = await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.base_url}/api/services/CRM/Import/ImportInvoice`,
+      url: `${context.auth.props.base_url}/api/services/CRM/Import/ImportInvoice`,
       headers: {
-        'api-key': context.auth.api_key, // Pass API key in headers
+        'api-key': context.auth.props.api_key, // Pass API key in headers
         'Content-Type': 'application/json',
       },
       body: {

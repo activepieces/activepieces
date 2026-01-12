@@ -1,8 +1,10 @@
 import { DropdownOption, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from '.';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { filloutFormsAuth } from '../..';
 
 export const formIdDropdown = Property.Dropdown({
+  auth: filloutFormsAuth,
   displayName: 'Form',
   required: true,
   refreshers: [],
@@ -15,7 +17,7 @@ export const formIdDropdown = Property.Dropdown({
       };
     }
 
-    const apiKey = auth as string;
+    const apiKey = auth.secret_text;
     const forms = await makeRequest(apiKey, HttpMethod.GET, '/forms', undefined);
 
     const options: DropdownOption<string>[] = forms.map((form: any) => ({
@@ -31,6 +33,7 @@ export const formIdDropdown = Property.Dropdown({
 });
 
 export const submissionIdDropdown = Property.Dropdown({
+  auth: filloutFormsAuth,
   displayName: 'Submission',
   description: 'Select from the 50 most recent submissions for the chosen form.',
   required: true,
@@ -53,7 +56,7 @@ export const submissionIdDropdown = Property.Dropdown({
     }
 
     try {
-      const apiKey = auth as string;
+      const apiKey = auth.secret_text;
       const response = await makeRequest(
         apiKey, 
         HttpMethod.GET, 

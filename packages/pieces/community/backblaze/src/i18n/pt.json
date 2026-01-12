@@ -35,7 +35,7 @@
   "China (Ningxia) [cn-northwest-1]": "China (Ningxia) [cn-northwest-1]",
   "Europe (Zurich) [eu-central-2]": "Europa (Zurich) [eu-central-2]",
   "Middle East (UAE) [me-central-1]": "Oriente Médio (AUE) [me-central-1]",
-  "\nThis piece allows you to upload files to BackBlaze Bucket compatible services.\n\nBackBlaze Settings:\nRegions: https://www.backblaze.com/apidocs/introduction-to-the-s3-compatible-api\nEndpoint: leave blank\n": "\nThis piece allows you to upload files to BackBlaze Bucket compatible services.\n\nBackBlaze Settings:\nRegions: https://www.backblaze.com/apidocs/introduction-to-the-s3-compatible-api\nEndpoint: leave blank\n",
+  "\nThis piece allows you to upload files to BackBlaze Bucket compatible services.\n\nBackBlaze Settings:\nRegions: https://www.backblaze.com/apidocs/introduction-to-the-s3-compatible-api\nEndpoint: leave blank\n": "O módulo autoriza você a enviar arquivos para o BackBlaze Bucket com serviços compatíveis.\n\nConfigurações BackBlaze:\nRegiões: https://www.backblaze.com/apidocs/introduction-to-the-s3-compatible-api\nEndpoint: Deixe em branco.",
   "Upload File": "Enviar Arquivo",
   "Read File": "Arquivo de leitura",
   "Upload an File to bucket.": "Enviar um arquivo para o bucket.",

@@ -1,0 +1,12 @@
+{
+  "AI-powered document structuring and data extraction": "AI-powered document structuring and data extraction",
+  "\nTo get your API key:\n1. Log in to your Hystruct dashboard\n2. Click on your profile picture (top right)\n3. Click **Settings**\n4. Click **API Keys**\n5. Copy and paste your API key here\n": "\nTo get your API key:\n1. Log in to your Hystruct dashboard\n2. Click on your profile picture (top right)\n3. Click **Settings**\n4. Click **API Keys**\n5. Copy and paste your API key here\n",
+  "Create Job": "Create Job",
+  "Create and queue a new job to run for a workflow": "Create and queue a new job to run for a workflow",
+  "Workflow ID": "Workflow ID",
+  "The ID of the workflow to run": "The ID of the workflow to run",
+  "Workflow Event": "Workflow Event",
+  "Triggers when a workflow event occurs (e.g., job completed, data updated)": "Triggers when a workflow event occurs (e.g., job completed, data updated)",
+  "Markdown": "Markdown",
+  "## Webhook Setup\n\nTo receive workflow events, set up a webhook in your Hystruct dashboard:\n\n1. Log in to Hystruct and go to **Integrations**\n2. Click **Webhooks** → **Create webhook**\n3. Paste this URL as the Webhook URL:\n```text\n{{webhookUrl}}\n```\n4. Select the events you want to subscribe to\n5. Optionally enter a Workflow ID to filter events\n6. Click **Save**\n": "## Webhook Setup\n\nTo receive workflow events, set up a webhook in your Hystruct dashboard:\n\n1. Log in to Hystruct and go to **Integrations**\n2. Click **Webhooks** → **Create webhook**\n3. Paste this URL as the Webhook URL:\n```text\n{{webhookUrl}}\n```\n4. Select the events you want to subscribe to\n5. Optionally enter a Workflow ID to filter events\n6. Click **Save**\n"
+}

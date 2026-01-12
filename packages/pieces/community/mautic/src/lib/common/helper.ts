@@ -4,6 +4,7 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
+import { mauticAuth } from '../..';
 
 // Function Section
 export const mapMauticToActivepiecesProperty = (
@@ -112,13 +113,14 @@ export const fetchDynamicFieldsFromMetadata = async (
 
 export const getFields = (type: 'contact' | 'company' | 'lead') =>
   Property.DynamicProperties({
+    auth: mauticAuth,
     displayName: 'All Fields',
     description: 'List of all possible fields present',
     required: true,
     refreshers: [],
     props: async ({ auth }) => {
       if (!auth) return {};
-      const { base_url, username, password } = auth;
+      const { base_url, username, password } = auth.props;
       return fetchDynamicFieldsFromMetadata(base_url, username, password, type);
     },
   });

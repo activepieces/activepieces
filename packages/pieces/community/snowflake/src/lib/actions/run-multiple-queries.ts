@@ -56,7 +56,7 @@ export const runMultipleQueries = createAction({
 
   async run(context) {
     const connection = configureConnection(
-      context.auth,
+      context.auth.props,
       context.propsValue.application,
       context.propsValue.timeout
     );

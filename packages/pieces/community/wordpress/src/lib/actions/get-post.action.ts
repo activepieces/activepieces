@@ -25,19 +25,19 @@ export const getWordPressPost = createAction({
     }),
   },
   async run(context) {
-    if (!(await wordpressCommon.urlExists(context.auth.website_url.trim()))) {
-      throw new Error('Website url is invalid: ' + context.auth.website_url);
+    if (!(await wordpressCommon.urlExists(context.auth.props.website_url.trim()))) {
+      throw new Error('Website url is invalid: ' + context.auth.props.website_url);
     }
 
     return await httpClient.sendRequest<{ id: string; name: string }[]>({
       method: HttpMethod.GET,
-      url: `${context.auth.website_url.trim()}/wp-json/wp/v2/posts/${
+      url: `${context.auth.props.website_url.trim()}/wp-json/wp/v2/posts/${
         context.propsValue.id
       }`,
       authentication: {
         type: AuthenticationType.BASIC,
-        username: context.auth.username,
-        password: context.auth.password,
+        username: context.auth.props.username,
+        password: context.auth.props.password,
       },
     });
   },

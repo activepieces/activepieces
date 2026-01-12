@@ -3,6 +3,7 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
+import { edenAiAuth } from '../..';
 
 const TRANSLATION_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -186,10 +187,12 @@ function normalizeTranslationResponse(provider: string, response: any) {
 
 export const translateTextAction = createAction({
   name: 'translate_text',
+  auth: edenAiAuth,
   displayName: 'Translate Text',
   description: 'Translate text into different languages using Eden AI. Supports multiple providers, languages, and models.',
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for text translation.',
       required: true,
@@ -202,6 +205,7 @@ export const translateTextAction = createAction({
       required: true,
     }),
     source_language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Source Language',
       description: 'The language of the input text. Choose "Auto Detection" to automatically detect the language.',
       required: false,
@@ -210,6 +214,7 @@ export const translateTextAction = createAction({
       defaultValue: 'auto-detect',
     }),
     target_language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Target Language',
       description: 'The language to translate the text into.',
       required: true,
@@ -222,6 +227,7 @@ export const translateTextAction = createAction({
       required: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -277,7 +283,7 @@ export const translateTextAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/translation/automatic_translation',
         body,

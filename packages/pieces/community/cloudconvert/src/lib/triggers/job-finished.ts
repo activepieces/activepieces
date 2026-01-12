@@ -94,7 +94,7 @@ export const jobFinished = createTrigger({
     const webhookUrl = context.webhookUrl;
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${cloudconvertCommon.baseUrl((context.auth as any).region || 'auto')}/webhooks`,
+      url: `${cloudconvertCommon.baseUrl((context.auth).props?.['region'] as string || 'auto')}/webhooks`,
       body: {
         url: webhookUrl,
         events: ['job.finished']

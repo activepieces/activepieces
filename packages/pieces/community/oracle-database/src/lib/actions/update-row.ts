@@ -43,7 +43,7 @@ export const updateRowAction = createAction({
     }
 
     try {
-      const client = new OracleDbClient(context.auth);
+      const client = new OracleDbClient(context.auth.props);
       return await client.updateRow(
         tableName,
         values as Record<string, unknown>,

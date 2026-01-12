@@ -1,11 +1,13 @@
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { formStackAuth } from './auth';
 
 export const formIdDropdown = Property.Dropdown({
   displayName: 'Forms ',
   required: true,
-  refreshers: ['auth'],
+    auth: formStackAuth,
+    refreshers: ['auth'],
   options: async ({ auth }) => {
     if (!auth) {
       return {
@@ -14,7 +16,7 @@ export const formIdDropdown = Property.Dropdown({
         options: [],
       };
     }
-    const authentication = auth as OAuth2PropertyValue;
+    const authentication = auth;
     const accessToken = authentication['access_token'];
 
     const forms = await makeRequest(
@@ -36,6 +38,7 @@ export const formIdDropdown = Property.Dropdown({
 });
 
 export const submissionIdDropdown = Property.Dropdown({
+  auth: formStackAuth,
   displayName: 'Submission',
   required: true,
   refreshers: ['auth', 'form_id'],
@@ -54,7 +57,7 @@ export const submissionIdDropdown = Property.Dropdown({
         options: [],
       };
     }
-    const authentication = auth as OAuth2PropertyValue;
+    const authentication = auth;
     const accessToken = authentication['access_token'];
 
     try {

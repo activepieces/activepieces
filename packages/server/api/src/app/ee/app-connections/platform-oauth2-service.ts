@@ -1,6 +1,8 @@
 import { PropertyType } from '@activepieces/pieces-framework'
 import {
+    ActivepiecesError,
     AppConnectionType,
+    ErrorCode,
     isNil,
     PlatformOAuth2ConnectionValue,
 } from '@activepieces/shared'
@@ -10,7 +12,7 @@ import {
     RefreshOAuth2Request,
 } from '../../app-connection/app-connection-service/oauth2/oauth2-service'
 import { credentialsOauth2Service } from '../../app-connection/app-connection-service/oauth2/services/credentials-oauth2-service'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 import { oauthAppService } from '../oauth-apps/oauth-app.service'
 
 export const platformOAuth2Service = (log: FastifyBaseLogger) => ({
@@ -23,16 +25,24 @@ export const platformOAuth2Service = (log: FastifyBaseLogger) => ({
         const { auth } = await pieceMetadataService(log).getOrThrow({
             name: pieceName,
             version: undefined,
-            projectId,
             platformId,
         })
-        if (isNil(auth) || auth.type !== PropertyType.OAUTH2) {
-            throw new Error(
-                'Cannot claim auth for non oauth2 property ' +
-                auth?.type +
-                ' ' +
-                pieceName,
-            )
+        if (isNil(auth)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Auth is required to claim a platform oauth2 connection piece ${pieceName},platformId: ${platformId},projectId: ${projectId}`,
+                },
+            })
+        }
+        const oauth2Auth = Array.isArray(auth) ? auth.find(auth => auth.type === PropertyType.OAUTH2) : auth
+        if (isNil(oauth2Auth) || oauth2Auth.type !== PropertyType.OAUTH2) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Cannot claim auth for non oauth2 property ${oauth2Auth?.type} ${pieceName}`,
+                },
+            })
         }
         const oauth2App = await oauthAppService.getWithSecret({
             pieceName,

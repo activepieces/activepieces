@@ -27,7 +27,7 @@ export const sendMessage = createAction({
       method: HttpMethod.POST,
       url: 'https://dashboard.whatsable.app/api/whatsapp/messages/send',
       headers: {
-        'Authorization': ctx.auth,
+        'Authorization': ctx.auth.secret_text,
       },
       body: {
         to,

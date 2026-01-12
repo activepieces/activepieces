@@ -20,6 +20,7 @@ export const askOpenRouterAction = createAction({
   auth: openRouterAuth,
   props: {
     model: Property.Dropdown({
+      auth: openRouterAuth,
       displayName: 'Model',
       description:
         'The model which will generate the completion. Some models are suitable for natural language tasks, others specialize in code.',
@@ -27,12 +28,19 @@ export const askOpenRouterAction = createAction({
       refreshers: [],
       defaultValue: 'pygmalionai/mythalion-13b',
       options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your account first',
+          };
+        }
         const request: HttpRequest = {
           url: 'https://openrouter.ai/api/v1/models',
           method: HttpMethod.GET,
           authentication: {
             type: AuthenticationType.BEARER_TOKEN,
-            token: auth as string,
+            token: auth.secret_text,
           },
         };
         try {
@@ -103,7 +111,7 @@ export const askOpenRouterAction = createAction({
       },
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
       headers: {
         'HTTP-Referer': 'https://openrouter.ai/playground',

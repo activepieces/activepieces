@@ -49,7 +49,8 @@ export const sendAMessage = createAction({
       description: 'Select the user who can view this private message.',
       required: false,
       refreshers: ['auth'],
-      async options({ auth }: any) {
+      auth: googleChatApiAuth,
+      async options({ auth }) {
         if (!auth) {
           return {
             disabled: true,

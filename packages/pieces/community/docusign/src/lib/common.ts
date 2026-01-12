@@ -1,21 +1,24 @@
 import { ApiClient } from 'docusign-esign';
-import { DocusignAuthType } from '../index';
+import { docusignAuth, DocusignAuthType } from '../index';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 
-export async function createApiClient(auth: DocusignAuthType) {
+export async function createApiClient(
+  auth: AppConnectionValueForAuthProperty<typeof docusignAuth>
+) {
   const oAuthBasePath =
-    auth.environment === 'demo'
+    auth.props.environment === 'demo'
       ? 'account-d.docusign.com'
       : 'account.docusign.com';
   const dsApi = new ApiClient({
-    basePath: `https://${auth.environment}.docusign.net/restapi`,
+    basePath: `https://${auth.props.environment}.docusign.net/restapi`,
     oAuthBasePath,
   });
 
   const results = await dsApi.requestJWTUserToken(
-    auth.clientId,
-    auth.impersonatedUserId,
-    auth.scopes.split(','),
-    Buffer.from(auth.privateKey.replace(/\\n/g, '\n'), 'utf-8'),
+    auth.props.clientId,
+    auth.props.impersonatedUserId,
+    auth.props.scopes.split(','),
+    Buffer.from(auth.props.privateKey.replace(/\\n/g, '\n'), 'utf-8'),
     10 * 60 // 10mn lifetime
   );
   const accessToken = results.body.access_token;

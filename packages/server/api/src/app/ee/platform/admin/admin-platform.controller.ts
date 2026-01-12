@@ -1,38 +1,64 @@
-import { StripePlanName } from '@activepieces/ee-shared'
-import { apDayjs } from '@activepieces/server-shared'
-import { AdminRetryRunsRequestBody, apId, ApplyLicenseKeyByEmailRequestBody, ExecutionType, FlowRunStatus, GiftTrialByEmailRequestBody, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PauseType, PrincipalType, ProgressUpdateType, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { ErrorHandlingOptionsParam, PieceMetadata, PieceMetadataModel, WebhookRenewConfiguration } from '@activepieces/pieces-framework'
+import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
+import { AdminRetryRunsRequestBody, ApplyLicenseKeyByEmailRequestBody, ExactVersionType, IncreaseAICreditsForPlatformRequestBody, isNil, PackageType, PieceCategory, PieceType, TriggerStrategy, TriggerTestStrategy, WebhookHandshakeConfiguration } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
+import { FastifyReply, FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { flowRunRepo } from '../../../flows/flow-run/flow-run-service'
-import { flowRunLogsService } from '../../../flows/flow-run/logs/flow-run-logs-service'
-import { projectService } from '../../../project/project-service'
-import { jobQueue } from '../../../workers/queue/job-queue'
-import { JobType } from '../../../workers/queue/queue-manager'
+import { system } from '../../../helper/system/system'
+import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-service'
 import { dedicatedWorkers } from '../platform-plan/platform-dedicated-workers'
-import { stripeHelper } from '../platform-plan/stripe-helper'
 import { adminPlatformService } from './admin-platform.service'
 
+const API_KEY_HEADER = 'api-key'
+const API_KEY = system.get(AppSystemProp.API_KEY)
+
+async function checkCertainKeyPreHandler(
+    req: FastifyRequest,
+    res: FastifyReply,
+): Promise<void> {
+
+    const key = req.headers[API_KEY_HEADER] as string | undefined
+    if (key !== API_KEY || isNil(API_KEY)) {
+        await res.status(StatusCodes.FORBIDDEN).send({ message: 'Forbidden' })
+        throw new Error('Forbidden')
+    }
+}
+
 export const adminPlatformModule: FastifyPluginAsyncTypebox = async (app) => {
-    await app.register(adminPlatformController, { prefix: '/v1/admin/platforms' })
+    app.addHook('preHandler', checkCertainKeyPreHandler)
+    await app.register(adminPlatformController, { prefix: '/v1/admin/' })
 }
 
 const adminPlatformController: FastifyPluginAsyncTypebox = async (
     app,
 ) => {
 
-    app.post('/runs/retry', AdminRetryRunsRequest, async (req, res) => {
+    app.post('/pieces', CreatePieceRequest, async (req): Promise<PieceMetadataModel> => {
+        return pieceMetadataService(req.log).create({
+            pieceMetadata: req.body as PieceMetadata,
+            packageType: PackageType.REGISTRY,
+            pieceType: PieceType.OFFICIAL,
+        })
+    },
+    )
+
+    app.post('/platforms/runs/retry', AdminRetryRunsRequest, async (req, res) => {
         await adminPlatformService(req.log).retryRuns(req.body)
         return res.status(StatusCodes.OK).send()
     })
 
-    app.post('/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
+    app.post('/platforms/apply-license-key', ApplyLicenseKeyByEmailRequest, async (req, res) => {
         await adminPlatformService(req.log).applyLicenseKeyByEmail(req.body)
         return res.status(StatusCodes.OK).send()
     })
 
+    app.post('/platforms/increase-ai-credits', IncreaseAICreditsForPlatformRequest, async (req, res) => {
+        await adminPlatformService(req.log).increaseAiCredits(req.body)
+        return res.status(StatusCodes.OK).send()
+    })
 
-    app.post('/dedicated-workers', ConfigureDedicatedWorkersRequest, async (req, res) => {
+    app.post('/platforms/dedicated-workers', ConfigureDedicatedWorkersRequest, async (req, res) => {
         await dedicatedWorkers(req.log).updateWorkerConfig({
             operation: req.body.operation,
             platformId: req.body.platformId,
@@ -40,65 +66,8 @@ const adminPlatformController: FastifyPluginAsyncTypebox = async (
         })
         return res.status(StatusCodes.OK).send()
     })
-
-
-    app.post('/retry-paused-runs', RetryPausedRuns, async (req, res) => {
-
-        for (const id of req.body.ids) {
-            const pausedRun = await flowRunRepo().findOneBy({ id, status: FlowRunStatus.PAUSED })
-            if (isNil(pausedRun)) {
-                throw new Error('Paused run not found')
-            }
-            if (pausedRun.pauseMetadata?.type !== PauseType.DELAY) {
-                throw new Error('Paused run is not a delay pause')
-            }
-            const logsFileId = pausedRun.logsFileId ?? apId()
-            const logsUploadUrl = await flowRunLogsService(req.log).constructUploadUrl({
-                flowRunId: pausedRun.id,
-                logsFileId,
-                behavior: UploadLogsBehavior.UPLOAD_DIRECTLY,
-                projectId: pausedRun.projectId,
-            })
-            await jobQueue(req.log).add({
-                id: pausedRun.id,
-                type: JobType.ONE_TIME,
-                data: {
-                    projectId: pausedRun.projectId,
-                    platformId: await projectService.getPlatformId(pausedRun.projectId),
-                    environment: pausedRun.environment,
-                    schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
-                    flowId: pausedRun.flowId,
-                    flowVersionId: pausedRun.flowVersionId,
-                    runId: pausedRun.id,
-                    httpRequestId: pausedRun.pauseMetadata?.requestIdToReply ?? undefined,
-                    synchronousHandlerId: pausedRun.pauseMetadata?.handlerId ?? null,
-                    progressUpdateType: pausedRun.pauseMetadata?.progressUpdateType ?? ProgressUpdateType.NONE,
-                    jobType: WorkerJobType.EXECUTE_FLOW,
-                    executionType: ExecutionType.RESUME,
-                    payload: {},
-                    logsUploadUrl,
-                    logsFileId,
-                },
-                delay: calculateDelayForPausedRun(pausedRun.pauseMetadata?.resumeDateTime),
-            })
-        }
-        return res.status(StatusCodes.OK).send()
-    })
-
-    app.post('/gift-trials', GiftTrialByEmailRequest, async (req, res) => {
-        const { gifts } = req.body
-        const results = await Promise.all(
-            gifts.map(gift => stripeHelper(req.log).giftTrialForCustomer({ email: gift.email, trialPeriod: gift.trialPeriod, plan: gift.trialPlan as StripePlanName })),
-        )
-
-        const errors = results.filter(result => !isNil(result))
-        if (errors.length === 0) {
-            return res.status(StatusCodes.OK).send({ message: 'All gifts processed successfully' })
-        }
-
-        return res.status(StatusCodes.PARTIAL_CONTENT).send({ errors })
-    })
 }
+
 
 const ConfigureDedicatedWorkersRequest = {
     schema: {
@@ -109,27 +78,17 @@ const ConfigureDedicatedWorkersRequest = {
         }),
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
     },
 }
 
-const RetryPausedRuns = {
-    schema: {
-        body: Type.Object({
-            ids: Type.Array(Type.String()),
-        }),
-    },
-    config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
-    },
-}
 
 const AdminRetryRunsRequest = {
     schema: {
         body: AdminRetryRunsRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
     },
 }
 
@@ -138,20 +97,59 @@ const ApplyLicenseKeyByEmailRequest = {
         body: ApplyLicenseKeyByEmailRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
     },
 }
 
-const GiftTrialByEmailRequest = {
+const IncreaseAICreditsForPlatformRequest = {
     schema: {
-        body: GiftTrialByEmailRequestBody,
+        body: IncreaseAICreditsForPlatformRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.SUPER_USER],
+        security: securityAccess.public(),
     },
 }
 
-function calculateDelayForPausedRun(resumeDateTimeIsoString: string): number {
-    const delayInMilliSeconds = apDayjs(resumeDateTimeIsoString).diff(apDayjs())
-    return delayInMilliSeconds < 0 ? 0 : delayInMilliSeconds
+
+const Action = Type.Object({
+    name: Type.String(),
+    displayName: Type.String(),
+    description: Type.String(),
+    requireAuth: Type.Boolean(),
+    props: Type.Unknown(),
+    errorHandlingOptions: Type.Optional(ErrorHandlingOptionsParam),
+})
+
+const Trigger = Type.Composite([
+    Action,
+    Type.Object({
+        renewConfiguration: Type.Optional(WebhookRenewConfiguration),
+        handshakeConfiguration: WebhookHandshakeConfiguration,
+        sampleData: Type.Optional(Type.Unknown()),
+        type: Type.Enum(TriggerStrategy),
+        testStrategy: Type.Enum(TriggerTestStrategy),
+    }),
+])
+
+const CreatePieceRequest = {
+    schema: {
+        body: Type.Object({
+            name: Type.String(),
+            displayName: Type.String(),
+            logoUrl: Type.String(),
+            description: Type.Optional(Type.String()),
+            version: ExactVersionType,
+            auth: Type.Optional(Type.Any()),
+            authors: Type.Array(Type.String()),
+            categories: Type.Optional(Type.Array(Type.Enum(PieceCategory))),
+            minimumSupportedRelease: ExactVersionType,
+            maximumSupportedRelease: ExactVersionType,
+            actions: Type.Record(Type.String(), Action),
+            triggers: Type.Record(Type.String(), Trigger),
+            i18n: Type.Optional(Type.Record(Type.String(), Type.Record(Type.String(), Type.String()))),
+        }),
+    },
+    config: {
+        security: securityAccess.public(),
+    },
 }

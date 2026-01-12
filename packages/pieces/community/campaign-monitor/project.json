@@ -7,23 +7,34 @@
     "version": {
       "currentVersionResolver": "git-tag",
       "preserveLocalDependencyProtocols": false,
-      "manifestRootsToUpdate": ["dist/{projectRoot}"]
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ]
     }
   },
   "tags": [],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/packages/pieces/community/campaign-monitor",
         "tsConfig": "packages/pieces/community/campaign-monitor/tsconfig.lib.json",
         "packageJson": "packages/pieces/community/campaign-monitor/package.json",
         "main": "packages/pieces/community/campaign-monitor/src/index.ts",
-        "assets": ["packages/pieces/community/campaign-monitor/*.md"],
+        "assets": [
+          "packages/pieces/community/campaign-monitor/*.md"
+        ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
-      }
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "nx-release-publish": {
       "options": {
@@ -32,7 +43,19 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"]
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/campaign-monitor",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
     }
   }
 }

@@ -59,7 +59,7 @@ export const findLead = createAction({
 					cursor?: string;
 					data: Record<string, any>[];
 				}>({
-					accessToken: context.auth,
+					accessToken: context.auth.secret_text,
 					method: HttpMethod.POST,
 					resourceUri: '/data/search/',
 					body: {

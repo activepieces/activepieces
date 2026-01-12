@@ -25,6 +25,7 @@ export const createProject = createAction({
 			required: false,
 		}),
 		companyId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Company',
 			description: 'The company to associate the project with.',
 			required: true,
@@ -37,7 +38,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/companies.json',
 				});
@@ -52,6 +53,7 @@ export const createProject = createAction({
 			},
 		}),
 		'category-id': Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Category',
 			description: 'The category to assign the project to.',
 			required: false,
@@ -64,7 +66,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/projectcategories.json',
 				});
@@ -79,6 +81,7 @@ export const createProject = createAction({
 			},
 		}),
 		tagIds: Property.MultiSelectDropdown({
+auth: teamworkAuth,
 			displayName: 'Tags',
 			description: 'Tags to associate with the project.',
 			required: false,
@@ -91,7 +94,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/tags.json',
 				});
@@ -116,6 +119,7 @@ export const createProject = createAction({
 			required: false,
 		}),
 		projectOwnerId: Property.Dropdown({
+auth: teamworkAuth,
 			displayName: 'Project Owner',
 			description: 'The user to assign as the project owner.',
 			required: false,
@@ -128,7 +132,7 @@ export const createProject = createAction({
 						options: [],
 					};
 				}
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/people.json',
 				});
@@ -147,11 +151,12 @@ export const createProject = createAction({
 			description: 'Custom fields for this project.',
 			required: false,
 			refreshers: [],
+			auth: teamworkAuth,
 			props: async ({ auth }) => {
 				if (!auth) return {};
 
 				const fields: DynamicPropsValue = {};
-				const res = await teamworkRequest(auth as PiecePropValueSchema<typeof teamworkAuth>, {
+				const res = await teamworkRequest(auth, {
 					method: HttpMethod.GET,
 					path: '/projects/api/v3/customfields.json',
 					query: {

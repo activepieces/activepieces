@@ -1,8 +1,9 @@
-import { googleSheetsAuth } from '../../index';
+import { googleSheetsAuth } from '../common/common';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import {
 	areSheetIdsValid,
 	columnToLabel,
+	createGoogleClient,
 	getHeaderRow,
 	ValueInputOption,
 } from '../common/common';
@@ -36,8 +37,7 @@ export const createColumnAction = createAction({
 			throw new Error('Please select a spreadsheet and sheet first.');
 		}
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		let columnLabel;
@@ -65,7 +65,7 @@ export const createColumnAction = createAction({
 			const headers = await getHeaderRow({
 				spreadsheetId:spreadsheetId as string,
 				sheetId :sheetId as number,
-				accessToken: context.auth.access_token,
+				auth: context.auth,
 			});
 
 			const newColumnIndex = headers === undefined ? 0 : headers.length;

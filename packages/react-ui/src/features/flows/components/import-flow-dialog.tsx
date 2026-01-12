@@ -5,8 +5,10 @@ import JSZip from 'jszip';
 import { TriangleAlert } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 import { useTelemetry } from '@/components/telemetry-provider';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,23 +28,25 @@ import {
   SelectLabel,
   SelectItem,
 } from '@/components/ui/select';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   FlowOperationType,
-  FlowTemplate,
   isNil,
   PopulatedFlow,
   TelemetryEventName,
   UncategorizedFolderId,
+  Template,
 } from '@activepieces/shared';
 
 import { FormError } from '../../../components/ui/form';
 import { flowsApi } from '../lib/flows-api';
+import { templateUtils } from '../lib/template-parser';
 
 export type ImportFlowDialogProps =
   | {
@@ -57,22 +61,13 @@ export type ImportFlowDialogProps =
 
 const readTemplateJson = async (
   templateFile: File,
-): Promise<FlowTemplate | null> => {
+): Promise<Template | null> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
 
     reader.onload = () => {
-      try {
-        const template = JSON.parse(reader.result as string) as FlowTemplate;
-        const { template: tmpl, name } = template;
-        if (!tmpl || !name || !tmpl.trigger) {
-          resolve(null);
-        } else {
-          resolve(template);
-        }
-      } catch {
-        resolve(null);
-      }
+      const template = templateUtils.parseTemplate(reader.result as string);
+      resolve(template);
     };
     reader.readAsText(templateFile);
   });
@@ -82,7 +77,7 @@ const ImportFlowDialog = (
   props: ImportFlowDialogProps & { children: React.ReactNode },
 ) => {
   const { capture } = useTelemetry();
-  const [templates, setTemplates] = useState<FlowTemplate[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -99,36 +94,43 @@ const ImportFlowDialog = (
   const { mutate: importFlows, isPending } = useMutation<
     PopulatedFlow[],
     Error,
-    FlowTemplate[]
+    Template[]
   >({
-    mutationFn: async (templates: FlowTemplate[]) => {
-      const importPromises = templates.map(async (template) => {
-        let flow: PopulatedFlow | null = null;
-        if (props.insideBuilder) {
-          flow = await flowsApi.get(props.flowId);
-        } else {
-          const folder =
-            !isNil(selectedFolderId) &&
-            selectedFolderId !== UncategorizedFolderId
-              ? await foldersApi.get(selectedFolderId)
-              : undefined;
-          flow = await flowsApi.create({
-            displayName: template.name,
-            projectId: authenticationSession.getProjectId()!,
-            folderName: folder?.displayName,
-          });
-        }
-        return await flowsApi.update(flow.id, {
-          type: FlowOperationType.IMPORT_FLOW,
-          request: {
-            displayName: template.name,
-            trigger: template.template.trigger,
-            schemaVersion: template.template.schemaVersion,
+    mutationFn: async (templates: Template[]) => {
+      const importPromises = templates.flatMap(async (template) => {
+        const flowImportPromises = (template.flows || []).map(
+          async (templateFlow) => {
+            let flow: PopulatedFlow | null = null;
+            if (props.insideBuilder) {
+              flow = await flowsApi.get(props.flowId);
+            } else {
+              const folder =
+                !isNil(selectedFolderId) &&
+                selectedFolderId !== UncategorizedFolderId
+                  ? await foldersApi.get(selectedFolderId)
+                  : undefined;
+              flow = await flowsApi.create({
+                displayName: templateFlow.displayName,
+                projectId: authenticationSession.getProjectId()!,
+                folderName: folder?.displayName,
+              });
+            }
+            return await flowsApi.update(flow.id, {
+              type: FlowOperationType.IMPORT_FLOW,
+              request: {
+                displayName: templateFlow.displayName,
+                trigger: templateFlow.trigger,
+                schemaVersion: templateFlow.schemaVersion,
+              },
+            });
           },
-        });
+        );
+
+        return Promise.all(flowImportPromises);
       });
 
-      return Promise.all(importPromises);
+      const results = await Promise.all(importPromises);
+      return results.flat();
     },
 
     onSuccess: (flows: PopulatedFlow[]) => {
@@ -141,13 +143,13 @@ const ImportFlowDialog = (
           multiple: flows.length > 1,
         },
       });
+      templatesApi.incrementUsageCount(templates[0].id);
 
-      toast({
-        title: t(`flowsImported`, {
+      toast.success(
+        t(`flowsImported`, {
           flowsCount: flows.length,
         }),
-        variant: 'default',
-      });
+      );
 
       if (flows.length === 1) {
         navigate(`/flows/${flows[0].id}`);
@@ -169,7 +171,7 @@ const ImportFlowDialog = (
         setErrorMessage(t('Template file is invalid'));
         console.log(err);
       } else {
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       }
     },
   });
@@ -199,7 +201,7 @@ const ImportFlowDialog = (
     setFailedFiles([]);
     setErrorMessage('');
     const file = files[0];
-    const newTemplates: FlowTemplate[] = [];
+    const newTemplates: Template[] = [];
     const isZipFile =
       file.type === 'application/zip' ||
       file.type === 'application/x-zip-compressed';
@@ -249,18 +251,17 @@ const ImportFlowDialog = (
         <DialogHeader>
           <div className="flex flex-col gap-3">
             <DialogTitle>{t('Import Flow')}</DialogTitle>
-            {props.insideBuilder && (
-              <div className="flex gap-1 items-center text-muted-foreground">
-                <TriangleAlert className="w-5 h-5 stroke-warning"></TriangleAlert>
-                <div className="font-semibold">{t('Warning')}:</div>
-                <div>
-                  {t('Importing a flow will overwrite your current one.')}
-                </div>
-              </div>
-            )}
           </div>
         </DialogHeader>
         <div className="flex flex-col gap-4">
+          {props.insideBuilder && (
+            <Alert variant="warning">
+              <TriangleAlert className="h-4 w-4" />
+              <AlertDescription>
+                {t('Importing a flow will overwrite your current one.')}
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="w-full flex flex-col gap-2 justify-between items-start">
             <span className="w-16 text-sm font-medium text-gray-700">
               {t('Flow')}

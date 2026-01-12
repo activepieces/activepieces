@@ -24,7 +24,7 @@ export const findContactByEmail = createAction({
     
     while (hasMore) {
       const response = await systemeIoCommon.getContacts({
-        auth: context.auth,
+        auth: context.auth.secret_text,
         limit: 100,
         startingAfter,
       });

@@ -1,4 +1,4 @@
-import { createTrigger, TriggerStrategy, StaticPropsValue } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, StaticPropsValue, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper, HttpMethod } from '@activepieces/pieces-common';
 import dayjs from 'dayjs';
 import { makeRequest } from '../common/client';
@@ -7,14 +7,14 @@ import { chatbotIdDropdown } from '../common/dropdown';
 const props = {
     chatbotId: chatbotIdDropdown,
 }
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof SiteSpeakAuth>, StaticPropsValue<typeof props>> = {
     strategy: DedupeStrategy.TIMEBASED,
     items: async ({ auth, propsValue }) => {
         if (!propsValue.chatbotId) {
             return [];
         }
         const response = await makeRequest(
-            auth as string,
+            auth.secret_text,
             HttpMethod.GET,
             `/${propsValue.chatbotId}/leads`,
             undefined,

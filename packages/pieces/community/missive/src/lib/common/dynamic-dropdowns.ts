@@ -1,9 +1,11 @@
 import { Property } from '@activepieces/pieces-framework';
 import { HttpMethod } from '@activepieces/pieces-common';
 import { missiveCommon } from './client';
+import { missiveAuth } from './auth';
 
 
 export const contactBookDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Contact Book',
     description: 'Select the contact book where the contact will be created',
     required: true,
@@ -19,7 +21,7 @@ export const contactBookDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/contact_books',
             });
@@ -46,6 +48,7 @@ export const contactBookDropdown = Property.Dropdown({
 
 
 export const organizationDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Organization',
     description: 'Select an organization',
     required: false,
@@ -61,7 +64,7 @@ export const organizationDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/organizations',
             });
@@ -88,6 +91,7 @@ export const organizationDropdown = Property.Dropdown({
 
 
 export const groupDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Group',
     description: 'Select a group',
     required: false,
@@ -103,7 +107,7 @@ export const groupDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/groups',
             });
@@ -130,6 +134,7 @@ export const groupDropdown = Property.Dropdown({
 
 
 export const contactGroupDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Contact Group',
     description: 'Select a contact group or organization',
     required: false,
@@ -161,7 +166,7 @@ export const contactGroupDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: `/contact_groups?contact_book=${contact_book}&kind=${group_kind}`,
             });
@@ -188,6 +193,7 @@ export const contactGroupDropdown = Property.Dropdown({
 
 
 export const optionalContactBookDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Contact Book',
     description: 'Contact book to search within (optional)',
     required: false,
@@ -203,7 +209,7 @@ export const optionalContactBookDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/contact_books',
             });
@@ -229,6 +235,7 @@ export const optionalContactBookDropdown = Property.Dropdown({
 });
 
 export const contactDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Contact',
     description: 'Select a contact',
     required: true,
@@ -244,7 +251,7 @@ export const contactDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/contacts?limit=200',
             });
@@ -276,6 +283,7 @@ export const contactDropdown = Property.Dropdown({
 
 
 export const teamDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Team',
     description: 'Select a team',
     required: false,
@@ -299,7 +307,7 @@ export const teamDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: `/teams?organization=${organization}`,
             });
@@ -326,6 +334,7 @@ export const teamDropdown = Property.Dropdown({
 
 
 export const sharedLabelDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Shared Label',
     description: 'Select a shared label',
     required: false,
@@ -349,7 +358,7 @@ export const sharedLabelDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: `/shared_labels?organization=${organization}`,
             });
@@ -376,6 +385,7 @@ export const sharedLabelDropdown = Property.Dropdown({
 
 
 export const userDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'User',
     description: 'Select a user',
     required: false,
@@ -399,7 +409,7 @@ export const userDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: `/users?organization=${organization}`,
             });
@@ -425,6 +435,7 @@ export const userDropdown = Property.Dropdown({
 });
 
 export const membershipOrganizationDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Organization',
     description: 'Select an organization for membership',
     required: false,
@@ -440,7 +451,7 @@ export const membershipOrganizationDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: '/organizations',
             });
@@ -466,6 +477,7 @@ export const membershipOrganizationDropdown = Property.Dropdown({
 });
 
 export const membershipContactGroupDropdown = Property.Dropdown({
+ auth: missiveAuth,
     displayName: 'Contact Group',
     description: 'Select a contact group',
     required: false,
@@ -497,7 +509,7 @@ export const membershipContactGroupDropdown = Property.Dropdown({
 
         try {
             const response = await missiveCommon.apiCall({
-                auth: auth as string,
+                auth: auth,
                 method: HttpMethod.GET,
                 resourceUri: `/contact_groups?contact_book=${contact_book}&kind=${group_kind}`,
             });

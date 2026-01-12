@@ -1,5 +1,6 @@
 import { Property } from "@activepieces/pieces-framework";
 import { HttpMethod, httpClient } from "@activepieces/pieces-common";
+import { cambaiAuth } from "../..";
 
 
 export const API_BASE_URL = "https://client.camb.ai/apis";
@@ -26,6 +27,7 @@ type Language = {
 
 
 export const listVoicesDropdown = Property.Dropdown({
+    auth: cambaiAuth,
     displayName: 'Voice',
     description: 'Select the voice to generate the speech.',
     required: true,
@@ -42,7 +44,7 @@ export const listVoicesDropdown = Property.Dropdown({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/list-voices`,
             headers: {
-                'x-api-key': auth as string,
+                'x-api-key': auth.secret_text,
             },
         });
         const voices = response.body ?? [];
@@ -58,6 +60,7 @@ export const listVoicesDropdown = Property.Dropdown({
 
 
 export const listSourceLanguagesDropdown = Property.Dropdown({
+    auth: cambaiAuth,
     displayName: 'Source Language',
     description: 'Select the original language of the input text.',
     required: true,
@@ -74,7 +77,7 @@ export const listSourceLanguagesDropdown = Property.Dropdown({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/source-languages`,
             headers: {
-                'x-api-key': auth as string,
+                'x-api-key': auth.secret_text,
             },
         });
         const languages = response.body ?? [];
@@ -92,13 +95,14 @@ export const listSourceLanguagesDropdown = Property.Dropdown({
 export const listTargetLanguagesDropdown = Property.Dropdown({
     displayName: 'Target Language',
     description: 'Select the language to translate the text into.',
+    auth: cambaiAuth,
     required: true,
     refreshers: [],
     options: async ({ auth }) => {
         if (!auth) {
             return {
                 disabled: true,
-                options: [],
+                options: [],        
                 placeholder: 'Please authenticate first',
             };
         }
@@ -106,7 +110,7 @@ export const listTargetLanguagesDropdown = Property.Dropdown({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/target-languages`,
             headers: {
-                'x-api-key': auth as string,
+                'x-api-key': auth.secret_text,
             },
         });
         const languages = response.body ?? [];
@@ -122,6 +126,7 @@ export const listTargetLanguagesDropdown = Property.Dropdown({
 
 export const listFoldersDropdown = Property.Dropdown({
     displayName: 'Folder',
+    auth: cambaiAuth,
     description: 'Select the folder to save the task in.',
     required: false,
     refreshers: [],
@@ -138,7 +143,7 @@ export const listFoldersDropdown = Property.Dropdown({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/folders`, 
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                 },
             });
             const folders = response.body ?? [];

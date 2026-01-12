@@ -1,9 +1,10 @@
-import { PieceAuth, Property } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth, Property } from '@activepieces/pieces-framework';
 import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { saveContent } from './api';
+import { AppConnectionType } from '@activepieces/shared';
 
-export type TotalCMSAuthType = { license: string; domain: string };
+export type TotalCMSAuthType = AppConnectionValueForAuthProperty<typeof cmsAuth>;
 
 export const cmsAuth = PieceAuth.CustomAuth({
   description: 'Setup your Total CMS connection',
@@ -26,7 +27,10 @@ export const cmsAuth = PieceAuth.CustomAuth({
       license: z.string(),
     });
 
-    const response = await saveContent(auth, 'text', 'activepieces', {
+    const response = await saveContent({
+      type: AppConnectionType.CUSTOM_AUTH,
+      props: auth,
+    }, 'text', 'activepieces', {
       text: 'verified',
     });
     if (response.success !== true) {

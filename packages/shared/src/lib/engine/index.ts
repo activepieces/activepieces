@@ -1,6 +1,7 @@
 export * from './engine-operation'
 export * from './requests'
 export * from './engine-constants'
+export * from './execution-errors'
 
 export enum ExecutionMode {
     SANDBOX_PROCESS = 'SANDBOX_PROCESS',

@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const getUserSchedule = createAction({
+  auth: assembledAuth,
   name: 'get_user_schedule',
   displayName: 'Get User Schedule',
   description: 'Retrieves user\'s schedule for specified period.',
@@ -29,7 +31,7 @@ export const getUserSchedule = createAction({
     });
 
     const response = await assembledCommon.makeRequest(
-      context.auth as string,
+      context.auth.secret_text,
       HttpMethod.GET,
       `/users/${user_id}/schedule?${params.toString()}`
     );

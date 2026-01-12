@@ -31,7 +31,7 @@ export const createConversationWithSingleAgent = createAction({
     const { agentId, type } = propsValue;
 
     const response = await makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.POST,
       `/agents/${agentId}/conversations/new`,
       {

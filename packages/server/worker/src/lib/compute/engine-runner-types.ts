@@ -4,10 +4,7 @@ import {
     PieceMetadata,
     PropertyType,
 } from '@activepieces/pieces-framework'
-import { ActivepiecesError, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowRunResponse, FlowVersionState, SourceCode, TriggerHookType } from '@activepieces/shared'
-import chalk from 'chalk'
-import { FastifyBaseLogger } from 'fastify'
-
+import { EngineResponseStatus, ExecuteActionResponse, ExecuteToolResponse, ExecuteTriggerResponse, ExecuteValidateAuthResponse, FlowVersionState, SourceCode, TriggerHookType } from '@activepieces/shared'
 
 export type CodeArtifact = {
     name: string
@@ -17,7 +14,7 @@ export type CodeArtifact = {
 }
 
 
-export type EngineHelperFlowResult = FlowRunResponse
+export type EngineHelperFlowResult = Record<string, never>
 
 export type EngineHelperTriggerResult<
     T extends TriggerHookType = TriggerHookType,
@@ -33,6 +30,8 @@ export type EngineHelperPropResult = {
 
 export type EngineHelperActionResult = ExecuteActionResponse
 
+export type EngineHelperToolResult = ExecuteToolResponse
+
 export type EngineHelperValidateAuthResult = ExecuteValidateAuthResponse
 
 export type EngineHelperCodeResult = ExecuteActionResponse
@@ -42,6 +41,7 @@ export type EngineHelperResult =
     | EngineHelperFlowResult
     | EngineHelperTriggerResult
     | EngineHelperPropResult
+    | EngineHelperToolResult
     | EngineHelperCodeResult
     | EngineHelperExtractPieceInformation
     | EngineHelperActionResult
@@ -52,6 +52,7 @@ export type EngineHelperResponse<Result extends EngineHelperResult> = {
     result: Result
     standardError: string
     standardOutput: string
+    delayInSeconds?: number
 }
 
 
@@ -61,59 +62,4 @@ export type ExecuteSandboxResult = {
     verdict: EngineResponseStatus
     standardOutput: string
     standardError: string
-}
-
-
-export const engineRunnerUtils = (log: FastifyBaseLogger) => ({
-    async readResults<Result extends EngineHelperResult>(sandboxResponse: ExecuteSandboxResult): Promise<EngineHelperResponse<Result>> {
-
-
-        sandboxResponse.standardOutput.split('\n').forEach((f) => {
-            if (f.trim().length > 0) log.debug({}, chalk.yellow(f))
-        })
-
-        sandboxResponse.standardError.split('\n').forEach((f) => {
-            if (f.trim().length > 0) log.debug({}, chalk.red(f))
-        })
-
-        if (sandboxResponse.verdict === EngineResponseStatus.TIMEOUT) {
-            throw new ActivepiecesError({
-                code: ErrorCode.EXECUTION_TIMEOUT,
-                params: {
-                    standardOutput: sandboxResponse.standardOutput,
-                    standardError: sandboxResponse.standardError,
-                },
-            })
-        }
-        if (sandboxResponse.verdict === EngineResponseStatus.MEMORY_ISSUE) {
-            throw new ActivepiecesError({
-                code: ErrorCode.MEMORY_ISSUE,
-                params: {},
-            })
-        }
-
-        const result = tryParseJson(sandboxResponse.output) as EngineHelperFlowResult
-
-        const response = {
-            status: sandboxResponse.verdict,
-            result: result as Result,
-            standardError: sandboxResponse.standardError,
-            standardOutput: sandboxResponse.standardOutput,
-        }
-
-        log.trace(response, '[EngineHelper#response] response')
-
-        return response
-    },
-})
-
-
-
-function tryParseJson(value: unknown): unknown {
-    try {
-        return JSON.parse(value as string)
-    }
-    catch (e) {
-        return value
-    }
 }

@@ -1,0 +1,66 @@
+{
+  "name": "pieces-ask-handle",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/ask-handle/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/ask-handle",
+        "tsConfig": "packages/pieces/community/ask-handle/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/ask-handle/package.json",
+        "main": "packages/pieces/community/ask-handle/src/index.ts",
+        "assets": [
+          "packages/pieces/community/ask-handle/*.md",
+          {
+            "input": "packages/pieces/community/ask-handle/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    },
+    "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/ask-handle",
+        "command": "bun install --no-save --silent"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  }
+}

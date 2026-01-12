@@ -12,8 +12,8 @@ import {
 import { useViewport } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useState } from 'react';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/ui/use-toast';
 import {
   FlowOperationType,
   StepLocationRelativeToParent,
@@ -25,13 +25,7 @@ import { useBuilderStateContext } from '../builder-hooks';
 import StepDragOverlay from './step-drag-overlay';
 import { ApButtonData } from './utils/types';
 
-const FlowDragLayer = ({
-  children,
-  cursorPosition,
-}: {
-  children: React.ReactNode;
-  cursorPosition: { x: number; y: number };
-}) => {
+const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const viewport = useViewport();
   const [previousViewPort, setPreviousViewPort] = useState(viewport);
   const [
@@ -108,8 +102,7 @@ const FlowDragLayer = ({
           droppedAtNodeData.parentStepName,
         );
         if (isPartOfInnerFlow) {
-          toast({
-            title: t('Invalid Move'),
+          toast(t('Invalid Move'), {
             description: t(
               'The destination location is a child of the dragged step',
             ),
@@ -156,12 +149,7 @@ const FlowDragLayer = ({
         <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
 
-      {draggedStep && (
-        <StepDragOverlay
-          cursorPosition={cursorPosition}
-          step={draggedStep}
-        ></StepDragOverlay>
-      )}
+      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
     </>
   );
 };

@@ -17,7 +17,7 @@ export const deleteContactAction = createAction({
   async run(context) {
     const id = context.propsValue.id!;
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
     return await client.deleteAction(
       FlowluModule.CRM,

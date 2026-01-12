@@ -1,7 +1,7 @@
 import { 
     FlowVersion, 
     isNil,
-    LATEST_SCHEMA_VERSION,
+    LATEST_FLOW_SCHEMA_VERSION,
     spreadIfDefined,
 } from '@activepieces/shared'
 import { system } from '../../helper/system/system'
@@ -14,7 +14,7 @@ const log = system.globalLogger()
 export const flowVersionMigrationService = {
     async migrate(flowVersion: FlowVersion): Promise<FlowVersion> {
         // Early exit if already at latest version
-        if (flowVersion.schemaVersion === LATEST_SCHEMA_VERSION) {
+        if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
             return flowVersion
         }
 

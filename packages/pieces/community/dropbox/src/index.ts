@@ -55,7 +55,7 @@ export const dropbox = createPiece({
       baseUrl: () => 'https://api.dropboxapi.com/2',
       auth: dropboxAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${auth.access_token}`,
       }),
     }),
   ],

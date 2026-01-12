@@ -26,7 +26,7 @@ export const getDataDefinition = createAction({
         `v3/forms/${formId}/data/${dataId}?format=4&used-with-actives-pieces=`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
     });
     if (response.status === 200) {

@@ -15,16 +15,24 @@ export const createPost = createAction({
       required: true,
     }),
     topic_id: Property.Dropdown({
+      auth: discourseAuth,
       description: 'ID of the topic to post in',
       displayName: 'Topic ID',
       required: true,
-      options: async ({ auth }: any) => {
+      options: async ({ auth }) => {
+        if (!auth) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please connect your discourse account',
+          };
+        }
         const response = await httpClient.sendRequest({
           method: HttpMethod.GET,
-          url: `${auth.website_url.trim()}/latest.json`,
+          url: `${auth.props.website_url.trim()}/latest.json`,
           headers: {
-            'Api-Key': auth.api_key,
-            'Api-Username': auth.api_username,
+            'Api-Key': auth.props.api_key,
+            'Api-Username': auth.props.api_username,
           },
         });
         const options = response.body['topic_list']['topics'].map(
@@ -49,10 +57,10 @@ export const createPost = createAction({
 
     return await httpClient.sendRequest({
       method: HttpMethod.POST,
-      url: `${context.auth.website_url.trim()}/posts.json`,
+      url: `${context.auth.props.website_url.trim()}/posts.json`,
       headers: {
-        'Api-Key': context.auth.api_key,
-        'Api-Username': context.auth.api_username,
+        'Api-Key': context.auth.props.api_key,
+        'Api-Username': context.auth.props.api_username,
       },
       body: {
         raw: raw,

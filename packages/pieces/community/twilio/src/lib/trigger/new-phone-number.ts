@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   PiecePropValueSchema,
   TriggerStrategy,
@@ -39,7 +40,7 @@ interface IncomingPhoneNumbersResponse {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof twilioAuth>,
+  AppConnectionValueForAuthProperty<typeof twilioAuth>,
   Record<string, unknown>
 > = {
   strategy: DedupeStrategy.TIMEBASED,

@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
 
-async function executeStorageAppend(context: ActionContext<PieceAuthProperty, {
+async function executeStorageAppend(context: ActionContext<PieceAuthProperty | undefined, {
   key: ShortTextProperty<true>;
   value: ShortTextProperty<true>;
   separator: ShortTextProperty<false>;

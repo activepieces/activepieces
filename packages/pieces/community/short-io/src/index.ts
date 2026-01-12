@@ -34,7 +34,7 @@ export const shortIo = createPiece({
       auth: shortIoAuth,
       baseUrl: () => 'https://api.short.io',
       authMapping: async (auth) => {
-        const { apiKey } = auth as { apiKey: string };
+        const { apiKey } = auth.props;
         return {
           Authorization: apiKey,
         };

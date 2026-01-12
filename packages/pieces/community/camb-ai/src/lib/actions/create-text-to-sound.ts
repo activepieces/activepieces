@@ -47,7 +47,7 @@ export const createTextToSound = createAction({
             method: HttpMethod.POST,
             url: `${API_BASE_URL}/text-to-sound`,
             headers: {
-                'x-api-key': auth,
+                'x-api-key': auth.secret_text,
                 'Content-Type': 'application/json'
             },
             body: payload,
@@ -63,7 +63,7 @@ export const createTextToSound = createAction({
                 method: HttpMethod.GET,
                 url: `${API_BASE_URL}/text-to-sound/${taskId}`,
                 headers: {
-                    'x-api-key': auth,
+                    'x-api-key': auth.secret_text,
                 },
             });
 
@@ -92,7 +92,7 @@ export const createTextToSound = createAction({
         const audioResponse = await httpClient.sendRequest({
             method: HttpMethod.GET,
             url: `${API_BASE_URL}/text-to-sound-result/${run_id}`,
-            headers: { 'x-api-key': auth },
+            headers: { 'x-api-key': auth.secret_text },
             responseType: 'arraybuffer',
         });
 

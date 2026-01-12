@@ -24,7 +24,7 @@ export const voiceChange = createAction({
       required: false,
     }),
     format: Property.StaticDropdown({
-      displayName: "Output Format",
+      displayName:  "Output Format",
       description: "Format of the generated audio file",
       required: false,
       options: {
@@ -109,7 +109,7 @@ export const voiceChange = createAction({
 
       // API request
       const response = await makeRequest(
-        auth as string,
+        auth.secret_text,
         HttpMethod.POST,
         "/voice-changer/convert",
         formData,

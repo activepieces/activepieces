@@ -1,10 +1,20 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "cli": {
+    "packageManager": "bun"
+  },
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["production", "^production"],
       "cache": true
+    },
+    "prebuild": {
+      "cache": true,
+      "inputs": [
+        "{projectRoot}/package.json",
+        { "runtime": "if [ \"$AP_ENVIRONMENT\" = \"dev\" ]; then echo dev; else echo $(date +%s%N); fi" }
+      ]
     },
     "lint": {
       "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
@@ -38,6 +48,11 @@
     },
     "e2e": {
       "cache": true
+    },
+    "@nx/esbuild:esbuild": {
+      "cache": true,
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"]
     }
   },
   "namedInputs": {

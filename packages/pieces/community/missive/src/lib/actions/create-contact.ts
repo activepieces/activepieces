@@ -180,7 +180,7 @@ export const createContact = createAction({
             }
         }),
         memberships: Property.DynamicProperties({
-            displayName: 'Memberships',
+    auth: missiveAuth,            displayName: 'Memberships',
             description: 'Organizations and groups the contact belongs to',
             required: false,
             refreshers: ['contact_book'],
@@ -207,7 +207,7 @@ export const createContact = createAction({
 
                 try {
                     const orgsResponse = await missiveCommon.apiCall({
-                        auth: auth as any as string,
+                        auth: auth,
                         method: HttpMethod.GET,
                         resourceUri: '/organizations',
                     });
@@ -224,7 +224,7 @@ export const createContact = createAction({
                 if (contact_book) {
                     try {
                         const groupsResponse = await missiveCommon.apiCall({
-                            auth: auth as any as string,
+                            auth: auth,
                             method: HttpMethod.GET,
                             resourceUri: `/contact_groups?contact_book=${contact_book}&kind=group`,
                         });

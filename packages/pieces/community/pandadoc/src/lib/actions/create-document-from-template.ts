@@ -149,7 +149,7 @@ export const createDocumentFromTemplate = createAction({
     }
 
     return await pandadocClient.makeRequest(
-      auth as string,
+      auth.secret_text,
       HttpMethod.POST,
       '/documents',
       body

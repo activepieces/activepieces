@@ -10,6 +10,7 @@ import {
 
 export const conversationIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -46,6 +47,7 @@ export const conversationIdProp = (displayName: string, required = true) =>
 
 export const tagIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -80,6 +82,7 @@ export const tagIdProp = (displayName: string, required = true) =>
 
 export const companyIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -114,6 +117,7 @@ export const companyIdProp = (displayName: string, required = true) =>
 
 export const contactIdProp = (displayName: string, contactType: string | null, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -150,6 +154,7 @@ export const contactIdProp = (displayName: string, contactType: string | null, r
 
 export const collectionIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -184,6 +189,7 @@ export const collectionIdProp = (displayName: string, required = true) =>
 
 export const ticketTypeIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -224,6 +230,7 @@ export const ticketTypeIdProp = (displayName: string, required = true) =>
 
 export const ticketStateIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: [],
@@ -268,6 +275,7 @@ export const ticketStateIdProp = (displayName: string, required = true) =>
 
 export const ticketIdProp = (displayName: string, required = true) =>
 	Property.Dropdown({
+		auth: intercomAuth,
 		displayName,
 		required,
 		refreshers: ['ticketTypeId'],
@@ -310,6 +318,7 @@ export const ticketIdProp = (displayName: string, required = true) =>
 
 export const ticketPropertiesProp = (displayName: string, required = true) =>
 	Property.DynamicProperties({
+		auth: intercomAuth,
 		displayName,
 		refreshers: ['ticketTypeId'],
 		required,

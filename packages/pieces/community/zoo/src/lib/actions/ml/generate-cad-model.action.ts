@@ -38,7 +38,7 @@ export const generateCadModelAction = createAction({
       method: HttpMethod.POST,
       url: `https://api.zoo.dev/ai/text-to-cad/${propsValue.outputFormat}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         output_kcl: propsValue.outputKcl,

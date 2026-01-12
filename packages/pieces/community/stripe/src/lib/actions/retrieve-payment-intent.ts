@@ -24,7 +24,7 @@ export const stripeRetrievePaymentIntent = createAction({
       url: `${stripeCommon.baseUrl}/payment_intents/${payment_intent_id}`,
       authentication: {
         type: AuthenticationType.BEARER_TOKEN,
-        token: context.auth,
+        token: context.auth.secret_text,
       },
     });
 

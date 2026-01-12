@@ -19,6 +19,7 @@ export const enableWarmup = createAction({
     'Enable warmup for specific email accounts where it is currently disabled.',
   props: {
     accountId: Property.Dropdown({
+  auth: ReachinboxAuth,
       displayName: 'Select Email Accounts to Enable Warmup',
       description: 'Choose email accounts that have warmup disabled.',
       required: true,
@@ -75,7 +76,7 @@ export const enableWarmup = createAction({
         method: HttpMethod.POST,
         url: `${reachinboxCommon.baseUrl}account/warmup/enable`,
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
           'Content-Type': 'application/json',
         },
         body,

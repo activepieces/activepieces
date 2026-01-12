@@ -39,6 +39,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -76,6 +77,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -137,6 +139,7 @@ describe('OAuth App API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 

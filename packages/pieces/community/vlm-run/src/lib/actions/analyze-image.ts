@@ -18,11 +18,11 @@ export const analyzeImage = createAction({
 
 
     const response = await vlmRunCommon.analyzeImage({
-      apiKey,
+      apiKey:apiKey.secret_text,
       images: [image],
       domain,
     });
 
-    return await vlmRunCommon.getresponse(apiKey, response.id, response.status);
+    return await vlmRunCommon.getresponse(apiKey.secret_text, response.id, response.status);
   },
 });

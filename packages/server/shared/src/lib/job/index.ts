@@ -6,6 +6,8 @@ import {
 } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 
+export * from './runs-metadata-queue-factory'
+
 export enum JobStatus {
     COMPLETED = 'COMPLETED',
     FAILED = 'FAILED',
@@ -13,6 +15,7 @@ export enum JobStatus {
 
 export enum QueueName {
     WORKER_JOBS = 'workerJobs',
+    RUNS_METADATA = 'runsMetadata',
 }
 
 export const getPlatformQueueName = (platformId: string): string => {
@@ -27,7 +30,6 @@ export const ApQueueJob = Type.Object({
 })
 
 export type ApQueueJob = Static<typeof ApQueueJob>
-
 export const SendEngineUpdateRequest = Type.Object({
     workerServerId: Type.String(),
     requestId: Type.String(),
@@ -68,7 +70,6 @@ export type SubmitPayloadsRequest = Static<typeof SubmitPayloadsRequest>
 export function getEngineTimeout(operationType: EngineOperationType, flowTimeoutSandbox: number, triggerTimeoutSandbox: number): number {
     switch (operationType) {
         case EngineOperationType.EXECUTE_FLOW:
-        case EngineOperationType.EXECUTE_TOOL:
             return flowTimeoutSandbox
         case EngineOperationType.EXECUTE_PROPERTY:
         case EngineOperationType.EXECUTE_VALIDATE_AUTH:

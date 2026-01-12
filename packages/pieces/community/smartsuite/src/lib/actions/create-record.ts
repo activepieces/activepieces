@@ -20,8 +20,8 @@ export const createRecord = createAction({
 		const tableResponse = await smartSuiteApiCall<{
 			structure: TableStucture[];
 		}>({
-			apiKey: auth.apiKey,
-			accountId: auth.accountId,
+			apiKey: auth.props.apiKey,
+			accountId: auth.props.accountId,
 			method: HttpMethod.GET,
 			resourceUri: `/applications/${tableId}`,
 		});
@@ -31,8 +31,8 @@ export const createRecord = createAction({
 
 		try {
 			const response = await smartSuiteApiCall<Record<string, any>>({
-				apiKey: auth.apiKey,
-				accountId: auth.accountId,
+				apiKey: auth.props.apiKey,
+				accountId: auth.props.accountId,
 				method: HttpMethod.POST,
 				resourceUri: `/applications/${tableId}/records/`,
 				body: formattedFields,

@@ -88,7 +88,7 @@ const NewConnectionDialog = React.memo(
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <ScrollArea className="flex-grow overflow-y-auto ">
+            <ScrollArea className="grow overflow-y-auto ">
               <div className="grid grid-cols-4 gap-4">
                 {(isLoading ||
                   (filteredPieces && filteredPieces.length === 0)) && (

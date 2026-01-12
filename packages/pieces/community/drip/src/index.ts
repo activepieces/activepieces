@@ -29,7 +29,7 @@ export const drip = createPiece({
       baseUrl: () => `https://api.getdrip.com/v2/`,
       auth: dripAuth,
       authMapping: async (auth) => ({
-        Authorization: `Basic ${Buffer.from(auth as string).toString(
+        Authorization: `Basic ${Buffer.from(auth.secret_text).toString(
           'base64'
         )}`,
       }),

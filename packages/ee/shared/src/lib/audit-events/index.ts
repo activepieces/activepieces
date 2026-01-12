@@ -111,9 +111,11 @@ export const FlowRunEvent = Type.Object({
             'startTime',
             'finishTime',
             'duration',
+            'triggeredBy',
             'environment',
             'flowId',
             'flowVersionId',
+            'stepNameToTest',
             'flowDisplayName',
             'status',
         ]),
@@ -370,6 +372,10 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         }
         case FlowOperationType.UPDATE_METADATA:
             return `Updated metadata for flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_MINUTES_SAVED:
+            return `Updated minutes saved for flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_OWNER:
+            return `Updated owner for flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.ownerId}".`
         case FlowOperationType.MOVE_BRANCH:
             return `Moved branch number ${
                 event.data.request.request.sourceBranchIndex + 1

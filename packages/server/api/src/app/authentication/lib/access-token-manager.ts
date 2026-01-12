@@ -76,7 +76,7 @@ export const accessTokenManager = {
     },
 }
 
-async function assertUserSession(decoded: Principal): Promise<void> {
+async function assertUserSession(decoded: Principal | Principal): Promise<void> {
     if (decoded.type !== PrincipalType.USER) return
     
     const user = await userService.getOneOrFail({ id: decoded.id })

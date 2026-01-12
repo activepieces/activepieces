@@ -21,7 +21,7 @@ export const flowExecutionCache = (log: FastifyBaseLogger) => ({
         }
         return cachedValue
     },
-    delete: async (flowId: FlowId): Promise<void> => {
+    invalidate: async (flowId: FlowId): Promise<void> => {
         await distributedStore.delete(flowExecutionStateKey(flowId))
     },
 })

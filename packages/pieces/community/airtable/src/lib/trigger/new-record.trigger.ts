@@ -4,6 +4,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   StaticPropsValue,
   TriggerStrategy,
   createTrigger,
@@ -17,11 +18,11 @@ const props = {
   viewId: airtableCommon.views,
 };
 
-const polling: Polling<string, StaticPropsValue<typeof props>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof airtableAuth>, StaticPropsValue<typeof props>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue }) => {
     const records = await airtableCommon.getTableSnapshot({
-      personalToken: auth,
+      personalToken: auth.secret_text,
       baseId: propsValue.base,
       tableId: propsValue.tableId!,
       limitToView: propsValue.viewId,
@@ -42,21 +43,17 @@ export const airtableNewRecordTrigger = createTrigger({
   sampleData: {},
   type: TriggerStrategy.POLLING,
   async test(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.test(polling, { store, auth, propsValue, files });
+    return await pollingHelper.test(polling, context);
   },
   async onEnable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+    await pollingHelper.onEnable(polling, context);
   },
 
   async onDisable(context) {
-    const { store, auth, propsValue } = context;
-    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+    await pollingHelper.onDisable(polling, context);
   },
 
   async run(context) {
-    const { store, auth, propsValue, files } = context;
-    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
+    return await pollingHelper.poll(polling, context);
   },
 });

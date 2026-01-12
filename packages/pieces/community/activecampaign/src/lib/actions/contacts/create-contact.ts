@@ -42,7 +42,7 @@ export const createContactAction = createAction({
 			createContactParams.fieldValues.push({ field: key, value: value });
 		});
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		return await client.createContact(createContactParams);
 	},
 });

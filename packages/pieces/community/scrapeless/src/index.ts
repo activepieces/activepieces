@@ -71,7 +71,7 @@ export const scrapeless = createPiece({
       baseUrl:()=>'https://api.scrapeless.com/api/v1',
       authMapping:async(auth)=>{
         return{
-          'x-api-token':auth as string
+          'x-api-token':auth.secret_text
         }
       }
     })

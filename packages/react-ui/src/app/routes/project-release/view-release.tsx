@@ -17,7 +17,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { isNil, ProjectReleaseType } from '@activepieces/shared';
 
 import { ApplyButton } from './apply-plan';
@@ -93,6 +94,7 @@ const ViewRelease = () => {
                       variant="ghost"
                       className="size-8 p-0"
                       request={{
+                        projectId: authenticationSession.getProjectId()!,
                         type: ProjectReleaseType.ROLLBACK,
                         projectReleaseId: release?.id || '',
                       }}

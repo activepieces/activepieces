@@ -12,6 +12,7 @@ export const updatePipelineRecord = createAction({
   props: {
     pipelineRecordId: pipelineRecordsDropdown,
     pipelineDetails: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Pipeline Details',
       description: 'These fields will be prepopulated with pipeline data',
       refreshers: ['pipelineRecordId', 'auth'],

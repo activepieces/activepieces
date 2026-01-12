@@ -1,0 +1,7 @@
+{
+  "New Submission": "Nieuwe inzending",
+  "Triggers when form receives a new submission.": "Triggert wanneer het formulier een nieuwe uitwerking ontvangt.",
+  "Markdown": "Markdown",
+  "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenereer sample data & triggers gepubliceerde flow.\n\n",
+  "\nTo set up the trigger for new form submissions, follow these steps:\n\n1. Go to the \"Dashboard\" section.\n2. Select the form where you want the trigger to occur.\n3. Click on the \"Settings\" section.\n4. Find the \"Webhook URL\" field and paste above URL there.  \n6. Click on \"Save\".\n": "\nOm de trigger voor nieuwe formulierinzendingen in te stellen, volg je de volgende stappen:\n\n1. Ga naar de \"Dashboard\" sectie.\n2. Selecteer het formulier waar de trigger plaats moet vinden.\n3. Klik op de \"Instellingen\" sectie.\n4. Zoek het \"Webhook URL\" veld en plak daar boven de URL.  \n6. Klik op \"Opslaan\".\n"
+}

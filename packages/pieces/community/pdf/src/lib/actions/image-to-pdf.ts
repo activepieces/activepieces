@@ -38,9 +38,9 @@ export const imageToPdf = createAction({
 			let result: PDFImage | null = null;
 
 			if (imageExtension === 'png') {
-				result = await pdfDoc.embedPng(image.data);
+				result = await pdfDoc.embedPng(image.data as any);
 			} else if (imageExtension === 'jpg' || imageExtension === 'jpeg') {
-				result = await pdfDoc.embedJpg(image.data);
+				result = await pdfDoc.embedJpg(image.data as any);
 			} else {
 				throw new Error(`Unsupported image format: ${imageExtension}`);
 			}
@@ -49,7 +49,7 @@ export const imageToPdf = createAction({
 				throw new Error('Failed to embed image');
 			}
 
-			const exifOrientation = getImageOrientation(image.data.buffer);
+			const exifOrientation = getImageOrientation(image.data.buffer as any);
 			const orientationCorrection = getOrientationCorrection(exifOrientation);
 
 			let scaledImage, correctedWidth, correctedHeight;

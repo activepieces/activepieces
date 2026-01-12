@@ -40,7 +40,7 @@ export const addUpdateSubscriberAction = createAction({
       formData.append(`merge_fields[${key}]`, value.toString());
     });
 
-    formData.append('auth_token', context.auth);
+    formData.append('auth_token', context.auth.secret_text);
     formData.append('list_id', listId.toString());
     formData.append('double_option', double_option ? '1' : '0');
     formData.append('update_subscriber', update_subscriber ? '1' : '0');

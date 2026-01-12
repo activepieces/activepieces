@@ -48,7 +48,7 @@ This single webhook will now send all events to Activepieces. This trigger will 
     // Does nothing
   },
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
     const signatureHeader = context.payload.headers['x-webhook-signature'];
     const body = context.payload.body as any;
 

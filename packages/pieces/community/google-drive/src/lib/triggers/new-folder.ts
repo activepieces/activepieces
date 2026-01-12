@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   createTrigger,
 } from '@activepieces/pieces-framework';
@@ -14,7 +15,7 @@ import { googleDriveAuth } from '../..';
 import { common } from '../common';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleDriveAuth>,
+  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
   { parentFolder?: any,include_team_drives?:boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

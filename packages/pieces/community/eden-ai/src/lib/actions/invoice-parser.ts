@@ -3,6 +3,7 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
+import { edenAiAuth } from '../..';
 
 const FINANCIAL_PARSER_PROVIDERS = [
   { label: 'Affinda', value: 'affinda' },
@@ -169,11 +170,13 @@ function normalizeFinancialParserResponse(provider: string, response: any) {
 }
 
 export const invoiceParserAction = createAction({
+  auth: edenAiAuth,
   name: 'invoice_parser',
   displayName: 'Invoice Parser',
   description: 'Extract structured invoice data from files using Eden AI. Supports multiple providers, languages, and document types.',
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for financial document parsing.',
       required: true,
@@ -186,6 +189,7 @@ export const invoiceParserAction = createAction({
       required: true,
     }),
     document_type: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Document Type',
       description: 'The type of financial document to parse.',
       required: false,
@@ -194,6 +198,7 @@ export const invoiceParserAction = createAction({
       defaultValue: 'invoice',
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Document Language',
       description: 'The language of the document. Choose "Auto Detection" if unsure.',
       required: false,
@@ -218,6 +223,7 @@ export const invoiceParserAction = createAction({
       defaultValue: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -282,7 +288,7 @@ export const invoiceParserAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/ocr/financial_parser',
         body,

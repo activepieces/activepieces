@@ -166,11 +166,7 @@ export const BranchListItem = ({
         <div className="min-w-[16px]">
           <Tooltip>
             <TooltipTrigger asChild>
-              <InvalidStepIcon
-                size={16}
-                viewBox="0 0 16 16"
-                className="stroke-0 animate-fade shrink-0"
-              ></InvalidStepIcon>
+              <InvalidStepIcon className="h-4 w-4 shrink-0"></InvalidStepIcon>
             </TooltipTrigger>
             <TooltipContent side="bottom">
               {t('Incomplete settings')}

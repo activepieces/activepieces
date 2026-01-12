@@ -264,7 +264,7 @@ export const runBqlQuery = createAction({
         }
 
         const response = await browserlessCommon.apiCall({
-            auth: context.auth,
+            auth: context.auth.props,
             method: HttpMethod.POST,
             resourceUri,
             body: requestBody,

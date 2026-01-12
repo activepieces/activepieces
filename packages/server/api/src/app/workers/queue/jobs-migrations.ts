@@ -1,10 +1,11 @@
 import { apId, JobData, UploadLogsBehavior, WorkerJobType } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogsService } from '../../flows/flow-run/logs/flow-run-logs-service'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
 import { system } from '../../helper/system/system'
 
 const enrichFlowIdAndLogsUrl: JobMigration = {
-    targetSchemaVersion: 5,
+    runAtSchemaVersion: 0,
     migrate: async (job: JobData) => {
         if (job.jobType === WorkerJobType.EXECUTE_FLOW) {
             const flowVersion = await flowVersionService(system.globalLogger()).getOne(job.flowVersionId)
@@ -18,14 +19,14 @@ const enrichFlowIdAndLogsUrl: JobMigration = {
             return {
                 ...job,
                 flowId: flowVersion!.flowId,
-                schemaVersion: 5,
+                schemaVersion: 4,
                 logsFileId,
                 logsUploadUrl,
             }
         }
         return {
             ...job,
-            schemaVersion: 5,
+            schemaVersion: 4,
         }
     },
 }
@@ -33,23 +34,30 @@ const enrichFlowIdAndLogsUrl: JobMigration = {
 const migrations: JobMigration[] = [
     enrichFlowIdAndLogsUrl,
 ]
-
-export const jobMigrations = {
+export const jobMigrations = (log: FastifyBaseLogger) => ({
     apply: async (job: Record<string, unknown>): Promise<JobData> => {
-
-        const jobData = job as JobData
+        let jobData = job as JobData
+        log.info({
+            schemaVersion: jobData.schemaVersion,
+            jobType: jobData.jobType,
+            projectId: jobData.projectId,
+        }, '[jobMigrations] Apply migration for job')
         for (const migration of migrations) {
-            const schemaVersion = 'schemaVersion' in jobData ? jobData.schemaVersion : 0
-            if (schemaVersion === migration.targetSchemaVersion) {
-                return migration.migrate(jobData)
+            const schemaVersion = getSchemaVersion(jobData)
+            if (schemaVersion === migration.runAtSchemaVersion) {
+                jobData = await migration.migrate(jobData)
             }
         }
         return jobData
     },
+})
+
+function getSchemaVersion(job: JobData): number {
+    return 'schemaVersion' in job ? job.schemaVersion : 0
 }
 
 
 type JobMigration = {
-    targetSchemaVersion: number
+    runAtSchemaVersion: number
     migrate: (job: JobData) => Promise<JobData>
 }

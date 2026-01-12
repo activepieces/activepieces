@@ -111,7 +111,7 @@ export const createInvoiceAction = createAction({
 
     const request: HttpRequest = {
       method: HttpMethod.POST,
-      url: `${context.auth.environment}/v1/invoices`,
+      url: `${context.auth.props.environment}/v1/invoices`,
       authentication: { type: AuthenticationType.BEARER_TOKEN, token },
       body,
     };

@@ -9,7 +9,7 @@ export default createAction({
   description: 'Fetches teams from clockodo',
   props: {},
   async run({ auth }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.listTeams();
     return {
       teams: res.teams,

@@ -5,9 +5,10 @@ import {
   StoreScope,
   createAction,
 } from '@activepieces/pieces-framework';
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import {
   areSheetIdsValid,
+  GoogleSheetsAuthValue,
   googleSheetsCommon,
   mapRowsToHeaderNames,
 } from '../common/common';
@@ -20,7 +21,7 @@ import { commonProps } from '../common/props';
 
 async function getRows(
   store: Store,
-  auth: PiecePropValueSchema<typeof googleSheetsAuth>,
+  auth: GoogleSheetsAuthValue,
   spreadsheetId: string,
   sheetId: number,
   memKey: string,
@@ -30,16 +31,8 @@ async function getRows(
   useHeaderNames: boolean,
   testing: boolean
 ) {
-  const sheetName = await googleSheetsCommon.findSheetName(
-    auth.access_token,
-    spreadsheetId,
-    sheetId
-  );
-
   const sheetGridRange = await getWorkSheetGridSize(auth,spreadsheetId,sheetId);
   const existingGridRowCount = sheetGridRange.rowCount ??0;
-	// const existingGridColumnCount = sheetGridRange.columnCount??26;
-
   const memVal = await store.get(memKey, StoreScope.FLOW);
 
   let startingRow;
@@ -70,7 +63,7 @@ async function getRows(
   if (testing == false) await store.put(memKey, endRow, StoreScope.FLOW);
 
   const row = await googleSheetsCommon.getGoogleSheetRows({
-    accessToken: auth.access_token,
+    auth,
     sheetId: sheetId,
     spreadsheetId: spreadsheetId,
     rowIndex_s: startingRow,
@@ -81,7 +74,7 @@ async function getRows(
   if (row.length == 0) {
     const allRows = await googleSheetsCommon.getGoogleSheetRows({
       spreadsheetId: spreadsheetId,
-      accessToken: auth.access_token,
+      auth,
       sheetId: sheetId,
       rowIndex_s: undefined,
       rowIndex_e: undefined,
@@ -97,7 +90,7 @@ async function getRows(
     spreadsheetId,
     sheetId,
     headerRow,
-    auth.access_token
+    auth,
   );
   
   return finalRows;

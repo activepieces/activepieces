@@ -31,7 +31,7 @@ export function createHedyWebhookTrigger(config: TriggerConfig) {
     },
     sampleData: config.sampleData,
     async onEnable(context) {
-      const client = new HedyApiClient(context.auth as string);
+      const client = new HedyApiClient(context.auth.secret_text);
       const webhookUrl = context.webhookUrl;
 
       if (!webhookUrl) {
@@ -67,7 +67,7 @@ export function createHedyWebhookTrigger(config: TriggerConfig) {
         return;
       }
 
-      const client = new HedyApiClient(context.auth as string);
+      const client = new HedyApiClient(context.auth.secret_text);
       try {
         await client.request({
           method: HttpMethod.DELETE,

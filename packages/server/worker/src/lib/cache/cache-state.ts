@@ -1,11 +1,9 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'path'
-import { fileSystemUtils } from '@activepieces/server-shared'
+import { fileSystemUtils, memoryLock } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import writeFileAtomic from 'write-file-atomic'
-import { workerDistributedLock } from '../utils/worker-redis'
-import { workerCache } from './worker-cache'
 
 type CacheMap = Record<string, string>
 
@@ -30,10 +28,8 @@ export const cacheState = (folderPath: string, log: FastifyBaseLogger) => {
                     state: value,
                 }
             }
-            const cacheId = await workerCache(log).getCacheId()
-            return workerDistributedLock(log).runExclusive({
-                key: `cache-save-${folderPath}-${cacheId}`,
-                timeoutInSeconds: 30 * 60,
+            return memoryLock.runExclusive({
+                key: `cache-save-${folderPath}`,
                 fn: async () => {
                     const cacheFromDisk = await readCacheFromFile(folderPath)
                     const valueFromDisk = cacheFromDisk[key]

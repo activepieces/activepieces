@@ -48,7 +48,7 @@ export default createAction({
         throw new Error('Collection is required');
       }
 
-      const databaseName = context.propsValue.database || context.auth.database;
+      const databaseName = context.propsValue.database || context.auth.props.database;
       if (!databaseName) {
         throw new Error('Database is required. Please specify it in the connection settings or in this action.');
       }

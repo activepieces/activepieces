@@ -35,12 +35,13 @@ export const deleteRecord = createAction({
             }
         }),
         recordId: Property.Dropdown({
+            auth: insightlyAuth,
             displayName: 'Record ID',
             description: 'Select the record to delete',
             required: true,
             refreshers: ['objectName', 'pod'],
             options: async ({ auth, objectName, pod }) => {
-                if (!objectName || !pod) {
+                if (!objectName || !pod || !auth) {
                     return {
                         disabled: true,
                         placeholder: 'Please select an object type and pod first',
@@ -49,7 +50,7 @@ export const deleteRecord = createAction({
                 }
 
                 const response = await makeInsightlyRequest(
-                    auth as string,
+                    auth,
                     `/${objectName}?top=100&brief=true`,
                     pod as string
                 );

@@ -3,7 +3,7 @@ import {
   PieceAuth,
   PiecePropValueSchema,
 } from '@activepieces/pieces-framework';
-import { PieceCategory } from '@activepieces/shared';
+import { AppConnectionType, PieceCategory } from '@activepieces/shared';
 import { findCompaniesAction, findCompanyByDomainAction } from './lib/actions/companies';
 import { findJobOpeningsAction, getAJobOpeningByIdAction, getCompanyJobOpeningsActions } from './lib/actions/jobs';
 import { makeClient } from './lib/common';
@@ -36,7 +36,10 @@ export const PredictLeadsAuth = PieceAuth.CustomAuth({
   validate: async ({ auth }) => {
     try {
       const client = makeClient(
-        auth as PiecePropValueSchema<typeof PredictLeadsAuth>
+        {
+          type: AppConnectionType.CUSTOM_AUTH,
+          props: auth,
+        }
       );
       await client.findCompanyByDomain("google.com");
       return {
@@ -77,7 +80,7 @@ export const predictLeads = createPiece({
       auth:PredictLeadsAuth,
       baseUrl:()=>'https://predictleads.com/api/v3',
       authMapping: async (auth)=>{
-        const authValue = auth as PiecePropValueSchema<typeof PredictLeadsAuth>;
+        const authValue = auth.props;
         return{
           'X-Api-Key':authValue.apiKey,
           'X-Api-Token':authValue.apiToken

@@ -1,26 +1,31 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { CancelTestTriggerRequestBody, PrincipalType, TestTriggerRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { testTriggerService } from '../../trigger/test-trigger/test-trigger-service'
 
 export const testTriggerController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', TestTriggerRequest, async (req) => {
-        const { projectId } = req.principal
         const { flowId, flowVersionId, testStrategy } = req.body
 
-        return testTriggerService(req.log).test({
+        const logWithContext = req.log.child({
             flowId,
             flowVersionId,
-            projectId,
+            projectId: req.projectId,
+            testStrategy,
+        })
+        return testTriggerService(logWithContext).test({
+            flowId,
+            flowVersionId,
+            projectId: req.projectId,
             testStrategy,
         })
     })
     app.delete('/', CancelTestTriggerRequest, async (req) => {
-        const { projectId } = req.principal
         const { flowId } = req.body
 
         return testTriggerService(req.log).cancel({
             flowId,
-            projectId,
+            projectId: req.projectId,
         })
     })
 }
@@ -30,7 +35,9 @@ const TestTriggerRequest = {
         body: TestTriggerRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }
 
@@ -39,6 +46,8 @@ const CancelTestTriggerRequest = {
         body: CancelTestTriggerRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER],
+        security: securityAccess.project([PrincipalType.USER], undefined, {
+            type: ProjectResourceType.BODY,
+        }),
     },
 }

@@ -10,52 +10,55 @@ export enum FilteredPieceBehavior {
     BLOCKED = 'BLOCKED',
 }
 
-export const SMTPInformation = Type.Object({
-    user: Type.String(),
-    senderEmail: Type.String(),
-    senderName: Type.String(),
-    password: Type.String(),
-    host: Type.String(),
-    port: Type.Number(),
-})
-export type SMTPInformation = Static<typeof SMTPInformation>
-
 export enum PlatformUsageMetric {
-    TASKS = 'tasks',
     AI_CREDITS = 'ai-credits',
     ACTIVE_FLOWS = 'active-flows',
-    USER_SEATS = 'user-seats',
-    PROJECTS = 'projects',
-    TABLES = 'tables',
-    MCPS = 'mcps',
 }
 
 export const PlatformUsage = Type.Object({
-    tasks: Type.Number(),
-    aiCredits: Type.Number(),
+    totalAiCreditsUsed: Type.Number(),
+    totalAiCreditsUsedThisMonth: Type.Number(),
+    aiCreditsRemaining: Type.Number(),
+    aiCreditsLimit: Type.Number(),
     activeFlows: Type.Number(),
-    tables: Type.Number(),
-    mcps: Type.Number(),
-    seats: Type.Number(),
-    projects: Type.Number(),
 })
 
 export type PlatformUsage = Static<typeof PlatformUsage>
 
-export enum AiOverageState {
-    NOT_ALLOWED = 'not_allowed',
-    ALLOWED_BUT_OFF = 'allowed_but_off',
-    ALLOWED_AND_ON = 'allowed_an_on',
+export enum PlanName {
+    STANDARD = 'standard',
+    ENTERPRISE = 'enterprise',
+    APPSUMO_ACTIVEPIECES_TIER1 = 'appsumo_activepieces_tier1',
+    APPSUMO_ACTIVEPIECES_TIER2 = 'appsumo_activepieces_tier2',
+    APPSUMO_ACTIVEPIECES_TIER3 = 'appsumo_activepieces_tier3',
+    APPSUMO_ACTIVEPIECES_TIER4 = 'appsumo_activepieces_tier4',
+    APPSUMO_ACTIVEPIECES_TIER5 = 'appsumo_activepieces_tier5',
+    APPSUMO_ACTIVEPIECES_TIER6 = 'appsumo_activepieces_tier6',
+}
+
+export enum TeamProjectsLimit {
+    NONE = 'NONE',
+    ONE = 'ONE',
+    UNLIMITED = 'UNLIMITED',
+}
+
+export enum AiCreditsAutoTopUpState {
+    ENABLED = 'enabled',
+    DISABLED = 'disabled',
 }
 
 export const PlatformPlan = Type.Object({
     ...BaseModelSchema,
+    // TODO: We have to use the enum when we finalize the plan names
     plan: Type.Optional(Type.String()),
     platformId: Type.String(),
-    tasksLimit: Type.Optional(Type.Number()),
     includedAiCredits: Type.Number(),
-    aiCreditsOverageLimit: Type.Optional(Type.Number()),
-    aiCreditsOverageState: Type.Optional(Type.String()),
+    lastFreeAiCreditsRenewalDate: Type.Optional(Type.String()),
+
+    aiCreditsAutoTopUpState: Type.Enum(AiCreditsAutoTopUpState),
+    aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
+    aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
+    maxAutoTopUpCreditsMonthly: Nullable(Type.Number()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),
@@ -69,13 +72,12 @@ export const PlatformPlan = Type.Object({
     managePiecesEnabled: Type.Boolean(),
     manageTemplatesEnabled: Type.Boolean(),
     customAppearanceEnabled: Type.Boolean(),
-    manageProjectsEnabled: Type.Boolean(),
+    teamProjectsLimit: Type.Enum(TeamProjectsLimit),
     projectRolesEnabled: Type.Boolean(),
     customDomainsEnabled: Type.Boolean(),
     globalConnectionsEnabled: Type.Boolean(),
     customRolesEnabled: Type.Boolean(),
     apiKeysEnabled: Type.Boolean(),
-    eligibleForTrial: Nullable(Type.String()),
     ssoEnabled: Type.Boolean(),
     licenseKey: Type.Optional(Type.String()),
     licenseExpiresAt: Type.Optional(Type.String()),
@@ -85,13 +87,8 @@ export const PlatformPlan = Type.Object({
     stripeSubscriptionStartDate: Type.Optional(Type.Number()),
     stripeSubscriptionEndDate: Type.Optional(Type.Number()),
     stripeSubscriptionCancelDate: Type.Optional(Type.Number()),
-    stripePaymentMethod: Type.Optional(Type.String()),
-    stripeBillingCycle: Type.String(),
 
-    userSeatsLimit: Nullable(Type.Number()),
     projectsLimit: Nullable(Type.Number()),
-    tablesLimit: Nullable(Type.Number()),
-    mcpLimit: Nullable(Type.Number()),
     activeFlowsLimit: Nullable(Type.Number()),
 
     dedicatedWorkers: Nullable(Type.Object({
@@ -120,7 +117,6 @@ export const Platform = Type.Object({
     * @deprecated Use projects filter instead.
     */
     filteredPieceBehavior: Type.Enum(FilteredPieceBehavior),
-    smtp: Nullable(SMTPInformation),
     cloudAuthEnabled: Type.Boolean(),
     enforceAllowedAuthDomains: Type.Boolean(),
     allowedAuthDomains: Type.Array(Type.String()),
@@ -132,7 +128,6 @@ export type Platform = Static<typeof Platform>
 
 export const PlatformWithoutSensitiveData = Type.Composite([Type.Object({
     federatedAuthProviders: Nullable(FederatedAuthnProviderConfigWithoutSensitiveData),
-    smtp: Nullable(Type.Object({})),
     plan: PlatformPlanLimits,
     usage: Type.Optional(PlatformUsage),
 }), Type.Pick(Platform, [
@@ -164,3 +159,4 @@ export const PlatformBillingInformation = Type.Object({
     cancelAt: Type.Optional(Type.Number()),
 })
 export type PlatformBillingInformation = Static<typeof PlatformBillingInformation>
+

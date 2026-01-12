@@ -21,7 +21,7 @@ export const moveTask = createAction({
       url:`${BASE_URL}/tasks/${taskId}/move`,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
       body: {
         workspaceId:newWorkspaceId

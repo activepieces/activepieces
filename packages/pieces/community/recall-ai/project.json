@@ -1,0 +1,66 @@
+{
+  "name": "pieces-recall-ai",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/recall-ai/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/recall-ai",
+        "tsConfig": "packages/pieces/community/recall-ai/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/recall-ai/package.json",
+        "main": "packages/pieces/community/recall-ai/src/index.ts",
+        "assets": [
+          "packages/pieces/community/recall-ai/*.md",
+          {
+            "input": "packages/pieces/community/recall-ai/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    },
+    "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/recall-ai",
+        "command": "bun install --no-save --silent"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    }
+  }
+}

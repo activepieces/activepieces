@@ -42,7 +42,7 @@ export const createSubscriberListAction = createAction({
       context.propsValue;
 
     const form = new FormData();
-    form.append('auth_token', context.auth);
+    form.append('auth_token', context.auth.secret_text);
     form.append('name', listname);
     form.append('sender_email', sender_email);
     form.append('company', company ?? '');

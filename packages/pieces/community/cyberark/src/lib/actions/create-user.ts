@@ -258,7 +258,7 @@ export const createUser = createAction({
     }),
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     const requestBody: any = {
       username: context.propsValue.username,

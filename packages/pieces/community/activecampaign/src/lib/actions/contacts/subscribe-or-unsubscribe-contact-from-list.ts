@@ -35,7 +35,7 @@ export const subscribeOrUnsubscribeContactFromListAction = createAction({
 	async run(context) {
 		const { listId, status, contactId } = context.propsValue;
 
-		const client = makeClient(context.auth);
+		const client = makeClient(context.auth.props);
 		return await client.addContactToList(listId!, contactId, status);
 	},
 });

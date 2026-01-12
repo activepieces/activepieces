@@ -16,7 +16,7 @@ export const getDestination = createAction({
     }),
   },
   async run(context) {
-    const onfleetApi = new Onfleet(context.auth);
+    const onfleetApi = new Onfleet(context.auth.secret_text);
 
     return await onfleetApi.destinations.get(context.propsValue.destination);
   },

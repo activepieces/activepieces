@@ -1,8 +1,10 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { assembledCommon } from '../common';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { assembledAuth } from '../common/auth';
 
 export const updateOOO = createAction({
+  auth: assembledAuth,
   name: 'update_OOO',
   displayName: 'Update OOO Request',
   description: 'Updates an existing OOO request.',
@@ -54,7 +56,7 @@ export const updateOOO = createAction({
       // cancel the existing time off request
       console.log(`Canceling existing time off request: ${OOO_id}`);
       await assembledCommon.makeRequest(
-        context.auth as string,
+        context.auth.secret_text,
         HttpMethod.POST,
         `/time_off/${OOO_id}/cancel`
       );
@@ -72,7 +74,7 @@ export const updateOOO = createAction({
       if (reason) newRequestData['description'] = reason;
       
       const response = await assembledCommon.makeRequest(
-        context.auth as string,
+        context.auth.secret_text,
         HttpMethod.POST,
         '/time_off',
         newRequestData

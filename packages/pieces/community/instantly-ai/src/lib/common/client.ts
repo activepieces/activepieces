@@ -1,4 +1,6 @@
 import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+import { instantlyAiAuth } from '../..';
 
 export const BASE_URL = 'https://api.instantly.ai/api/v2';
 
@@ -11,7 +13,7 @@ export async function makeRequest({
 }: {
   endpoint: string;
   method: HttpMethod;
-  apiKey: string;
+  apiKey: AppConnectionValueForAuthProperty<typeof instantlyAiAuth>;
   body?: Record<string, unknown>;
   queryParams?: Record<string, string | number | boolean>;
 }) {
@@ -29,7 +31,7 @@ export async function makeRequest({
     url: finalUrl,
     headers: {
       'Content-Type': 'application/json',
-      'authorization': `Bearer ${apiKey}`,
+      'authorization': `Bearer ${apiKey.secret_text}`,
     },
     body,
   });

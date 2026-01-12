@@ -12,11 +12,11 @@ import { isNil } from '@activepieces/shared';
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
 		...request,
-		url: `${request.auth.instanceUrl}/rest/api/3/${request.url}`,
+		url: `${request.auth.props.instanceUrl}/rest/api/3/${request.url}`,
 		authentication: {
 			type: AuthenticationType.BASIC,
-			username: request.auth.email,
-			password: request.auth.apiToken,
+			username: request.auth.props.email,
+			password: request.auth.props.apiToken,
 		},
 	});
 }
@@ -305,7 +305,7 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 	query,
 	body,
 }: JiraApiCallParams): Promise<T> {
-	const baseUrl = `${auth.instanceUrl}/rest/api/3`;
+	const baseUrl = `${auth.props.instanceUrl}/rest/api/3`;
 	const qs: QueryParams = {};
 	if (query) {
 		for (const [key, value] of Object.entries(query)) {
@@ -322,8 +322,8 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 		body,
 		authentication: {
 			type: AuthenticationType.BASIC,
-			username:auth.email,
-			password:auth.apiToken,
+			username:auth.props.email,
+			password:auth.props.apiToken,
 		},
 	};
 

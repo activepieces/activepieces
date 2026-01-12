@@ -19,7 +19,7 @@ export const updateEntryAction = createAction({
     entryData: formFields,
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth;
     const { formId, entryId, entryData } = context.propsValue;
 
     return await makeRequest(

@@ -29,7 +29,7 @@ export const findUserByNameAction = createAction({
 			},
 			authentication: {
 				type: AuthenticationType.BEARER_TOKEN,
-				token: auth,
+				token: auth.secret_text,
 			},
 		});
 

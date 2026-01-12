@@ -52,7 +52,7 @@ export const replyMessage = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authToken = auth as string;
+    const authToken = auth.secret_text;
     const response = await httpClient.sendRequest({
       method: HttpMethod.POST,
       url: `${getApiEndpoint(authToken)}/apis/v1/messages/reply`,

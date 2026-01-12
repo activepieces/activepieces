@@ -15,7 +15,7 @@ export const getFliqrAccountFlows = createAction({
       method: HttpMethod.GET,
       url: `${fliqrConfig.baseUrl}/accounts/flows`,
       headers: {
-        [fliqrConfig.accessTokenHeaderKey]: context.auth,
+        [fliqrConfig.accessTokenHeaderKey]: context.auth.secret_text,
       }
     });
     return res.body;

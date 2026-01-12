@@ -13,7 +13,7 @@ export const pieceTranslation = {
       if (!target) {
         return piece
       }
-      const translatedPiece: T = JSON.parse(JSON.stringify(piece))
+      const translatedPiece: T = structuredClone(piece)
       pieceTranslation.pathsToValuesToTranslate.forEach(key => {
         translateProperty(translatedPiece, key, target)
       })

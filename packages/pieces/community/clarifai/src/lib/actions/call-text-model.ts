@@ -28,7 +28,7 @@ export const textClassifierModelPredictAction = createAction({
     const input = textToInput(txt);
 
     const outputs = await callClarifaiModel({
-      auth,
+      auth: auth.secret_text,
       modelUrl,
       input,
     });
@@ -56,7 +56,7 @@ export const textToTextModelPredictAction = createAction({
     const input = textToInput(txt);
 
     const outputs = await callClarifaiModel({
-      auth,
+      auth: auth.secret_text,
       modelUrl,
       input,
     });

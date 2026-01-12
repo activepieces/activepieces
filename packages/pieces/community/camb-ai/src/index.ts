@@ -55,7 +55,7 @@ export const cambAi = createPiece({
             baseUrl: () => API_BASE_URL,
             authMapping: async (auth) => {
                 return {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                 };
             },
         }),

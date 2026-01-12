@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import React from 'react';
@@ -13,7 +12,7 @@ import {
 } from '@/components/ui/select';
 import { FlowTrigger, TriggerEventWithPayload } from '@activepieces/shared';
 
-import { testStepHooks } from '../test-step-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 type TriggerEventSelectProps = {
   pollResults: { data: TriggerEventWithPayload[] } | undefined;
@@ -29,22 +28,6 @@ export const TriggerEventSelect = React.memo(
 
     const { mutate: updateSampleData } = testStepHooks.useUpdateSampleData(
       formValues.name,
-      (step) => {
-        const sampleDataFileId = step.settings.sampleData?.sampleDataFileId;
-        const sampleDataInputFileId =
-          step.settings.sampleData?.sampleDataInputFileId;
-
-        form.setValue(
-          'settings.sampleData',
-          {
-            ...(formValues.settings.sampleData ?? {}),
-            sampleDataFileId,
-            sampleDataInputFileId,
-            lastTestDate: dayjs().toISOString(),
-          },
-          { shouldValidate: true },
-        );
-      },
     );
 
     return (
@@ -58,6 +41,7 @@ export const TriggerEventSelect = React.memo(
             if (triggerEvent) {
               updateSampleData({
                 response: {
+                  testType: 'trigger',
                   output: triggerEvent.payload,
                   success: true,
                 },

@@ -60,7 +60,7 @@ export const openRouter = createPiece({
       baseUrl: () => 'https://openrouter.ai/api/v1',
       auth: openRouterAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

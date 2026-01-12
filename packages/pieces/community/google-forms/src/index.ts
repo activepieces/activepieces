@@ -31,7 +31,7 @@ export const googleForms = createPiece({
       baseUrl: () => 'https://forms.googleapis.com/v1',
       auth: googleFormsAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+        Authorization: `Bearer ${(auth).access_token}`,
       }),
     }),
   ],

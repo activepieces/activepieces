@@ -25,7 +25,7 @@ export const duplicateTemplateAction = createAction({
     const { templateId, template_name } = context.propsValue;
 
     const formData = new FormData();
-    formData.append('auth_token', context.auth);
+    formData.append('auth_token', context.auth.secret_text);
     formData.append('template_name', template_name);
     formData.append('origin_template_id', templateId.toString());
 

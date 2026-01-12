@@ -11,6 +11,7 @@ interface DropdownParams {
 
 export const accountId = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: zohoMailAuth,
 		displayName: params.displayName,
 		description: params.description,
 		refreshers: [],
@@ -47,6 +48,7 @@ export const accountId = (params: DropdownParams) =>
 
 export const folderId = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: zohoMailAuth,
 		displayName: params.displayName,
 		description: params.description,
 		refreshers: ['accountId'],
@@ -91,6 +93,7 @@ export const folderId = (params: DropdownParams) =>
 
 export const messageId = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: zohoMailAuth,
 		displayName: params.displayName,
 		description: params.description,
 		refreshers: ['accountId', 'folderId'],
@@ -146,6 +149,7 @@ export const messageId = (params: DropdownParams) =>
 
 export const fromAddress = (params: DropdownParams) =>
 	Property.Dropdown({
+		auth: zohoMailAuth,
 		displayName: params.displayName,
 		description: params.description,
 		refreshers: ['accountId'],

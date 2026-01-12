@@ -15,7 +15,7 @@ export const getSession = createAction({
   },
   async run(context) {
     const sessionId = context.propsValue.sessionId as string;
-    const client = new HedyApiClient(context.auth as string);
+    const client = new HedyApiClient(context.auth.secret_text);
     const response = await client.request<Session>({
       method: HttpMethod.GET,
       path: `/sessions/${sessionId}`,

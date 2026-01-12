@@ -28,12 +28,12 @@ export const createUser = createAction({
     // the below need to be passed with the JSON
     // context.auth.access_token
     // context.auth.base_url
-    const baseUrl = context.auth.base_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.base_url.replace(/\/$/, '');
     const headers = {
       'Content-Type': 'application/json',
     };
     const createAminosRequestBody = {
-      api_key: context.auth.access_token,
+      api_key: context.auth.props.access_token,
       name: context.propsValue.userfriendlyname,
       email: context.propsValue.useremail,
       price_plan_id: context.propsValue.userplanid,

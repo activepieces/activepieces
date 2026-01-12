@@ -10,6 +10,7 @@ export function makeClient(auth: PiecePropValueSchema<typeof APITableAuth>) {
 
 export const APITableCommon = {
 	space_id: Property.Dropdown({
+		auth: APITableAuth,
 		displayName: 'Space',
 		required: true,
 		refreshers: [],
@@ -21,7 +22,7 @@ export const APITableCommon = {
 					placeholder: 'Connect your account first',
 				};
 			}
-			const client = makeClient(auth as PiecePropValueSchema<typeof APITableAuth>);
+			const client = makeClient(auth.props);
 			const res = await client.listSpaces();
 			return {
 				disabled: false,
@@ -35,6 +36,7 @@ export const APITableCommon = {
 		},
 	}),
 	datasheet_id: Property.Dropdown({
+		auth: APITableAuth,
 		displayName: 'Datasheet',
 		required: true,
 		refreshers: ['space_id'],
@@ -46,7 +48,7 @@ export const APITableCommon = {
 					placeholder: 'Connect your account first and select space.',
 				};
 			}
-			const client = makeClient(auth as PiecePropValueSchema<typeof APITableAuth>);
+			const client = makeClient(auth.props);
 			const res = await client.listDatasheets(space_id as string);
 			return {
 				disabled: false,
@@ -60,12 +62,17 @@ export const APITableCommon = {
 		},
 	}),
 	fields: Property.DynamicProperties({
+		auth: APITableAuth,
 		displayName: 'Fields',
 		description: 'The fields to add to the record.',
 		required: true,
 		refreshers: ['auth', 'datasheet_id'],
 		props: async ({ auth, datasheet_id }) => {
-			const client = makeClient(auth as PiecePropValueSchema<typeof APITableAuth>);
+			if(!auth)
+			{
+				return {}
+			}
+			const client = makeClient(auth.props);
 			const res = await client.getDatasheetFields(datasheet_id as unknown as string);
 
 			const props: DynamicPropsValue = {};

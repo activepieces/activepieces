@@ -1,4 +1,4 @@
-import { PrincipalType } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { projectService } from './project-service'
 
@@ -13,6 +13,6 @@ export const projectWorkerController: FastifyPluginAsyncTypebox = async (
 
 const GetWorkerProjectRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.ENGINE],
+        security: securityAccess.engine(),
     },
 }

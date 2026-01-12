@@ -54,7 +54,7 @@ export const newCommentTrigger = createTrigger({
 
 		const triggerIdentifier = context.webhookUrl.substring(context.webhookUrl.lastIndexOf('/') + 1);
 		const webhook = await findOrCreateWebhook(
-			context.auth as string,
+			context.auth.secret_text,
 			context.webhookUrl,
 			sheet_id as string,
 			triggerIdentifier,
@@ -72,7 +72,7 @@ export const newCommentTrigger = createTrigger({
 
 		if (webhookInfo && webhookInfo.webhookId) {
 			try {
-				await unsubscribeWebhook(context.auth as string, webhookInfo.webhookId);
+				await unsubscribeWebhook(context.auth.secret_text, webhookInfo.webhookId);
 			} catch (error: any) {
 				if (error.response?.status !== 404) {
 					console.error(`Error unsubscribing webhook ${webhookInfo.webhookId}: ${error.message}`);
@@ -118,7 +118,7 @@ export const newCommentTrigger = createTrigger({
 				if (objectSheetId) {
 					try {
 						eventOutput.commentData = await getCommentFullDetails(
-							context.auth as string,
+							context.auth.secret_text,
 							objectSheetId,
 							event.discussionId.toString(),
 							event.id.toString(),

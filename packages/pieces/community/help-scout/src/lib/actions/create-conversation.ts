@@ -108,9 +108,13 @@ export const createConversation = createAction({
         },
       ],
       tags: propsValue.tags,
-      ...(propsValue.assignTo && { assignTo: Number(propsValue.assignTo) }),
-      ...(propsValue.fromUser && { user: Number(propsValue.fromUser) }),
     };
+    if(propsValue.fromUser) {
+      payload['user'] = Number(propsValue.fromUser);
+    }
+    if(propsValue.assignTo) {
+      payload['assignTo'] = Number(propsValue.assignTo);
+    }
 
     Object.keys(payload).forEach((key) => {
       if (payload[key] === undefined || payload[key] === null) {

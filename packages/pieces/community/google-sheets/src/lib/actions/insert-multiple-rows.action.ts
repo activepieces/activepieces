@@ -1,4 +1,4 @@
-import { googleSheetsAuth } from '../../';
+import { googleSheetsAuth } from '../common/common';
 import {
 	createAction,
 	DropdownOption,
@@ -6,11 +6,9 @@ import {
 	OAuth2PropertyValue,
 	Property,
 } from '@activepieces/pieces-framework';
-import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel, areSheetIdsValid } from '../common/common';
-import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
+import { Dimension, googleSheetsCommon, objectToArray, ValueInputOption,columnToLabel, areSheetIdsValid, GoogleSheetsAuthValue, createGoogleClient } from '../common/common';
 import { getWorkSheetName, getWorkSheetGridSize } from '../triggers/helpers';
 import { google, sheets_v4 } from 'googleapis';
-import { OAuth2Client } from 'googleapis-common';
 import { MarkdownVariant } from '@activepieces/shared';
 import {parse} from 'csv-parse/sync';
 import { commonProps } from '../common/props';
@@ -49,6 +47,7 @@ export const insertMultipleRowsAction = createAction({
 			},
 		}),
 		values: Property.DynamicProperties({
+			auth: googleSheetsAuth,
 			displayName: 'Values',
 			description: 'The values to insert.',
 			required: true,
@@ -57,7 +56,6 @@ export const insertMultipleRowsAction = createAction({
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;
 				const valuesInputType = input_type as unknown as string;
-				const authentication = auth as OAuth2PropertyValue;
 
 				if (
 					!auth ||
@@ -104,7 +102,7 @@ export const insertMultipleRowsAction = createAction({
 				case 'column_names': {
 					const headers = await googleSheetsCommon.getGoogleSheetRows({
 						spreadsheetId: spreadsheet_id,
-						accessToken: getAccessTokenOrThrow(authentication),
+						auth: auth,
 						sheetId: sheet_id,
 						rowIndex_s: 1,
 						rowIndex_e: 1,
@@ -157,6 +155,7 @@ export const insertMultipleRowsAction = createAction({
 			defaultValue: false,
 		}),
 		check_for_duplicate_column: Property.DynamicProperties({
+			auth: googleSheetsAuth,
 			displayName: 'Duplicate Value Column',
 			description: 'The column to check for duplicate values.',
 			refreshers: ['spreadsheetId', 'sheetId', 'check_for_duplicate', 'headerRow'],
@@ -164,7 +163,6 @@ export const insertMultipleRowsAction = createAction({
 			props: async ({ auth, spreadsheetId, sheetId, check_for_duplicate, headerRow }) => {
 				const sheet_id = Number(sheetId);
 				const spreadsheet_id = spreadsheetId as unknown as string;
-				const authentication = auth as OAuth2PropertyValue;
 				const checkForExisting = check_for_duplicate as unknown as boolean;
 				if (
 					!auth ||
@@ -179,7 +177,7 @@ export const insertMultipleRowsAction = createAction({
 				if (checkForExisting) {
 					const headers = await googleSheetsCommon.getGoogleSheetRows({
 						spreadsheetId: spreadsheet_id,
-						accessToken: getAccessTokenOrThrow(authentication),
+						auth: auth as GoogleSheetsAuthValue,
 						sheetId: sheet_id,
 						rowIndex_s: 1,
 						rowIndex_e: 1,
@@ -253,7 +251,7 @@ export const insertMultipleRowsAction = createAction({
 
 		const rowHeaders = await googleSheetsCommon.getGoogleSheetRows({
 			spreadsheetId: spreadsheetId,
-			accessToken: context.auth.access_token,
+			auth: context.auth,
 			sheetId: sheetId,
 			rowIndex_s: 1,
 			rowIndex_e: 1,
@@ -262,8 +260,7 @@ export const insertMultipleRowsAction = createAction({
 
 		const sheetHeaders = rowHeaders[0]?.values ?? {};
 
-		const authClient = new OAuth2Client();
-		authClient.setCredentials(context.auth);
+		const authClient = await createGoogleClient(context.auth);
 		const sheets = google.sheets({ version: 'v4', auth: authClient });
 
 		const formattedValues = await formatInputRows(sheets,spreadsheetId, sheetName,valuesInputType, rowValuesInput, sheetHeaders);
@@ -280,7 +277,7 @@ export const insertMultipleRowsAction = createAction({
 		if (checkForDuplicateValues) {
 			const existingSheetValues = await googleSheetsCommon.getGoogleSheetRows({
 				spreadsheetId: spreadsheetId,
-				accessToken: context.auth.access_token,
+				auth: context.auth,
 				sheetId: sheetId,
 				rowIndex_s: 1,
 				rowIndex_e: undefined,

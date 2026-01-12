@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import {
   CORE_STEP_METADATA,
@@ -43,7 +43,7 @@ const getActionFromPieceMetadata = (
     (action) => action.name === actionName,
   );
   if (isNil(result)) {
-    toast(INTERNAL_ERROR_TOAST);
+    internalErrorToast();
     console.error(`Action ${actionName} not found in piece metadata`);
     return null;
   }

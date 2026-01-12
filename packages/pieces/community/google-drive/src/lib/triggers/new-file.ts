@@ -1,4 +1,5 @@
 import {
+  AppConnectionValueForAuthProperty,
   PiecePropValueSchema,
   Property,
   createTrigger,
@@ -16,7 +17,7 @@ import { common } from '../common';
 import { downloadFileFromDrive } from '../common/get-file-content';
 
 const polling: Polling<
-  PiecePropValueSchema<typeof googleDriveAuth>,
+  AppConnectionValueForAuthProperty<typeof googleDriveAuth>,
   { parentFolder?: any; include_team_drives?: boolean }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

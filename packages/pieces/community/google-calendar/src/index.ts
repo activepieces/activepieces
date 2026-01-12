@@ -54,7 +54,8 @@ export const googleCalendar = createPiece({
     'abuaboud',
     'ikus060',
     'Cloudieunnie',
-    'sanket-a11y'
+    'sanket-a11y',
+    'geekyme'
   ],
   auth: googleCalendarAuth,
   actions: [
@@ -75,7 +76,7 @@ export const googleCalendar = createPiece({
       },
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${(auth as OAuth2PropertyValue).access_token}`,
+          Authorization: `Bearer ${(auth).access_token}`,
         };
       },
     }),

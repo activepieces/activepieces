@@ -52,7 +52,7 @@ export const newSentMessage = createTrigger({
   type: TriggerStrategy.WEBHOOK,
   async onEnable(context) {
     const response = await timelinesAiCommon.createWebhook({
-      apiKey: context.auth as string,
+      apiKey: context.auth,
       event_type: 'message:sent:new',
       url: context.webhookUrl,
       enabled: true,
@@ -68,7 +68,7 @@ export const newSentMessage = createTrigger({
     const webhook_id = webhookInfo?.webhook_id;
     if (webhook_id) {
       await timelinesAiCommon.deleteWebhook({
-        apiKey: context.auth as string,
+        apiKey: context.auth,
         webhook_id,
       });
     }

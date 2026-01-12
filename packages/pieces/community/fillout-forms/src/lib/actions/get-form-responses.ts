@@ -69,7 +69,7 @@ export const getFormResponses = createAction({
     })
   },
   async run(context) {
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const formId = context.propsValue['formId'];
     const queryParams: Record<string, any> = {};

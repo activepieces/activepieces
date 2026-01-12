@@ -75,7 +75,7 @@ export const createEmailTemplate = createAction({
       sampleData,
     } = context.propsValue;
 
-    const { accessKeyId, secretAccessKey, region } = context.auth;
+    const { accessKeyId, secretAccessKey, region } = context.auth.props;
 
     validateTemplateName(templateName);
 

@@ -16,7 +16,7 @@ const tracer = trace.getTracer('job-consumer')
 
 
 export const jobConsmer = (log: FastifyBaseLogger) => ({
-    async consumeJob(job: Job<JobData>, workerToken: string): Promise<ConsumeJobResponse> {
+    async consumeJob(job: Job<JobData>): Promise<ConsumeJobResponse> {
         const { id: jobId, data: jobData, attemptsStarted } = job
         assertNotNullOrUndefined(jobId, 'jobId')
         const timeoutInSeconds = getTimeoutForWorkerJob(jobData.jobType)
@@ -37,10 +37,9 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                     switch (jobData.jobType) {
                         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
                         case WorkerJobType.EXECUTE_PROPERTY:
-                        case WorkerJobType.EXECUTE_TOOL:
                         case WorkerJobType.EXECUTE_VALIDATION:
                         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
-                            await userInteractionJobExecutor(log).execute(jobData, engineToken, workerToken, timeoutInSeconds)
+                            await userInteractionJobExecutor(log).execute(jobData, engineToken, timeoutInSeconds)
                             span.setAttribute('worker.completed', true)
                             return {
                                 status: ConsumeJobResponseStatus.OK,
@@ -55,7 +54,6 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                                 jobId,
                                 data: jobData,
                                 engineToken,
-                                workerToken,
                                 timeoutInSeconds,
                             })
                             span.setAttribute('worker.completed', true)
@@ -73,7 +71,7 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                         }
                         case WorkerJobType.EXECUTE_WEBHOOK: {
                             span.setAttribute('worker.webhookExecution', true)
-                            return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, workerToken, timeoutInSeconds)
+                            return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, timeoutInSeconds)
                         }
                         case WorkerJobType.OUTGOING_WEBHOOK: {
                             await outgoingWebhookExecutor(log).execute(jobId, jobData, timeoutInSeconds)
@@ -99,7 +97,6 @@ const getTimeoutForWorkerJob = (jobType: WorkerJobType): number => {
             return dayjs.duration(workerMachine.getSettings().TRIGGER_HOOKS_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EXECUTE_WEBHOOK:
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
-        case WorkerJobType.EXECUTE_TOOL:
         case WorkerJobType.EXECUTE_PROPERTY:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_POLLING:

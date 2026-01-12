@@ -26,6 +26,7 @@ export const createAvatarVideo = createAction({
       },
     }),
     avatar_id: Property.Dropdown({
+      auth: joggAiAuth,
       displayName: 'Avatar',
       description: 'Select an avatar to use',
       required: true,
@@ -49,7 +50,7 @@ export const createAvatarVideo = createAction({
             method: HttpMethod.GET,
             url,
             headers: {
-              'x-api-key': auth as string,
+              'x-api-key': auth.secret_text,
             },
           });
 
@@ -98,6 +99,7 @@ export const createAvatarVideo = createAction({
       },
     }),
     voice_id: Property.Dropdown({
+      auth: joggAiAuth,
       displayName: 'Voice',
       description: 'Select a voice to use',
       required: true,
@@ -118,7 +120,7 @@ export const createAvatarVideo = createAction({
               method: HttpMethod.GET,
               url: 'https://api.jogg.ai/v1/voices/custom',
               headers: {
-                'x-api-key': auth as string,
+                'x-api-key': auth.secret_text,
               },
             });
           } catch {
@@ -126,7 +128,7 @@ export const createAvatarVideo = createAction({
               method: HttpMethod.GET,
               url: 'https://api.jogg.ai/v1/voices',
               headers: {
-                'x-api-key': auth as string,
+                'x-api-key': auth.secret_text,
               },
             });
           }
@@ -267,7 +269,7 @@ export const createAvatarVideo = createAction({
       method: HttpMethod.POST,
       url: 'https://api.jogg.ai/v1/create_video_from_talking_avatar',
       headers: {
-        'x-api-key': auth,
+        'x-api-key': auth.secret_text,
         'Content-Type': 'application/json',
       },
       body: requestBody,

@@ -32,13 +32,13 @@ export const createNewUser = createAction({
   },
 
   async run(context) {
-    const siteUrl = parseDirectoryURL(context.auth.site_url);
+    const siteUrl = parseDirectoryURL(context.auth.props.site_url);
 
     // Compile the request
     const CREATE_NEW_USER_URL = siteUrl + '/v2/user/create';
     const headers = {
       accept: 'application/json',
-      'X-Api-Key': context.auth.api_key,
+      'X-Api-Key': context.auth.props.api_key,
       'Content-Type': 'application/x-www-form-urlencoded',
     };
     const body = {

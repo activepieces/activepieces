@@ -9,7 +9,8 @@ export const findCampaign = createAction({
   description: 'Locate an existing campaign by campaign name.',
   props: zohoCampaignsCommon.findCampaignProperties(),
   async run({ auth, propsValue }) {
-    const { access_token: accessToken, location } = auth as any;
+       const location = auth.props?.['location'] as string || 'zoho.com';
+    const accessToken = auth.access_token
     await propsValidation.validateZod(
       propsValue,
       zohoCampaignsCommon.findCampaignSchema

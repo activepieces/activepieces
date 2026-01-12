@@ -4,8 +4,7 @@ import { createRoot } from 'react-dom/client';
 
 import { Button } from '@/components/ui/button';
 
-import { NODE_SELECTION_RECT_CLASS_NAME } from '../../builder-hooks';
-import { SELECTION_RECT_CHEVRON_ATTRIBUTE } from '../utils/consts';
+import { flowCanvasConsts } from '../utils/consts';
 
 const showChevronNextToSelection = (targetDiv: HTMLElement) => {
   const container = document.createElement('div');
@@ -15,8 +14,10 @@ const showChevronNextToSelection = (targetDiv: HTMLElement) => {
     <Button
       variant="outline"
       size="icon"
-      className="absolute top-0 -left-10 z-50"
-      {...{ [`data-${SELECTION_RECT_CHEVRON_ATTRIBUTE}`]: true }}
+      className="absolute top-[10px] -left-10 z-50"
+      {...{
+        [`data-${flowCanvasConsts.SELECTION_RECT_CHEVRON_ATTRIBUTE}`]: true,
+      }}
       onClick={(e) => {
         const rightClickEvent = new MouseEvent('contextmenu', {
           bubbles: true,
@@ -44,7 +45,9 @@ export const useShowChevronNextToSelection = () => {
           if (
             node instanceof HTMLElement &&
             node.children.length > 0 &&
-            node.children[0].classList.contains(NODE_SELECTION_RECT_CLASS_NAME)
+            node.children[0].classList.contains(
+              flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME,
+            )
           ) {
             root = showChevronNextToSelection(node.children[0] as HTMLElement);
           }
@@ -54,7 +57,9 @@ export const useShowChevronNextToSelection = () => {
           if (
             node instanceof HTMLElement &&
             node.children.length > 0 &&
-            node.children[0].classList.contains(NODE_SELECTION_RECT_CLASS_NAME)
+            node.children[0].classList.contains(
+              flowCanvasConsts.NODE_SELECTION_RECT_CLASS_NAME,
+            )
           ) {
             if (root) {
               root.unmount();

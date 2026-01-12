@@ -29,9 +29,10 @@ export const createContactAction = createAction({
     ...flowluProps.account,
   },
   async run(context) {
+    const {auth, ...propsValue} = context;
     const client = makeClient(
-      context.auth as PiecePropValueSchema<typeof flowluAuth>
+      context.auth
     );
-    return await client.createAccount({ type: 2, ...context.propsValue });
+    return await client.createAccount({ type: 2, ...propsValue });
   },
 });

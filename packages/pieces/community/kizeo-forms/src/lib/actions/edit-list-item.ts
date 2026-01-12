@@ -58,7 +58,7 @@ export const editListItem = createAction({
       url: endpoint + `public/v4/lists/${listId}/items?used-with-activepieces=`,
       headers: {
         'Content-Type': 'application/json',
-        Authorization: context.auth,
+        Authorization: context.auth.secret_text,
       },
       body: body,
     });

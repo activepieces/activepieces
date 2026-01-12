@@ -59,7 +59,8 @@ export const sampleDataService = (log: FastifyBaseLogger) => ({
             if (response.metadata?.[DATA_TYPE_KEY_IN_FILE_METADATA] === SampleDataDataType.STRING) {
                 return response.data.toString('utf-8')
             }
-            return JSON.parse(response.data.toString('utf-8'))
+            const decodedData = new TextDecoder('utf-8').decode(response.data)
+            return JSON.parse(decodedData)
         }
         return undefined
 

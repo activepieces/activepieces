@@ -37,7 +37,7 @@ export const createConversation = createAction({
     timeout: timeoutProp,
   },
   async run({ auth, propsValue }) {
-    const client = createClient(auth as DustAuthType);
+    const client = createClient(auth.props);
 
     const payload: PublicPostConversationsRequestBody = {
       visibility: 'unlisted',
@@ -88,7 +88,7 @@ export const createConversation = createAction({
       return await getConversationContent(
         conversationId,
         propsValue.timeout,
-        auth as DustAuthType
+        auth.props
       );
     } else {
       return response.value;

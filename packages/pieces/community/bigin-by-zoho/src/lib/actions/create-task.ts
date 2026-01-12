@@ -28,6 +28,7 @@ export const createTask = createAction({
       required: false,
     }),
     recurringInfo: Property.DynamicProperties({
+      auth: biginAuth,
       displayName: 'Recurring Info',
       description:
         'Please note: Due Date must be set above for recurring tasks',
@@ -118,6 +119,7 @@ export const createTask = createAction({
     }),
     reminderInfo: Property.DynamicProperties({
       displayName: 'Reminder Information',
+      auth: biginAuth,
       refreshers: ['enableReminder'],
       required: false,
       props: (propsValue, ctx): any => {
@@ -192,6 +194,7 @@ export const createTask = createAction({
       },
     }),
     relatedTo: Property.Dropdown({
+      auth: biginAuth,
       displayName: 'Related To',
       description: 'Select the specific record the task is related to.',
       required: false,
@@ -201,7 +204,8 @@ export const createTask = createAction({
         if (!auth) return handleDropdownError('Please connect first');
         if (!relatedModule) return { options: [] };
 
-        const { access_token, api_domain } = auth as any;
+        const { access_token, data } = auth;
+        const api_domain = data['api_domain'];
 
         const fetchMap: Record<string, () => Promise<any>> = {
           Contacts: () =>
@@ -263,7 +267,8 @@ export const createTask = createAction({
     tag: tagsDropdown('Tasks'),
   },
   async run({ auth, propsValue }) {
-    const { access_token, api_domain } = auth as any;
+    const { access_token, data } = auth;
+    const api_domain = data['api_domain'];
 
     const taskData: any = {
       Subject: propsValue.subject,

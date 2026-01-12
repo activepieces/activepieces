@@ -21,6 +21,17 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return JSON.parse(value) as T
     },
 
+    async getAll<T>(keys: string[]): Promise<Record<string, T | null>> {
+        const redisClient = await getRedisClient()
+        const values = await redisClient.mget(keys)
+        return values.reduce<Record<string, T | null>>((result, value, index) => {
+            if (value) {
+                result[keys[index]] = JSON.parse(value)
+            }
+            return result
+        }, {})
+    },
+
     async delete(key: string): Promise<void> {
         const redisClient = await getRedisClient()
         await redisClient.del(key)
@@ -71,28 +82,14 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
         return result as T
     },
 
-    async hdeleteFieldsIfValueMatches(
-        key: string,
-        fieldValuePairs: [string, unknown][],
-    ): Promise<void> {
-        const redisClient = await getRedisClient()
-        const lua = `
-            for i = 1, #ARGV, 2 do
-                if redis.call('HGET', KEYS[1], ARGV[i]) == ARGV[i+1] then
-                    redis.call('HDEL', KEYS[1], ARGV[i])
-                end
-            end
-            return
-        `
-        const flattenedArgs = fieldValuePairs.flatMap(([field, value]) => [field, JSON.stringify(value)])
-        await redisClient.eval(lua, 1, key, ...flattenedArgs)
-    },
-
     async merge<T extends Record<string, unknown>>(key: string, value: T, ttlInSeconds?: number): Promise<void> {
         const redisClient = await getRedisClient()
         const serializedFields: Record<string, string> = {}
 
         for (const [field, fieldValue] of Object.entries(value)) {
+            if (isNil(fieldValue)) {
+                continue
+            }
             serializedFields[field] = JSON.stringify(fieldValue)
         }
 
@@ -102,4 +99,18 @@ export const distributedStoreFactory = (getRedisClient: () => Promise<Redis>) =>
             await redisClient.expire(key, ttlInSeconds)
         }
     },
+
+    async deleteKeyIfFieldValueMatches(key: string, field: string, expectedValue: unknown): Promise<void> {
+        const redisClient = await getRedisClient()
+        const lua = `
+            local currentValue = redis.call('HGET', KEYS[1], ARGV[1])
+            if currentValue and currentValue == ARGV[2] then
+                redis.call('DEL', KEYS[1])
+            end
+        `
+        const serializedValue = JSON.stringify(expectedValue)
+        await redisClient.eval(lua, 1, key, field, serializedValue)
+    },
 })
+
+export type DistributedStore = ReturnType<typeof distributedStoreFactory>

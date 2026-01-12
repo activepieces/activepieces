@@ -23,7 +23,7 @@ export const browseAi = createPiece({
       auth: browseAiAuth,
       baseUrl: () => 'https://api.browse.ai/v2',
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

@@ -5,7 +5,7 @@ import { flowWorkerCache } from '../../cache/flow-worker-cache'
 import { triggerHooks } from '../../utils/trigger-utils'
 
 export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
-    async executeTrigger({ jobId, data, engineToken, workerToken, timeoutInSeconds }: ExecuteTriggerParams): Promise<ConsumeJobResponse> {
+    async executeTrigger({ jobId, data, engineToken, timeoutInSeconds }: ExecuteTriggerParams): Promise<ConsumeJobResponse> {
         const { flowVersionId } = data
 
         const flowVersion = await flowWorkerCache(log).getVersion({
@@ -29,7 +29,7 @@ export const executeTriggerExecutor = (log: FastifyBaseLogger) => ({
                 errorMessage,
             }
         }
-        await workerApiService(workerToken).startRuns({
+        await workerApiService().startRuns({
             flowVersionId: data.flowVersionId,
             platformId: data.platformId,
             progressUpdateType: ProgressUpdateType.NONE,
@@ -47,6 +47,5 @@ type ExecuteTriggerParams = {
     jobId: string
     data: PollingJobData
     engineToken: string
-    workerToken: string
     timeoutInSeconds: number
 }

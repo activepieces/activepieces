@@ -1,14 +1,14 @@
-import { createTrigger, TriggerStrategy, PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { createTrigger, TriggerStrategy, PiecePropValueSchema, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { blueskyAuth } from '../common/auth';
 import { createBlueskyAgent } from '../common/client';
 import dayjs from 'dayjs';
 
-const polling: Polling<PiecePropValueSchema<typeof blueskyAuth>, Record<string, never>> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof blueskyAuth>, Record<string, never>> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, lastFetchEpochMS }) => {
     try {
-      const agent = await createBlueskyAgent(auth);
+      const agent = await createBlueskyAgent(auth.props);
       
       const response = await agent.getTimeline({
         limit: 50

@@ -129,7 +129,7 @@ export const createContact = createAction({
 
       const response = await biginApiService.createContact(
         context.auth.access_token,
-        (context.auth as any).api_domain,
+        context.auth.data['api_domain'],
         payload
       );
 

@@ -51,8 +51,8 @@ export const retable = createPiece({
       baseUrl: () => retableCommon.baseUrl,
       auth: retableAuth,
       authMapping: async (auth) => ({
-        ApiKey: auth as string,
-      }),
+        ApiKey: auth.secret_text,
+      }), 
     }),
   ],
   triggers: [],

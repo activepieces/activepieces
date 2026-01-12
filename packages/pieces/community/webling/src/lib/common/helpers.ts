@@ -4,18 +4,18 @@ import {
   HttpMethod,
   HttpRequest,
 } from '@activepieces/pieces-common';
-import { PiecePropValueSchema } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PiecePropValueSchema } from '@activepieces/pieces-framework';
 import { CalendarObject, WeblingCalendarEvent, WeblingChanges } from './types';
 
 export async function callApi<Type>(
-  authProp: PiecePropValueSchema<typeof weblingAuth>,
-  request: string
+  authProp: AppConnectionValueForAuthProperty<typeof weblingAuth>,
+  request: string,
 ) {
   const httpRequest: HttpRequest = {
     method: HttpMethod.GET,
-    url: `https://${authProp.baseUrl}/api/1/${request}`,
+    url: `https://${authProp.props.baseUrl}/api/1/${request}`,
     headers: {
-      apikey: authProp.apikey,
+      apikey: authProp.props.apikey,
     },
   };
   const response = await httpClient.sendRequest<Type>(httpRequest);
@@ -23,8 +23,9 @@ export async function callApi<Type>(
 }
 
 export async function getChanges(
-  authProp: PiecePropValueSchema<typeof weblingAuth>,
-  lastFetchEpochMS: number
+  authProp: AppConnectionValueForAuthProperty<typeof weblingAuth>,
+
+  lastFetchEpochMS: number,
 ): Promise<WeblingChanges> {
   // Webling API breaks if unix timestamp is too far in the past
   if (lastFetchEpochMS === 0) {
@@ -42,7 +43,7 @@ export async function getChanges(
 }
 
 export async function getCalendars(
-  authProp: PiecePropValueSchema<typeof weblingAuth>
+  authProp: AppConnectionValueForAuthProperty<typeof weblingAuth>
 ): Promise<CalendarObject[]> {
   const response = await callApi<CalendarObject[]>(
     authProp,
@@ -52,8 +53,8 @@ export async function getCalendars(
 }
 
 export async function getAllEvents(
-  authProp: PiecePropValueSchema<typeof weblingAuth>,
-  calendarId: string
+  authProp: AppConnectionValueForAuthProperty<typeof weblingAuth>,
+  calendarId: string,
 ): Promise<WeblingCalendarEvent[]> {
   const response = await callApi<WeblingCalendarEvent[]>(
     authProp,
@@ -63,7 +64,8 @@ export async function getAllEvents(
 }
 
 export async function getEventsById(
-  authProp: PiecePropValueSchema<typeof weblingAuth>,
+  authProp: AppConnectionValueForAuthProperty<typeof weblingAuth>,
+
   eventIds: string,
 ): Promise<WeblingCalendarEvent[]> {
 
@@ -78,7 +80,7 @@ export async function getEventsById(
 };
 
 export async function getUpdatedOrNewEvents(
-  authProp: PiecePropValueSchema<typeof weblingAuth>,
+  authProp: AppConnectionValueForAuthProperty<typeof weblingAuth>,
   calendarId: string,
   lastFetchEpochMS: number
 ): Promise<WeblingCalendarEvent[]> {

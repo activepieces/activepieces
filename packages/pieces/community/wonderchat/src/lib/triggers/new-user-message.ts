@@ -2,7 +2,8 @@ import {
   PiecePropValueSchema,
   createTrigger,
   TriggerStrategy,
-  Property
+  Property,
+  AppConnectionValueForAuthProperty
 } from '@activepieces/pieces-framework';
 import {
   Polling,
@@ -20,7 +21,7 @@ interface Message {
 }
 
 const polling: Polling<
-  PiecePropValueSchema<typeof wonderchatAuth>,
+  AppConnectionValueForAuthProperty<typeof wonderchatAuth>,
   { chatlogId: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,
@@ -30,7 +31,7 @@ const polling: Polling<
       url: 'https://app.wonderchat.io/api/v1/messages',
       headers: { 'Content-Type': 'application/json' },
       body: {
-        apiKey: auth,
+        apiKey: auth.secret_text,
         chatlogId: propsValue.chatlogId
       }
     });

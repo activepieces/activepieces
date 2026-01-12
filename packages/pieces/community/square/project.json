@@ -3,6 +3,11 @@
   "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "packages/pieces/community/square/src",
   "projectType": "library",
+  "implicitDependencies": [
+    "pieces-common",
+    "pieces-framework",
+    "shared"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",
@@ -23,14 +28,33 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
-      }
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
-      ]
+      ],
+      "options": {
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true
+      }
+    },
+    "prebuild": {
+      "dependsOn": [
+        "^build"
+      ],
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/square",
+        "command": "bun install --no-save --silent"
+      }
     }
   },
   "tags": []

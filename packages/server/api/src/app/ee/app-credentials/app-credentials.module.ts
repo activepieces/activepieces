@@ -1,14 +1,15 @@
 import {
     AppCredential,
-    AppCredentialId,
     AppCredentialType,
     ListAppCredentialsRequest,
     UpsertAppCredentialRequest,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, SeekPage } from '@activepieces/shared'
-import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { PrincipalType, SeekPage } from '@activepieces/shared'
+import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
+import { AppCredentialEntity } from './app-credentials.entity'
 import { appCredentialService } from './app-credentials.service'
 
 export const appCredentialModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -22,14 +23,7 @@ const DEFAULT_LIMIT_SIZE = 10
 const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
     fastify.get(
         '/',
-        {
-            config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
-            },
-            schema: {
-                querystring: ListAppCredentialsRequest,
-            },
-        },
+        ListCredsRequest,
         async (
             request: FastifyRequest<{
                 Querystring: ListAppCredentialsRequest
@@ -47,36 +41,20 @@ const appCredentialController: FastifyPluginAsyncTypebox = async (fastify) => {
 
     fastify.post(
         '/',
-        {
-            schema: {
-                body: UpsertAppCredentialRequest,
-            },
-        },
-        async (
-            request: FastifyRequest<{
-                Body: UpsertAppCredentialRequest
-            }>,
-        ) => {
+        UpsertAppCredentialRequestOptions,
+        async (request) => {
             return appCredentialService.upsert({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 request: request.body,
             })
         },
     )
 
     fastify.delete(
-        '/:credentialId',
-        async (
-            request: FastifyRequest<{
-                Params: {
-                    credentialId: AppCredentialId
-                }
-            }>,
-            reply,
-        ) => {
+        '/:id', DeleteAppCredentialRequestOptions, async (request, reply) => {
             await appCredentialService.delete({
-                id: request.params.credentialId,
-                projectId: request.principal.projectId,
+                id: request.params.id,
+                projectId: request.projectId,
             })
 
             return reply.status(StatusCodes.OK).send()
@@ -94,4 +72,46 @@ function censorClientSecret(
         return f
     })
     return page
+}
+
+const ListCredsRequest = {
+    config: {
+        security: securityAccess.public(),
+    },
+    schema: {
+        querystring: ListAppCredentialsRequest,
+    },
+}
+
+const UpsertAppCredentialRequestOptions = {
+    schema: {
+        body: UpsertAppCredentialRequest,
+    },
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            undefined,
+            {
+                type: ProjectResourceType.BODY,
+            },
+        ),
+    },
+}
+
+const DeleteAppCredentialRequestOptions = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            undefined,
+            {
+                type: ProjectResourceType.TABLE,
+                tableName: AppCredentialEntity,
+            },
+        ),
+    },
+    schema: {
+        params: Type.Object({
+            id: Type.String(),
+        }),
+    },
 }

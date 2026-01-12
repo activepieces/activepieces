@@ -61,6 +61,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 filename: part.filename,
                 data: await part.toBuffer(),
                 type: 'file',
+                mimetype: part.mimetype,
             };
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (part as any).value = apFile
@@ -91,7 +92,6 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
     await app.register(healthModule)
-
     return app
 }
 

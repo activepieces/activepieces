@@ -66,7 +66,7 @@ export const findUser = createAction({
     }),
   },
   async run(context) {
-    const authData = await getAuthToken(context.auth as CyberArkAuth);
+    const authData = await getAuthToken(context.auth);
 
     const queryParams = new URLSearchParams();
 

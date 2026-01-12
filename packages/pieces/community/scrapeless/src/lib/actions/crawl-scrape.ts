@@ -18,7 +18,7 @@ export const crawlScrapeApi = createAction({
   },
   async run({ propsValue, auth }) {
     try {
-      const client = createScrapelessClient(auth);
+      const client = createScrapelessClient(auth.secret_text);
 
       const url = propsValue.url;
       const browserOptions = {

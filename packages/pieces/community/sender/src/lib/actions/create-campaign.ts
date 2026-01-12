@@ -51,7 +51,7 @@ export const createCampaignAction = createAction({
     }
 
     const response = await makeSenderRequest(
-      context.auth,
+      context.auth.secret_text,
       '/campaigns',
       HttpMethod.POST,
       campaignData

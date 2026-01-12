@@ -5,7 +5,7 @@ import { FileX } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 
 import { BuilderPage } from '@/app/builder';
-import { BuilderStateProvider } from '@/app/builder/builder-state-provider';
+import { BuilderStateProvider } from '@/app/builder/state/builder-state-provider';
 import { buttonVariants } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { flowsApi } from '@/features/flows/lib/flows-api';
@@ -73,9 +73,10 @@ const FlowBuilderPage = () => {
         flow={flow}
         flowVersion={flow!.version}
         readonly={false}
+        hideTestWidget={false}
         run={null}
-        sampleData={sampleData ?? {}}
-        sampleDataInput={sampleDataInput ?? {}}
+        outputSampleData={sampleData ?? {}}
+        inputSampleData={sampleDataInput ?? {}}
       >
         <BuilderPage />
       </BuilderStateProvider>

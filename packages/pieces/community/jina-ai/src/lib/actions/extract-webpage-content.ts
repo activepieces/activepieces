@@ -213,7 +213,7 @@ export const extractWebpageContentAction = createAction({
     const response = await JinaAICommon.makeRequest({
       url: finalUrl,
       method: HttpMethod.GET,
-      auth: apiKey as string,
+      auth: apiKey.secret_text,
       body: undefined,
       headers,
     });

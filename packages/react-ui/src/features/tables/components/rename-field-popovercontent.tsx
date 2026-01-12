@@ -28,7 +28,7 @@ const RenameFieldPopoverContent = ({ name }: { name: string }) => {
     },
     resolver: (values) => {
       const errors: FieldErrors<{ name: string }> = {};
-      if (values.name.length === 0) {
+      if (values.name.trim().length === 0) {
         errors.name = {
           message: t('Name is required'),
           type: 'required',
@@ -37,8 +37,9 @@ const RenameFieldPopoverContent = ({ name }: { name: string }) => {
       if (
         fields.find(
           (field) =>
-            field.name.toLowerCase() === values.name.toLowerCase() &&
-            field.name.toLowerCase() !== name.toLowerCase(),
+            field.name.trim().toLowerCase() ===
+              values.name.trim().toLowerCase() &&
+            field.name.trim().toLowerCase() !== name.trim().toLowerCase(),
         )
       ) {
         errors.name = {

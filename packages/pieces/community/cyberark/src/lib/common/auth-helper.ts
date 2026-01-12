@@ -1,5 +1,7 @@
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
-
+import { cyberarkAuth } from '../..';
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+  
 export interface CyberArkAuth {
   serverUrl: string;
   username: string;
@@ -11,8 +13,8 @@ export interface AuthToken {
   serverUrl: string;
 }
 
-export async function getAuthToken(auth: CyberArkAuth): Promise<AuthToken> {
-  const baseUrl = auth.serverUrl.replace(/\/$/, '');
+export async function getAuthToken(auth: AppConnectionValueForAuthProperty<typeof cyberarkAuth>): Promise<AuthToken> {
+  const baseUrl = auth.props.serverUrl.replace(/\/$/, '');
   
   try {
     const response = await httpClient.sendRequest({
@@ -22,8 +24,8 @@ export async function getAuthToken(auth: CyberArkAuth): Promise<AuthToken> {
         'Content-Type': 'application/json',
       },
       body: {
-        username: auth.username,
-        password: auth.password,
+        username: auth.props.username,
+        password: auth.props.password,
       },
     });
 

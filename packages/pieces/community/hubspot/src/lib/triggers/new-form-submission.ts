@@ -12,11 +12,13 @@ import {
 	createTrigger,
 	PiecePropValueSchema,
 	TriggerStrategy,
+	Property,
 } from '@activepieces/pieces-framework';
 import { formDropdown } from '../common/props';
 
 type Props = {
 	formId: string;
+	allowMultipleFiles: boolean;
 };
 
 type FormSubmissionResponse = {
@@ -39,7 +41,8 @@ type FormField = {
 	fieldType: string;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
 		const authValue = auth as PiecePropValueSchema<typeof hubspotAuth>;
@@ -90,7 +93,12 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 
 				if (field) {
 					const { label, fieldType } = field;
-					if (fieldType === 'checkbox') {
+
+					// return an array
+					if (
+						fieldType === 'checkbox' ||
+						(fieldType === 'file' && propsValue.allowMultipleFiles)
+					) {
 						formattedValues[label] = formattedValues[label] || [];
 						formattedValues[label].push(fieldValue.value);
 					} else {
@@ -121,6 +129,12 @@ export const newFormSubmissionTrigger = createTrigger({
 	type: TriggerStrategy.POLLING,
 	props: {
 		formId: formDropdown,
+		allowMultipleFiles: Property.Checkbox({
+			displayName: 'Allow Multiple Files',
+			description: 'Return all file fields as array',
+			required: true,
+			defaultValue: false,
+		}),
 	},
 	async onEnable(context) {
 		await pollingHelper.onEnable(polling, {

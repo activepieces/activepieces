@@ -18,6 +18,7 @@ export const moveFileAction = createAction({
     siteId: microsoftSharePointCommon.siteId,
     driveId: microsoftSharePointCommon.driveId,
     fileId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'File to Move',
       description: 'The file you want to move.',
       required: true,
@@ -61,6 +62,7 @@ export const moveFileAction = createAction({
       },
     }),
     destinationFolderId: Property.Dropdown({
+      auth: microsoftSharePointAuth,
       displayName: 'Destination Folder',
       description: 'The folder to move the file into. Select "Root" to move to the top level of the drive.',
       required: true,

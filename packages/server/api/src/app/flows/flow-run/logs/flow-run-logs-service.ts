@@ -28,7 +28,7 @@ export const flowRunLogsService = (log: FastifyBaseLogger) => {
                 algorithm: JwtSignAlgorithm.HS256,
                 expiresInSeconds: dayjs.duration(100, 'year').asSeconds(),
             })
-            return domainHelper.getInternalApiUrl({ path: `/v1/flow-runs/logs?token=${token}`, platformId: null })
+            return domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/logs?token=${token}`, platformId: null })
         },
         async upsertMetadata(request: UploadLogsToken): Promise<File> {
             const file = await fileService(log).getFile({

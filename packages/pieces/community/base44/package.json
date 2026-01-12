@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-base44",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "@base44/sdk": "^0.8.4",
+    "tslib": "^2.3.0"
+  }
+}

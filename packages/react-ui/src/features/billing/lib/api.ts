@@ -1,16 +1,11 @@
 import { api } from '@/lib/api';
 import {
-  ListAICreditsUsageRequest,
-  ListAICreditsUsageResponse,
-} from '@activepieces/common-ai';
-import {
+  UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
-  ToggleAiCreditsOverageEnabledParams,
-  SetAiCreditsOverageLimitParams,
-  UpdateSubscriptionParams,
-  StartTrialParams,
+  CreateAICreditCheckoutSessionParamsSchema,
+  UpdateAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/ee-shared';
-import { PlatformPlan, PlatformBillingInformation } from '@activepieces/shared';
+import { PlatformBillingInformation } from '@activepieces/shared';
 
 export const platformBillingApi = {
   getSubscriptionInfo() {
@@ -19,33 +14,30 @@ export const platformBillingApi = {
   getPortalLink() {
     return api.post<string>('/v1/platform-billing/portal');
   },
-  updateSubscription(params: UpdateSubscriptionParams) {
-    return api.post<string>('/v1/platform-billing/update-subscription', params);
+  updateActiveFlowsLimits(params: UpdateActiveFlowsAddonParams) {
+    return api.post<string>(
+      '/v1/platform-billing/update-active-flows-addon',
+      params,
+    );
   },
   createSubscription(params: CreateSubscriptionParams) {
-    return api.post<string>('/v1/platform-billing/create-subscription', params);
-  },
-  setAiCreditsOverageLimit(params: SetAiCreditsOverageLimitParams) {
-    return api.post<PlatformPlan>(
-      '/v1/platform-billing/set-ai-credits-overage-limit',
+    return api.post<string>(
+      '/v1/platform-billing/create-checkout-session',
       params,
     );
   },
-  toggleAiCreditsOverageEnabled(params: ToggleAiCreditsOverageEnabledParams) {
-    return api.post<PlatformPlan>(
-      '/v1/platform-billing/update-ai-overage-state',
+  createAICreditCheckoutSession(
+    params: CreateAICreditCheckoutSessionParamsSchema,
+  ) {
+    return api.post<{ stripeCheckoutUrl: string }>(
+      '/v1/platform-billing/ai-credits/create-checkout-session',
       params,
     );
   },
-  startTrial(params: StartTrialParams) {
-    return api.post<{ success: boolean }>(
-      '/v1/platform-billing/start-trial',
+  updateAutoTopUp(params: UpdateAICreditsAutoTopUpParamsSchema) {
+    return api.post<{ stripeCheckoutUrl?: string }>(
+      '/v1/platform-billing/ai-credits/auto-topup',
       params,
     );
-  },
-  listAiCreditsUsage(
-    params: ListAICreditsUsageRequest,
-  ): Promise<ListAICreditsUsageResponse> {
-    return api.get('/v1/platform-billing/ai-credits-usage', params);
   },
 };

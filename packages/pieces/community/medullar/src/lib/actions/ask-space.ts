@@ -73,7 +73,7 @@ export const askSpace = createAction({
           },
         },
         headers: {
-          Authorization: `Bearer ${context.auth}`,
+          Authorization: `Bearer ${context.auth.secret_text}`,
         },
       });
       chatId = chatResponse.body.uuid;
@@ -93,7 +93,7 @@ export const askSpace = createAction({
         source: 'external_api',
       },
       headers: {
-        Authorization: `Bearer ${context.auth}`,
+        Authorization: `Bearer ${context.auth.secret_text}`,
       },
     });
 

@@ -23,7 +23,8 @@ export const createCampaignAction = createAction({
             description: 'Select the AI agent to use for the campaign.',
             required: true,
             refreshers: ['auth'],
-            options: async ({ auth }: { auth?: string }) => {
+            auth: kallabotAuth,
+            options: async ({ auth }) => {
                 if (!auth) {
                     return {
                         disabled: true,
@@ -37,7 +38,7 @@ export const createCampaignAction = createAction({
                         method: HttpMethod.GET,
                         url: 'https://api.kallabot.com/agents',
                         headers: {
-                            'Authorization': `Bearer ${auth}`,
+                            'Authorization': `Bearer ${auth.secret_text}`,
                             'Content-Type': 'application/json'
                         }
                     });
@@ -102,7 +103,8 @@ export const createCampaignAction = createAction({
             description: 'Select the contact list for the campaign.',
             required: true,
             refreshers: ['auth'],
-            options: async ({ auth }: { auth?: string }) => {
+            auth: kallabotAuth,
+            options: async ({ auth }) => {
                 if (!auth) {
                     return {
                         disabled: true,
@@ -116,7 +118,7 @@ export const createCampaignAction = createAction({
                         method: HttpMethod.GET,
                         url: 'https://api.kallabot.com/contacts/lists',
                         headers: {
-                            'Authorization': `Bearer ${auth}`,
+                            'Authorization': `Bearer ${auth.secret_text}`,
                             'Content-Type': 'application/json'
                         }
                     });
@@ -174,7 +176,8 @@ export const createCampaignAction = createAction({
             description: 'Select phone numbers to use for making calls.',
             required: true,
             refreshers: ['auth'],
-            options: async ({ auth }: { auth?: string }) => {
+            auth: kallabotAuth,
+            options: async ({ auth }) => {
                 if (!auth) {
                     return {
                         disabled: true,
@@ -188,7 +191,7 @@ export const createCampaignAction = createAction({
                         method: HttpMethod.GET,
                         url: 'https://api.kallabot.com/account-phone-numbers',
                         headers: {
-                            'Authorization': `Bearer ${auth}`,
+                            'Authorization': `Bearer ${auth.secret_text}`,
                             'Content-Type': 'application/json'
                         }
                     });
@@ -280,7 +283,7 @@ export const createCampaignAction = createAction({
             method: HttpMethod.POST,
             url: 'https://api.kallabot.com/campaign',
             headers: {
-                'Authorization': `Bearer ${context.auth}`,
+                'Authorization': `Bearer ${context.auth.secret_text}`,
                 'Content-Type': 'application/json'
             },
             body: payload

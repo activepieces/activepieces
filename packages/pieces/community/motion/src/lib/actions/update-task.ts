@@ -63,7 +63,7 @@ export const updateTask = createAction({
       url: `${BASE_URL}/tasks/${propsValue.taskId}`,
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': auth,
+        'X-API-Key': auth.secret_text,
       },
       body: {
         name,

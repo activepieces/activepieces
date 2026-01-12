@@ -1,9 +1,14 @@
+import { ApEdition } from '@activepieces/shared'
 import { MigrationInterface, QueryRunner } from 'typeorm'
+import { isNotOneOfTheseEditions } from '../../database-common'
 
 export class AddPlatformAnalyticsReportEntity1753091760355 implements MigrationInterface {
     name = 'AddPlatformAnalyticsReportEntity1753091760355'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             CREATE TABLE "platform_analytics_report" (
                 "id" character varying(21) NOT NULL,
@@ -32,6 +37,9 @@ export class AddPlatformAnalyticsReportEntity1753091760355 implements MigrationI
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        if (isNotOneOfTheseEditions([ApEdition.CLOUD, ApEdition.ENTERPRISE])) {
+            return
+        }
         await queryRunner.query(`
             ALTER TABLE "platform_analytics_report" DROP CONSTRAINT "fk_platform_analytics_report_platform_id"
         `)

@@ -49,7 +49,7 @@ export const sportsNewsSearch = createAction({
       method: HttpMethod.POST,
       url: `${dappierCommon.baseUrl}/app/v2/search?data_model_id=dm_01j0pb465keqmatq9k83dthx34`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
         'Content-Type': 'application/json',
       },
       body: {

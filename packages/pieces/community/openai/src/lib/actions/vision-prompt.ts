@@ -24,6 +24,7 @@ export const visionPrompt = createAction({
       required: true,
     }),
     detail: Property.Dropdown({
+      auth: openaiAuth,
       displayName: 'Detail',
       required: false,
       description:
@@ -99,7 +100,7 @@ export const visionPrompt = createAction({
     });
 
     const openai = new OpenAI({
-      apiKey: auth,
+      apiKey: auth.secret_text,
     });
     const { temperature, maxTokens, topP, frequencyPenalty, presencePenalty } =
       propsValue;

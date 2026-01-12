@@ -1,0 +1,98 @@
+import {
+  DedupeStrategy,
+  Polling,
+  pollingHelper,
+} from '@activepieces/pieces-common';
+import {
+  AppConnectionValueForAuthProperty,
+  TriggerStrategy,
+  createTrigger,
+} from '@activepieces/pieces-framework';
+import { HttpMethod, httpClient } from '@activepieces/pieces-common';
+import { flowParserAuth } from '../common/auth';
+import dayjs from 'dayjs';
+
+const BASE_URL = 'https://api.flowparser.one/v1';
+
+const polling: Polling<AppConnectionValueForAuthProperty<typeof flowParserAuth>, Record<string, never>> = {
+  strategy: DedupeStrategy.TIMEBASED,
+  items: async ({ auth, lastFetchEpochMS }) => {
+    try {
+      const queryParams: Record<string, string> = {
+        status: 'parsed',
+      };
+
+      if (lastFetchEpochMS) {
+        queryParams['since'] = new Date(lastFetchEpochMS).toISOString();
+      }
+
+      const response = await httpClient.sendRequest<
+        Array<{
+          id: string;
+          status: string;
+          [key: string]: any;
+        }>
+      >({
+        method: HttpMethod.GET,
+        url: `${BASE_URL}/documents/status-changes`,
+        headers: {
+          flow_api_key: auth.secret_text,
+        },
+        queryParams,
+      });
+
+      const statusChanges = Array.isArray(response.body) ? response.body : [];
+
+      // Filter to only include parsed status changes
+      const parsedDocuments = statusChanges.filter(
+        (doc) => doc.status === 'parsed'
+      );
+
+      return parsedDocuments.map((doc) => {
+        // Use the status change timestamp or current time as fallback
+        const timestamp = doc['updatedAt'] || doc['createdAt'] || new Date().toISOString();
+        return {
+          epochMilliSeconds: dayjs(timestamp).valueOf(),
+          data: doc,
+        };
+      });
+    } catch (error: any) {
+      console.error('Error fetching parsed documents:', error);
+      return [];
+    }
+  },
+};
+
+export const newParsedDocumentFound = createTrigger({
+  auth: flowParserAuth,
+  name: 'new_parsed_document_found',
+  displayName: 'New Parsed Document Found',
+  description: 'Triggers when a document has been successfully parsed',
+  props: {},
+  sampleData: {
+    id: 'uuid',
+    documentId: 'uuid',
+    templateId: 'uuid',
+    createdAt: '2024-01-01T00:00:00Z',
+    parsedAt: '2024-01-01T00:00:00Z',
+    status: 'parsed',
+  },
+  type: TriggerStrategy.POLLING,
+  async test(context) {
+    const { store, auth, propsValue, files } = context;
+    return await pollingHelper.test(polling, { store, auth, propsValue, files });
+  },
+  async onEnable(context) {
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onEnable(polling, { store, auth, propsValue });
+  },
+  async onDisable(context) {
+    const { store, auth, propsValue } = context;
+    await pollingHelper.onDisable(polling, { store, auth, propsValue });
+  },
+  async run(context) {
+    const { store, auth, propsValue, files } = context;
+    return await pollingHelper.poll(polling, { store, auth, propsValue, files });
+  },
+});
+

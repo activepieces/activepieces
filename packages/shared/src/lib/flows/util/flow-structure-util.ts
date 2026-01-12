@@ -5,7 +5,7 @@ import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
 
-export const AGENT_PIECE_NAME = '@activepieces/piece-agent'
+export const AI_PIECE_NAME = '@activepieces/piece-ai'
 
 export type Step = FlowAction | FlowTrigger
 type StepWithIndex = Step & {
@@ -224,7 +224,7 @@ function extractAgentIds(flowVersion: FlowVersion): string[] {
 
 function isAgentPiece(action: Step) {
     return (
-        action.type === FlowActionType.PIECE && action.settings.pieceName === AGENT_PIECE_NAME
+        action.type === FlowActionType.PIECE && action.settings.pieceName === AI_PIECE_NAME
     )
 }
 

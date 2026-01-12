@@ -75,15 +75,15 @@ export const customerIo: any = createPiece({
     createEvent,
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        customerIOCommon[(auth as CustomerIOAuth).region].trackUrl,
+        auth ? customerIOCommon[auth.props.region || 'us'].trackUrl : '',
       auth: customerIOAuth,
       name: 'custom_track_api_call',
       description: 'CustomerIO Track Custom API Call (track.customer.io)',
       displayName: 'Track Custom API Call',
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as CustomerIOAuth).track_site_id}:${
-            (auth as CustomerIOAuth).track_api_key
+          `${(auth).props.track_site_id}:${
+            (auth).props.track_api_key
           }`,
           'utf8'
         ).toString('base64')}`,
@@ -91,13 +91,13 @@ export const customerIo: any = createPiece({
     }),
     createCustomApiCallAction({
       baseUrl: (auth) =>
-        customerIOCommon[(auth as CustomerIOAuth).region].apiUrl,
+        auth ? customerIOCommon[auth.props.region || 'us'].apiUrl : '',
       auth: customerIOAuth,
       name: 'custom_app_api_call',
       description: 'CustomerIO App Custom API Call (api.customer.io)',
       displayName: 'App Custom API Call',
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${(auth as CustomerIOAuth).api_bearer_token}`,
+        Authorization: `Bearer ${(auth).props.api_bearer_token}`,
       }),
     }),
   ],

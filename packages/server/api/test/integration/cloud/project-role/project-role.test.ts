@@ -27,6 +27,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
             
@@ -60,6 +61,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -85,6 +87,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -110,6 +113,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -131,6 +135,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -165,6 +170,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -195,6 +201,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -223,6 +230,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockUser.id,
+                
                 platform: { id: mockPlatform.id },
             })
 
@@ -245,6 +253,7 @@ describe('Project Role API', () => {
             const testToken = await generateMockToken({
                 type: PrincipalType.USER,
                 id: mockOwner.id,
+                
                 platform: { id: mockPlatform.id },
             })
 

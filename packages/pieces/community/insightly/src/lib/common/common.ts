@@ -1,5 +1,5 @@
 import { httpClient, HttpMethod, AuthenticationType } from '@activepieces/pieces-common';
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { AppConnectionValueForAuthProperty, PieceAuth } from '@activepieces/pieces-framework';
 
 export const insightlyAuth = PieceAuth.SecretText({
   displayName: 'API Key',
@@ -21,7 +21,7 @@ export const INSIGHTLY_OBJECTS = [
 ];
 
 export async function makeInsightlyRequest(
-  apiKey: string, 
+  auth: AppConnectionValueForAuthProperty<typeof insightlyAuth>, 
   endpoint: string, 
   pod = 'na1',
   method: HttpMethod = HttpMethod.GET,
@@ -35,7 +35,7 @@ export async function makeInsightlyRequest(
     url,
     authentication: {
       type: AuthenticationType.BASIC,
-      username: apiKey,
+      username: auth.secret_text,
       password: '',
     },
   };

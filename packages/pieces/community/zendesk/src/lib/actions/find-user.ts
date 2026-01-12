@@ -106,7 +106,7 @@ export const findUserAction = createAction({
     }),
   },
   async run({ propsValue, auth }) {
-    const authentication = auth as AuthProps;
+    const authentication = auth;
     const {
       search_type,
       email,
@@ -187,13 +187,13 @@ export const findUserAction = createAction({
     try {
       const response = await httpClient.sendRequest({
         url: `https://${
-          authentication.subdomain
+          authentication.props.subdomain
         }.zendesk.com/api/v2/search.json?${searchParams.toString()}`,
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BASIC,
-          username: authentication.email + '/token',
-          password: authentication.token,
+          username: authentication.props.email + '/token',
+          password: authentication.props.token,
         },
       });
 

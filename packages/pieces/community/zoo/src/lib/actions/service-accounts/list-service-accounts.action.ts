@@ -25,7 +25,7 @@ export const listServiceAccountsAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/org/service-accounts',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

@@ -17,7 +17,7 @@ export const extractDataFromDocumentAction = createAction({
 		const { documentId } = context.propsValue;
 
 		const response = await airparserApiCall<GetDocumentResponse>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/docs/${documentId}/extended`,
 		});

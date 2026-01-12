@@ -20,7 +20,7 @@ export const createOrgAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.zoo.dev/org',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         name: propsValue.name,

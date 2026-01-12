@@ -23,7 +23,7 @@ async function convertPdfToImages(dataBuffer: Buffer): Promise<Buffer[]> {
     const outputDir = join(tempDir, `output-${uniqueId}`);
     try {
         await fs.mkdir(outputDir);
-        await fs.writeFile(inputFilePath, dataBuffer);
+        await fs.writeFile(inputFilePath, dataBuffer as any);
 
         const { stderr } = await execPromise(`${pdftoppmPath} -png ${inputFilePath} ${join(outputDir, 'output')}`);
         if (stderr) {

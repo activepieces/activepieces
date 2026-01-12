@@ -25,7 +25,7 @@ export const listOrgInvoicesAction = createAction({
       method: HttpMethod.GET,
       url: 'https://api.zoo.dev/org/payment/invoices',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         ...(propsValue.limit && { limit: propsValue.limit.toString() }),

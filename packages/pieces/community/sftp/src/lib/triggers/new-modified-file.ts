@@ -1,4 +1,4 @@
-import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy } from '@activepieces/pieces-framework';
+import { PiecePropValueSchema, Property, createTrigger, TriggerStrategy, AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
 import { sftpAuth, getClient, getProtocolBackwardCompatibility, endClient } from '../..';
 import dayjs from 'dayjs';
@@ -11,13 +11,13 @@ function getModifyTime(file: Client.FileInfo | FTPFileInfo, protocol: string): n
     dayjs((file as FTPFileInfo).modifiedAt).valueOf();
 }
 
-const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ignoreHiddenFiles?: boolean }> = {
+const polling: Polling<AppConnectionValueForAuthProperty<typeof sftpAuth>, { path: string; ignoreHiddenFiles?: boolean }> = {
   strategy: DedupeStrategy.TIMEBASED,
   items: async ({ auth, propsValue, lastFetchEpochMS }) => {
     let client: Client | FTPClient | null = null;
     try {
-      const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.protocol);
-      client = await getClient(auth);
+      const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.props.protocol);
+      client = await getClient(auth.props);
       const files = await client.list(propsValue.path);
 
       const filteredFiles = files.filter(file => {
@@ -44,7 +44,7 @@ const polling: Polling<PiecePropValueSchema<typeof sftpAuth>, { path: string; ig
       return [];
     } finally {
       if (client) {
-        await endClient(client, auth.protocol);
+        await endClient(client, auth.props.protocol);
       }
     }
   },

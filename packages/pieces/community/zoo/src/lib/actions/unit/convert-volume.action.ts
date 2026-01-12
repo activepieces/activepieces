@@ -50,7 +50,7 @@ export const convertVolumeAction = createAction({
       method: HttpMethod.GET,
       url: `https://api.zoo.dev/unit/conversion/volume/${propsValue.inputUnit}/${propsValue.outputUnit}`,
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       queryParams: {
         value: propsValue.value.toString(),

@@ -1,6 +1,7 @@
 import { HttpMethod } from '@activepieces/pieces-common';
 import { PieceAuth, Property } from '@activepieces/pieces-framework';
 import { makeRequest } from './client';
+import { AppConnectionType } from '@activepieces/shared';
 
 export const cloudinaryAuth = PieceAuth.CustomAuth({
     required: true,
@@ -30,7 +31,10 @@ export const cloudinaryAuth = PieceAuth.CustomAuth({
                     error: 'Authentication credentials are required. Please provide your API Key, API Secret, and Cloud Name from your Cloudinary Console.',
                 };
             }
-            await makeRequest(auth, HttpMethod.GET, '/folders');
+            await makeRequest({
+                type: AppConnectionType.CUSTOM_AUTH,
+                props: auth,
+            }, HttpMethod.GET, '/folders');
             return {
                 valid: true,
             };

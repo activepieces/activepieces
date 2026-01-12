@@ -1,7 +1,7 @@
 import { hubspotAuth } from '../../';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { getDefaultPropertiesForObject, standardObjectPropertiesDropdown } from '../common/props';
-import { OBJECT_TYPE } from '../common/constants';
+import { OBJECT_TYPE, MAX_SEARCH_PAGE_SIZE } from '../common/constants';
 import { MarkdownVariant } from '@activepieces/shared';
 import { FilterOperatorEnum } from '../common/types';
 import { Client } from '@hubspot/api-client';
@@ -83,7 +83,7 @@ export const findDealAction = createAction({
 		const defaultDealProperties = getDefaultPropertiesForObject(OBJECT_TYPE.DEAL);
 
 		const response = client.crm.deals.searchApi.doSearch({
-			limit: 100,
+			limit: MAX_SEARCH_PAGE_SIZE,
 			properties: [...defaultDealProperties, ...additionalPropertiesToRetrieve],
 			filterGroups: [{ filters }],
 		});

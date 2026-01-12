@@ -26,6 +26,7 @@ export const createContactAction = createAction({
       },
     }),
     contactFields: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Details',
       required: true,
       refreshers: ['type'],
@@ -40,7 +41,7 @@ export const createContactAction = createAction({
           if (auth) {
             try {
               const organisations = await capsuleCrmClient.searchContacts(
-                auth as CapsuleCrmAuthType,
+                auth,
                 ''
               );
               
@@ -92,13 +93,14 @@ export const createContactAction = createAction({
       required: false,
     }),
     ownerId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Owner',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [] };
         const users = await capsuleCrmClient.listUsers(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: users.map((user) => ({
@@ -109,13 +111,14 @@ export const createContactAction = createAction({
       },
     }),
     teamId: Property.Dropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Team',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [] };
         const teams = await capsuleCrmClient.listTeams(
-          auth as CapsuleCrmAuthType
+          auth
         );
         return {
           options: teams.map((team) => ({
@@ -126,12 +129,13 @@ export const createContactAction = createAction({
       },
     }),
     tags: Property.MultiSelectDropdown({
+      auth: capsuleCrmAuth,
       displayName: 'Tags',
       required: false,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) return { options: [] };
-        const tags = await capsuleCrmClient.listTags(auth as CapsuleCrmAuthType);
+        const tags = await capsuleCrmClient.listTags(auth);
         return {
           options: tags.map((tag) => ({
             label: tag.name,
@@ -141,6 +145,7 @@ export const createContactAction = createAction({
       },
     }),
     customFields: Property.DynamicProperties({
+      auth: capsuleCrmAuth,
       displayName: 'Custom Fields',
       required: true,
       refreshers: [],
@@ -148,7 +153,7 @@ export const createContactAction = createAction({
         const fields: DynamicPropsValue = {};
         if (!auth) return fields;
         const customFields = await capsuleCrmClient.listCustomFields(
-          auth as CapsuleCrmAuthType
+          auth
         );
         for (const field of customFields) {
           switch (field.type) {

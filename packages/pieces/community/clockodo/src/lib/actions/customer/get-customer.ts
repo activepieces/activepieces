@@ -11,7 +11,7 @@ export default createAction({
     customer_id: clockodoCommon.customer_id(true, undefined),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.getCustomer(propsValue.customer_id as number);
     return res.customer;
   },

@@ -22,13 +22,28 @@
             "glob": "**/!(i18n.json)"
           }
         ],
-        "updateBuildableProjectDepsInPackageJson": true
-      }
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/notion",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   },

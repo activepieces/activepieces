@@ -24,7 +24,7 @@ export const sendinblue = createPiece({
       baseUrl: () => 'https://api.sendinblue.com/v3',
       auth: sendinblueAuth,
       authMapping: async (auth) => ({
-        'api-key': auth as string,
+        'api-key': auth.secret_text,
       }),
     }),
   ],

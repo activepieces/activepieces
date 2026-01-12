@@ -1,10 +1,12 @@
 import { getAccessTokenOrThrow } from '@activepieces/pieces-common';
 import { OAuth2PropertyValue, Property } from '@activepieces/pieces-framework';
 import { GitlabApi } from './client';
+import { gitlabAuth } from '../..';
 
 export const gitlabCommon = {
   projectId: (required = true) =>
     Property.Dropdown({
+      auth: gitlabAuth,
       displayName: 'Project',
       required,
       refreshers: [],
@@ -17,7 +19,7 @@ export const gitlabCommon = {
           };
         }
         const client = makeClient({
-          auth: auth as OAuth2PropertyValue,
+          auth: auth,
         });
         const res = await client.listProjects({
           simple: true,

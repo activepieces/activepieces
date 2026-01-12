@@ -17,7 +17,7 @@ export const getLastRun = createAction({
     }),
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const headers = {
       Authorization: 'Bearer ' + apifyToken,
       'Content-Type': 'application/json',

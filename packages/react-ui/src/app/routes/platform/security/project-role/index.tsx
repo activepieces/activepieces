@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,

@@ -55,7 +55,7 @@ export const slidespeak = createPiece({
       baseUrl:()=>BASE_URL,
       authMapping:async (auth)=>{
          return{
-           'X-API-key':auth as string
+           'X-API-key':auth.secret_text,
         }
       }
     })

@@ -78,14 +78,15 @@ export const zendesk = createPiece({
     findUserAction,
     createCustomApiCallAction({
       baseUrl: (auth) =>
+        auth?
         `https://${
-          (auth as { subdomain: string }).subdomain
-        }.zendesk.com/api/v2`,
+          auth.props.subdomain
+        }.zendesk.com/api/v2` : '',
       auth: zendeskAuth,
       authMapping: async (auth) => ({
         Authorization: `Basic ${Buffer.from(
-          `${(auth as { email: string }).email}/token:${
-            (auth as { token: string }).token
+          `${auth.props.email}/token:${
+            auth.props.token
           }`
         ).toString('base64')}`,
       }),

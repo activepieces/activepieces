@@ -53,7 +53,7 @@ export const scheduleCallAgent = createAction({
       method: HttpMethod.POST,
       url: `${aiAnswerConfig.baseUrl}/v2/schedule_call_agent/${agentID}`,
       headers: {
-        [aiAnswerConfig.accessTokenHeaderKey]: context.auth,
+        [aiAnswerConfig.accessTokenHeaderKey]: context.auth.secret_text,
       },
       queryParams: {
         agent_id: agentID

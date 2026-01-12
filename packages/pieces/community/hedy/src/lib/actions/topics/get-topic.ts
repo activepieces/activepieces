@@ -15,7 +15,7 @@ export const getTopic = createAction({
   },
   async run(context) {
     const topicId = context.propsValue.topicId as string;
-    const client = new HedyApiClient(context.auth as string);
+    const client = new HedyApiClient(context.auth.secret_text);
     const response = await client.request<Topic>({
       method: HttpMethod.GET,
       path: `/topics/${topicId}`,

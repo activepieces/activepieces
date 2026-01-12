@@ -25,7 +25,7 @@ export const createFaq = createAction({
     const { auth: apiKey, propsValue } = context;
     const { title, description } = propsValue;
 
-    return await aidbaseClient.createFaq(apiKey, {
+    return await aidbaseClient.createFaq(apiKey.secret_text, {
       title,
       description,
     });

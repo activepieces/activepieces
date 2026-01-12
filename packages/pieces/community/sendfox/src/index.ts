@@ -28,7 +28,7 @@ export const sendfox = createPiece({
       baseUrl: () => 'https://api.sendfox.com',
       auth: sendfoxAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

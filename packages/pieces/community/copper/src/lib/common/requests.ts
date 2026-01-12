@@ -19,9 +19,9 @@ async function fireHttpRequest({
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        'X-PW-AccessToken': auth.apiKey,
+        'X-PW-AccessToken': auth.props.apiKey,
         'X-PW-Application': 'developer_api',
-        'X-PW-UserEmail': auth.email,
+        'X-PW-UserEmail': auth.props.email,
       },
       body,
     })

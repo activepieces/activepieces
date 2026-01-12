@@ -9,12 +9,18 @@ import {
 } from '@activepieces/pieces-common';
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
+import { githubAuth } from '../..';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',
-  repositoryDropdown: Property.Dropdown<{ repo: string; owner: string }>({
+  repositoryDropdown: Property.Dropdown<
+    { repo: string; owner: string },
+    true,
+    typeof githubAuth
+  >({
     displayName: 'Repository',
     refreshers: [],
+    auth: githubAuth,
     required: true,
     options: async ({ auth }) => {
       if (!auth) {
@@ -42,6 +48,7 @@ export const githubCommon = {
   }),
   milestoneDropdown: (required = false) =>
     Property.Dropdown({
+      auth: githubAuth,
       displayName: 'Milestone',
       description: 'The milestone to associate this issue with.',
       required,
@@ -59,7 +66,7 @@ export const githubCommon = {
           number: number;
           title: string;
         }>({
-          accessToken: (auth as OAuth2PropertyValue).access_token,
+          accessToken: auth.access_token,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/milestones`,
         });
@@ -76,6 +83,7 @@ export const githubCommon = {
     }),
   branchDropdown: (displayName: string, desc: string, required = true) =>
     Property.Dropdown({
+      auth: githubAuth,
       displayName,
       description: desc,
       required,
@@ -90,7 +98,7 @@ export const githubCommon = {
         }
         const { owner, repo } = repository as RepositoryProp;
         const branches = await githubPaginatedApiCall<{ name: string }>({
-          accessToken: (auth as OAuth2PropertyValue).access_token,
+          accessToken: auth.access_token,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/branches`,
         });
@@ -108,6 +116,7 @@ export const githubCommon = {
 
   issueDropdown: (required = true) =>
     Property.Dropdown({
+      auth: githubAuth,
       displayName: 'Issue',
       description: 'The issue to select.',
       required,
@@ -127,7 +136,7 @@ export const githubCommon = {
           title: string;
           pull_request?: Record<string, any>;
         }>({
-          accessToken: (auth as OAuth2PropertyValue).access_token,
+          accessToken: auth.access_token,
           method: HttpMethod.GET,
           resourceUri: `/repos/${owner}/${repo}/issues`,
           query: {
@@ -150,6 +159,7 @@ export const githubCommon = {
 
   assigneeSingleDropdown: (required = false) =>
     Property.Dropdown({
+      auth: githubAuth,
       displayName: 'Assignee',
       description: 'Filter issues by a specific assignee.',
       required,
@@ -163,11 +173,7 @@ export const githubCommon = {
           };
         }
         const { owner, repo } = repository as RepositoryProp;
-        const assignees = await getAssignee(
-          auth as OAuth2PropertyValue,
-          owner,
-          repo
-        );
+        const assignees = await getAssignee(auth, owner, repo);
         return {
           disabled: false,
           options: assignees.map((assignee) => {
@@ -182,6 +188,7 @@ export const githubCommon = {
 
   assigneeDropDown: (required = false) =>
     Property.MultiSelectDropdown({
+      auth: githubAuth,
       displayName: 'Assignees',
       description: 'Assignees for the Issue',
       refreshers: ['repository'],
@@ -195,7 +202,7 @@ export const githubCommon = {
             placeholder: 'please authenticate first and select repo',
           };
         }
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+        const authProp: OAuth2PropertyValue = auth;
         const { owner, repo } = repository as RepositoryProp;
         const assignees = await getAssignee(authProp, owner, repo);
         return {
@@ -211,6 +218,7 @@ export const githubCommon = {
     }),
   labelDropDown: (required = false) =>
     Property.MultiSelectDropdown({
+      auth: githubAuth,
       displayName: 'Labels',
       description: 'Labels for the Issue',
       refreshers: ['repository'],

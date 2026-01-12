@@ -70,6 +70,7 @@ export const stripeCommon = {
   },
 
   invoice: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Invoice',
     required: true,
     refreshers: [],
@@ -84,7 +85,7 @@ export const stripeCommon = {
 
       try {
         const client = getClient(
-          auth as PiecePropValueSchema<typeof stripeAuth>
+          auth.secret_text
         );
 
         const invoices = await client.invoices.list({
@@ -125,6 +126,7 @@ export const stripeCommon = {
   }),
 
   customer: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Customer',
     required: true,
     refreshers: [],
@@ -141,7 +143,7 @@ export const stripeCommon = {
         method: HttpMethod.GET,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         url: searchValue
           ? `${baseUrl}/customers/search`
@@ -178,6 +180,7 @@ export const stripeCommon = {
   }),
 
   product: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Product',
     required: true,
     refreshers: [],
@@ -202,7 +205,7 @@ export const stripeCommon = {
         url: `${baseUrl}/products/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           query: query,
@@ -230,6 +233,7 @@ export const stripeCommon = {
   }),
 
   price: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Price',
     required: true,
     refreshers: [],
@@ -252,7 +256,7 @@ export const stripeCommon = {
         url: `${baseUrl}/prices/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           query: `active:'true' AND type:'recurring' AND (product.name~"${
@@ -284,6 +288,7 @@ export const stripeCommon = {
   }),
 
   subscription: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Subscription',
     required: true,
     refreshers: [],
@@ -297,7 +302,7 @@ export const stripeCommon = {
       }
       try {
         const client = getClient(
-          auth as PiecePropValueSchema<typeof stripeAuth>
+          auth.secret_text
         );
 
         const subscriptions = await client.subscriptions.list({
@@ -333,6 +338,7 @@ export const stripeCommon = {
   }),
 
   payout: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Payout',
     required: true,
     refreshers: [],
@@ -349,7 +355,7 @@ export const stripeCommon = {
         url: `${baseUrl}/payouts`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           limit: '100',
@@ -382,6 +388,7 @@ export const stripeCommon = {
   }),
 
   paymentIntent: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Payment Intent',
     required: true,
     refreshers: [],
@@ -406,7 +413,7 @@ export const stripeCommon = {
         url: `${baseUrl}/payment_intents/search`,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: auth as string,
+          token: auth.secret_text,
         },
         queryParams: {
           query: query,
@@ -442,6 +449,7 @@ export const stripeCommon = {
   }),
 
   paymentLink: Property.Dropdown({
+  auth: stripeAuth,
     displayName: 'Payment Link',
     required: true,
     refreshers: [],
@@ -454,7 +462,7 @@ export const stripeCommon = {
         };
       }
       try {
-        const client = getClient(auth as string);
+        const client = getClient(auth.secret_text);
         const paymentLinks = await client.paymentLinks.list({
           active: true,
           limit: 100,

@@ -1,30 +1,30 @@
 import { t } from 'i18next';
 import React, { useContext, useRef, useState } from 'react';
 
-import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import { todosHooks } from '@/features/todos/lib/todo-hook';
+import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   FlowAction,
   FlowActionType,
   Step,
   TodoType,
-  PopulatedTodo,
   flowStructureUtil,
   isNil,
+  StepRunResponse,
+  PopulatedTodo,
+  AgentResult,
 } from '@activepieces/shared';
 
-import { flowRunsApi } from '../../../features/flow-runs/lib/flow-runs-api';
 import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
+import { defaultAgentOutput, isRunAgent } from './agent-test-step';
 import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
-import { testStepHooks } from './test-step-hooks';
 import { TestButtonTooltip } from './test-step-tooltip';
-
+import { testStepHooks } from './utils/test-step-hooks';
 type TestActionComponentProps = {
   isSaving: boolean;
   flowVersionId: string;
@@ -56,7 +56,6 @@ const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
 const TestStepSectionImplementation = React.memo(
   ({
     isSaving,
-    flowVersionId,
     currentStep,
   }: TestActionComponentProps & { currentStep: FlowAction }) => {
     const [errorMessage, setErrorMessage] = useState<string | undefined>(
@@ -66,46 +65,74 @@ const TestStepSectionImplementation = React.memo(
     const [activeDialog, setActiveDialog] = useState<DialogType>(
       DialogType.NONE,
     );
-    const socket = useSocket();
-    const [todoId, setTodoId] = useState<string | null>(null);
     const { sampleData, sampleDataInput } = useBuilderStateContext((state) => {
       return {
-        sampleData: state.sampleData[currentStep.name],
-        sampleDataInput: state.sampleDataInput[currentStep.name],
+        sampleData: state.outputSampleData[currentStep.name],
+        sampleDataInput: state.inputSampleData[currentStep.name],
       };
     });
     const abortControllerRef = useRef<AbortController>(new AbortController());
     const [mutationKey, setMutationKey] = useState<string[]>([]);
+    const [liveAgentResult, setLiveAgentResult] = useState<
+      AgentResult | undefined
+    >(undefined);
     const { mutate: testAction, isPending: isWatingTestResult } =
       testStepHooks.useTestAction({
         mutationKey,
         currentStep,
         setErrorMessage,
         setConsoleLogs,
-        onSuccess: undefined,
+        onSuccess: () => {
+          setTodo(null);
+        },
       });
 
-    const { data: todo, isLoading: isLoadingTodo } = todosHooks.useTodo(todoId);
-
+    const [todo, setTodo] = useState<PopulatedTodo | null>(null);
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
-
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const handleTodoCreateTask = async () => {
+    const handleTodoTest = async () => {
       setActiveDialog(DialogType.TODO_CREATE_TASK);
-      const testStepResponse = await flowRunsApi.testStep(socket, {
-        flowVersionId,
-        stepName: currentStep.name,
+      testAction({
+        type: 'todoAction',
+        onProgress: async (progress: StepRunResponse) => {
+          if (progress.success) {
+            const todoId = getTodoIdFromStepRunResponse(progress);
+            if (todoId) {
+              const todo = await todosApi.get(todoId);
+              setTodo(todo);
+            } else {
+              setErrorMessage(
+                `${t(`Can't find todo ID in the response`)} ${JSON.stringify(
+                  progress.output,
+                )}`,
+              );
+            }
+          }
+        },
       });
-      const output = testStepResponse.output as PopulatedTodo;
-      if (testStepResponse.success && !isNil(output)) {
-        setTodoId(output.id as string);
-      }
+    };
+    const handleAgentTest = async () => {
+      testAction({
+        type: 'agentAction',
+        onProgress: async (progress: StepRunResponse) => {
+          const outputProgress = progress.output;
+          if (!isNil(outputProgress)) {
+            setLiveAgentResult(outputProgress as AgentResult);
+          }
+        },
+        onFinish: () => {
+          setLiveAgentResult(undefined);
+        },
+      });
     };
 
     const onTestButtonClick = async () => {
       if (isTodoCreateTask(currentStep)) {
-        handleTodoCreateTask();
+        handleTodoTest();
+      } else if (isRunAgent(currentStep)) {
+        setLiveAgentResult(defaultAgentOutput);
+        handleAgentTest();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
         setActiveDialog(DialogType.WEBHOOK);
       } else {
@@ -115,32 +142,25 @@ const TestStepSectionImplementation = React.memo(
 
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
-      setTodoId(null);
+      setTodo(null);
       abortControllerRef.current.abort();
       setMutationKey([Date.now().toString()]);
     };
 
-    const isTesting =
-      activeDialog !== DialogType.NONE || isLoadingTodo || isWatingTestResult;
+    const isTesting = activeDialog !== DialogType.NONE || isWatingTestResult;
     const { isLoadingDynamicProperties } = useContext(DynamicPropertiesContext);
 
     return (
       <>
         {!sampleDataExists && (
-          <div className="flex-grow flex justify-center items-center w-full h-full">
+          <div className="grow flex justify-center items-center w-full h-full">
             <TestButtonTooltip invalid={!currentStep.valid}>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={onTestButtonClick}
                 keyboardShortcut="G"
-                onKeyboardShortcut={() => {
-                  if (isTodoCreateTask(currentStep)) {
-                    handleTodoCreateTask();
-                  } else {
-                    testAction(undefined);
-                  }
-                }}
+                onKeyboardShortcut={onTestButtonClick}
                 loading={isTesting || isSaving}
                 disabled={!currentStep.valid || isLoadingDynamicProperties}
               >
@@ -152,8 +172,9 @@ const TestStepSectionImplementation = React.memo(
         )}
         {sampleDataExists && (
           <TestSampleDataViewer
-            currentStep={currentStep}
             isValid={currentStep.valid}
+            currentStep={currentStep}
+            agentResult={liveAgentResult}
             isTesting={isTesting || isLoadingDynamicProperties}
             sampleData={sampleData}
             sampleDataInput={sampleDataInput ?? null}
@@ -171,7 +192,12 @@ const TestStepSectionImplementation = React.memo(
           todo && (
             <TodoTestingDialog
               open={true}
-              onOpenChange={(open) => !open && handleCloseDialog()}
+              key={todo.id}
+              onOpenChange={(open) => {
+                if (!open) {
+                  handleCloseDialog();
+                }
+              }}
               todo={todo}
               currentStep={currentStep}
               setErrorMessage={setErrorMessage}
@@ -215,3 +241,14 @@ TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
 
 export { TestActionSection };
+const getTodoIdFromStepRunResponse = (stepRunResponse: StepRunResponse) => {
+  if (
+    stepRunResponse.output &&
+    typeof stepRunResponse.output === 'object' &&
+    'id' in stepRunResponse.output &&
+    typeof stepRunResponse.output.id === 'string'
+  ) {
+    return stepRunResponse.output.id;
+  }
+  return null;
+};
