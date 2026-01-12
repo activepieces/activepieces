@@ -3,13 +3,11 @@ import { ActivepiecesError, ErrorCode, PrincipalType, UpdatePlatformReportReques
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyBaseLogger } from 'fastify'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
-import { platformMustHaveFeatureEnabled } from '../ee/authentication/ee-authorization'
 import { userService } from '../user/user-service'
 import { piecesAnalyticsService } from './pieces-analytics.service'
 import { platformAnalyticsReportService } from './platform-analytics-report.service'
 
 export const platformAnalyticsModule: FastifyPluginAsyncTypebox = async (app) => {
-    app.addHook('preHandler', platformMustHaveFeatureEnabled((platform) => platform.plan.analyticsEnabled))
     await piecesAnalyticsService(app.log).init()
     await app.register(platformAnalyticsController, { prefix: '/v1/analytics' })
 }

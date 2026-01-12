@@ -208,6 +208,18 @@ export const projectService = {
             externalId,
         })
     },
+    async getAll(params: { ownerId: UserId, platformId: string }): Promise<Project[]> {
+        return projectRepo().findBy({
+            ownerId: params.ownerId,
+            platformId: params.platformId,
+        })
+    },
+    async hardDelete(params: { id: ProjectId, platformId: string }): Promise<void> {
+        await projectRepo().delete({
+            id: params.id,
+            platformId: params.platformId,
+        })
+    },
 }
 
 

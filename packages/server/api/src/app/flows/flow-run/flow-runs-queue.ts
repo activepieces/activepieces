@@ -5,7 +5,6 @@ import { BullMQOtel } from 'bullmq-otel'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { distributedLock, distributedStore, redisConnections } from '../../database/redis-connections'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { system } from '../../helper/system/system'
 import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue/job-queue'
@@ -16,6 +15,21 @@ import { flowRunSideEffects } from './flow-run-side-effects'
 let runsMetadataWorker: Worker<RunsMetadataJobData> | undefined = undefined
 
 const queue = runsMetadataQueueFactory({ createRedisConnection: redisConnections.create, distributedStore })
+
+// Helper functions to build URLs using FRONTEND_URL
+function getApiUrlForWorker(path: string): string {
+    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+    const baseUrl = frontendUrl.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    return `${baseUrl}/api${normalizedPath}`
+}
+
+function getPublicUrl(path: string): string {
+    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+    const baseUrl = frontendUrl.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    return `${baseUrl}${normalizedPath}`
+}
 
 export const runsMetadataQueue = (log: FastifyBaseLogger) => ({
     async init(): Promise<void> {
@@ -164,7 +178,6 @@ async function markParentRunAsFailed({
     parentRunId,
     childRunId,
     projectId,
-    platformId,
 }: MarkParentRunAsFailedParams): Promise<void> {
     const flowRun = await flowRunRepo().findOneByOrFail({
         id: parentRunId,
@@ -177,8 +190,8 @@ async function markParentRunAsFailed({
     const requestId = flowRun.pauseMetadata?.type === PauseType.WEBHOOK ? flowRun.pauseMetadata?.requestId : undefined
     assertNotNullOrUndefined(requestId, 'Parent run has no request id')
 
-    const callbackUrl = await domainHelper.getApiUrlForWorker({ path: `/v1/flow-runs/${parentRunId}/requests/${requestId}`, platformId })
-    const childRunUrl = await domainHelper.getPublicUrl({ path: `/projects/${projectId}/runs/${childRunId}`, platformId })
+    const callbackUrl = getApiUrlForWorker(`/v1/flow-runs/${parentRunId}/requests/${requestId}`)
+    const childRunUrl = getPublicUrl(`/projects/${projectId}/runs/${childRunId}`)
     await apAxios.post(callbackUrl, {
         status: 'error',
         data: {

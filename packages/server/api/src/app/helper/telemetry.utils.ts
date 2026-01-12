@@ -1,77 +1,25 @@
-import { AppSystemProp, apVersionUtil } from '@activepieces/server-shared'
 import { ProjectId, TelemetryEvent, User, UserId, UserIdentity } from '@activepieces/shared'
-import { Analytics } from '@segment/analytics-node'
 import { FastifyBaseLogger } from 'fastify'
-import { platformService } from '../platform/platform.service'
-import { projectService } from '../project/project-service'
-import { system } from './system/system'
 
-const telemetryEnabled = system.getBoolean(AppSystemProp.TELEMETRY_ENABLED)
-
-const analytics = new Analytics({ writeKey: '42TtMD2Fh9PEIcDO2CagCGFmtoPwOmqK' })
-
-export const telemetry = (log: FastifyBaseLogger) => ({
-    async identify(user: User, identity: UserIdentity, projectId: ProjectId): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const identify = {
-            userId: user.id,
-            traits: {
-                email: identity.email,
-                firstName: identity.firstName,
-                lastName: identity.lastName,
-                projectId,
-                firstSeenAt: user.created,
-                ...(await getMetadata()),
-            },
-        }
-        analytics.identify(identify)
+/**
+ * No-op telemetry utility - telemetry has been removed from this fork.
+ * All methods are stubs that do nothing.
+ */
+export const telemetry = (_log: FastifyBaseLogger) => ({
+    async identify(_user: User, _identity: UserIdentity, _projectId: ProjectId): Promise<void> {
+        // No-op: telemetry disabled
     },
-    async trackPlatform(platformId: ProjectId, event: TelemetryEvent): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const platform = await platformService.getOneOrThrow(platformId)
-        await this.trackUser(platform.ownerId, event)
+    async trackPlatform(_platformId: ProjectId, _event: TelemetryEvent): Promise<void> {
+        // No-op: telemetry disabled
     },
     async trackProject(
-        projectId: ProjectId,
-        event: TelemetryEvent,
+        _projectId: ProjectId,
+        _event: TelemetryEvent,
     ): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const project = await projectService.getOne(projectId)
-        this.trackUser(project!.ownerId, event).catch((e) =>
-            log.error(e, '[Telemetry#trackProject] this.trackUser'),
-        )
+        // No-op: telemetry disabled
     },
-    isEnabled: () => telemetryEnabled,
-    async trackUser(userId: UserId, event: TelemetryEvent): Promise<void> {
-        if (!telemetryEnabled) {
-            return
-        }
-        const payloadEvent = {
-            userId,
-            event: event.name,
-            properties: {
-                ...event.payload,
-                ...(await getMetadata()),
-                datetime: new Date().toISOString(),
-            },
-        }
-        log.info(payloadEvent, '[Telemetry#trackUser] sending event')
-        analytics.track(payloadEvent)
+    isEnabled: () => false,
+    async trackUser(_userId: UserId, _event: TelemetryEvent): Promise<void> {
+        // No-op: telemetry disabled
     },
 })
-
-async function getMetadata() {
-    const currentVersion = await apVersionUtil.getCurrentRelease()
-    const edition = system.getEdition()
-    return {
-        activepiecesVersion: currentVersion,
-        activepiecesEnvironment: system.get(AppSystemProp.ENVIRONMENT),
-        activepiecesEdition: edition,
-    }
-}

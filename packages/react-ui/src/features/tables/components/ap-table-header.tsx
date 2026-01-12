@@ -5,7 +5,6 @@ import {
   Trash2,
   Import,
   Download,
-  UploadCloud,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -28,7 +27,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
-import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   getProjectName,
@@ -66,9 +64,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   const { project } = projectCollectionUtils.useCurrentProject();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
-  );
-  const userHasPermissionToPushToGit = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
   );
 
   const exportTable = async () => {
@@ -123,20 +118,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                     <Download className="mr-2 h-4 w-4" />
                     {t('Export')}
                   </DropdownMenuItem>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToPushToGit}
-                  >
-                    <PushToGitDialog type="table" tables={[table]}>
-                      <DropdownMenuItem
-                        disabled={!userHasPermissionToPushToGit}
-                        onSelect={(e) => e.preventDefault()}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <UploadCloud className="mr-2 h-4 w-4" />
-                        {t('Push to Git')}
-                      </DropdownMenuItem>
-                    </PushToGitDialog>
-                  </PermissionNeededTooltip>
+                  {/* Push to Git removed (EE feature) */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Download, PencilIcon, TrashIcon, UploadCloud } from 'lucide-react';
+import { Download, PencilIcon, TrashIcon } from 'lucide-react';
 import React from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -10,7 +10,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { Permission, Table } from '@activepieces/shared';
 
@@ -32,9 +31,6 @@ const ApTableActionsMenu = ({
 }) => {
   const userHasPermissionToUpdateTable = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
-  );
-  const userHasPermissionToPushToGit = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
   );
   return (
     <DropdownMenu modal={true}>
@@ -79,20 +75,7 @@ const ApTableActionsMenu = ({
           </div>
         </DropdownMenuItem>
 
-        <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
-          <PushToGitDialog type="table" tables={[table]}>
-            <DropdownMenuItem
-              disabled={!userHasPermissionToPushToGit}
-              onSelect={(e) => e.preventDefault()}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex cursor-pointer flex-row gap-2 items-center">
-                <UploadCloud className="h-4 w-4" />
-                <span>{t('Push to Git')}</span>
-              </div>
-            </DropdownMenuItem>
-          </PushToGitDialog>
-        </PermissionNeededTooltip>
+        {/* Push to Git removed (EE feature) */}
 
         <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
           <DropdownMenuItem

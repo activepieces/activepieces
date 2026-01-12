@@ -1,4 +1,3 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     CreateFolderRequest,
@@ -13,9 +12,15 @@ import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { applicationEvents } from '../../helper/application-events'
 import { FolderEntity } from './folder.entity'
 import { flowFolderService as folderService } from './folder.service'
+
+// Simple event names for community edition
+enum ApplicationEventName {
+    FOLDER_CREATED = 'folder.created',
+    FOLDER_UPDATED = 'folder.updated',
+    FOLDER_DELETED = 'folder.deleted',
+}
 
 const DEFAULT_PAGE_SIZE = 10
 export const folderModule: FastifyPluginAsyncTypebox = async (app) => {
@@ -30,12 +35,11 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
             projectId: request.projectId,
             request: request.body,
         })
-        applicationEvents.sendUserEvent(request, {
+        // Log event instead of sending to EE event system
+        request.log.info({
             action: ApplicationEventName.FOLDER_CREATED,
-            data: {
-                folder: createdFolder,
-            },
-        })
+            folderId: createdFolder.id,
+        }, 'Folder created')
         return createdFolder
     },
     )
@@ -50,12 +54,11 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 request: request.body,
             })
 
-            applicationEvents.sendUserEvent(request, {
+            // Log event instead of sending to EE event system
+            request.log.info({
                 action: ApplicationEventName.FOLDER_UPDATED,
-                data: {
-                    folder: updatedFlow,
-                },
-            })
+                folderId: updatedFlow.id,
+            }, 'Folder updated')
 
             return updatedFlow
         },
@@ -94,12 +97,11 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
                 projectId: request.projectId,
                 folderId: request.params.id,
             })
-            applicationEvents.sendUserEvent(request, {
+            // Log event instead of sending to EE event system
+            request.log.info({
                 action: ApplicationEventName.FOLDER_DELETED,
-                data: {
-                    folder,
-                },
-            })
+                folderId: folder.id,
+            }, 'Folder deleted')
             await folderService(request.log).delete({
                 projectId: request.projectId,
                 folderId: request.params.id,
@@ -113,7 +115,7 @@ const folderController: FastifyPluginAsyncTypebox = async (fastify) => {
 const CreateFolderParams = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.BODY,
             }),
@@ -129,7 +131,7 @@ const CreateFolderParams = {
 const UpdateFolderParams = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FolderEntity,
@@ -149,7 +151,7 @@ const UpdateFolderParams = {
 const GetFolderParams = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FolderEntity,
@@ -168,7 +170,7 @@ const GetFolderParams = {
 const ListFoldersParams = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_FLOW, {
                 type: ProjectResourceType.QUERY,
             }),
@@ -184,7 +186,7 @@ const ListFoldersParams = {
 const DeleteFolderParams = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FolderEntity,

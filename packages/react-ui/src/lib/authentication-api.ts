@@ -4,7 +4,7 @@ import {
   GetCurrentProjectMemberRoleQuery,
   ResetPasswordRequestBody,
   VerifyEmailRequestBody,
-} from '@activepieces/ee-shared';
+} from '@/lib/ee-shared-stub';
 import {
   AuthenticationResponse,
   ClaimTokenRequest,

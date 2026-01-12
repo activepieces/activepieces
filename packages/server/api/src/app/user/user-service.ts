@@ -1,6 +1,5 @@
 import {
     ActivepiecesError,
-    ApEdition,
     apId,
     assertNotNullOrUndefined,
     Cursor,
@@ -23,8 +22,6 @@ import dayjs from 'dayjs'
 import { In } from 'typeorm'
 import { userIdentityService } from '../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformProjectService } from '../ee/projects/platform-project-service'
-import { projectMemberRepo } from '../ee/projects/project-role/project-role.service'
 import { buildPaginator } from '../helper/pagination/build-paginator'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { system } from '../helper/system/system'
@@ -168,11 +165,13 @@ export const userService = {
         }
     },
     async delete({ id, platformId }: DeleteParams): Promise<void> {
-
-        await platformProjectService(system.globalLogger()).deletePersonalProjectForUser({
-            userId: id,
-            platformId,
-        })
+        // Delete user's personal projects
+        const projects = await projectService.getAll({ ownerId: id, platformId })
+        for (const project of projects) {
+            if (project.type === ProjectType.PERSONAL) {
+                await projectService.hardDelete({ id: project.id, platformId })
+            }
+        }
         await userRepo().delete({
             id,
             platformId,
@@ -231,14 +230,10 @@ export const userService = {
 }
 
 
-async function getUsersForProject(platformId: PlatformId, projectId: string): Promise<UserId[]> {
+async function getUsersForProject(platformId: PlatformId, _projectId: string): Promise<UserId[]> {
+    // For community edition, just return platform admins
     const platformAdmins = await userRepo().find({ where: { platformId, platformRole: PlatformRole.ADMIN } }).then((users) => users.map((user) => user.id))
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return platformAdmins
-    }
-    const projectMembers = await projectMemberRepo().find({ where: { projectId, platformId } }).then((members) => members.map((member) => member.userId))
-    return [...platformAdmins, ...projectMembers]
+    return platformAdmins
 }
 
 type UpdateLastActiveDateParams = {

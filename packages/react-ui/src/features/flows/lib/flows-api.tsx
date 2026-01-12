@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 
 import { UNSAVED_CHANGES_TOAST } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
-import { GetFlowTemplateRequestQuery } from '@activepieces/ee-shared';
+import { GetFlowTemplateRequestQuery } from '@/lib/ee-shared-stub';
 import {
   CreateFlowRequest,
   ErrorCode,

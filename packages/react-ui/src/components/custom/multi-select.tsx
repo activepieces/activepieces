@@ -116,17 +116,19 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
     [onValueChangeProp],
   );
 
-  const [value, setValue] = useControllableState({
+  const [valueState, setValue] = useControllableState<string[]>({
     prop: valueProp,
-    defaultProp: defaultValue,
+    defaultProp: defaultValue ?? [],
     onChange: handleValueChange,
   });
+  const value: string[] = valueState ?? [];
 
-  const [open, setOpen] = useControllableState({
+  const [openState, setOpen] = useControllableState<boolean>({
     prop: openProp,
-    defaultProp: defaultOpen,
+    defaultProp: defaultOpen ?? false,
     onChange: onOpenChange,
   });
+  const open: boolean = openState ?? false;
 
   const handleSelect = React.useCallback(
     (value: string, item: MultiSelectOptionItem) => {

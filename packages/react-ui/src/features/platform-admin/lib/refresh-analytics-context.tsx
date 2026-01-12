@@ -1,61 +1,22 @@
-import { createContext, useState, useCallback } from 'react';
+// Stub for removed platform-admin feature
+import React, { createContext, useContext, ReactNode } from 'react';
 
-type TimeSavedOverride = {
-  value: number | null;
+interface RefreshAnalyticsContextType {
+  refreshAnalytics: () => void;
+}
+
+const RefreshAnalyticsContextDefault: RefreshAnalyticsContextType = {
+  refreshAnalytics: () => {},
 };
 
-type RefreshAnalyticsContextType = {
-  isRefreshing: boolean;
-  setIsRefreshing: (isRefreshing: boolean) => void;
-  timeSavedPerRunOverrides: Record<string, TimeSavedOverride>;
-  setTimeSavedPerRunOverride: (flowId: string, value: number | null) => void;
-  clearTimeSavedPerRunOverrides: () => void;
-};
+export const RefreshAnalyticsContext = createContext<RefreshAnalyticsContextType>(RefreshAnalyticsContextDefault);
 
-export const RefreshAnalyticsContext =
-  createContext<RefreshAnalyticsContextType>({
-    isRefreshing: false,
-    setIsRefreshing: () => {},
-    timeSavedPerRunOverrides: {},
-    setTimeSavedPerRunOverride: () => {},
-    clearTimeSavedPerRunOverrides: () => {},
-  });
-
-export const RefreshAnalyticsProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [timeSavedPerRunOverrides, setTimeSavedPerRunOverrides] = useState<
-    Record<string, TimeSavedOverride>
-  >({});
-
-  const setTimeSavedPerRunOverride = useCallback(
-    (flowId: string, value: number | null) => {
-      setTimeSavedPerRunOverrides((prev) => ({
-        ...prev,
-        [flowId]: { value },
-      }));
-    },
-    [],
-  );
-
-  const clearTimeSavedPerRunOverrides = useCallback(() => {
-    setTimeSavedPerRunOverrides({});
-  }, []);
-
+export const RefreshAnalyticsProvider = ({ children }: { children: ReactNode }) => {
   return (
-    <RefreshAnalyticsContext.Provider
-      value={{
-        isRefreshing,
-        setIsRefreshing,
-        timeSavedPerRunOverrides,
-        setTimeSavedPerRunOverride,
-        clearTimeSavedPerRunOverrides,
-      }}
-    >
+    <RefreshAnalyticsContext.Provider value={{ refreshAnalytics: () => {} }}>
       {children}
     </RefreshAnalyticsContext.Provider>
   );
 };
+
+export const useRefreshAnalytics = () => useContext(RefreshAnalyticsContext);

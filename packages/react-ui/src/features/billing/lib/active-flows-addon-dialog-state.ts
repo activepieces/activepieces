@@ -1,15 +1,14 @@
+// Stub for removed billing feature
 import { create } from 'zustand';
 
-interface ActiveFlowsAddonDialogStore {
+interface ManagePlanDialogState {
   isOpen: boolean;
   openDialog: () => void;
-  closeDialog: () => void;
+  close: () => void;
 }
 
-export const useManagePlanDialogStore = create<ActiveFlowsAddonDialogStore>(
-  (set) => ({
-    isOpen: false,
-    openDialog: () => set({ isOpen: true }),
-    closeDialog: () => set({ isOpen: false }),
-  }),
-);
+export const useManagePlanDialogStore = create<ManagePlanDialogState>((set) => ({
+  isOpen: false,
+  openDialog: () => set({ isOpen: true }),
+  close: () => set({ isOpen: false }),
+}));

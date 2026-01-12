@@ -6,7 +6,6 @@ import {
   Plus,
   CheckIcon,
   Table2,
-  UploadCloud,
   EllipsisVertical,
   Tag,
   Clock,
@@ -26,7 +25,6 @@ import {
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
@@ -43,9 +41,6 @@ const ApTablesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
-  );
-  const userHasPermissionToPushToGit = useAuthorization().checkAccess(
-    Permission.WRITE_PROJECT_RELEASE,
   );
   const { data, isLoading, refetch } = tableHooks.useTables();
   const { mutate: createTable, isPending: isCreatingTable } =
@@ -160,26 +155,9 @@ const ApTablesPage = () => {
           </div>
         ),
       },
-      {
-        render: (_) => (
-          <div onClick={(e) => e.stopPropagation()}>
-            <PermissionNeededTooltip
-              hasPermission={userHasPermissionToPushToGit}
-            >
-              <PushToGitDialog type="table" tables={selectedRows}>
-                {selectedRows.length > 0 && (
-                  <Button className="w-full mr-2" size="sm" variant="outline">
-                    <UploadCloud className="mr-2 w-4" />
-                    {`${t('Push to Git')} (${selectedRows.length})`}
-                  </Button>
-                )}
-              </PushToGitDialog>
-            </PermissionNeededTooltip>
-          </div>
-        ),
-      },
+      // Push to Git removed (EE feature)
     ],
-    [bulkDeleteMutation, selectedRows, userHasPermissionToPushToGit],
+    [bulkDeleteMutation, selectedRows],
   );
   if (isCreatingTable) {
     return <LoadingScreen mode="container" />;

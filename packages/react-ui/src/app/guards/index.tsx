@@ -8,11 +8,6 @@ import {
 
 import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
-import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/impact';
-import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
-import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
-import { SSOPage } from '@/app/routes/platform/security/sso';
 import AIProvidersPage from '@/app/routes/platform/setup/ai';
 import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
@@ -33,25 +28,17 @@ import NotFoundPage from '../routes/404-page';
 import AuthenticatePage from '../routes/authenticate';
 import { ChangePasswordPage } from '../routes/change-password';
 import { AppConnectionsPage } from '../routes/connections';
-import { EmbeddedConnectionDialog } from '../routes/embed/embedded-connection-dialog';
 import { FlowsPage } from '../routes/flows';
 import { FlowBuilderPage } from '../routes/flows/id';
 import { ResetPasswordPage } from '../routes/forget-password';
 import { FormPage } from '../routes/forms';
-import LeaderboardPage from '../routes/leaderboard';
-import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import ProjectsPage from '../routes/platform/projects';
-import AuditLogsPage from '../routes/platform/security/audit-logs';
-import { ProjectRolePage } from '../routes/platform/security/project-role';
-import { ProjectRoleUsersTable } from '../routes/platform/security/project-role/project-role-users-table';
 import { GlobalConnectionsTable } from '../routes/platform/setup/connections';
 import { PlatformTemplatesPage } from '../routes/platform/setup/templates';
 import UsersPage from '../routes/platform/users';
-import { ProjectReleasesPage } from '../routes/project-release';
-import ViewRelease from '../routes/project-release/view-release';
 import { RunsPage } from '../routes/runs';
 import { FlowRunPage } from '../routes/runs/id';
 import { SignInPage } from '../routes/sign-in';
@@ -82,14 +69,7 @@ const SettingsRerouter = () => {
 };
 
 const routes = [
-  {
-    path: '/embed',
-    element: <EmbedPage></EmbedPage>,
-  },
-  {
-    path: '/embed/connections',
-    element: <EmbeddedConnectionDialog></EmbeddedConnectionDialog>,
-  },
+  // Embed routes removed (EE feature)
   {
     path: '/authenticate',
     element: <AuthenticatePage />,
@@ -176,16 +156,7 @@ const routes = [
     path: '/templates/:templateId',
     element: <TemplateDetailsWrapper />,
   },
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.singleRelease,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <ViewRelease />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
+  // Releases routes removed (EE feature)
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.tables,
     element: (
@@ -224,16 +195,7 @@ const routes = [
       </ProjectDashboardLayout>
     ),
   }),
-  ...ProjectRouterWrapper({
-    path: routesThatRequireProjectId.releases,
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Releases">
-          <ProjectReleasesPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  }),
+  // Releases route removed (EE feature)
   ...ProjectRouterWrapper({
     path: routesThatRequireProjectId.todos,
     element: (
@@ -337,26 +299,7 @@ const routes = [
       </PlatformLayout>
     ),
   },
-  {
-    path: '/impact',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Impact">
-          <AnalyticsPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
-  {
-    path: '/leaderboard',
-    element: (
-      <ProjectDashboardLayout>
-        <PageTitle title="Leaderboard">
-          <LeaderboardPage />
-        </PageTitle>
-      </ProjectDashboardLayout>
-    ),
-  },
+  // Impact and Leaderboard routes removed (EE feature)
   {
     path: '/platform',
     element: (
@@ -417,26 +360,7 @@ const routes = [
       </PlatformLayout>
     ),
   },
-  {
-    path: '/platform/security/api-keys',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="API Keys">
-          <ApiKeysPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/audit-logs',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Audit Logs">
-          <AuditLogsPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
+  // API Keys and Audit Logs routes removed (EE feature)
   {
     path: '/platform/infrastructure/workers',
     element: (
@@ -467,18 +391,10 @@ const routes = [
       </PlatformLayout>
     ),
   },
+  // Billing routes removed (EE feature)
+  // Billing success/error kept with stub components
   {
     path: '/platform/setup/billing',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <SettingsBilling />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/setup/billing/success',
     element: (
       <PlatformLayout>
         <PageTitle title="Billing">
@@ -487,56 +403,7 @@ const routes = [
       </PlatformLayout>
     ),
   },
-  {
-    path: '/platform/setup/billing/error',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Billing">
-          <Error />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/signing-keys',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Signing Keys">
-          <SigningKeysPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/sso',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="SSO">
-          <SSOPage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Project Roles">
-          <ProjectRolePage />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
-  {
-    path: '/platform/security/project-roles/:projectRoleId',
-    element: (
-      <PlatformLayout>
-        <PageTitle title="Project Role Users">
-          <ProjectRoleUsersTable />
-        </PageTitle>
-      </PlatformLayout>
-    ),
-  },
+  // Signing keys, SSO, Project roles routes removed (EE feature)
   {
     path: '/platform/setup',
     element: (

@@ -15,13 +15,19 @@ import utc from 'dayjs/plugin/utc'
 import { FastifyBaseLogger } from 'fastify'
 import { websocketService } from '../../core/websockets.service'
 import { redisConnections } from '../../database/redis-connections'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
-import { dedicatedWorkers } from '../../ee/platform/platform-plan/platform-dedicated-workers'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { workerMachineCache } from './machine-cache'
 
 dayjs.extend(utc)
+
+// Simplified domain helper for community edition
+const domainHelper = {
+    async getPublicUrl({ path }: { path: string }): Promise<string> {
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        return `${frontendUrl}${path ? `/${path}` : ''}`
+    },
+}
 
 export const machineService = (log: FastifyBaseLogger) => {
     return {
@@ -37,7 +43,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 id: request.workerId,
                 information: request,
             })
-            const executionMode = await getExecutionMode(log, platformIdForDedicatedWorker)
+            const executionMode = await getExecutionMode(platformIdForDedicatedWorker)
             const isDedicatedWorker = !isNil(platformIdForDedicatedWorker)
             return {
                 JWT_SECRET: await jwtUtils.getJwtSecret(),
@@ -122,20 +128,10 @@ export const machineService = (log: FastifyBaseLogger) => {
 }
 
 
-async function getExecutionMode(log: FastifyBaseLogger, platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
+async function getExecutionMode(_platformIdForDedicatedWorker: string | undefined): Promise<ExecutionMode> {
     const executionMode = system.getOrThrow<ExecutionMode>(AppSystemProp.EXECUTION_MODE)
-    if (isNil(platformIdForDedicatedWorker)) {
-        return executionMode
-    }
-
-    const dedicatedWorkerConfig = await dedicatedWorkers(log).getWorkerConfig(platformIdForDedicatedWorker)
-    if (isNil(dedicatedWorkerConfig)) {
-        return executionMode
-    }
-    if (dedicatedWorkerConfig.trustedEnvironment) {
-        return ExecutionMode.SANDBOX_PROCESS
-    }
-    return ExecutionMode.SANDBOX_CODE_AND_PROCESS
+    // For community edition, just return the configured execution mode
+    return executionMode
 }
 
 type OnDisconnectParams = {

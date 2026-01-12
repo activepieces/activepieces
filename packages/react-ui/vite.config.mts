@@ -51,11 +51,11 @@ export default defineConfig(({ command, mode }) => {
         ),
         'ee-embed-sdk': path.resolve(
           __dirname,
-          '../../packages/ee/ui/embed-sdk/src',
+          './src/lib/embed-sdk-stub.ts',
         ),
         '@activepieces/ee-shared': path.resolve(
           __dirname,
-          '../../packages/ee/shared/src',
+          './src/lib/ee-shared-stub.ts',
         ),
         '@activepieces/pieces-framework': path.resolve(
           __dirname,

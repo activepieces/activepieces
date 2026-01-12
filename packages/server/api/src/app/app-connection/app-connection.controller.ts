@@ -1,4 +1,3 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ApId,
@@ -20,10 +19,14 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { applicationEvents } from '../helper/application-events'
-import { securityHelper } from '../helper/security-helper'
 import { appConnectionService } from './app-connection-service/app-connection-service'
 import { AppConnectionEntity } from './app-connection.entity'
+
+// Simple event names for community edition
+enum ApplicationEventName {
+    CONNECTION_UPSERTED = 'connection.upserted',
+    CONNECTION_DELETED = 'connection.deleted',
+}
 
 export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts, done) => {
     app.post('/', UpsertAppConnectionRequest, async (request, reply) => {
@@ -35,17 +38,13 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             value: request.body.value,
             displayName: request.body.displayName,
             pieceName: request.body.pieceName,
-            ownerId: await securityHelper.getUserIdFromRequest(request),
+            ownerId: request.principal.type === PrincipalType.SERVICE ? null : request.principal.id,
             scope: AppConnectionScope.PROJECT,
             metadata: request.body.metadata,
             pieceVersion: request.body.pieceVersion,
         })
-        applicationEvents.sendUserEvent(request, {
-            action: ApplicationEventName.CONNECTION_UPSERTED,
-            data: {
-                connection: appConnection,
-            },
-        })
+        // Log event instead of sending to EE event system
+        request.log.info({ action: ApplicationEventName.CONNECTION_UPSERTED, connection: appConnection.id }, 'Connection upserted')
         await reply
             .status(StatusCodes.CREATED)
             .send(appConnection)
@@ -119,12 +118,8 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             projectId: request.projectId,
         })
-        applicationEvents.sendUserEvent(request, {
-            action: ApplicationEventName.CONNECTION_DELETED,
-            data: {
-                connection,
-            },
-        })
+        // Log event instead of sending to EE event system
+        request.log.info({ action: ApplicationEventName.CONNECTION_DELETED, connection: connection.id }, 'Connection deleted')
         await appConnectionService(request.log).delete({
             id: request.params.id,
             platformId: request.principal.platform.id,

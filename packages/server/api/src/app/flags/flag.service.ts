@@ -2,13 +2,23 @@ import { AppSystemProp, apVersionUtil, webhookSecretsUtils } from '@activepieces
 import { ApEdition, ApFlagId, ExecutionMode, Flag, isNil } from '@activepieces/shared'
 import { In } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { federatedAuthnService } from '../ee/authentication/federated-authn/federated-authn-service'
-import { domainHelper } from '../ee/custom-domains/domain-helper'
 import { system } from '../helper/system/system'
 import { FlagEntity } from './flag.entity'
 import { defaultTheme } from './theme'
 
 const flagRepo = repoFactory(FlagEntity)
+
+// Simplified domain helper for community edition
+const domainHelper = {
+    async getPublicUrl({ path }: { path: string }): Promise<string> {
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        return `${frontendUrl}${path ? `/${path}` : ''}`
+    },
+    async getPublicApiUrl({ path }: { path: string }): Promise<string> {
+        const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+        return `${frontendUrl}/api/${path}`
+    },
+}
 
 export const flagService = {
     save: async (flag: FlagType): Promise<Flag> => {
@@ -68,20 +78,19 @@ export const flagService = {
             },
             {
                 id: ApFlagId.AGENTS_CONFIGURED,
-                // TODO (@abuaboud): add new check
                 value: true,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_ALERTS,
-                value: system.getEdition() !== ApEdition.COMMUNITY,
+                value: false,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_PROJECT_MEMBERS,
-                value: system.getEdition() !== ApEdition.COMMUNITY,
+                value: false,
                 created,
                 updated,
             },
@@ -99,7 +108,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.CAN_BUY_ACTIVE_FLOWS,
-                value: system.getEdition() === ApEdition.CLOUD,
+                value: false,
                 created,
                 updated,
             },
@@ -111,13 +120,13 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_BILLING_LIMITS_ON_SIDEBAR,
-                value: system.getEdition() === ApEdition.CLOUD,
+                value: false,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.SHOW_BILLING_PAGE,
-                value: system.getEdition() === ApEdition.CLOUD,
+                value: false,
                 created,
                 updated,
             },
@@ -153,7 +162,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.EDITION,
-                value: system.getEdition(),
+                value: ApEdition.COMMUNITY,
                 created,
                 updated,
             },
@@ -165,7 +174,7 @@ export const flagService = {
             },
             {
                 id: ApFlagId.THIRD_PARTY_AUTH_PROVIDER_REDIRECT_URL,
-                value: await federatedAuthnService(system.globalLogger()).getThirdPartyRedirectUrl(undefined),
+                value: null,
                 created,
                 updated,
             },
@@ -183,13 +192,13 @@ export const flagService = {
             },
             {
                 id: ApFlagId.SHOW_COMMUNITY,
-                value: system.getEdition() !== ApEdition.ENTERPRISE,
+                value: true,
                 created,
                 updated,
             },
             {
                 id: ApFlagId.PRIVATE_PIECES_ENABLED,
-                value: system.getEdition() !== ApEdition.COMMUNITY,
+                value: false,
                 created,
                 updated,
             },

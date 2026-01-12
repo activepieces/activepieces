@@ -1,88 +1,39 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { HttpStatusCode } from 'axios';
-import { t } from 'i18next';
-import { UseFormReturn } from 'react-hook-form';
-import { toast } from 'sonner';
+// Stub for removed alerts feature (EE feature)
+import { useQuery, useMutation } from '@tanstack/react-query';
 
-import { internalErrorToast } from '@/components/ui/sonner';
-import { api } from '@/lib/api';
-import { authenticationSession } from '@/lib/authentication-session';
-import { Alert, AlertChannel } from '@activepieces/ee-shared';
+// Stub type for alert data
+interface AlertEmail {
+  id: string;
+  receiver: string;
+  projectId: string;
+  created: string;
+  updated: string;
+}
 
-import { alertsApi } from './api';
-
-type Params = {
-  email: string;
-};
-
-export const alertsKeys = {
-  all: ['alerts-email-list'] as const,
-};
-
-type Options = {
-  setOpen: (open: boolean) => void;
-  form: UseFormReturn<any>;
+export const alertQueries = {
+  useAlerts: () => {
+    return useQuery({
+      queryKey: ['alerts'],
+      queryFn: async (): Promise<AlertEmail[]> => [],
+    });
+  },
+  useAlertsEmailList: () => {
+    return useQuery({
+      queryKey: ['alerts-email-list'],
+      queryFn: async (): Promise<AlertEmail[]> => [],
+    });
+  },
 };
 
 export const alertMutations = {
-  useCreateAlert: ({ setOpen, form }: Options) => {
-    const queryClient = useQueryClient();
-
-    return useMutation<Alert, Error, Params>({
-      mutationFn: async (params) =>
-        alertsApi.create({
-          receiver: params.email,
-          projectId: authenticationSession.getProjectId()!,
-          channel: AlertChannel.EMAIL,
-        }),
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: alertsKeys.all });
-        toast.success(t('Your changes have been saved.'), {
-          duration: 3000,
-        });
-        setOpen(false);
-      },
-      onError: (error) => {
-        if (api.isError(error)) {
-          switch (error.response?.status) {
-            case HttpStatusCode.Conflict:
-              form.setError('root.serverError', {
-                message: t('The email is already added.'),
-              });
-              break;
-            default: {
-              internalErrorToast();
-              break;
-            }
-          }
-        }
-      },
+  useCreateAlert: (_params?: unknown) => {
+    return useMutation({
+      mutationFn: async (_request: unknown) => {},
     });
   },
   useDeleteAlert: () => {
-    const queryClient = useQueryClient();
-    return useMutation<void, Error, Alert>({
-      mutationFn: (alert) => alertsApi.delete(alert.id),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: alertsKeys.all });
-        toast.success(t('Your changes have been saved.'), {
-          duration: 3000,
-        });
-      },
+    return useMutation({
+      mutationFn: async (_alert: AlertEmail) => {},
     });
   },
-};
-
-export const alertQueries = {
-  useAlertsEmailList: () =>
-    useQuery<Alert[], Error, Alert[]>({
-      queryKey: alertsKeys.all,
-      queryFn: async () => {
-        const page = await alertsApi.list({
-          projectId: authenticationSession.getProjectId()!,
-          limit: 100,
-        });
-        return page.data;
-      },
-    }),
 };

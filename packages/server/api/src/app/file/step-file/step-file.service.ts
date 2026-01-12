@@ -8,13 +8,22 @@ import {
 } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { domainHelper } from '../../ee/custom-domains/domain-helper'
 import { jwtUtils } from '../../helper/jwt-utils'
 import { system } from '../../helper/system/system'
 import { fileService } from '../file.service'
 import { s3Helper } from '../s3-helper'
 
 const executionRetentionInDays = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
+
+// Helper function to get public API URL
+function getPublicApiUrl(path: string): string {
+    const frontendUrl = system.getOrThrow(AppSystemProp.FRONTEND_URL)
+    // Remove trailing slash from frontendUrl if present
+    const baseUrl = frontendUrl.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl
+    // Ensure path starts with /
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`
+    return `${baseUrl}/api/${normalizedPath}`
+}
 
 export const stepFileService = (log: FastifyBaseLogger) => ({
     async saveAndEnrich(params: SaveParams): Promise<StepFileUpsertResponse> {
@@ -32,7 +41,7 @@ export const stepFileService = (log: FastifyBaseLogger) => ({
         })
         return {
             uploadUrl: await constructUploadUrl(log, file.s3Key, params.data, params.contentLength),
-            url: await constructDownloadUrl(params.platformId, file),
+            url: await constructDownloadUrl(file),
         }
     },
 })
@@ -46,7 +55,7 @@ async function constructUploadUrl(log: FastifyBaseLogger, s3Key: string | undefi
     return s3Helper(log).putS3SignedUrl(s3Key, contentLength)
 }
 
-async function constructDownloadUrl(platformId: string, file: File): Promise<string> {
+async function constructDownloadUrl(file: File): Promise<string> {
     const accessToken = await jwtUtils.sign({
         payload: {
             fileId: file.id,
@@ -54,10 +63,7 @@ async function constructDownloadUrl(platformId: string, file: File): Promise<str
         expiresInSeconds: dayjs.duration(executionRetentionInDays, 'days').asSeconds(),
         key: await jwtUtils.getJwtSecret(),
     })
-    return domainHelper.getPublicApiUrl({
-        path: `v1/step-files/signed?token=${accessToken}`,
-        platformId,
-    })
+    return getPublicApiUrl(`v1/step-files/signed?token=${accessToken}`)
 }
 
 

@@ -157,7 +157,13 @@ export const returnResponse = createAction({
 });
 
 function praseToJson(body: unknown) {
+  if (body === undefined || body === null) {
+    return {};
+  }
   if (typeof body === 'string') {
+    if (body.trim() === '') {
+      return {};
+    }
     return JSON.parse(body);
   }
   return JSON.parse(JSON.stringify(body));

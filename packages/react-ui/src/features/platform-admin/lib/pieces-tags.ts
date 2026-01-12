@@ -1,20 +1,11 @@
+// Stub for removed platform-admin feature
 import { api } from '@/lib/api';
-import {
-  UpsertTagRequest,
-  ListTagsRequest,
-  SeekPage,
-  SetPieceTagsRequest,
-  Tag,
-} from '@activepieces/shared';
+import { Tag, SeekPage } from '@activepieces/shared';
 
 export const piecesTagsApi = {
-  upsert(tag: UpsertTagRequest) {
-    return api.post<Tag>('/v1/tags', tag);
-  },
-  list(query: ListTagsRequest) {
-    return api.get<SeekPage<Tag>>('/v1/tags', query);
-  },
-  tagPieces(request: SetPieceTagsRequest) {
-    return api.post<void>('/v1/tags/pieces', request);
-  },
+  list: (_params?: { limit?: number }) =>
+    api.get<SeekPage<Tag>>('/v1/pieces/tags'),
+  create: (_request: unknown) => api.post<Tag>('/v1/pieces/tags', {}),
+  upsert: (_request: unknown) => api.post<Tag>('/v1/pieces/tags', {}),
+  tagPieces: (_request: unknown) => api.post('/v1/pieces/tags/tag-pieces', {}),
 };

@@ -2,7 +2,6 @@ import { ActivepiecesError, apId, CreateTemplateRequestBody, ErrorCode, FlowVers
 import { FastifyBaseLogger } from 'fastify'
 import { ArrayContains, ArrayOverlap, Equal, IsNull } from 'typeorm'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformTemplateService } from '../ee/template/platform-template.service'
 import { paginationHelper } from '../helper/pagination/pagination-utils'
 import { templateValidator } from './template-validator'
 import { TemplateEntity } from './template.entity'
@@ -62,7 +61,25 @@ export const templateService = (log: FastifyBaseLogger) => ({
                 return templateRepo().save(newTemplate)
             }
             case TemplateType.CUSTOM: {
-                return platformTemplateService().create({ platformId, name, summary, description, pieces, tags: newTags, blogUrl, metadata, author, categories, flows })
+                // Custom templates now use standard service (EE platformTemplateService removed)
+                const newTemplate: NewTemplate = {
+                    id: apId(),
+                    name,
+                    type,
+                    summary,
+                    description,
+                    platformId,
+                    tags: newTags,
+                    blogUrl,
+                    metadata,
+                    author,
+                    usageCount: 0,
+                    categories,
+                    pieces,
+                    flows,
+                    status: TemplateStatus.PUBLISHED,
+                }
+                return templateRepo().save(newTemplate)
             }
         }
     },
@@ -104,7 +121,21 @@ export const templateService = (log: FastifyBaseLogger) => ({
                 return templateRepo().findOneByOrFail({ id })
             }
             case TemplateType.CUSTOM: {
-                return platformTemplateService().update({ id, params })
+                // Custom templates now use standard update (EE platformTemplateService removed)
+                await templateRepo().update(id, {
+                    ...spreadIfDefined('name', name),
+                    ...spreadIfDefined('summary', summary),
+                    ...spreadIfDefined('description', description),
+                    ...spreadIfDefined('tags', tags),
+                    ...spreadIfDefined('blogUrl', blogUrl),
+                    ...spreadIfDefined('metadata', metadata),
+                    ...spreadIfDefined('categories', categories),
+                    ...spreadIfDefined('flows', sanatizedFlows),
+                    ...spreadIfDefined('pieces', pieces),
+                    ...spreadIfDefined('tags', newTags),
+                    ...spreadIfDefined('status', status),
+                })
+                return templateRepo().findOneByOrFail({ id })
             }
         }
     },

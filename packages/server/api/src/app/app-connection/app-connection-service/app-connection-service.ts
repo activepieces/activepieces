@@ -1,7 +1,6 @@
 import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ApEdition,
     ApEnvironment,
     apId,
     AppConnection,
@@ -36,7 +35,6 @@ import semver from 'semver'
 import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-worker'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
 import { flowService } from '../../flows/flow/flow.service'
 import { encryptUtils } from '../../helper/encryption'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
@@ -205,13 +203,13 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectId,
             platformId,
         })
-        
+
         const targetAppConnection = await this.getOneOrThrowWithoutValue({
             id: targetAppConnectionId,
             projectId,
             platformId,
         })
-        
+
         if (sourceAppConnection.pieceName !== targetAppConnection.pieceName) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -349,29 +347,14 @@ export const appConnectionService = (log: FastifyBaseLogger) => ({
             projectIds: ArrayContains([projectId]),
         })
     },
-    async getOwners({ projectId, platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
+    async getOwners({ platformId }: { projectId: ProjectId, platformId: PlatformId }): Promise<AppConnectionOwners[]> {
+        // Community edition: just return platform admins
         const platformAdmins = (await userService.getByPlatformRole(platformId, PlatformRole.ADMIN)).map(user => ({
             firstName: user.identity.firstName,
             lastName: user.identity.lastName,
             email: user.identity.email,
         }))
-        const edition = system.getOrThrow(AppSystemProp.EDITION)
-        if (edition === ApEdition.COMMUNITY) {
-            return platformAdmins
-        }
-        const projectMembers = await projectMemberService(log).list({
-            platformId,
-            projectId,
-            cursorRequest: null,
-            limit: 1000,
-            projectRoleId: undefined,
-        })
-        const projectMembersDetails = projectMembers.data.map(pm => ({
-            firstName: pm.user.firstName,
-            lastName: pm.user.lastName,
-            email: pm.user.email,
-        }))
-        return [...platformAdmins, ...projectMembersDetails]
+        return platformAdmins
     },
 })
 
@@ -445,7 +428,7 @@ const validateConnectionValue = async (
                 platformId,
                 props: value.props,
             })
-            
+
             const auth = await oauth2Handler[value.type](log).claim({
                 projectId,
                 platformId,
@@ -546,7 +529,7 @@ async function fetchFlowIdsForConnections(
 ): Promise<Map<string, string[]>> {
     const allExternalIds = new Set<string>()
     const allProjectIds = new Set<string>()
-    
+
     connections.forEach((connection) => {
         allExternalIds.add(connection.externalId)
         connection.projectIds.forEach((projectId) => {

@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { isCloudPlanButNotEnterprise } from '@activepieces/ee-shared';
+import { isCloudPlanButNotEnterprise } from '@/lib/ee-shared-stub';
 import { isNil } from '@activepieces/shared';
 
 export const DeleteAccount = () => {

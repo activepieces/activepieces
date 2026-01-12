@@ -8,22 +8,6 @@ import { AIProviderEntity } from '../ai/ai-provider-entity'
 import { PlatformAnalyticsReportEntity } from '../analytics/platform-analytics-report.entity'
 import { AppConnectionEntity } from '../app-connection/app-connection.entity'
 import { UserIdentityEntity } from '../authentication/user-identity/user-identity-entity'
-import { AlertEntity } from '../ee/alerts/alerts-entity'
-import { ApiKeyEntity } from '../ee/api-keys/api-key-entity'
-import { AppCredentialEntity } from '../ee/app-credentials/app-credentials.entity'
-import { AppSumoEntity } from '../ee/appsumo/appsumo.entity'
-import { AuditEventEntity } from '../ee/audit-logs/audit-event-entity'
-import { OtpEntity } from '../ee/authentication/otp/otp-entity'
-import { ConnectionKeyEntity } from '../ee/connection-keys/connection-key.entity'
-import { CustomDomainEntity } from '../ee/custom-domains/custom-domain.entity'
-import { OAuthAppEntity } from '../ee/oauth-apps/oauth-app.entity'
-import { PlatformPlanEntity } from '../ee/platform/platform-plan/platform-plan.entity'
-import { ProjectMemberEntity } from '../ee/projects/project-members/project-member.entity'
-import { ProjectPlanEntity } from '../ee/projects/project-plan/project-plan.entity'
-import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.entity'
-import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
-import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
-import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -75,10 +59,8 @@ function getEntities(): EntitySchema<unknown>[] {
         PlatformEntity,
         TagEntity,
         PieceTagEntity,
-        AlertEntity,
         UserInvitationEntity,
         AIProviderEntity,
-        ProjectRoleEntity,
         TableEntity,
         FieldEntity,
         RecordEntity,
@@ -90,25 +72,8 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoActivityEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
-        // Enterprise
-        ProjectMemberEntity,
-        ProjectPlanEntity,
-        CustomDomainEntity,
-        SigningKeyEntity,
-        OAuthAppEntity,
-        OtpEntity,
-        ApiKeyEntity,
         TemplateEntity,
-        GitRepoEntity,
-        AuditEventEntity,
-        ProjectReleaseEntity,
         PlatformAnalyticsReportEntity,
-        // CLOUD
-        AppSumoEntity,
-        ConnectionKeyEntity,
-        AppCredentialEntity,
-        PlatformPlanEntity,
-
     ]
 }
 

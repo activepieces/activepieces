@@ -1,7 +1,6 @@
-import { OPEN_SOURCE_PLAN } from '@activepieces/ee-shared'
 import {
     ActivepiecesError,
-    ApEdition,
+    AiCreditsAutoTopUpState,
     apId,
     ErrorCode,
     FilteredPieceBehavior,
@@ -12,17 +11,41 @@ import {
     PlatformUsage,
     PlatformWithoutSensitiveData,
     spreadIfDefined,
+    TeamProjectsLimit,
     UpdatePlatformRequestBody,
     UserId,
     UserStatus,
 } from '@activepieces/shared'
 import { repoFactory } from '../core/db/repo-factory'
-import { platformPlanService } from '../ee/platform/platform-plan/platform-plan.service'
 import { defaultTheme } from '../flags/theme'
-import { system } from '../helper/system/system'
 import { projectService } from '../project/project-service'
 import { userService } from '../user/user-service'
 import { PlatformEntity } from './platform.entity'
+
+// Default open source plan limits (formerly from @activepieces/ee-shared)
+const OPEN_SOURCE_PLAN: Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' | 'stripeSubscriptionEndDate'> = {
+    includedAiCredits: 0,
+    aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
+    environmentsEnabled: true,
+    analyticsEnabled: true,
+    showPoweredBy: false,
+    agentsEnabled: true,
+    mcpsEnabled: true,
+    tablesEnabled: true,
+    todosEnabled: true,
+    auditLogEnabled: false,
+    embeddingEnabled: false,
+    managePiecesEnabled: true,
+    manageTemplatesEnabled: true,
+    customAppearanceEnabled: true,
+    teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
+    projectRolesEnabled: true,
+    customDomainsEnabled: false,
+    globalConnectionsEnabled: false,
+    customRolesEnabled: false,
+    apiKeysEnabled: true,
+    ssoEnabled: false,
+}
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)
 
@@ -117,12 +140,7 @@ export const platformService = {
             ...spreadIfDefined('allowedAuthDomains', params.allowedAuthDomains),
             ...spreadIfDefined('pinnedPieces', params.pinnedPieces),
         }
-        if (!isNil(params.plan)) {
-            await platformPlanService(system.globalLogger()).update({
-                platformId: params.id,
-                ...params.plan,
-            })
-        }
+        // Platform plan updates removed (EE feature)
         return platformRepo().save(updatedPlatform)
     },
     async getOneOrThrow(id: PlatformId): Promise<Platform> {
@@ -176,24 +194,18 @@ export const platformService = {
     },
 }
 
-async function getUsage(platform: Platform): Promise<PlatformUsage | undefined> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return undefined
-    }
-    return platformPlanService(system.globalLogger()).getUsage(platform.id)
+// Platform usage tracking removed (EE feature)
+async function getUsage(_platform: Platform): Promise<PlatformUsage | undefined> {
+    return undefined
 }
 
-async function getPlan(platform: Platform): Promise<PlatformPlanLimits> {
-    const edition = system.getEdition()
-    if (edition === ApEdition.COMMUNITY) {
-        return {
-            ...OPEN_SOURCE_PLAN,
-            stripeSubscriptionStartDate: 0,
-            stripeSubscriptionEndDate: 0,
-        }
+// Platform plan service removed (EE feature) - always return open source defaults
+async function getPlan(_platform: Platform): Promise<PlatformPlanLimits> {
+    return {
+        ...OPEN_SOURCE_PLAN,
+        stripeSubscriptionStartDate: 0,
+        stripeSubscriptionEndDate: 0,
     }
-    return platformPlanService(system.globalLogger()).getOrCreateForPlatform(platform.id)
 }
 
 type AddParams = {

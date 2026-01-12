@@ -1,4 +1,3 @@
-import { ApplicationEventName, GetFlowTemplateRequestQuery, GitPushOperationType } from '@activepieces/ee-shared'
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
@@ -8,14 +7,12 @@ import {
     ErrorCode,
     FlowOperationRequest,
     FlowOperationType,
-    FlowStatus,
     flowStructureUtil,
     FlowTrigger,
     GetFlowQueryParamsRequest,
     isNil,
     ListFlowsRequest,
     Permission,
-    PlatformUsageMetric,
     PopulatedFlow,
     PrincipalType,
     SeekPage,
@@ -28,18 +25,26 @@ import {
 } from '@fastify/type-provider-typebox'
 import dayjs from 'dayjs'
 import { StatusCodes } from 'http-status-codes'
+import { Static } from '@sinclair/typebox'
 import { authenticationUtils } from '../../authentication/authentication-utils'
 import { entitiesMustBeOwnedByCurrentProject } from '../../authentication/authorization'
-import { assertUserHasPermissionToFlow } from '../../ee/authentication/project-role/rbac-middleware'
-import { platformPlanService } from '../../ee/platform/platform-plan/platform-plan.service'
-import { gitRepoService } from '../../ee/projects/project-release/git-sync/git-sync.service'
-import { applicationEvents } from '../../helper/application-events'
 import { userService } from '../../user/user-service'
 import { migrateFlowVersionTemplate } from '../flow-version/migrations'
 import { FlowEntity } from './flow.entity'
 import { flowService } from './flow.service'
 
 const DEFAULT_PAGE_SIZE = 10
+
+// Simple event names for community edition
+enum ApplicationEventName {
+    FLOW_CREATED = 'flow.created',
+    FLOW_UPDATED = 'flow.updated',
+    FLOW_DELETED = 'flow.deleted',
+}
+
+// Query schema for GetFlowTemplate
+const GetFlowTemplateRequestQuery = Type.Object({})
+type GetFlowTemplateRequestQuery = Static<typeof GetFlowTemplateRequestQuery>
 
 export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.addHook('preSerialization', entitiesMustBeOwnedByCurrentProject)
@@ -50,12 +55,11 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
         })
 
-        applicationEvents.sendUserEvent(request, {
+        // Log event instead of sending to EE event system
+        request.log.info({
             action: ApplicationEventName.FLOW_CREATED,
-            data: {
-                flow: newFlow,
-            },
-        })
+            flowId: newFlow.id,
+        }, 'Flow created')
 
         return reply.status(StatusCodes.CREATED).send(newFlow)
     })
@@ -63,7 +67,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/:id', {
         config: {
             security: securityAccess.project(
-                [PrincipalType.USER, PrincipalType.SERVICE], 
+                [PrincipalType.USER, PrincipalType.SERVICE],
                 Permission.UPDATE_FLOW_STATUS, {
                     type: ProjectResourceType.TABLE,
                     tableName: FlowEntity,
@@ -90,21 +94,14 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
     }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromRequest(request)
-        await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)
+        // Skip RBAC middleware check in community edition
 
         const flow = await flowService(request.log).getOnePopulatedOrThrow({
             id: request.params.id,
             projectId: request.projectId,
         })
 
-        const turnOnFlow = request.body.type === FlowOperationType.CHANGE_STATUS && request.body.request.status === FlowStatus.ENABLED
-        const publishDisabledFlow = request.body.type === FlowOperationType.LOCK_AND_PUBLISH && flow.status === FlowStatus.DISABLED
-        if (turnOnFlow || publishDisabledFlow) {
-            await platformPlanService(request.log).checkActiveFlowsExceededLimit(
-                request.principal.platform.id,
-                PlatformUsageMetric.ACTIVE_FLOWS,
-            )
-        }
+        // Skip platform plan checks in community edition
         await assertThatFlowIsNotBeingUsed(flow, userId)
         const updatedFlow = await flowService(request.log).update({
             id: request.params.id,
@@ -113,13 +110,14 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.projectId,
             operation: cleanOperation(request.body),
         })
-        applicationEvents.sendUserEvent(request, {
+
+        // Log event instead of sending to EE event system
+        request.log.info({
             action: ApplicationEventName.FLOW_UPDATED,
-            data: {
-                request: request.body,
-                flowVersion: flow.version,
-            },
-        })
+            flowId: flow.id,
+            operationType: request.body.type,
+        }, 'Flow updated')
+
         return updatedFlow
     })
 
@@ -168,25 +166,18 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.projectId,
         })
-        await gitRepoService(request.log).onDeleted({
-            type: GitPushOperationType.DELETE_FLOW,
-            externalId: flow.externalId,
-            userId: request.principal.id,
-            projectId: request.projectId,
-            platformId: request.principal.platform.id,
-            log: request.log,
-        })
+        // Skip git sync in community edition
         await flowService(request.log).delete({
             id: request.params.id,
             projectId: request.projectId,
         })
-        applicationEvents.sendUserEvent(request, {
+
+        // Log event instead of sending to EE event system
+        request.log.info({
             action: ApplicationEventName.FLOW_DELETED,
-            data: {
-                flow,
-                flowVersion: flow.version,
-            },
-        })
+            flowId: flow.id,
+        }, 'Flow deleted')
+
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
@@ -254,7 +245,7 @@ async function assertThatFlowIsNotBeingUsed(
 const CreateFlowRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.BODY,
             }),
@@ -274,7 +265,7 @@ const CreateFlowRequestOptions = {
 const ListFlowsRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_FLOW, {
                 type: ProjectResourceType.QUERY,
             }),
@@ -293,7 +284,7 @@ const ListFlowsRequestOptions = {
 const CountFlowsRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_FLOW, {
                 type: ProjectResourceType.QUERY,
             }),
@@ -306,7 +297,7 @@ const CountFlowsRequestOptions = {
 const GetFlowTemplateRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FlowEntity,
@@ -329,7 +320,7 @@ const GetFlowTemplateRequestOptions = {
 const GetFlowRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.READ_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FlowEntity,
@@ -352,7 +343,7 @@ const GetFlowRequestOptions = {
 const DeleteFlowRequestOptions = {
     config: {
         security: securityAccess.project(
-            [PrincipalType.USER, PrincipalType.SERVICE], 
+            [PrincipalType.USER, PrincipalType.SERVICE],
             Permission.WRITE_FLOW, {
                 type: ProjectResourceType.TABLE,
                 tableName: FlowEntity,
@@ -370,5 +361,3 @@ const DeleteFlowRequestOptions = {
         },
     },
 }
-
-

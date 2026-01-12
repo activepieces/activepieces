@@ -187,7 +187,7 @@ async function installPieces(log: FastifyBaseLogger, rootWorkspace: string, piec
                 rootWorkspace,
                 piecesCount: piecesToInstall.length,
                 timeTaken: `${Math.floor(performance.now() - performanceStartTime)}ms`,
-            }, '[registryPieceManager] Installed registry pieces using bun')
+            }, '[registryPieceManager] Installed registry pieces using pnpm')
 
             return {
                 piecesToInstall,

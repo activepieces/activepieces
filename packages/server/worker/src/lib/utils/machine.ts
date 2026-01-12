@@ -1,4 +1,4 @@
-import { apVersionUtil, environmentVariables, exceptionHandler, networkUtils, systemUsage, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
+import { AppSystemProp, apVersionUtil, environmentVariables, exceptionHandler, networkUtils, systemUsage, webhookSecretsUtils, WorkerSystemProp } from '@activepieces/server-shared'
 import { apId, assertNotNullOrUndefined, isNil, spreadIfDefined, WorkerMachineHealthcheckRequest, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { engineProcessManager } from '../compute/process/engine-process-manager'
@@ -90,7 +90,7 @@ export const workerMachine = {
         if (environmentVariables.hasAppModules()) {
             return 'http://127.0.0.1:3000/'
         }
-        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        const url = environmentVariables.getEnvironmentOrThrow(AppSystemProp.FRONTEND_URL)
         return appendSlashAndApi(replaceLocalhost(url))
     },
     getSocketUrlAndPath: (): { url: string, path: string } => {
@@ -100,7 +100,7 @@ export const workerMachine = {
                 path: '/socket.io',
             }
         }
-        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        const url = environmentVariables.getEnvironmentOrThrow(AppSystemProp.FRONTEND_URL)
         return {
             url: removeTrailingSlash(replaceLocalhost(url)),
             path: '/api/socket.io',
@@ -120,7 +120,7 @@ export const workerMachine = {
 
 function getPublicUrl(): string {
     if (isNil(settings)) {
-        const url = environmentVariables.getEnvironmentOrThrow(WorkerSystemProp.FRONTEND_URL)
+        const url = environmentVariables.getEnvironmentOrThrow(AppSystemProp.FRONTEND_URL)
         return url
     }
     return settings.PUBLIC_URL

@@ -1,6 +1,8 @@
 {
   "name": "@activepieces/engine",
   "version": "0.7.0",
-  "type": "commonjs"
+  "type": "commonjs",
+  "dependencies": {
+    "nx": "^22.3.3"
+  }
 }
-

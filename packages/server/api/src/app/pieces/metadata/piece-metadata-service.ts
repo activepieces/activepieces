@@ -27,7 +27,6 @@ import { FastifyBaseLogger } from 'fastify'
 import semVer from 'semver'
 import { EntityManager, IsNull } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
-import { enterpriseFilteringUtils } from '../../ee/pieces/filters/piece-filtering-utils'
 import { system } from '../../helper/system/system'
 import { pieceTagService } from '../tags/pieces/piece-tag.service'
 import { localPieceCache } from './local-piece-cache'
@@ -95,11 +94,8 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 ))
                 return piece.name === name && strictlyLessThan
             })
-            const isFiltered = !isNil(piece) && await enterpriseFilteringUtils.isFiltered({
-                piece,
-                projectId,
-                platformId,
-            })
+            // Community edition: skip enterprise filtering
+            const isFiltered = false
             if (isFiltered) {
                 return undefined
             }
@@ -111,7 +107,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 release: undefined,
                 log,
             })
-            
+
             const pieceMap = new Map<string, PieceMetadataModel>()
             for (const piece of allPieces) {
                 if (!pieceMap.has(piece.name)) {
@@ -240,7 +236,7 @@ export const getPiecePackageWithoutArchive = async (
             const piecePlatformId = pieceMetadata.platformId
             if (pieceMetadata.pieceType === PieceType.CUSTOM) {
                 assertNotNullOrUndefined(piecePlatformId, 'platformId is required')
-                return {  
+                return {
                     pieceName: pieceMetadata.name,
                     pieceVersion: pieceMetadata.version,
                     packageType: pieceMetadata.packageType,
@@ -248,7 +244,7 @@ export const getPiecePackageWithoutArchive = async (
                     platformId: piecePlatformId,
                 }
             }
-            return {  
+            return {
                 pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
                 packageType: pieceMetadata.packageType,

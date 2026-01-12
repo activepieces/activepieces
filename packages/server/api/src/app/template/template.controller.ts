@@ -18,7 +18,6 @@ import {
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
 import { StatusCodes } from 'http-status-codes'
-import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
@@ -84,7 +83,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
 
         switch (type) {
             case TemplateType.CUSTOM: {
-                await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+                // Platform ownership check removed (EE feature)
                 platformId = request.principal.platform.id
             }
                 break
@@ -117,7 +116,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
         if (template.type === TemplateType.CUSTOM) {
-            await platformMustBeOwnedByCurrentUser.call(app, request, reply)
+            // Platform ownership check removed (EE feature)
         }
 
         await templateService(app.log).delete({

@@ -1,22 +1,12 @@
+// Stub for removed members feature
 import { api } from '@/lib/api';
-import {
-  ListProjectMembersRequestQuery,
-  ProjectMemberWithUser,
-  UpdateProjectMemberRoleRequestBody,
-} from '@activepieces/ee-shared';
+
+import { ProjectMemberWithUser } from '@/lib/ee-shared-stub';
 import { SeekPage } from '@activepieces/shared';
 
 export const projectMembersApi = {
-  list(request: ListProjectMembersRequestQuery) {
-    return api.get<SeekPage<ProjectMemberWithUser>>(
-      '/v1/project-members',
-      request,
-    );
-  },
-  update(memberId: string, request: UpdateProjectMemberRoleRequestBody) {
-    return api.post<void>(`/v1/project-members/${memberId}`, request);
-  },
-  delete(id: string): Promise<void> {
-    return api.delete<void>(`/v1/project-members/${id}`);
-  },
+  list: (params: { projectId: string }) =>
+    api.get<SeekPage<ProjectMemberWithUser>>('/v1/project-members', params),
+  upsert: (_request: unknown) => api.post('/v1/project-members', {}),
+  delete: (_id: string) => api.delete('/v1/project-members'),
 };

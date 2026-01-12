@@ -1,4 +1,3 @@
-import { ApplicationEventName } from '@activepieces/ee-shared'
 import { AppSystemProp, networkUtils, securityAccess } from '@activepieces/server-shared'
 import {
     assertNotNullOrUndefined,
@@ -10,11 +9,16 @@ import {
 } from '@activepieces/shared'
 import { RateLimitOptions } from '@fastify/rate-limit'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
-import { applicationEvents } from '../helper/application-events'
 import { system } from '../helper/system/system'
 import { platformUtils } from '../platform/platform.utils'
 import { userService } from '../user/user-service'
 import { authenticationService } from './authentication.service'
+
+// Simple event names for community edition
+enum ApplicationEventName {
+    USER_SIGNED_UP = 'user.signed-up',
+    USER_SIGNED_IN = 'user.signed-in',
+}
 
 export const authenticationController: FastifyPluginAsyncTypebox = async (
     app,
@@ -28,17 +32,13 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
             platformId: platformId ?? null,
         })
 
-        applicationEvents.sendUserEvent({
-            platformId: signUpResponse.platformId!,
+        // Log event instead of sending to EE event system
+        request.log.info({
+            action: ApplicationEventName.USER_SIGNED_UP,
             userId: signUpResponse.id,
             projectId: signUpResponse.projectId,
             ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_UP,
-            data: {
-                source: 'credentials',
-            },
-        })
+        }, 'User signed up')
 
         return signUpResponse
     })
@@ -54,15 +54,14 @@ export const authenticationController: FastifyPluginAsyncTypebox = async (
 
         const responsePlatformId = response.platformId
         assertNotNullOrUndefined(responsePlatformId, 'Platform ID is required')
-        applicationEvents.sendUserEvent({
-            platformId: responsePlatformId,
+
+        // Log event instead of sending to EE event system
+        request.log.info({
+            action: ApplicationEventName.USER_SIGNED_IN,
             userId: response.id,
             projectId: response.projectId,
             ip: networkUtils.extractClientRealIp(request, system.get(AppSystemProp.CLIENT_REAL_IP_HEADER)),
-        }, {
-            action: ApplicationEventName.USER_SIGNED_IN,
-            data: {},
-        })
+        }, 'User signed in')
 
         return response
     })

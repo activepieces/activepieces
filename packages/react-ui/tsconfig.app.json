@@ -18,16 +18,16 @@
         "../../packages/shared/src"
       ],
       "@activepieces/ee-shared": [
-        "../../packages/ee/shared/src"  
+        "./src/lib/ee-shared-stub.ts"
       ],
       "@activepieces/pieces-framework": [
-        "../../packages/pieces/community/framework/src" 
+        "../../packages/pieces/community/framework/src"
       ],
       "@activepieces/pieces-common": [
-        "../../packages/pieces/community/common/src" 
+        "../../packages/pieces/community/common/src"
       ],
       "ee-embed-sdk": [
-        "../../packages/ee/ui/embed-sdk/src"
+        "./src/lib/embed-sdk-stub.ts"
       ],
       "@activepieces/piece-ai": [
         "../../packages/pieces/community/ai/src"

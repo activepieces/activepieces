@@ -16,7 +16,7 @@ import {
   CreatePlatformProjectRequest,
   ListProjectRequestForPlatformQueryParams,
   UpdateProjectPlatformRequest,
-} from '@activepieces/ee-shared';
+} from '@/lib/ee-shared-stub';
 import {
   isNil,
   ProjectType,

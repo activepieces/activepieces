@@ -1,10 +1,7 @@
-import { ApEdition, FlowRun, isFailedState, isFlowRunStateTerminal, isNil, RunEnvironment } from '@activepieces/shared'
+import { FlowRun, isFailedState, isFlowRunStateTerminal, isNil, RunEnvironment } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { alertsService } from '../../ee/alerts/alerts-service'
-import { system } from '../../helper/system/system'
 
-const paidEditions = [ApEdition.CLOUD, ApEdition.ENTERPRISE].includes(system.getEdition())
 export const flowRunHooks = (log: FastifyBaseLogger) => ({
     async onFinish(flowRun: FlowRun): Promise<void> {
         if (!isFlowRunStateTerminal({
@@ -22,12 +19,11 @@ export const flowRunHooks = (log: FastifyBaseLogger) => ({
                 created: date,
             }
 
-            if (paidEditions) {
-                await alertsService(log).sendAlertOnRunFinish({ issueToAlert, flowRunId: flowRun.id })
-            }
-        }
-        if (!paidEditions) {
-            return
+            // Community edition: just log the issue instead of sending alerts
+            log.info({
+                issueToAlert,
+                flowRunId: flowRun.id,
+            }, '[FlowRunHooks] Flow run failed - would send alert in EE')
         }
     },
 })

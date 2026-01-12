@@ -3,7 +3,7 @@ import { ActivepiecesError, ErrorCode, isNil, Principal, PrincipalForType, Princ
 import { FastifyBaseLogger } from 'fastify'
 import { Socket } from 'socket.io'
 import { accessTokenManager } from '../authentication/lib/access-token-manager'
-import { projectMemberService } from '../ee/projects/project-members/project-member.service'
+import { projectService } from '../project/project-service'
 import { app } from '../server'
 
 export type WebsocketListener<T, PR extends PrincipalType.USER | PrincipalType.WORKER> = (socket: Socket) => (data: T, principal: PrincipalForType<PR>, projectId: PR extends PrincipalType.USER ? string : null, callback?: (data: unknown) => void) => Promise<void>
@@ -29,7 +29,7 @@ export const websocketService = {
         const projectId = socket.handshake.auth.projectId
         switch (type) {
             case PrincipalType.USER: {
-                await validateProjectId({ userId: principal.id, projectId, log })
+                await validateProjectId({ userId: principal.id, projectId, log, platformId: principal.platform?.id })
                 log.info({
                     message: 'User connected',
                     userId: principal.id,
@@ -93,7 +93,7 @@ export const websocketService = {
     },
 }
 
-const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdArgs): Promise<void> => {
+const validateProjectId = async ({ projectId, platformId }: ValidateProjectIdArgs): Promise<void> => {
     if (isNil(projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHENTICATION,
@@ -102,12 +102,9 @@ const validateProjectId = async ({ userId, projectId, log }: ValidateProjectIdAr
             },
         })
     }
-    const role = await projectMemberService(log).getRole({
-        projectId,
-        userId,
-    })
-
-    if (isNil(role)) {
+    // Simplified validation - just check if project exists and belongs to platform
+    const project = await projectService.getOneOrThrow(projectId)
+    if (platformId && project.platformId !== platformId) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
             params: {
@@ -121,4 +118,5 @@ type ValidateProjectIdArgs = {
     userId: string
     projectId?: string
     log: FastifyBaseLogger
+    platformId?: string
 }

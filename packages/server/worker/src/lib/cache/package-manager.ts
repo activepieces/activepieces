@@ -11,21 +11,20 @@ import { FastifyBaseLogger } from 'fastify'
 
 export const packageManager = (log: FastifyBaseLogger) => ({
     async validate(): Promise<void> {
-        await execPromise('bun --version')
-        await execPromise('bun install')
+        await execPromise('pnpm --version')
+        await execPromise('pnpm install')
     },
     async install({ path, filtersPath }: InstallParams): Promise<CommandOutput> {
         const args = [
             '--ignore-scripts',
-            '--linker isolated',
         ]
         const filters: string[] = filtersPath
             .map(sanitizeFilterPath)
-            .map((path) => `--filter ./${path}`)
+            .map((filterPath) => `--filter ./${filterPath}`)
         await fileSystemUtils.threadSafeMkdir(path)
         log.debug({ path, args, filters }, '[PackageManager#install]')
         const { error, data } = await tryCatch(async () => spawnWithKill({
-            cmd: `bun install ${args.join(' ')} ${filters.join(' ')}`,
+            cmd: `pnpm install ${args.join(' ')} ${filters.join(' ')}`,
             options: {
                 cwd: path,
             },
@@ -41,13 +40,13 @@ export const packageManager = (log: FastifyBaseLogger) => ({
     async build({ path, entryFile, outputFile }: BuildParams): Promise<CommandOutput> {
         const config = [
             `${entryFile}`,
-            '--target node',
-            '--production',
-            '--format cjs',
-            `--outfile ${outputFile}`,
+            '--platform=node',
+            '--bundle',
+            '--format=cjs',
+            `--outfile=${outputFile}`,
         ]
         log.debug({ path, entryFile, outputFile, config }, '[PackageManager#build]')
-        return execPromise(`bun build ${config.join(' ')}`, { cwd: path })
+        return execPromise(`npx esbuild ${config.join(' ')}`, { cwd: path })
     },
 
 })

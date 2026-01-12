@@ -9,7 +9,6 @@ import { UserBadgeEntity } from './badge-entity'
 import { flowsBadgesCheck } from './checks/active-flows-badges'
 import { flowContentBadgesCheck } from './checks/flow-content'
 import { flowRunsBadgesCheck } from './checks/flow-runs-badges'
-import { emailService } from '../../ee/helper/email/email-service'
 
 export const userBadgeRepo = repoFactory(UserBadgeEntity)
 
@@ -62,7 +61,7 @@ async function processBadgeChecks(
                 userId,
             })
 
-            await emailService(log).sendBadgeAwardedEmail(userId, badgeName)
+            // Email service removed (EE feature)
 
             websocketService.to(userId).emit(WebsocketClientEvent.BADGE_AWARDED, {
                 badge: badgeName,

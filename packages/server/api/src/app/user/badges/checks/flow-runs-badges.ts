@@ -1,4 +1,4 @@
-import { ApplicationEventName, FlowRunEvent } from '@activepieces/ee-shared'
+import { ApplicationEventName, FlowRunEvent } from '../../../helper/application-events'
 import { BADGES, FlowRunStatus, isFailedState, isNil, RunEnvironment } from '@activepieces/shared'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
 

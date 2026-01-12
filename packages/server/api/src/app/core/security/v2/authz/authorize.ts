@@ -1,7 +1,7 @@
 import { AuthorizationRouteSecurity, AuthorizationType, ProjectAuthorizationConfig, RouteKind } from '@activepieces/server-shared'
-import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType } from '@activepieces/shared'
+import { ActivepiecesError, ErrorCode, isNil, PlatformRole, Principal, PrincipalType, ProjectId } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { rbacService } from '../../../../ee/authentication/project-role/rbac-service'
+import { projectService } from '../../../../project/project-service'
 import { userService } from '../../../../user/user-service'
 
 export const authorizeOrThrow = async (principal: Principal, security: AuthorizationRouteSecurity, log: FastifyBaseLogger): Promise<void> => {
@@ -44,7 +44,7 @@ async function assertPlatformIsOwnedByCurrentPrincipal(principal: Principal): Pr
 }
 
 
-async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, log: FastifyBaseLogger): Promise<void> {
+async function assertAccessToProject(principal: Principal, projectSecurity: ProjectAuthorizationConfig, _log: FastifyBaseLogger): Promise<void> {
     if (isNil(projectSecurity.projectId)) {
         throw new ActivepiecesError({
             code: ErrorCode.AUTHORIZATION,
@@ -53,7 +53,32 @@ async function assertAccessToProject(principal: Principal, projectSecurity: Proj
             },
         })
     }
-    await rbacService(log).assertPrinicpalAccessToProject({ principal, permission: projectSecurity.permission, projectId: projectSecurity.projectId })
+    // Simplified authorization - just check if user has access to project
+    await assertPrincipalAccessToProject({ principal, projectId: projectSecurity.projectId })
+}
+
+async function assertPrincipalAccessToProject({ principal, projectId }: { principal: Principal, projectId: ProjectId }): Promise<void> {
+    if (principal.type === PrincipalType.SERVICE) {
+        return
+    }
+    if (principal.type === PrincipalType.USER) {
+        const project = await projectService.getOneOrThrow(projectId)
+        if (project.platformId !== principal.platform?.id) {
+            throw new ActivepiecesError({
+                code: ErrorCode.AUTHORIZATION,
+                params: {
+                    message: 'User does not have access to this project',
+                },
+            })
+        }
+        return
+    }
+    throw new ActivepiecesError({
+        code: ErrorCode.AUTHORIZATION,
+        params: {
+            message: 'principal is not allowed for this route',
+        },
+    })
 }
 
 
