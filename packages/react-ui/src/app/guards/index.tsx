@@ -41,6 +41,7 @@ import { FormPage } from '../routes/forms';
 import LeaderboardPage from '../routes/leaderboard';
 import SettingsBilling from '../routes/platform/billing';
 import SettingsHealthPage from '../routes/platform/infra/health';
+import OutgoingWebhooksPage from '../routes/platform/infra/outgoing-webhooks';
 import TriggerHealthPage from '../routes/platform/infra/triggers';
 import SettingsWorkersPage from '../routes/platform/infra/workers';
 import ProjectsPage from '../routes/platform/projects';
@@ -463,6 +464,16 @@ const routes = [
       <PlatformLayout>
         <PageTitle title="Trigger Health">
           <TriggerHealthPage />
+        </PageTitle>
+      </PlatformLayout>
+    ),
+  },
+  {
+    path: '/platform/infrastructure/outgoing-webhooks',
+    element: (
+      <PlatformLayout>
+        <PageTitle title="Outgoing Webhooks">
+          <OutgoingWebhooksPage />
         </PageTitle>
       </PlatformLayout>
     ),

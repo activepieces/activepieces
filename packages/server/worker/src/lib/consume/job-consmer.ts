@@ -10,6 +10,7 @@ import { flowJobExecutor } from './executors/flow-job-executor'
 import { renewWebhookExecutor } from './executors/renew-webhook-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
+import { outgoingWebhookExecutor } from './executors/outgoing-webhook-job-executor'
 
 const tracer = trace.getTracer('job-consumer')
 
@@ -72,6 +73,13 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                             span.setAttribute('worker.webhookExecution', true)
                             return await webhookExecutor(log).consumeWebhook(jobId, jobData, engineToken, timeoutInSeconds)
                         }
+                        case WorkerJobType.OUTGOING_WEBHOOK: {
+                            await outgoingWebhookExecutor(log).execute(jobId, jobData, timeoutInSeconds)
+                            span.setAttribute('worker.completed', true)
+                            return {
+                                status: ConsumeJobResponseStatus.OK,
+                            }
+                        }
                     }
                 }
                 finally {
@@ -95,5 +103,7 @@ const getTimeoutForWorkerJob = (jobType: WorkerJobType): number => {
             return dayjs.duration(workerMachine.getSettings().TRIGGER_TIMEOUT_SECONDS, 'seconds').asSeconds()
         case WorkerJobType.EXECUTE_FLOW:
             return dayjs.duration(workerMachine.getSettings().FLOW_TIMEOUT_SECONDS, 'seconds').asSeconds()
+        case WorkerJobType.OUTGOING_WEBHOOK:
+            return dayjs.duration(workerMachine.getSettings().OUTGOING_WEBHOOK_TIMEOUT_SECONDS, 'seconds').asSeconds()
     }
 }
