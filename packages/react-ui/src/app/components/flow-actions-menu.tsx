@@ -113,7 +113,6 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         projectId: authenticationSession.getProjectId()!,
         folderId: flow.folderId ?? undefined,
       });
-
       const updatedFlow = await flowsApi.update(createdFlow.id, {
         type: FlowOperationType.IMPORT_FLOW,
         request: {
