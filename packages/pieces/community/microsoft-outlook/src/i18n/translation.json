@@ -85,5 +85,11 @@
   "Triggers when a new email is received in the inbox.": "Triggers when a new email is received in the inbox.",
   "Triggers when a new email is delivered into the specified folder.": "Triggers when a new email is delivered into the specified folder.",
   "Triggers when a new email containing one or more attachments arrives.": "Triggers when a new email containing one or more attachments arrives.",
-  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Monitor attachments in a specific folder. Leave empty to monitor all folders."
+  "From (Sender Email)": "From (Sender Email)",
+  "To (Recipient Email)": "To (Recipient Email)",
+  "Attachment Name Filter": "Attachment Name Filter",
+  "Filter emails from a specific sender (optional). Leave empty to for all senders.": "Filter emails from a specific sender (optional). Leave empty to for all senders.",
+  "Filter emails to a specific recipient (optional). Leave empty to for all recipients.": "Filter emails to a specific recipient (optional). Leave empty to for all recipients.",
+  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Monitor attachments in a specific folder. Leave empty to monitor all folders.",
+  "Filter attachments by name (contains). Leave empty to include all attachments.": "Filter attachments by name (contains). Leave empty to include all attachments."
 }
