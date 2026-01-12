@@ -196,14 +196,6 @@ export class FlowExecutorContext {
         })
         return flattenedSteps
     }
-
-    public getStepNames(): Set<string> {
-        const stepNames = new Set<string>(Object.keys(this.steps))
-        this.currentPath.path.forEach(([stepName]) => {
-            stepNames.add(stepName)
-        })
-        return stepNames
-    }
 }
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
