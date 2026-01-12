@@ -454,6 +454,9 @@
       ],
       "@activepieces/piece-billplz": [
         "packages/pieces/community/billplz/src/index.ts"
+      ],
+      "@activepieces/piece-vouchery-io": [
+        "packages/pieces/community/vouchery-io/src/index.ts"
       ]
     },
     "resolveJsonModule": true
