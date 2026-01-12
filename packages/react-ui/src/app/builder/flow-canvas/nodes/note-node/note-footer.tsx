@@ -25,7 +25,7 @@ export const NoteFooter = ({
   return (
     <div className="flex items-center justify-between gap-2">
       <TextWithTooltip tooltipMessage={creator}>
-        <div className="text-xs">{creator}</div>
+        <div className="text-xs opacity-65">{creator}</div>
       </TextWithTooltip>
       {!isDragging && (
         <div className="flex items-center gap-1">

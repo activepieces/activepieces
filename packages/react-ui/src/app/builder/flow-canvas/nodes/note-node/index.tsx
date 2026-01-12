@@ -39,9 +39,9 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
   return (
     <div className="group note-node">
       <NodeResizeControl
-        minWidth={200}
-        minHeight={180}
-        maxWidth={550}
+        minWidth={150}
+        minHeight={150}
+        maxWidth={600}
         maxHeight={600}
         onResize={(_, params) => {
           // update the size locally means that we don't re-render the whole graph
