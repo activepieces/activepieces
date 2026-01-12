@@ -21,6 +21,7 @@ import {
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
+  FlowVersionTemplate,
   ListFlowsRequest,
   PopulatedFlow,
   FlowTrigger,
@@ -30,6 +31,7 @@ import {
   isNil,
   ErrorCode,
   SeekPage,
+  Template,
   UncategorizedFolderId,
 } from '@activepieces/shared';
 
@@ -330,6 +332,114 @@ export const flowHooks = {
       },
       onSuccess: (flow) => {
         navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
+      },
+    });
+  },
+  importFlowsFromTemplates: async ({
+    templates,
+    projectId,
+    folderName,
+    existingFlowId,
+  }: {
+    templates: Template[];
+    projectId: string;
+    folderName?: string;
+    existingFlowId?: string;
+  }): Promise<PopulatedFlow[]> => {
+    if (templates.length === 0) {
+      return [];
+    }
+
+    const allFlowsToImport: Array<{
+      flow: PopulatedFlow;
+      templateFlow: FlowVersionTemplate;
+      oldExternalId: string;
+    }> = [];
+
+    for (const template of templates) {
+      const flows = template.flows || [];
+      if (flows.length === 0) {
+        continue;
+      }
+
+      const templateFlow = flows[0];
+      let flow: PopulatedFlow;
+      
+      if (existingFlowId) {
+        flow = await flowsApi.get(existingFlowId);
+      } else {
+        flow = await flowsApi.create({
+          displayName: templateFlow.displayName,
+          projectId,
+          folderName,
+        });
+      }
+
+      const oldExternalId = !isNil(template.metadata?.externalId)
+        ? (template.metadata['externalId'] as string)
+        : flow.externalId;
+
+      allFlowsToImport.push({
+        flow,
+        templateFlow,
+        oldExternalId,
+      });
+
+      if (existingFlowId) {
+        break;
+      }
+    }
+
+    const externalIdMap = new Map<string, string>();
+    for (const { oldExternalId, flow } of allFlowsToImport) {
+      externalIdMap.set(oldExternalId, flow.externalId);
+    }
+
+    const importPromises = allFlowsToImport.map(
+      async ({ flow, templateFlow }) => {
+        let triggerString = JSON.stringify(templateFlow.trigger);
+
+        for (const [oldId, newId] of externalIdMap.entries()) {
+          triggerString = triggerString.replaceAll(oldId, newId);
+        }
+
+        const updatedTrigger = JSON.parse(triggerString);
+
+        return await flowsApi.update(flow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: templateFlow.displayName,
+            trigger: updatedTrigger,
+            schemaVersion: templateFlow.schemaVersion,
+          },
+        });
+      },
+    );
+
+    return await Promise.all(importPromises);
+  },
+  importFlowVersionWithExternalIdMapping: async ({
+    flowVersion,
+    targetFlow,
+    templateExternalId,
+  }: {
+    flowVersion: FlowVersion;
+    targetFlow: PopulatedFlow;
+    templateExternalId?: string;
+  }): Promise<PopulatedFlow> => {
+    const oldExternalId = templateExternalId ?? targetFlow.externalId;
+    const triggerString = JSON.stringify(flowVersion.trigger).replaceAll(
+      oldExternalId,
+      targetFlow.externalId,
+    );
+    const updatedTrigger = JSON.parse(triggerString);
+
+    return await flowsApi.update(targetFlow.id, {
+      type: FlowOperationType.IMPORT_FLOW,
+      request: {
+        displayName: flowVersion.displayName,
+        trigger: updatedTrigger,
+        schemaVersion: flowVersion.schemaVersion,
       },
     });
   },

@@ -40,9 +40,9 @@ import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { GitBranchType } from '@activepieces/ee-shared';
 import {
-  FlowOperationType,
   FlowVersion,
   FlowVersionState,
+  isNil,
   Permission,
   PopulatedFlow,
 } from '@activepieces/shared';
@@ -113,13 +113,13 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
         projectId: authenticationSession.getProjectId()!,
         folderId: flow.folderId ?? undefined,
       });
-      const updatedFlow = await flowsApi.update(createdFlow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: modifiedFlowVersion.displayName,
-          trigger: modifiedFlowVersion.trigger,
-          schemaVersion: modifiedFlowVersion.schemaVersion,
-        },
+
+      const updatedFlow = await flowHooks.importFlowVersionWithExternalIdMapping({
+        flowVersion: modifiedFlowVersion,
+        targetFlow: createdFlow,
+        templateExternalId: !isNil(flow.metadata?.externalId)
+          ? (flow.metadata['externalId'] as string)
+          : undefined,
       });
       return updatedFlow;
     },
