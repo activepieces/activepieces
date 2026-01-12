@@ -1,6 +1,6 @@
 import { CreatePlatformOutgoingWebhookRequestBody, ListPlatformOutgoingWebhooksRequestBody, OutgoingWebhook, TestPlatformOutgoingWebhookRequestBody, UpdatePlatformOutgoingWebhookRequestBody } from '@activepieces/ee-shared'
 import { securityAccess } from '@activepieces/server-shared'
-import { EndpointScope, PrincipalType, SeekPage } from '@activepieces/shared'
+import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { outgoingWebhookService } from '../../outgoing-webhooks/outgoing-webhooks.service'
@@ -46,8 +46,6 @@ export const CreateOutgoingWebhookRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
     },
 }
 
@@ -60,8 +58,6 @@ export const UpdateOutgoingWebhookRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
     },
 }
 
@@ -79,8 +75,6 @@ export const ListOutgoingWebhooksRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
     },
 }
 
@@ -92,8 +86,6 @@ export const DeleteOutgoingWebhookRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        scope: EndpointScope.PLATFORM,
     },
 }
 
@@ -103,8 +95,6 @@ export const TestPlatformOutgoingWebhookRequest = {
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),
-        allowedPrincipals: [PrincipalType.USER],
-        scope: EndpointScope.PLATFORM,
     },
 }
 

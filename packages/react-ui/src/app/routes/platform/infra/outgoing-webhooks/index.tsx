@@ -2,28 +2,27 @@ import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { OutgoingWebhookDialog } from '@/features/platform-admin/components/outgoing-webhook-dialog';
-import { OutgoingWebhooksTable } from '@/features/platform-admin/components/outgoing-webhooks-table';
-import { outgoingWebhooksHooks } from '@/features/platform-admin/lib/outgoing-webhooks-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
-import { projectCollectionUtils } from '@/hooks/project-collection';
+
+import { OutgoingWebhookDialog } from './components/outgoing-webhook-dialog';
+import { OutgoingWebhooksTable } from './components/outgoing-webhooks-table';
+import { outgoingWebhooksCollectionUtils } from './lib/outgoing-webhooks-collection';
 
 const OutgoingWebhooksPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
-  const { data: webhooks, isLoading } =
-    outgoingWebhooksHooks.useOutgoingWebhooks();
-  const { data: projects } = projectCollectionUtils.useAll();
 
   const isEnabled = platform.plan.auditLogEnabled;
+  const { data: webhooks } = outgoingWebhooksCollectionUtils.useAll(platform.plan.auditLogEnabled);
+
   return (
     <LockedFeatureGuard
-      featureKey="AUDIT_LOGS"
+      featureKey="OUTGOING_WEBHOOKS"
       locked={!isEnabled}
-      lockTitle={t('Unlock Audit Logs For this feature')}
+      lockTitle={t('Unlock Outgoing Webhooks')}
       lockDescription={t(
-        'Configure outgoing webhooks based on activities done within your account',
+        'Configure webhook URL to receive events from your platform to your external system',
       )}
     >
       <div className="flex flex-col w-full gap-4">
@@ -39,7 +38,7 @@ const OutgoingWebhooksPage = () => {
               {t('Manage webhooks that receive platform events')}
             </p>
           </div>
-          <OutgoingWebhookDialog webhook={null} projects={projects ?? []}>
+          <OutgoingWebhookDialog webhook={null}>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
               {t('Create Webhook')}
@@ -47,11 +46,7 @@ const OutgoingWebhooksPage = () => {
           </OutgoingWebhookDialog>
         </div>
 
-        <OutgoingWebhooksTable
-          webhooks={webhooks}
-          isLoading={isLoading}
-          projects={projects ?? []}
-        />
+        <OutgoingWebhooksTable webhooks={webhooks} />
       </div>
     </LockedFeatureGuard>
   );

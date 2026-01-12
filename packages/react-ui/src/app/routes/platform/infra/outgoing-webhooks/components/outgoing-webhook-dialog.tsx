@@ -1,8 +1,6 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,100 +23,85 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  CreatePlatformOutgoingWebhookRequestBody,
   ApplicationEventName,
   OutgoingWebhook,
-  UpdatePlatformOutgoingWebhookRequestBody,
-  OutgoingWebhookScope,
+  CreatePlatformOutgoingWebhookRequestBody,
 } from '@activepieces/ee-shared';
-import { Project } from '@activepieces/shared';
 
-import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
+import { outgoingWebhooksCollectionUtils } from '../lib/outgoing-webhooks-collection';
 import { toast } from 'sonner';
-
-const formSchema = z.object({
-  url: z.string().url({ message: t('Please enter a valid URL') }),
-  scope: z.nativeEnum(OutgoingWebhookScope),
-  projectId: z.string().optional(),
-  events: z.array(z.nativeEnum(ApplicationEventName)).min(1, {
-    message: t('Please select at least one event'),
-  }),
-});
-
-type FormData = z.infer<typeof formSchema>;
 
 interface OutgoingWebhookDialogProps {
   children: React.ReactNode;
   webhook: OutgoingWebhook | null;
-  projects: Project[];
 }
 
 export const OutgoingWebhookDialog = ({
   children,
   webhook,
-  projects,
 }: OutgoingWebhookDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<CreatePlatformOutgoingWebhookRequestBody>({
     defaultValues: {
       url: webhook?.url || '',
-      scope: webhook?.scope || OutgoingWebhookScope.PLATFORM,
       events: webhook?.events || [],
-      projectId:
-        webhook?.scope === OutgoingWebhookScope.PROJECT
-          ? webhook?.projectId
-          : undefined,
     },
   });
 
   const { mutate: testWebhook, isPending: isTesting } =
-    outgoingWebhooksHooks.useTestOutgoingWebhook();
-  const { mutate: mutateWebhook, isPending } =
-    outgoingWebhooksHooks.useMutateOutgoingWebhook();
-
-  const watchedScope = form.watch('scope');
-
-  const handleSubmit = (data: FormData) => {
-    let request:
-      | CreatePlatformOutgoingWebhookRequestBody
-      | UpdatePlatformOutgoingWebhookRequestBody = {
-      url: data.url,
-      events: data.events,
-    };
-
-    if (!webhook) {
-      // For platform webhooks, scope is implicit and set by the backend
-      request = {
-        ...request,
-      } as CreatePlatformOutgoingWebhookRequestBody;
-    }
-
-    mutateWebhook(
-      { id: webhook?.id || '', data: request },
-      {
-        onSuccess: () => {
-          toast.success(t('Success'), {
-            description: t(`Outgoing webhook ${webhook ? 'updated' : 'created'} successfully`),
-          });
-          setIsOpen(false);
-          form.reset();
-        },
-        onError: (error: Error) => {
-          toast.error(t('Error'), {
-            description: error.message,
-          });
-        },
+    outgoingWebhooksCollectionUtils.useTestOutgoingWebhook();
+  
+  const { mutate: createWebhook, isPending: isCreating } =
+    outgoingWebhooksCollectionUtils.useCreateOutgoingWebhook(
+      () => {
+        toast.success(t('Success'), {
+          description: t('Outgoing webhook created successfully'),
+        });
+        setIsOpen(false);
+        form.reset();
+      },
+      (error: Error) => {
+        toast.error(t('Error'), {
+          description: error.message,
+        });
       },
     );
+
+  const handleSubmit = (data: CreatePlatformOutgoingWebhookRequestBody) => {
+    // Basic validation
+    if (!data.url || data.url.trim() === '') {
+      toast.error(t('Error'), {
+        description: t('Please enter a valid URL'),
+      });
+      return;
+    }
+
+    if (!data.events || data.events.length === 0) {
+      toast.error(t('Error'), {
+        description: t('Please select at least one event'),
+      });
+      return;
+    }
+
+    if (webhook) {
+      // Update existing webhook
+      try {
+        outgoingWebhooksCollectionUtils.update(webhook.id, data);
+        toast.success(t('Success'), {
+          description: t('Outgoing webhook updated successfully'),
+        });
+        setIsOpen(false);
+        form.reset();
+      } catch (error) {
+        toast.error(t('Error'), {
+          description: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    } else {
+      // Create new webhook
+      createWebhook(data);
+    }
   };
 
   const availableEvents = Object.values(ApplicationEventName);
@@ -128,7 +111,9 @@ export const OutgoingWebhookDialog = ({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{t('Create Outgoing Webhook')}</DialogTitle>
+          <DialogTitle>
+            {webhook ? t('Update Outgoing Webhook') : t('Create Outgoing Webhook')}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form
@@ -151,67 +136,6 @@ export const OutgoingWebhookDialog = ({
                 </FormItem>
               )}
             />
-
-            <FormField
-              control={form.control}
-              name="scope"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('Scope')}</FormLabel>
-                  <Select
-                    disabled={!!webhook}
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('Select scope')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value={OutgoingWebhookScope.PLATFORM}>
-                        {t('Platform')}
-                      </SelectItem>
-                      <SelectItem value={OutgoingWebhookScope.PROJECT}>
-                        {t('Project')}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {watchedScope === OutgoingWebhookScope.PROJECT && (
-              <FormField
-                control={form.control}
-                name="projectId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('Project')}</FormLabel>
-                    <Select
-                      disabled={!!webhook}
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder={t('Select project')} />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {projects?.map((project) => (
-                          <SelectItem key={project.id} value={project.id}>
-                            {project.displayName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
 
             <FormField
               control={form.control}
@@ -266,7 +190,7 @@ export const OutgoingWebhookDialog = ({
                 type="button"
                 variant="outline"
                 onClick={() => setIsOpen(false)}
-                disabled={isPending}
+                disabled={isCreating}
               >
                 {t('Cancel')}
               </Button>
@@ -278,8 +202,8 @@ export const OutgoingWebhookDialog = ({
               >
                 {isTesting ? t('Testing...') : t('Test Webhook')}
               </Button>
-              <Button type="submit" disabled={isPending}>
-                {isPending
+              <Button type="submit" disabled={isCreating}>
+                {isCreating
                   ? t('...')
                   : webhook
                   ? t('Update Webhook')

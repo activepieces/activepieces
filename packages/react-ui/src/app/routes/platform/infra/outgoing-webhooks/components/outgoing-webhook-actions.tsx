@@ -11,22 +11,16 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { OutgoingWebhook } from '@activepieces/ee-shared';
-import { Project } from '@activepieces/shared';
 
-import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
-
+import { outgoingWebhooksCollectionUtils } from '../lib/outgoing-webhooks-collection';
 import { OutgoingWebhookDialog } from './outgoing-webhook-dialog';
 
 const OutgoingWebhookActions = ({
   webhook,
-  projects,
 }: {
   webhook: OutgoingWebhook;
-  projects: Project[];
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { mutate: deleteWebhook, isPending: isDeleting } =
-    outgoingWebhooksHooks.useDeleteOutgoingWebhook();
 
   return (
     <div className="flex justify-end">
@@ -41,7 +35,7 @@ const OutgoingWebhookActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <OutgoingWebhookDialog webhook={webhook} projects={projects}>
+          <OutgoingWebhookDialog webhook={webhook}>
             <DropdownMenuItem
               onSelect={(e) => {
                 e.preventDefault();
@@ -59,7 +53,7 @@ const OutgoingWebhookActions = ({
             showToast
             mutationFn={async () => {
               if (webhook) {
-                deleteWebhook(webhook.id);
+                outgoingWebhooksCollectionUtils.delete([webhook.id]);
               }
             }}
             isDanger
@@ -81,3 +75,4 @@ const OutgoingWebhookActions = ({
 };
 
 export default OutgoingWebhookActions;
+

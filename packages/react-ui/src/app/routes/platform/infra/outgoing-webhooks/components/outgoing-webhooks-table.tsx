@@ -5,20 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { OutgoingWebhook, OutgoingWebhookScope } from '@activepieces/ee-shared';
-import { Project, SeekPage } from '@activepieces/shared';
+import { OutgoingWebhook } from '@activepieces/ee-shared';
 import OutgoingWebhookActions from './outgoing-webhook-actions';
 
 interface OutgoingWebhooksTableProps {
-  webhooks: SeekPage<OutgoingWebhook> | undefined;
-  isLoading: boolean;
-  projects: Project[];
+  webhooks: OutgoingWebhook[];
 }
 
 export const OutgoingWebhooksTable = ({
   webhooks,
-  isLoading,
-  projects,
 }: OutgoingWebhooksTableProps) => {
   const columns: ColumnDef<RowDataWithActions<OutgoingWebhook>>[] = [
     {
@@ -30,23 +25,6 @@ export const OutgoingWebhooksTable = ({
         <div className="max-w-xs truncate font-mono text-sm">
           {row.original.url}
         </div>
-      ),
-    },
-    {
-      accessorKey: 'scope',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Scope')} />
-      ),
-      cell: ({ row }) => (
-        <Badge
-          variant={
-            row.original.scope === OutgoingWebhookScope.PLATFORM
-              ? 'default'
-              : 'outline'
-          }
-        >
-          {row.original.scope}
-        </Badge>
       ),
     },
     {
@@ -83,16 +61,23 @@ export const OutgoingWebhooksTable = ({
     {
       id: 'actions',
       cell: ({ row }) => (
-        <OutgoingWebhookActions webhook={row.original} projects={projects}/>
+        <OutgoingWebhookActions webhook={row.original} />
       ),
     },
   ];
 
+  const page = {
+    data: webhooks,
+    next: null,
+    previous: null,
+  };
+
   return (
     <DataTable
       columns={columns}
-      page={webhooks}
-      isLoading={isLoading}
+      page={page}
+      clientPagination={true}
+      isLoading={false}
       emptyStateTextTitle={t('No webhooks found')}
       emptyStateTextDescription={t('Create your first webhook to get started')}
       emptyStateIcon={<Globe />}

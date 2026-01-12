@@ -176,6 +176,7 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/outgoing-webhooks',
           label: t('Outgoing Webhooks'),
           icon: Webhook,
+          locked: !platform.plan.auditLogEnabled,
         },
       ],
     },
