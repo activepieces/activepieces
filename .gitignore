@@ -10,6 +10,7 @@ dev
 /cache
 /logs/
 .env
+/packages/server/api/.env
 
 # SDK Build
 builds
