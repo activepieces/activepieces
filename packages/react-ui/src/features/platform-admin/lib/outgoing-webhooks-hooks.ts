@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
-  CreateOutgoingWebhookRequestBody,
-  TestOutgoingWebhookRequestBody,
-  UpdateOutgoingWebhookRequestBody,
+  CreatePlatformOutgoingWebhookRequestBody,
+  TestPlatformOutgoingWebhookRequestBody,
+  UpdatePlatformOutgoingWebhookRequestBody,
 } from '@activepieces/ee-shared';
 
 import { outgoingWebhooksApi } from './outgoing-webhooks-api';
@@ -26,17 +26,17 @@ export const outgoingWebhooksHooks = {
       }: {
         id?: string;
         data:
-          | UpdateOutgoingWebhookRequestBody
-          | CreateOutgoingWebhookRequestBody;
+          | UpdatePlatformOutgoingWebhookRequestBody
+          | CreatePlatformOutgoingWebhookRequestBody;
       }) => {
         if (id) {
           return outgoingWebhooksApi.update(
             id,
-            data as UpdateOutgoingWebhookRequestBody,
+            data as UpdatePlatformOutgoingWebhookRequestBody,
           );
         } else {
           return outgoingWebhooksApi.create(
-            data as CreateOutgoingWebhookRequestBody,
+            data as CreatePlatformOutgoingWebhookRequestBody,
           );
         }
       },
@@ -59,7 +59,7 @@ export const outgoingWebhooksHooks = {
 
   useTestOutgoingWebhook() {
     return useMutation({
-      mutationFn: (request: TestOutgoingWebhookRequestBody) =>
+      mutationFn: (request: TestPlatformOutgoingWebhookRequestBody) =>
         outgoingWebhooksApi.test(request),
     });
   },

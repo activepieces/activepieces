@@ -32,6 +32,7 @@ import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
 import { McpServerEntity } from '../mcp/mcp-entity'
+import { OutgoingWebhookEntity } from '../outgoing-webhooks/outgoing-webhooks.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -54,7 +55,6 @@ import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
-import { OutgoingWebhookEntity } from '../ee/outging-webhooks/outgoing-webhooks.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -109,7 +109,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ConnectionKeyEntity,
         AppCredentialEntity,
         PlatformPlanEntity,
-        OutgoingWebhookEntity
+        OutgoingWebhookEntity,
 
     ]
 }

@@ -211,11 +211,12 @@ export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 
 export const OutgoingWebhookJobData = Type.Object({
+    schemaVersion: Type.Number(),
     platformId: Type.String(),
     projectId: Type.Optional(Type.String()),
     webhookId: Type.String(),
     webhookUrl: Type.String(),
-    payload: Type.Any(),
+    payload: Type.Unknown(),
     jobType: Type.Literal(WorkerJobType.OUTGOING_WEBHOOK),
 })
 

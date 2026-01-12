@@ -1,20 +1,20 @@
 import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 
-import { DashboardPageHeader } from '@/components/custom/dashboard-page-header';
 import { Button } from '@/components/ui/button';
 import { OutgoingWebhookDialog } from '@/features/platform-admin/components/outgoing-webhook-dialog';
 import { OutgoingWebhooksTable } from '@/features/platform-admin/components/outgoing-webhooks-table';
 import { outgoingWebhooksHooks } from '@/features/platform-admin/lib/outgoing-webhooks-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
-import { projectHooks } from '@/hooks/project-hooks';
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 
 const OutgoingWebhooksPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
   const { data: webhooks, isLoading } =
     outgoingWebhooksHooks.useOutgoingWebhooks();
-  const { data: projects } = projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
 
   const isEnabled = platform.plan.auditLogEnabled;
   return (

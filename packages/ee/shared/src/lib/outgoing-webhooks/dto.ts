@@ -1,4 +1,3 @@
-import { DiscriminatedUnion } from '@activepieces/shared'
 import { Static, Type } from '@sinclair/typebox'
 import { ApplicationEventName } from '../audit-events'
 
@@ -7,44 +6,29 @@ export enum OutgoingWebhookScope {
     PROJECT = 'PROJECT',
 }
 
-export const ListOutgoingWebhooksRequestBody = Type.Object({
+export const ListPlatformOutgoingWebhooksRequestBody = Type.Object({
     cursor: Type.Optional(Type.String()),
     limit: Type.Optional(Type.Number()),
 })
 
-export type ListOutgoingWebhooksRequestBody = Static<typeof ListOutgoingWebhooksRequestBody>
+export type ListPlatformOutgoingWebhooksRequestBody = Static<typeof ListPlatformOutgoingWebhooksRequestBody>
 
-const CreateOutgoingWebhookBase = {
+
+
+export const CreatePlatformOutgoingWebhookRequestBody = Type.Object({
     events: Type.Array(Type.Enum(ApplicationEventName)),
     url: Type.String({ format: 'uri' }),
-}
-
-const CreateOutgoingWebhookPlatformScopeRequestBody = Type.Object({
-    ...CreateOutgoingWebhookBase,
-    scope: Type.Literal(OutgoingWebhookScope.PLATFORM),
 })
 
-const CreateOutgoingWebhookProjectScopeRequestBody = Type.Object({
-    ...CreateOutgoingWebhookBase,
-    scope: Type.Literal(OutgoingWebhookScope.PROJECT),
-    projectId: Type.String(),
-})
 
-export const CreateOutgoingWebhookRequestBody = DiscriminatedUnion('scope', [
-    CreateOutgoingWebhookProjectScopeRequestBody,
-    CreateOutgoingWebhookPlatformScopeRequestBody,
-])
+export type CreatePlatformOutgoingWebhookRequestBody = Static<typeof CreatePlatformOutgoingWebhookRequestBody>
 
-export type CreateOutgoingWebhookRequestBody = Static<typeof CreateOutgoingWebhookRequestBody>
+export const UpdatePlatformOutgoingWebhookRequestBody = CreatePlatformOutgoingWebhookRequestBody
 
-export const UpdateOutgoingWebhookRequestBody = Type.Object({
-    ...CreateOutgoingWebhookBase,
-})
+export type UpdatePlatformOutgoingWebhookRequestBody = Static<typeof UpdatePlatformOutgoingWebhookRequestBody>
 
-export type UpdateOutgoingWebhookRequestBody = Static<typeof UpdateOutgoingWebhookRequestBody>
-
-export const TestOutgoingWebhookRequestBody = Type.Object({
+export const TestPlatformOutgoingWebhookRequestBody = Type.Object({
     url: Type.String({ format: 'uri' }),
 })
 
-export type TestOutgoingWebhookRequestBody = Static<typeof TestOutgoingWebhookRequestBody>
+export type TestPlatformOutgoingWebhookRequestBody = Static<typeof TestPlatformOutgoingWebhookRequestBody>

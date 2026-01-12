@@ -38,7 +38,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             pieceVersion: request.body.pieceVersion,
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -96,7 +96,7 @@ const globalConnectionController: FastifyPluginAsyncTypebox = async (app) => {
             scope: AppConnectionScope.PLATFORM,
             projectId: null,
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,

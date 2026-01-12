@@ -10,17 +10,17 @@ const OutgoingWebhookBase = {
     url: Type.String({ format: 'uri' }),
 }
 
-export const OutgoingWebhookPlatformScope = Type.Object({
-    ...OutgoingWebhookBase,
-    scope: Type.Literal(OutgoingWebhookScope.PLATFORM),
-})
-export type OutgoingWebhookPlatformScope = Static<typeof OutgoingWebhookPlatformScope>
 
 
 const OutgoingWebhookProjectScope = Type.Object({
     ...OutgoingWebhookBase,
     scope: Type.Literal(OutgoingWebhookScope.PROJECT),
     projectId: Type.String(),
+})
+
+export const OutgoingWebhookPlatformScope = Type.Object({
+    ...OutgoingWebhookBase,
+    scope: Type.Literal(OutgoingWebhookScope.PLATFORM),
 })
 
 export const OutgoingWebhook = DiscriminatedUnion('scope', [

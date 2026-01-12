@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+import { MigrationInterface, QueryRunner } from 'typeorm'
 
 export class AddOutgoingWebhooks1759332023650 implements MigrationInterface {
     name = 'AddOutgoingWebhooks1759332023650'
@@ -16,47 +16,47 @@ export class AddOutgoingWebhooks1759332023650 implements MigrationInterface {
                 "url" character varying NOT NULL,
                 CONSTRAINT "PK_83e09f2d5f371616d444f8ad27c" PRIMARY KEY ("id")
             )
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_outgoing_webhook_platform_scope" ON "outgoing_webhook" ("platformId")
             WHERE scope = 'PLATFORM'
-        `);
+        `)
         await queryRunner.query(`
             CREATE INDEX "idx_outgoing_webhook_project_scope" ON "outgoing_webhook" ("projectId")
             WHERE scope = 'PROJECT'
-        `);
+        `)
 
 
 
         await queryRunner.query(`
             ALTER TABLE "outgoing_webhook"
             ADD CONSTRAINT "fk_outgoing_webhook_platform_id" FOREIGN KEY ("platformId") REFERENCES "platform"("id") ON DELETE CASCADE ON UPDATE NO ACTION
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "outgoing_webhook"
             ADD CONSTRAINT "fk_outgoing_webhook_project_id" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE NO ACTION
-        `);
+        `)
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`
             ALTER TABLE "outgoing_webhook" DROP CONSTRAINT "fk_outgoing_webhook_project_id"
-        `);
+        `)
         await queryRunner.query(`
             ALTER TABLE "outgoing_webhook" DROP CONSTRAINT "fk_outgoing_webhook_platform_id"
-        `);
+        `)
 
 
 
         await queryRunner.query(`
             DROP INDEX "public"."idx_outgoing_webhook_project_scope"
-        `);
+        `)
         await queryRunner.query(`
             DROP INDEX "public"."idx_outgoing_webhook_platform_scope"
-        `);
+        `)
         await queryRunner.query(`
             DROP TABLE "outgoing_webhook"
-        `);
+        `)
 
     }
 

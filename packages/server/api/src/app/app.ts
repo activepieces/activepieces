@@ -42,6 +42,7 @@ import { adminPlatformModule } from './ee/platform/admin/admin-platform.controll
 import { adminPlatformTemplatesCloudModule } from './ee/platform/admin/templates/admin-platform-templates-cloud.module'
 import { platformAiCreditsService } from './ee/platform/platform-plan/platform-ai-credits.service'
 import { platformPlanModule } from './ee/platform/platform-plan/platform-plan.module'
+import { platformWebhooksModule } from './ee/platform-webhooks/platform-webhooks.module'
 import { projectEnterpriseHooks } from './ee/projects/ee-project-hooks'
 import { platformProjectModule } from './ee/projects/platform-project-module'
 import { projectMemberModule } from './ee/projects/project-members/project-member.module'
@@ -88,7 +89,6 @@ import { webhookModule } from './webhooks/webhook-module'
 import { engineResponseWatcher } from './workers/engine-response-watcher'
 import { queueMetricsModule } from './workers/queue/metrics/queue-metrics.module'
 import { migrateQueuesAndRunConsumers, workerModule } from './workers/worker-module'
-import { outgoingWebhooksModule } from './ee/outging-webhooks/outgoing-webhooks.module'
 
 export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> => {
 
@@ -290,6 +290,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
+            await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)
@@ -315,6 +316,7 @@ export const setupApp = async (app: FastifyInstance): Promise<FastifyInstance> =
             await app.register(apiKeyModule)
             await app.register(gitRepoModule)
             await app.register(auditEventModule)
+            await app.register(platformWebhooksModule)
             await app.register(projectRoleModule)
             await app.register(projectReleaseModule)
             await app.register(globalConnectionModule)

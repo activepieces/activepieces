@@ -1,13 +1,15 @@
-import { CreateOutgoingWebhookRequestBody, ListOutgoingWebhooksRequestBody, OutgoingWebhook, TestOutgoingWebhookRequestBody, UpdateOutgoingWebhookRequestBody } from '@activepieces/ee-shared'
+import { CreatePlatformOutgoingWebhookRequestBody, ListPlatformOutgoingWebhooksRequestBody, OutgoingWebhook, TestPlatformOutgoingWebhookRequestBody, UpdatePlatformOutgoingWebhookRequestBody } from '@activepieces/ee-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { EndpointScope, PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
-import { outgoingWebhookService } from './outgoing-webhooks.service'
 import { StatusCodes } from 'http-status-codes'
+import { outgoingWebhookService } from '../../outgoing-webhooks/outgoing-webhooks.service'
 
-export const outgoingWebhooksController: FastifyPluginAsyncTypebox = async (app) => {
+export const platformWebhooksController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateOutgoingWebhookRequest, async (req) => {
         return outgoingWebhookService(req.log).create(req.body, req.principal.platform.id)
     })
+
     app.patch('/:id', UpdateOutgoingWebhookRequest, async (req) => {
         return outgoingWebhookService(req.log).update({
             id: req.params.id,
@@ -29,10 +31,10 @@ export const outgoingWebhooksController: FastifyPluginAsyncTypebox = async (app)
         })
     })
 
-    app.post('/test', TestOutgoingWebhookRequest, async (req) => {
+    app.post('/test', TestPlatformOutgoingWebhookRequest, async (req) => {
         return outgoingWebhookService(req.log).test({
             platformId: req.principal.platform.id,
-            projectId: req.principal.projectId,
+            projectId: undefined,
             url: req.body.url,
         })
     })
@@ -40,9 +42,10 @@ export const outgoingWebhooksController: FastifyPluginAsyncTypebox = async (app)
 
 export const CreateOutgoingWebhookRequest = {
     schema: {
-        body: CreateOutgoingWebhookRequestBody,
+        body: CreatePlatformOutgoingWebhookRequestBody,
     },
     config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
@@ -50,12 +53,13 @@ export const CreateOutgoingWebhookRequest = {
 
 export const UpdateOutgoingWebhookRequest = {
     schema: {
-        body: UpdateOutgoingWebhookRequestBody,
+        body: UpdatePlatformOutgoingWebhookRequestBody,
         params: Type.Object({
             id: Type.String(),
         }),
     },
     config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
@@ -63,7 +67,7 @@ export const UpdateOutgoingWebhookRequest = {
 
 export const ListOutgoingWebhooksRequest = {
     schema: {
-        querystring: ListOutgoingWebhooksRequestBody,
+        querystring: ListPlatformOutgoingWebhooksRequestBody,
         response: {
             [StatusCodes.OK]: SeekPage(OutgoingWebhook),
         },
@@ -74,6 +78,7 @@ export const ListOutgoingWebhooksRequest = {
         [StatusCodes.OK]: SeekPage(OutgoingWebhook),
     },
     config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
@@ -86,17 +91,20 @@ export const DeleteOutgoingWebhookRequest = {
         }),
     },
     config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
         allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
         scope: EndpointScope.PLATFORM,
     },
 }
 
-export const TestOutgoingWebhookRequest = {
+export const TestPlatformOutgoingWebhookRequest = {
     schema: {
-        body: TestOutgoingWebhookRequestBody,
+        body: TestPlatformOutgoingWebhookRequestBody,
     },
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+        allowedPrincipals: [PrincipalType.USER],
         scope: EndpointScope.PLATFORM,
     },
 }
+

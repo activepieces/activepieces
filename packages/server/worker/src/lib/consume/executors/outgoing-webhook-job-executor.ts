@@ -7,7 +7,7 @@ export const outgoingWebhookExecutor = (log: FastifyBaseLogger) => ({
         const { webhookUrl, payload } = jobData
         log.info({
             jobId,
-            jobData,
+            webhookUrl,
         }, 'Consuming outgoing webhook job')
 
         const response = await axios.post(webhookUrl, payload, {
@@ -18,7 +18,6 @@ export const outgoingWebhookExecutor = (log: FastifyBaseLogger) => ({
             jobId,
             response: {
                 status: response.status,
-                data: response.data,
             },
         }, 'Outgoing webhook job consumed')
     },

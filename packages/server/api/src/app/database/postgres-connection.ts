@@ -671,7 +671,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         UpdateCacheStructure1767904545112,
         AddOutdatedToReport1767994436597,
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
-        AddOutgoingWebhooks1759332023650
+        AddOutgoingWebhooks1759332023650,
     ]
     return migrations
 }

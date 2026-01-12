@@ -3,42 +3,28 @@ import {
 } from '@activepieces/ee-shared'
 import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import {
-    apId,
     Cursor,
     isNil,
     SeekPage,
 } from '@activepieces/shared'
-import { Value } from '@sinclair/typebox/value'
 import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
-import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { repoFactory } from '../../core/db/repo-factory'
-import { applicationEvents, AuditEventParam, MetaInformation } from '../../helper/application-events'
+import { applicationEvents } from '../../helper/application-events'
 import { buildPaginator } from '../../helper/pagination/build-paginator'
 import { paginationHelper } from '../../helper/pagination/pagination-utils'
-import { platformService } from '../../platform/platform.service'
-import { projectService } from '../../project/project-service'
-import { userService } from '../../user/user-service'
 import { AuditEventEntity } from './audit-event-entity'
-import { outgoingWebhookService } from '../outging-webhooks/outgoing-webhooks.service'
 
 export const auditLogRepo = repoFactory(AuditEventEntity)
 
 export const auditLogService = (log: FastifyBaseLogger) => ({
     setup(): void {
-        applicationEvents.registerListeners(log, {
-            userEvent: (log) => (requestInformation, params) => {
-                rejectedPromiseHandler(saveEvent(requestInformation, params, log), log)
+        applicationEvents(log).registerListeners(log, {
+            userEvent: (log) => async (params) => {
+                rejectedPromiseHandler(auditLogRepo().save(params), log)
             },
-            workerEvent: (log) => (projectId, params) => {
-                rejectedPromiseHandler(projectService.getOneOrThrow(projectId).then((project) => {
-                    rejectedPromiseHandler(saveEvent({
-                        platformId: project.platformId,
-                        projectId,
-                        userId: undefined,
-                        ip: undefined,
-                    }, params, log), log)
-                }), log)
+            workerEvent: (log) => async (_projectId, params) => {
+                rejectedPromiseHandler(auditLogRepo().save(params), log)
             },
         })
     },
@@ -85,56 +71,6 @@ export const auditLogService = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function saveEvent(info: MetaInformation, rawEvent: AuditEventParam, log: FastifyBaseLogger): Promise<void> {
-    const platformId = info.platformId
-    const platform = await platformService.getOneWithPlanOrThrow(platformId)
-    if (!platform.plan.auditLogEnabled) {
-        return
-    }
-    const user = info.userId ? await userService.getOneOrFail({
-        id: info.userId,
-    }) : undefined
-    const identity = !isNil(user?.identityId) ? await userIdentityService(log).getOneOrFail({
-        id: user.identityId,
-    }) : undefined
-    const project = info.projectId ? await projectService.getOne(info.projectId) : undefined
-    const eventToSave: unknown = {
-        id: apId(),
-        created: new Date().toISOString(),
-        updated: new Date().toISOString(),
-        userId: info.userId,
-        userEmail: identity?.email,
-        projectId: info.projectId,
-        projectDisplayName: project?.displayName,
-        platformId: info.platformId,
-        ip: info.ip,
-        data: {
-            ...rawEvent.data,
-            project,
-            user,
-        },
-        action: rawEvent.action,
-    }
-
-    // The event may contain Date objects, so we serialize it to convert dates back to strings as per the schema.
-    const clonedAndSerializedDates = JSON.parse(JSON.stringify(eventToSave))
-    const cleanedEvent = Value.Clean(ApplicationEvent, clonedAndSerializedDates) as ApplicationEvent
-
-    await Promise.all([
-        auditLogRepo().save(cleanedEvent),
-        outgoingWebhookService(log).trigger({
-            platformId: info.platformId,
-            projectId: info.projectId,
-            event: cleanedEvent.action,
-            payload: cleanedEvent,
-        }),
-    ])
-
-    log.info({
-        action: cleanedEvent.action,
-        message: '[AuditEventService#saveEvent] Audit event saved',
-    })
-}
 
 type ListParams = {
     platformId: string

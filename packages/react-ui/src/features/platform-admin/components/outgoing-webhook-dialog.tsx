@@ -31,17 +31,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { toast } from '@/components/ui/use-toast';
 import {
-  CreateOutgoingWebhookRequestBody,
+  CreatePlatformOutgoingWebhookRequestBody,
   ApplicationEventName,
   OutgoingWebhook,
-  UpdateOutgoingWebhookRequestBody,
+  UpdatePlatformOutgoingWebhookRequestBody,
   OutgoingWebhookScope,
 } from '@activepieces/ee-shared';
 import { Project } from '@activepieces/shared';
 
 import { outgoingWebhooksHooks } from '../lib/outgoing-webhooks-hooks';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   url: z.string().url({ message: t('Please enter a valid URL') }),
@@ -89,44 +89,32 @@ export const OutgoingWebhookDialog = ({
 
   const handleSubmit = (data: FormData) => {
     let request:
-      | CreateOutgoingWebhookRequestBody
-      | UpdateOutgoingWebhookRequestBody = {
+      | CreatePlatformOutgoingWebhookRequestBody
+      | UpdatePlatformOutgoingWebhookRequestBody = {
       url: data.url,
       events: data.events,
     };
 
     if (!webhook) {
+      // For platform webhooks, scope is implicit and set by the backend
       request = {
-        scope: data.scope,
         ...request,
-        ...(data.scope === OutgoingWebhookScope.PROJECT &&
-          data.projectId && {
-            projectId: data.projectId,
-          }),
-      } as CreateOutgoingWebhookRequestBody;
+      } as CreatePlatformOutgoingWebhookRequestBody;
     }
 
     mutateWebhook(
       { id: webhook?.id || '', data: request },
       {
         onSuccess: () => {
-          toast({
-            title: t('Success'),
-            description: t(
-              `Outgoing webhook ${
-                webhook ? 'updated' : 'created'
-              } successfully`,
-            ),
-            duration: 3000,
+          toast.success(t('Success'), {
+            description: t(`Outgoing webhook ${webhook ? 'updated' : 'created'} successfully`),
           });
           setIsOpen(false);
           form.reset();
         },
         onError: (error: Error) => {
-          toast({
-            title: t('Error'),
+          toast.error(t('Error'), {
             description: error.message,
-            variant: 'destructive',
           });
         },
       },
