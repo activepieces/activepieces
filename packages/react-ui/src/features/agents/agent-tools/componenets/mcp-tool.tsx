@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/tooltip';
 import { AgentMcpTool } from '@activepieces/shared';
 
-import { useAgentToolsStore } from '../store';
+import { useMcpToolDialogStore } from '../stores/mcp-tools';
 
 type AgentMcpToolsAccordionProps = {
   disabled?: boolean;
@@ -28,7 +28,7 @@ export const AgentMcpToolComponent = ({
   tools,
   removeTool,
 }: AgentMcpToolsAccordionProps) => {
-  const { setShowAddMcpDialog } = useAgentToolsStore();
+  const { setShowAddMcpDialog } = useMcpToolDialogStore();
 
   return (
     <AccordionItem value="mcp" className="border-b last:border-0">

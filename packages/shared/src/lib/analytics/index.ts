@@ -3,29 +3,16 @@ import { BaseModelSchema, Nullable } from '../common/base-model'
 import { FlowStatus } from '../flows/flow'
 import { UserWithMetaInformation } from '../user'
 
-export const DEFAULT_ESTIMATED_TIME_SAVED_PER_STEP = 2
-
-export const UpdatePlatformReportRequest = Type.Object({
-    estimatedTimeSavedPerStep: Nullable(Type.Number()),
-    outdated: Type.Boolean(),
-})
-export type UpdatePlatformReportRequest = Static<typeof UpdatePlatformReportRequest>
-
-export const AnalyticsPieceReportItem = Type.Object({
-    name: Type.String(),
-    displayName: Type.String(),
-    logoUrl: Type.String(),
-    usageCount: Type.Number(),
-})
-export type AnalyticsPieceReportItem = Static<typeof AnalyticsPieceReportItem>
-
-export const AnalyticsPieceReport = Type.Array(AnalyticsPieceReportItem)
-export type AnalyticsPieceReport = Static<typeof AnalyticsPieceReport>
+export enum AnalyticsTimePeriod {
+    LAST_WEEK = 'last-week',
+    LAST_MONTH = 'last-month',
+    ALL_TIME = 'all-time',
+}
 
 export const AnalyticsRunsUsageItem = Type.Object({
     day: Type.String(),
-    totalRuns: Type.Number(),
-    minutesSaved: Type.Number(),
+    flowId: Type.String(),
+    runs: Type.Number(),
 })
 export type AnalyticsRunsUsageItem = Static<typeof AnalyticsRunsUsageItem>
 
@@ -38,13 +25,8 @@ export const AnalyticsFlowReportItem = Type.Object({
     projectId: Type.String(),
     projectName: Type.String(),
     status: Type.Enum(FlowStatus),
-    runs: Type.Number(),
-    timeSavedPerRun: Type.Object({
-        value: Nullable(Type.Number()),
-        isEstimated: Type.Boolean(),
-    }),
-    minutesSaved: Type.Number(),
-    ownerId: Type.String(),
+    timeSavedPerRun: Nullable(Type.Number()),
+    ownerId: Nullable(Type.String()),
 })
 export type AnalyticsFlowReportItem = Static<typeof AnalyticsFlowReportItem>
 
@@ -53,12 +35,36 @@ export type AnalyticsFlowReport = Static<typeof AnalyticsFlowReport>
 
 export const PlatformAnalyticsReport = Type.Object({
     ...BaseModelSchema,
-    estimatedTimeSavedPerStep: Nullable(Type.Number()),
+    cachedAt: Type.String(),
+    runs: AnalyticsRunsUsage,
     outdated: Type.Boolean(),
-    users: Type.Array(UserWithMetaInformation),
-    topPieces: AnalyticsPieceReport,
-    runsUsage: AnalyticsRunsUsage,
-    flowsDetails: AnalyticsFlowReport,
+    flows: AnalyticsFlowReport,
     platformId: Type.String(),
+    users: Type.Array(UserWithMetaInformation),
 })
 export type PlatformAnalyticsReport = Static<typeof PlatformAnalyticsReport>
+
+export const ProjectLeaderboardItem = Type.Object({
+    projectId: Type.String(),
+    projectName: Type.String(),
+    flowCount: Type.Number(),
+    minutesSaved: Nullable(Type.Number()),
+})
+export type ProjectLeaderboardItem = Static<typeof ProjectLeaderboardItem>
+
+export const UserLeaderboardItem = Type.Object({
+    userId: Type.String(),
+    flowCount: Type.Number(),
+    minutesSaved: Nullable(Type.Number()),
+})
+export type UserLeaderboardItem = Static<typeof UserLeaderboardItem>
+
+export const AnalyticsReportRequest = Type.Object({
+    timePeriod: Type.Optional(Type.Enum(AnalyticsTimePeriod)),
+})
+export type AnalyticsReportRequest = Static<typeof AnalyticsReportRequest>
+
+export const LeaderboardRequest = Type.Object({
+    timePeriod: Type.Enum(AnalyticsTimePeriod),
+})
+export type LeaderboardRequest = Static<typeof LeaderboardRequest>

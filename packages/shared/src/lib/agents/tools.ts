@@ -77,7 +77,7 @@ export const AgentPieceToolMetadata = Type.Object({
     pieceName: Type.String(),
     pieceVersion: Type.String(),
     actionName: Type.String(),
-    predefinedInput: PredefinedInputsStructure,
+    predefinedInput: Type.Optional(PredefinedInputsStructure),
 })
 export type AgentPieceToolMetadata = Static<typeof AgentPieceToolMetadata>
 

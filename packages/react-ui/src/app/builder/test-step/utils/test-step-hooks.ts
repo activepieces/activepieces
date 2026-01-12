@@ -316,7 +316,7 @@ export const testStepHooks = {
             stepName: currentStep.name,
           },
           onProgress: params?.onProgress,
-          onFinsih:
+          onFinish:
             params?.type === 'agentAction' ? params.onFinish : undefined,
         });
         return response;

@@ -8,11 +8,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { TemplateCardSkeleton } from './template-card-skeleton';
 
 type CategorySectionSkeletonProps = {
-  hideTitle?: boolean;
+  hideHeader?: boolean;
 };
 
 export const CategorySectionSkeleton = ({
-  hideTitle = false,
+  hideHeader = false,
 }: CategorySectionSkeletonProps) => {
   return (
     <div className="space-y-4">
@@ -40,7 +40,7 @@ export const CategorySectionSkeleton = ({
               key={index}
               className="basis-full sm:basis-1/3 lg:basis-1/4 xl:basis-1/5 min-w-[350px]"
             >
-              <TemplateCardSkeleton hideTitle={hideTitle} />
+              <TemplateCardSkeleton showCategoryCarouselButton={hideHeader} />
             </CarouselItem>
           ))}
         </CarouselContent>
