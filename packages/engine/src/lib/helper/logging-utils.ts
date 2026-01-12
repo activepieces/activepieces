@@ -1,166 +1,136 @@
 import { isObject, StepOutput } from '@activepieces/shared'
-import { Queue } from '@datastructures-js/queue'
-import sizeof from 'object-sizeof'
-import PriorityQueue from 'priority-queue-typescript'
+import { getPathKey } from '../handler/context/flow-execution-context'
+import { StepExecutionPath } from '../handler/context/step-execution-path'
+import { utils } from '../utils'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const ERROR_OFFSET = 256 * 1024
 const DEFAULT_MAX_LOG_SIZE_FOR_TESTING = '10'
-const MAX_LOG_SIZE = Number(process.env.AP_MAX_FILE_SIZE_MB ?? DEFAULT_MAX_LOG_SIZE_FOR_TESTING) * 1024 * 1024
+const MAX_LOG_SIZE = Number(process.env.AP_MAX_FILE_SIZE_MB ?? DEFAULT_MAX_LOG_SIZE_FOR_TESTING)
 const MAX_SIZE_FOR_ALL_ENTRIES = MAX_LOG_SIZE - ERROR_OFFSET
-const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = sizeof(TRUNCATION_TEXT_PLACEHOLDER)
-const nonTruncatableKeys: Key[] = ['status', 'duration', 'type']
+const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = utils.sizeof(TRUNCATION_TEXT_PLACEHOLDER)
+const nonTruncatableKeys = ['status', 'duration', 'type']
+
+type TrimResponse = {
+    steps: Record<string, StepOutput>
+    stepsSize: Map<string, number>
+}
 
 export const loggingUtils = {
-    async trimExecution(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
-        const totalJsonSize = sizeof(steps)
+    trimExecutionInput(steps: Record<string, StepOutput>, stepsSize: Map<string, number>, path: StepExecutionPath['path']): TrimResponse {
+        const totalJsonSize = getTotalStepsSize(stepsSize)
         if (!jsonExceedMaxSize(totalJsonSize)) {
-            return steps
+            return { steps, stepsSize }
         }
-        return removeLeavesInTopologicalOrder(steps, totalJsonSize).json
-    },
-    async trimExecutionInput(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
-        const totalJsonSize = sizeof(steps)
-        if (!jsonExceedMaxSize(totalJsonSize)) {
-            return steps
-        }
-        return trimStepInputsOnly(steps, totalJsonSize)
+
+        const descendingSortedSteps = Array.from(stepsSize.entries()).sort((a, b) => b[1] - a[1]).map(([key]) => key)
+        return trimStepInputs(steps, descendingSortedSteps, stepsSize, path)
     },
 }
 
-function trimStepInputsOnly(
-    steps: Record<string, StepOutput>,
-    initialSize: number
-): Record<string, StepOutput> {
-    let currentSize = initialSize
+function getTotalStepsSize(stepsSize: Map<string, number>): number {
+    return Array.from(stepsSize.values()).reduce((acc, size) => acc + size, 0)
+}
 
-    for (const stepName of Object.keys(steps)) {
-        if (!jsonExceedMaxSize(currentSize)) {
+function trimStepInputs(
+    steps: Record<string, StepOutput>,
+    descendingSortedSteps: string[],
+    stepsSize: Map<string, number>,
+    path: StepExecutionPath['path'],
+): TrimResponse {
+    let totalSize = getTotalStepsSize(stepsSize)
+
+    for (const pathKey of descendingSortedSteps) {
+        if (!jsonExceedMaxSize(totalSize)) {
             break
         }
 
+        const stepName = pathKey.split('.')[0]
         const step = steps[stepName]
-        if (step && step.input) {
+        if (step?.input) {
             const inputBefore = step.input
-            const inputSizeBefore = sizeof(inputBefore)
-            
-            if (isObject(inputBefore) || Array.isArray(inputBefore)) {
-                const inputJson = JSON.parse(JSON.stringify(inputBefore))
-                const { json, size } = removeLeavesInTopologicalOrder(inputJson, inputSizeBefore)
-                step.input = json 
-                currentSize += size - inputSizeBefore
-            } else if (typeof inputBefore === 'string' && inputBefore.length > 10) {
-                step.input = inputBefore.substring(0, 10) + TRUNCATION_TEXT_PLACEHOLDER
-                currentSize += sizeof(step.input) - inputSizeBefore
+            const stepSize = utils.sizeof(step)
+            let truncateResult: { input: unknown, newTotalSize: number, newStepSize: number } | null = null
+
+            if (isObject(inputBefore)) {
+                truncateResult = truncateObject(inputBefore, totalSize, stepSize)
+            }
+            else if (Array.isArray(inputBefore)) {
+                truncateResult = truncateArray(inputBefore, totalSize, stepSize)
+            }
+            else if (typeof inputBefore === 'string') {
+                truncateResult = truncateString(inputBefore, totalSize, stepSize)
+            }
+
+            if (truncateResult) {
+                step.input = truncateResult.input
+                totalSize = truncateResult.newTotalSize
+
+                stepsSize.set(getPathKey(stepName, path), truncateResult.newStepSize)
             }
         }
     }
 
-    return steps as Record<string, StepOutput>
+    return { steps, stepsSize }
 }
 
-function removeLeavesInTopologicalOrder(json: Record<string, unknown>, size: number): {json: Record<string, StepOutput>, size: number} {
-    const nodes: Node[] = traverseJsonAndConvertToNodes(json)
-    const leaves = new PriorityQueue<Node>(
-        undefined,
-        (a: Node, b: Node) => b.size - a.size,
-    )
-    nodes.filter((node) => node.numberOfChildren === 0).forEach((node) => leaves.add(node))
-    let totalJsonSize = size
+type TruncateResponse<T> = {
+    input: T
+    newTotalSize: number
+    newStepSize: number
+}
 
-    while (!leaves.empty() && jsonExceedMaxSize(totalJsonSize)) {
-        const curNode = leaves.poll()
+type TruncateHelper<T> = (input: T, totalSize: number, stepSize: number) => TruncateResponse<T>
 
-        const isDepthGreaterThanOne = curNode && curNode.depth > 1
-        const isTruncatable = curNode && (!nonTruncatableKeys.includes(curNode.key))
+const truncateObject: TruncateHelper<Record<string, unknown>> = (json, totalSize, stepSize) => {
+    const entries = Object.entries(json)
+    const descendingSortedEntries = entries.sort((a, b) => utils.sizeof(b[1]) - utils.sizeof(a[1]))
 
-        if (isDepthGreaterThanOne && isTruncatable) {
-            totalJsonSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - curNode.size
+    let newTotalSize = totalSize
+    let newStepSize = stepSize
 
-            const parent = curNode.parent
-
-            parent.value[curNode.key] = TRUNCATION_TEXT_PLACEHOLDER
-
-            nodes[parent.index].numberOfChildren--
-            if (nodes[parent.index].numberOfChildren == 0) {
-                leaves.add(nodes[parent.index])
-            }
+    for (const [key, value] of descendingSortedEntries) {
+       
+        if (!jsonExceedMaxSize(newTotalSize) || nonTruncatableKeys.includes(key)) {
+            break
         }
+
+        json[key] = TRUNCATION_TEXT_PLACEHOLDER
+
+        const delta = SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - utils.sizeof(value)
+        newTotalSize += delta
+        newStepSize += delta
     }
-    return {json: json as Record<string, StepOutput>, size: totalJsonSize}
+
+    return { input: json as Record<string, StepOutput>, newTotalSize, newStepSize }
 }
 
-function traverseJsonAndConvertToNodes(root: unknown) {
+const truncateArray: TruncateHelper<unknown[]> = (array, totalSize, stepSize) => {
+    const children = array.map((value) => utils.sizeof(value))
+    const descendingSortedChildren = children.map((size, index) => ({ size, index })).sort((a, b) => b.size - a.size).map(({ index }) => index)
+    let newTotalSize = totalSize
+    let newStepSize = stepSize
 
-    const nodesQueue = new Queue<BfsNode>()
-    nodesQueue.enqueue({ key: '', value: root, parent: { index: -1, value: {} }, depth: 0 })
-
-    const nodes: Node[] = []
-
-    while (!nodesQueue.isEmpty()) {
-        const curNode = nodesQueue.dequeue()
-        const children = findChildren(curNode.value, curNode.key === 'iterations')
-
-        nodes.push({
-            index: nodes.length,
-            size: children.length === 0 ? sizeof(curNode.value) : children.length * SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER,
-            key: curNode.key,
-            parent: {
-                index: curNode.parent.index,
-                value: curNode.parent.value as Record<Key, unknown>,
-            },
-            numberOfChildren: children.length,
-            depth: curNode.depth,
-        })
-
-        children.forEach((child) => {
-            const key = child[0], value = child[1]
-            nodesQueue.enqueue({ value, key, parent: { index: nodes.length - 1, value: curNode.value }, depth: curNode.depth + 1 })
-        })
-    }
-
-    return nodes
-}
-
-function findChildren(curNode: unknown, traverseArray: boolean): [Key, unknown][] {
-    if (isObject(curNode)) {
-        return Object.entries(curNode)
-    }
-    // Array should be treated as a leaf node as If it has too many small items, It will prioritize the other steps first 
-    if (Array.isArray(curNode) && traverseArray) {
-        const children: [Key, unknown][] = []
-        for (let i = 0; i < curNode.length; i++) {
-            children.push([i, curNode[i]])
+    for (const index of descendingSortedChildren) {
+        if (!jsonExceedMaxSize(newTotalSize)) {
+            break
         }
-        return children
+        array[index] = TRUNCATION_TEXT_PLACEHOLDER
+        newTotalSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - children[index]
+        newStepSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - children[index]
     }
-    return []
+    return { input: array as unknown[], newTotalSize, newStepSize }
+}
+
+const truncateString: TruncateHelper<string> = (string, totalSize, stepSize) => {
+    if (string.length > 10) {
+        const truncatedString = string.substring(0, 10) + TRUNCATION_TEXT_PLACEHOLDER
+        const delta = utils.sizeof(truncatedString) - utils.sizeof(string)
+        return { input: truncatedString, newTotalSize: totalSize + delta, newStepSize: stepSize + delta }
+    }
+    return { input: string, newTotalSize: totalSize, newStepSize: stepSize }
 }
 
 const jsonExceedMaxSize = (jsonSize: number): boolean => {
     return jsonSize > MAX_SIZE_FOR_ALL_ENTRIES
 }
-
-type Node = {
-    index: number
-    size: number
-    key: Key
-    parent: {
-        index: number
-        value: Record<Key, unknown>
-    }
-    numberOfChildren: number
-    depth: number
-}
-
-type BfsNode = {
-    value: unknown
-    key: Key
-    parent: {
-        index: number
-        value: unknown
-    }
-    depth: number
-}
-
-type Key = string | number | symbol

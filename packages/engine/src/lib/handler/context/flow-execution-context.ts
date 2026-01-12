@@ -2,6 +2,7 @@ import { assertEqual, EngineGenericError, FailedStep, FlowActionType, FlowRunSta
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
+import { utils } from '../../utils'
 import { StepExecutionPath } from './step-execution-path'
 
 
@@ -26,6 +27,7 @@ export class FlowExecutorContext {
     currentPath: StepExecutionPath
     stepNameToTest?: boolean
     stepsCount: number
+    stepsSize: Map<string, number>
 
     /**
      * Execution time in milliseconds
@@ -41,6 +43,7 @@ export class FlowExecutorContext {
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
+        this.stepsSize = copyFrom?.stepsSize ?? new Map()
     }
 
     static empty(): FlowExecutorContext {
@@ -70,11 +73,6 @@ export class FlowExecutorContext {
         }
         return this
     }
-
-    public trimmedSteps(): Promise<Record<string, StepOutput>> {
-        return loggingUtils.trimExecution(this.steps)
-    }
-
 
     public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
@@ -129,9 +127,17 @@ export class FlowExecutorContext {
         const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
         targetMap[stepName] = stepOutput
 
+        const pathKey = getPathKey(stepName, this.currentPath.path)
+        if (!this.stepsSize.has(pathKey)) {
+            this.stepsSize.set(pathKey, utils.sizeof(stepOutput))
+        }
+
+        const trimmed = loggingUtils.trimExecutionInput(steps, this.stepsSize, this.currentPath.path)
+
         return new FlowExecutorContext({
             ...this,
-            steps: loggingUtils.trimExecutionInput(steps),
+            steps: trimmed.steps,
+            stepsSize: trimmed.stepsSize,
         })
     }
 
@@ -139,8 +145,6 @@ export class FlowExecutorContext {
         const stateAtPath = getStateAtPath({ currentPath: this.currentPath, steps: this.steps })
         return stateAtPath[stepName]
     }
-
-
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
         return new FlowExecutorContext({
@@ -210,4 +214,7 @@ function getStateAtPath({ currentPath, steps }: { currentPath: StepExecutionPath
     return targetMap
 }
 
+export function getPathKey(stepName: string, path: StepExecutionPath['path']): string {
+    return `${stepName}.${path.map(([stepName, iteration]) => `${stepName}[${iteration}]`).join('.')}`
+}
 

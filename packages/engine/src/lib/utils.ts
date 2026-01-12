@@ -81,6 +81,9 @@ export const utils = {
             },
         }
     },
+    sizeof(object: unknown): number {
+        return Buffer.byteLength(JSON.stringify(object))
+    },
 }
 
 function isEngineError(error: unknown): error is ExecutionError {

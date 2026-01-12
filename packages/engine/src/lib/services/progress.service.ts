@@ -48,11 +48,11 @@ export const progressService = {
         const { engineConstants, flowExecutorContext, stepName, stepOutput } = params
         return {
             update: async (params: { data: unknown }) => {
-                const trimmedSteps = await flowExecutorContext
-                    .upsertStep(stepName, stepOutput.setOutput(params.data))
-                    .trimmedSteps()
+                const steps = flowExecutorContext
+                    .upsertStep(stepName, stepOutput.setOutput(params.data)).steps
+                    
                 const stepResponse = extractStepResponse({
-                    steps: trimmedSteps,
+                    steps,
                     runId: engineConstants.flowRunId,
                     stepName,
                 })
@@ -95,6 +95,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
                 steps: flowExecutorContext.steps,
             },
         })
+
         if (isNil(engineConstants.logsUploadUrl)) {
             throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
         }
