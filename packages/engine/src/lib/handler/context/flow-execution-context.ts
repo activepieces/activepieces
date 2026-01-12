@@ -169,12 +169,21 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-
    
-    public currentState(): Record<string, unknown> {
-        let flattenedSteps: Record<string, unknown> = extractOutput(this.steps)
+    public currentState(referencedStepNames?: string[]): Record<string, unknown> {
+        const referencedSteps = referencedStepNames 
+            ?  referencedStepNames.reduce((acc, stepName) => {
+                acc[stepName] = this.steps[stepName]
+                return acc
+            }, {} as Record<string, StepOutput>)
+            : this.steps
+
+        let flattenedSteps: Record<string, unknown> = extractOutput(referencedSteps)
         let targetMap = this.steps
         this.currentPath.path.forEach(([stepName, iteration]) => {
+            if (!referencedSteps[stepName]) {
+                return
+            }
             const stepOutput = targetMap[stepName]
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
                 throw new EngineGenericError('NotInstanceOfLoopOnItemsStepOutputError', '[ExecutionState#getTargetMap] Not instance of Loop On Items step output')
@@ -188,7 +197,13 @@ export class FlowExecutorContext {
         return flattenedSteps
     }
 
-
+    public getStepNames(): Set<string> {
+        const stepNames = new Set<string>(Object.keys(this.steps))
+        this.currentPath.path.forEach(([stepName]) => {
+            stepNames.add(stepName)
+        })
+        return stepNames
+    }
 }
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {

@@ -21,7 +21,8 @@ export const createPropsResolver = ({ engineToken, projectId, apiUrl, contextVer
                     censoredInput: unresolvedInput,
                 }
             }
-            const currentState = executionState.currentState()
+            const referencedStepNames = extractReferencedStepNames(unresolvedInput, executionState.getStepNames())
+            const currentState = executionState.currentState(Array.from(referencedStepNames))
             const resolveOptions = {
                 engineToken,
                 projectId,
@@ -80,6 +81,18 @@ const mergeFlattenedKeysArraysIntoOneArray = async (token: string, partsThatNeed
 }
 
 export type PropsResolver = ReturnType<typeof createPropsResolver>
+
+function extractReferencedStepNames(input: unknown, stepNames: Set<string>): Set<string> {
+    const stringifiedInput = JSON.stringify(input)
+    const referencedSteps = new Set<string>()
+    for (const stepName of Array.from(stepNames)) {
+        if (stringifiedInput.includes(stepName)) {
+            referencedSteps.add(stepName)
+        }
+    }
+    return referencedSteps
+}
+
 /** 
  * input: `Hello {{firstName}} {{lastName}}`
  * tokenThatNeedResolving: [`{{firstName}}`, `{{lastName}}`]
