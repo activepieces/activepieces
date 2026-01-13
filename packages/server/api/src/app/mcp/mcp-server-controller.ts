@@ -7,7 +7,7 @@ import { mcpServerService } from './mcp-service'
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 
-    app.get('/:projectId', GetMcpRequest, async (req) => {
+    app.get('/', GetMcpRequest, async (req) => {
         return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
     })
 
