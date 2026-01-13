@@ -4,19 +4,21 @@ import {
     ALL_PRINCIPAL_TYPES,
     ApEdition,
     ApFlagId,
-    CreateTemplateRequestBody,    
-    ErrorCode,    
+    CreateTemplateRequestBody,
+    ErrorCode,
     FlowVersionTemplate,
     isNil,
     ListTemplatesRequestQuery,
     Principal,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
+    Template,
     TemplateType,
     UpdateTemplateRequestBody,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Static, Type } from '@sinclair/typebox'
+import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
@@ -27,6 +29,7 @@ import { communityTemplates } from './community-flow-template.service'
 import { templateService } from './template.service'
 
 const edition = system.getEdition()
+
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
@@ -55,14 +58,14 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.get('/', ListTemplatesParams, async (request) => {
-        const platformId = await resolveTemplatesPlatformIdOrThrow(request.principal, request.query.type ?? TemplateType.OFFICIAL)
-        if (isNil(platformId)) {
-            if (edition === ApEdition.CLOUD) {
-                return templateService(app.log).list({ platformId: null, requestQuery: request.query })
-            }
-            return communityTemplates.list(request.query)
+        const officialTemplates = await loadOfficialTemplatesOrReturnEmpty(app.log, request.query)
+        const customTemplates = await loadCustomTemplatesOrReturnEmpty(app.log, request.query, request.principal)
+
+        return {
+            data: [...officialTemplates, ...customTemplates],
+            next: null,
+            previous: null,
         }
-        return templateService(app.log).list({ platformId, requestQuery: request.query })
     })
 
     app.post('/', {
@@ -108,7 +111,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => { 
+    app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => {
         await templateService(app.log).incrementUsageCount({ id: request.params.id })
         return reply.status(StatusCodes.OK).send()
     })
@@ -126,33 +129,6 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
 }
-
-async function resolveTemplatesPlatformIdOrThrow(principal: Principal, type: TemplateType): Promise<string | null> {
-    if (principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER || type === TemplateType.OFFICIAL) {
-        return null
-    }
-
-    if (type === TemplateType.CUSTOM) {
-        const platform = await platformService.getOneWithPlanOrThrow(principal.platform.id)
-        if (!platform.plan.manageTemplatesEnabled) {
-            throw new ActivepiecesError({
-                code: ErrorCode.FEATURE_DISABLED,
-                params: {
-                    message: 'Templates are not enabled for this platform',
-                },
-            })
-        }
-        return platform.id
-    }
-
-    throw new ActivepiecesError({
-        code: ErrorCode.VALIDATION,
-        params: {
-            message: 'Invalid request, shared templates are not supported to being listed',
-        },
-    })
-}
-
 
 const GetIdParams = Type.Object({
     id: Type.String(),
@@ -241,4 +217,44 @@ const IncrementUsageCountParams = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
     },
+}
+
+
+async function loadOfficialTemplatesOrReturnEmpty(
+    log: FastifyBaseLogger,
+    query: ListTemplatesRequestQuery,
+): Promise<Template[]> {
+    if (!isNil(query.type) && query.type !== TemplateType.OFFICIAL) {
+        return []
+    }
+    if (edition === ApEdition.CLOUD) {
+        const officialTemplatesFromCloud = await templateService(log).list({
+            platformId: null,
+            type: TemplateType.OFFICIAL,
+            ...query,
+        })
+        return officialTemplatesFromCloud.data
+    }
+    const loadTemplatesFromCloud = await communityTemplates.list({ ...query, type: TemplateType.OFFICIAL })
+    return loadTemplatesFromCloud.data
+}
+
+async function loadCustomTemplatesOrReturnEmpty(
+    log: FastifyBaseLogger,
+    query: ListTemplatesRequestQuery,
+    principal: Principal,
+): Promise<Template[]> {
+    if ((!isNil(query.type) && query.type !== TemplateType.CUSTOM)) {
+        return []
+    }
+    const platformId = principal.type === PrincipalType.UNKNOWN || principal.type === PrincipalType.WORKER ? null : principal.platform.id
+    if (isNil(platformId)) {
+        return []
+    }
+    const platform = await platformService.getOneWithPlanOrThrow(platformId)
+    if (!platform.plan.manageTemplatesEnabled) {
+        return []
+    }
+    const customTemplates = await templateService(log).list({ platformId, type: TemplateType.CUSTOM, ...query })
+    return customTemplates.data
 }

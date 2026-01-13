@@ -10,26 +10,29 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
-const pieceIconVariants = cva('flex items-center justify-center   ', {
-  variants: {
-    circle: {
-      true: 'rounded-full p-2',
-      false: '',
+const pieceIconVariants = cva(
+  'flex rounded-md items-center justify-center   ',
+  {
+    variants: {
+      circle: {
+        true: 'rounded-full p-2',
+        false: '',
+      },
+      size: {
+        xxl: 'size-[64px] p-4',
+        xl: 'size-[48px]',
+        lg: 'size-[40px]',
+        md: 'size-[36px] p-1.5',
+        sm: 'size-[25px]',
+        xs: 'size-[18px]',
+      },
+      border: {
+        true: 'border border-solid',
+      },
     },
-    size: {
-      xxl: 'size-[64px] p-4',
-      xl: 'size-[48px]',
-      lg: 'size-[40px]',
-      md: 'size-[36px] p-1.5',
-      sm: 'size-[25px]',
-      xs: 'size-[18px]',
-    },
-    border: {
-      true: 'border border-solid',
-    },
+    defaultVariants: {},
   },
-  defaultVariants: {},
-});
+);
 
 interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
   displayName?: string;

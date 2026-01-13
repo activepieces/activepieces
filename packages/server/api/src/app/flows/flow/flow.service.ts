@@ -396,6 +396,13 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 })
                 break
             }
+
+            case FlowOperationType.UPDATE_OWNER: {
+                await flowRepo().update(id, {
+                    ownerId: operation.request.ownerId,
+                })
+                break
+            }
             default: {
                 let lastVersion = await flowVersionService(
                     log,

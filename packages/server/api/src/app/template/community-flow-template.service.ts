@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -7,21 +6,11 @@ import {
     SeekPage,
     Template,
 } from '@activepieces/shared'
-import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { system } from '../helper/system/system'
 
+const TEMPLATES_SOURCE_URL = 'https://cloud.activepieces.com/api/v1/templates'
 export const communityTemplates = {
     getOrThrow: async (id: string): Promise<Template> => {
-        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-        if (isNil(templateSource)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Templates source URL is not set',
-                },
-            })
-        }
-        const url = `${templateSource}/${id}`
+        const url = `${TEMPLATES_SOURCE_URL}/${id}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -42,11 +31,7 @@ export const communityTemplates = {
         return template
     },
     getCategories: async (): Promise<string[]> => {
-        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-        if (isNil(templateSource)) {
-            return []
-        }
-        const url = `${templateSource}/categories`
+        const url = `${TEMPLATES_SOURCE_URL}/categories`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -57,12 +42,8 @@ export const communityTemplates = {
         return categories
     },
     list: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
-        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-        if (isNil(templateSource)) {
-            return paginationHelper.createPage([], null)
-        }
         const queryString = convertToQueryString(request)
-        const url = `${templateSource}?${queryString}`
+        const url = `${TEMPLATES_SOURCE_URL}?${queryString}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
