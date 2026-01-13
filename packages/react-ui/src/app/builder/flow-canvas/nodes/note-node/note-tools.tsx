@@ -17,9 +17,9 @@ export const NoteTools = ({
 }: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   return (
-    <div ref={containerRef} className="absolute -top-[50px] w-full left-0">
+    <div ref={containerRef} className="absolute -top-[45px] w-full left-0">
       <div className="flex items-center justify-center">
-        <div className="p-1 bg-background flex items-center gap-1 shadow-md rounded-md scale-75 border border-solid border-border">
+        <div className="p-1 bg-background flex items-center gap-0.5 shadow-md rounded-lg scale-65 border border-solid border-border">
           <NoteColorPicker
             currentColor={currentColor}
             setCurrentColor={setCurrentColor}
@@ -32,14 +32,15 @@ export const NoteTools = ({
   );
 };
 
-export const NoteColorVariantToTailwind = {
-  [NoteColorVariant.ORANGE]: 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300',
-  [NoteColorVariant.RED]: 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300',
-  [NoteColorVariant.GREEN]: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300',
-  [NoteColorVariant.BLUE]: 'bg-sky-100 text-sky-700 dark:bg-sky-950 dark:text-sky-300',
-  [NoteColorVariant.PURPLE]: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300',
-  [NoteColorVariant.YELLOW]: 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300',
-};
+
+const NoteColorPickerClassName = {
+  [NoteColorVariant.YELLOW]: 'bg-amber-400',      
+  [NoteColorVariant.ORANGE]: 'bg-orange-400',
+  [NoteColorVariant.RED]: 'bg-red-400',
+  [NoteColorVariant.GREEN]: 'bg-green-400',
+  [NoteColorVariant.BLUE]: 'bg-blue-400',
+  [NoteColorVariant.PURPLE]: 'bg-purple-400',
+}
 
 const NoteColorPicker = ({
   currentColor,
@@ -47,13 +48,13 @@ const NoteColorPicker = ({
   container,
 }: NoteColorPickerProps) => {
   return (
-    <Popover>
+    <Popover >
       <PopoverTrigger asChild>
         <div
           className={cn(
-            NoteColorVariantToTailwind[currentColor] ??
-              NoteColorVariantToTailwind[NoteColorVariant.YELLOW],
-            'mx-2 size-5 shrink-0  rounded-full cursor-pointer',
+            NoteColorPickerClassName[currentColor] ??
+              NoteColorPickerClassName[NoteColorVariant.YELLOW],
+            'mx-0.5 size-5 shrink-0  rounded-full cursor-pointer',
           )}
           role="button"
         ></div>
@@ -75,8 +76,8 @@ const NoteColorPicker = ({
             >
               <div
                 className={cn(
-                  NoteColorVariantToTailwind[color] ??
-                    NoteColorVariantToTailwind[NoteColorVariant.YELLOW],
+                  NoteColorPickerClassName[color] ??
+                    NoteColorPickerClassName[NoteColorVariant.YELLOW],
                   'size-4 shrink-0 rounded-full',
                 )}
               ></div>
@@ -93,10 +94,10 @@ type NoteToolsProps = {
   editor: Editor;
   currentColor: NoteColorVariant;
   setCurrentColor: (color: NoteColorVariant) => void;
-}
+};
 
 type NoteColorPickerProps = {
   currentColor: NoteColorVariant;
   setCurrentColor: (color: NoteColorVariant) => void;
   container: HTMLDivElement | null;
-}
+};

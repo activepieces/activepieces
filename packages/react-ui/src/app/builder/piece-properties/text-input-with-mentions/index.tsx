@@ -28,6 +28,7 @@ const extensions = (placeholder?: string) => {
     }),
     Placeholder.configure({
       placeholder,
+      emptyNodeClass: 'before:text-muted-foreground opacity-75',
     }),
     Mention.configure({
       suggestion: {

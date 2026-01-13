@@ -26,6 +26,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
     isUnderlineActive,
   });
   const handleStrike = () => {
+    editor.setEditable(true);
     editor.chain().focus().toggleStrike().run();
     editor.commands.focus();
     setActiveState({
@@ -34,6 +35,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
     });
   };
   const handleBold = () => {
+    editor.setEditable(true);
     editor.chain().focus().toggleBold().run();
     editor.commands.focus();
     setActiveState({
@@ -42,6 +44,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
     });
   };
   const handleItalic = () => {
+    editor.setEditable(true);
     editor.chain().focus().toggleItalic().run();
     editor.commands.focus();
     setActiveState({
@@ -50,6 +53,7 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
     });
   };
   const handleUnderline = () => {
+    editor.setEditable(true);
     editor.chain().focus().toggleUnderline().run();
     editor.commands.focus();
     setActiveState({
@@ -67,7 +71,10 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
   }, [isStrikeActive, isBoldActive, isItalicActive, isUnderlineActive]);
   const containerRef = useRef<HTMLDivElement>(null);
   return (
-    <div ref={containerRef} className="flex items-center gap-2 text-foreground">
+    <div
+      ref={containerRef}
+      className="flex items-center gap-0.5 text-foreground"
+    >
       <ImageTool editor={editor} containerRef={containerRef} />
       <Button
         onClick={handleStrike}
