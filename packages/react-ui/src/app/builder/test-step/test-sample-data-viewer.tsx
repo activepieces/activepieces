@@ -8,6 +8,7 @@ import { StepStatusIcon } from '@/features/flow-runs/components/step-status-icon
 import { formatUtils } from '@/lib/utils';
 import {
   AgentResult,
+  AgentTaskStatus,
   FlowAction,
   isNil,
   StepOutputStatus,
@@ -70,6 +71,20 @@ const isConsoleLogsValid = (value: unknown) => {
   return value !== '';
 };
 
+const resolveAgentResult = (
+  sampleData: unknown,
+  agentResult?: AgentResult,
+): AgentResult => {
+  return (
+    agentResult ??
+    (sampleData &&
+    typeof sampleData === 'object' &&
+    Object.keys(sampleData).length > 0
+      ? (sampleData as AgentResult)
+      : defaultAgentOutput)
+  );
+};
+
 export const TestSampleDataViewer = React.memo(
   ({
     isValid,
@@ -87,17 +102,9 @@ export const TestSampleDataViewer = React.memo(
   }: RetestSampleDataViewerProps) => {
     const renderViewer = () => {
       if (isRunAgent(currentStep)) {
-        const resolvedAgentResult =
-          agentResult ??
-          (sampleData &&
-          typeof sampleData === 'object' &&
-          Object.keys(sampleData).length > 0
-            ? (sampleData as AgentResult)
-            : defaultAgentOutput);
-
         return (
           <AgentTestStep
-            agentResult={resolvedAgentResult}
+            agentResult={resolveAgentResult(sampleData, agentResult)}
             errorMessage={errorMessage}
           />
         );
@@ -155,20 +162,56 @@ export const TestSampleDataViewer = React.memo(
           <div className="flex justify-center items-center">
             <div className="flex flex-col grow gap-1">
               <div className="text-md flex gap-1 items-center">
-                {errorMessage ? (
-                  <>
-                    <StepStatusIcon status={StepOutputStatus.FAILED} size="5" />
-                    <span>{t('Testing Failed')}</span>
-                  </>
-                ) : (
-                  <>
-                    <StepStatusIcon
-                      status={StepOutputStatus.SUCCEEDED}
-                      size="5"
-                    />
-                    <span>{t('Tested Successfully')}</span>
-                  </>
-                )}
+                {(() => {
+                  if (isRunAgent(currentStep)) {
+                    const resolvedAgentResult = resolveAgentResult(
+                      sampleData,
+                      agentResult,
+                    );
+                    const isFailed =
+                      resolvedAgentResult.status === AgentTaskStatus.FAILED;
+
+                    return (
+                      <>
+                        <StepStatusIcon
+                          status={
+                            isFailed
+                              ? StepOutputStatus.FAILED
+                              : StepOutputStatus.SUCCEEDED
+                          }
+                          size="5"
+                        />
+                        <span>
+                          {t(
+                            isFailed ? 'Testing Failed' : 'Tested Successfully',
+                          )}
+                        </span>
+                      </>
+                    );
+                  }
+
+                  if (errorMessage) {
+                    return (
+                      <>
+                        <StepStatusIcon
+                          status={StepOutputStatus.FAILED}
+                          size="5"
+                        />
+                        <span>{t('Testing Failed')}</span>
+                      </>
+                    );
+                  }
+
+                  return (
+                    <>
+                      <StepStatusIcon
+                        status={StepOutputStatus.SUCCEEDED}
+                        size="5"
+                      />
+                      <span>{t('Tested Successfully')}</span>
+                    </>
+                  );
+                })()}
               </div>
               <div className="text-muted-foreground text-xs">
                 {lastTestDate &&
