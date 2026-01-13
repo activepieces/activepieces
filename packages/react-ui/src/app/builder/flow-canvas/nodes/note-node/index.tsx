@@ -137,6 +137,12 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
             e.stopPropagation();
             editorRef.current?.commands.focus();
           }}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            if (e.key === 'Shift') {
+              e.stopPropagation();
+            }
+          }}
         >
           <MarkdownInput
             ref={editorRef}

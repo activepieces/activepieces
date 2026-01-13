@@ -7,7 +7,7 @@ import {
   Minus,
   MousePointer,
   Plus,
-  StickerIcon,
+  StickyNote,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
@@ -277,7 +277,7 @@ const CanvasControls = ({
                 );
               }}
             >
-              <StickerIcon className="size-4" />
+              <StickyNote className="size-4" />
             </Button>
           </CanvasButtonWrapper>
         )}

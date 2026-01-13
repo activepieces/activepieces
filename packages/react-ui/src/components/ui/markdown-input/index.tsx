@@ -10,7 +10,7 @@ import Text from '@tiptap/extension-text';
 import { Underline } from '@tiptap/extension-underline';
 import { Focus, UndoRedo } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
-import { Editor, EditorContent, useEditor } from '@tiptap/react';
+import { Editor, EditorContent, Extension, useEditor } from '@tiptap/react';
 import React, { useImperativeHandle } from 'react';
 
 import { cn } from '@/lib/utils';
@@ -54,6 +54,24 @@ export const MarkdownInput = React.forwardRef<
         EmptyLineParagraphExtension,
         UndoRedo.configure({
           depth: 10,
+        }),
+        Extension.create({
+          addKeyboardShortcuts() {
+            return {
+              'Cmd-Enter'() {
+                editor.commands.enter();
+                return true;
+              },
+              'Ctrl-Enter'() {
+                editor.commands.enter();
+                return true;
+              },
+              'Shift-Enter'() {
+                editor.commands.enter();
+                return true;
+              },
+            };
+          },
         }),
       ],
       content: initialValue,
