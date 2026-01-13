@@ -38,7 +38,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
         // Default 100MB, also set in nginx.conf
-        bodyLimit: Math.max(fileSizeLimit, flowRunLogSizeLimit, 25) * 1024 * 1024,
+        bodyLimit: Math.max(fileSizeLimit + 4, flowRunLogSizeLimit + 4, 25) * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
         },
