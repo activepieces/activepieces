@@ -9,12 +9,11 @@ import {
   CarouselPrevious,
   useCarousel,
 } from '@/components/ui/carousel';
-import { CATEGORY_DISPLAY_NAMES, TemplateCategory } from '@activepieces/shared';
 
 type CategoryFilterCarouselProps = {
-  categories: (TemplateCategory | 'All')[];
-  selectedCategory: TemplateCategory | 'All';
-  onCategorySelect: (category: TemplateCategory | 'All') => void;
+  categories: string[];
+  selectedCategory: string;
+  onCategorySelect: (category: string) => void;
 };
 
 const CarouselContentWithButtons = ({
@@ -23,11 +22,6 @@ const CarouselContentWithButtons = ({
   onCategorySelect,
 }: CategoryFilterCarouselProps) => {
   const { canScrollNext, canScrollPrev } = useCarousel();
-
-  const formatCategoryName = (category: TemplateCategory | 'All') => {
-    if (category === 'All') return 'All';
-    return CATEGORY_DISPLAY_NAMES[category];
-  };
 
   return (
     <div
@@ -51,7 +45,7 @@ const CarouselContentWithButtons = ({
                     : 'bg-transparent hover:!bg-sidebar-accent hover:!text-sidebar-accent-foreground border-none'
                 }`}
               >
-                {formatCategoryName(category)}
+                {category}
               </Button>
             </CarouselItem>
           );

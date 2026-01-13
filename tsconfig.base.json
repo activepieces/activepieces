@@ -454,6 +454,9 @@
       ],
       "@activepieces/piece-billplz": [
         "packages/pieces/community/billplz/src/index.ts"
+      ],
+      "@activepieces/piece-hashi-corp-vault": [
+        "packages/pieces/community/hashi-corp-vault/src/index.ts"
       ]
     },
     "resolveJsonModule": true
