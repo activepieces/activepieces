@@ -478,6 +478,9 @@
       ],
       "@activepieces/piece-gender-api": [
         "packages/pieces/community/gender-api/src/index.ts"
+      ],
+      "@activepieces/piece-plausible": [
+        "packages/pieces/community/plausible/src/index.ts"
       ]
     },
     "resolveJsonModule": true
