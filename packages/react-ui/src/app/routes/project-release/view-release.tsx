@@ -84,7 +84,6 @@ const ViewRelease = () => {
           <div className="flex flex-col items-start gap-2 w-full">
             <div className="flex items-center gap-2 text-md justify-between w-full">
               <h1 className="text-3xl font-bold">{release?.name}</h1>
-              <div className="flex items-center justify-center">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <ApplyButton
@@ -92,7 +91,7 @@ const ViewRelease = () => {
                         navigate('/releases');
                       }}
                       variant="ghost"
-                      className="size-8 p-0"
+                      className=" p-0"
                       request={{
                         projectId: authenticationSession.getProjectId()!,
                         type: ProjectReleaseType.ROLLBACK,
@@ -105,7 +104,6 @@ const ViewRelease = () => {
                   </TooltipTrigger>
                   <TooltipContent side="bottom">{t('Rollback')}</TooltipContent>
                 </Tooltip>
-              </div>
             </div>
             <p className="text-sm text-muted-foreground">
               {t('Created')}: {timeAgo}
