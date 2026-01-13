@@ -195,7 +195,7 @@ export const decryptPgpFile = createAction({
       const decryptedData = new Uint8Array(await decrypted.data);
 
       // Write the decrypted file
-      const fileName = key.toLowerCase().replace(/\.(pgp|gpg)$/i, '');
+      const fileName = key.split("/").get(-1).toLowerCase().replace(/\.(pgp|gpg)$/i, '');
 
       return await context.files.write({
         fileName: fileName,
