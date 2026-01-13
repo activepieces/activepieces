@@ -24,7 +24,7 @@ const TemplatesPage = () => {
   const navigate = useNavigate();
   const { data: templateCategories } = templatesHooks.useTemplateCategories();
   const { platform } = platformHooks.useCurrentPlatform();
-  const isShowingOfficialTemplates = platform.plan.manageTemplatesEnabled;
+  const isShowingOfficialTemplates = !platform.plan.manageTemplatesEnabled;
   const { templates, isLoading, search, setSearch, category, setCategory } =
     templatesHooks.useTemplates(
       isShowingOfficialTemplates ? TemplateType.OFFICIAL : TemplateType.CUSTOM,
@@ -124,6 +124,7 @@ const TemplatesPage = () => {
         ) : showAllCategories ? (
           <AllCategoriesView
             templatesByCategory={templatesByCategory}
+            categories={categories}
             onCategorySelect={setCategory}
             onTemplateSelect={handleTemplateSelect}
             isLoading={showLoading}
