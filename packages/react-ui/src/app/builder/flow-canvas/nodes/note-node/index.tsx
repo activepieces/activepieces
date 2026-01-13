@@ -90,7 +90,7 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
 ApNoteCanvasNode.displayName = 'ApNoteCanvasNode';
 
 const NoteContent = ({ note, isDragging }: NoteContentProps) => {
-  const { id, creatorId, color, size } = note;
+  const { id, ownerId: creatorId, color, size } = note;
   const { width, height } = size;
   const [localNote, setLocalNote] = useState(note);
   const [updateContent, readonly, updateNoteColor] = useBuilderStateContext(

@@ -49,7 +49,7 @@ export const createNotesState = (
         request: {
           ...request,
           id: apId(),
-          creatorId: authenticationSession.getCurrentUserId() ?? null,
+          ownerId: authenticationSession.getCurrentUserId() ?? null,
         },
       });
       set(() => {

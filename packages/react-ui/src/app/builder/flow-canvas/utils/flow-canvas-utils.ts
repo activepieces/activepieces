@@ -501,7 +501,7 @@ function buildNotesGraph(notes: Note[]): ApGraph {
       position: note.position,
       data: {
         content: note.content,
-        creatorId: note.creatorId,
+        creatorId: note.ownerId,
         color: note.color,
         size: note.size,
       },

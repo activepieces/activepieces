@@ -89,11 +89,6 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
                 }
             }
         },
-        preHandler: async (request) => {
-            if (request.body?.type === FlowOperationType.ADD_NOTE) {
-                request.body.request.creatorId = request.principal?.type === PrincipalType.SERVICE ? null : request.principal.id
-            }
-        },
     }, async (request) => {
         const userId = await authenticationUtils.extractUserIdFromRequest(request)
         await assertUserHasPermissionToFlow(request.principal, request.projectId, request.body.type, request.log)

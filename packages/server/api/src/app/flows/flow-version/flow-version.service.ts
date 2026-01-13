@@ -151,6 +151,7 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 operation,
                 platformId,
                 log,
+                userId,
             )
         }
 
@@ -354,13 +355,14 @@ async function applySingleOperation(
     operation: FlowOperationRequest,
     platformId: PlatformId,
     log: FastifyBaseLogger,
+    userId: UserId | null,
 ): Promise<FlowVersion> {
     await flowVersionSideEffects(log).preApplyOperation({
         projectId,
         flowVersion,
         operation,
     })
-    const preparedOperation = await flowVersionValidationUtil(log).prepareRequest({ platformId, request: operation })
+    const preparedOperation = await flowVersionValidationUtil(log).prepareRequest({ platformId, request: operation, userId })
     const updatedFlowVersion = flowOperations.apply(flowVersion, preparedOperation)
     return updatedFlowVersion
 }

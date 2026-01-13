@@ -11,7 +11,7 @@ export enum NoteColorVariant {
 export const Note = Type.Object({
     id: Type.String(),
     content: Type.String(),
-    creatorId: Nullable(Type.String()),
+    ownerId: Nullable(Type.String()),
     color: Type.Enum(NoteColorVariant),
     position: Type.Object({
         x: Type.Number(),
