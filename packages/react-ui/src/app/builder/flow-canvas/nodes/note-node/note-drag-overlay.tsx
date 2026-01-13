@@ -50,9 +50,7 @@ const NoteDragOverlay = () => {
   }
   return (
     <div
-      className={
-        'absolute left-0 top-0  !cursor-grabbing note-drag-overlay'
-      }
+      className={'absolute left-0 top-0  !cursor-grabbing note-drag-overlay'}
       ref={containerRef}
       onClick={() => {
         if (noteDragOverlayMode === NoteDragOverlayMode.CREATE) {
@@ -77,7 +75,6 @@ const NoteDragOverlay = () => {
         height: `${draggedNote.size.height * reactFlow.getZoom()}px`,
         width: `${draggedNote.size.width * reactFlow.getZoom()}px`,
       }}
-      
     >
       <NoteContent
         isDragging={true}

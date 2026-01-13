@@ -7,7 +7,6 @@ import {
   Minus,
   MousePointer,
   Plus,
-  StickerIcon,
   StickyNote,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
