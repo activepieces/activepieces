@@ -91,11 +91,11 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         lastActionExecutionTime = Date.now()
         const { flowExecutorContext, engineConstants } = params
         const executionState = await logSerializer.serialize({
-            executionState: {
+            executionState: {   
                 steps: flowExecutorContext.steps,
+                tags: Array.from(flowExecutorContext.tags),
             },
         })
-        console.error('executionState', JSON.stringify(flowExecutorContext.steps, null, 2))
 
         if (isNil(engineConstants.logsUploadUrl)) {
             throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
