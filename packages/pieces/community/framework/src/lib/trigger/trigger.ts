@@ -63,6 +63,7 @@ TS extends TriggerStrategy,
 > = BaseTriggerParams<PieceAuth, TriggerProps, TS> & {
   handshakeConfiguration?: WebhookHandshakeConfiguration
   onHandshake?: (context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<WebhookResponse>,
+  shouldHandshake?: (context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<boolean | WebhookResponse>,
   renewConfiguration?: WebhookRenewConfiguration
   onRenew?(context: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>): Promise<void>,
 }
@@ -89,6 +90,7 @@ export class ITrigger<
     public readonly type: TS,
     public readonly handshakeConfiguration: WebhookHandshakeConfiguration,
     public readonly onHandshake: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<WebhookResponse>,
+    public readonly shouldHandshake: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<boolean | WebhookResponse>,
     public readonly renewConfiguration: WebhookRenewConfiguration,
     public readonly onRenew: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>,
     public readonly onEnable: (ctx: TriggerHookContext<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>, TriggerProps, TS>) => Promise<void>,
@@ -124,6 +126,7 @@ export const createTrigger = <
         params.type,
         params.handshakeConfiguration ?? { strategy: WebhookHandshakeStrategy.NONE },
         params.onHandshake ?? (async () => ({ status: 200 })),
+        params.shouldHandshake ?? (async () => false),
         params.renewConfiguration ?? { strategy: WebhookRenewStrategy.NONE },
         params.onRenew ?? (async () => Promise.resolve()),
         params.onEnable,
@@ -144,6 +147,7 @@ export const createTrigger = <
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },
         async () => ({ status: 200 }),
+        async () => false,
         { strategy: WebhookRenewStrategy.NONE },
         (async () => Promise.resolve()),
         params.onEnable,
@@ -164,6 +168,7 @@ export const createTrigger = <
         params.type,
         { strategy: WebhookHandshakeStrategy.NONE },
         async () => ({ status: 200 }),
+        async () => false,
         { strategy: WebhookRenewStrategy.NONE },
         (async () => Promise.resolve()),
         params.onEnable,
