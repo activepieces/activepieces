@@ -335,16 +335,48 @@ export const flowHooks = {
       },
     });
   },
+  importFlowIntoExisting: async ({
+    template,
+    existingFlowId,
+  }: {
+    template: Template;
+    existingFlowId: string;
+  }): Promise<PopulatedFlow> => {
+    const flows = template.flows || [];
+    if (flows.length === 0) {
+      throw new Error('Template has no flows');
+    }
+
+    const templateFlow = flows[0];
+    const flow = await flowsApi.get(existingFlowId);
+
+    const oldExternalId = !isNil(template.metadata?.externalId)
+      ? (template.metadata['externalId'] as string)
+      : flow.externalId;
+
+    const triggerString = JSON.stringify(templateFlow.trigger).replaceAll(
+      oldExternalId,
+      flow.externalId,
+    );
+    const updatedTrigger = JSON.parse(triggerString);
+
+    return await flowsApi.update(flow.id, {
+      type: FlowOperationType.IMPORT_FLOW,
+      request: {
+        displayName: templateFlow.displayName,
+        trigger: updatedTrigger,
+        schemaVersion: templateFlow.schemaVersion,
+      },
+    });
+  },
   importFlowsFromTemplates: async ({
     templates,
     projectId,
     folderName,
-    existingFlowId,
   }: {
     templates: Template[];
     projectId: string;
     folderName?: string;
-    existingFlowId?: string;
   }): Promise<PopulatedFlow[]> => {
     if (templates.length === 0) {
       return [];
@@ -363,17 +395,11 @@ export const flowHooks = {
       }
 
       for (const templateFlow of flows) {
-        let flow: PopulatedFlow;
-
-        if (existingFlowId) {
-          flow = await flowsApi.get(existingFlowId);
-        } else {
-          flow = await flowsApi.create({
-            displayName: templateFlow.displayName,
-            projectId,
-            folderName,
-          });
-        }
+        const flow = await flowsApi.create({
+          displayName: templateFlow.displayName,
+          projectId,
+          folderName,
+        });
 
         const oldExternalId = !isNil(template.metadata?.externalId)
           ? (template.metadata['externalId'] as string)
@@ -384,14 +410,6 @@ export const flowHooks = {
           templateFlow,
           oldExternalId,
         });
-
-        if (existingFlowId) {
-          break;
-        }
-      }
-
-      if (existingFlowId) {
-        break;
       }
     }
 

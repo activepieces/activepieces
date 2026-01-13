@@ -96,10 +96,19 @@ const ImportFlowDialog = (
     Template[]
   >({
     mutationFn: async (templates: Template[]) => {
+      if (props.insideBuilder) {
+        if (templates.length === 0) {
+          throw new Error('No template selected');
+        }
+        const flow = await flowHooks.importFlowIntoExisting({
+          template: templates[0],
+          existingFlowId: props.flowId,
+        });
+        return [flow];
+      }
+
       const folder =
-        !props.insideBuilder &&
-        !isNil(selectedFolderId) &&
-        selectedFolderId !== UncategorizedFolderId
+        !isNil(selectedFolderId) && selectedFolderId !== UncategorizedFolderId
           ? await foldersApi.get(selectedFolderId)
           : undefined;
 
@@ -107,7 +116,6 @@ const ImportFlowDialog = (
         templates,
         projectId: authenticationSession.getProjectId()!,
         folderName: folder?.displayName,
-        existingFlowId: props.insideBuilder ? props.flowId : undefined,
       });
     },
 
