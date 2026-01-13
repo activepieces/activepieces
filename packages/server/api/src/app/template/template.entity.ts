@@ -35,7 +35,11 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
         },
         flows: {
             type: 'jsonb',
-            nullable: false,
+            nullable: true,
+        },
+        tables: {
+            type: 'jsonb',
+            nullable: true,
         },
         tags: {
             type: 'jsonb',

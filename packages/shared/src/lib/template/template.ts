@@ -1,6 +1,7 @@
 import { Omit, Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../common'
 import { FlowVersion } from '../flows/flow-version'
+import { TableState } from '../project-release/project-state'
 
 export const TemplateTag = Type.Object({
     title: Type.String(),
@@ -29,6 +30,9 @@ export enum TemplateStatus {
     ARCHIVED = 'ARCHIVED',
 }
 
+export const TableTemplate = Type.Omit(TableState, ['id', 'created', 'updated'])
+export type TableTemplate = Static<typeof TableTemplate>
+
 export const Template = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
@@ -44,6 +48,7 @@ export const Template = Type.Object({
     pieces: Type.Array(Type.String()),
     platformId: Nullable(Type.String()),
     flows: Type.Optional(Type.Array(FlowVersionTemplate)),
+    tables: Type.Optional(Type.Array(TableTemplate)),
     status: Type.Enum(TemplateStatus),
 })
 export type Template = Static<typeof Template>
