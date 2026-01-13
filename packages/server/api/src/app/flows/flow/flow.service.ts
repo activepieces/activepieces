@@ -333,11 +333,11 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 id,
                 projectId,
             })
-            if (flow.operationStatus !== FlowOperationStatus.NONE) {
+            if (flow.operationStatus === FlowOperationStatus.DELETING) {
                 throw new ActivepiecesError({
                     code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
                     params: {
-                        message: `Flow is busy with ${flow.operationStatus.toLocaleLowerCase()} operation. Please try again in a moment.`,
+                        message: `This flow is getting deleted.`,
                     },
                 })
             }
