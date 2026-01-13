@@ -1,5 +1,5 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { HttpMethod } from '@activepieces/pieces-common';
+import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { woodpeckerAuth } from '../..';
 import { campaignsDropdown, woodpeckerClient } from '../common';
 
@@ -18,6 +18,7 @@ export const getProspectResponses = createAction({
       displayName: 'Campaign',
       description: 'Filter responses by campaign (optional)',
       required: false,
+      auth: woodpeckerAuth,
       refreshers: [],
       options: async ({ auth }) => {
         if (!auth) {
@@ -27,7 +28,6 @@ export const getProspectResponses = createAction({
             placeholder: 'Please authenticate first',
           };
         }
-        const { HttpMethod, httpClient } = await import('@activepieces/pieces-common');
         const response = await httpClient.sendRequest<Array<{ id: number; name: string; status: string }>>({
           method: HttpMethod.GET,
           url: 'https://api.woodpecker.co/rest/v1/campaign_list',
