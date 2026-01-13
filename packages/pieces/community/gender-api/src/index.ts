@@ -11,6 +11,7 @@ export const genderApi = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/gender-api.png',
   authors: ['sanket-a11y'],
+  description: 'Predict the gender of a person based on their name using Gender-api service.',
   actions: [
     getGenderByFirstName,
     getGenderByFullName,

@@ -14,12 +14,12 @@ export const getGenderByFullName = createAction({
       required: true,
     }),
     country_code: Property.ShortText({
-      displayName: 'Country Code (Optional)',
+      displayName: 'Country Code',
       description: 'ISO 3166-1 alpha-2 country code to improve accuracy (e.g., "US", "DE")',
       required: false,
     }),
     locale: Property.ShortText({
-      displayName: 'Locale (Optional)',
+      displayName: 'Locale',
       description: 'Browser locale for localization (e.g., "en-US", "de-DE")',
       required: false,
     }),
