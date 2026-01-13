@@ -434,6 +434,7 @@ export const flowHooks = {
             displayName: templateFlow.displayName,
             trigger: updatedTrigger,
             schemaVersion: templateFlow.schemaVersion,
+            notes: templateFlow.notes,
           },
         });
       },
