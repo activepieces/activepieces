@@ -26,6 +26,11 @@ export const slackSendMessageAction = createAction({
       description: 'The text of your message. When using Block Kit blocks, this is used as a fallback for notifications.',
       required: false,
     }),
+    sendAsBot:Property.Checkbox({
+      displayName:'Send as a bot?',
+      required:true,
+      defaultValue:true
+    }),
     threadTs,
     username,
     profilePicture,
@@ -49,9 +54,10 @@ export const slackSendMessageAction = createAction({
     blocks,
   },
   async run(context) {
-    const token = context.auth.access_token;
-    const { text, channel, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
+    const { text, channel,sendAsBot, username, profilePicture, threadTs, file, mentionOriginFlow, blocks, replyBroadcast, unfurlLinks } =
       context.propsValue;
+    
+    const token = sendAsBot ?context.auth.access_token :context.auth.data?.authed_user?.access_token ;
     
     if (!text && (!blocks || !Array.isArray(blocks) || blocks.length === 0)) {
       throw new Error('Either Message or Block Kit blocks must be provided');

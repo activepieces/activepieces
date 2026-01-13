@@ -1,4 +1,4 @@
-import { FilesService, TriggerStrategy, createTrigger, PropertyType, Property } from '@activepieces/pieces-framework';
+import { FilesService, TriggerStrategy, createTrigger,  Property } from '@activepieces/pieces-framework';
 import { Client, PageCollection } from '@microsoft/microsoft-graph-client';
 import { Message, FileAttachment } from '@microsoft/microsoft-graph-types';
 import dayjs from 'dayjs';
@@ -11,10 +11,15 @@ async function enrichAttachments(
 	messages: Message[],
 	files: FilesService,
 	nameFilter?: string,
+	senderFilter?: string,
 ): Promise<Record<string, any>[]> {
 	const attachments: Record<string, any>[] = [];
 
 	for (const message of messages) {
+		if (senderFilter && message.sender?.emailAddress?.address && !message.sender.emailAddress.address.toLowerCase().includes(senderFilter.toLowerCase())) {
+			continue;
+		}
+
 		const attachmentResponse: PageCollection = await client
 			.api(`/me/messages/${message.id}/attachments`)
 			.get();
@@ -58,6 +63,11 @@ export const newAttachmentTrigger = createTrigger({
 			description: 'Monitor attachments in a specific folder. Leave empty to monitor all folders.',
 			required: false,
 		}),
+		sender: Property.ShortText({
+			displayName: 'From (Sender Email)',
+			description: 'Filter emails from a specific sender (optional). Leave empty to for all senders.',
+			required: false,
+		}),
 		attachmentNameFilter: Property.ShortText({
 			displayName: 'Attachment Name Filter',
 			description: 'Filter attachments by name (contains). Leave empty to include all attachments.',
@@ -73,7 +83,7 @@ export const newAttachmentTrigger = createTrigger({
 		// return
 	},
 	async test(context) {
-		const { folderId, attachmentNameFilter } = context.propsValue;
+		const { folderId, attachmentNameFilter, sender } = context.propsValue;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
@@ -86,7 +96,7 @@ export const newAttachmentTrigger = createTrigger({
 			.top(10)
 			.get();
 
-		const attachments = await enrichAttachments(client, response.value as Message[], context.files, attachmentNameFilter);
+		const attachments = await enrichAttachments(client, response.value as Message[], context.files, attachmentNameFilter, sender);
 
 		const items = attachments.map((attachment) => ({
 			epochMilliSeconds: dayjs(attachment['messageReceivedDateTime']).valueOf(),
@@ -101,7 +111,7 @@ export const newAttachmentTrigger = createTrigger({
 			throw new Error("lastPoll doesn't exist in the store.");
 		}
 
-		const { folderId, attachmentNameFilter } = context.propsValue;
+		const { folderId, attachmentNameFilter, sender } = context.propsValue;
 		const client = Client.initWithMiddleware({
 			authProvider: {
 				getAccessToken: () => Promise.resolve(context.auth.access_token),
@@ -129,7 +139,7 @@ export const newAttachmentTrigger = createTrigger({
 				break;
 			}
 		}
-		const attachments = await enrichAttachments(client, messages, context.files, attachmentNameFilter);
+		const attachments = await enrichAttachments(client, messages, context.files, attachmentNameFilter, sender);
 
 		const items = attachments.map((attachment) => ({
 			epochMilliSeconds: dayjs(attachment['messageReceivedDateTime']).valueOf(),
