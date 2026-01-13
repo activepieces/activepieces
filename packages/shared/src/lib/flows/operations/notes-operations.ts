@@ -1,6 +1,6 @@
 import { FlowVersion } from '../flow-version'
 import { Note } from '../note'
-import { CreateNoteRequest, DeleteNoteRequest, UpdateNoteRequest } from '.'
+import { AddNoteRequest, DeleteNoteRequest, UpdateNoteRequest } from '.'
 import { apId } from '../../common/id-generator'
 
 const _updateNote = (flowVersion: FlowVersion, request: UpdateNoteRequest): FlowVersion => {
@@ -20,9 +20,9 @@ const _deleteNote = (flowVersion: FlowVersion, request: DeleteNoteRequest): Flow
     return newFlowVersion
 }
 
-const _addNote = (flowVersion: FlowVersion, request: CreateNoteRequest): FlowVersion => {
+const _addNote = (flowVersion: FlowVersion, request: AddNoteRequest): FlowVersion => {
     const newFlowVersion = JSON.parse(JSON.stringify(flowVersion))
-    newFlowVersion.notes.push({ ...request, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), id: apId() })
+    newFlowVersion.notes.push({ ...request, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() })
     return newFlowVersion
 }
 

@@ -3,7 +3,7 @@ import { FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
-import { CreateNoteRequest, DeleteNoteRequest, FlowOperationRequest, FlowOperationType, ImportFlowRequest, StepLocationRelativeToParent } from './index'
+import { AddNoteRequest, DeleteNoteRequest, FlowOperationRequest, FlowOperationType, ImportFlowRequest, StepLocationRelativeToParent } from './index'
 
 function createDeleteActionOperation(actionName: string): FlowOperationRequest {
     return {
@@ -91,7 +91,7 @@ function _getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportF
     const deleteOperations: DeleteNoteRequest[] = flowVersion.notes.map(note => ({
         id: note.id,
     }))
-    const addOperations: CreateNoteRequest[] = (request.notes || []).map(note => (note))
+    const addOperations: AddNoteRequest[] = (request.notes || []).map(note => (note))
 
     const operations: FlowOperationRequest[] = [
         ...deleteOperations.map(operation => ({

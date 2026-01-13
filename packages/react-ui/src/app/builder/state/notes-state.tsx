@@ -2,7 +2,7 @@ import { StoreApi } from 'zustand';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  CreateNoteRequest,
+  AddNoteRequest,
   FlowOperationType,
   NoteColorVariant,
   Note,
@@ -17,7 +17,7 @@ export enum NoteDragOverlayMode {
 }
 
 export type NotesState = {
-  addNote: (request: CreateNoteRequest) => void;
+  addNote: (request: Omit<AddNoteRequest, 'id'>) => void;
   deleteNote: (id: string) => void;
   moveNote: (id: string, position: { x: number; y: number }) => void;
   resizeNote: (id: string, size: { width: number; height: number }) => void;
@@ -43,10 +43,13 @@ export const createNotesState = (
     ) => {
       set({ noteDragOverlayMode });
     },
-    addNote: (request: CreateNoteRequest) => {
+    addNote: (request: Omit<AddNoteRequest, 'id'>) => {
       get().applyOperation({
         type: FlowOperationType.ADD_NOTE,
-        request
+        request: {
+          ...request,
+          id: apId(),
+        }
       });
       const notes = get().flowVersion.notes;
       notes[notes.length - 1].ownerId = authenticationSession.getCurrentUserId() ?? null;

@@ -117,13 +117,11 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
       }}
     >
       {!isDragging && !readonly && editorRef.current && (
-        <div className="focus-within:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
+        <div className="opacity-0 focus-within:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
           <NoteTools
             editor={editorRef.current}
             currentColor={note.color}
-            setCurrentColor={(color: NoteColorVariant) =>
-              updateNoteColor(id, color)
-            }
+            id={id}
           />
         </div>
       )}

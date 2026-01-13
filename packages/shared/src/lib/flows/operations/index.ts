@@ -62,7 +62,7 @@ export const UpdateNoteRequest = Type.Omit(Note, [ 'createdAt', 'updatedAt'])
 export const DeleteNoteRequest = Type.Object({
     id: Type.String(),
 })
-export const CreateNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt', 'ownerId','id'])
+export const AddNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt', 'ownerId'])
 
 export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
@@ -93,7 +93,7 @@ export type AddBranchRequest = Static<typeof AddBranchRequest>
 export type DuplicateBranchRequest = Static<typeof DuplicateBranchRequest>
 export type UpdateNoteRequest = Static<typeof UpdateNoteRequest>
 export type DeleteNoteRequest = Static<typeof DeleteNoteRequest>
-export type CreateNoteRequest = Static<typeof CreateNoteRequest>
+export type AddNoteRequest = Static<typeof AddNoteRequest>
 
 export enum StepLocationRelativeToParent {
     AFTER = 'AFTER',
@@ -417,7 +417,7 @@ export const FlowOperationRequest = Type.Union([
     Type.Object(
         {
             type: Type.Literal(FlowOperationType.ADD_NOTE),
-            request: CreateNoteRequest,
+            request: AddNoteRequest,
         },
         {
             title: 'Add Note',

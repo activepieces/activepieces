@@ -9,23 +9,38 @@ import {
 } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { NoteColorVariant } from '@activepieces/shared';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { TrashIcon } from 'lucide-react';
 
 export const NoteTools = ({
   editor,
   currentColor,
-  setCurrentColor,
+  id,
 }: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [updateNoteColor, deleteNote] = useBuilderStateContext(
+    (state) => [state.updateNoteColor, state.deleteNote],
+  );
   return (
     <div ref={containerRef} className="absolute -top-[45px] w-full left-0">
       <div className="flex items-center justify-center">
         <div className="p-1 bg-background flex items-center gap-0.5 shadow-md rounded-lg scale-65 border border-solid border-border">
           <NoteColorPicker
             currentColor={currentColor}
-            setCurrentColor={setCurrentColor}
+            setCurrentColor={(color: NoteColorVariant) => {
+              updateNoteColor(id, color);
+            }}
             container={containerRef.current}
           />
           <MarkdownTools editor={editor} />
+          <Separator orientation="vertical" className='h-[30px]'></Separator>
+          <Button variant="ghost" size="icon" onClick={() => {
+            deleteNote(id);
+          }}>
+            <TrashIcon className="size-4 text-destructive" />
+          </Button>
         </div>
       </div>
     </div>
@@ -93,7 +108,7 @@ NoteTools.displayName = 'NoteTools';
 type NoteToolsProps = {
   editor: Editor;
   currentColor: NoteColorVariant;
-  setCurrentColor: (color: NoteColorVariant) => void;
+  id: string;
 };
 
 type NoteColorPickerProps = {
