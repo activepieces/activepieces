@@ -1,28 +1,25 @@
 import { Editor } from '@tiptap/core';
+import { TrashIcon } from 'lucide-react';
 import { useRef } from 'react';
 
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
+import { Button } from '@/components/ui/button';
 import { MarkdownTools } from '@/components/ui/markdown-input/tools';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { NoteColorVariant } from '@activepieces/shared';
-import { useBuilderStateContext } from '@/app/builder/builder-hooks';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
-import { TrashIcon } from 'lucide-react';
 
-export const NoteTools = ({
-  editor,
-  currentColor,
-  id,
-}: NoteToolsProps) => {
+export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [updateNoteColor, deleteNote] = useBuilderStateContext(
-    (state) => [state.updateNoteColor, state.deleteNote],
-  );
+  const [updateNoteColor, deleteNote] = useBuilderStateContext((state) => [
+    state.updateNoteColor,
+    state.deleteNote,
+  ]);
   return (
     <div ref={containerRef} className="absolute -top-[45px] w-full left-0">
       <div className="flex items-center justify-center">
@@ -35,10 +32,14 @@ export const NoteTools = ({
             container={containerRef.current}
           />
           <MarkdownTools editor={editor} />
-          <Separator orientation="vertical" className='h-[30px]'></Separator>
-          <Button variant="ghost" size="icon" onClick={() => {
-            deleteNote(id);
-          }}>
+          <Separator orientation="vertical" className="h-[30px]"></Separator>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              deleteNote(id);
+            }}
+          >
             <TrashIcon className="size-4 text-destructive" />
           </Button>
         </div>
@@ -47,15 +48,14 @@ export const NoteTools = ({
   );
 };
 
-
 const NoteColorPickerClassName = {
-  [NoteColorVariant.YELLOW]: 'bg-amber-400',      
+  [NoteColorVariant.YELLOW]: 'bg-amber-400',
   [NoteColorVariant.ORANGE]: 'bg-orange-400',
   [NoteColorVariant.RED]: 'bg-red-400',
   [NoteColorVariant.GREEN]: 'bg-green-400',
   [NoteColorVariant.BLUE]: 'bg-blue-400',
   [NoteColorVariant.PURPLE]: 'bg-purple-400',
-}
+};
 
 const NoteColorPicker = ({
   currentColor,
@@ -63,7 +63,7 @@ const NoteColorPicker = ({
   container,
 }: NoteColorPickerProps) => {
   return (
-    <Popover >
+    <Popover>
       <PopoverTrigger asChild>
         <div
           className={cn(

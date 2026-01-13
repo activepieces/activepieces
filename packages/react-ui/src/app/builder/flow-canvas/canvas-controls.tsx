@@ -19,7 +19,6 @@ import {
   TooltipContent,
 } from '@/components/ui/tooltip';
 import { isMac } from '@/lib/utils';
-import { NoteColorVariant } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
 import { NoteDragOverlayMode } from '../state/notes-state';
@@ -272,7 +271,7 @@ const CanvasControls = ({
                       width: flowCanvasConsts.NOTE_CREATION_OVERLAY_WIDTH,
                       height: flowCanvasConsts.NOTE_CREATION_OVERLAY_HEIGHT,
                     },
-                    color: NoteColorVariant.YELLOW,
+                    color: flowCanvasConsts.DEFAULT_NOTE_COLOR,
                   },
                   NoteDragOverlayMode.CREATE,
                 );

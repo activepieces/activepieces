@@ -153,8 +153,11 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 log,
                 userId,
             )
-            if(operation.type === FlowOperationType.ADD_NOTE) {
-              mutatedFlowVersion.notes[mutatedFlowVersion.notes.length - 1].ownerId = userId
+            if (operation.type === FlowOperationType.ADD_NOTE) {
+                const noteIndex = mutatedFlowVersion.notes.findIndex((note) => note.id === operation.request.id)
+                if (noteIndex !== -1) {
+                    mutatedFlowVersion.notes[noteIndex] = { ...mutatedFlowVersion.notes[noteIndex], ownerId: userId }
+                }
             }
         }
 

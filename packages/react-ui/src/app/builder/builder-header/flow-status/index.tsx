@@ -19,7 +19,8 @@ const BuilderFlowStatusSection = React.memo(() => {
         publishedVersionId={flow.publishedVersionId}
       ></FlowVersionStateDot>
       {(flow.publishedVersionId === flowVersion.id ||
-        flowVersion.state === FlowVersionState.DRAFT && !isNil(flow.publishedVersionId)) && (
+        (flowVersion.state === FlowVersionState.DRAFT &&
+          !isNil(flow.publishedVersionId))) && (
         <FlowStatusToggle flow={flow}></FlowStatusToggle>
       )}
     </div>

@@ -90,13 +90,11 @@ export const MarkdownInput = React.forwardRef<
     };
 
     return (
-      //gotta add this nodrag nopan nowheel to prevent dnd-kit and React Flow interference with selection
+      //gotta add this nodrag nopan to prevent dnd-kit and React Flow interference with selection
       <div
-        className={
-          !editor.isEditable
-            ? 'relative h-full'
-            : 'nodrag nopan nowheel relative h-full '
-        }
+        className={cn('relative h-full nowheel', {
+          'nodrag nopan': !editor.isEditable,
+        })}
         onPointerDown={stopEventPropagation}
         onMouseDown={stopEventPropagation}
         onClick={stopEventPropagation}

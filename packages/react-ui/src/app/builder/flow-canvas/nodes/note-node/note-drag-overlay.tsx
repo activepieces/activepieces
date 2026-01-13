@@ -2,7 +2,7 @@ import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
-import { apId, isNil, NoteColorVariant } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
 import { NoteDragOverlayMode } from '../../../state/notes-state';
@@ -66,7 +66,7 @@ const NoteDragOverlay = () => {
               content: flowCanvasConsts.DEFAULT_NOTE_CONTENT,
               position: positionOnCanvas,
               size: draggedNote.size,
-              color: NoteColorVariant.YELLOW,
+              color: flowCanvasConsts.DEFAULT_NOTE_COLOR,
             });
           }
         }

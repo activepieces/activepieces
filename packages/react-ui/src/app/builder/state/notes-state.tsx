@@ -44,20 +44,29 @@ export const createNotesState = (
       set({ noteDragOverlayMode });
     },
     addNote: (request: Omit<AddNoteRequest, 'id'>) => {
+      const id = apId();
       get().applyOperation({
         type: FlowOperationType.ADD_NOTE,
         request: {
           ...request,
-          id: apId(),
-        }
+          id,
+        },
       });
       const notes = get().flowVersion.notes;
-      notes[notes.length - 1].ownerId = authenticationSession.getCurrentUserId() ?? null;
+      const noteIndex = notes.findIndex((note) => note.id === id);
+      if (noteIndex !== -1) {
+        notes[noteIndex] = {
+          ...notes[noteIndex],
+          ownerId: authenticationSession.getCurrentUserId() ?? null,
+        };
+      }
+      notes[noteIndex].ownerId =
+        authenticationSession.getCurrentUserId() ?? null;
       set(() => {
         return {
           flowVersion: {
             ...get().flowVersion,
-            notes
+            notes,
           },
           draggedNote: null,
           noteDragOverlayMode: null,

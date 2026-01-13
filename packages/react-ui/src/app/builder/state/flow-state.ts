@@ -155,6 +155,15 @@ export const createFlowState = (
     applyOperation: (operation: FlowOperationRequest, onSuccess?: () => void) =>
       set((state) => {
         if (state.readonly) {
+          if (operation.type === FlowOperationType.UPDATE_NOTE) {
+            const newFlowVersion = flowOperations.apply(
+              state.flowVersion,
+              operation,
+            );
+            return {
+              flowVersion: newFlowVersion,
+            };
+          }
           console.warn('Cannot apply operation while readonly');
           return state;
         }

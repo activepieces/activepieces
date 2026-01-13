@@ -1,5 +1,4 @@
 import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-
 import { userHooks } from '@/hooks/user-hooks';
 import { isNil } from '@activepieces/shared';
 
