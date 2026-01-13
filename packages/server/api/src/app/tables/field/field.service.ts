@@ -1,5 +1,5 @@
 import { AppSystemProp } from '@activepieces/server-shared'
-import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, ProjectId, UpdateFieldRequest } from '@activepieces/shared'
+import { ActivepiecesError, apId, assertNotNullOrUndefined, CreateFieldRequest, ErrorCode, Field, FieldState, FieldType, isNil, UpdateFieldRequest } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { system } from '../../helper/system/system'
 import { FieldEntity } from './field.entity'
