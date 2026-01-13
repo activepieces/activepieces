@@ -25,7 +25,7 @@ async function prepareInput(
     > {
     const previousExecutionFile = (jobData.executionType === ExecutionType.RESUME || attempsStarted > 1) ? await flowRunLogs.get(jobData.logsUploadUrl) : null
     const steps = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.steps : {}
-
+    const tags = !isNil(previousExecutionFile) ? previousExecutionFile?.executionState?.tags : []
     switch (jobData.executionType) {
         case ExecutionType.BEGIN: {
             return {
@@ -38,6 +38,7 @@ async function prepareInput(
                 executionType: ExecutionType.BEGIN,
                 executionState: {
                     steps,
+                    tags,
                 },
                 sampleData: jobData.sampleData,
                 executeTrigger: jobData.executeTrigger ?? false,
@@ -61,6 +62,7 @@ async function prepareInput(
                 executionType: ExecutionType.RESUME,
                 executionState: {
                     steps,
+                    tags,
                 },
                 runEnvironment: jobData.environment,
                 httpRequestId: jobData.httpRequestId ?? null,
