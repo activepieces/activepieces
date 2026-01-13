@@ -46,7 +46,7 @@ export type ApNoteNode = {
     x: number;
     y: number;
   };
-  data: Pick<Note, 'content' | 'creatorId' | 'color' | 'size'>;
+  data: Pick<Note, 'content' | 'ownerId' | 'color' | 'size'>;
 };
 
 export type ApLoopReturnNode = {
