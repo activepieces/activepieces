@@ -158,7 +158,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 'latest_version',
                 `latest_version."flowId" = ff.id AND latest_version.id = (${latestVersionSubquery.getQuery()})`,
             )
-            queryBuilder.leftJoinAndMapOne(
+            queryBuilder.innerJoinAndMapOne(
                 'ff.version',
                 'flow_version',
                 'published_version',
