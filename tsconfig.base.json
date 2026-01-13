@@ -475,6 +475,9 @@
       ],
       "@activepieces/piece-gender-api": [
         "packages/pieces/community/gender-api/src/index.ts"
+      ],
+      "@activepieces/piece-woodpecker": [
+        "packages/pieces/community/woodpecker/src/index.ts"
       ]
     },
     "resolveJsonModule": true
