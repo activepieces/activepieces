@@ -1,6 +1,5 @@
-import { isObject, StepOutput } from '@activepieces/shared'
-import { getPathKey } from '../handler/context/flow-execution-context'
-import { StepExecutionPath } from '../handler/context/step-execution-path'
+import { FlowActionType, StepOutput } from '@activepieces/shared'
+import PriorityQueue from 'priority-queue-typescript'
 import { utils } from '../utils'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
@@ -9,128 +8,110 @@ const DEFAULT_MAX_LOG_SIZE_FOR_TESTING = '10'
 const MAX_LOG_SIZE = Number(process.env.AP_MAX_FILE_SIZE_MB ?? DEFAULT_MAX_LOG_SIZE_FOR_TESTING)
 const MAX_SIZE_FOR_ALL_ENTRIES = MAX_LOG_SIZE - ERROR_OFFSET
 const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = utils.sizeof(TRUNCATION_TEXT_PLACEHOLDER)
-const nonTruncatableKeys = ['status', 'duration', 'type']
 
-type TrimResponse = {
-    steps: Record<string, StepOutput>
-    stepsSize: Map<string, number>
+type InputKeyEntry = {
+    step: StepOutput
+    stepName: string
+    inputKey: string
+    size: number
 }
 
 export const loggingUtils = {
-    trimExecutionInput(steps: Record<string, StepOutput>, stepsSize: Map<string, number>, path: StepExecutionPath['path']): TrimResponse {
-        const totalJsonSize = getTotalStepsSize(stepsSize)
-        if (!jsonExceedMaxSize(totalJsonSize)) {
-            return { steps, stepsSize }
+    trimExecutionInput(steps: Record<string, StepOutput>, maxSize: number = MAX_SIZE_FOR_ALL_ENTRIES): Record<string, StepOutput> {
+        const totalJsonSize = getTotalStepsSize(steps)
+
+        if (!jsonExceedMaxSize(totalJsonSize, maxSize)) {
+            return steps
         }
 
-        const descendingSortedSteps = Array.from(stepsSize.entries()).sort((a, b) => b[1] - a[1]).map(([key]) => key)
-        return trimStepInputs(steps, descendingSortedSteps, stepsSize, path)
+        const priorityQueue = new PriorityQueue<InputKeyEntry>(
+            undefined,
+            (a: InputKeyEntry, b: InputKeyEntry) => a.size - b.size,
+        )
+        traverseStepsAndCollectKeys(steps, priorityQueue)
+
+        // calculate minimalSize: replace all input sizes with placeholder sizes . after that we will re-replace them with actual sizes from smallest until we exceed the limit.
+        let minimalSize = getStepsSizeWithAllInputsTruncated(totalJsonSize, priorityQueue)
+
+        // pop smallest entries from queue, accumulating their sizes until we exceed the limit
+        // The keys that remain in the queue after popping are the ones we need to truncate
+        const keysToRemove = new Set<InputKeyEntry>()
+        while (priorityQueue.size() > 0) {
+            const entry = priorityQueue.poll()!
+            
+            minimalSize += entry.size - SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER
+
+            // if minimalSize exceeds the limit, stop popping
+            // the remaining keys in the queue and current one will be truncated
+            if (minimalSize > maxSize) {
+                keysToRemove.add(entry) 
+                break
+            }
+        }
+
+        while (priorityQueue.size() > 0) {
+            const entry = priorityQueue.poll()!
+            keysToRemove.add(entry)
+        }
+        
+        removeKeysFromSteps(keysToRemove)
+
+        return steps
     },
 }
 
-function getTotalStepsSize(stepsSize: Map<string, number>): number {
-    return Array.from(stepsSize.values()).reduce((acc, size) => acc + size, 0)
+function getTotalStepsSize(steps: Record<string, StepOutput>): number {
+    return utils.sizeof(steps)
 }
 
-function trimStepInputs(
+function traverseStepsAndCollectKeys(
     steps: Record<string, StepOutput>,
-    descendingSortedSteps: string[],
-    stepsSize: Map<string, number>,
-    path: StepExecutionPath['path'],
-): TrimResponse {
-    let totalSize = getTotalStepsSize(stepsSize)
-
-    for (const pathKey of descendingSortedSteps) {
-        if (!jsonExceedMaxSize(totalSize)) {
-            break
-        }
-
-        const stepName = pathKey.split('.')[0]
-        const step = steps[stepName]
+    priorityQueue: PriorityQueue<InputKeyEntry>,
+): void {
+    for (const [stepName, step] of Object.entries(steps)) {
         if (step?.input) {
-            const inputBefore = step.input
-            const stepSize = utils.sizeof(step)
-            let truncateResult: { input: unknown, newTotalSize: number, newStepSize: number } | null = null
-
-            if (isObject(inputBefore)) {
-                truncateResult = truncateObject(inputBefore, totalSize, stepSize)
+            const input = step.input as Record<string, unknown>
+            for (const [inputKey, value] of Object.entries(input)) {
+                const valueSize = utils.sizeof(value)
+                priorityQueue.add({
+                    step,
+                    stepName,
+                    inputKey,
+                    size: valueSize,
+                })
             }
-            else if (Array.isArray(inputBefore)) {
-                truncateResult = truncateArray(inputBefore, totalSize, stepSize)
-            }
-            else if (typeof inputBefore === 'string') {
-                truncateResult = truncateString(inputBefore, totalSize, stepSize)
-            }
+        }
 
-            if (truncateResult) {
-                step.input = truncateResult.input
-                totalSize = truncateResult.newTotalSize
-
-                stepsSize.set(getPathKey(stepName, path), truncateResult.newStepSize)
+        if (step?.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
+            const loopOutput = step.output as { iterations: Record<string, StepOutput>[] }
+            if (loopOutput.iterations) {
+                for (const iteration of loopOutput.iterations) {
+                    traverseStepsAndCollectKeys(iteration, priorityQueue)
+                }
             }
         }
     }
-
-    return { steps, stepsSize }
 }
 
-type TruncateResponse<T> = {
-    input: T
-    newTotalSize: number
-    newStepSize: number
-}
-
-type TruncateHelper<T> = (input: T, totalSize: number, stepSize: number) => TruncateResponse<T>
-
-const truncateObject: TruncateHelper<Record<string, unknown>> = (json, totalSize, stepSize) => {
-    const entries = Object.entries(json)
-    const descendingSortedEntries = entries.sort((a, b) => utils.sizeof(b[1]) - utils.sizeof(a[1]))
-
-    let newTotalSize = totalSize
-    let newStepSize = stepSize
-
-    for (const [key, value] of descendingSortedEntries) {
-       
-        if (!jsonExceedMaxSize(newTotalSize) || nonTruncatableKeys.includes(key)) {
-            break
+function removeKeysFromSteps(
+    keysToRemove: Set<InputKeyEntry>,
+): void {
+    for (const entry of keysToRemove) {
+        if (entry.step?.input) {
+            const input = entry.step.input as Record<string, unknown>
+            input[entry.inputKey] = TRUNCATION_TEXT_PLACEHOLDER
         }
-
-        json[key] = TRUNCATION_TEXT_PLACEHOLDER
-
-        const delta = SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - utils.sizeof(value)
-        newTotalSize += delta
-        newStepSize += delta
     }
-
-    return { input: json as Record<string, StepOutput>, newTotalSize, newStepSize }
 }
 
-const truncateArray: TruncateHelper<unknown[]> = (array, totalSize, stepSize) => {
-    const children = array.map((value) => utils.sizeof(value))
-    const descendingSortedChildren = children.map((size, index) => ({ size, index })).sort((a, b) => b.size - a.size).map(({ index }) => index)
-    let newTotalSize = totalSize
-    let newStepSize = stepSize
-
-    for (const index of descendingSortedChildren) {
-        if (!jsonExceedMaxSize(newTotalSize)) {
-            break
-        }
-        array[index] = TRUNCATION_TEXT_PLACEHOLDER
-        newTotalSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - children[index]
-        newStepSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - children[index]
+const getStepsSizeWithAllInputsTruncated = (totalSize: number, priorityQueue: PriorityQueue<InputKeyEntry> ): number => {
+    let size = totalSize
+    for (const entry of priorityQueue) {
+        size = size - entry.size + SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER
     }
-    return { input: array as unknown[], newTotalSize, newStepSize }
+    return size
 }
 
-const truncateString: TruncateHelper<string> = (string, totalSize, stepSize) => {
-    if (string.length > 10) {
-        const truncatedString = string.substring(0, 10) + TRUNCATION_TEXT_PLACEHOLDER
-        const delta = utils.sizeof(truncatedString) - utils.sizeof(string)
-        return { input: truncatedString, newTotalSize: totalSize + delta, newStepSize: stepSize + delta }
-    }
-    return { input: string, newTotalSize: totalSize, newStepSize: stepSize }
-}
-
-const jsonExceedMaxSize = (jsonSize: number): boolean => {
-    return jsonSize > MAX_SIZE_FOR_ALL_ENTRIES
+const jsonExceedMaxSize = (jsonSize: number, maxSize: number): boolean => {
+    return jsonSize > maxSize
 }

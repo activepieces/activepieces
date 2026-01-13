@@ -95,6 +95,7 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
                 steps: flowExecutorContext.steps,
             },
         })
+        console.error('executionState', JSON.stringify(flowExecutorContext.steps, null, 2))
 
         if (isNil(engineConstants.logsUploadUrl)) {
             throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')

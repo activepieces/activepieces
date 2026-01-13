@@ -2,7 +2,6 @@ import { assertEqual, EngineGenericError, FailedStep, FlowActionType, FlowRunSta
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
-import { utils } from '../../utils'
 import { StepExecutionPath } from './step-execution-path'
 
 
@@ -127,17 +126,9 @@ export class FlowExecutorContext {
         const targetMap = getStateAtPath({ currentPath: this.currentPath, steps })
         targetMap[stepName] = stepOutput
 
-        const pathKey = getPathKey(stepName, this.currentPath.path)
-        if (!this.stepsSize.has(pathKey)) {
-            this.stepsSize.set(pathKey, utils.sizeof(stepOutput))
-        }
-
-        const trimmed = loggingUtils.trimExecutionInput(steps, this.stepsSize, this.currentPath.path)
-
         return new FlowExecutorContext({
             ...this,
-            steps: trimmed.steps,
-            stepsSize: trimmed.stepsSize,
+            steps: this.currentPath.path.length === 0 ? loggingUtils.trimExecutionInput(steps) : steps,
         })
     }
 
