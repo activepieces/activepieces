@@ -23,6 +23,7 @@ import {
   SidebarSkeleton,
 } from '@/components/ui/sidebar-shadcn';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
+import { ImportFlowButton } from '@/features/flows/lib/Import-flow-button';
 import { NewFlowButton } from '@/features/flows/lib/new-flow-button';
 import { CreateFolderDialog } from '@/features/folders/component/create-folder-dialog';
 import { FolderActions } from '@/features/folders/component/folder-actions';
@@ -236,6 +237,12 @@ function DefaultFolder({
             <Shapes className="size-3.5!" />
             <span>{t('Uncategorized')}</span>
             <div className="ml-auto relative">
+              <ImportFlowButton
+                folderId={UncategorizedFolderId}
+                variant="small"
+                className="opacity-0 group-hover/item:opacity-100"
+                onRefresh={refetch}
+              />
               <NewFlowButton
                 folderId={UncategorizedFolderId}
                 variant="small"
@@ -292,6 +299,12 @@ function RegularFolder({
             <FolderOpen className="size-3.5! hidden group-data-[state=open]/collapsible:block" />
             <span className="truncate">{folder.displayName}</span>
             <div className="flex items-center justify-center ml-auto">
+              <ImportFlowButton
+                folderId={folder.id}
+                variant="small"
+                className="group-hover/item:opacity-100 opacity-0"
+                onRefresh={refetch}
+              />
               <NewFlowButton
                 folderId={folder.id}
                 variant="small"

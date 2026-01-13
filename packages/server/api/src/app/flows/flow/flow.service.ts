@@ -554,7 +554,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flows: [flow.version],
             tags: [],
             blogUrl: '',
-            metadata: null,
+            metadata: {
+                externalId: flow.externalId,
+            },
             author: userMetadata ? `${userMetadata.firstName} ${userMetadata.lastName}` : '',
             categories: [],
             type: TemplateType.SHARED,
