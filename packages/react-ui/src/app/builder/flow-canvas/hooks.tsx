@@ -132,7 +132,7 @@ const useIsFocusInsideListMapperModeInput = ({
   setIsFocusInsideListMapperModeInput,
   isFocusInsideListMapperModeInput,
 }: {
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
   setIsFocusInsideListMapperModeInput: (
     isFocusInsideListMapperModeInput: boolean,
   ) => void;
@@ -185,7 +185,7 @@ export const useFocusOnStep = () => {
 };
 
 export const useResizeCanvas = (
-  containerRef: React.RefObject<HTMLDivElement>,
+  containerRef: React.RefObject<HTMLDivElement | null>,
   setHasCanvasBeenInitialised: (hasCanvasBeenInitialised: boolean) => void,
 ) => {
   const containerSizeRef = useRef({

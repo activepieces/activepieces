@@ -11,7 +11,7 @@ import {
 import { SearchInput } from '../../../components/ui/search-input';
 
 type PiecesSearchInputProps = {
-  searchInputRef: React.RefObject<HTMLInputElement>;
+  searchInputRef: React.RefObject<HTMLInputElement | null>;
   onSearchChange: (query: string) => void;
 };
 

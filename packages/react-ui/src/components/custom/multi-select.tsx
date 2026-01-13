@@ -416,7 +416,7 @@ const MultiSelectContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => {
   const context = useMultiSelect();
 
-  const fragmentRef = React.useRef<DocumentFragment>();
+  const fragmentRef = React.useRef<DocumentFragment | undefined>(undefined);
 
   if (!fragmentRef.current && typeof window !== 'undefined') {
     fragmentRef.current = document.createDocumentFragment();

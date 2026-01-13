@@ -30,7 +30,7 @@ export const Messages = Type.Array(
 export type Messages = Static<typeof Messages>;
 
 interface ChatMessageListProps extends React.HTMLAttributes<HTMLDivElement> {
-  messagesRef?: React.RefObject<HTMLDivElement>;
+  messagesRef?: React.RefObject<HTMLDivElement | null>;
   messages?: Messages;
   chatUI?: ChatUIResponse | null | undefined;
   sendingError?: ApErrorParams | null;

@@ -231,7 +231,7 @@ export const localesMap = {
   [LocalesEnum.CHINESE_TRADITIONAL]: '繁體中文',
 };
 
-export const useElementSize = (ref: RefObject<HTMLElement>) => {
+export const useElementSize = (ref: RefObject<HTMLElement | null>) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
   useEffect(() => {
     const handleResize = (entries: ResizeObserverEntry[]) => {

@@ -21,7 +21,7 @@ type Props<T extends string> = {
   className?: string;
   open: boolean;
   setOpen: (open: boolean) => void;
-  listRef?: React.RefObject<HTMLDivElement>;
+  listRef?: React.RefObject<HTMLDivElement | null>;
 };
 
 export function AutoComplete<T extends string>({

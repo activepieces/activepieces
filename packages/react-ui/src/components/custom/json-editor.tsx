@@ -38,7 +38,7 @@ const tryParseJson = (value: unknown): unknown => {
 type JsonEditorProps = {
   field: ControllerRenderProps<Record<string, any>, string>;
   readonly: boolean;
-  onFocus?: (ref: RefObject<ReactCodeMirrorRef>) => void;
+  onFocus?: (ref: RefObject<ReactCodeMirrorRef | null>) => void;
   className?: string;
 };
 

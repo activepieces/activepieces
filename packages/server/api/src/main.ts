@@ -3,6 +3,7 @@ import './instrumentation'
 
 import dayjs from 'dayjs'
 import { FastifyInstance } from 'fastify'
+import { AppSystemProp } from '@activepieces/server-shared'
 import { appPostBoot } from './app/app'
 import { initializeDatabase } from './app/database'
 import { distributedLock } from './app/database/redis-connections'
@@ -10,11 +11,13 @@ import { system } from './app/helper/system/system'
 import { setupServer } from './app/server'
 import { workerPostBoot } from './app/worker'
 
+const API_PORT = system.getNumber(AppSystemProp.API_PORT) ?? 3000
+
 const start = async (app: FastifyInstance): Promise<void> => {
     try {
         await app.listen({
             host: '0.0.0.0',
-            port: 3000,
+            port: API_PORT,
         })
         if (system.isWorker()) {
             await workerPostBoot(app)

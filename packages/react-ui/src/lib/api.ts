@@ -10,11 +10,25 @@ import qs from 'qs';
 import { authenticationSession } from '@/lib/authentication-session';
 import { ApErrorParams, ErrorCode, isNil } from '@activepieces/shared';
 
+// Allow runtime configuration of API URL for embedding in external apps
+declare global {
+  interface Window {
+    __AP_API_URL__?: string;
+    __AP_SKIP_API_PREFIX__?: boolean;
+  }
+}
+
 export const API_BASE_URL =
-  import.meta.env.MODE === 'cloud'
+  window.__AP_API_URL__ ||
+  (import.meta.env.MODE === 'cloud'
     ? 'https://cloud.activepieces.com'
-    : window.location.origin;
-export const API_URL = `${API_BASE_URL}/api`;
+    : window.location.origin);
+
+// When embedding in external apps, the AP backend routes are at /v1/... directly
+// Set window.__AP_SKIP_API_PREFIX__ = true to skip adding /api prefix
+export const API_URL = window.__AP_SKIP_API_PREFIX__
+  ? API_BASE_URL
+  : `${API_BASE_URL}/api`;
 
 const disallowedRoutes = [
   '/v1/managed-authn/external-token',
@@ -44,9 +58,8 @@ function globalErrorHandler(error: AxiosError) {
       errorCode === ErrorCode.SESSION_EXPIRED ||
       errorCode === ErrorCode.INVALID_BEARER_TOKEN
     ) {
-      authenticationSession.logOut();
       console.log(errorCode);
-      window.location.href = '/sign-in';
+      authenticationSession.logOut(); // This handles navigation
     }
   }
 }

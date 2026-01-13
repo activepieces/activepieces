@@ -88,15 +88,17 @@ export const workerMachine = {
     },
     getInternalApiUrl: (): string => {
         if (environmentVariables.hasAppModules()) {
-            return 'http://127.0.0.1:3000/'
+            const port = environmentVariables.getNumberEnvironment(AppSystemProp.API_PORT) ?? 3000
+            return `http://127.0.0.1:${port}/`
         }
         const url = environmentVariables.getEnvironmentOrThrow(AppSystemProp.FRONTEND_URL)
         return appendSlashAndApi(replaceLocalhost(url))
     },
     getSocketUrlAndPath: (): { url: string, path: string } => {
         if (environmentVariables.hasAppModules()) {
+            const port = environmentVariables.getNumberEnvironment(AppSystemProp.API_PORT) ?? 3000
             return {
-                url: 'http://127.0.0.1:3000/',
+                url: `http://127.0.0.1:${port}/`,
                 path: '/socket.io',
             }
         }

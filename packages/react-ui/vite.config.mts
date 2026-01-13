@@ -24,7 +24,7 @@ export default defineConfig(({ command, mode }) => {
       // allowedHosts: ['your_exposed_localhost'],
       proxy: {
         '/api': {
-          target: 'http://127.0.0.1:3000',
+          target: 'http://127.0.0.1:8080',
           secure: false,
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),

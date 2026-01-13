@@ -39,7 +39,7 @@ export const TodoDetails = ({
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const socket = useSocket();
-  const previousStatus = useRef<Todo['status']>();
+  const previousStatus = useRef<Todo['status'] | undefined>(undefined);
   const { data: todo, isLoading, refetch } = todosHooks.useTodo(todoId);
 
   function detectStatusChange(updatedTodo: Todo) {

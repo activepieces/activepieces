@@ -31,7 +31,7 @@ const CellContext = createContext<CellContextType>({
 
 type CellProviderProps = CellContextType & {
   children: React.ReactNode;
-  containerRef: React.RefObject<HTMLDivElement>;
+  containerRef: React.RefObject<HTMLDivElement | null>;
 };
 
 export const CellProvider = ({

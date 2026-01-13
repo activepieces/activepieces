@@ -19,7 +19,7 @@ export const AllowOnlyLoggedInUserOnlyGuard = ({
   const { reset } = useTelemetry();
   const location = useLocation();
   if (!authenticationSession.isLoggedIn()) {
-    authenticationSession.logOut();
+    authenticationSession.logOut(false); // Don't navigate - let React Router handle it
     reset();
     const searchParams = new URLSearchParams();
     searchParams.set('from', location.pathname + location.search);

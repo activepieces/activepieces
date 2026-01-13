@@ -18,7 +18,7 @@ export function BuilderStateProvider({
   inputSampleData: sampleDataInput,
   ...props
 }: BuilderStateProviderProps) {
-  const storeRef = useRef<BuilderStore>();
+  const storeRef = useRef<BuilderStore | undefined>(undefined);
   const { checkAccess } = useAuthorization();
   const readonly = !checkAccess(Permission.WRITE_FLOW) || props.readonly;
   projectHooks.useReloadPageIfProjectIdChanged(props.flow.projectId);

@@ -26,6 +26,8 @@ services:
       - 'POSTGRES_USER=${AP_POSTGRES_USERNAME}'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
     networks:
       - activepieces
   redis:
@@ -34,6 +36,8 @@ services:
     restart: unless-stopped
     volumes:
       - 'redis_data:/data'
+    ports:
+      - '6379:6379'
     networks:
       - activepieces
 volumes:

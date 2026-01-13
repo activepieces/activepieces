@@ -89,7 +89,11 @@ export const authenticationSession = {
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
     ApStorage.getInstance().setItem(projectIdKey, result.projectId);
-    window.location.href = '/';
+    try {
+      window.location.assign('/');
+    } catch {
+      window.location.reload();
+    }
   },
   switchToProject(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
@@ -109,9 +113,17 @@ export const authenticationSession = {
     ApStorage.getInstance().removeItem(projectIdKey);
     ApStorage.getInstance().removeItem(tokenKey);
   },
-  logOut() {
+  logOut(navigate = true) {
     this.clearSession();
-    window.location.href = '/sign-in';
+    if (navigate) {
+      // Use location.assign for better Firefox compatibility
+      try {
+        window.location.assign('/sign-in');
+      } catch {
+        // If navigation fails (Firefox security), the calling code should handle it
+        console.warn('Navigation blocked, caller should handle redirect');
+      }
+    }
   },
 };
 

@@ -54,7 +54,7 @@ export const LIMIT_QUERY_PARAM = 'limit';
 
 type DataTableAction<TData extends DataWithId> = (
   row: RowDataWithActions<TData>,
-) => JSX.Element;
+) => React.ReactNode;
 
 type ColumnDef<TData, TValue> = TanstackColumnDef<TData, TValue> & {
   notClickable?: boolean;

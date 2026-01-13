@@ -18,7 +18,7 @@ import { AccountSettingsDialog } from './account-settings';
 export const BadgeCelebrate = () => {
   const socket = useSocket();
   const { refetch } = userHooks.useCurrentUser();
-  const cleanupRef = useRef<() => void>();
+  const cleanupRef = useRef<(() => void) | undefined>(undefined);
   const { data: showBadges } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_BADGES,
   );

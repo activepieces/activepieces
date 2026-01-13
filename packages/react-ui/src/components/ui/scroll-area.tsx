@@ -9,7 +9,7 @@ const ScrollArea = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
     viewPortClassName?: string;
     orientation?: 'vertical' | 'horizontal';
-    viewPortRef?: React.RefObject<HTMLDivElement>;
+    viewPortRef?: React.RefObject<HTMLDivElement | null>;
     showGradient?: boolean;
     gradientClassName?: string;
   }
