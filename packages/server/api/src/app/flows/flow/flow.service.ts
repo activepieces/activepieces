@@ -444,7 +444,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                         displayName: lastVersionWithArtifacts.displayName,
                         notes: lastVersionWithArtifacts.notes,
                     })
-                    log.debug(`lastVersion: ${JSON.stringify(lastVersion.notes)}`)
                     // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
                     lastVersion = await flowVersionService(log).applyOperation({
                         userId,
@@ -457,7 +456,6 @@ export const flowService = (log: FastifyBaseLogger) => ({
                         },
                     })
                 }
-                log.debug(`lastVersion: ${JSON.stringify(lastVersion.notes)}, operation: ${JSON.stringify(operation)}`)
                 await flowVersionService(log).applyOperation({
                     userId,
                     projectId,

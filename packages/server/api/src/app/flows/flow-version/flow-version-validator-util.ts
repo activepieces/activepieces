@@ -112,6 +112,16 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
             case FlowOperationType.ADD_NOTE:
                 clonedRequest.request.ownerId = userId
                 break
+            case FlowOperationType.IMPORT_FLOW:{
+               const notes = clonedRequest.request.notes
+               if (!isNil(notes)) {
+                clonedRequest.request.notes = notes.map(note => ({
+                    ...note,
+                    ownerId: userId,
+                }))
+               }
+               break
+            }
             default:
                 break
         }

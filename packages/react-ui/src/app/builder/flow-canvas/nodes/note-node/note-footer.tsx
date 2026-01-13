@@ -17,11 +17,7 @@ export const NoteFooter = ({
   id,
   isDragging,
   creatorId,
-}: {
-  id: string;
-  isDragging?: boolean;
-  creatorId: string | null | undefined;
-}) => {
+}: NoteFooterProps) => {
   const [deleteNote, readonly] = useBuilderStateContext((state) => [
     state.deleteNote,
     state.readonly,
@@ -66,3 +62,9 @@ export const NoteFooter = ({
   );
 };
 NoteFooter.displayName = 'NoteFooter';
+
+type NoteFooterProps = {
+  id: string;
+  isDragging?: boolean;
+  creatorId: string | null | undefined;
+}

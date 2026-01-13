@@ -14,11 +14,7 @@ export const NoteTools = ({
   editor,
   currentColor,
   setCurrentColor,
-}: {
-  editor: Editor;
-  currentColor: NoteColorVariant;
-  setCurrentColor: (color: NoteColorVariant) => void;
-}) => {
+}: NoteToolsProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   return (
     <div ref={containerRef} className="absolute -top-[50px] w-full left-0">
@@ -49,11 +45,7 @@ const NoteColorPicker = ({
   currentColor,
   setCurrentColor,
   container,
-}: {
-  currentColor: NoteColorVariant;
-  setCurrentColor: (color: NoteColorVariant) => void;
-  container: HTMLDivElement | null;
-}) => {
+}: NoteColorPickerProps) => {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -96,3 +88,15 @@ const NoteColorPicker = ({
   );
 };
 NoteTools.displayName = 'NoteTools';
+
+type NoteToolsProps = {
+  editor: Editor;
+  currentColor: NoteColorVariant;
+  setCurrentColor: (color: NoteColorVariant) => void;
+}
+
+type NoteColorPickerProps = {
+  currentColor: NoteColorVariant;
+  setCurrentColor: (color: NoteColorVariant) => void;
+  container: HTMLDivElement | null;
+}
