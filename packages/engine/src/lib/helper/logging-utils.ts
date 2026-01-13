@@ -6,7 +6,7 @@ import PriorityQueue from 'priority-queue-typescript'
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const ERROR_OFFSET = 256 * 1024
 const DEFAULT_MAX_LOG_SIZE_FOR_TESTING = '10'
-const MAX_LOG_SIZE = Number(process.env.AP_MAX_FILE_SIZE_MB ?? DEFAULT_MAX_LOG_SIZE_FOR_TESTING) * 1024 * 1024
+const MAX_LOG_SIZE = Number(process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB ?? DEFAULT_MAX_LOG_SIZE_FOR_TESTING) * 1024 * 1024
 const MAX_SIZE_FOR_ALL_ENTRIES = MAX_LOG_SIZE - ERROR_OFFSET
 const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = sizeof(TRUNCATION_TEXT_PLACEHOLDER)
 const nonTruncatableKeys: Key[] = ['status', 'duration', 'type']

@@ -153,6 +153,7 @@ function getEnvironmentVariables(): Record<string, string | undefined> {
         AP_EXECUTION_MODE: workerMachine.getSettings().EXECUTION_MODE,
         AP_DEV_PIECES: workerMachine.getSettings().DEV_PIECES.join(','),
         AP_MAX_FILE_SIZE_MB: workerMachine.getSettings().MAX_FILE_SIZE_MB.toString(),
+        AP_MAX_FLOW_RUN_LOG_SIZE_MB: workerMachine.getSettings().MAX_FLOW_RUN_LOG_SIZE_MB.toString(),
         AP_FILE_STORAGE_LOCATION: workerMachine.getSettings().FILE_STORAGE_LOCATION,
         AP_S3_USE_SIGNED_URLS: workerMachine.getSettings().S3_USE_SIGNED_URLS,
     }
