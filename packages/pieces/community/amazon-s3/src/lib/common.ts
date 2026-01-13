@@ -31,7 +31,7 @@ export function createSecretsManagerClient(auth: {
       accessKeyId: auth.accessKeyId,
       secretAccessKey: auth.secretAccessKey,
     },
-    region: auth.region || 'eu-central-1',
+    region: auth.region,
     endpoint: undefined,
   });
   return client;
