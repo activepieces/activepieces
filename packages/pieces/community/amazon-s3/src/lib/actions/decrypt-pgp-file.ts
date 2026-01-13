@@ -60,7 +60,7 @@ export const decryptPgpFile = createAction({
     const secretsClient = createSecretsManagerClient({
       accessKeyId: accessKeyId,
       secretAccessKey: secretAccessKey,
-      region: secretsManagerRegion || region || 'eu-central-1',
+      region: secretsManagerRegion || region,
     });
 
     // Fetch the secret key from AWS Secrets Manager
@@ -87,7 +87,7 @@ export const decryptPgpFile = createAction({
       }
       if (error.name === 'ResourceNotFoundException') {
         throw new Error(
-          `Secret ${secretArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || region || 'eu-central-1'}.`
+          `Secret ${secretArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || region}.`
         );
       }
       if (error.name === 'InvalidParameterException') {
@@ -124,7 +124,7 @@ export const decryptPgpFile = createAction({
         }
         if (error.name === 'ResourceNotFoundException') {
           throw new Error(
-            `Passphrase secret ${passphraseArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || region || 'eu-central-1'}.`
+            `Passphrase secret ${passphraseArn} not found. Please verify the secret ARN is correct and exists in region ${secretsManagerRegion || region}.`
           );
         }
         if (error.name === 'InvalidParameterException') {
