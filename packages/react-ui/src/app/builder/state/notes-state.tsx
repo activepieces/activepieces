@@ -1,37 +1,23 @@
 import { StoreApi } from 'zustand';
 
+import { authenticationSession } from '@/lib/authentication-session';
+import {
+  AddNoteRequest,
+  FlowOperationType,
+  NoteColorVariant,
+  Note,
+  apId,
+} from '@activepieces/shared';
+
 import { BuilderState } from '../builder-hooks';
 
 export enum NoteDragOverlayMode {
   CREATE = 'create',
   MOVE = 'move',
 }
-export enum NoteColorVariant {
-  ORANGE = 'orange',
-  RED = 'red',
-  GREEN = 'green',
-  BLUE = 'blue',
-  PURPLE = 'purple',
-  YELLOW = 'yellow',
-}
-export type Note = {
-  content: string;
-  creator: string;
-  position: {
-    x: number;
-    y: number;
-  };
-  size: {
-    width: number;
-    height: number;
-  };
-  color: NoteColorVariant;
-  id: string;
-};
 
 export type NotesState = {
-  notes: Note[];
-  addNote: (note: Note) => void;
+  addNote: (request: Omit<AddNoteRequest, 'id'>) => void;
   deleteNote: (id: string) => void;
   moveNote: (id: string, position: { x: number; y: number }) => void;
   resizeNote: (id: string, size: { width: number; height: number }) => void;
@@ -47,59 +33,103 @@ export type NotesState = {
 };
 
 export const createNotesState = (
-  notes: Note[],
   get: StoreApi<BuilderState>['getState'],
   set: StoreApi<BuilderState>['setState'],
 ): NotesState => {
   return {
-    notes,
     noteDragOverlayMode: null,
     setNoteDragOverlayMode: (
       noteDragOverlayMode: NoteDragOverlayMode | null,
     ) => {
       set({ noteDragOverlayMode });
     },
-    addNote: (note: Note) => {
-      set((state) => {
-        return { notes: [...state.notes, note], noteDragOverlayMode: null };
+    addNote: (request: Omit<AddNoteRequest, 'id'>) => {
+      const id = apId();
+      get().applyOperation({
+        type: FlowOperationType.ADD_NOTE,
+        request: {
+          ...request,
+          id,
+        },
       });
-    },
-    updateContent: (id: string, content: string) => {
-      set((state) => {
-        return {
-          notes: state.notes.map((note) =>
-            note.id === id ? { ...note, content } : note,
-          ),
+      const notes = get().flowVersion.notes;
+      const noteIndex = notes.findIndex((note) => note.id === id);
+      if (noteIndex !== -1) {
+        notes[noteIndex] = {
+          ...notes[noteIndex],
+          ownerId: authenticationSession.getCurrentUserId() ?? null,
         };
-      });
-    },
-    deleteNote: (id: string) => {
-      set((state) => {
+      }
+      notes[noteIndex].ownerId =
+        authenticationSession.getCurrentUserId() ?? null;
+      set(() => {
         return {
-          notes: state.notes.filter((note) => note.id !== id),
+          flowVersion: {
+            ...get().flowVersion,
+            notes,
+          },
+          draggedNote: null,
           noteDragOverlayMode: null,
         };
       });
     },
+    updateContent: (id: string, content: string) => {
+      const note = get().getNoteById(id);
+      if (!note) {
+        return;
+      }
+      get().applyOperation({
+        type: FlowOperationType.UPDATE_NOTE,
+        request: {
+          ...note,
+          content,
+        },
+      });
+    },
+    deleteNote: (id: string) => {
+      get().applyOperation({
+        type: FlowOperationType.DELETE_NOTE,
+        request: {
+          id: id,
+        },
+      });
+    },
     moveNote: (id: string, position: { x: number; y: number }) => {
-      set((state) => {
+      set(() => {
         return {
-          notes: state.notes.map((note) =>
-            note.id === id ? { ...note, position } : note,
-          ),
           noteDragOverlayMode: null,
           draggedNote: null,
         };
       });
+      const note = get().getNoteById(id);
+      if (!note) {
+        return;
+      }
+      get().applyOperation({
+        type: FlowOperationType.UPDATE_NOTE,
+        request: {
+          ...note,
+          position,
+        },
+      });
     },
     resizeNote: (id: string, size: { width: number; height: number }) => {
-      set((state) => {
+      set(() => {
         return {
-          notes: state.notes.map((note) =>
-            note.id === id ? { ...note, size } : note,
-          ),
           noteDragOverlayMode: null,
+          draggedNote: null,
         };
+      });
+      const note = get().getNoteById(id);
+      if (!note) {
+        return;
+      }
+      get().applyOperation({
+        type: FlowOperationType.UPDATE_NOTE,
+        request: {
+          ...note,
+          size,
+        },
       });
     },
     draggedNote: null,
@@ -107,15 +137,19 @@ export const createNotesState = (
       set({ draggedNote: note, noteDragOverlayMode: mode });
     },
     getNoteById: (id: string) => {
-      return get().notes.find((note) => note.id === id) ?? null;
+      return get().flowVersion.notes.find((note) => note.id === id) ?? null;
     },
     updateNoteColor: (id: string, color: NoteColorVariant) => {
-      set((state) => {
-        return {
-          notes: state.notes.map((note) =>
-            note.id === id ? { ...note, color } : note,
-          ),
-        };
+      const note = get().getNoteById(id);
+      if (!note) {
+        return;
+      }
+      get().applyOperation({
+        type: FlowOperationType.UPDATE_NOTE,
+        request: {
+          ...note,
+          color,
+        },
       });
     },
   };

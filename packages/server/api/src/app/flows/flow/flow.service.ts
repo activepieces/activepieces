@@ -69,6 +69,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             savedFlow.id,
             {
                 displayName: request.displayName,
+                notes: [],
             },
         )
 
@@ -403,6 +404,24 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 })
                 break
             }
+            case FlowOperationType.ADD_NOTE:
+            case FlowOperationType.UPDATE_NOTE:
+            case FlowOperationType.DELETE_NOTE: {
+                const lastVersion = await flowVersionService(
+                    log,
+                ).getFlowVersionOrThrow({
+                    flowId: id,
+                    versionId: undefined,
+                })
+                await flowVersionService(log).applyOperation({
+                    userId,
+                    projectId,
+                    platformId,
+                    flowVersion: lastVersion,
+                    userOperation: operation,
+                })
+                break
+            }
             default: {
                 let lastVersion = await flowVersionService(
                     log,
@@ -423,8 +442,8 @@ export const flowService = (log: FastifyBaseLogger) => ({
                         log,
                     ).createEmptyVersion(id, {
                         displayName: lastVersionWithArtifacts.displayName,
+                        notes: lastVersionWithArtifacts.notes,
                     })
-
                     // Duplicate the artifacts from the previous version, otherwise they will be deleted during update operation
                     lastVersion = await flowVersionService(log).applyOperation({
                         userId,
@@ -554,7 +573,9 @@ export const flowService = (log: FastifyBaseLogger) => ({
             flows: [flow.version],
             tags: [],
             blogUrl: '',
-            metadata: null,
+            metadata: {
+                externalId: flow.externalId,
+            },
             author: userMetadata ? `${userMetadata.firstName} ${userMetadata.lastName}` : '',
             categories: [],
             type: TemplateType.SHARED,

@@ -3,7 +3,7 @@ import { FlowAction, FlowActionType } from '../actions/action'
 import { FlowVersion } from '../flow-version'
 import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 import { flowStructureUtil } from '../util/flow-structure-util'
-import { FlowOperationRequest, FlowOperationType, ImportFlowRequest, StepLocationRelativeToParent } from './index'
+import { AddNoteRequest, DeleteNoteRequest, FlowOperationRequest, FlowOperationType, ImportFlowRequest, StepLocationRelativeToParent } from './index'
 
 function createDeleteActionOperation(actionName: string): FlowOperationRequest {
     return {
@@ -26,7 +26,7 @@ function createChangeNameOperation(displayName: string): FlowOperationRequest {
     }
 }
 
-function _getImportOperations(step: FlowAction | FlowTrigger | undefined): FlowOperationRequest[] {
+function _getImportOperationsForSteps(step: FlowAction | FlowTrigger | undefined): FlowOperationRequest[] {
     const steps: FlowOperationRequest[] = []
     while (step) {
         if (step.nextAction) {
@@ -50,7 +50,7 @@ function _getImportOperations(step: FlowAction | FlowTrigger | undefined): FlowO
                             action: removeAnySubsequentAction(step.firstLoopAction),
                         },
                     })
-                    steps.push(..._getImportOperations(step.firstLoopAction))
+                    steps.push(..._getImportOperationsForSteps(step.firstLoopAction))
                 }
                 break
             }
@@ -67,7 +67,7 @@ function _getImportOperations(step: FlowAction | FlowTrigger | undefined): FlowO
                                     action: removeAnySubsequentAction(child),
                                 },
                             })
-                            steps.push(..._getImportOperations(child))
+                            steps.push(..._getImportOperationsForSteps(child))
                         }
                     }
                 }
@@ -86,6 +86,25 @@ function _getImportOperations(step: FlowAction | FlowTrigger | undefined): FlowO
     return steps
 }
 
+function _getImportOperationsForNotes(flowVersion: FlowVersion, request: ImportFlowRequest): FlowOperationRequest[] { 
+
+    const deleteOperations: DeleteNoteRequest[] = flowVersion.notes.map(note => ({
+        id: note.id,
+    }))
+    const addOperations: AddNoteRequest[] = (request.notes || []).map(note => (note))
+
+    const operations: FlowOperationRequest[] = [
+        ...deleteOperations.map(operation => ({
+            type: FlowOperationType.DELETE_NOTE as const,
+            request: operation,
+        })),
+        ...addOperations.map(operation => ({
+            type: FlowOperationType.ADD_NOTE as const,
+            request: operation,
+        })),
+    ]
+    return operations
+}
 function removeAnySubsequentAction(action: FlowAction): FlowAction {
     const clonedAction: FlowAction = JSON.parse(JSON.stringify(action))
     switch (clonedAction.type) {
@@ -117,14 +136,15 @@ function _importFlow(flowVersion: FlowVersion, request: ImportFlowRequest): Flow
         createDeleteActionOperation(action.name),
     )
 
-    const importOperations = _getImportOperations(request.trigger)
-
+    const importOperations = _getImportOperationsForSteps(request.trigger)
+ 
     return [
         createChangeNameOperation(request.displayName),
         ...deleteOperations,
         createUpdateTriggerOperation(request.trigger),
         ...importOperations,
+        ..._getImportOperationsForNotes(flowVersion, request),
     ]
 }
 
-export { _importFlow, _getImportOperations }
+export { _importFlow, _getImportOperationsForSteps as _getImportOperations }

@@ -51,6 +51,8 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
       socket.disconnect();
     }
     return () => {
+      socket.off('connect');
+      socket.off('disconnect');
       socket.disconnect();
     };
   }, [token, projectId]);

@@ -6,8 +6,8 @@ import {
   Map,
   Minus,
   MousePointer,
-  NotebookPen,
   Plus,
+  StickerIcon,
 } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
 
@@ -21,7 +21,7 @@ import {
 import { isMac } from '@/lib/utils';
 
 import { useBuilderStateContext } from '../builder-hooks';
-import { NoteColorVariant, NoteDragOverlayMode } from '../state/notes-state';
+import { NoteDragOverlayMode } from '../state/notes-state';
 
 import { flowCanvasConsts } from './utils/consts';
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
@@ -173,13 +173,14 @@ const CanvasControls = ({
   const [noteDragOverlayMode, setDraggedNote] = useBuilderStateContext(
     (state) => [state.noteDragOverlayMode, state.setDraggedNote],
   );
-  const [setPanningMode, panningMode, showMinimap, setShowMinimap] =
+  const [setPanningMode, panningMode, showMinimap, setShowMinimap, readonly] =
     useBuilderStateContext((state) => {
       return [
         state.setPanningMode,
         state.panningMode,
         state.showMinimap,
         state.setShowMinimap,
+        state.readonly,
       ];
     });
   const spacePressed = useKeyPress('Space');
@@ -249,34 +250,37 @@ const CanvasControls = ({
             <MousePointer className="size-4" />
           </Button>
         </CanvasButtonWrapper>
-        <CanvasButtonWrapper tooltip={t('Add note')}>
-          <Button
-            variant={
-              noteDragOverlayMode === NoteDragOverlayMode.CREATE
-                ? 'default'
-                : 'ghost'
-            }
-            size="icon"
-            onClick={() => {
-              setDraggedNote(
-                {
-                  id: '',
-                  content: '',
-                  creator: '',
-                  position: { x: 0, y: 0 },
-                  size: {
-                    width: flowCanvasConsts.NOTE_CREATION_OVERLAY_WIDTH,
-                    height: flowCanvasConsts.NOTE_CREATION_OVERLAY_HEIGHT,
+        {!readonly && (
+          <CanvasButtonWrapper tooltip={t('Add note')}>
+            <Button
+              variant={
+                noteDragOverlayMode === NoteDragOverlayMode.CREATE
+                  ? 'default'
+                  : 'ghost'
+              }
+              size="icon"
+              onClick={() => {
+                setDraggedNote(
+                  {
+                    id: '',
+                    content: '',
+                    createdAt: '',
+                    updatedAt: '',
+                    position: { x: 0, y: 0 },
+                    size: {
+                      width: flowCanvasConsts.NOTE_CREATION_OVERLAY_WIDTH,
+                      height: flowCanvasConsts.NOTE_CREATION_OVERLAY_HEIGHT,
+                    },
+                    color: flowCanvasConsts.DEFAULT_NOTE_COLOR,
                   },
-                  color: NoteColorVariant.YELLOW,
-                },
-                NoteDragOverlayMode.CREATE,
-              );
-            }}
-          >
-            <NotebookPen className="size-4" />
-          </Button>
-        </CanvasButtonWrapper>
+                  NoteDragOverlayMode.CREATE,
+                );
+              }}
+            >
+              <StickerIcon className="size-4" />
+            </Button>
+          </CanvasButtonWrapper>
+        )}
       </div>
       <div className="grow"></div>
     </div>
