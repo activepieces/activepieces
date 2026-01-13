@@ -36,7 +36,7 @@ beforeAll(async () => {
 afterAll(async () => {
     await databaseConnection().destroy()
     await app?.close()
-},600000)
+}, 600000)
 
 describe('authorizeOrThrow', () => {
     describe('PUBLIC routes', () => {
