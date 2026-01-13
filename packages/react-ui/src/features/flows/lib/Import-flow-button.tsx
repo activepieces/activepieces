@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Upload } from 'lucide-react';
+import { Import } from 'lucide-react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { useEmbedding } from '@/components/embed-provider';
@@ -58,10 +58,10 @@ export const ImportFlowButton = ({
               data-testid="import-flow-button"
             >
               {variant === 'small' ? (
-                <Upload className="h-4 w-4" />
+                <Import className="h-4 w-4" />
               ) : (
                 <>
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Import className="h-4 w-4 mr-2" />
                   <span>{t('Import')}</span>
                 </>
               )}
