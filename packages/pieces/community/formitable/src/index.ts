@@ -43,7 +43,7 @@ export const formitable = createPiece({
   auth: formitableAuth,
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/formitable.png',
-  authors: [],
+  authors: ['onyedikachi-david'],
   categories: [PieceCategory.SALES_AND_CRM],
   actions: [],
   triggers: formitableTriggers,
