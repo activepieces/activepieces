@@ -228,14 +228,7 @@ export const createFlowState = (
             );
             break;
           }
-          case FlowOperationType.ADD_NOTE: {
-            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
-            break;
-          }
-          case FlowOperationType.UPDATE_NOTE: {
-            debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
-            break;
-          }
+          case FlowOperationType.UPDATE_NOTE:
           case FlowOperationType.DELETE_NOTE: {
             debouncedAddToFlowUpdatesQueue(operation.request.id, updateRequest);
             break;

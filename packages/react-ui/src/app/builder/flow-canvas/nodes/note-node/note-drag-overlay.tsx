@@ -63,7 +63,6 @@ const NoteDragOverlay = () => {
               y: rect.top,
             });
             addNote({
-              id: apId(),
               content: flowCanvasConsts.DEFAULT_NOTE_CONTENT,
               position: positionOnCanvas,
               size: draggedNote.size,

@@ -153,6 +153,9 @@ export const flowVersionService = (log: FastifyBaseLogger) => ({
                 log,
                 userId,
             )
+            if(operation.type === FlowOperationType.ADD_NOTE) {
+              mutatedFlowVersion.notes[mutatedFlowVersion.notes.length - 1].ownerId = userId
+            }
         }
 
         mutatedFlowVersion.updated = dayjs().toISOString()

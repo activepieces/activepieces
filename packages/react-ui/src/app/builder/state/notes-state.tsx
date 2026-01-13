@@ -46,14 +46,16 @@ export const createNotesState = (
     addNote: (request: CreateNoteRequest) => {
       get().applyOperation({
         type: FlowOperationType.ADD_NOTE,
-        request: {
-          ...request,
-          id: apId(),
-          ownerId: authenticationSession.getCurrentUserId() ?? null,
-        },
+        request
       });
+      const notes = get().flowVersion.notes;
+      notes[notes.length - 1].ownerId = authenticationSession.getCurrentUserId() ?? null;
       set(() => {
         return {
+          flowVersion: {
+            ...get().flowVersion,
+            notes
+          },
           draggedNote: null,
           noteDragOverlayMode: null,
         };

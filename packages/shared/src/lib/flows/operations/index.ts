@@ -62,7 +62,7 @@ export const UpdateNoteRequest = Type.Omit(Note, [ 'createdAt', 'updatedAt'])
 export const DeleteNoteRequest = Type.Object({
     id: Type.String(),
 })
-export const CreateNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt'])
+export const CreateNoteRequest = Type.Omit(Note, ['createdAt', 'updatedAt', 'ownerId','id'])
 
 export const AddBranchRequest = Type.Object({
     branchIndex: Type.Number(),
