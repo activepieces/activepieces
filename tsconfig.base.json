@@ -473,6 +473,9 @@
       "@activepieces/piece-time-ops": [
         "packages/pieces/community/time-ops/src/index.ts"
       ],
+      "@activepieces/piece-formitable": [
+        "packages/pieces/community/formitable/src/index.ts"
+      ],
       "@activepieces/piece-gender-api": [
         "packages/pieces/community/gender-api/src/index.ts"
       ],
