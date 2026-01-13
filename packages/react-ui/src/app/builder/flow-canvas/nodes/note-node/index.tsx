@@ -140,7 +140,9 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
         >
           <MarkdownInput
             ref={editorRef}
-            key={readonly ? 'readonly' : 'editable'}
+            key={`${localNote.id}-${readonly ? 'readonly' : 'editable'}-${
+              localNote.position.x
+            }-${localNote.position.y}`}
             disabled={isDragging || readonly}
             initialValue={localNote.content}
             className={cn('text-xs h-full', NoteColorVariantClassName[color], {

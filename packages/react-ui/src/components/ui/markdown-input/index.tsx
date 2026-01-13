@@ -74,7 +74,7 @@ export const MarkdownInput = React.forwardRef<
       onBlur: () => {
         window.getSelection()?.removeAllRanges();
         if (onlyEditableOnDoubleClick) {
-          editor.setEditable(false);
+          editor.setEditable(false, false);
         }
       },
       parseOptions: {
@@ -102,7 +102,7 @@ export const MarkdownInput = React.forwardRef<
         onMouseUp={stopEventPropagation}
         onDoubleClick={() => {
           if (onlyEditableOnDoubleClick && !disabled) {
-            editor.setEditable(true);
+            editor.setEditable(true, false);
           }
         }}
       >
