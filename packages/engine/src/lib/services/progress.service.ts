@@ -92,8 +92,9 @@ const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Pro
         const { flowExecutorContext, engineConstants } = params
         const trimmedSteps = await flowExecutorContext.trimmedSteps()
         const executionState = await logSerializer.serialize({
-            executionState: {
+            executionState: {   
                 steps: trimmedSteps,
+                tags: Array.from(flowExecutorContext.tags),
             },
         })
         if (isNil(engineConstants.logsUploadUrl)) {
