@@ -2,14 +2,10 @@ import { useReactFlow } from '@xyflow/react';
 import { useRef, useState } from 'react';
 
 import { useSidebar } from '@/components/ui/sidebar-shadcn';
-import { userHooks } from '@/hooks/user-hooks';
-import { apId, isNil } from '@activepieces/shared';
+import { isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../../builder-hooks';
-import {
-  NoteColorVariant,
-  NoteDragOverlayMode,
-} from '../../../state/notes-state';
+import { NoteDragOverlayMode } from '../../../state/notes-state';
 import {
   useCursorPosition,
   useCursorPositionEffect,
@@ -48,11 +44,7 @@ const NoteDragOverlay = () => {
     setOverlayPosition(position);
   });
   const hideOverlay = isNil(draggedNote) || isNil(noteDragOverlayMode);
-  const { data: user } = userHooks.useCurrentUser();
-  const userFullName =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.email;
+
   if (hideOverlay) {
     return null;
   }
@@ -71,12 +63,10 @@ const NoteDragOverlay = () => {
               y: rect.top,
             });
             addNote({
-              id: apId(),
               content: flowCanvasConsts.DEFAULT_NOTE_CONTENT,
-              creator: userFullName ?? '',
               position: positionOnCanvas,
               size: draggedNote.size,
-              color: NoteColorVariant.YELLOW,
+              color: flowCanvasConsts.DEFAULT_NOTE_COLOR,
             });
           }
         }

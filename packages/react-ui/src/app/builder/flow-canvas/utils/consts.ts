@@ -1,3 +1,5 @@
+import { NoteColorVariant } from '@activepieces/shared';
+
 import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from '../edges/loop-return-edge';
 import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from '../edges/loop-start-edge';
 import { ApRouterEndCanvasEdge } from '../edges/router-end-edge';
@@ -86,6 +88,7 @@ export const flowCanvasConsts = {
   LABEL_HEIGHT,
   ARC_LEFT_UP,
   VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
+
   doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
   edgeTypes: {
     [ApEdgeType.STRAIGHT_LINE]: ApStraightLineCanvasEdge,
@@ -115,5 +118,6 @@ export const flowCanvasConsts = {
   BUILDER_NAVIGATION_SIDEBAR_ID: 'builder-navigation-sidebar',
   NODE_SELECTION_RECT_CLASS_NAME: 'react-flow__nodesselection-rect',
   SIDEBAR_ANIMATION_DURATION: 200,
-  DEFAULT_NOTE_CONTENT: 'This is a note...',
+  DEFAULT_NOTE_CONTENT: '<br>',
+  DEFAULT_NOTE_COLOR: NoteColorVariant.BLUE,
 };
