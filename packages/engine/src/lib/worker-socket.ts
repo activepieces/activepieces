@@ -16,7 +16,6 @@ import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'
 import { utils } from './utils'
 
-const WORKER_ID = process.env.WORKER_ID
 const WS_URL = 'ws://127.0.0.1:12345'
 
 let socket: Socket | undefined
@@ -28,15 +27,12 @@ async function executeFromSocket(operation: EngineOperation, operationType: Engi
 }
 
 export const workerSocket = {
-    init: (): void => {
-        if (isNil(WORKER_ID)) {
-            throw new EngineGenericError('WorkerIdNotSetError', 'WORKER_ID environment variable is not set')
-        }
-
+    init: (sandboxId: string): void => {
+   
         socket = io(WS_URL, {
             path: '/worker/ws',
             auth: {
-                workerId: WORKER_ID,
+                sandboxId: sandboxId,
             },
             autoConnect: true,
             reconnection: true,
@@ -48,7 +44,7 @@ export const workerSocket = {
             const engineStdout: EngineStdout = {
                 message: args.join(' ') + '\n',
             }
-            socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
+            socket?.emit('message', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
             originalLog.apply(console, args)
         }
 
@@ -57,7 +53,7 @@ export const workerSocket = {
             const engineStdout: EngineStdout = {
                 message: args.join(' ') + '\n',
             }
-            socket?.emit(EngineSocketEvent.ENGINE_STDOUT, engineStdout)
+            socket?.emit('message', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
             originalWarn.apply(console, args)
         }
 
@@ -70,7 +66,7 @@ export const workerSocket = {
             const engineStderr: EngineStderr = {
                 message: sanitizedArgs.join(' ') + '\n',
             }
-            socket?.emit(EngineSocketEvent.ENGINE_STDERR, engineStderr)
+            socket?.emit('message', { event: EngineSocketEvent.ENGINE_STDERR, payload: engineStderr })
 
             originalError.apply(console, sanitizedArgs)
         }
@@ -98,7 +94,7 @@ export const workerSocket = {
         type: EngineSocketEvent,
         data: unknown,
     ): Promise<void> => {
-        await emitWithAck(socket, type, data, {
+        await emitWithAck(socket, 'message', { event: type, payload: data }, {
             timeoutMs: 4000,
             retries: 4,
             retryDelayMs: 1000,

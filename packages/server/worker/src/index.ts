@@ -1,5 +1,5 @@
 export * from './lib/utils/machine'
-export * from './lib/compute/engine-runner-types'
+export * from './lib/compute/operation-handler'
 export * from './lib/consume/executors/flow-job-executor'
 export * from './lib/utils/webhook-utils'
 export * from './lib/flow-worker'
