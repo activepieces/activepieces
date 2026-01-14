@@ -85,5 +85,11 @@
   "Triggers when a new email is received in the inbox.": "Se déclenche lorsqu'un nouvel e-mail est reçu dans la boîte de réception.",
   "Triggers when a new email is delivered into the specified folder.": "Déclenche lorsqu'un nouvel e-mail est envoyé dans le dossier spécifié.",
   "Triggers when a new email containing one or more attachments arrives.": "Déclenche lorsqu'un nouvel e-mail contenant une ou plusieurs pièces jointes arrive.",
-  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Surveiller les pièces jointes dans un dossier spécifique. Laisser vide pour surveiller tous les dossiers."
+  "From (Sender Email)": "De (Courriel expéditeur)",
+  "To (Recipient Email)": "À (Courriel du destinataire)",
+  "Attachment Name Filter": "Filtre de nom de pièce jointe",
+  "Filter emails from a specific sender (optional). Leave empty to for all senders.": "Filtrer les e-mails d'un expéditeur spécifique (facultatif). Laisser vide pour tous les expéditeurs.",
+  "Filter emails to a specific recipient (optional). Leave empty to for all recipients.": "Filtrer les e-mails à un destinataire spécifique (facultatif). Laisser vide pour tous les destinataires.",
+  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Surveiller les pièces jointes dans un dossier spécifique. Laisser vide pour surveiller tous les dossiers.",
+  "Filter attachments by name (contains). Leave empty to include all attachments.": "Filtrer les pièces jointes par nom (contient). Laisser vide pour inclure toutes les pièces jointes."
 }
