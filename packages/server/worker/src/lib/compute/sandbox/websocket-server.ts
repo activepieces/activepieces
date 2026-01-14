@@ -54,6 +54,7 @@ export const sandboxWebsocketServer = {
         listeners[sandboxId] = listener
     },
     removeListener(sandboxId: string): void {
+        // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
         delete listeners[sandboxId]
     },
     isConnected(sandboxId: string): boolean {

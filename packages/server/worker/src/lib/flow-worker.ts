@@ -5,10 +5,10 @@ import { appSocket } from './app-socket'
 import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
 import { sandboxPool } from './compute/sandbox/sandbox-pool'
+import { sandboxWebsocketServer } from './compute/sandbox/websocket-server'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
-import { sandboxWebsocketServer } from './compute/sandbox/websocket-server'
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,

@@ -3,7 +3,6 @@ import { FastifyBaseLogger } from 'fastify'
 import { nanoid } from 'nanoid'
 import { workerMachine } from '../../utils/machine'
 import { createSandbox, Sandbox } from './sandbox'
-import { sandboxWebsocketServer } from './websocket-server'
 
 const sandboxes: Map<string, Sandbox> = new Map()
 let sandboxQueue: string[] = []
@@ -18,7 +17,7 @@ export const sandboxPool = {
     getFreeSandboxes: () => {
         return sandboxQueue.length
     },
-    init: (log: FastifyBaseLogger) => {
+    init: (_log: FastifyBaseLogger) => {
         workerConcurrency = workerMachine.getSettings().WORKER_CONCURRENCY
         sandboxMemoryLimit = Math.floor(parseInt(workerMachine.getSettings().SANDBOX_MEMORY_LIMIT) / 1024)
         reusable = canReuseWorkers()
