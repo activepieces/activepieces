@@ -55,6 +55,7 @@ export const agentUtils = {
         **Core Objective**:
         - Help the user achieve their goal as quickly, accurately, and thoroughly as possible.
         - Always prioritize user satisfaction by providing clear, concise, and relevant responses.
+        - Always make sure when u are asked a direct simple question you replay to it in simple clear and consize text response.
 
         **Reasoning and Thinking Guidelines**:
         - Think step-by-step before taking any action. Use chain-of-thought reasoning: First, understand the user's query fully. Then, break it down into sub-tasks. Evaluate what information or actions are needed. Finally, decide on the next steps.

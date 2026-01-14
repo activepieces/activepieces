@@ -1,5 +1,6 @@
 import { api } from '@/lib/api';
 import {
+  AIProviderModel,
   AIProviderWithoutSensitiveData,
   CreateAIProviderRequest,
   UpdateAIProviderRequest,
@@ -8,6 +9,9 @@ import {
 export const aiProviderApi = {
   list() {
     return api.get<AIProviderWithoutSensitiveData[]>('/v1/ai-providers');
+  },
+  listModelsForProvider(provider: string) {
+    return api.get<AIProviderModel[]>(`/v1/ai-providers/${provider}/models`);
   },
   upsert(request: CreateAIProviderRequest): Promise<void> {
     return api.post('/v1/ai-providers', request);
