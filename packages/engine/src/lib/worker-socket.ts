@@ -32,17 +32,18 @@ export const workerSocket = {
             auth: {
                 sandboxId,
             },
-            autoConnect: true,
+            autoConnect: false,
             reconnection: true,
         })
 
+        
         // Redirect console.log/error/warn to socket
         const originalLog = console.log
         console.log = function (...args): void {
             const engineStdout: EngineStdout = {
                 message: args.join(' ') + '\n',
             }
-            socket?.emit('message', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
+            socket?.emit('command', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
             originalLog.apply(console, args)
         }
 
@@ -51,7 +52,7 @@ export const workerSocket = {
             const engineStdout: EngineStdout = {
                 message: args.join(' ') + '\n',
             }
-            socket?.emit('message', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
+            socket?.emit('command', { event: EngineSocketEvent.ENGINE_STDOUT, payload: engineStdout })
             originalWarn.apply(console, args)
         }
 
@@ -64,7 +65,7 @@ export const workerSocket = {
             const engineStderr: EngineStderr = {
                 message: sanitizedArgs.join(' ') + '\n',
             }
-            socket?.emit('message', { event: EngineSocketEvent.ENGINE_STDERR, payload: engineStderr })
+            socket?.emit('command', { event: EngineSocketEvent.ENGINE_STDERR, payload: engineStderr })
 
             originalError.apply(console, sanitizedArgs)
         }
@@ -85,14 +86,14 @@ export const workerSocket = {
             }
         })
 
-
+        socket.connect()
     },
 
     sendToWorkerWithAck: async (
         type: EngineSocketEvent,
         data: unknown,
     ): Promise<void> => {
-        await emitWithAck(socket, 'message', { event: type, payload: data }, {
+        await emitWithAck(socket, 'command', { event: type, payload: data }, {
             timeoutMs: 4000,
             retries: 4,
             retryDelayMs: 1000,
@@ -103,7 +104,7 @@ export const workerSocket = {
         const engineStderr: EngineStderr = {
             message: inspect(error),
         }
-        await emitWithAck(socket, EngineSocketEvent.ENGINE_STDERR, engineStderr, {
+        await emitWithAck(socket, 'command', { event: EngineSocketEvent.ENGINE_STDERR, payload: engineStderr }, {
             timeoutMs: 3000,
             retries: 4,
             retryDelayMs: 1000,

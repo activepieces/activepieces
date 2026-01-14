@@ -8,6 +8,7 @@ import { sandboxPool } from './compute/sandbox/sandbox-pool'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
+import { sandboxWebsocketServer } from './compute/sandbox/websocket-server'
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,
@@ -17,6 +18,8 @@ export const runsMetadataQueue = runsMetadataQueueFactory({
 export const flowWorker = (log: FastifyBaseLogger) => ({
     async init({ workerToken: token, markAsHealthy }: FlowWorkerInitParams): Promise<void> {
         rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
+
+        sandboxWebsocketServer.init(log)
 
         await appSocket(log).init({
             workerToken: token,
@@ -36,6 +39,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
 
     async close(): Promise<void> {
         await sandboxPool.drain()
+        await sandboxWebsocketServer.shutdown()
         appSocket(log).disconnect()
 
         if (runsMetadataQueue.isInitialized()) {

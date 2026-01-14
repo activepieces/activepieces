@@ -23,7 +23,6 @@ export const sandboxPool = {
         sandboxMemoryLimit = Math.floor(parseInt(workerMachine.getSettings().SANDBOX_MEMORY_LIMIT) / 1024)
         reusable = canReuseWorkers()
         sandboxQueue = Array.from({ length: workerConcurrency }, () => nanoid())
-        sandboxWebsocketServer.init(log)
     },
     allocate: (log: FastifyBaseLogger): Sandbox => {
         const sandboxId = sandboxQueue.shift()
@@ -70,7 +69,6 @@ export const sandboxPool = {
             await sandbox.shutdown()
         }
         sandboxes.clear()
-        await sandboxWebsocketServer.shutdown()
     },
 }
 

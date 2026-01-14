@@ -4,6 +4,7 @@ import { workerSocket } from './lib/worker-socket'
 const SANDBOX_ID = process.env.SANDBOX_ID
 process.title = `sandbox-${SANDBOX_ID}`
 
+
 if (!isNil(SANDBOX_ID)) {
     workerSocket.init(SANDBOX_ID)
 }

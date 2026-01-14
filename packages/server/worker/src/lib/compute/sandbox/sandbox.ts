@@ -54,17 +54,18 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
             let timeout: NodeJS.Timeout | null = null
             const operationPromise = new Promise<SandboxResult>((resolve, reject) => {
                 assertNotNullOrUndefined(process, 'Sandbox process should not be null')
-                timeout = setTimeout(() => {
+                timeout = setTimeout(async () => {
                     killedByTimeout = true
+                    log.debug({ sandboxId }, 'Killing sandbox by timeout')
                     if (!isNil(process)) {
-                        void killProcess(process, log)
+                        await killProcess(process, log)
                     }
                 }, options.timeoutInSeconds * 1000)
 
                 let stdError = ''
                 let stdOut = ''
 
-                void sandboxWebsocketServer.attachListener(sandboxId, async (event, payload) => {
+                sandboxWebsocketServer.attachListener(sandboxId, async (event, payload) => {
                     switch (event) {
                         case EngineSocketEvent.ENGINE_RESPONSE:
                             resolve({
@@ -75,7 +76,6 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                             break
                         case EngineSocketEvent.ENGINE_STDOUT:
                             stdOut += (payload as EngineStdout).message
-                     
                             break
                         case EngineSocketEvent.ENGINE_STDERR:
                             stdError += (payload as EngineStderr).message
@@ -92,6 +92,9 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                         case EngineSocketEvent.ENGINE_OPERATION:
                             break
                     }
+                })
+                process.on('error', (error) => {
+                    log.error({ sandboxId, error }, 'Sandbox process error')
                 })
 
                 process.on('exit', (code, signal) => {
@@ -127,6 +130,8 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 })
 
                 sandboxWebsocketServer.send(sandboxId, operation, operationType)
+                log.debug({ sandboxId, operationType }, 'Sent operation to sandbox')
+
             })
 
             try {
@@ -139,11 +144,12 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 void sandboxWebsocketServer.removeListener(sandboxId)
                 process?.removeAllListeners('exit')
                 process?.removeAllListeners('error')
-                process?.removeAllListeners('message')
+                process?.removeAllListeners('command')
             }
         },
         shutdown: async () => {
             if (!isNil(process)) {
+                log.debug({ sandboxId }, 'Shutting down sandbox')
                 await killProcess(process, log)
                 process = null
             }
