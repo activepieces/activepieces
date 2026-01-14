@@ -23,7 +23,7 @@ export const watchTaskRunsTrigger = createTrigger({
     statuses: createStatusesProperty(),
   },
   async onEnable(context) {
-    const client = createApifyClient(context.auth.apikey);
+    const client = createApifyClient(context.auth.props.apikey);
     const taskId = context.propsValue.taskid;
     const statuses = context.propsValue.statuses as WebhookEventType[];
     const idempotencyKey = generateIdempotencyKey(taskId, statuses);
@@ -41,7 +41,7 @@ export const watchTaskRunsTrigger = createTrigger({
   async onDisable(context) {
     const webhookId: string = (await context.store.get('_task_webhook_id')) as string;
     if (webhookId) {
-      const client = createApifyClient(context.auth.apikey);
+      const client = createApifyClient(context.auth.props.apikey);
       await deleteWebhook(client, webhookId);
       await context.store.delete('_task_webhook_id');
     }

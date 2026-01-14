@@ -1,17 +1,20 @@
-import { 
-  ActorListSortBy, 
-  ActorRun, 
-  ApifyClient, 
-  Build, 
-  Dictionary, 
-  WebhookCondition, 
-  WebhookEventType 
+import {
+  ActorListSortBy,
+  ActorRun,
+  ApifyClient,
+  Build,
+  Dictionary,
+  WebhookCondition,
+  WebhookEventType
 } from 'apify-client';
 import { Property } from '@activepieces/pieces-framework';
 import { createHash } from 'crypto';
+import { apifyAuth } from '../..';
 
 export type ApifyAuth = {
-  apikey: string;
+  props: {
+    apikey: string;
+  };
 };
 
 type DropdownOption = {
@@ -272,7 +275,7 @@ export const createDropdownOptions = async (
 
   try {
     const apifyAuth = auth as ApifyAuth;
-    const items = await fetchItems(apifyAuth.apikey);
+    const items = await fetchItems(apifyAuth.props.apikey);
     return { disabled: false, options: items };
   } catch (error) {
     return {
@@ -362,6 +365,7 @@ export const createActorSourceProperty = () => Property.StaticDropdown({
 
 export const createActorIdProperty = () => Property.Dropdown({
   displayName: 'Actor',
+  auth: apifyAuth,
   description: 'Select an Actor from the list',
   required: true,
   refreshers: ['auth', 'actorSource'],
@@ -373,6 +377,7 @@ export const createActorIdProperty = () => Property.Dropdown({
 
 export const createTaskIdProperty = () => Property.Dropdown({
   displayName: 'Actor task',
+  auth: apifyAuth,
   description: 'Select a task from the list',
   required: true,
   refreshers: ['auth'],
@@ -390,12 +395,13 @@ const createInputBodyProperty = (runType: RunType, defaultValue?: object) => Pro
 
 export const createActorInputProperty = () => Property.DynamicProperties({
   displayName: 'Input',
+  auth: apifyAuth,
   required: true,
   refreshers: ['auth', 'actorid'],
   props: async (propsValue) => {
     const apiKey = propsValue['auth'] as ApifyAuth;
     const actorId = propsValue['actorid'] as unknown as string;
-    const defaultBuild = await fetchActorInputSchema(apiKey.apikey, actorId);
+    const defaultBuild = await fetchActorInputSchema(apiKey.props.apikey, actorId);
 
     const defaultInputs = defaultBuild ? getDefaultValuesFromBuild(defaultBuild as ActorBuild) : undefined;
 
@@ -410,6 +416,7 @@ export const createActorInputProperty = () => Property.DynamicProperties({
 
 export const createTaskInputProperty = () => Property.DynamicProperties({
   displayName: 'Input',
+  auth: apifyAuth,
   required: true,
   refreshers: ['auth', 'taskid'],
   props: async () => {

@@ -9,6 +9,7 @@ export const getDatasetItems = createAction({
   description: 'Retrieves items from a dataset',
   props: {
     datasetId: Property.Dropdown({
+      auth: apifyAuth,
       required: true,
       refreshers: ['auth'],
       displayName: 'Datasets',
@@ -31,7 +32,7 @@ export const getDatasetItems = createAction({
     })
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const { datasetId, offset, limit } = context.propsValue;
 
     const client = createApifyClient(apifyToken);

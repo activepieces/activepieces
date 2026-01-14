@@ -1,17 +1,17 @@
 import { createAction } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
-import { 
-  createApifyClient, 
-  createBuildProperty, 
-  createRunOptions, 
-  handleRunResult, 
-  createActorSourceProperty, 
-  createActorIdProperty, 
-  createActorInputProperty, 
-  createMemoryProperty, 
-  createTimeoutProperty, 
-  createWaitForFinishProperty, 
-  RunType 
+import {
+  createApifyClient,
+  createBuildProperty,
+  createRunOptions,
+  handleRunResult,
+  createActorSourceProperty,
+  createActorIdProperty,
+  createActorInputProperty,
+  createMemoryProperty,
+  createTimeoutProperty,
+  createWaitForFinishProperty,
+  RunType
 } from '../common';
 
 export const runActor = createAction({
@@ -29,7 +29,7 @@ export const runActor = createAction({
     waitForFinish: createWaitForFinishProperty(RunType.ACTOR)
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const { input, actorid, timeout, build, memory, waitForFinish } = context.propsValue;
     const body = input['body'];
 

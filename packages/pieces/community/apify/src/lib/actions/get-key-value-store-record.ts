@@ -1,12 +1,12 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { apifyAuth } from '../..';
-import { 
-  createApifyClient, 
-  createDropdownOptions, 
-  getFileExtension, 
-  isBinaryContentType, 
-  listRecords, 
-  listStores 
+import {
+  createApifyClient,
+  createDropdownOptions,
+  getFileExtension,
+  isBinaryContentType,
+  listRecords,
+  listStores
 } from '../common';
 
 export const getKeyValueStoreRecord = createAction({
@@ -16,6 +16,7 @@ export const getKeyValueStoreRecord = createAction({
   description: 'Retrieves a value stored in the key-value store under a specific key',
   props: {
     store: Property.Dropdown({
+      auth: apifyAuth,
       required: true,
       refreshers: ['auth'],
       displayName: 'Store',
@@ -25,6 +26,7 @@ export const getKeyValueStoreRecord = createAction({
       }
     }),
     recordKey: Property.Dropdown({
+      auth: apifyAuth,
       required: true,
       refreshers: ['auth', 'store'],
       displayName: 'Key-Value Store Record Key',
@@ -43,7 +45,7 @@ export const getKeyValueStoreRecord = createAction({
     }),
   },
   async run(context) {
-    const apifyToken = context.auth.apikey;
+    const apifyToken = context.auth.props.apikey;
     const { store, recordKey } = context.propsValue;
 
     const client = createApifyClient(apifyToken);
