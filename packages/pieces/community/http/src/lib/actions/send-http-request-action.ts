@@ -253,11 +253,7 @@ export const httpSendRequestAction = createAction({
           { label: 'Do not continue (stop the flow)', value: 'continue_none' },
         ],
       },
-    }),
-    stopFlow: Property.Checkbox({
-      displayName: 'Stop the flow on Failure ?',
-      required: false,
-    }),
+    })
   },
   errorHandlingOptions: {
     continueOnFailure: { hide: true, defaultValue: false },
@@ -277,7 +273,6 @@ export const httpSendRequestAction = createAction({
       use_proxy,
       authType,
       authFields,
-      stopFlow,
     } = context.propsValue;
 
     assertNotNullOrUndefined(method, 'Method');
@@ -380,10 +375,6 @@ export const httpSendRequestAction = createAction({
         );
       } catch (error) {
         attempts++;
-
-        if (stopFlow) {
-          throw error;
-        }
 
         switch (failureMode) {
           case 'retry_all': {
