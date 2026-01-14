@@ -1,7 +1,7 @@
 import { Omit, Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../common'
-import { FlowVersion } from '../flows/flow-version'
 import { Note } from '../flows'
+import { FlowVersion } from '../flows/flow-version'
 
 export const TemplateTag = Type.Object({
     title: Type.String(),
