@@ -85,5 +85,11 @@
   "Triggers when a new email is received in the inbox.": "Triggert wanneer een nieuwe e-mail wordt ontvangen in de inbox.",
   "Triggers when a new email is delivered into the specified folder.": "Triggert wanneer een nieuwe e-mail wordt verstuurd naar de opgegeven map.",
   "Triggers when a new email containing one or more attachments arrives.": "Triggert wanneer er een nieuwe e-mail met één of meer bijlagen arriveert.",
-  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Bijlagen in een specifieke map bijhouden. Laat leeg om alle mappen te controleren."
+  "From (Sender Email)": "Van (ender E-mail)",
+  "To (Recipient Email)": "Aan (Ontvanger e-mail)",
+  "Attachment Name Filter": "Filter Bijlage naam",
+  "Filter emails from a specific sender (optional). Leave empty to for all senders.": "Filter e-mails van een specifieke afzender (optioneel). Laat leeg voor alle afzenders.",
+  "Filter emails to a specific recipient (optional). Leave empty to for all recipients.": "Filter e-mails naar een specifieke ontvanger (optioneel). Laat leeg voor alle ontvangers.",
+  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Bijlagen in een specifieke map bijhouden. Laat leeg om alle mappen te controleren.",
+  "Filter attachments by name (contains). Leave empty to include all attachments.": "Filter bijlagen op naam (bevatten). Laat leeg om alle bijlagen op te nemen."
 }
