@@ -1,5 +1,10 @@
+import { Document } from '@tiptap/extension-document';
+import { HardBreak } from '@tiptap/extension-hard-break';
+import { History } from '@tiptap/extension-history';
 import { MentionNodeAttrs, Mention } from '@tiptap/extension-mention';
+import { Paragraph } from '@tiptap/extension-paragraph';
 import { Placeholder } from '@tiptap/extension-placeholder';
+import { Text } from '@tiptap/extension-text';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 
@@ -17,17 +22,19 @@ type TextInputWithMentionsProps = {
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  enableMarkdown?: boolean;
 };
 
-const extensions = (placeholder?: string) => {
-  return [
-    StarterKit.configure({
-      heading: {
-        levels: [1, 2, 3, 4, 5, 6],
-      },
-    }),
+const extensions = ({
+  enableMarkdown,
+  placeholder,
+}: {
+  placeholder?: string;
+  enableMarkdown?: boolean;
+}) => {
+  const baseExtensions = [
     Placeholder.configure({
-      placeholder,
+      placeholder: placeholder,
       emptyNodeClass: 'before:text-muted-foreground opacity-75',
     }),
     Mention.configure({
@@ -36,10 +43,31 @@ const extensions = (placeholder?: string) => {
       },
       deleteTriggerWithBackspace: true,
       renderHTML({ node }) {
-        const mentionAttrs: MentionNodeAttrs =
-          node.attrs as unknown as MentionNodeAttrs;
+        const mentionAttrs = node.attrs as unknown as MentionNodeAttrs;
         return textMentionUtils.generateMentionHtmlElement(mentionAttrs);
       },
+    }),
+  ];
+
+  if (enableMarkdown) {
+    return [
+      ...baseExtensions,
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+      }),
+    ];
+  }
+
+  return [
+    ...baseExtensions,
+    Document,
+    History,
+    HardBreak,
+    Text,
+    Paragraph.configure({
+      HTMLAttributes: {},
     }),
   ];
 };
@@ -63,6 +91,7 @@ export const TextInputWithMentions = ({
   onChange,
   disabled,
   placeholder,
+  enableMarkdown,
 }: TextInputWithMentionsProps) => {
   const steps = useBuilderStateContext((state) =>
     flowStructureUtil.getAllSteps(state.flowVersion.trigger),
@@ -94,7 +123,7 @@ export const TextInputWithMentions = ({
 
   const editor = useEditor({
     editable: !disabled,
-    extensions: extensions(placeholder),
+    extensions: extensions({ placeholder, enableMarkdown }),
     content: {
       type: 'doc',
       content: textMentionUtils.convertTextToTipTapJsonContent(

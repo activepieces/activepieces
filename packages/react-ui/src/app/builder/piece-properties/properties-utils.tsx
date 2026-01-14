@@ -43,6 +43,7 @@ export const selectGenericFormComponentForProperty = ({
   dynamicPropsInfo,
   propertySettings,
   hideLabel,
+  enableMarkdownForInputWithMention,
 }: SelectGenericFormComponentForPropertyParams) => {
   switch (property.type) {
     case PropertyType.ARRAY:
@@ -242,6 +243,7 @@ export const selectGenericFormComponentForProperty = ({
               disabled={disabled}
               initialValue={field.value}
               onChange={field.onChange}
+              enableMarkdown={enableMarkdownForInputWithMention}
             ></TextInputWithMentions>
           ) : (
             <Input
@@ -320,6 +322,7 @@ export type SelectGenericFormComponentForPropertyParams = {
   dynamicInputModeToggled: boolean;
   form: UseFormReturn<FieldValues, any, undefined>;
   propertySettings: Record<string, PropertySettings> | null;
+  enableMarkdownForInputWithMention?: boolean;
   dynamicPropsInfo:
     | ({
         pieceName: string;

@@ -31,7 +31,6 @@ import {
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
 import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
@@ -207,15 +206,16 @@ function AppConnectionsPage() {
                 </Tooltip>
               )}
 
-              <CopyTextTooltip
-                title={t('External ID')}
-                text={row.original.externalId || ''}
-              >
-                <TruncatedColumnTextValue value={row.original.displayName} />
-              </CopyTextTooltip>
-            </div>
-          );
-        },
+            <CopyTextTooltip
+              title={t('External ID')}
+              text={row.original.externalId || ''}
+            >
+              <div className="text-left truncate max-w-[120px] 2xl:max-w-[250px]">
+                {row.original.displayName}
+              </div>
+            </CopyTextTooltip>
+          </div>
+        );
       },
       {
         accessorKey: 'status',
