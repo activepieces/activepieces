@@ -41,7 +41,7 @@ export const MembersSettings = () => {
 
   const combinedData: MemberRowData[] = useMemo(() => {
     const currentProjectId = authenticationSession.getProjectId();
-    
+
     const members: MemberRowData[] =
       projectMembers
         ?.filter((member) => member.user.status === UserStatus.ACTIVE)

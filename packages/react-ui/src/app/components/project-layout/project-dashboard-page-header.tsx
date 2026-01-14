@@ -140,7 +140,9 @@ export const ProjectDashboardPageHeader = ({
           }}
         >
           <UsersRound className="w-4 h-4" />
-          <span className="text-sm font-medium">{activeProjectMembers?.length}</span>
+          <span className="text-sm font-medium">
+            {activeProjectMembers?.length}
+          </span>
         </Button>
       )}
       {showInviteUserButton && (
