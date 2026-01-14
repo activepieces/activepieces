@@ -2,9 +2,9 @@ import { pubsubFactory } from '@activepieces/server-shared'
 import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { workerRedisConnections } from '../utils/worker-redis'
 import { appSocket } from '../app-socket'
 import { runsMetadataQueue } from '../flow-worker'
+import { workerRedisConnections } from '../utils/worker-redis'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 

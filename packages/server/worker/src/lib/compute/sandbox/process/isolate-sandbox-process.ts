@@ -4,10 +4,10 @@ import { arch } from 'node:process'
 import { execPromise, fileSystemUtils } from '@activepieces/server-shared'
 import { isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { CreateProcessParams, ProcessMaker } from './types'
-import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { registryPieceManager } from '../../../cache/pieces/production/registry-piece-manager'
+import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { workerMachine } from '../../../utils/machine'
+import { CreateProcessParams, ProcessMaker } from './types'
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'
@@ -78,9 +78,10 @@ async function getDirsToBindArgs(log: FastifyBaseLogger, options: CreateProcessP
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
     ]
 
-    if(options.reusable) {
+    if (options.reusable) {
         dirsToBind.push(`--dir=/codes=${path.resolve(GLOBAL_CODE_CACHE_PATH)}`)
-    } else {
+    }
+    else {
         const flowVersionId = options.flowVersionId
         const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
         if (fExists) {
@@ -109,7 +110,7 @@ async function getDirsToBindArgs(log: FastifyBaseLogger, options: CreateProcessP
 }
 
 function getSandboxNumber(sandboxId: string): number {
-    if(!isNil(sandboxIndex[sandboxId])) {
+    if (!isNil(sandboxIndex[sandboxId])) {
         return sandboxIndex[sandboxId]
     }
     sandboxIndex[sandboxId] = Object.keys(sandboxIndex).length

@@ -5,10 +5,10 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
-import { runsMetadataQueue } from '../../flow-worker'
-import { workerRedisConnections } from '../../utils/worker-redis'
 import { operationHandler } from '../../compute/operation-handler'
 import { sandboxSockerHandler } from '../../compute/sandbox-socket-handlers'
+import { runsMetadataQueue } from '../../flow-worker'
+import { workerRedisConnections } from '../../utils/worker-redis'
 
 const tracer = trace.getTracer('flow-job-executor')
 

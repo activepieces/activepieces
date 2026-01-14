@@ -1,9 +1,9 @@
-import { nanoid } from "nanoid"
-import { workerMachine } from "../../utils/machine"
-import { sandboxWebsocketServer } from "./websocket-server"
-import { createSandbox, Sandbox } from "./sandbox"
-import { FastifyBaseLogger } from "fastify"
-import { ExecutionMode, ApEnvironment, isNil } from "@activepieces/shared"
+import { ApEnvironment, ExecutionMode, isNil } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import { nanoid } from 'nanoid'
+import { workerMachine } from '../../utils/machine'
+import { createSandbox, Sandbox } from './sandbox'
+import { sandboxWebsocketServer } from './websocket-server'
 
 const sandboxes: Map<string, Sandbox> = new Map()
 let sandboxQueue: string[] = []
@@ -50,7 +50,7 @@ export const sandboxPool = {
                 AP_S3_USE_SIGNED_URLS: workerSettings.S3_USE_SIGNED_URLS,
             },
             memoryLimitMb: sandboxMemoryLimit,
-            reusable: reusable,
+            reusable,
         })
         sandboxes.set(sandboxId, newSandbox)
         return newSandbox

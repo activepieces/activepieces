@@ -32,7 +32,7 @@ export const workerSocket = {
         socket = io(WS_URL, {
             path: '/worker/ws',
             auth: {
-                sandboxId: sandboxId,
+                sandboxId,
             },
             autoConnect: true,
             reconnection: true,

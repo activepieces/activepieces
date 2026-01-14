@@ -4,10 +4,10 @@ import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from './app-socket'
 import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
 import { workerCache } from './cache/worker-cache'
+import { sandboxPool } from './compute/sandbox/sandbox-pool'
 import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
 import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
-import { sandboxPool } from './compute/sandbox/sandbox-pool'
 
 export const runsMetadataQueue = runsMetadataQueueFactory({ 
     createRedisConnection: workerRedisConnections.create,

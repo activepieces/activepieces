@@ -28,7 +28,7 @@ export const sandboxWebsocketServer = {
                 delete connectionPromises[sandboxId]
             }
 
-            socket.on("message", (msg: { event: EngineSocketEvent, payload: unknown }, callback?: () => void) => {
+            socket.on('message', (msg: { event: EngineSocketEvent, payload: unknown }, callback?: () => void) => {
                 const { event, payload } = msg
                 const promise = listeners[sandboxId](event, payload)
                 promise.then(() => {

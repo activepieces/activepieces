@@ -1,12 +1,12 @@
-import { ActivepiecesError, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, ErrorCode, ExecutionMode, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest } from "@activepieces/shared"
-import { simpleProcess } from "./process/simple-process"
-import { FastifyBaseLogger } from "fastify"
-import { ChildProcess } from "child_process"
-import treeKill from "tree-kill"
-import { sandboxWebsocketServer } from "./websocket-server"
-import { isolateSandboxProcess } from "./process/isolate-sandbox-process"
-import { workerMachine } from "../../utils/machine"
-import { sandboxSockerHandler } from "../sandbox-socket-handlers"
+import { ChildProcess } from 'child_process'
+import { ActivepiecesError, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, ErrorCode, ExecutionMode, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest } from '@activepieces/shared'
+import { FastifyBaseLogger } from 'fastify'
+import treeKill from 'tree-kill'
+import { workerMachine } from '../../utils/machine'
+import { sandboxSockerHandler } from '../sandbox-socket-handlers'
+import { isolateSandboxProcess } from './process/isolate-sandbox-process'
+import { simpleProcess } from './process/simple-process'
+import { sandboxWebsocketServer } from './websocket-server'
 
 
 const processMaker = {
@@ -102,7 +102,8 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                                 standardError: stdError,
                             },
                         }))
-                    } else if (isRamIssue) {
+                    }
+                    else if (isRamIssue) {
                         reject(new ActivepiecesError({
                             code: ErrorCode.SANDBOX_MEMORY_ISSUE,
                             params: {
@@ -110,7 +111,8 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                                 standardError: stdError,
                             },
                         }))
-                    } else {
+                    }
+                    else {
                         reject(new ActivepiecesError({
                             code: ErrorCode.SANDBOX_INTERNAL_ERROR,
                             params: {
@@ -127,7 +129,8 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
 
             try {
                 return await operationPromise
-            } finally {
+            }
+            finally {
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
@@ -186,7 +189,8 @@ async function killProcess(childProcess: ChildProcess, log: FastifyBaseLogger): 
                     pid,
                     error: err,
                 }, 'Failed to kill child process tree')
-            } else {
+            }
+            else {
                 log.debug({
                     pid,
                 }, 'Killed child process tree')
