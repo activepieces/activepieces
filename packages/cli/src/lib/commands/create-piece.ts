@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import { Command } from 'commander';
-import { readdir, unlink, writeFile } from 'fs/promises';
+import { readdir, rm, writeFile } from 'fs/promises';
 import inquirer from 'inquirer';
 import assert from 'node:assert';
 import { exec } from '../utils/exec';
@@ -72,7 +72,7 @@ const removeUnusedFiles = async (pieceName: string, pieceType: string) => {
   const path = `packages/pieces/${pieceType}/${pieceName}/src/lib/`;
   const files = await readdir(path);
   for (const file of files) {
-    await unlink(path + file);
+    await rm(path + file, { recursive: true, force: true });
   }
 };
 function capitalizeFirstLetter(str: string): string {

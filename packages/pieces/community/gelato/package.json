@@ -1,0 +1,11 @@
+{
+  "name": "@activepieces/piece-gelato",
+  "version": "0.0.1",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "dayjs": "^1.11.10",
+    "tslib": "^2.3.0"
+  }
+}

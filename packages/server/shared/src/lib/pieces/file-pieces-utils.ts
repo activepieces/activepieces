@@ -64,7 +64,16 @@ export const filePiecesUtils = (log: FastifyBaseLogger) => ({
     loadDistPiecesMetadata: async (piecesNames: string[]): Promise<PieceMetadata[]> => {
         try {
             const paths = (await findAllPiecesFolder(DIST_PIECES_PATH)).filter(path => piecesNames.some(name => path.endsWith(sep + name)))
-            const pieces = await Promise.all(paths.map((p) => loadPieceFromFolder(p)))
+            const pieces = await Promise.all(paths.map(async (p) => {
+                try {
+                    return await loadPieceFromFolder(p)
+                }
+                catch (pieceError) {
+                    const err = pieceError as Error
+                    log.warn({ name: 'loadDistPiecesMetadata', path: p, message: err.message }, 'Failed to load piece, skipping')
+                    return null
+                }
+            }))
             return pieces.filter((p): p is PieceMetadata => p !== null)
         }
         catch (e) {
