@@ -1,7 +1,6 @@
 import { inspect } from 'util'
 import {
     emitWithAck,
-    EngineGenericError,
     EngineOperation,
     EngineOperationType,
     EngineResponse,
@@ -10,7 +9,6 @@ import {
     EngineStderr,
     EngineStdout,
     ERROR_MESSAGES_TO_REDACT,
-    isNil,
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'

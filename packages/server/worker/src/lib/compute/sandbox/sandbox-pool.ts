@@ -55,22 +55,22 @@ export const sandboxPool = {
         sandboxes.set(sandboxId, newSandbox)
         return newSandbox
     },
-    release: (sandbox: Sandbox | undefined) => {
+    release: async (sandbox: Sandbox | undefined) => {
         if (isNil(sandbox)) {
             return
         }
         if (!reusable) {
-            sandbox.shutdown()
+            await sandbox.shutdown()
             sandboxes.delete(sandbox.id)
         }
         sandboxQueue.push(sandbox.id)
     },
-    drain: () => {
+    drain: async () => {
         for (const sandbox of sandboxes.values()) {
-            sandbox.shutdown()
+            await sandbox.shutdown()
         }
         sandboxes.clear()
-        sandboxWebsocketServer.shutdown()
+        await sandboxWebsocketServer.shutdown()
     },
 }
 

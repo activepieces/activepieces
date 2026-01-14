@@ -57,14 +57,14 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 timeout = setTimeout(() => {
                     killedByTimeout = true
                     if (!isNil(process)) {
-                        killProcess(process, log)
+                        void killProcess(process, log)
                     }
                 }, options.timeoutInSeconds * 1000)
 
                 let stdError = ''
                 let stdOut = ''
 
-                sandboxWebsocketServer.attachListener(sandboxId, async (event, payload) => {
+                void sandboxWebsocketServer.attachListener(sandboxId, async (event, payload) => {
                     switch (event) {
                         case EngineSocketEvent.ENGINE_RESPONSE:
                             resolve({
@@ -88,6 +88,8 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                             break
                         case EngineSocketEvent.UPDATE_STEP_PROGRESS:
                             await sandboxSockerHandler(log).updateStepProgress(payload as UpdateStepProgressRequest)
+                            break
+                        case EngineSocketEvent.ENGINE_OPERATION:
                             break
                     }
                 })
@@ -134,7 +136,7 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                 if (!isNil(timeout)) {
                     clearTimeout(timeout)
                 }
-                sandboxWebsocketServer.removeListener(sandboxId)
+                void sandboxWebsocketServer.removeListener(sandboxId)
                 process?.removeAllListeners('exit')
                 process?.removeAllListeners('error')
                 process?.removeAllListeners('message')

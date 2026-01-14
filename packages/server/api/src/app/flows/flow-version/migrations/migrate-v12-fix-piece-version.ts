@@ -1,5 +1,4 @@
 import {
-    assertNotNullOrUndefined,
     FlowActionType,
     flowStructureUtil,
     FlowTriggerType,
@@ -13,8 +12,6 @@ import { pieceMetadataService } from '../../../pieces/metadata/piece-metadata-se
 import { projectService } from '../../../project/project-service'
 import { flowService } from '../../flow/flow.service'
 import { Migration } from '.'
-
-
 
 export const migrateV12FixPieceVersion: Migration = {
     targetSchemaVersion: '12',

@@ -180,7 +180,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     attemptsStarted,
                     timeoutInSeconds,
                 )
-                const { result, status, delayInSeconds } = await operationHandler(log).executeFlow(
+                const { result, status, delayInSeconds } = await operationHandler(runLog).executeFlow(
                     engineToken,
                     input,
                 )

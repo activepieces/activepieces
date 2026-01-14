@@ -1,3 +1,4 @@
+import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { EngineOperation, EngineOperationType, EngineSocketEvent, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Server as SocketIOServer } from 'socket.io'
@@ -19,7 +20,7 @@ export const sandboxWebsocketServer = {
 
         io.on('connection', (socket) => {
             const sandboxId = socket.handshake.auth['sandboxId'] as string
-            socket.join(sandboxId)
+            rejectedPromiseHandler(socket.join(sandboxId), log)
 
             connectionState[sandboxId] = true
             if (!isNil(connectionPromises[sandboxId])) {
@@ -74,8 +75,8 @@ export const sandboxWebsocketServer = {
             connectionPromises[sandboxId] = resolve
         })
     },
-    shutdown: () => {
-        io?.close()
+    shutdown: async () => {
+        await io?.close()
     },
 }
 

@@ -53,7 +53,7 @@ export const workerMachine = {
     isDedicatedWorker: () => {
         return !isNil(settings?.PLATFORM_ID_FOR_DEDICATED_WORKER)
     },
-    init: async (_settings: WorkerSettingsResponse, _workerToken: string, log: FastifyBaseLogger) => {
+    init: async (_settings: WorkerSettingsResponse, _workerToken: string, _log: FastifyBaseLogger) => {
         settings = {
             ..._settings,
             ...spreadIfDefined('WORKER_CONCURRENCY', environmentVariables.getNumberEnvironment(WorkerSystemProp.WORKER_CONCURRENCY)),

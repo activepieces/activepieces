@@ -35,7 +35,7 @@ export const flowWorker = (log: FastifyBaseLogger) => ({
     },
 
     async close(): Promise<void> {
-        sandboxPool.drain()
+        await sandboxPool.drain()
         appSocket(log).disconnect()
 
         if (runsMetadataQueue.isInitialized()) {

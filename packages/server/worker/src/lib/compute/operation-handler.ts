@@ -5,7 +5,7 @@ import {
     PropertyType,
 } from '@activepieces/pieces-framework'
 import { webhookSecretsUtils } from '@activepieces/server-shared'
-import { AgentPieceProps, AgentToolType, AI_PIECE_NAME, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ErrorCode, ExecuteActionResponse, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, parseToJsonIfPossible, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
+import { AgentPieceProps, AgentToolType, AI_PIECE_NAME, BeginExecuteFlowOperation, CodeAction, EngineOperation, EngineOperationType, EngineResponseStatus, ExecuteActionResponse, ExecuteExtractPieceMetadataOperation, ExecuteFlowOperation, ExecutePropsOptions, ExecuteToolResponse, ExecuteTriggerOperation, ExecuteTriggerResponse, ExecuteValidateAuthOperation, ExecuteValidateAuthResponse, FlowActionType, flowStructureUtil, FlowTriggerType, FlowVersion, parseToJsonIfPossible, PieceActionSettings, PieceTriggerSettings, ResumeExecuteFlowOperation, TriggerHookType } from '@activepieces/shared'
 import { trace } from '@opentelemetry/api'
 import { FastifyBaseLogger } from 'fastify'
 import { CodeArtifact } from '../cache/code-builder'
@@ -220,7 +220,7 @@ async function executeSingleTask<Result extends OperationResult>(log: FastifyBas
             }
         }
         finally {
-            sandboxPool.release(sandbox)
+            await sandboxPool.release(sandbox)
             span.end()
         }
     })
