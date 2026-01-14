@@ -42,6 +42,8 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
         }  as Client.ConnectOptions['algorithms'],
         timeout: 10000,
       });
+
+      return sftp as T;
     }
 
     await sftp.connect({
