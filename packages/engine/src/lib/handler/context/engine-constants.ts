@@ -111,6 +111,7 @@ export class EngineConstants {
         this.logsFileId = params.logsFileId
         this.platformId = params.platformId
         this.timeoutInSeconds = params.timeoutInSeconds
+        this.stepNames = params.stepNames
     }
   
     public static fromExecuteFlowInput(input: ExecuteFlowOperation): EngineConstants {
