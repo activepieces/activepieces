@@ -85,5 +85,11 @@
   "Triggers when a new email is received in the inbox.": "Aciona quando um novo e-mail é recebido na caixa de entrada.",
   "Triggers when a new email is delivered into the specified folder.": "Aciona quando um novo e-mail é entregue na pasta especificada.",
   "Triggers when a new email containing one or more attachments arrives.": "Dispara quando um novo email contendo um ou mais anexos chegar.",
-  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Monitora anexos em uma pasta específica. Deixe em branco para monitorar todas as pastas."
+  "From (Sender Email)": "De (Email do Remetente)",
+  "To (Recipient Email)": "Para (Email do Destinatário)",
+  "Attachment Name Filter": "Filtro de Nome de Anexo",
+  "Filter emails from a specific sender (optional). Leave empty to for all senders.": "Filtrar e-mails de um remetente específico (opcional). Deixe em branco para todos os remetentes.",
+  "Filter emails to a specific recipient (optional). Leave empty to for all recipients.": "Filtrar e-mails para um destinatário específico (opcional). Deixe em branco para todos os destinatários.",
+  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "Monitora anexos em uma pasta específica. Deixe em branco para monitorar todas as pastas.",
+  "Filter attachments by name (contains). Leave empty to include all attachments.": "Filtrar anexos por nome (contém). Deixe em branco para incluir todos os anexos."
 }
