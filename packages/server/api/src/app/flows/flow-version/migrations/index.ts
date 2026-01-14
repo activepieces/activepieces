@@ -49,7 +49,7 @@ export const flowMigrations = {
     },
 }
 
-export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger'], schemaVersion: FlowVersion['schemaVersion'], notes: FlowVersion['notes']): Promise<FlowVersionTemplate> => {
+export const migrateFlowVersionTemplate = async ({ trigger, schemaVersion, notes, valid }: Pick<FlowVersionTemplate, 'trigger' | 'schemaVersion' | 'notes' | 'valid'>): Promise<FlowVersionTemplate> => {
     return flowMigrations.apply({
         agentIds: [],
         connectionIds: [],
@@ -59,10 +59,16 @@ export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger']
         id: '',
         updated: new Date().toISOString(),
         updatedBy: '',
-        valid: false,
+        valid,
         trigger,
         state: FlowVersionState.DRAFT,
         schemaVersion,
-        notes,
+        notes: notes ?? [],
     })
+}
+
+export const migrateFlowVersionTemplateList = async (flowVersions: FlowVersionTemplate[]): Promise<FlowVersionTemplate[]> => {
+    return Promise.all(flowVersions.map(async (flowVersion) => {
+        return migrateFlowVersionTemplate(flowVersion)
+    }))
 }

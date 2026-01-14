@@ -1,5 +1,6 @@
 import { Omit, Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../common'
+import { Note } from '../flows'
 import { FlowVersion } from '../flows/flow-version'
 
 export const TemplateTag = Type.Object({
@@ -18,9 +19,11 @@ export enum TemplateType {
 
 export const FlowVersionTemplate = Type.Composite([Type.Omit(
     FlowVersion,
-    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles'],
+    ['id', 'created', 'updated', 'flowId', 'state', 'updatedBy', 'agentIds', 'connectionIds', 'backupFiles', 'notes'],
 ), Type.Object({
     description: Type.Optional(Type.String()),
+    //notes were optional for old json templates
+    notes: Type.Optional(Type.Array(Note)),
 })])
 export type FlowVersionTemplate = Static<typeof FlowVersionTemplate>
 

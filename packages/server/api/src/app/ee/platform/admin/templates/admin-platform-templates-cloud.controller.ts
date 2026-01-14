@@ -3,6 +3,7 @@ import { ActivepiecesError, ApFlagId, CreateTemplateRequestBody, ErrorCode, Temp
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { flagService } from '../../../../flags/flag.service'
+import { migrateFlowVersionTemplateList } from '../../../../flows/flow-version/migrations'
 import { templateService } from '../../../../template/template.service'
 
 export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = async (
@@ -29,7 +30,13 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
     })
     
 
-    app.post('/', CreateTemplateRequest, async (request) => {
+    app.post('/', {
+        ...CreateTemplateRequest,
+        preValidation: async (request) => {
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+            request.body.flows = migratedFlows
+        },
+    }, async (request) => {
         const { type } = request.body
         if (type !== TemplateType.OFFICIAL) {
             throw new ActivepiecesError({
@@ -45,7 +52,13 @@ export const adminPlatformTemplatesCloudController: FastifyPluginAsyncTypebox = 
         })
     })
 
-    app.post('/:id', UpdateTemplateRequest, async (request) => {
+    app.post('/:id', {
+        ...UpdateTemplateRequest,
+        preValidation: async (request) => {
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+            request.body.flows = migratedFlows
+        },
+    }, async (request) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
         
         if (template.type !== TemplateType.OFFICIAL) {
