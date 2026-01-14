@@ -1,5 +1,5 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
-import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
+import { GetSecretValueCommand } from '@aws-sdk/client-secrets-manager';
 import * as openpgp from 'openpgp';
 import { amazonS3Auth } from '../..';
 import { createS3, createSecretsManagerClient } from '../common';
@@ -181,8 +181,7 @@ export const decryptPgpFile = createAction({
       }
 
       // Decrypt the message
-      let decrypted;
-      decrypted = await openpgp.decrypt({
+      const decrypted = await openpgp.decrypt({
         message,
         decryptionKeys: privateKey,
         format: 'binary',
@@ -195,10 +194,10 @@ export const decryptPgpFile = createAction({
       const decryptedData = new Uint8Array(await decrypted.data);
 
       // Write the decrypted file
-      const fileName = key.split("/").get(-1).toLowerCase().replace(/\.(pgp|gpg)$/i, '');
+      const fileName = key.split("/").at(-1)?.toLowerCase().replace(/\.(pgp|gpg)$/i, '');
 
       return await context.files.write({
-        fileName: fileName,
+        fileName: fileName ?? 'decrypted_file',
         data: Buffer.from(decryptedData),
       });
     } catch (error) {
