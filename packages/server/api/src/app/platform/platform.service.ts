@@ -37,6 +37,7 @@ export const platformService = {
             const hasProjects = await projectService.userHasProjects({
                 platformId: user.platformId,
                 userId: user.id,
+                isPrivileged: userService.isUserPrivileged(user),
             })
             return hasProjects ? user.platformId : null
         }))

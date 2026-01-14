@@ -323,6 +323,9 @@
       "@activepieces/piece-chatfly": [
         "packages/pieces/community/chatfly/src/index.ts"
       ],
+      "@activepieces/piece-azure-blob-storage": [
+        "packages/pieces/community/azure-blob-storage/src/index.ts"
+      ],
       "@activepieces/piece-metatext": [
         "packages/pieces/community/metatext/src/index.ts"
       ],
@@ -331,6 +334,156 @@
       ],
       "@activepieces/piece-neverbounce": [
         "packages/pieces/community/neverbounce/src/index.ts"
+      ],
+      "@activepieces/piece-mailercheck": [
+        "packages/pieces/community/mailercheck/src/index.ts"
+      ],
+      "@activepieces/piece-vero": [
+        "packages/pieces/community/vero/src/index.ts"
+      ],
+      "@activepieces/piece-digital-pilot": [
+        "packages/pieces/community/digital-pilot/src/index.ts"
+      ],
+      "@activepieces/piece-clearoutphone": [
+        "packages/pieces/community/clearoutphone/src/index.ts"
+      ],
+      "@activepieces/piece-omnihr": [
+        "packages/pieces/community/omnihr/src/index.ts"
+      ],
+      "@activepieces/piece-clicdata": [
+        "packages/pieces/community/clicdata/src/index.ts"
+      ],
+      "@activepieces/piece-katana": [
+        "packages/pieces/community/katana/src/index.ts"
+      ],
+      "@activepieces/piece-giftbit": [
+        "packages/pieces/community/giftbit/src/index.ts"
+      ],
+      "@activepieces/piece-free-agent": [
+        "packages/pieces/community/free-agent/src/index.ts"
+      ],
+      "@activepieces/piece-lemon-squeezy": [
+        "packages/pieces/community/lemon-squeezy/src/index.ts"
+      ],
+      "@activepieces/piece-qwilr": [
+        "packages/pieces/community/qwilr/src/index.ts"
+      ],
+      "@activepieces/piece-splitwise": [
+        "packages/pieces/community/splitwise/src/index.ts"
+      ],
+      "@activepieces/piece-voipstudio": [
+        "packages/pieces/community/voipstudio/src/index.ts"
+      ],
+      "@activepieces/piece-millionverifier": [
+        "packages/pieces/community/millionverifier/src/index.ts"
+      ],
+      "@activepieces/piece-octopush-sms": [
+        "packages/pieces/community/octopush-sms/src/index.ts"
+      ],
+      "@activepieces/piece-twitch": [
+        "packages/pieces/community/twitch/src/index.ts"
+      ],
+      "@activepieces/piece-moonclerk": [
+        "packages/pieces/community/moonclerk/src/index.ts"
+      ],
+      "@activepieces/piece-heymarket-sms": [
+        "packages/pieces/community/heymarket-sms/src/index.ts"
+      ],
+      "@activepieces/piece-flipando": [
+        "packages/pieces/community/flipando/src/index.ts"
+      ],
+      "@activepieces/piece-skyprep": [
+        "packages/pieces/community/skyprep/src/index.ts"
+      ],
+      "@activepieces/piece-influencers-club": [
+        "packages/pieces/community/influencers-club/src/index.ts"
+      ],
+      "@activepieces/piece-tenzo": [
+        "packages/pieces/community/tenzo/src/index.ts"
+      ],
+      "@activepieces/piece-seek-table": [
+        "packages/pieces/community/seek-table/src/index.ts"
+      ],
+      "@activepieces/piece-lucidya": [
+        "packages/pieces/community/lucidya/src/index.ts"
+      ],
+      "@activepieces/piece-phone-validator": [
+        "packages/pieces/community/phone-validator/src/index.ts"
+      ],
+      "@activepieces/piece-barcode-lookup": [
+        "packages/pieces/community/barcode-lookup/src/index.ts"
+      ],
+      "@activepieces/piece-tidely": [
+        "packages/pieces/community/tidely/src/index.ts"
+      ],
+      "@activepieces/piece-cryptolens": [
+        "packages/pieces/community/cryptolens/src/index.ts"
+      ],
+      "@activepieces/piece-ampeco": [
+        "packages/pieces/community/ampeco/src/index.ts"
+      ],
+      "@activepieces/piece-quaderno": [
+        "packages/pieces/community/quaderno/src/index.ts"
+      ],
+      "@activepieces/piece-livesession": [
+        "packages/pieces/community/livesession/src/index.ts"
+      ],
+      "@activepieces/piece-roe-ai": [
+        "packages/pieces/community/roe-ai/src/index.ts"
+      ],
+      "@activepieces/piece-duckdb": [
+        "packages/pieces/community/duckdb/src/index.ts"
+      ],
+      "@activepieces/piece-waitwhile": [
+        "packages/pieces/community/waitwhile/src/index.ts"
+      ],
+      "@activepieces/piece-baremetrics": [
+        "packages/pieces/community/baremetrics/src/index.ts"
+      ],
+      "@activepieces/piece-chartly": [
+        "packages/pieces/community/chartly/src/index.ts"
+      ],
+      "@activepieces/piece-insta-charts": [
+        "packages/pieces/community/insta-charts/src/index.ts"
+      ],
+      "@activepieces/piece-pinch-payments": [
+        "packages/pieces/community/pinch-payments/src/index.ts"
+      ],
+      "@activepieces/piece-just-invoice": [
+        "packages/pieces/community/just-invoice/src/index.ts"
+      ],
+      "@activepieces/piece-billplz": [
+        "packages/pieces/community/billplz/src/index.ts"
+      ],
+      "@activepieces/piece-vouchery-io": [
+        "packages/pieces/community/vouchery-io/src/index.ts"
+      ],
+      "@activepieces/piece-lokalise": [
+        "packages/pieces/community/lokalise/src/index.ts"
+      ],
+      "@activepieces/piece-digital-ocean": [
+        "packages/pieces/community/digital-ocean/src/index.ts"
+      ],
+      "@activepieces/piece-hashi-corp-vault": [
+        "packages/pieces/community/hashi-corp-vault/src/index.ts"
+      ],
+      "@activepieces/piece-leap-ai": [
+        "packages/pieces/community/leap-ai/src/index.ts"
+      ],
+      "@activepieces/piece-time-ops": [
+        "packages/pieces/community/time-ops/src/index.ts"
+      ],
+      "@activepieces/piece-formitable": [
+        "packages/pieces/community/formitable/src/index.ts"
+      ],
+      "@activepieces/piece-gender-api": [
+        "packages/pieces/community/gender-api/src/index.ts"
+      ],
+      "@activepieces/piece-plausible": [
+        "packages/pieces/community/plausible/src/index.ts"
+      ],
+      "@activepieces/piece-woodpecker": [
+        "packages/pieces/community/woodpecker/src/index.ts"
       ]
     },
     "resolveJsonModule": true

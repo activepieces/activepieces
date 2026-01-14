@@ -72,7 +72,11 @@ const FolderItem = ({
             </div>
           }
         >
-          <FolderActions folder={folder} refetch={refetch} />
+          <FolderActions
+            folder={folder}
+            refetch={refetch}
+            hideFlowCount={true}
+          />
         </TextWithIcon>
       </Button>
     </div>
@@ -108,7 +112,8 @@ const FolderFilterList = ({ refresh }: { refresh: number }) => {
 
   const { data: allFlowsCount, refetch: refetchAllFlowsCount } = useQuery({
     queryKey: ['flowsCount', authenticationSession.getProjectId()],
-    queryFn: flowsApi.count,
+    queryFn: () =>
+      flowsApi.count({ projectId: authenticationSession.getProjectId()! }),
   });
 
   useEffect(() => {

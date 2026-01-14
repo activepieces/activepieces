@@ -1,6 +1,14 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { CheckIcon, Package } from 'lucide-react';
+import {
+  CheckIcon,
+  Package,
+  Tag,
+  Hash,
+  GitBranch,
+  Tags,
+  Puzzle,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -48,8 +56,13 @@ const PlatformPiecesPage = () => {
       () => [
         {
           accessorKey: 'name',
+          size: 80,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('App')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Piece')}
+              icon={Puzzle}
+            />
           ),
           cell: ({ row }) => {
             return (
@@ -68,8 +81,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'displayName',
+          size: 180,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Display Name')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Display Name')}
+              icon={Tag}
+            />
           ),
           cell: ({ row }) => {
             return <div className="text-left">{row.original.displayName}</div>;
@@ -77,8 +95,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'packageName',
+          size: 200,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Package Name')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Package Name')}
+              icon={Hash}
+            />
           ),
           cell: ({ row }) => {
             return <div className="text-left">{row.original.name}</div>;
@@ -86,8 +109,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'version',
+          size: 100,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Version')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Version')}
+              icon={GitBranch}
+            />
           ),
           cell: ({ row }) => {
             return <div className="text-left">{row.original.version}</div>;
@@ -95,8 +123,13 @@ const PlatformPiecesPage = () => {
         },
         {
           accessorKey: 'tags',
+          size: 150,
           header: ({ column }) => (
-            <DataTableColumnHeader column={column} title={t('Tags')} />
+            <DataTableColumnHeader
+              column={column}
+              title={t('Tags')}
+              icon={Tags}
+            />
           ),
           cell: ({ row }) => {
             return (

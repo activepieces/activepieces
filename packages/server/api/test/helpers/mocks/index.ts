@@ -16,7 +16,8 @@ import {
 } from '@activepieces/ee-shared'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
-import { AiOverageState,
+import {
+    AiCreditsAutoTopUpState,
     AIProvider,
     AIProviderName,
     apId,
@@ -231,8 +232,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
-        aiCreditsOverageLimit: platformPlan?.aiCreditsOverageLimit ?? 0,
-        aiCreditsOverageState: platformPlan?.aiCreditsOverageState ?? AiOverageState.ALLOWED_BUT_OFF,
+        aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
         analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
         auditLogEnabled: platformPlan?.auditLogEnabled ?? false,
@@ -530,6 +530,7 @@ export const createMockFlowVersion = (
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
+        notes: flowVersion?.notes ?? [],
     }
 }
 
@@ -648,7 +649,7 @@ export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Par
     const mockUserIdentity = createMockUserIdentity({
         verified: true,
         ...userIdentity,
-    })  
+    })
     await databaseConnection().getRepository('user_identity').save(mockUserIdentity)
     const mockUser = createMockUser({
         ...user,
@@ -679,7 +680,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
         ownerId: mockOwner.id,
         filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
-    
+
     await databaseConnection().getRepository('platform').save(mockPlatform)
     const hasPlanTable = databaseConnection().hasMetadata(PlatformPlanEntity)
     if (hasPlanTable) {
@@ -777,10 +778,12 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         platformId: aiProvider?.platformId ?? apId(),
         provider: aiProvider?.provider ?? faker.helpers.enumValue(AIProviderName),
         displayName: aiProvider?.displayName ?? faker.lorem.word(),
-        config: await encryptUtils.encryptObject({
-            apiKey: aiProvider?.config?.apiKey ?? process.env.OPENAI_API_KEY ?? faker.string.uuid(),
+        auth: await encryptUtils.encryptObject({
+            apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
+        config: {},
     }
+    
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
@@ -788,7 +791,6 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
 }
-
 
 type CreateMockPlatformWithOwnerParams = {
     platform?: Partial<Omit<Platform, 'ownerId'>>

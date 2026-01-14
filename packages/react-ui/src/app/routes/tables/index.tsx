@@ -8,6 +8,8 @@ import {
   Table2,
   UploadCloud,
   EllipsisVertical,
+  Tag,
+  Clock,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -30,14 +32,14 @@ import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { useNewWindow } from '@/lib/navigation-utils';
 import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const [selectedRows, setSelectedRows] = useState<Table[]>([]);
-  const { data: project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
@@ -53,14 +55,18 @@ const ApTablesPage = () => {
     {
       accessorKey: 'name',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
         <FormattedDate

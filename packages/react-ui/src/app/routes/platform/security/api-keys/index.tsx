@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Key, Plus, Trash } from 'lucide-react';
+import { Key, Plus, Trash, Hash, Tag, Clock } from 'lucide-react';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
@@ -29,8 +29,9 @@ const ApiKeysPage = () => {
   const columns: ColumnDef<RowDataWithActions<ApiKeyResponseWithoutValue>>[] = [
     {
       accessorKey: 'id',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Id')} />
+        <DataTableColumnHeader column={column} title={t('Id')} icon={Hash} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.id}</div>;
@@ -38,8 +39,13 @@ const ApiKeysPage = () => {
     },
     {
       accessorKey: 'displayName',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Display Name')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Display Name')}
+          icon={Tag}
+        />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.displayName}</div>;
@@ -47,8 +53,13 @@ const ApiKeysPage = () => {
     },
     {
       accessorKey: 'created',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -60,8 +71,13 @@ const ApiKeysPage = () => {
     },
     {
       accessorKey: 'lastUsedAt',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Last Used')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Last Used')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (

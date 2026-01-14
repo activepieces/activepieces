@@ -141,7 +141,6 @@ const TestStepSectionImplementation = React.memo(
     };
 
     const handleCloseDialog = () => {
-      console.log('handleCloseDialog');
       setActiveDialog(DialogType.NONE);
       setTodo(null);
       abortControllerRef.current.abort();

@@ -10,13 +10,17 @@ import {
 import { ApStorage } from './ap-browser-storage';
 import { authenticationApi } from './authentication-api';
 const tokenKey = 'token';
-
+const projectIdKey = 'projectId';
 export const authenticationSession = {
+  setProjectId(projectId: string) {
+    ApStorage.getInstance().setItem(projectIdKey, projectId);
+  },
   saveResponse(response: AuthenticationResponse, isEmbedding: boolean) {
     if (isEmbedding) {
       ApStorage.setInstanceToSessionStorage();
     }
     ApStorage.getInstance().setItem(tokenKey, response.token);
+    ApStorage.getInstance().setItem(projectIdKey, response.projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isJwtExpired(token: string): boolean {
@@ -42,8 +46,15 @@ export const authenticationSession = {
     if (isNil(token)) {
       return null;
     }
+    const projectId = ApStorage.getInstance().getItem(projectIdKey);
+    if (!isNil(projectId)) {
+      return projectId;
+    }
     const decodedJwt = getDecodedJwt(token);
-    return decodedJwt.projectId;
+    if ('projectId' in decodedJwt && typeof decodedJwt.projectId === 'string') {
+      return decodedJwt.projectId;
+    }
+    return null;
   },
   getCurrentUserId(): string | null {
     const token = this.getToken();
@@ -55,6 +66,7 @@ export const authenticationSession = {
   },
   appendProjectRoutePrefix(path: string): string {
     const projectId = this.getProjectId();
+
     if (isNil(projectId)) {
       return path;
     }
@@ -76,14 +88,14 @@ export const authenticationSession = {
       platformId,
     });
     ApStorage.getInstance().setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(projectIdKey, result.projectId);
     window.location.href = '/';
   },
-  async switchToProject(projectId: string) {
+  switchToProject(projectId: string) {
     if (authenticationSession.getProjectId() === projectId) {
       return;
     }
-    const result = await authenticationApi.switchProject({ projectId });
-    ApStorage.getInstance().setItem(tokenKey, result.token);
+    ApStorage.getInstance().setItem(projectIdKey, projectId);
     window.dispatchEvent(new Event('storage'));
   },
   isLoggedIn(): boolean {
@@ -94,6 +106,7 @@ export const authenticationSession = {
     return !this.isJwtExpired(token);
   },
   clearSession() {
+    ApStorage.getInstance().removeItem(projectIdKey);
     ApStorage.getInstance().removeItem(tokenKey);
   },
   logOut() {

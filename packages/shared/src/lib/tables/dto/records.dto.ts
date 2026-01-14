@@ -51,6 +51,7 @@ export const ListRecordsRequest = Type.Object({
 export type ListRecordsRequest = Omit<Static<typeof ListRecordsRequest>, 'cursor'> & { cursor: Cursor | undefined }
 
 export const DeleteRecordsRequest = Type.Object({
+    tableId: Type.String(),
     ids: Type.Array(Type.String()),
 })
 

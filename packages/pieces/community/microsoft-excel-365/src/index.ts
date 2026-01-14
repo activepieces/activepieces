@@ -40,8 +40,8 @@ import { newRowInTableTrigger } from './lib/trigger/new-row-in-table';
 import { newWorksheetTrigger } from './lib/trigger/new-worksheet';
 import { updatedRowTrigger } from './lib/trigger/updated-row';
 
+import { appendMultipleRowsAction } from './lib/actions/append-multiple-rows';
 import { excelCommon } from './lib/common/common';
-import { get } from 'http';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -89,6 +89,7 @@ export const microsoftExcel = createPiece({
   authors: ['BastienMe', 'kishanprmr', 'MoShizzle', 'abuaboud', 'Pranith124', 'onyedikachi-david'],
   actions: [
     appendRowAction,
+    appendMultipleRowsAction,
     getWorksheetsAction,
     getWorksheetRowsAction,
     updateRowAction,

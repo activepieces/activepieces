@@ -32,6 +32,7 @@ export const Flow = Type.Object({
     ...BaseModelSchema,
     projectId: Type.String(),
     externalId: Type.String(),
+    ownerId: Nullable(Type.String()),
     folderId: Nullable(Type.String()),
     status: Type.Enum(FlowStatus),
     publishedVersionId: Nullable(Type.String()),

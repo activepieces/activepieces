@@ -8,6 +8,7 @@ import {
     Project,
     TableWebhook,
     TriggerEvent,
+    User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
@@ -20,6 +21,7 @@ export type FlowSchema = Flow & {
     project: Project
     runs: FlowRun[]
     folder?: Folder
+    owner?: User
     events: TriggerEvent[]
     publishedVersion?: FlowVersion
     tableWebhooks: TableWebhook[]
@@ -65,11 +67,20 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: Number,
             nullable: true,
         },
+        ownerId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
             name: 'idx_flow_project_id',
             columns: ['projectId'],
+            unique: false,
+        },
+        {
+            name: 'idx_flow_owner_id',
+            columns: ['ownerId'],
             unique: false,
         },
         {
@@ -83,6 +94,17 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: 'one-to-many',
             target: 'flow_run',
             inverseSide: 'flow',
+        },
+        owner: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'SET NULL',
+            nullable: false,
+            joinColumn: {
+                name: 'ownerId',
+                foreignKeyConstraintName: 'fk_flow_owner_id',
+            },
         },
         folder: {
             type: 'many-to-one',

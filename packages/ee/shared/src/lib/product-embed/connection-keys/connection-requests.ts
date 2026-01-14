@@ -13,6 +13,7 @@ export type GetOrDeleteConnectionFromTokenRequest = Static<typeof GetOrDeleteCon
 export const ListConnectionKeysRequest = Type.Object({
     limit: Type.Optional(Type.Number()),
     cursor: Type.Optional(Type.String({})),
+    projectId: Type.String(),
 })
 
 
@@ -41,6 +42,7 @@ export const UpsertConnectionFromToken = Type.Union([UpsertApiKeyConnectionFromT
 export type UpsertConnectionFromToken = Static<typeof UpsertConnectionFromToken>
 
 export const UpsertSigningKeyConnection = Type.Object({
+    projectId: Type.String(),
     settings: Type.Object({
         type: Type.Literal(ConnectionKeyType.SIGNING_KEY),
     }),

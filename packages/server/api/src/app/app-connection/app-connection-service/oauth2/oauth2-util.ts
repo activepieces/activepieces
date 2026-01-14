@@ -65,14 +65,12 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
         return false
     },
     getOAuth2TokenUrl: async ({
-        projectId,
         platformId,
         pieceName,
         props,
     }: OAuth2TokenUrlParams): Promise<string> => {
         const pieceMetadata = await pieceMetadataService(log).getOrThrow({
             name: pieceName,
-            projectId,
             platformId,
             version: undefined,
         })
@@ -107,7 +105,6 @@ export const oauth2Util = (log: FastifyBaseLogger) => ({
 })
 
 type OAuth2TokenUrlParams = {
-    projectId: string | undefined
     platformId: PlatformId
     pieceName: string
     props?: Record<string, unknown>

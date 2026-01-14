@@ -1,3 +1,4 @@
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ALL_PRINCIPAL_TYPES,
@@ -22,6 +23,7 @@ import {
     Type,
 } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { FlowRunEntity } from './flow-run-entity'
 import { flowRunService } from './flow-run-service'
 
 const DEFAULT_PAGING_LIMIT = 10
@@ -39,7 +41,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
             createdAfter: request.query.createdAfter,
             createdBefore: request.query.createdBefore,
             flowRunIds: request.query.flowRunIds,
-            archived: request.query.archived,
+            includeArchived: request.query.includeArchived,
         })
     })
 
@@ -48,7 +50,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
         GetRequest,
         async (request, reply) => {
             const flowRun = await flowRunService(request.log).getOnePopulatedOrThrow({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 id: request.params.id,
             })
             await reply.send(flowRun)
@@ -110,7 +112,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/cancel', BulkCancelFlowRequest, async (req) => {
         return flowRunService(req.log).cancel({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             platformId: req.principal.platform.id,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
@@ -123,7 +125,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/retry', BulkRetryFlowRequest, async (req) => {
         return flowRunService(req.log).bulkRetry({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
             strategy: req.body.strategy,
@@ -137,7 +139,7 @@ export const flowRunController: FastifyPluginAsyncTypebox = async (app) => {
 
     app.post('/archive', ArchiveFlowRunRequest, async (req) => {
         return flowRunService(req.log).bulkArchive({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             flowRunIds: req.body.flowRunIds,
             excludeFlowRunIds: req.body.excludeFlowRunIds,
             status: req.body.status,
@@ -155,8 +157,11 @@ const FlowRunFilteredWithNoSteps = Type.Omit(FlowRun, ['pauseMetadata', 'steps']
 
 const ListRequest = {
     config: {
-        permission: Permission.READ_RUN,
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_RUN, {
+                type: ProjectResourceType.QUERY,
+            }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -171,8 +176,12 @@ const ListRequest = {
 
 const GetRequest = {
     config: {
-        permission: Permission.READ_RUN,
-        allowedPrincipals: [PrincipalType.SERVICE, PrincipalType.USER] as const,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.READ_RUN, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowRunEntity,
+            }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -189,7 +198,7 @@ const GetRequest = {
 
 const ResumeFlowRunRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
     },
     schema: {
         params: Type.Object({
@@ -201,8 +210,12 @@ const ResumeFlowRunRequest = {
 
 const RetryFlowRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE],
-        permission: Permission.WRITE_RUN,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.TABLE,
+                tableName: FlowRunEntity,
+            }),
     },
     schema: {
         params: Type.Object({
@@ -214,8 +227,11 @@ const RetryFlowRequest = {
 
 const BulkCancelFlowRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_RUN,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         tags: ['flow-runs'],
@@ -227,8 +243,11 @@ const BulkCancelFlowRequest = {
 
 const ArchiveFlowRunRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_RUN,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         body: BulkArchiveActionOnRunsRequestBody,
@@ -237,8 +256,11 @@ const ArchiveFlowRunRequest = {
 
 const BulkRetryFlowRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
-        permission: Permission.WRITE_RUN,
+        security: securityAccess.project(
+            [PrincipalType.USER, PrincipalType.SERVICE], 
+            Permission.WRITE_RUN, {
+                type: ProjectResourceType.BODY,
+            }),
     },
     schema: {
         body: BulkActionOnRunsRequestBody,

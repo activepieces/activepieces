@@ -13,7 +13,7 @@ import { StepOutputStatus } from '@activepieces/shared';
 
 type StepStatusIconProps = {
   status: StepOutputStatus;
-  size: '3' | '4' | '5';
+  size: '3' | '4' | '5' | '4.5';
   hideTooltip?: boolean;
 };
 
@@ -37,14 +37,12 @@ const StepStatusIcon = React.memo(
         <TooltipTrigger asChild>
           <Icon
             className={cn('', {
-              'w-3': size === '3',
-              'w-4': size === '4',
-              'h-3': size === '3',
-              'h-4': size === '4',
-              'w-5': size === '5',
-              'h-5': size === '5',
-              'text-green-700': variant === 'success',
-              'text-red-700': variant === 'error',
+              'size-3': size === '3',
+              'size-4.5': size === '4.5',
+              'size-4': size === '4',
+              'size-5': size === '5',
+              'text-green-700 dark:text-green-200': variant === 'success',
+              'text-red-700 dark:text-red-200': variant === 'error',
               'text-foreground': variant === 'default',
             })}
           ></Icon>

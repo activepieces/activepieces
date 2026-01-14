@@ -1,7 +1,7 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { ChevronDown, Logs } from 'lucide-react';
+import { ChevronDown, HistoryIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import {
   createSearchParams,
@@ -9,11 +9,7 @@ import {
   useSearchParams,
 } from 'react-router-dom';
 
-import {
-  LeftSideBarType,
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PageHeader } from '@/components/custom/page-header';
 import { useEmbedding } from '@/components/embed-provider';
 import {
@@ -31,10 +27,14 @@ import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { getProjectName, projectHooks } from '@/hooks/project-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
+import { RightSideBarType } from '@/lib/types';
+import { cn, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -63,21 +63,19 @@ export const BuilderHeader = () => {
   const [
     flow,
     flowVersion,
-    setLeftSidebar,
     moveToFolderClientSide,
     applyOperation,
     setRightSidebar,
   ] = useBuilderStateContext((state) => [
     state.flow,
     state.flowVersion,
-    state.setLeftSidebar,
     state.moveToFolderClientSide,
     state.applyOperation,
     state.setRightSidebar,
   ]);
 
   const { embedState } = useEmbedding();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
 
   const { data: folderData } = foldersHooks.useFolder(
     flow.folderId ?? UncategorizedFolderId,
@@ -119,7 +117,11 @@ export const BuilderHeader = () => {
         {!embedState.hideFlowNameInBuilder && (
           <BreadcrumbItem>
             <BreadcrumbPage>
-              <div className="flex items-center gap-1 text-base">
+              <div
+                className={cn('flex items-center gap-1 text-base', {
+                  'max-w-[500px]': !isEditingFlowName,
+                })}
+              >
                 <EditableText
                   className="hover:cursor-text"
                   value={flowVersion.displayName}
@@ -186,10 +188,10 @@ export const BuilderHeader = () => {
       {hasPermissionToReadRuns && (
         <Button
           variant="ghost"
-          onClick={() => setLeftSidebar(LeftSideBarType.RUNS)}
+          onClick={() => setRightSidebar(RightSideBarType.RUNS)}
           className="gap-2 px-2"
         >
-          <Logs className="w-4 h-4" />
+          <HistoryIcon className="w-4 h-4" />
           {t('Runs')}
         </Button>
       )}

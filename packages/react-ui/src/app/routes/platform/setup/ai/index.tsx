@@ -5,60 +5,16 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { AIProviderName, PlatformRole, ApFlagId } from '@activepieces/shared';
+import {
+  PlatformRole,
+  ApFlagId,
+  SUPPORTED_AI_PROVIDERS,
+} from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
 
-const SUPPORTED_AI_PROVIDERS = [
-  {
-    provider: AIProviderName.OPENAI,
-    displayName: 'OpenAI',
-    markdown: `Follow these instructions to get your OpenAI API Key:
-
-1. Visit the following website: https://platform.openai.com/account/api-keys.
-2. Once on the website, locate and click on the option to obtain your OpenAI API Key.
-
-It is strongly recommended that you add your credit card information to your OpenAI account and upgrade to the paid plan **before** generating the API Key. This will help you prevent 429 errors.
-`,
-    logoUrl: 'https://cdn.activepieces.com/pieces/openai.png',
-  },
-  {
-    provider: AIProviderName.ANTHROPIC,
-    displayName: 'Anthropic',
-    markdown: `Follow these instructions to get your Claude API Key:
-
-1. Visit the following website: https://console.anthropic.com/settings/keys.
-2. Once on the website, locate and click on the option to obtain your Claude API Key.
-`,
-    logoUrl: 'https://cdn.activepieces.com/pieces/claude.png',
-  },
-  {
-    provider: AIProviderName.GOOGLE,
-    displayName: 'Google Gemini',
-    markdown: `Follow these instructions to get your Google API Key:
-1. Visit the following website: https://console.cloud.google.com/apis/credentials.
-2. Once on the website, locate and click on the option to obtain your Google API Key.
-`,
-    logoUrl: 'https://cdn.activepieces.com/pieces/google-gemini.png',
-  },
-  {
-    provider: AIProviderName.AZURE,
-    displayName: 'Azure',
-    logoUrl: 'https://cdn.activepieces.com/pieces/azure-openai.png',
-    markdown:
-      'Use the Azure Portal to browse to your OpenAI resource and retrieve an API key and resource name.',
-  },
-  {
-    provider: AIProviderName.OPENROUTER,
-    displayName: 'OpenRouter',
-    logoUrl: 'https://cdn.activepieces.com/pieces/openrouter.jpg',
-    markdown: `Follow these instructions to get your OpenRouter API Key:
-1. Visit the following website: https://openrouter.ai/settings/keys.
-2. Once on the website, locate and click on the option to obtain your OpenRouter API Key.`,
-  },
-];
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({
     queryKey: ['ai-providers'],
@@ -98,22 +54,23 @@ export default function AIProvidersPage() {
           }
         ></DashboardPageHeader>
         <div className="flex flex-col gap-4">
-          {SUPPORTED_AI_PROVIDERS.map((provider) => (
-            <AIProviderCard
-              key={provider.provider}
-              provider={provider.provider}
-              displayName={provider.displayName}
-              logoUrl={provider.logoUrl}
-              markdown={provider.markdown}
-              configured={
-                providers?.find((p) => p.id === provider.provider)
-                  ?.configured ?? false
-              }
-              isDeleting={isDeleting}
-              onDelete={() => deleteProvider(provider.provider)}
-              onSave={() => refetch()}
-            />
-          ))}
+          {SUPPORTED_AI_PROVIDERS.map((providerDef) => {
+            const config = providers?.find(
+              (p) => p.provider === providerDef.provider,
+            );
+
+            return (
+              <AIProviderCard
+                key={providerDef.provider}
+                providerInfo={providerDef}
+                providerConfig={config}
+                isDeleting={isDeleting}
+                onDelete={(id) => deleteProvider(id)}
+                onSave={() => refetch()}
+                allowWrite={allowWrite}
+              />
+            );
+          })}
         </div>
       </div>
     </LockedFeatureGuard>

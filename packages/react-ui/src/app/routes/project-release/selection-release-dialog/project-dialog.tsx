@@ -18,7 +18,7 @@ import {
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
@@ -45,8 +45,7 @@ export function ProjectSelectionDialog({
   setOpen,
   onSuccess,
 }: ProjectSelectionDialogProps) {
-  const { data: projects, isLoading: loadingProjects } =
-    projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
   const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
     useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
@@ -85,6 +84,7 @@ export function ProjectSelectionDialog({
       return;
     }
     loadSyncPlan({
+      projectId,
       type: ProjectReleaseType.PROJECT,
       targetProjectId: data.selectedProject,
     });
@@ -126,7 +126,6 @@ export function ProjectSelectionDialog({
                           label: project.displayName,
                           value: project.id,
                         }))}
-                      loading={loadingProjects}
                     ></SearchableSelect>
 
                     <FormMessage />
@@ -162,6 +161,7 @@ export function ProjectSelectionDialog({
           setOpen={setIsCreateReleaseDialogOpen}
           refetch={onSuccess}
           diffRequest={{
+            projectId,
             targetProjectId: form.getValues('selectedProject'),
             type: ProjectReleaseType.PROJECT,
           }}

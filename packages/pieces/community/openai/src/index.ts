@@ -71,7 +71,7 @@ export const openai = createPiece({
       baseUrl: () => baseUrl,
       authMapping: async (auth) => {
         return {
-          Authorization: `Bearer ${auth}`,
+          Authorization: `Bearer ${auth.secret_text}`,
         };
       },
     }),

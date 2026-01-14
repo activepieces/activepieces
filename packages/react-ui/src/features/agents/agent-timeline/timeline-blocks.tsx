@@ -9,6 +9,7 @@ import {
   SquareTerminal,
   Braces,
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 import { ApMarkdown } from '@/components/custom/markdown';
 import { DataList } from '@/components/data-list';
@@ -129,7 +130,7 @@ export const AgentToolBlock = ({ block, index }: AgentToolBlockProps) => {
       <Accordion
         type="single"
         collapsible
-        className="border-0 w-full bg-accent/20 rounded-md text-foreground border border-border"
+        className="w-full bg-accent/20 rounded-md text-foreground border border-border"
       >
         <AccordionItem value={`block-${index}`} className="border-0">
           <AccordionTrigger className="p-3 text-sm">
@@ -248,10 +249,32 @@ export const ThinkingBlock = () => {
 };
 
 export const PromptBlock = ({ prompt }: { prompt: string }) => {
+  const MAX_CHARS = 180;
+  const [expanded, setExpanded] = useState(false);
+
+  const isTruncatable = prompt.length > MAX_CHARS;
+
+  const displayedPrompt = useMemo(() => {
+    if (expanded || !isTruncatable) return prompt;
+    return prompt.slice(0, MAX_CHARS) + '…';
+  }, [expanded, isTruncatable, prompt]);
+
   return (
     <TimelineItem icon={<SquareTerminal className="h-4 w-4 text-primary" />}>
-      <div className="bg-primary/5 rounded-md p-3 text-sm text-foreground border border-border">
-        <ApMarkdown markdown={prompt} variant={MarkdownVariant.BORDERLESS} />
+      <div className="bg-primary/5 rounded-md p-3 text-sm text-foreground border border-border space-y-2">
+        <ApMarkdown
+          markdown={displayedPrompt}
+          variant={MarkdownVariant.BORDERLESS}
+        />
+
+        {isTruncatable && (
+          <button
+            onClick={() => setExpanded((v) => !v)}
+            className="text-xs text-primary hover:underline"
+          >
+            {expanded ? 'Read less' : 'Read more'}
+          </button>
+        )}
       </div>
     </TimelineItem>
   );

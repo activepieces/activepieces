@@ -1,6 +1,6 @@
 import { OtpType } from '@activepieces/ee-shared'
 import { cryptoUtils } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, EndpointScope, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ApFlagId, assertNotNullOrUndefined, AuthenticationResponse, ErrorCode, isNil, PlatformRole, PlatformWithoutSensitiveData, ProjectType, User, UserIdentity, UserIdentityProvider } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { otpService } from '../ee/authentication/otp/otp-service'
 import { flagService } from '../flags/flag.service'
@@ -144,18 +144,6 @@ export const authenticationService = (log: FastifyBaseLogger) => ({
             userId: user.id,
             platformId: platform.id,
             projectId: null,
-        })
-    },
-    async switchProject(params: SwitchProjectParams): Promise<AuthenticationResponse> {
-        const project = await projectService.getOneOrThrow(params.projectId)
-        const projectPlatform = await platformService.getOneWithPlanOrThrow(project.platformId)
-        await assertUserCanSwitchToPlatform(params.currentPlatformId, projectPlatform)
-        const user = await getUserForPlatform(params.identityId, projectPlatform)
-        return authenticationUtils.getProjectAndToken({
-            userId: user.id,
-            platformId: project.platformId,
-            projectId: params.projectId,
-            scope: params.scope,
         })
     },
 })
@@ -303,11 +291,4 @@ type SignInWithPasswordParams = {
 type SwitchPlatformParams = {
     identityId: string
     platformId: string
-}
-
-type SwitchProjectParams = {
-    identityId: string
-    currentPlatformId: string
-    projectId: string
-    scope?: EndpointScope
 }

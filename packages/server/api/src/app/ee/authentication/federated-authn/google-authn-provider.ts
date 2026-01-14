@@ -65,7 +65,7 @@ const exchangeCodeForIdToken = async (
         }),
     })
 
-    const { id_token: idToken } = await response.json()
+    const { id_token: idToken } = await response.json() as { id_token: string }
     return idToken
 }
 

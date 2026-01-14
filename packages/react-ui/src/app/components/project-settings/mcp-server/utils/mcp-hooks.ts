@@ -9,6 +9,7 @@ export const mcpHooks = {
     return useQuery({
       queryKey: [...MCP_SERVER_QUERY_KEY, projectId],
       queryFn: () => mcpApi.get(projectId),
+      retry: false,
       enabled: !!projectId && (options.enabled ?? true),
     });
   },

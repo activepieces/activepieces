@@ -1,15 +1,15 @@
-import { QueryClient, useSuspenseQuery } from '@tanstack/react-query';
+import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { userApi } from '@/lib/user-api';
-import { UserWithMetaInformationAndProject } from '@activepieces/shared';
+import { isNil, UserWithBadges } from '@activepieces/shared';
 
 export const userHooks = {
   useCurrentUser: () => {
     const userId = authenticationSession.getCurrentUserId();
     const token = authenticationSession.getToken();
     const expired = authenticationSession.isJwtExpired(token!);
-    return useSuspenseQuery<UserWithMetaInformationAndProject | null, Error>({
+    return useSuspenseQuery<UserWithBadges | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
         // Skip user data fetch if JWT is expired to prevent redirect to sign-in page
@@ -20,13 +20,28 @@ export const userHooks = {
           return null;
         }
         try {
-          const result = await userApi.getCurrentUser();
+          const result = await userApi.getUserById(userId);
           return result;
         } catch (error) {
           console.error(error);
           return null;
         }
       },
+      staleTime: Infinity,
+    });
+  },
+  useUserById: (id: string | null) => {
+    return useQuery({
+      queryKey: ['user', id],
+      queryFn: async () => {
+        try {
+          return await userApi.getUserById(id!);
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
+      },
+      enabled: !isNil(id),
       staleTime: Infinity,
     });
   },

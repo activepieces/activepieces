@@ -61,7 +61,7 @@ const ShareTemplateDialog: React.FC<{
         summary: template.summary,
         tags: template.tags,
         blogUrl: template.blogUrl ?? undefined,
-        metadata: null,
+        metadata: template.metadata,
         author,
         categories: template.categories,
         type: template.type,

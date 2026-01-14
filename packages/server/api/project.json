@@ -28,7 +28,8 @@
             "output": "."
           },
           "packages/server/api/src/assets"
-        ]
+        ],
+        "clean": false
       },
       "configurations": {
         "development": {

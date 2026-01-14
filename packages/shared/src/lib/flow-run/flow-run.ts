@@ -29,6 +29,7 @@ export const FlowRun = Type.Object({
     flowId: Type.String(),
     parentRunId: Type.Optional(Type.String()),
     failParentOnFailure: Type.Boolean(),
+    triggeredBy: Type.Optional(Type.String()),
     tags: Type.Optional(Type.Array(Type.String())),
     flowVersionId: Type.String(),
     flowVersion: Type.Optional(Type.Object({

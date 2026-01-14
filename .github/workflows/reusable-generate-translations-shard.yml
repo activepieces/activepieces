@@ -49,6 +49,7 @@ jobs:
         run: |
           git config --local user.email "abdulyki+automatedcommits@activepieces.com"
           git config --local user.name "automated-commits-ap"
+          git checkout -- bun.lock
 
       - name: Prepare branch
         env:

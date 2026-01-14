@@ -1,4 +1,4 @@
-import { AIProviderName } from '../../common/types';
+import { AIProviderName } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { generateText } from 'ai';
@@ -7,7 +7,7 @@ import { aiProps } from '../../common/props';
 export const summarizeText = createAction({
   name: 'summarizeText',
   displayName: 'Summarize Text',
-  description: '',
+  description: 'Summarize long emails, articles, or documents into what matters.',
   props: {
     provider: aiProps({ modelType: 'text' }).provider,
     model: aiProps({ modelType: 'text' }).model,
@@ -28,14 +28,17 @@ export const summarizeText = createAction({
     }),
   },
   async run(context) {
-    const providerId = context.propsValue.provider;
+    const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
 
     const model = await createAIModel({
-      providerId,
+      provider: provider as AIProviderName,
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
     });
 
     const response = await generateText({
@@ -49,8 +52,8 @@ export const summarizeText = createAction({
       maxOutputTokens: context.propsValue.maxOutputTokens,
       temperature: 1,
       providerOptions: {
-        [providerId]: {
-          ...(providerId === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
+        [provider]: {
+          ...(provider === AIProviderName.OPENAI ? { reasoning_effort: 'minimal' } : {}),
         }
       }
     });

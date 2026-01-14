@@ -5,10 +5,10 @@ import { square } from '@activepieces/piece-square'
 import { Piece, PieceAuthProperty } from '@activepieces/pieces-framework'
 import {
     rejectedPromiseHandler,
+    securityAccess,
 } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
-    ALL_PRINCIPAL_TYPES,
     apId,
     assertNotNullOrUndefined,
     ErrorCode,
@@ -55,7 +55,7 @@ export const appEventRoutingController: FastifyPluginAsyncTypebox = async (
         {
             config: {
                 rawBody: true,
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
         },
         async (

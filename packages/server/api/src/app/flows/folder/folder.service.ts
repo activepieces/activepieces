@@ -88,7 +88,7 @@ export const flowFolderService = (log: FastifyBaseLogger) => ({
         const queryBuilder = folderRepo()
             .createQueryBuilder('folder')
             .leftJoin('flow', 'flow', 'flow.folderId = folder.id')
-            .addSelect('COUNT(flow.id)', 'numberOfFlows')
+            .addSelect('COUNT(flow.id)::int', 'numberOfFlows')
             .where('folder.projectId = :projectId', { projectId })
             .groupBy('folder.id')
 

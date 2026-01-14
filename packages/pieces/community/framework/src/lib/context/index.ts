@@ -1,5 +1,5 @@
 import {
-  AgentTool,
+  AgentPieceTool,
   AppConnectionType,
   AppConnectionValue,
   ExecutionType,
@@ -12,6 +12,7 @@ import {
   TriggerPayload,
   TriggerStrategy,
 } from '@activepieces/shared';
+import { Tool } from 'ai'
 
 import {
   BasicAuthProperty,
@@ -232,12 +233,12 @@ export type ActionContext<
 
 
 export type ConstructToolParams = {
-  tools: AgentTool[]
+  tools: AgentPieceTool[]
   model: unknown,
 }
 
 export interface AgentContext {
-  tools: (params: ConstructToolParams) => Promise<Record<string, unknown>>;
+  tools: (params: ConstructToolParams) => Promise<Record<string, Tool>>;
 }
 
 export interface FilesService {

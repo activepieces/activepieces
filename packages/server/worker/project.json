@@ -11,7 +11,8 @@
         "outputPath": "dist/packages/server/worker",
         "main": "packages/server/worker/src/index.ts",
         "tsConfig": "packages/server/worker/tsconfig.lib.json",
-        "assets": ["packages/server/worker/*.md"]
+        "assets": ["packages/server/worker/*.md"],
+        "clean": false
       }
     },
     "lint": {

@@ -11,7 +11,7 @@ import {
   PieceTriggerSettings,
 } from '@activepieces/shared';
 
-import { GenericPropertiesFormComponent } from '../../piece-properties/generic-properties-form';
+import { GenericPropertiesForm } from '../../piece-properties/generic-properties-form';
 import { useStepSettingsContext } from '../step-settings-context';
 
 import { ConnectionSelect } from './connection-select';
@@ -30,7 +30,12 @@ const removeAuthFromProps = (
 };
 
 const PieceSettings = React.memo((props: PieceSettingsProps) => {
-  const { pieceModel } = useStepSettingsContext();
+  const {
+    pieceModel,
+    selectedStep,
+    updateFormSchema,
+    updatePropertySettingsSchema,
+  } = useStepSettingsContext();
 
   const actionName = (props.step.settings as PieceActionSettings).actionName;
   const selectedAction = actionName
@@ -99,26 +104,42 @@ const PieceSettings = React.memo((props: PieceSettingsProps) => {
             ></ConnectionSelect>
           )}
           {selectedAction && (
-            <GenericPropertiesFormComponent
+            <GenericPropertiesForm
               key={selectedAction.name}
               prefixValue={'settings.input'}
               props={actionPropsWithoutAuth}
-              allowDynamicValues={true}
+              propertySettings={selectedStep.settings.propertySettings}
               disabled={props.readonly}
               useMentionTextInput={true}
               markdownVariables={markdownVariables}
-            ></GenericPropertiesFormComponent>
+              dynamicPropsInfo={{
+                pieceName: pieceModel.name,
+                pieceVersion: pieceModel.version,
+                actionOrTriggerName: selectedAction.name,
+                placedInside: 'stepSettings',
+                updateFormSchema,
+                updatePropertySettingsSchema,
+              }}
+            ></GenericPropertiesForm>
           )}
           {selectedTrigger && (
-            <GenericPropertiesFormComponent
+            <GenericPropertiesForm
+              dynamicPropsInfo={{
+                pieceName: pieceModel.name,
+                pieceVersion: pieceModel.version,
+                actionOrTriggerName: selectedTrigger.name,
+                placedInside: 'stepSettings',
+                updateFormSchema,
+                updatePropertySettingsSchema,
+              }}
               key={selectedTrigger.name}
               prefixValue={'settings.input'}
               props={triggerPropsWithoutAuth}
               useMentionTextInput={false}
-              allowDynamicValues={true}
+              propertySettings={selectedStep.settings.propertySettings}
               disabled={props.readonly}
               markdownVariables={markdownVariables}
-            ></GenericPropertiesFormComponent>
+            ></GenericPropertiesForm>
           )}
         </>
       )}

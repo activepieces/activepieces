@@ -10,6 +10,10 @@ import {
   Users,
   Wand,
   Workflow,
+  Database,
+  FileText,
+  User,
+  Clock,
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 
@@ -31,7 +35,7 @@ import {
 import { auditEventsApi } from '@/features/platform-admin/lib/audit-events-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { formatUtils } from '@/lib/utils';
 import {
   ApplicationEvent,
@@ -43,7 +47,7 @@ import { isNil } from '@activepieces/shared';
 export default function AuditLogsPage() {
   const { platform } = platformHooks.useCurrentPlatform();
   const [searchParams] = useSearchParams();
-  const { data: projects } = projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
   const { data: users } = platformUserHooks.useUsers();
 
   const filters: DataTableFilters<keyof ApplicationEvent>[] = [
@@ -140,8 +144,13 @@ export default function AuditLogsPage() {
           columns={[
             {
               accessorKey: 'resource',
+              size: 120,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Resource')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Resource')}
+                  icon={Database}
+                />
               ),
               cell: ({ row }) => {
                 const icon = convertToIcon(row.original);
@@ -164,8 +173,13 @@ export default function AuditLogsPage() {
             },
             {
               accessorKey: 'details',
+              size: 200,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Details')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Details')}
+                  icon={FileText}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -177,10 +191,12 @@ export default function AuditLogsPage() {
             },
             {
               accessorKey: 'userId',
+              size: 180,
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
                   title={t('Performed By')}
+                  icon={User}
                 />
               ),
               cell: ({ row }) => {
@@ -191,8 +207,13 @@ export default function AuditLogsPage() {
             },
             {
               accessorKey: 'action',
+              size: 150,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Action')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Action')}
+                  icon={Wand}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -206,8 +227,13 @@ export default function AuditLogsPage() {
             },
             {
               accessorKey: 'projectId',
+              size: 150,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Project')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Project')}
+                  icon={Folder}
+                />
               ),
               cell: ({ row }) => {
                 return row.original.projectId &&
@@ -224,8 +250,13 @@ export default function AuditLogsPage() {
             },
             {
               accessorKey: 'created',
+              size: 150,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Created')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Created')}
+                  icon={Clock}
+                />
               ),
               cell: ({ row }) => {
                 return (

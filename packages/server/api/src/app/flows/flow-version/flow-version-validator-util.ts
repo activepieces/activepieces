@@ -13,8 +13,8 @@ import {
     PieceActionSettings,
     PieceTriggerSettings,
     PlatformId,
-    ProjectId,
     RouterActionSettingsWithValidation,
+    UserId,
 } from '@activepieces/shared'
 import { Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
@@ -34,11 +34,7 @@ type ValidationResult = {
 }
 
 export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
-    async prepareRequest(
-        projectId: ProjectId,
-        platformId: PlatformId,
-        request: FlowOperationRequest,
-    ): Promise<FlowOperationRequest> {
+    async prepareRequest({ platformId, request, userId }: PrepareRequestParams): Promise<FlowOperationRequest> {
         const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
 
         switch (clonedRequest.type) {
@@ -51,10 +47,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         break
                     case FlowActionType.PIECE: {
                         const result = await validateAction(
-                            clonedRequest.request.action.settings,
-                            projectId,
-                            platformId,
-                            log,
+                            { settings: clonedRequest.request.action.settings, platformId, log },
                         )
                         clonedRequest.request.action.valid = result.valid
                         if (!isNil(result.cleanInput)) {
@@ -81,10 +74,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         break
                     case FlowActionType.PIECE: {
                         const result = await validateAction(
-                            clonedRequest.request.settings,
-                            projectId,
-                            platformId,
-                            log,
+                            { settings: clonedRequest.request.settings, platformId, log },
                         )
                         clonedRequest.request.valid = result.valid
                         if (!isNil(result.cleanInput)) {
@@ -109,10 +99,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         break
                     case FlowTriggerType.PIECE: {
                         const result = await validateTrigger(
-                            clonedRequest.request.settings,
-                            projectId,
-                            platformId,
-                            log,
+                            { settings: clonedRequest.request.settings, platformId, log },
                         )
                         clonedRequest.request.valid = result.valid
                         if (result.valid && result.cleanInput) {
@@ -122,6 +109,16 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     }
                 }
                 break
+            case FlowOperationType.IMPORT_FLOW:{
+                const notes = clonedRequest.request.notes
+                if (!isNil(notes)) {
+                    clonedRequest.request.notes = notes.map(note => ({
+                        ...note,
+                        ownerId: userId,
+                    }))
+                }
+                break
+            }
             default:
                 break
         }
@@ -129,12 +126,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function validateAction(
-    settings: PieceActionSettings,
-    projectId: ProjectId,
-    platformId: PlatformId,
-    log: FastifyBaseLogger,
-): Promise<ValidationResult> {
+async function validateAction({ settings, platformId, log }: ValidateActionParams): Promise<ValidationResult> {
     if (
         isNil(settings.pieceName) ||
         isNil(settings.pieceVersion) ||
@@ -145,7 +137,6 @@ async function validateAction(
     }
 
     const piece = await pieceMetadataService(log).getOrThrow({
-        projectId,
         platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,
@@ -165,12 +156,7 @@ async function validateAction(
     return validateProps(props, settings.input, piece.auth, action.requireAuth)
 }
 
-async function validateTrigger(
-    settings: PieceTriggerSettings,
-    projectId: ProjectId,
-    platformId: PlatformId,
-    log: FastifyBaseLogger,
-): Promise<ValidationResult> {
+async function validateTrigger({ settings, platformId, log }: ValidateTriggerParams): Promise<ValidationResult> {
     if (
         isNil(settings.pieceName) ||
         isNil(settings.pieceVersion) ||
@@ -181,7 +167,6 @@ async function validateTrigger(
     }
 
     const piece = await pieceMetadataService(log).getOrThrow({
-        projectId,
         platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,
@@ -216,3 +201,21 @@ function validateProps(
     }
 }
 
+
+type PrepareRequestParams = {
+    platformId?: PlatformId
+    request: FlowOperationRequest
+    userId: UserId | null
+}
+
+type ValidateActionParams = {
+    settings: PieceActionSettings
+    platformId?: PlatformId
+    log: FastifyBaseLogger
+}
+
+type ValidateTriggerParams = {
+    settings: PieceTriggerSettings
+    platformId?: PlatformId
+    log: FastifyBaseLogger
+}

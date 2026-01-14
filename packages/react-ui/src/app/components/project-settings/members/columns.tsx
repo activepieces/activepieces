@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { ChevronDown, Info, Trash2 } from 'lucide-react';
+import { ChevronDown, Info, Trash2, User, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -27,7 +27,7 @@ import { projectMembersApi } from '@/features/members/lib/project-members-api';
 import { userInvitationApi } from '@/features/members/lib/user-invitation';
 import { projectRoleApi } from '@/features/platform-admin/lib/project-role-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
 import { Permission, UserInvitation } from '@activepieces/shared';
 
@@ -61,7 +61,7 @@ const RoleCell = ({
 
   const roles = rolesData?.data ?? [];
   const { checkAccess } = useAuthorization();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const userHasPermissionToUpdateRole =
     checkAccess(Permission.WRITE_PROJECT_MEMBER) &&
     row.original.type === 'member';
@@ -165,7 +165,7 @@ const ActionsCell = ({
   refetch: () => void;
 }) => {
   const { checkAccess } = useAuthorization();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
 
   const userHasPermissionToDelete =
     row.original.type === 'member'
@@ -231,8 +231,13 @@ export const membersTableColumns = ({
 })[] => [
   {
     accessorKey: 'member',
+    size: 250,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('User Name')} />
+      <DataTableColumnHeader
+        column={column}
+        title={t('User Name')}
+        icon={User}
+      />
     ),
     cell: ({ row }) => {
       if (row.original.type === 'invitation') {
@@ -273,8 +278,9 @@ export const membersTableColumns = ({
   },
   {
     accessorKey: 'role',
+    size: 180,
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title={t('Role')} />
+      <DataTableColumnHeader column={column} title={t('Role')} icon={Shield} />
     ),
     cell: ({ row }) => {
       return (

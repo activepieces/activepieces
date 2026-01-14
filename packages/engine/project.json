@@ -20,7 +20,8 @@
         "webpackConfig": "packages/engine/webpack.config.js",
         "babelUpwardRootMode": true,
         "statsJson": false,
-        "sourceMap": true
+        "sourceMap": true,
+        "clean": false
       },
       "configurations": {
         "production": {

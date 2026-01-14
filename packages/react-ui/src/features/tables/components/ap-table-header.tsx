@@ -30,7 +30,10 @@ import {
 import EditableText from '@/components/ui/editable-text';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { getProjectName, projectHooks } from '@/hooks/project-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
 import { Permission } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
@@ -60,7 +63,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   ]);
   const [isImportCsvDialogOpen, setIsImportCsvDialogOpen] = useState(false);
   const [isEditingTableName, setIsEditingTableName] = useState(false);
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
   );
@@ -146,7 +149,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   const rightContent = (
     <div className="flex items-center gap-2">
       {isSaving && (
-        <div className="flex items-center gap-2 text-muted-foreground animate-fade-in">
+        <div className="flex items-center gap-2 text-muted-foreground animate-in fade-in">
           <RefreshCw className="h-4 w-4 animate-spin" />
           <span className="text-sm">{t('Saving...')}</span>
         </div>

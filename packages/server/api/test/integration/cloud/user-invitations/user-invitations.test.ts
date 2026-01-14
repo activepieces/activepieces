@@ -240,7 +240,7 @@ describe('User Invitation API', () => {
             const mockToken = await generateMockToken({
                 id: mockMember.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockProject.platformId,
                 },
@@ -413,7 +413,7 @@ describe('User Invitation API', () => {
             const mockToken = await generateMockToken({
                 id: mockMember.id,
                 type: PrincipalType.USER,
-                projectId: mockProject.id,
+                
                 platform: {
                     id: mockProject.platformId,
                 },
@@ -499,7 +499,6 @@ async function createBasicEnvironment({ platform, project }: { platform?: Partia
     const mockOwnerToken = await generateMockToken({
         id: mockOwner.id,
         type: PrincipalType.USER,
-        projectId: mockProject.id,
         platform: {
             id: mockPlatform.id,
         },

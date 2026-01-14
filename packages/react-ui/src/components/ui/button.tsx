@@ -24,7 +24,7 @@ const buttonVariants = cva(
           'border-input bg-background enabled:hover:bg-accent enabled:hover:text-accent-foreground border',
         accent: 'bg-accent text-accent-foreground enabled:hover:bg-accent/80',
         ghost:
-          'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
+          'hover:bg-gray-300/10 hover:text-accent-foreground dark:hover:bg-gray-300/10',
         link: 'text-primary underline-offset-4 hover:underline',
         transparent: 'text-primary enabled:hover:bg-transparent',
         'outline-primary':
@@ -34,6 +34,7 @@ const buttonVariants = cva(
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',
         sm: 'h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5',
         lg: 'h-10 rounded-md px-6 has-[>svg]:px-4',
+        xl: 'h-12 rounded-md px-8 has-[>svg]:px-6',
         icon: 'size-9',
         xs: 'h-6 px-2 text-xs py-2',
       },

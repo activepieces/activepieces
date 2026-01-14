@@ -8,58 +8,43 @@ import {
   ArraySubProps,
 } from '@activepieces/pieces-framework';
 import {
-  FlowActionType,
-  FlowTriggerType,
+  isNil,
   PropertyExecutionType,
-  Step,
+  PropertySettings,
 } from '@activepieces/shared';
 
-import { selectGenericFormComponentForProperty } from './properties-utils';
+import {
+  selectGenericFormComponentForProperty,
+  SelectGenericFormComponentForPropertyParams,
+} from './properties-utils';
 
-type GenericPropertiesFormProps = {
-  props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
-  allowDynamicValues: boolean;
-  prefixValue: string;
-  markdownVariables?: Record<string, string>;
-  useMentionTextInput: boolean;
-  disabled?: boolean;
-  onValueChange?: (val: { value: unknown; propertyName: string }) => void;
-};
-
-export const GenericPropertiesFormComponent = React.memo(
+export const GenericPropertiesForm = React.memo(
   ({
     markdownVariables,
     props,
-    allowDynamicValues,
+    propertySettings,
     prefixValue,
     disabled,
     useMentionTextInput,
     onValueChange,
+    dynamicPropsInfo,
   }: GenericPropertiesFormProps) => {
     const form = useFormContext();
-    const step = form.getValues() as Step;
-
-    const { settings } = step;
-    const actionOrTriggerName = settings.actionName ?? settings.triggerName;
-    const { pieceName, pieceVersion } = settings;
-
     return (
       Object.keys(props).length > 0 && (
         <div className="flex flex-col gap-4 w-full">
           {Object.entries(props).map(([propertyName]) => {
-            const isPieceStep =
-              step.type === FlowActionType.PIECE ||
-              step.type === FlowTriggerType.PIECE;
-
-            const dynamicInputModeToggled = isPieceStep
-              ? step.settings.propertySettings[propertyName]?.type ===
-                PropertyExecutionType.DYNAMIC
-              : false;
-
+            const dynamicInputModeToggled =
+              propertySettings?.[propertyName]?.type ===
+              PropertyExecutionType.DYNAMIC;
             return (
               <FormField
                 key={propertyName}
-                name={`${prefixValue}.${propertyName}`}
+                name={
+                  prefixValue.length > 0
+                    ? `${prefixValue}.${propertyName}`
+                    : propertyName
+                }
                 control={form.control}
                 render={({ field }) =>
                   selectGenericFormComponentForProperty({
@@ -74,18 +59,19 @@ export const GenericPropertiesFormComponent = React.memo(
                       },
                     },
                     propertyName,
-                    inputName: `${prefixValue}.${propertyName}`,
+                    inputName:
+                      prefixValue.length > 0
+                        ? `${prefixValue}.${propertyName}`
+                        : propertyName,
                     property: props[propertyName],
-                    allowDynamicValues,
+                    allowDynamicValues: !isNil(propertySettings),
                     markdownVariables: markdownVariables ?? {},
                     useMentionTextInput: useMentionTextInput,
                     disabled: disabled ?? false,
                     dynamicInputModeToggled,
-                    form: form,
-                    actionOrTriggerName: actionOrTriggerName,
-                    pieceName: pieceName,
-                    pieceVersion: pieceVersion,
-                    inputPrefix: 'settings.input',
+                    form,
+                    dynamicPropsInfo,
+                    propertySettings,
                   })
                 }
               />
@@ -97,4 +83,17 @@ export const GenericPropertiesFormComponent = React.memo(
   },
 );
 
-GenericPropertiesFormComponent.displayName = 'GenericFormComponent';
+GenericPropertiesForm.displayName = 'GenericFormComponent';
+
+type GenericPropertiesFormProps = {
+  props: PiecePropertyMap | OAuth2Props | ArraySubProps<boolean>;
+  /**Use this to allow user toggling property execution type */
+  propertySettings: Record<string, PropertySettings> | null;
+  prefixValue: string;
+  markdownVariables?: Record<string, string>;
+  useMentionTextInput: boolean;
+  disabled?: boolean;
+  onValueChange?: (val: { value: unknown; propertyName: string }) => void;
+  /**for dynamic dropdowns and dynamic properties */
+  dynamicPropsInfo: SelectGenericFormComponentForPropertyParams['dynamicPropsInfo'];
+};
