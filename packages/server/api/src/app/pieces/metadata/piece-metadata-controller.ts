@@ -27,6 +27,7 @@ import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
 import { pieceSyncService } from '../piece-sync-service'
 import { getPiecePackageWithoutArchive, pieceMetadataService } from './piece-metadata-service'
+import { dropdownOptionsCache } from './dropdown-options-cache'
 
 export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
     await app.register(basePiecesController, { prefix: '/v1/pieces' })
@@ -135,25 +136,34 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
         async (req) => {
             const projectId = req.projectId
             const platform = req.principal.platform
-            const flow = await flowService(req.log).getOnePopulatedOrThrow({
-                projectId,
-                id: req.body.flowId,
-                versionId: req.body.flowVersionId,
-            })
-            const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
-                jobType: WorkerJobType.EXECUTE_PROPERTY,
-                platformId: platform.id,
-                projectId,
-                flowVersion: flow.version,
-                propertyName: req.body.propertyName,
-                actionOrTriggerName: req.body.actionOrTriggerName,
-                input: req.body.input,
-                sampleData,
-                searchValue: req.body.searchValue,
-                piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
-            })
-            return result
+            
+            // Use getOrSet with cache stampede protection
+            // Only ONE request will fetch data while others wait
+            return dropdownOptionsCache(req.log).getOrSet(
+                req.body,
+                platform.id,
+                async () => {
+                    const flow = await flowService(req.log).getOnePopulatedOrThrow({
+                        projectId,
+                        id: req.body.flowId,
+                        versionId: req.body.flowVersionId,
+                    })
+                    const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
+                    const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
+                        jobType: WorkerJobType.EXECUTE_PROPERTY,
+                        platformId: platform.id,
+                        projectId,
+                        flowVersion: flow.version,
+                        propertyName: req.body.propertyName,
+                        actionOrTriggerName: req.body.actionOrTriggerName,
+                        input: req.body.input,
+                        sampleData,
+                        searchValue: req.body.searchValue,
+                        piece: await getPiecePackageWithoutArchive(req.log, platform.id, req.body),
+                    })
+                    return result
+                },
+            )
         },
     )
 
