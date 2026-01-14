@@ -75,7 +75,6 @@ export const FlowStepInputOutput = () => {
     return <OutputSkeleton />;
   }
 
-  
   const message = handleRunFailureOrEmptyLog(run, rententionDays);
   if (message) {
     return (
@@ -87,7 +86,6 @@ export const FlowStepInputOutput = () => {
       </div>
     );
   }
-
 
   if (!selectedStepOutput || !selectedStep) {
     return (
