@@ -85,5 +85,11 @@
   "Triggers when a new email is received in the inbox.": "受信トレイに新しいメールを受信したときにトリガーします。",
   "Triggers when a new email is delivered into the specified folder.": "指定したフォルダに新しいメールが配信されたときにトリガーされます。",
   "Triggers when a new email containing one or more attachments arrives.": "添付ファイルを含む新しいメールが到着したときにトリガーされます。",
-  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "特定のフォルダ内の添付ファイルを監視します。すべてのフォルダを監視するには空白のままにします。"
+  "From (Sender Email)": "差出人(メールアドレス)",
+  "To (Recipient Email)": "宛先（受信者のメール）",
+  "Attachment Name Filter": "添付ファイル名フィルタ",
+  "Filter emails from a specific sender (optional). Leave empty to for all senders.": "特定の送信者からのメールをフィルタリングします（任意）。すべての送信者に空白のままにします。",
+  "Filter emails to a specific recipient (optional). Leave empty to for all recipients.": "特定の受信者にメールを絞り込みます（任意）。すべての受信者に空白のままにします。",
+  "Monitor attachments in a specific folder. Leave empty to monitor all folders.": "特定のフォルダ内の添付ファイルを監視します。すべてのフォルダを監視するには空白のままにします。",
+  "Filter attachments by name (contains). Leave empty to include all attachments.": "添付ファイルを名前でフィルタリングします。空の場合はすべての添付ファイルを含みます。"
 }
