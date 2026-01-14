@@ -256,7 +256,10 @@ const StepSettingsContainer = () => {
                   onResize={(size) => setHeight(size)}
                   className="min-h-[130px]"
                 >
-                  <ScrollArea className="h-[calc(100%-35px)]  ">
+                  <ScrollArea
+                    className="h-[calc(100%-35px)]"
+                    viewPortClassName="h-full"
+                  >
                     {showGenerateSampleData && (
                       <TestStepContainer
                         type={modifiedStep.type}

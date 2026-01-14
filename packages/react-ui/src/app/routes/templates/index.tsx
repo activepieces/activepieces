@@ -124,6 +124,7 @@ const TemplatesPage = () => {
         ) : showAllCategories ? (
           <AllCategoriesView
             templatesByCategory={templatesByCategory}
+            categories={categories}
             onCategorySelect={setCategory}
             onTemplateSelect={handleTemplateSelect}
             isLoading={showLoading}

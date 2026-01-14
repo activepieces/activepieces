@@ -27,7 +27,12 @@ export const migrateV12FixPieceVersion: Migration = {
         }
 
         const flow = await flowService(system.globalLogger()).getOneById(flowVersion.flowId)
-        assertNotNullOrUndefined(flow, 'Flow not found')
+        if (isNil(flow)) {
+            return {
+                ...flowVersion,
+                schemaVersion: '13',
+            }
+        }
         const platformId = await projectService.getPlatformId(flow.projectId)
         const stepNameToPieceVersion: Record<string, string> = {}
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)

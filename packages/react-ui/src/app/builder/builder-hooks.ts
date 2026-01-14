@@ -4,6 +4,7 @@ import { create, useStore } from 'zustand';
 import { CanvasState, createCanvasState } from './state/canvas-state';
 import { ChatState, createChatState } from './state/chat-state';
 import { createFlowState, FlowState } from './state/flow-state';
+import { createNotesState, NotesState } from './state/notes-state';
 import {
   createPieceSelectorState,
   PieceSelectorState,
@@ -27,7 +28,8 @@ export type BuilderState = FlowState &
   RunState &
   ChatState &
   CanvasState &
-  StepFormState;
+  StepFormState &
+  NotesState;
 export type BuilderInitialState = Pick<
   BuilderState,
   | 'flow'
@@ -48,8 +50,10 @@ export const createBuilderStore = (initialState: BuilderInitialState) =>
     const chatState = createChatState(set);
     const canvasState = createCanvasState(initialState, set);
     const stepFormState = createStepFormState(set);
+    const notesState = createNotesState(get, set);
     return {
       ...flowState,
+      ...notesState,
       ...runState,
       ...pieceSelectorState,
       ...chatState,

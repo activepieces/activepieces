@@ -79,6 +79,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
             break
         }
         case ExecutionType.RESUME: {
+            flowContext = flowContext.addTags(input.executionState.tags)
             break
         }
     }
