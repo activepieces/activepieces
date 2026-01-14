@@ -4,7 +4,7 @@ import {
   createApifyClient,
   createBuildProperty,
   createRunOptions,
-  handleRunResult,
+  handleRun,
   createTaskIdProperty,
   createTaskInputProperty,
   createMemoryProperty,
@@ -34,9 +34,15 @@ export const runTask = createAction({
     const client = createApifyClient(apifyToken);
 
     const runOptions = createRunOptions({ timeout, memory, build });
-    const run = await client.task(taskid).call(body, runOptions);
+    const resourceClient = client.task(taskid);
 
-    return handleRunResult(run, waitForFinish || false, client);
+    return handleRun({
+      resourceClient,
+      body,
+      runOptions,
+      waitForFinish: waitForFinish || false,
+      client
+    });
   },
 });
 

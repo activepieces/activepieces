@@ -1,9 +1,10 @@
 import {
+  ActorClient,
   ActorListSortBy,
-  ActorRun,
   ApifyClient,
   Build,
   Dictionary,
+  TaskClient,
   WebhookCondition,
   WebhookEventType
 } from 'apify-client';
@@ -308,7 +309,7 @@ export const createTimeoutProperty = (runType: RunType) => Property.Number({
 
 export const createWaitForFinishProperty = (runType: RunType) => Property.Checkbox({
   displayName: 'Wait for finish',
-  description: `Enable this to receive the actual output of the ${runType} run as the response.`,
+  description: `If checked, the step waits for the ${runType} run to finish and returns the run's dataset items as the step output.`,
   required: false,
   defaultValue: true,
 });
@@ -328,23 +329,37 @@ export const createRunOptions = (input: {
   return options;
 };
 
-// Handle run result based on the wait for finish property
-export const handleRunResult = async (
-  run: ActorRun,
-  waitForFinish: boolean,
-  client: ApifyClient
-): Promise<{ run: any; items: any; }> => {
+// Handle run based on the wait for finish property
+export const handleRun = async (
+  {
+    resourceClient,
+    body,
+    runOptions,
+    waitForFinish,
+    client
+  }: {
+    resourceClient: ActorClient | TaskClient;
+    body: Dictionary;
+    runOptions: { timeout?: number; memory?: number; build?: string; };
+    waitForFinish: boolean;
+    client: ApifyClient;
+  }
+): Promise<{ run: any; datasetItems: any; }> => {
+  const run = waitForFinish
+    ? await resourceClient.call(body, runOptions)
+    : await resourceClient.start(body, runOptions);
+
   if (waitForFinish && run.defaultDatasetId) {
-    const items = await client.dataset(run.defaultDatasetId).get();
+    const datasetItems = await client.dataset(run.defaultDatasetId).listItems();
     return {
       run,
-      items
+      datasetItems: datasetItems.items
     };
   }
 
   return {
     run,
-    items: null
+    datasetItems: null
   };
 };
 
