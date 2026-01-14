@@ -1,4 +1,3 @@
-import { rejectedPromiseHandler } from '@activepieces/server-shared'
 import { EngineOperation, EngineOperationType, EngineSocketEvent, isNil } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { Server as SocketIOServer } from 'socket.io'
@@ -20,7 +19,7 @@ export const sandboxWebsocketServer = {
 
         io.on('connection', (socket) => {
             const sandboxId = socket.handshake.auth['sandboxId'] as string
-            rejectedPromiseHandler(socket.join(sandboxId), log)
+            socket.join(sandboxId)
 
             connectionState[sandboxId] = true
             if (!isNil(connectionPromises[sandboxId])) {
