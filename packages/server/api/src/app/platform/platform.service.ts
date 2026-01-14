@@ -33,18 +33,18 @@ const OPEN_SOURCE_PLAN: Omit<PlatformPlanLimits, 'stripeSubscriptionStartDate' |
     mcpsEnabled: true,
     tablesEnabled: true,
     todosEnabled: true,
-    auditLogEnabled: false,
-    embeddingEnabled: false,
+    auditLogEnabled: false,       // EE feature - removed
+    embeddingEnabled: false,      // Keep false so AI menu shows
     managePiecesEnabled: true,
     manageTemplatesEnabled: true,
     customAppearanceEnabled: true,
     teamProjectsLimit: TeamProjectsLimit.UNLIMITED,
     projectRolesEnabled: true,
-    customDomainsEnabled: false,
-    globalConnectionsEnabled: false,
-    customRolesEnabled: false,
+    customDomainsEnabled: false,  // EE feature - removed
+    globalConnectionsEnabled: true,
+    customRolesEnabled: false,    // EE feature - removed
     apiKeysEnabled: true,
-    ssoEnabled: false,
+    ssoEnabled: false,            // EE feature - removed
 }
 
 export const platformRepo = repoFactory<Platform>(PlatformEntity)

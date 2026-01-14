@@ -7,6 +7,7 @@ import {
     SeekPage,
     SERVICE_KEY_SECURITY_OPENAPI,
     UpdateUserRequestBody,
+    UserWithBadges,
     UserWithMetaInformation,
 } from '@activepieces/shared'
 import {
@@ -17,6 +18,16 @@ import { StatusCodes } from 'http-status-codes'
 import { userService } from '../user-service'
 
 export const platformUserController: FastifyPluginAsyncTypebox = async (app) => {
+
+    app.get('/:id', GetUserByIdRequest, async (req) => {
+        const platformId = req.principal.platform.id
+        assertNotNullOrUndefined(platformId, 'platformId')
+
+        return userService.getOneByIdAndPlatformIdOrThrow({
+            id: req.params.id,
+            platformId,
+        })
+    })
 
     app.get('/', ListUsersRequest, async (req) => {
         const platformId = req.principal.platform.id
@@ -54,6 +65,22 @@ export const platformUserController: FastifyPluginAsyncTypebox = async (app) => 
 
         return res.status(StatusCodes.NO_CONTENT).send()
     })
+}
+
+const GetUserByIdRequest = {
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        response: {
+            [StatusCodes.OK]: UserWithBadges,
+        },
+        tags: ['users'],
+        description: 'Get user by ID',
+    },
+    config: {
+        security: securityAccess.publicPlatform([PrincipalType.USER]),
+    },
 }
 
 const ListUsersRequest = {
