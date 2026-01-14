@@ -7,7 +7,7 @@ import {
 import { Migration } from '.'
 
 export const migrateV13AgentProviderModel: Migration = {
-    targetSchemaVersion: '13',
+    targetSchemaVersion: '14',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {
             if (step.type === FlowActionType.PIECE && step.settings.pieceName === '@activepieces/piece-ai') {
@@ -36,7 +36,7 @@ export const migrateV13AgentProviderModel: Migration = {
 
         return {
             ...newVersion,
-            schemaVersion: '14',
+            schemaVersion: '15',
         }
     },
 }
