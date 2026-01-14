@@ -338,7 +338,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 throw new ActivepiecesError({
                     code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
                     params: {
-                        message: `This flow is getting deleted.`,
+                        message: 'This flow is getting deleted.',
                     },
                 })
             }
