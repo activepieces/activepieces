@@ -6,7 +6,6 @@ import {
     ApFlagId,
     CreateTemplateRequestBody,
     ErrorCode,
-    FlowVersionTemplate,
     isNil,
     ListTemplatesRequestQuery,
     Principal,
@@ -22,7 +21,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
 import { platformMustBeOwnedByCurrentUser } from '../ee/authentication/ee-authorization'
 import { flagService } from '../flags/flag.service'
-import { migrateFlowVersionTemplate } from '../flows/flow-version/migrations'
+import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
 import { communityTemplates } from './community-flow-template.service'
@@ -71,14 +70,7 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', {
         ...CreateParams,
         preValidation: async (request) => {
-            const migratedFlows = await Promise.all((request.body.flows ?? []).map(async (flow: FlowVersionTemplate) => {
-                const migratedFlow = await migrateFlowVersionTemplate(flow.trigger, flow.schemaVersion, flow.notes)
-                return {
-                    ...flow,
-                    trigger: migratedFlow.trigger,
-                    schemaVersion: migratedFlow.schemaVersion,
-                }
-            }))
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
             request.body.flows = migratedFlows
         },
     }, async (request, reply) => {
@@ -106,7 +98,12 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.CREATED).send(result)
     })
 
-    app.post('/:id', UpdateParams, async (request, reply) => {
+    app.post('/:id', { ...UpdateParams,
+        preValidation: async (request) => {
+            const migratedFlows = await migrateFlowVersionTemplateList(request.body.flows ?? [])
+            request.body.flows = migratedFlows
+        },
+    }, async (request, reply) => {
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
     })
