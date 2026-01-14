@@ -16,6 +16,7 @@ import {
     Cursor,
     EngineResponseStatus,
     ErrorCode,
+    ExecuteValidateAuthResponse,
     isNil,
     Metadata,
     OAuth2GrantType,
@@ -33,7 +34,7 @@ import {
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import semver from 'semver'
-import { EngineHelperResponse, EngineHelperValidateAuthResult } from 'server-worker'
+import { OperationResponse } from 'server-worker'
 import { ArrayContains, Equal, FindOperator, FindOptionsWhere, ILike, In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectMemberService } from '../../ee/projects/project-members/project-member.service'
@@ -503,7 +504,7 @@ const engineValidateAuth = async (
         platformId,
     })
 
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperValidateAuthResult>>({
+    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<ExecuteValidateAuthResponse>>({
         piece: await getPiecePackageWithoutArchive(log, platformId, {
             pieceName,
             pieceVersion: pieceMetadata.version,
