@@ -1,4 +1,7 @@
+import { isNil } from '@activepieces/shared';
 import { Mail } from 'lucide-react';
+
+import { UserAvatar } from '../ui/user-avatar';
 
 import { UserBadges } from '@/components/custom/user-badges';
 import {
@@ -7,9 +10,6 @@ import {
   HoverCardContent,
 } from '@/components/ui/hover-card';
 import { userHooks } from '@/hooks/user-hooks';
-import { isNil } from '@activepieces/shared';
-
-import { UserAvatar } from '../ui/user-avatar';
 
 interface ApAvatarProps {
   id: string | null;
@@ -40,6 +40,7 @@ export const ApAvatar = ({
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
             email={user.email}
+            imageUrl={user.imageUrl}
             size={avatarSize}
             disableTooltip={true}
           />
@@ -68,6 +69,7 @@ export const ApAvatar = ({
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
             email={user.email}
+            imageUrl={user.imageUrl}
             size={36}
             disableTooltip={true}
           />

@@ -328,6 +328,7 @@ import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-
 import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
 import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
 import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130030028-AddNotesToFlowVersion'
+import { ADDIMAGETOUSER1768502658760 } from './migration/postgres/1768502658760-ADDIMAGETOUSER'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -672,6 +673,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddOutdatedToReport1767994436597,
         AddNotesToFlowVersion1768130030028,
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
+        ADDIMAGETOUSER1768502658760,
     ]
     return migrations
 }
