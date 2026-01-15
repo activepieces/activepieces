@@ -1,23 +1,24 @@
 import { fork } from 'child_process'
 import { FastifyBaseLogger } from 'fastify'
 import { ENGINE_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
-import { EngineProcess } from './engine-factory-types'
+import { ProcessMaker } from './types'
 
-export const noSandboxProcess = (_log: FastifyBaseLogger): EngineProcess => ({
+export const simpleProcess = (_log: FastifyBaseLogger): ProcessMaker => ({
     create: async (params) => {
+        const { env, memoryLimitMb, sandboxId } = params
         return fork(ENGINE_PATH, [], {
-            ...params.options,
             execArgv: [
                 // IMPORTANT DO NOT REMOVE THIS ARGUMENT: https://github.com/laverdet/isolated-vm/issues/424
                 '--no-node-snapshot',
-                `--max-old-space-size=${params.options.resourceLimits.maxOldGenerationSizeMb}`,
-                `--max-semi-space-size=${params.options.resourceLimits.maxYoungGenerationSizeMb}`,
+                `--max-old-space-size=${memoryLimitMb}`,
+                `--max-semi-space-size=${memoryLimitMb}`,
             ],
             env: {
-                ...params.options.env,
+                ...env,
                 AP_BASE_CODE_DIRECTORY: GLOBAL_CODE_CACHE_PATH,
-                WORKER_ID: params.workerId,
+                SANDBOX_ID: sandboxId,
             },
         })
     },
 })
+

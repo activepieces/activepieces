@@ -5,12 +5,15 @@ import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import { aiProviderApi } from '@/features/platform-admin/lib/ai-provider-api';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { userHooks } from '@/hooks/user-hooks';
-import { PlatformRole, ApFlagId } from '@activepieces/shared';
+import {
+  PlatformRole,
+  ApFlagId,
+  SUPPORTED_AI_PROVIDERS,
+} from '@activepieces/shared';
 
 import LockedFeatureGuard from '../../../../components/locked-feature-guard';
 
 import { AIProviderCard } from './universal-pieces/ai-provider-card';
-import { SUPPORTED_AI_PROVIDERS } from './universal-pieces/supported-ai-providers';
 
 export default function AIProvidersPage() {
   const { data: providers, refetch } = useQuery({

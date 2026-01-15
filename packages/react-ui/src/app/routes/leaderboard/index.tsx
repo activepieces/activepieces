@@ -30,7 +30,7 @@ import { UsersLeaderboard, UserStats } from './users-leaderboard';
 
 export default function LeaderboardPage() {
   const [timePeriod, setTimePeriod] = useState<AnalyticsTimePeriod>(
-    AnalyticsTimePeriod.LAST_MONTH,
+    AnalyticsTimePeriod.ALL_TIME,
   );
   const { data: analyticsData, isLoading: isAnalyticsLoading } =
     platformAnalyticsHooks.useAnalytics();
@@ -161,7 +161,41 @@ export default function LeaderboardPage() {
             </div>
           }
           description={t('See top performers by flows created and time saved')}
-        />
+        >
+          <div className="flex items-center gap-2">
+            <Select
+              value={timePeriod}
+              onValueChange={(value) =>
+                setTimePeriod(value as AnalyticsTimePeriod)
+              }
+            >
+              <SelectTrigger>
+                <Calendar className="w-4 h-4 mr-2" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
+                  {t('Last 7 days')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
+                  {t('Last 30 days')}
+                </SelectItem>
+                <SelectItem value={AnalyticsTimePeriod.ALL_TIME}>
+                  {t('All Time')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownload}
+              disabled={isDownloadDisabled}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              {t('Download')}
+            </Button>
+          </div>
+        </DashboardPageHeader>
 
         <Tabs
           defaultValue="creators"
@@ -177,39 +211,6 @@ export default function LeaderboardPage() {
                 {t('Projects')}
               </TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-2">
-              <Select
-                value={timePeriod}
-                onValueChange={(value) =>
-                  setTimePeriod(value as AnalyticsTimePeriod)
-                }
-              >
-                <SelectTrigger className="h-8">
-                  <Calendar className="h-3 w-3 mr-2" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_WEEK}>
-                    {t('Last 7 days')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.LAST_MONTH}>
-                    {t('Last 30 days')}
-                  </SelectItem>
-                  <SelectItem value={AnalyticsTimePeriod.ALL_TIME}>
-                    {t('All Time')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDownload}
-                disabled={isDownloadDisabled}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {t('Download')}
-              </Button>
-            </div>
           </div>
 
           <TabsContent value="creators">
