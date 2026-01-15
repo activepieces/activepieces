@@ -22,6 +22,7 @@ export const migrateV13AgentProviderModel: Migration = {
                         ...step,
                         settings: {
                             ...step.settings,
+                            pieceVersion: '0.1.0',
                             input: {
                                 ...input,
                                 [AgentPieceProps.AI_PROVIDER_MODEL]: { provider, model },
@@ -29,8 +30,16 @@ export const migrateV13AgentProviderModel: Migration = {
                         },
                     }
                 }
-                return step
+
+                return {
+                    ...step,
+                    settings: {
+                        ...step.settings,
+                        pieceVersion: '0.1.0'
+                    }
+                }
             }
+
             return step
         })
 
