@@ -2,13 +2,13 @@ import { pubsubFactory } from '@activepieces/server-shared'
 import { EngineHttpResponse, FlowRunStatus, isFlowRunStateTerminal, isNil, SendFlowResponseRequest, StepRunResponse, UpdateRunProgressRequest, WebsocketServerEvent } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
-import { appSocket } from '../../app-socket'
-import { runsMetadataQueue } from '../../flow-worker'
-import { workerRedisConnections } from '../../utils/worker-redis'
+import { appSocket } from '../app-socket'
+import { runsMetadataQueue } from '../flow-worker'
+import { workerRedisConnections } from '../utils/worker-redis'
 
 const pubsub = pubsubFactory(workerRedisConnections.create)
 
-export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
+export const sandboxSockerHandler = (log: FastifyBaseLogger) => ({
     sendFlowResponse: async (request: SendFlowResponseRequest): Promise<void> => {
         const { workerHandlerId, httpRequestId, runResponse } = request
         await publishEngineResponse(log, {
@@ -67,12 +67,6 @@ export const engineSocketHandlers = (log: FastifyBaseLogger) => ({
     },
 })
 
-type UpdateStepProgressRequest = {
-    projectId: string
-    stepResponse: StepRunResponse
-}
-
-
 async function publishEngineResponse<T>(log: FastifyBaseLogger, request: PublishEngineResponseRequest<T>): Promise<void> {
     const { requestId, workerServerId, response } = request
     log.info({ requestId }, '[engineResponsePublisher#publishEngineResponse]')
@@ -128,3 +122,8 @@ type PublishEngineResponseRequest<T> = {
 }
 
 type EngineResponseWithId<T> = { requestId: string, response: T }
+
+type UpdateStepProgressRequest = {
+    projectId: string
+    stepResponse: StepRunResponse
+}

@@ -31,13 +31,31 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
       type: flowCanvasConsts.DRAGGED_NOTE_TAG,
     },
   });
-
+  //because react flow only detects nowheel class, it doesn't work with focus-within:nowheel
+  const [isFocusWithin, setIsFocusWithin] = useState(false);
   const [size, setSize] = useState(props.data.size);
   if (draggedNote?.id === props.id || note === null) {
     return null;
   }
   return (
-    <div className="group note-node outline-none">
+    <div
+      className={cn('group note-node outline-none', {
+        nowheel: isFocusWithin,
+      })}
+      onFocus={() => setIsFocusWithin(true)}
+      onBlur={() => setIsFocusWithin(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setIsFocusWithin(false);
+          if (
+            document.activeElement instanceof HTMLElement &&
+            document.activeElement.closest('.note-node')
+          ) {
+            document.activeElement.blur();
+          }
+        }
+      }}
+    >
       <NodeResizeControl
         minWidth={150}
         minHeight={150}
@@ -121,7 +139,10 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
       }}
     >
       {!isDragging && !readonly && editorRef.current && (
-        <div className="opacity-0 focus-within:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300">
+        <div
+          className="opacity-0 focus-within:opacity-100 pointer-events-none group-focus-within:pointer-events-auto group-focus-within:opacity-100 transition-opacity duration-300"
+          onPointerDown={(e) => e.stopPropagation()}
+        >
           <NoteTools
             editor={editorRef.current}
             currentColor={note.color}
@@ -162,8 +183,10 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
               NoteColorVariantClassName[color],
             )}
             onChange={(value: string) => {
-              setLocalNote({ ...localNote, content: value });
-              debouncedUpdateContent(id, value);
+              if (value !== localNote.content) {
+                setLocalNote({ ...localNote, content: value });
+                debouncedUpdateContent(id, value);
+              }
             }}
           />
         </div>
