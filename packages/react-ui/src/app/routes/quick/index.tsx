@@ -1,14 +1,11 @@
 'use client';
 
-import { t } from 'i18next';
-import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import PromptInput from '@/features/chat-v2/prompt-input';
 import { Conversation } from '@/features/chat-v2/conversation';
 import { UserMessage } from '@/features/chat-v2/user-message';
 import { LLMMessage } from '@/features/chat-v2/llm-message';
-import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/features/chat-v2/reasoning';
 
-export function CoworkPage() {
+export function QuickPage() {
   const handleMessageSend = (message: string) => {
     // eslint-disable-next-line no-console
     console.log('Message sent:', message);
@@ -29,12 +26,19 @@ export function CoworkPage() {
             {
               type: 'reasoning',
               isStreaming: false,
-              defaultOpen: true,
               content: 'Here is the reasoning behind the response. This content is collapsible and shows the thinking process.'
             },
             {
               type: 'text',
               text: 'This is a response from the LLM. It appears on the left side with a maximum width of 70%.'
+            },
+            {
+              type: 'plan',
+              items: [
+                { text: 'Task 1 - Completed', status: 'completed' },
+                { text: 'Task 2 - In Progress', status: 'not-started' },
+                { text: 'Task 3 - Not Started', status: 'not-started' },
+              ]
             }
           ]} />
         </Conversation>
@@ -50,3 +54,4 @@ export function CoworkPage() {
     </div>
   );
 }
+

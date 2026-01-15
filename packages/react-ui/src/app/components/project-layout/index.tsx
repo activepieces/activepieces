@@ -73,8 +73,8 @@ export function ProjectDashboardLayout({
       hasPermission: true,
     },
     {
-      to: '/cowork',
-      label: t('Cowork'),
+      to: '/quick',
+      label: t('Chat'),
       show: !isEmbedded,
       icon: Compass,
       hasPermission: true,

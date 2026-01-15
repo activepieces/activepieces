@@ -1,7 +1,7 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
-import { Search, Plus, LineChart, Trophy, Compass, Users } from 'lucide-react';
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect, useCallback, SVGProps } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
@@ -48,6 +48,18 @@ import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
+import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
+
+const QuickLogo = (props: SVGProps<SVGSVGElement>) => {
+  return (
+    <img
+      src={quickLogoUrl}
+      alt="Quick Logo"
+      className={props.className}
+      style={{ display: 'block' }}
+    />
+  );
+};
 
 export function ProjectDashboardSidebar() {
   const { data: projects } = projectCollectionUtils.useAll();
@@ -154,10 +166,10 @@ export function ProjectDashboardSidebar() {
 
   const coworkLink: SidebarItemType = {
     type: 'link',
-    to: '/cowork',
-    label: t('Cowork'),
+    to: '/quick',
+    label: t('Chat'),
     show: true,
-    icon: Users,
+    icon: QuickLogo,
     hasPermission: true,
     isSubItem: false,
   };

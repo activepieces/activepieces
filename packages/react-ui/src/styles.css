@@ -114,7 +114,7 @@
   --animate-slide-in-from-bottom: slide-in-from-bottom 0.2s ease-out forwards;
   --animate-primary-color-pulse: primary-color-pulse 1s ease-in-out infinite
     alternate;
-  --font-sans: "Inter",ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji";
+  --font-sans: ui-sans-serif,system-ui,sans-serif,"Apple Color Emoji","Segoe UI Emoji",Segoe UI Symbol,"Noto Color Emoji";
   --shadow-step-container: 0px 0px 22px hsl(var(--border) / 0.4);
   --shadow-add-button: var(--add-button-shadow);
   --color-builder-background: var(--builder-background);
