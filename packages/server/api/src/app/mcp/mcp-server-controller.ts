@@ -1,6 +1,6 @@
 import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import { AgentMcpTool, ApId, buildAuthHeaders, createTransportConfig, isNil, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
-import { experimental_createMCPClient as createMCPClient, MCPClient } from '@ai-sdk/mcp'
+import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { mcpServerService } from './mcp-service'
@@ -61,7 +61,7 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
                     tool.protocol,
                     tool.serverUrl,
                     buildAuthHeaders(tool.auth),
-                ),
+                ) as MCPTransport,
             })
             const mcpTools = await mcpClient.tools()
 

@@ -4,7 +4,7 @@ import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
 import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, createTransportConfig, isNil, McpServerTools, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { ActionContext } from "@activepieces/pieces-framework";
-import { experimental_createMCPClient as createMCPClient, MCPClient } from '@ai-sdk/mcp';
+import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
 
 type FlattenedMcpResult = {
   mcpClients: MCPClient[];
@@ -40,7 +40,7 @@ async function constructMcpServersTools(
             tool.protocol,
             tool.serverUrl,
             buildAuthHeaders(tool.auth)
-          ),
+          ) as MCPTransport,
         });
 
         const mcpTools = await mcpClient.tools();
