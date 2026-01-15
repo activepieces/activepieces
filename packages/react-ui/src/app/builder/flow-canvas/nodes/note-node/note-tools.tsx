@@ -1,6 +1,6 @@
 import { Editor } from '@tiptap/core';
 import { TrashIcon } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
     state.deleteNote,
   ]);
   return (
-    <div ref={containerRef} className="absolute -top-[45px] w-full left-0">
+    <div ref={containerRef} className="absolute cursor-default -top-[45px] w-full left-0">
       <div className="flex items-center justify-center">
         <div className="p-1 bg-background flex items-center gap-0.5 shadow-md rounded-lg scale-65 border border-solid border-border">
           <NoteColorPicker
@@ -62,15 +62,19 @@ const NoteColorPicker = ({
   setCurrentColor,
   container,
 }: NoteColorPickerProps) => {
+  const [open, setOpen] = useState(false);
+  const popoverTriggerRef = useRef<HTMLDivElement>(null);
   return (
-    <Popover>
+    <Popover onOpenChange={setOpen} open={open}>
       <PopoverTrigger asChild>
         <div
+          ref={popoverTriggerRef}
           className={cn(
             NoteColorPickerClassName[currentColor] ??
               NoteColorPickerClassName[NoteColorVariant.YELLOW],
             'mx-0.5 size-5 shrink-0  rounded-full cursor-pointer',
           )}
+          tabIndex={0}
           role="button"
         ></div>
       </PopoverTrigger>
@@ -84,9 +88,11 @@ const NoteColorPicker = ({
             <div
               key={color}
               role="button"
-              className="size-5 shrink-0 cursor-pointer grow flex items-center justify-center"
+              className="size-5  shrink-0 cursor-pointer grow flex items-center justify-center"
               onClick={() => {
                 setCurrentColor(color);
+                setOpen(false);
+                popoverTriggerRef.current?.focus()
               }}
             >
               <div
