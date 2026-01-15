@@ -35,8 +35,8 @@ export const migrateV13AgentProviderModel: Migration = {
                     ...step,
                     settings: {
                         ...step.settings,
-                        pieceVersion: '0.1.0'
-                    }
+                        pieceVersion: '0.1.0',
+                    },
                 }
             }
 
