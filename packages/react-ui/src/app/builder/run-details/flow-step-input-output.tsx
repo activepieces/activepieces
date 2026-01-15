@@ -71,6 +71,10 @@ export const FlowStepInputOutput = () => {
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
 
+  if (!isRunDone) {
+    return <OutputSkeleton />;
+  }
+
   const message = handleRunFailureOrEmptyLog(run, rententionDays);
   if (message) {
     return (
@@ -81,10 +85,6 @@ export const FlowStepInputOutput = () => {
         </h4>
       </div>
     );
-  }
-
-  if (!isRunDone) {
-    return <OutputSkeleton />;
   }
 
   if (!selectedStepOutput || !selectedStep) {

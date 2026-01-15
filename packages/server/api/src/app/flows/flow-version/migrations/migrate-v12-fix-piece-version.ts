@@ -13,8 +13,6 @@ import { projectService } from '../../../project/project-service'
 import { flowService } from '../../flow/flow.service'
 import { Migration } from '.'
 
-
-
 export const migrateV12FixPieceVersion: Migration = {
     targetSchemaVersion: '12',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {

@@ -16,7 +16,6 @@
     "fastify": "5.4.0",
     "fetch-retry": "6.0.0",
     "p-limit": "2.3.0",
-    "chalk": "4.1.2",
     "chokidar": "4.0.3",
     "nanoid": "3.3.8",
     "tree-kill": "1.2.2",

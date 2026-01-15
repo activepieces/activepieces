@@ -5,8 +5,8 @@ import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { flowRunLogs } from '../../api/server-api.service'
 import { flowWorkerCache } from '../../cache/flow-worker-cache'
-import { engineRunner } from '../../compute'
-import { engineSocketHandlers } from '../../compute/process/engine-socket-handlers'
+import { operationHandler } from '../../compute/operation-handler'
+import { sandboxSockerHandler } from '../../compute/sandbox-socket-handlers'
 import { runsMetadataQueue } from '../../flow-worker'
 import { workerRedisConnections } from '../../utils/worker-redis'
 
@@ -81,7 +81,7 @@ async function handleMemoryIssueError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await engineSocketHandlers(log).updateRunProgress({
+    await sandboxSockerHandler(log).updateRunProgress({
         finishTime: dayjs().toISOString(),
         status: FlowRunStatus.MEMORY_LIMIT_EXCEEDED,
         httpRequestId: jobData.httpRequestId,
@@ -96,7 +96,7 @@ async function handleTimeoutError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await engineSocketHandlers(log).updateRunProgress({
+    await sandboxSockerHandler(log).updateRunProgress({
         finishTime: dayjs().toISOString(),
         status: FlowRunStatus.TIMEOUT,
         httpRequestId: jobData.httpRequestId,
@@ -111,7 +111,7 @@ async function handleInternalError(
     jobData: ExecuteFlowJobData,
     log: FastifyBaseLogger,
 ): Promise<void> {
-    await engineSocketHandlers(log).updateRunProgress({
+    await sandboxSockerHandler(log).updateRunProgress({
         finishTime: dayjs().toISOString(),
         status: FlowRunStatus.INTERNAL_ERROR,
         httpRequestId: jobData.httpRequestId,
@@ -180,7 +180,7 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
                     attemptsStarted,
                     timeoutInSeconds,
                 )
-                const { result, status, delayInSeconds } = await engineRunner(runLog).executeFlow(
+                const { result, status, delayInSeconds } = await operationHandler(runLog).executeFlow(
                     engineToken,
                     input,
                 )
@@ -205,10 +205,10 @@ export const flowJobExecutor = (log: FastifyBaseLogger) => ({
             catch (e) {
                 const isTimeoutError =
                     e instanceof ActivepiecesError &&
-                    e.error.code === ErrorCode.EXECUTION_TIMEOUT
+                    e.error.code === ErrorCode.SANDBOX_EXECUTION_TIMEOUT
                 const isMemoryIssueError =
                     e instanceof ActivepiecesError &&
-                    e.error.code === ErrorCode.MEMORY_ISSUE
+                    e.error.code === ErrorCode.SANDBOX_MEMORY_ISSUE
 
                 if (isTimeoutError) {
                     span.setAttribute('error.type', 'timeout')

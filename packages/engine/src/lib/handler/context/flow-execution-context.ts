@@ -164,11 +164,18 @@ export class FlowExecutorContext {
             stepsCount: this.stepsCount + 1,
         })
     }
-
    
-    public currentState(): Record<string, unknown> {
-        let flattenedSteps: Record<string, unknown> = extractOutput(this.steps)
+    public currentState(referencedStepNames?: string[]): Record<string, unknown> {
+        const referencedSteps = referencedStepNames 
+            ?  referencedStepNames.reduce((acc, stepName) => {
+                if (this.steps[stepName]) acc[stepName] = this.steps[stepName]
+                return acc
+            }, {} as Record<string, StepOutput>)
+            : this.steps
+
+        let flattenedSteps: Record<string, unknown> = extractOutput(referencedSteps)
         let targetMap = this.steps
+
         this.currentPath.path.forEach(([stepName, iteration]) => {
             const stepOutput = targetMap[stepName]
             if (!stepOutput.output || stepOutput.type !== FlowActionType.LOOP_ON_ITEMS) {
@@ -182,8 +189,6 @@ export class FlowExecutorContext {
         })
         return flattenedSteps
     }
-
-
 }
 
 function extractOutput(steps: Record<string, StepOutput>): Record<string, unknown> {
