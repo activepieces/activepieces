@@ -1,6 +1,6 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
-import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { Search, Plus, LineChart, Trophy, Compass, Users } from 'lucide-react';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
@@ -152,6 +152,16 @@ export function ProjectDashboardSidebar() {
     return true;
   };
 
+  const coworkLink: SidebarItemType = {
+    type: 'link',
+    to: '/cowork',
+    label: t('Cowork'),
+    show: true,
+    icon: Users,
+    hasPermission: true,
+    isSubItem: false,
+  };
+
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
@@ -182,7 +192,7 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const items = [exploreLink, impactLink, leaderboardLink].filter(
+  const items = [coworkLink, exploreLink, impactLink, leaderboardLink].filter(
     permissionFilter,
   );
 

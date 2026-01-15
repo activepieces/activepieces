@@ -72,6 +72,13 @@ export function ProjectDashboardLayout({
       icon: Trophy,
       hasPermission: true,
     },
+    {
+      to: '/cowork',
+      label: t('Cowork'),
+      show: !isEmbedded,
+      icon: Compass,
+      hasPermission: true,
+    },
   ];
 
   const hideHeader =

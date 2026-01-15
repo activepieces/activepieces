@@ -10,6 +10,7 @@ import { PageTitle } from '@/app/components/page-title';
 import { ChatPage } from '@/app/routes/chat';
 import { EmbedPage } from '@/app/routes/embed';
 import AnalyticsPage from '@/app/routes/impact';
+import { CoworkPage } from '@/app/routes/cowork';
 import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
 import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
 import { SSOPage } from '@/app/routes/platform/security/sso';
@@ -353,6 +354,16 @@ const routes = [
       <ProjectDashboardLayout>
         <PageTitle title="Leaderboard">
           <LeaderboardPage />
+        </PageTitle>
+      </ProjectDashboardLayout>
+    ),
+  },
+  {
+    path: '/cowork',
+    element: (
+      <ProjectDashboardLayout>
+        <PageTitle title="Cowork">
+          <CoworkPage />
         </PageTitle>
       </ProjectDashboardLayout>
     ),
