@@ -163,16 +163,17 @@ export const FlowCanvas = React.memo(
 
     const { setCursorPosition } = useCursorPosition();
     const translateExtent = useMemo(() => {
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight + 100;
       const nodes = graph.nodes;
       const graphRectangle = getNodesBounds(nodes);
-      const stepWidth = flowCanvasConsts.AP_NODE_SIZE.STEP.width;
       const start = {
-        x: -graphRectangle.width - 5 * stepWidth,
-        y: -graphRectangle.height,
+        x: graphRectangle.x - windowWidth,
+        y: graphRectangle.y - windowHeight,
       };
       const end = {
-        x: 2.5 * graphRectangle.width + 5 * stepWidth,
-        y: 2 * graphRectangle.height,
+        x: graphRectangle.x + graphRectangle.width + windowWidth,
+        y: graphRectangle.y + graphRectangle.height + windowHeight,
       };
       const extent: CoordinateExtent = [
         [start.x, start.y],
