@@ -30,6 +30,7 @@ const authDesc = `
     - Select **Microsoft Graph** → **Delegated permissions**.
     - Add the following scopes:
       - Notes.ReadWrite
+      - Notes.Read.All
       - offline_access
 	  - User.Read
     - Click **Add permissions**.
@@ -41,7 +42,7 @@ export const oneNoteAuth = PieceAuth.OAuth2({
 	authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
 	tokenUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 	required: true,
-	scope: ['Notes.ReadWrite', 'User.Read', 'offline_access'],
+	scope: ['Notes.ReadWrite', 'Notes.Read.All', 'User.Read', 'offline_access'],
 	prompt: 'omit'
 });
 
