@@ -10,9 +10,9 @@ import {
   useSensors,
   PointerSensorOptions,
 } from '@dnd-kit/core';
-import type { PointerEvent } from 'react';
 import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
+import type { PointerEvent } from 'react';
 import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -30,7 +30,6 @@ import NoteDragOverlay from './nodes/note-node/note-drag-overlay';
 import StepDragOverlay from './nodes/step-node/step-drag-overlay';
 import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
-
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const reactFlow = useReactFlow();
@@ -217,7 +216,6 @@ function handleNoteDragEnd({
     }
   }
 }
-
 
 class PointerSensorIgnoringInteractiveItems extends PointerSensor {
   static activators = [

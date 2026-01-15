@@ -31,7 +31,9 @@ export const MarkdownInput = React.forwardRef<
     }: MarkdownInputProps,
     ref: React.Ref<Editor | null>,
   ) => {
-    const [showTextCursor, setShowTextCursor] = useState(!onlyEditableOnDoubleClick && !disabled);
+    const [showTextCursor, setShowTextCursor] = useState(
+      !onlyEditableOnDoubleClick && !disabled,
+    );
     const editor = useEditor({
       extensions: [
         Document,
@@ -112,8 +114,8 @@ export const MarkdownInput = React.forwardRef<
           //gotta add this nodrag nopan to prevent dnd-kit and React Flow interference with selection
           'nodrag nopan nowheel cursor-text select-text': showTextCursor,
         })}
-        onKeyDown={(e)=>{
-          if(e.key === 'Escape'){
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
             editor.commands.blur();
           }
         }}

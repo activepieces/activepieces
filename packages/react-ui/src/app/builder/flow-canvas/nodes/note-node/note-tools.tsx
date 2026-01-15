@@ -21,7 +21,10 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
     state.deleteNote,
   ]);
   return (
-    <div ref={containerRef} className="absolute cursor-default -top-[45px] w-full left-0">
+    <div
+      ref={containerRef}
+      className="absolute cursor-default -top-[45px] w-full left-0"
+    >
       <div className="flex items-center justify-center">
         <div className="p-1 bg-background flex items-center gap-0.5 shadow-md rounded-lg scale-65 border border-solid border-border">
           <NoteColorPicker
@@ -92,7 +95,7 @@ const NoteColorPicker = ({
               onClick={() => {
                 setCurrentColor(color);
                 setOpen(false);
-                popoverTriggerRef.current?.focus()
+                popoverTriggerRef.current?.focus();
               }}
             >
               <div

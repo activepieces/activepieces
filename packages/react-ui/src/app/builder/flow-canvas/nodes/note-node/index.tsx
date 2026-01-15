@@ -38,19 +38,24 @@ const ApNoteCanvasNode = (props: NodeProps & Omit<ApNoteNode, 'position'>) => {
     return null;
   }
   return (
-    <div className={cn("group note-node outline-none", {
-      'nowheel': isFocusWithin,
-    })}
-    onFocus={() => setIsFocusWithin(true)}
-    onBlur={() => setIsFocusWithin(false)}
-    onKeyDown={(e) => {
-      if(e.key === 'Escape'){
-        setIsFocusWithin(false);
-        if(document.activeElement instanceof HTMLElement && document.activeElement.closest('.note-node')){
-          document.activeElement.blur();
+    <div
+      className={cn('group note-node outline-none', {
+        nowheel: isFocusWithin,
+      })}
+      onFocus={() => setIsFocusWithin(true)}
+      onBlur={() => setIsFocusWithin(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          setIsFocusWithin(false);
+          if (
+            document.activeElement instanceof HTMLElement &&
+            document.activeElement.closest('.note-node')
+          ) {
+            document.activeElement.blur();
+          }
         }
-      }
-    }}>
+      }}
+    >
       <NodeResizeControl
         minWidth={150}
         minHeight={150}
@@ -178,7 +183,7 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
               NoteColorVariantClassName[color],
             )}
             onChange={(value: string) => {
-              if(value !== localNote.content){
+              if (value !== localNote.content) {
                 setLocalNote({ ...localNote, content: value });
                 debouncedUpdateContent(id, value);
               }
