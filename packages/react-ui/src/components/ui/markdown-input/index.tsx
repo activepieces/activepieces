@@ -11,7 +11,7 @@ import { Underline } from '@tiptap/extension-underline';
 import { Focus, UndoRedo } from '@tiptap/extensions';
 import { Markdown } from '@tiptap/markdown';
 import { Editor, EditorContent, Extension, useEditor } from '@tiptap/react';
-import React, { useImperativeHandle } from 'react';
+import React, { useImperativeHandle, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
@@ -31,6 +31,7 @@ export const MarkdownInput = React.forwardRef<
     }: MarkdownInputProps,
     ref: React.Ref<Editor | null>,
   ) => {
+    const [showTextCursor, setShowTextCursor] = useState(!onlyEditableOnDoubleClick && !disabled);
     const editor = useEditor({
       extensions: [
         Document,
@@ -89,7 +90,11 @@ export const MarkdownInput = React.forwardRef<
           spellcheck: 'false',
         },
       },
+      onFocus: () => {
+        setShowTextCursor(true);
+      },
       onBlur: () => {
+        setShowTextCursor(false);
         window.getSelection()?.removeAllRanges();
         if (onlyEditableOnDoubleClick) {
           editor.setEditable(false, false);
@@ -101,26 +106,20 @@ export const MarkdownInput = React.forwardRef<
     });
     useImperativeHandle(ref, () => editor, [editor]);
 
-    // Stop all events from bubbling to prevent dnd-kit/React Flow interference with selection
-    const stopEventPropagation = (e: React.SyntheticEvent) => {
-      if (disabled || !editor.isEditable) return;
-      e.stopPropagation();
-    };
-
     return (
-      //gotta add this nodrag nopan to prevent dnd-kit and React Flow interference with selection
       <div
-        className={cn('relative h-full nowheel', {
-          'nodrag nopan': !editor.isEditable,
+        className={cn('relative h-full', {
+          //gotta add this nodrag nopan to prevent dnd-kit and React Flow interference with selection
+          'nodrag nopan nowheel cursor-text select-text': showTextCursor,
         })}
-        onPointerDown={stopEventPropagation}
-        onMouseDown={stopEventPropagation}
-        onClick={stopEventPropagation}
-        onPointerUp={stopEventPropagation}
-        onMouseUp={stopEventPropagation}
+        onKeyDown={(e)=>{
+          if(e.key === 'Escape'){
+            editor.commands.blur();
+          }
+        }}
         onDoubleClick={() => {
           if (onlyEditableOnDoubleClick && !disabled) {
-            editor.setEditable(true, false);
+            editor.setEditable(true);
           }
         }}
       >
@@ -137,7 +136,7 @@ export const MarkdownInput = React.forwardRef<
           </div>
         )}
         <EditorContent
-          className={editor.isEditable ? 'cursor-text select-text' : ''}
+          className={'h-full'}
           key={disabled ? 'disabled' : 'enabled'}
           editor={editor}
         />
