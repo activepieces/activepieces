@@ -9,9 +9,9 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { ReactFlowInstance, useReactFlow, useViewport } from '@xyflow/react';
+import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -30,8 +30,8 @@ import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
-  const viewport = useViewport();
-  const [previousViewPort, setPreviousViewPort] = useState(viewport);
+  const reactFlow = useReactFlow();
+  const previousViewPortRef = useRef({ x: 0, y: 0, zoom: 1 });
   const [
     setActiveDraggingStep,
     applyOperation,
@@ -58,9 +58,11 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       }
       const { x, y } = args.pointerCoordinates;
       const { width, height } = args.collisionRect;
+      const currentViewport = reactFlow.getViewport();
+      const previousViewPort = previousViewPortRef.current;
       const deltaViewport = {
-        x: previousViewPort.x - viewport.x,
-        y: previousViewPort.y - viewport.y,
+        x: previousViewPort.x - currentViewport.x,
+        y: previousViewPort.y - currentViewport.y,
       };
       const updated = {
         ...args,
@@ -77,7 +79,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       };
       return rectIntersection(updated);
     },
-    [viewport.x, viewport.y, previousViewPort.x, previousViewPort.y],
+    [reactFlow],
   );
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
@@ -92,14 +94,14 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
         setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE);
       }
     }
-    setPreviousViewPort(viewport);
+    previousViewPortRef.current = reactFlow.getViewport();
   };
 
-  const handleDragCancel = () => {
+  const handleDragCancel = useCallback(() => {
     setActiveDraggingStep(null);
     setDraggedNote(null, null);
-  };
-  const reactFlow = useReactFlow();
+  }, [setActiveDraggingStep, setDraggedNote]);
+
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
     setDraggedNote(null, null);
