@@ -10,6 +10,7 @@ import {
   Share2,
   Trash2,
   UploadCloud,
+  User,
 } from 'lucide-react';
 import React, { useState } from 'react';
 import { useLocation } from 'react-router-dom';
@@ -24,10 +25,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LoadingSpinner } from '@/components/ui/spinner';
+import { ChangeOwnerDialog } from '@/features/flows/components/change-owner-dialog';
 import { ImportFlowDialog } from '@/features/flows/components/import-flow-dialog';
 import { RenameFlowDialog } from '@/features/flows/components/rename-flow-dialog';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { flowsApi } from '@/features/flows/lib/flows-api';
+import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { PublishedNeededTooltip } from '@/features/project-releases/components/published-tooltip';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
@@ -56,6 +59,7 @@ type FlowActionMenuProps = {
   onMoveTo: (folderId: string) => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onOwnerChange?: () => void;
 } & (
   | { insideBuilder: true; onVersionsListClick: () => void }
   | { insideBuilder: false; onVersionsListClick: null }
@@ -70,6 +74,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   onMoveTo,
   onDuplicate,
   onDelete,
+  onOwnerChange,
   onVersionsListClick,
   insideBuilder,
 }) => {
@@ -94,6 +99,8 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
   const allowPush =
     flow.publishedVersionId !== null &&
     flow.version.state === FlowVersionState.LOCKED;
+  const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const hasProjectMembers = projectMembers && projectMembers.length > 0;
 
   const { mutate: duplicateFlow, isPending: isDuplicatePending } = useMutation({
     mutationFn: async () => {
@@ -112,6 +119,7 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
           displayName: modifiedFlowVersion.displayName,
           trigger: modifiedFlowVersion.trigger,
           schemaVersion: modifiedFlowVersion.schemaVersion,
+          notes: modifiedFlowVersion.notes,
         },
       });
       return updatedFlow;
@@ -213,6 +221,27 @@ const FlowActionMenu: React.FC<FlowActionMenuProps> = ({
                 </div>
               </DropdownMenuItem>
             </MoveFlowDialog>
+          </PermissionNeededTooltip>
+        )}
+        {!readonly && hasProjectMembers && !embedState.isEmbedded && (
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateFlow}
+          >
+            <ChangeOwnerDialog
+              flow={flow}
+              onOwnerChange={onOwnerChange || (() => {})}
+            >
+              <DropdownMenuItem
+                disabled={!userHasPermissionToUpdateFlow}
+                onSelect={(e) => e.preventDefault()}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex cursor-pointer  flex-row gap-2 items-center">
+                  <User className="h-4 w-4" />
+                  <span>{t('Change Owner')}</span>
+                </div>
+              </DropdownMenuItem>
+            </ChangeOwnerDialog>
           </PermissionNeededTooltip>
         )}
         {!embedState.hideDuplicateFlow && (

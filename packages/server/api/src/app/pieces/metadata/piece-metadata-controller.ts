@@ -21,7 +21,7 @@ import {
 import {
     FastifyPluginAsyncTypebox,
 } from '@fastify/type-provider-typebox'
-import { EngineHelperPropResult, EngineHelperResponse } from 'server-worker'
+import { EngineHelperPropResult, OperationResponse } from 'server-worker'
 import { flowService } from '../../flows/flow/flow.service'
 import { sampleDataService } from '../../flows/step-run/sample-data.service'
 import { userInteractionWatcher } from '../../workers/user-interaction-watcher'
@@ -141,7 +141,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
                 versionId: req.body.flowVersionId,
             })
             const sampleData = await sampleDataService(req.log).getSampleDataForFlow(projectId, flow.version, SampleDataFileType.OUTPUT)
-            const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperPropResult>>({
+            const { result } = await userInteractionWatcher(req.log).submitAndWaitForResponse<OperationResponse<EngineHelperPropResult>>({
                 jobType: WorkerJobType.EXECUTE_PROPERTY,
                 platformId: platform.id,
                 projectId,

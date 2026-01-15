@@ -1,5 +1,4 @@
 import {
-    assertNotNullOrUndefined,
     FlowActionType,
     flowStructureUtil,
     FlowTriggerType,
@@ -14,8 +13,6 @@ import { projectService } from '../../../project/project-service'
 import { flowService } from '../../flow/flow.service'
 import { Migration } from '.'
 
-
-
 export const migrateV12FixPieceVersion: Migration = {
     targetSchemaVersion: '12',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
@@ -27,7 +24,12 @@ export const migrateV12FixPieceVersion: Migration = {
         }
 
         const flow = await flowService(system.globalLogger()).getOneById(flowVersion.flowId)
-        assertNotNullOrUndefined(flow, 'Flow not found')
+        if (isNil(flow)) {
+            return {
+                ...flowVersion,
+                schemaVersion: '13',
+            }
+        }
         const platformId = await projectService.getPlatformId(flow.projectId)
         const stepNameToPieceVersion: Record<string, string> = {}
         const steps = flowStructureUtil.getAllSteps(flowVersion.trigger)

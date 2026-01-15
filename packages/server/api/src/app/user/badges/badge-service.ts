@@ -3,13 +3,13 @@ import { FastifyBaseLogger } from 'fastify'
 import { In } from 'typeorm'
 import { repoFactory } from '../../core/db/repo-factory'
 import { websocketService } from '../../core/websockets.service'
+import { emailService } from '../../ee/helper/email/email-service'
 import { applicationEvents, AuditEventParam } from '../../helper/application-events'
 import { BadgeCheck } from './badge-check'
 import { UserBadgeEntity } from './badge-entity'
 import { flowsBadgesCheck } from './checks/active-flows-badges'
 import { flowContentBadgesCheck } from './checks/flow-content'
 import { flowRunsBadgesCheck } from './checks/flow-runs-badges'
-import { emailService } from '../../ee/helper/email/email-service'
 
 export const userBadgeRepo = repoFactory(UserBadgeEntity)
 

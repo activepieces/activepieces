@@ -38,7 +38,8 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
-    [AppSystemProp.MAX_FILE_SIZE_MB]: '4',
+    [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
+    [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '25',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: '1048576',
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: '600',
@@ -49,8 +50,6 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',
     [AppSystemProp.REDIS_TYPE]: RedisType.STANDALONE,
-    [AppSystemProp.TEMPLATES_SOURCE_URL]:
-        'https://cloud.activepieces.com/api/v1/templates',
     [AppSystemProp.TRIGGER_DEFAULT_POLL_INTERVAL]: '5',
     [AppSystemProp.MAX_CONCURRENT_JOBS_PER_PROJECT]: '100',
     [AppSystemProp.PROJECT_RATE_LIMITER_ENABLED]: 'false',

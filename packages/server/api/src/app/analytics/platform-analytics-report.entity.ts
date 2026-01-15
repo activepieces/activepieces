@@ -11,29 +11,26 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
     name: 'platform_analytics_report',
     columns: {
         ...BaseColumnSchemaPart,
-        estimatedTimeSavedPerStep: {
-            type: Number,
-            nullable: true,
-        },
         platformId: {
             type: String,
         },
         outdated: {
             type: Boolean,
+            nullable: false,
+        },
+        cachedAt: {
+            type: Date,
+            nullable: false,
+        },
+        runs: {
+            type: 'jsonb',
+            nullable: false,
+        },
+        flows: {
+            type: 'jsonb',
+            nullable: false,
         },
         users: {
-            type: 'jsonb',
-            nullable: false,
-        },
-        topPieces: {
-            type: 'jsonb',
-            nullable: false,
-        },
-        runsUsage: {
-            type: 'jsonb',
-            nullable: false,
-        },
-        flowsDetails: {
             type: 'jsonb',
             nullable: false,
         },
@@ -41,8 +38,7 @@ export const PlatformAnalyticsReportEntity = new EntitySchema<PlatformAnalyticsR
     relations: {
         platform: {
             target: 'platform',
-            type: 'one-to-one',
-            cascade: true,
+            type: 'many-to-one',
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
