@@ -5,6 +5,7 @@ import i18next, { t } from 'i18next';
 import JSZip from 'jszip';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import { twMerge } from 'tailwind-merge';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { LocalesEnum, Permission } from '@activepieces/shared';
 
@@ -233,11 +234,12 @@ export const localesMap = {
 
 export const useElementSize = (ref: RefObject<HTMLElement>) => {
   const [size, setSize] = useState({ width: 0, height: 0 });
+  const debouncedSetSize = useDebouncedCallback(setSize, 150);
   useEffect(() => {
     const handleResize = (entries: ResizeObserverEntry[]) => {
       if (entries[0]) {
         const { width, height } = entries[0].contentRect;
-        setSize({ width, height });
+        debouncedSetSize({ width, height });
       }
     };
 

@@ -139,7 +139,9 @@ const BuilderPage = () => {
             [animateResizeClassName]: !isDraggingHandle,
           })}
           style={{
-            transitionDuration: `${flowCanvasConsts.SIDEBAR_ANIMATION_DURATION}ms`,
+            transitionDuration: `${
+              isDraggingHandle ? 0 : flowCanvasConsts.SIDEBAR_ANIMATION_DURATION
+            }ms`,
           }}
         >
           <div ref={rightSidePanelRef} className="h-full w-full">
