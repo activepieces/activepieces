@@ -8,9 +8,11 @@ import {
   rectIntersection,
   useSensor,
   useSensors,
+  PointerSensorOptions,
 } from '@dnd-kit/core';
 import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
+import type { PointerEvent } from 'react';
 import { useCallback, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -110,7 +112,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(PointerSensorIgnoringInteractiveItems, {
       activationConstraint: {
         distance: 10,
       },
@@ -213,4 +215,51 @@ function handleNoteDragEnd({
       }
     }
   }
+}
+
+class PointerSensorIgnoringInteractiveItems extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: (
+        { nativeEvent: event }: PointerEvent,
+        { onActivation }: PointerSensorOptions,
+      ) => {
+        const target = event.target as HTMLElement;
+        if (target?.closest('[contenteditable="true"]')) {
+          return false;
+        }
+
+        if (
+          !event.isPrimary ||
+          event.button !== 0 ||
+          isInteractiveElement(event.target as Element)
+        ) {
+          return false;
+        }
+
+        onActivation?.({ event });
+        return true;
+      },
+    },
+  ];
+}
+
+function isInteractiveElement(element: Element | null): boolean {
+  const interactiveElements = [
+    'button',
+    'input',
+    'textarea',
+    'select',
+    'option',
+  ];
+
+  if (
+    element?.tagName &&
+    interactiveElements.includes(element.tagName.toLowerCase())
+  ) {
+    return true;
+  }
+
+  return false;
 }
