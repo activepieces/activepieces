@@ -1,0 +1,10 @@
+{
+  "MillionVerifier is an email verifier service and API": "MillionVerifier is an email verifier service and API",
+  "API Key for MillionVerifier.\n\nAPI key you can find on this page: https://app.millionverifier.com/api\n\n**Test API key for development:** `API_KEY_FOR_TEST`. This API key will return random results.": "API Key for MillionVerifier.\n\nAPI key you can find on this page: https://app.millionverifier.com/api\n\n**Test API key for development:** `API_KEY_FOR_TEST`. This API key will return random results.",
+  "Verify Email": "Verify Email",
+  "Verify email address using Million Verifier API": "Verify email address using Million Verifier API",
+  "Email Address": "Email Address",
+  "Timeout": "Timeout",
+  "The email address to verify": "The email address to verify",
+  "Timeout in seconds (default: 10)": "Timeout in seconds (default: 10)"
+}

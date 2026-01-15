@@ -33,7 +33,7 @@ import {
 } from '@/components/ui/tooltip';
 import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   ProjectRelease,
@@ -53,9 +53,12 @@ const ProjectReleasesPage = () => {
   );
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['project-releases'],
-    queryFn: () => projectReleaseApi.list(),
+    queryFn: () =>
+      projectReleaseApi.list({
+        projectId: authenticationSession.getProjectId()!,
+      }),
   });
-  const { data: projects } = projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
   const columns: ColumnDef<RowDataWithActions<ProjectRelease>>[] = [
     {
       accessorKey: 'name',

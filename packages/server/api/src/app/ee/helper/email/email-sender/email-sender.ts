@@ -51,12 +51,20 @@ type TriggerFailureThresholdTemplateData = BaseEmailTemplateData<'trigger-failur
     projectName: string
 }>
 
+type BadgeAwardedTemplateData = BaseEmailTemplateData<'badge-awarded', {
+    badgeTitle: string
+    badgeDescription: string
+    badgeImageUrl: string
+    firstName: string
+}>
+
 export type EmailTemplateData =
   | InvitationEmailTemplateData
   | ResetPasswordEmailTemplateData
   | VerifyEmailTemplateData
   | IssueCreatedTemplateData
   | TriggerFailureThresholdTemplateData
+  | BadgeAwardedTemplateData
 
 type SendArgs = {
     emails: string[]

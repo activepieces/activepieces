@@ -58,6 +58,7 @@ export const PlatformPlan = Type.Object({
     aiCreditsAutoTopUpState: Type.Enum(AiCreditsAutoTopUpState),
     aiCreditsAutoTopUpThreshold: Type.Optional(Type.Number()),
     aiCreditsAutoTopUpCreditsToAdd: Type.Optional(Type.Number()),
+    maxAutoTopUpCreditsMonthly: Nullable(Type.Number()),
 
     environmentsEnabled: Type.Boolean(),
     analyticsEnabled: Type.Boolean(),

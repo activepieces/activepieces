@@ -16,7 +16,10 @@ import { projectMembersHooks } from '@/features/members/lib/project-members-hook
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { getProjectName, projectHooks } from '@/hooks/project-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
@@ -24,6 +27,7 @@ import {
   Permission,
   PlatformRole,
   ProjectType,
+  UserStatus,
 } from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
@@ -36,7 +40,7 @@ export const ProjectDashboardPageHeader = ({
   children?: React.ReactNode;
   description?: React.ReactNode;
 }) => {
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -45,6 +49,9 @@ export const ProjectDashboardPageHeader = ({
   >('general');
   const location = useLocation();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const activeProjectMembers = projectMembers?.filter(
+    (member) => member.user.status === UserStatus.ACTIVE,
+  );
   const { checkAccess } = useAuthorization();
   const { data: user } = userHooks.useCurrentUser();
   const userHasPermissionToReadProjectMembers = checkAccess(
@@ -62,7 +69,7 @@ export const ProjectDashboardPageHeader = ({
   const showProjectMembersIcons =
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    !isNil(projectMembers) &&
+    !isNil(activeProjectMembers) &&
     project.type === ProjectType.TEAM;
 
   const showInviteUserButton =
@@ -124,8 +131,8 @@ export const ProjectDashboardPageHeader = ({
         <Button
           variant="ghost"
           className="gap-2"
-          aria-label={`View ${projectMembers?.length} team member${
-            projectMembers?.length !== 1 ? 's' : ''
+          aria-label={`View ${activeProjectMembers?.length} team member${
+            activeProjectMembers?.length !== 1 ? 's' : ''
           }`}
           onClick={() => {
             setSettingsInitialTab('members');
@@ -133,7 +140,9 @@ export const ProjectDashboardPageHeader = ({
           }}
         >
           <UsersRound className="w-4 h-4" />
-          <span className="text-sm font-medium">{projectMembers?.length}</span>
+          <span className="text-sm font-medium">
+            {activeProjectMembers?.length}
+          </span>
         </Button>
       )}
       {showInviteUserButton && (

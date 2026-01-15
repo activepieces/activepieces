@@ -2,14 +2,14 @@ import { QueryClient, useQuery, useSuspenseQuery } from '@tanstack/react-query';
 
 import { authenticationSession } from '@/lib/authentication-session';
 import { userApi } from '@/lib/user-api';
-import { isNil, UserWithMetaInformation } from '@activepieces/shared';
+import { isNil, UserWithBadges } from '@activepieces/shared';
 
 export const userHooks = {
   useCurrentUser: () => {
     const userId = authenticationSession.getCurrentUserId();
     const token = authenticationSession.getToken();
     const expired = authenticationSession.isJwtExpired(token!);
-    return useSuspenseQuery<UserWithMetaInformation | null, Error>({
+    return useSuspenseQuery<UserWithBadges | null, Error>({
       queryKey: ['currentUser', userId],
       queryFn: async () => {
         // Skip user data fetch if JWT is expired to prevent redirect to sign-in page
@@ -34,7 +34,12 @@ export const userHooks = {
     return useQuery({
       queryKey: ['user', id],
       queryFn: async () => {
-        return await userApi.getUserById(id!);
+        try {
+          return await userApi.getUserById(id!);
+        } catch (error) {
+          console.error(error);
+          return null;
+        }
       },
       enabled: !isNil(id),
       staleTime: Infinity,

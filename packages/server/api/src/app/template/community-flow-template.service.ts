@@ -1,4 +1,3 @@
-import { AppSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     ErrorCode,
@@ -7,37 +6,44 @@ import {
     SeekPage,
     Template,
 } from '@activepieces/shared'
-import { paginationHelper } from '../helper/pagination/pagination-utils'
-import { system } from '../helper/system/system'
 
+const TEMPLATES_SOURCE_URL = 'https://cloud.activepieces.com/api/v1/templates'
 export const communityTemplates = {
-    get: async (id: string): Promise<Template> => {
-        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-        if (isNil(templateSource)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Templates source URL is not set',
-                },
-            })
-        }
-        const url = `${templateSource}/${id}`
+    getOrThrow: async (id: string): Promise<Template> => {
+        const url = `${TEMPLATES_SOURCE_URL}/${id}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
             },
         })
+        if (!response.ok) {
+            throw new ActivepiecesError({
+                code: ErrorCode.ENTITY_NOT_FOUND,
+                params: {
+                    entityType: 'template',
+                    entityId: id,
+                    message: `Template ${id} not found`,
+                },
+            })
+        }
         const template = await response.json()
         return template
     },
+    getCategories: async (): Promise<string[]> => {
+        const url = `${TEMPLATES_SOURCE_URL}/categories`
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        const categories = await response.json()
+        return categories
+    },
     list: async (request: ListTemplatesRequestQuery): Promise<SeekPage<Template>> => {
-        const templateSource = system.get(AppSystemProp.TEMPLATES_SOURCE_URL)
-        if (isNil(templateSource)) {
-            return paginationHelper.createPage([], null)
-        }
         const queryString = convertToQueryString(request)
-        const url = `${templateSource}?${queryString}`
+        const url = `${TEMPLATES_SOURCE_URL}?${queryString}`
         const response = await fetch(url, {
             method: 'GET',
             headers: {

@@ -12,6 +12,7 @@ export const sampleDataController: FastifyPluginAsyncTypebox = async (fastify) =
             projectId: request.projectId,
             flowVersionId: request.body.flowVersionId,
             stepNameToTest: request.body.stepName,
+            triggeredBy: request.principal.id,
         })
     })
 

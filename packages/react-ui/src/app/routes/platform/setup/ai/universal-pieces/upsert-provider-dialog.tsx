@@ -41,11 +41,12 @@ import {
   OpenAICompatibleProviderConfig,
   OpenAIProviderAuthConfig,
   OpenAIProviderConfig,
+  SUPPORTED_AI_PROVIDERS,
+  UpdateAIProviderRequest,
 } from '@activepieces/shared';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
-import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers';
 import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 
 type UpsertAIProviderDialogProps = {
@@ -84,28 +85,43 @@ export const UpsertAIProviderDialog = ({
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      if (config) {
+      if (providerId && config) {
+        // Edit mode
         form.reset({
           provider,
           displayName: defaultDisplayName,
-          config: config ?? {},
+          config: config,
           auth: { apiKey: '' },
         } as CreateAIProviderRequest);
-      } else if (!providerId) {
+      } else {
+        // Create mode
         form.reset({
           provider,
           displayName: currentProviderDef.name,
           config: {},
-          auth: {},
+          auth: { apiKey: '' },
         } as CreateAIProviderRequest);
       }
     }
-  }, [open, config, defaultDisplayName, form]);
+  }, [
+    open,
+    config,
+    defaultDisplayName,
+    form,
+    provider,
+    providerId,
+    currentProviderDef,
+  ]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: CreateAIProviderRequest): Promise<void> => {
       if (providerId) {
-        return aiProviderApi.update(providerId, data);
+        const updateData: UpdateAIProviderRequest = {
+          displayName: data.displayName,
+          config: data.config,
+          ...(data.auth?.apiKey?.length > 0 ? { auth: data.auth } : {}),
+        };
+        return aiProviderApi.update(providerId, updateData);
       } else {
         return aiProviderApi.upsert(data);
       }

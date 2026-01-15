@@ -75,7 +75,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.CREATED)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(12)
+            expect(Object.keys(responseBody)).toHaveLength(13)
             expect(responseBody?.id).toHaveLength(21)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -86,7 +86,7 @@ describe('Flow API', () => {
             expect(responseBody?.metadata).toMatchObject({ foo: 'bar' })
             expect(responseBody?.operationStatus).toBeDefined()
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(13)
+            expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toHaveLength(21)
             expect(responseBody?.version?.created).toBeDefined()
             expect(responseBody?.version?.updated).toBeDefined()
@@ -210,7 +210,7 @@ describe('Flow API', () => {
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('ENABLING')
-                expect(Object.keys(responseBody.version)).toHaveLength(13)
+                expect(Object.keys(responseBody.version)).toHaveLength(14)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
             }
         })
@@ -266,7 +266,7 @@ describe('Flow API', () => {
             expect(response?.statusCode).toBe(StatusCodes.OK)
             const responseBody = response?.json()
 
-            expect(Object.keys(responseBody)).toHaveLength(12)
+            expect(Object.keys(responseBody)).toHaveLength(13)
             expect(responseBody?.id).toBe(mockFlow.id)
             expect(responseBody?.created).toBeDefined()
             expect(responseBody?.updated).toBeDefined()
@@ -277,7 +277,7 @@ describe('Flow API', () => {
             expect(responseBody?.metadata).toBeNull()
             expect(responseBody?.operationStatus).toBe('DISABLING')
 
-            expect(Object.keys(responseBody?.version)).toHaveLength(13)
+            expect(Object.keys(responseBody?.version)).toHaveLength(14)
             expect(responseBody?.version?.id).toBe(mockFlowVersion.id)
         })
     })
@@ -379,7 +379,7 @@ describe('Flow API', () => {
             const responseBody: PopulatedFlow | undefined = response?.json()
             expect(responseBody).toBeDefined()
             if (responseBody) {
-                expect(Object.keys(responseBody)).toHaveLength(12)
+                expect(Object.keys(responseBody)).toHaveLength(13)
                 expect(responseBody.id).toBe(mockFlow.id)
                 expect(responseBody.created).toBeDefined()
                 expect(responseBody.updated).toBeDefined()
@@ -389,7 +389,7 @@ describe('Flow API', () => {
                 expect(responseBody.publishedVersionId).toBe(mockFlowVersion.id)
                 expect(responseBody.metadata).toBeNull()
                 expect(responseBody.operationStatus).toBe('DISABLING')
-                expect(Object.keys(responseBody.version)).toHaveLength(13)
+                expect(Object.keys(responseBody.version)).toHaveLength(14)
                 expect(responseBody.version.id).toBe(mockFlowVersion.id)
                 expect(responseBody.version.state).toBe('LOCKED')
             }

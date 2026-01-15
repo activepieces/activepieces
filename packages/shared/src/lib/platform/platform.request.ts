@@ -46,3 +46,10 @@ export const ApplyLicenseKeyByEmailRequestBody = Type.Object({
 })
 
 export type ApplyLicenseKeyByEmailRequestBody = Static<typeof ApplyLicenseKeyByEmailRequestBody>
+
+export const IncreaseAICreditsForPlatformRequestBody = Type.Object({
+    platformId: Type.String(),
+    amountInUsd: Type.Number(),
+})
+
+export type IncreaseAICreditsForPlatformRequestBody = Static<typeof IncreaseAICreditsForPlatformRequestBody>

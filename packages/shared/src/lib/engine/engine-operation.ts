@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { ExecutionToolStatus } from '../agents'
+import { ExecutionToolStatus, PredefinedInputsStructure } from '../agents'
 import { AppConnectionValue } from '../app-connection/app-connection'
 import { ExecutionState, ExecutionType, ResumePayload } from '../flow-run/execution/execution-output'
 import { FlowRunId, RunEnvironment } from '../flow-run/flow-run'
@@ -38,7 +38,6 @@ export const enum EngineSocketEvent {
     ENGINE_RESPONSE = 'engine-response',
     ENGINE_STDOUT = 'engine-stdout',
     ENGINE_STDERR = 'engine-stderr',
-    ENGINE_READY = 'engine-ready',
     ENGINE_OPERATION = 'engine-operation',
     UPDATE_RUN_PROGRESS = 'update-run-progress',
     SEND_FLOW_RESPONSE = 'send-flow-response',
@@ -81,7 +80,7 @@ export type ExecuteToolOperation = BaseEngineOperation & {
     actionName: string
     pieceName: string
     pieceVersion: string
-    predefinedInput: Record<string, unknown>
+    predefinedInput?: PredefinedInputsStructure
     instruction: string
 }
 

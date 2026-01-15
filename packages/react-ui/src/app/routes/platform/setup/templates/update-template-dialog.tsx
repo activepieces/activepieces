@@ -24,7 +24,6 @@ import { api } from '@/lib/api';
 import {
   FlowVersionTemplate,
   TemplateTag as TemplateTagType,
-  TemplateCategory,
   Template,
 } from '@activepieces/shared';
 
@@ -33,11 +32,12 @@ const UpdateFlowTemplateSchema = Type.Object({
     minLength: 1,
     errorMessage: t('Name is required'),
   }),
+  summary: Type.String(),
   description: Type.String(),
   blogUrl: Type.String(),
   template: Type.Optional(Type.Unknown()),
   tags: Type.Optional(Type.Array(TemplateTagType)),
-  categories: Type.Optional(Type.Array(Type.Enum(TemplateCategory))),
+  categories: Type.Optional(Type.Array(Type.String())),
 });
 type UpdateFlowTemplateSchema = Static<typeof UpdateFlowTemplateSchema>;
 
@@ -54,6 +54,7 @@ export const UpdateTemplateDialog = ({
   const form = useForm<UpdateFlowTemplateSchema>({
     defaultValues: {
       displayName: template.name,
+      summary: template.summary || '',
       blogUrl: template.blogUrl || '',
       description: template.description,
       tags: template.tags || [],
@@ -70,6 +71,7 @@ export const UpdateTemplateDialog = ({
 
       return templatesApi.update(template.id, {
         name: formValue.displayName,
+        summary: formValue.summary,
         description: formValue.description,
         tags: formValue.tags,
         blogUrl: formValue.blogUrl,
@@ -134,6 +136,21 @@ export const UpdateTemplateDialog = ({
                     required
                     id="name"
                     placeholder={t('Template Name')}
+                    className="rounded-sm"
+                  />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              name="summary"
+              render={({ field }) => (
+                <FormItem className="grid space-y-2">
+                  <Label htmlFor="summary">{t('Summary')}</Label>
+                  <Input
+                    {...field}
+                    id="summary"
+                    placeholder={t('Template Summary')}
                     className="rounded-sm"
                   />
                   <FormMessage />

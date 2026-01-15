@@ -2,13 +2,11 @@ import { useDraggable } from '@dnd-kit/core';
 import { Handle, NodeProps, Position } from '@xyflow/react';
 import React, { useMemo } from 'react';
 
-import {
-  RightSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { PieceSelector } from '@/app/builder/pieces-selector';
 import { LoopIterationInput } from '@/app/builder/run-details/loop-iteration-input';
 import { stepsHooks } from '@/features/pieces/lib/steps-hooks';
+import { RightSideBarType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   FlowOperationType,
@@ -17,10 +15,7 @@ import {
   flowStructureUtil,
 } from '@activepieces/shared';
 
-import {
-  flowUtilConsts,
-  STEP_CONTEXT_MENU_ATTRIBUTE,
-} from '../../utils/consts';
+import { flowCanvasConsts } from '../../utils/consts';
 import { flowCanvasUtils } from '../../utils/flow-canvas-utils';
 import { ApStepNode } from '../../utils/types';
 
@@ -71,7 +66,7 @@ const ApStepCanvasNode = React.memo(
       id: step.name,
       disabled: isTrigger || readonly,
       data: {
-        type: flowUtilConsts.DRAGGED_STEP_TAG,
+        type: flowCanvasConsts.DRAGGED_STEP_TAG,
       },
     });
 
@@ -118,18 +113,20 @@ const ApStepCanvasNode = React.memo(
           buttons: 2,
         });
         target.dispatchEvent(contextMenuEvent);
-      }, flowCanvasUtils.sidebarAnimationDuration + 50);
+      }, flowCanvasConsts.SIDEBAR_ANIMATION_DURATION + 50);
     };
 
     const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
     const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
     return (
       <div
-        {...{ [`data-${STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name }}
+        {...{
+          [`data-${flowCanvasConsts.STEP_CONTEXT_MENU_ATTRIBUTE}`]: step.name,
+        }}
         style={{
-          height: `${flowUtilConsts.AP_NODE_SIZE.STEP.height}px`,
-          width: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
-          maxWidth: `${flowUtilConsts.AP_NODE_SIZE.STEP.width}px`,
+          height: `${flowCanvasConsts.AP_NODE_SIZE.STEP.height}px`,
+          width: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
+          maxWidth: `${flowCanvasConsts.AP_NODE_SIZE.STEP.width}px`,
         }}
         onContextMenu={(e) => handleContextMenu(e)}
         className={cn(
@@ -196,12 +193,12 @@ const ApStepCanvasNode = React.memo(
 
           <Handle
             type="source"
-            style={flowUtilConsts.HANDLE_STYLING}
+            style={flowCanvasConsts.HANDLE_STYLING}
             position={Position.Bottom}
           />
           <Handle
             type="target"
-            style={flowUtilConsts.HANDLE_STYLING}
+            style={flowCanvasConsts.HANDLE_STYLING}
             position={Position.Top}
           />
         </div>

@@ -23,9 +23,10 @@ import {
 
 import { MoveFlowDialog } from '../components/move-flow-dialog';
 
-import { CreateFlowDropdown } from './create-flow-dropdown';
 import { flowHooks } from './flow-hooks';
 import { flowsApi } from './flows-api';
+import { ImportFlowButton } from './Import-flow-button';
+import { NewFlowButton } from './new-flow-button';
 
 export const useFlowsBulkActions = ({
   selectedRows,
@@ -177,7 +178,8 @@ export const useFlowsBulkActions = ({
                   </ConfirmationDeleteDialog>
                 </PermissionNeededTooltip>
               )}
-              <CreateFlowDropdown refetch={refetch} folderId={folderId} />
+              <ImportFlowButton folderId={folderId} onRefresh={refetch} />
+              <NewFlowButton folderId={folderId} />
             </div>
           );
         },

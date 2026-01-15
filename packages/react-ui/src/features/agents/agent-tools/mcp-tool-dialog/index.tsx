@@ -38,7 +38,7 @@ import {
   McpProtocol,
 } from '@activepieces/shared';
 
-import { useAgentToolsStore } from '../store';
+import { useMcpToolDialogStore } from '../stores/mcp-tools';
 
 const McpToolFormSchema = Type.Object({
   toolName: Type.String({ minLength: 1 }),
@@ -71,8 +71,8 @@ export function AgentMcpDialog({
   tools,
   onToolsUpdate,
 }: AgentToolsDialogProps) {
-  const { showAddMcpDialog, setShowAddMcpDialog, editingMcpTool } =
-    useAgentToolsStore();
+  const { showAddMcpDialog, editingMcpTool, closeMcpDialog } =
+    useMcpToolDialogStore();
 
   const isToolNameUnique = (value: string) => {
     return !tools.some(
@@ -185,7 +185,7 @@ export function AgentMcpDialog({
     }
 
     form.reset();
-    setShowAddMcpDialog(false);
+    closeMcpDialog();
     toast(t('MCP server added successfully'));
   };
 
@@ -203,7 +203,7 @@ export function AgentMcpDialog({
 
   const handleClose = () => {
     form.reset();
-    setShowAddMcpDialog(false);
+    closeMcpDialog();
   };
 
   return (

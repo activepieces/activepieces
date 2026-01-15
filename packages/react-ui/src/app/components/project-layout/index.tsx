@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectHooks } from '@/hooks/project-collection';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
@@ -52,7 +52,7 @@ export function ProjectDashboardLayout({
 
   const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
     {
-      to: '/explore',
+      to: '/templates',
       label: t('Explore'),
       show: !isEmbedded,
       icon: Compass,
@@ -82,11 +82,11 @@ export function ProjectDashboardLayout({
     <ProjectChangedRedirector currentProjectId={currentProjectId}>
       <SidebarProvider>
         {!isEmbedded && <ProjectDashboardSidebar />}
-        <SidebarInset className={`relative overflow-auto pb-4 gap-4`}>
+        <SidebarInset className={`relative overflow-auto gap-4`}>
           <div className="flex flex-col">
             {!hideHeader && (
               <>
-                <ProjectDashboardLayoutHeader />
+                <ProjectDashboardLayoutHeader key={currentProjectId} />
                 <Separator className="mb-5" />
               </>
             )}

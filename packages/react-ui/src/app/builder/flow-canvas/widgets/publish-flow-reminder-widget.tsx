@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { RightSideBarType } from '@/lib/types';
 import {
   FlowRun,
   FlowStatusUpdatedResponse,
@@ -20,7 +21,7 @@ import {
   Permission,
 } from '@activepieces/shared';
 
-import { RightSideBarType, useBuilderStateContext } from '../../builder-hooks';
+import { useBuilderStateContext } from '../../builder-hooks';
 
 import LargeWidgetWrapper from './large-widget-wrapper';
 
@@ -89,10 +90,12 @@ const PublishFlowReminderWidget = () => {
   if (!showShouldPublishButton) {
     return null;
   }
-  const showLoading = isPublishing || isDiscardingChanges;
-  const loadingText = isDiscardingChanges
-    ? t('Discarding changes...')
-    : t('Publishing...');
+  const showLoading = isPublishing || isDiscardingChanges || isSaving;
+  const loadingText = pickLoadingText({
+    isDiscardingChanges,
+    isPublishing,
+    isSaving,
+  });
   return (
     <LargeWidgetWrapper>
       <div className="flex items-center gap-2">
@@ -163,3 +166,24 @@ const useShouldShowPublishButton = ({
     isValid
   );
 };
+
+function pickLoadingText({
+  isDiscardingChanges,
+  isPublishing,
+  isSaving,
+}: {
+  isDiscardingChanges: boolean;
+  isPublishing: boolean;
+  isSaving: boolean;
+}) {
+  if (isSaving) {
+    return t('Saving...');
+  }
+  if (isDiscardingChanges) {
+    return t('Discarding changes...');
+  }
+  if (isPublishing) {
+    return t('Publishing...');
+  }
+  return '';
+}

@@ -1,4 +1,4 @@
-import { dynamicTool, LanguageModel, Tool } from "ai";
+import { dynamicTool, LanguageModel, Tool, ToolSet } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
@@ -9,14 +9,14 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 
 type FlattenedMcpResult = {
   mcpClients: MCPClient[];
-  tools: Record<string, unknown>;
+  tools: Record<string, Tool>;
 };
 
 function flattenMcpServers(
     servers: McpServerTools[]
   ): FlattenedMcpResult {
     const mcpClients: MCPClient[] = [];
-    const tools: Record<string, unknown> = {};
+    const tools: Record<string, Tool> = {};
 
     for (const server of servers) {
       mcpClients.push(server.mcpClient);
@@ -92,7 +92,7 @@ function createTransportConfig(
 type McpServerTools = {
   mcpName: string;
   mcpClient: MCPClient;
-  tools: Record<string, unknown>;
+  tools: Record<string, Tool>
 }
 
 async function constructMcpServersTools(
@@ -115,7 +115,7 @@ async function constructMcpServersTools(
         collected.push({
           mcpName: tool.toolName,
           mcpClient,
-          tools: mcpTools,
+          tools: mcpTools as Record<string, Tool>,
         });
       } catch (error) {
         console.error(
@@ -146,10 +146,16 @@ export async function constructAgentTools(
     const mcpServerTools = await constructMcpServersTools(agentTools.filter(tool => tool.type === AgentToolType.MCP))
     const { mcpClients, tools: mcpTools } = flattenMcpServers(mcpServerTools)
 
+    const combinedTools = {
+      ...agentPieceTools,
+      ...flowsTools,
+      ...mcpTools,
+    };
+
     return {
         mcpClients,
         tools: {
-            ...{...agentPieceTools, ...flowsTools, ...mcpTools },
+            ...combinedTools,
             [TASK_COMPLETION_TOOL_NAME]: dynamicTool({
           description:
             "This tool must be called as your FINAL ACTION to indicate whether the assigned goal was accomplished. Call it only when you have completed the user's task, or if you are unable to continue. Once you call this tool, you should not take any further actions.",
