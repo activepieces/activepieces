@@ -11,6 +11,9 @@ import {
     SharedTemplate,
     spreadIfDefined,
     Table,
+    TableDataState,
+    TableImportDataType,
+    TableTemplate,
     TableWebhook,
     TableWebhookEventType,
     TemplateStatus,
@@ -30,7 +33,7 @@ import { TableWebhookEntity } from './table-webhook.entity'
 import { TableEntity } from './table.entity'
 
 export const tableRepo = repoFactory(TableEntity)
-const recordRepo = repoFactory(RecordEntity)
+export const recordRepo = repoFactory(RecordEntity)
 const tableWebhookRepo = repoFactory(TableWebhookEntity)
 const tablePieceName = '@activepieces/piece-tables'
 
@@ -132,12 +135,39 @@ export const tableService = {
             fields,
         }
 
+        const tableState = projectStateService(log).getTableState(populatedTable)
+
+        const records = await recordRepo().find({
+            where: { tableId: table.id, projectId },
+            relations: ['cells'],
+        })
+
+        const rows: TableDataState['rows'] = records.map((record) => {
+            const row: { fieldId: string, value: string }[] = []
+            for (const field of fields) {
+                const cell = record.cells.find((c) => c.fieldId === field.id)
+                row.push({
+                    fieldId: field.externalId,
+                    value: cell?.value?.toString() ?? '',
+                })
+            }
+            return row
+        })
+
+        const tableTemplate: TableTemplate = {
+            ...tableState,
+            data: {
+                type: TableImportDataType.CSV,
+                rows,
+            },
+        }
+
         const template: SharedTemplate = {
             name: table.name,
             summary: '',
             description: '',
             pieces: [tablePieceName],
-            tables: [projectStateService(log).getTableState(populatedTable)],
+            tables: [tableTemplate],
             tags: [],
             blogUrl: '',
             metadata: {

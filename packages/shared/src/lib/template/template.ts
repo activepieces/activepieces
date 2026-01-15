@@ -33,7 +33,22 @@ export enum TemplateStatus {
     ARCHIVED = 'ARCHIVED',
 }
 
-export const TableTemplate = Type.Omit(TableState, ['id', 'created', 'updated'])
+export enum TableImportDataType {
+    CSV = 'CSV',
+}
+
+export const TableDataState = Type.Object({
+    type: Type.Enum(TableImportDataType),
+    rows: Type.Array(Type.Array(Type.Object({
+        fieldId: Type.String(),
+        value: Type.String(),
+    }))),
+})
+export type TableDataState = Static<typeof TableDataState>
+
+export const TableTemplate = Type.Composite([Type.Omit(TableState, ['id', 'created', 'updated']), Type.Object({
+    data: Nullable(TableDataState),
+})])
 export type TableTemplate = Static<typeof TableTemplate>
 
 export const Template = Type.Object({
