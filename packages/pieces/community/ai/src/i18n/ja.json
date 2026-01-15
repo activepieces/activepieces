@@ -27,6 +27,7 @@
   "Guide Prompt": "ガイドの提案",
   "Data Schema Type": "データスキーマタイプ",
   "Data Definition": "データ定義",
+  "AI Model": "AIモデル",
   "Agent Tools": "エージェントツール",
   "Structured Output": "構造化された出力",
   "Max steps": "最大歩数",
