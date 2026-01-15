@@ -8,7 +8,9 @@ import {
   rectIntersection,
   useSensor,
   useSensors,
+  PointerSensorOptions,
 } from '@dnd-kit/core';
+import type { PointerEvent } from 'react';
 import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useCallback, useRef } from 'react';
@@ -28,6 +30,7 @@ import NoteDragOverlay from './nodes/note-node/note-drag-overlay';
 import StepDragOverlay from './nodes/step-node/step-drag-overlay';
 import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
+
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const reactFlow = useReactFlow();
@@ -110,7 +113,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(PointerSensorIgnoringInteractiveItems, {
       activationConstraint: {
         distance: 10,
       },
@@ -213,4 +216,52 @@ function handleNoteDragEnd({
       }
     }
   }
+}
+
+
+class PointerSensorIgnoringInteractiveItems extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: (
+        { nativeEvent: event }: PointerEvent,
+        { onActivation }: PointerSensorOptions,
+      ) => {
+        const target = event.target as HTMLElement;
+        if (target?.closest('[contenteditable="true"]')) {
+          return false;
+        }
+
+        if (
+          !event.isPrimary ||
+          event.button !== 0 ||
+          isInteractiveElement(event.target as Element)
+        ) {
+          return false;
+        }
+
+        onActivation?.({ event });
+        return true;
+      },
+    },
+  ];
+}
+
+function isInteractiveElement(element: Element | null): boolean {
+  const interactiveElements = [
+    'button',
+    'input',
+    'textarea',
+    'select',
+    'option',
+  ];
+
+  if (
+    element?.tagName &&
+    interactiveElements.includes(element.tagName.toLowerCase())
+  ) {
+    return true;
+  }
+
+  return false;
 }
