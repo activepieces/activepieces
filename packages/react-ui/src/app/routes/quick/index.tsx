@@ -24,7 +24,7 @@ export function QuickPage() {
       <div className="sticky bottom-0 left-0 right-0 flex justify-center pb-4 pt-4 bg-background z-10">
         <div className="w-full max-w-4xl px-4">
           <PromptInput
-            onMessageSend={(message) => sendMessage({ message, sessionId: isNil(session) ? null : session.id })}
+            onMessageSend={(message) => sendMessage({ message, session: isNil(session) ? null : session })}
             placeholder="Ask Quick..."
             loading={isStreaming}
           />

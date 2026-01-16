@@ -26,7 +26,7 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
         '/:id/chat',
         ChatWithSessionRequest,
         async (request) => {
-            return await chatSessionService(request.log).chatWithSession({
+            await chatSessionService(request.log).chatWithSession({
                 platformId: request.principal.platform.id,
                 userId: request.principal.id,
                 sessionId: request.params.id,
