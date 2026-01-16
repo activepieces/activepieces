@@ -38,7 +38,7 @@ export const unzipFile = createAction({
     }
 
     const results: Result[] = [];
-    zipFile.forEach(async (zipEntry) => {
+    for (const zipEntry of zipFile.getEntries()) {
       if (!zipEntry.isDirectory) {
         const fileReference = await context.files.write({
           data: zipEntry.getData(),
@@ -50,7 +50,7 @@ export const unzipFile = createAction({
           filePath: zipEntry.entryName,
         });
       }
-    });
+    }
 
     return results;
   },

@@ -24,7 +24,6 @@ export const projectMembersHooks = {
         });
         return res.data;
       },
-      staleTime: Infinity,
       enabled: !!data,
     });
     return {
