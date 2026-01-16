@@ -1,13 +1,13 @@
 import { EntitySchema } from 'typeorm';
-import { QuickSession} from '@activepieces/shared';
+import { ChatSession} from '@activepieces/shared';
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
 } from '../../database/database-common';
 
-export const QuickSessionEntity = new EntitySchema<QuickSession>({
-    name: 'quick_session',
-    tableName: 'quick_session',
+export const ChatSessionEntity = new EntitySchema<ChatSession>({
+    name: 'chat_session',
+    tableName: 'chat_session',
 
     columns: {
         ...BaseColumnSchemaPart,
@@ -36,7 +36,7 @@ export const QuickSessionEntity = new EntitySchema<QuickSession>({
             joinColumn: {
                 name: 'userId',
                 referencedColumnName: 'id',
-                foreignKeyConstraintName: 'fk_quick_session_user',
+                foreignKeyConstraintName: 'fk_chat_session_user',
             },
         },
     },
