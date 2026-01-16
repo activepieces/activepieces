@@ -24,7 +24,6 @@ export const chatHooks = {
                         if (data.sessionId !== chatWithSessionId) {
                             return;
                         }
-                        console.log('AGENT_STREAMING_UPDATE', data);
                         currentSession = chatSessionUtils.streamChunk(currentSession, {
                             sessionId: chatWithSessionId,
                             part: data.part,

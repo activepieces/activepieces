@@ -1,4 +1,4 @@
-import { ChatSessionUpdate, chatSessionUtils, ConversationMessage, ExecuteAgentJobData, ChatSession, WebsocketClientEvent, WebsocketServerEvent } from "@activepieces/shared";
+import { ChatSessionUpdate, chatSessionUtils, ConversationMessage, ExecuteAgentJobData, ChatSession, WebsocketClientEvent, WebsocketServerEvent, ChatSessionEnded, EmitAgentStreamingEndedRequest } from "@activepieces/shared";
 import { ModelMessage, streamText } from "ai";
 import { systemPrompt } from "./system-prompt";
 import { createAnthropic } from "@ai-sdk/anthropic";
@@ -51,13 +51,14 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             })
             newSession = chatSessionUtils.streamChunk(newSession, quickStreamingUpdate);
         }
-        await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, {
+        const chatSessionEnded: EmitAgentStreamingEndedRequest = {
             userId: data.session.userId,
             event: WebsocketClientEvent.AGENT_STREAMING_ENDED,
             data: {
-                sessionId: data.session.id,
+                session: newSession,
             },
-        })
+        }
+        await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, chatSessionEnded)
     },
 })
 

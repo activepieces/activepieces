@@ -37,6 +37,9 @@ export const chatSessionService= (log: FastifyBaseLogger)=> ({
         })
         return newSession
     },
+    async update(sessionId: string, session: ChatSession): Promise<void> {
+        await chatSessionRepo().update(sessionId, session)
+    },
 
     async getOne(params: GetOneParams): Promise<ChatSession | null> {
         return chatSessionRepo().findOneBy({
