@@ -28,16 +28,7 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
   if (protocolBackwardCompatibility === 'sftp') {
     const sftp = new Client();
 
-    if (auth.password){
-      await sftp.connect({
-        host,
-        port,
-        username,
-        password,
-        timeout: 10000,
-      });
-    } 
-    else if (privateKey) {
+    if (privateKey) {
       if (!algorithm || algorithm.length === 0) {
         throw new Error('At least one algorithm must be selected for SFTP Private Key authentication.');
       }
@@ -51,7 +42,17 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
         }  as Client.ConnectOptions['algorithms'],
         timeout: 10000,
       });
+
+      return sftp as T;
     }
+
+    await sftp.connect({
+      host,
+      port,
+      username,
+      password,
+      timeout: 10000,
+    });
 
     return sftp as T;
   } else {
@@ -145,14 +146,6 @@ export const sftpAuth = PieceAuth.CustomAuth({
     })
   },
   validate: async ({ auth }) => {
-  
-    if (!auth.password && !auth.privateKey) {
-      return {
-        valid: false,
-        error: 'Either password or private key must be provided for authentication.',
-      };
-    }
-
     let client: Client | FTPClient | null = null;
     const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.protocol);
     try {
