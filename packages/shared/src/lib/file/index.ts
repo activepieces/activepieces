@@ -20,6 +20,7 @@ export enum FileType {
     FLOW_VERSION_BACKUP = 'FLOW_VERSION_BACKUP',
 
     PLATFORM_ASSET = 'PLATFORM_ASSET',
+    USER_PROFILE_PICTURE = 'USER_PROFILE_PICTURE',
 }
 export enum FileCompression {
     NONE = 'NONE',

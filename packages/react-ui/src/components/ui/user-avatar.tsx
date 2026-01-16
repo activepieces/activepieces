@@ -2,11 +2,14 @@ import Avatar from 'boring-avatars';
 
 import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
+import { cn } from '@/lib/utils';
+
 type UserAvatarProps = {
   name: string;
   email: string;
   size: number;
   disableTooltip?: boolean;
+  imageUrl?: string | null;
 };
 
 export function UserAvatar({
@@ -14,10 +17,20 @@ export function UserAvatar({
   email,
   size,
   disableTooltip = false,
+  imageUrl,
 }: UserAvatarProps) {
   const tooltip = `${name} (${email})`;
 
-  const avatarElement = (
+  const avatarElement = imageUrl ? (
+    <img
+      src={imageUrl}
+      alt={name}
+      width={size}
+      height={size}
+      className={cn('rounded-full object-cover')}
+      style={{ width: size, height: size }}
+    />
+  ) : (
     <Avatar
       name={email}
       size={size}

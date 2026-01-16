@@ -1,5 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
-import { BaseModelSchema } from '../common'
+import { BaseModelSchema, Nullable } from '../common'
 
 
 export enum UserIdentityProvider {
@@ -19,6 +19,7 @@ export const UserIdentity = Type.Object({
     verified: Type.Boolean(),
     tokenVersion: Type.Optional(Type.String()),
     provider: Type.Enum(UserIdentityProvider),
+    imageUrl: Nullable(Type.String()),
 })
 
 export type UserIdentity = Static<typeof UserIdentity>

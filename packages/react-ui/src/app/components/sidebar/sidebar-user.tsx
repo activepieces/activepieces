@@ -1,3 +1,4 @@
+import { Permission } from '@activepieces/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import {
@@ -9,6 +10,9 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+
+import AccountSettingsDialog from '../account-settings';
+import { HelpAndFeedback } from '../help-and-feedback';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useTelemetry } from '@/components/telemetry-provider';
@@ -41,10 +45,6 @@ import {
 } from '@/hooks/authorization-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { Permission } from '@activepieces/shared';
-
-import AccountSettingsDialog from '../account-settings';
-import { HelpAndFeedback } from '../help-and-feedback';
 
 export function SidebarUser() {
   const [accountSettingsOpen, setAccountSettingsOpen] = useState(false);
@@ -82,6 +82,7 @@ export function SidebarUser() {
                     <UserAvatar
                       name={user.firstName + ' ' + user.lastName}
                       email={user.email}
+                      imageUrl={user.imageUrl}
                       size={28}
                       disableTooltip={true}
                     />
@@ -102,6 +103,7 @@ export function SidebarUser() {
                   <UserAvatar
                     name={user.firstName + ' ' + user.lastName}
                     email={user.email}
+                    imageUrl={user.imageUrl}
                     size={32}
                     disableTooltip={true}
                   />
@@ -126,6 +128,7 @@ export function SidebarUser() {
                 <UserAvatar
                   name={user.firstName + ' ' + user.lastName}
                   email={user.email}
+                  imageUrl={user.imageUrl}
                   size={32}
                   disableTooltip={true}
                 />

@@ -63,6 +63,7 @@ export const UserWithMetaInformation = Type.Object({
     created: Type.String(),
     updated: Type.String(),
     lastActiveDate: Nullable(Type.String()),
+    imageUrl: Nullable(Type.String()),
 })
 
 export type UserWithMetaInformation = Static<typeof UserWithMetaInformation>
