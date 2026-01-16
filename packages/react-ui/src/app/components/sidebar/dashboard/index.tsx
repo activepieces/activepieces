@@ -1,11 +1,19 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
 import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
-import { useState, useMemo, useRef, useEffect, useCallback, SVGProps } from 'react';
+import {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+  SVGProps,
+} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
+import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +56,6 @@ import ProjectSideBarItem from '../project';
 import { AppSidebarHeader } from '../sidebar-header';
 import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
-import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 
 const QuickLogo = (props: SVGProps<SVGSVGElement>) => {
   return (

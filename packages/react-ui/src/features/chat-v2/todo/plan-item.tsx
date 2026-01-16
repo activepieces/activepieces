@@ -1,6 +1,7 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
 import { Circle, CircleCheck } from 'lucide-react';
+import React from 'react';
+
+import { cn } from '@/lib/utils';
 
 export type PlanItemStatus = 'not-started' | 'in-progress' | 'completed';
 
@@ -19,9 +20,7 @@ export function PlanItem({ text, status, className }: PlanItemProps) {
         );
       case 'not-started':
       default:
-        return (
-          <Circle className="size-4 text-muted-foreground shrink-0" />
-        );
+        return <Circle className="size-4 text-muted-foreground shrink-0" />;
     }
   };
 
@@ -29,19 +28,13 @@ export function PlanItem({ text, status, className }: PlanItemProps) {
     <div
       className={cn(
         'flex items-center gap-2 text-sm text-foreground',
-        className
+        className,
       )}
     >
       {getStatusIcon()}
-      <span
-        className={cn(
-          'flex-1',
-          status === 'completed' && 'line-through'
-        )}
-      >
+      <span className={cn('flex-1', status === 'completed' && 'line-through')}>
         {text}
       </span>
     </div>
   );
 }
-

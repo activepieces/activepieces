@@ -1,6 +1,4 @@
-import { Compass, LineChart, Trophy } from 'lucide-react';
 import React, { ComponentType, SVGProps } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -12,10 +10,10 @@ import { projectHooks } from '@/hooks/project-collection';
 import { ApEdition, ApFlagId, isNil } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
+import { AllowOnlyLoggedInUserOnlyGuard } from '../allow-logged-in-user-only-guard';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
-import { AllowOnlyLoggedInUserOnlyGuard } from '../allow-logged-in-user-only-guard';
 
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
@@ -51,8 +49,9 @@ export function ProjectDashboardLayout({
   }
 
   const hideHeader =
-    ['/templates', '/impact', '/leaderboard', '/quick'].some((item) => location.pathname.includes(item)) ||
-    isPlatformPage;
+    ['/templates', '/impact', '/leaderboard', '/quick'].some((item) =>
+      location.pathname.includes(item),
+    ) || isPlatformPage;
 
   return (
     <AllowOnlyLoggedInUserOnlyGuard>
