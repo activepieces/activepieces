@@ -1,43 +1,27 @@
-import React, { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { CopyButton } from '@/components/custom/clipboard/copy-button';
-import { Reasoning, ReasoningTrigger, ReasoningContent } from './reasoning';
-import { Avatar, AvatarImage } from '@/components/ui/avatar';
-import { Plan, PlanItemData } from './todo';
+import { Plan } from './todo';
 import { Thinking } from './thinking';
+import { AssistantConversationMessage, MarkdownVariant } from '@activepieces/shared';
+import { ApMarkdown } from '@/components/custom/markdown';
 
-export type LLMMessageItem = 
-  | { type: 'text'; text: string }
-  | { 
-      type: 'reasoning'; 
-      isStreaming?: boolean;
-      defaultOpen?: boolean;
-      content: string;
-      duration?: number;
-    }
-  | {
-      type: 'plan';
-      items: PlanItemData[];
-    };
 
 interface LLMMessageProps {
-  messages: LLMMessageItem[];
+  message: AssistantConversationMessage;
   className?: string;
 }
 
-export function LLMMessage({ messages, className }: LLMMessageProps) {
-  const fullText = useMemo(() => {
-    return messages
+export function LLMMessage({ message, className }: LLMMessageProps) {
+  const fullText =
+    message.parts
       .map((msg) => {
-        if (msg.type === 'text') return msg.text;
-        if (msg.type === 'reasoning') return msg.content;
+        if (msg.type === 'text') return msg.message;
         if (msg.type === 'plan') return msg.items.map(item => item.text).join('\n');
         return '';
       })
       .join('\n\n');
-  }, [messages]);
 
-  const hasNoMessage = messages.length === 0 || fullText.trim().length === 0;
+  const hasNoMessage = message.parts.length === 0 || fullText.trim().length === 0;
 
   if (hasNoMessage) {
     return <Thinking className={className} />;
@@ -51,26 +35,14 @@ export function LLMMessage({ messages, className }: LLMMessageProps) {
       )}
     >
       <div className="flex-1 space-y-4">
-        {messages.map((message, index) => {
+        {message.parts.map((message, index) => {
           if (message.type === 'text') {
-            return <div key={index}>{message.text}</div>;
-          }
-          
-          if (message.type === 'reasoning') {
-            const isStreaming = message.isStreaming ?? false;
-            const defaultOpen = message.defaultOpen ?? (isStreaming ? true : false);
-            
             return (
-              <Reasoning 
+              <ApMarkdown
                 key={index}
-                isStreaming={isStreaming}
-                defaultOpen={defaultOpen}
-              >
-                <ReasoningTrigger />
-                <ReasoningContent>
-                  {message.content}
-                </ReasoningContent>
-              </Reasoning>
+                markdown={message.message}
+                variant={MarkdownVariant.BORDERLESS}
+              />
             );
           }
           

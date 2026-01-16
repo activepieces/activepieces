@@ -1,12 +1,12 @@
 import { cn } from '@/lib/utils';
-import { UserAvatar } from '@/components/ui/user-avatar';
+import { UserConversationMessage } from '@activepieces/shared';
 
 interface UserMessageProps {
   className?: string;
-  text: string;
+  message: UserConversationMessage;
 }
 
-export function UserMessage({ className, text }: UserMessageProps) {
+export function UserMessage({ className, message }: UserMessageProps) {
   return (
     <div className="flex items-start gap-2 justify-end ml-auto max-w-[70%]">
       <div className="flex items-center gap-2">
@@ -16,7 +16,7 @@ export function UserMessage({ className, text }: UserMessageProps) {
             className
           )}
         >
-          {text}
+          {message.content}
         </div>
       </div>
     </div>

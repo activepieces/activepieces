@@ -91,19 +91,15 @@ export const ProjectRouterWrapper = ({
   {
     path: `/projects/:projectId${path.startsWith('/') ? path : `/${path}`}`,
     element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
         <TokenCheckerWrapper>{element}</TokenCheckerWrapper>
-      </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
   {
     path,
     element: (
-      <AllowOnlyLoggedInUserOnlyGuard>
         <RedirectToCurrentProjectRoute path={path}>
           {element}
         </RedirectToCurrentProjectRoute>
-      </AllowOnlyLoggedInUserOnlyGuard>
     ),
   },
 ];

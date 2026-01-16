@@ -15,6 +15,7 @@ import { authenticationSession } from '../../../lib/authentication-session';
 import { ProjectDashboardSidebar } from '../sidebar/dashboard';
 
 import { ProjectDashboardLayoutHeader } from './project-dashboard-layout-header';
+import { AllowOnlyLoggedInUserOnlyGuard } from '../allow-logged-in-user-only-guard';
 
 export type ProjectDashboardLayoutHeaderTab = {
   to: string;
@@ -42,7 +43,6 @@ export function ProjectDashboardLayout({
 }) {
   const { data: edition } = flagsHooks.useFlag<ApEdition>(ApFlagId.EDITION);
   const currentProjectId = authenticationSession.getProjectId();
-  const { t } = useTranslation();
   const location = useLocation();
   const isPlatformPage = location.pathname.includes('/platform/');
   const isEmbedded = useEmbedding().embedState.isEmbedded;
@@ -50,59 +50,30 @@ export function ProjectDashboardLayout({
     return <Navigate to="/sign-in" replace />;
   }
 
-  const itemsWithoutHeader: ProjectDashboardLayoutHeaderTab[] = [
-    {
-      to: '/templates',
-      label: t('Explore'),
-      show: !isEmbedded,
-      icon: Compass,
-      hasPermission: true,
-    },
-    {
-      to: '/impact',
-      label: t('Impact'),
-      show: !isEmbedded,
-      icon: LineChart,
-      hasPermission: true,
-    },
-    {
-      to: '/leaderboard',
-      label: t('Leaderboard'),
-      show: !isEmbedded,
-      icon: Trophy,
-      hasPermission: true,
-    },
-    {
-      to: '/quick',
-      label: t('Chat'),
-      show: !isEmbedded,
-      icon: Compass,
-      hasPermission: true,
-    },
-  ];
-
   const hideHeader =
-    itemsWithoutHeader.some((item) => location.pathname.includes(item.to)) ||
+    ['/templates', '/impact', '/leaderboard', '/quick'].some((item) => location.pathname.includes(item)) ||
     isPlatformPage;
 
   return (
-    <ProjectChangedRedirector currentProjectId={currentProjectId}>
-      <SidebarProvider>
-        {!isEmbedded && <ProjectDashboardSidebar />}
-        <SidebarInset className={`relative overflow-auto gap-4`}>
-          <div className="flex flex-col">
-            {!hideHeader && (
-              <>
-                <ProjectDashboardLayoutHeader key={currentProjectId} />
-                <Separator className="mb-5" />
-              </>
-            )}
-            <div className="px-4"> {children} </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+    <AllowOnlyLoggedInUserOnlyGuard>
+      <ProjectChangedRedirector currentProjectId={currentProjectId}>
+        <SidebarProvider>
+          {!isEmbedded && <ProjectDashboardSidebar />}
+          <SidebarInset className={`relative overflow-auto gap-4`}>
+            <div className="flex flex-col">
+              {!hideHeader && (
+                <>
+                  <ProjectDashboardLayoutHeader key={currentProjectId} />
+                  <Separator className="mb-5" />
+                </>
+              )}
+              <div className="px-4"> {children} </div>
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
 
-      {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
-    </ProjectChangedRedirector>
+        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+      </ProjectChangedRedirector>
+    </AllowOnlyLoggedInUserOnlyGuard>
   );
 }

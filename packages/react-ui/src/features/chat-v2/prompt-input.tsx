@@ -46,6 +46,7 @@ const PromptInput = React.forwardRef<HTMLTextAreaElement, PromptInputProps>(({
     const handleSend = () => {
         if (message.trim() && !loading) {
             onMessageSend(message.trim());
+            setMessage('');
         }
     };
 

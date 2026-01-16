@@ -1,14 +1,22 @@
-import React from 'react';
+import { ConversationMessage } from '@activepieces/shared';
+import { LLMMessage } from './llm-message';
+import { UserMessage } from './user-message';
 
 interface ConversationProps {
-  children: React.ReactNode;
+  conversation: ConversationMessage[];
   className?: string;
 }
 
-export function Conversation({ children, className }: ConversationProps) {
+export function Conversation({ conversation, className }: ConversationProps) {
   return (
     <div className={className}>
-      {children}
+      {conversation.map((message, index) => (
+        message.role === 'assistant' ? (
+          <LLMMessage key={index} message={message} />
+        ) : (
+          <UserMessage key={index} message={message} />
+        )
+      ))}
     </div>
   );
 }
