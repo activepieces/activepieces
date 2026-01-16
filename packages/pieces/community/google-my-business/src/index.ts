@@ -6,6 +6,7 @@ import {
 } from '@activepieces/pieces-framework';
 import { PieceCategory } from '@activepieces/shared';
 import { createReply } from './lib/actions/create-reply';
+import { createPost } from './lib/actions/create-post';
 import { newReview } from './lib/triggers/new-review';
 
 export const googleAuth = PieceAuth.OAuth2({
@@ -25,6 +26,7 @@ export const googleBusiness = createPiece({
   categories: [PieceCategory.MARKETING],
   actions: [
     createReply,
+    createPost,
     createCustomApiCallAction({
       baseUrl: () => {
         return 'https://www.googleapis.com/business/v4';
@@ -37,3 +39,5 @@ export const googleBusiness = createPiece({
   ],
   triggers: [newReview],
 });
+
+export default googleBusiness;
