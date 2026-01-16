@@ -1,52 +1,37 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { ActivepiecesError, ApId, ChatSession, ConversationMessage, ErrorCode, PlanConversationMessage, PrincipalType } from '@activepieces/shared'
-import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
 import { chatSessionService } from './chat.session.service'
-import { ChatSessionEntity } from './chat.session.entity'
 
 export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/', CreateChatSessionRequest, async (request, reply) => {
-
-            const session = await chatSessionService.create({
-                userId: request.principal.id,
-                plan: request.body.plan,
-                conversation: request.body.conversation,
-            })
-
-            reply.code(StatusCodes.CREATED)
-            return session
-        }
-    )
-
-    app.get(
-        '/',
-        ListChatSessionsRequest,
-        async (request) => {
-            return chatSessionService.listByUserId(request.principal.id)
-        }
-    )
+    app.post('/', CreateChatSessionRequestConfig, async (request) => {
+        const session = await chatSessionService(request.log).create(request.principal.id)
+        return session
+    })
 
     app.get(
         '/:id',
         GetChatSessionRequest,
-        async (request, reply) => {
-            const session = await chatSessionService.getOneOrThrow({
+        async (request) => {
+
+            return await chatSessionService(request.log).getOneOrThrow({
                 id: request.params.id,
                 userId: request.principal.id,
             })
+        }
+    )
 
-            if (!session) {
-                throw new ActivepiecesError({
-                    code: ErrorCode.ENTITY_NOT_FOUND,
-                    params: {
-                        entityId: request.params.id,
-                        entityType: 'ChatSession',
-                    },
-                })
-            }
-
-            return session
+    app.post(
+        '/:id/chat',
+        ChatWithSessionRequest,
+        async (request) => {
+            return await chatSessionService(request.log).chatWithSession({
+                platformId: request.principal.platform.id,
+                userId: request.principal.id,
+                sessionId: request.params.id,
+                message: request.body.message,
+            })
         }
     )
 
@@ -54,59 +39,46 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
         '/:id',
         DeleteChatSessionRequest,
         async (request, reply) => {
-            await chatSessionService.delete({
+            await chatSessionService(request.log).delete({
                 id: request.params.id,
                 userId: request.principal.id,
             })
-
             reply.code(StatusCodes.NO_CONTENT).send()
         }
     )
 }
 
 
-const CreateChatSessionRequest = {
+const CreateChatSessionRequestConfig = {
     config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, { 
-            tableName: ChatSessionEntity,
-            type: ProjectResourceType.TABLE
-        }),
+        security: securityAccess.unscoped([PrincipalType.USER]),
     },
     schema: {
         tags: ['chat-sessions'],
         summary: 'Create a new chat session',
-        body: Type.Object({
-            plan: PlanConversationMessage,
-            conversation: Type.Array(ConversationMessage)
-        }),
+        body: CreateChatSessionRequest,
         response: {
             [StatusCodes.CREATED]: ChatSession,
         },
     },
 }
 
-const ListChatSessionsRequest = {
+const ChatWithSessionRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, { 
-            tableName: ChatSessionEntity,
-            type: ProjectResourceType.TABLE
-        }),
+        security: securityAccess.unscoped([PrincipalType.USER]),
     },
     schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
         tags: ['chat-sessions'],
-        summary: 'List all chat sessions of current user',
-        response: {
-            [StatusCodes.OK]: Type.Array(ChatSession),
-        },
+        body: ChatWithQuickRequest,
+        summary: 'Chat with a session',
     },
 }
-
 const GetChatSessionRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, { 
-            tableName: ChatSessionEntity,
-            type: ProjectResourceType.TABLE
-        }),
+        security: securityAccess.unscoped([PrincipalType.USER]),
     },
     schema: {
         tags: ['chat-sessions'],
@@ -122,10 +94,7 @@ const GetChatSessionRequest = {
 
 const DeleteChatSessionRequest = {
     config: {
-        security: securityAccess.project([PrincipalType.USER], undefined, { 
-            tableName: ChatSessionEntity,
-            type: ProjectResourceType.TABLE
-        }),
+        security: securityAccess.unscoped([PrincipalType.USER]),
     },
     schema: {
         tags: ['chat-sessions'],

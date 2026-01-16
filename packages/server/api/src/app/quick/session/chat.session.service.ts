@@ -1,49 +1,51 @@
-import { ActivepiecesError, apId, ApId, ChatSession, ConversationMessage, ErrorCode, PlanConversationMessage } from '@activepieces/shared'
+import { ActivepiecesError, apId, ApId, ChatSession, chatSessionUtils, ChatWithQuickRequest, ConversationMessage, CreateChatSessionRequest, ErrorCode, ExecuteAgentJobData, LATEST_JOB_DATA_SCHEMA_VERSION, PlanConversationMessage, WorkerJobType } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ChatSessionEntity } from './chat.session.entity'
+import { jobQueue } from '../../workers/queue/job-queue'
+import { FastifyBaseLogger } from 'fastify'
+import { JobType } from '../../workers/queue/queue-manager'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
-export const chatSessionService = {
-    async create(params: {
-        userId: string
-        plan: PlanConversationMessage
-        conversation: ConversationMessage[]
-    }): Promise<ChatSession> {
+export const chatSessionService= (log: FastifyBaseLogger)=> ({
+    async create(userId: string): Promise<ChatSession> {
         const newSession: Partial<ChatSession> = {
             id: apId(),
-            userId: params.userId,
-            plan: params.plan,
-            conversation: params.conversation,
+            userId: userId,
+            conversation: [],
         }
-
         return await chatSessionRepo().save(newSession)
     },
 
-    async listByUserId(userId: string): Promise<ChatSession[]> {
-        return chatSessionRepo().find({
-            where: { userId },
-            order: {
-                created: 'DESC',
-            },
+    async chatWithSession(params: ChatWithSessionParams): Promise<ChatSession> {
+        const session: ChatSession = await this.getOneOrThrow({
+            id: params.sessionId,
+            userId: params.userId,
         })
+        const newSession = await chatSessionUtils.addUserMessage(session, params.message)
+        await chatSessionRepo().save(newSession)
+        const jobData: ExecuteAgentJobData = {
+            platformId: params.platformId,
+            session: newSession,
+            jobType: WorkerJobType.EXECUTE_AGENT,
+        }
+        await jobQueue(log).add({
+            id: jobData.session.id,
+            type: JobType.ONE_TIME,
+            data: jobData,
+        })
+        return newSession
     },
 
-    async getOne(params: {
-        id: ApId
-        userId: string
-    }): Promise<ChatSession | null> {
+    async getOne(params: GetOneParams): Promise<ChatSession | null> {
         return chatSessionRepo().findOneBy({
             id: params.id,
             userId: params.userId,
         })
     },
 
-    async getOneOrThrow(params: {
-        id: ApId
-        userId: string
-    }): Promise<ChatSession> {
+    async getOneOrThrow(params: GetOneParams): Promise<ChatSession> {
         const session = await this.getOne(params)
 
         if (isNil(session)) {
@@ -59,10 +61,7 @@ export const chatSessionService = {
         return session
     },
 
-    async delete(params: {
-        id: ApId
-        userId: string
-    }): Promise<void> {
+    async delete(params: GetOneParams): Promise<void> {
         const result = await chatSessionRepo().delete({
             id: params.id,
             userId: params.userId,
@@ -78,4 +77,16 @@ export const chatSessionService = {
             })
         }
     },
+})
+
+type ChatWithSessionParams = {
+    platformId: string;
+    userId: string;
+    sessionId: string;
+    message: string;
+}
+
+type GetOneParams = {
+    id: string;
+    userId: string;
 }

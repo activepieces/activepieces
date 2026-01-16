@@ -7,6 +7,7 @@ import { RunEnvironment } from '../flow-run/flow-run'
 import { FlowVersion } from '../flows/flow-version'
 import { FlowTriggerType } from '../flows/triggers/trigger'
 import { PiecePackage } from '../pieces/piece'
+import { ChatSession } from '../quick'
 
 export const LATEST_JOB_DATA_SCHEMA_VERSION = 4
 
@@ -47,6 +48,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION:
         case WorkerJobType.EXECUTE_VALIDATION:
         case WorkerJobType.EXECUTE_TRIGGER_HOOK:
+        case WorkerJobType.EXECUTE_AGENT:
             return 'critical'
     }
 }
@@ -56,6 +58,7 @@ export enum WorkerJobType {
     RENEW_WEBHOOK = 'RENEW_WEBHOOK',
     EXECUTE_POLLING = 'EXECUTE_POLLING',
     EXECUTE_WEBHOOK = 'EXECUTE_WEBHOOK',
+    EXECUTE_AGENT = 'EXECUTE_AGENT',
     EXECUTE_FLOW = 'EXECUTE_FLOW',
     EXECUTE_VALIDATION = 'EXECUTE_VALIDATION',
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
@@ -208,7 +211,15 @@ export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 
+export const ExecuteAgentJobData = Type.Object({
+    jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
+    platformId: Type.String(),
+    session: ChatSession
+})
+export type ExecuteAgentJobData = Static<typeof ExecuteAgentJobData>
+
 export const JobData = Type.Union([
+    ExecuteAgentJobData,
     PollingJobData,
     RenewWebhookJobData,
     ExecuteFlowJobData,

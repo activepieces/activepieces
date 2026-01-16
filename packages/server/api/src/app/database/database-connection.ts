@@ -54,6 +54,7 @@ import { UserEntity } from '../user/user-entity'
 import { UserInvitationEntity } from '../user-invitations/user-invitation.entity'
 import { createPGliteDataSource } from './pglite-connection'
 import { createPostgresDataSource } from './postgres-connection'
+import { ChatSessionEntity } from '../quick/session/chat.session.entity'
 
 const databaseType = system.get(AppSystemProp.DB_TYPE)
 
@@ -90,6 +91,7 @@ function getEntities(): EntitySchema<unknown>[] {
         TodoActivityEntity,
         TriggerSourceEntity,
         UserBadgeEntity,
+        ChatSessionEntity,
         // Enterprise
         ProjectMemberEntity,
         ProjectPlanEntity,
