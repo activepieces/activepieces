@@ -1,4 +1,4 @@
-import { CircleCheck, CircleDotDashed, CirclePlay } from 'lucide-react';
+import { CircleCheck, CircleDotDashed, CirclePlay, Loader } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import {
@@ -33,7 +33,7 @@ export function PlanItem({ text, status, className }: PlanItemProps) {
         );
       case 'in_progress':
         return (
-          <CirclePlay className="size-4 text-yellow-700 dark:text-yellow-200 shrink-0" />
+          <Loader className="size-4 text-yellow-700 dark:text-yellow-200 shrink-0" />
         );
       case 'pending':
       default:
