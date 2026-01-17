@@ -41,12 +41,12 @@ import {
   OpenAICompatibleProviderConfig,
   OpenAIProviderAuthConfig,
   OpenAIProviderConfig,
+  SUPPORTED_AI_PROVIDERS,
   UpdateAIProviderRequest,
 } from '@activepieces/shared';
 
 import { ApMarkdown } from '../../../../../../components/custom/markdown';
 
-import { SUPPORTED_AI_PROVIDERS } from './supported-ai-providers';
 import { UpsertProviderConfigForm } from './upsert-provider-config-form';
 
 type UpsertAIProviderDialogProps = {

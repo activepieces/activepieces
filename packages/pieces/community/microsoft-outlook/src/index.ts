@@ -22,7 +22,7 @@ export const microsoftOutlook = createPiece({
 	minimumSupportedRelease: '0.36.1',
 	logoUrl: 'https://cdn.activepieces.com/pieces/microsoft-outlook.jpg',
 	categories: [PieceCategory.PRODUCTIVITY],
-	authors: ['lucaslimasouza', 'kishanprmr'],
+	authors: ['lucaslimasouza', 'kishanprmr','sanket-a11y'],
 	actions: [
 		sendEmailAction,
 		downloadAttachmentAction,

@@ -39,8 +39,11 @@ Files from actions or triggers are stored in the database/S3 to support retries 
 </Info>
 
 - **Maximum File Size**: **10 MB**  
-  (Configurable via `AP_MAX_FILE_SIZE_MB`, default: **4 MB**)
+  (Configurable via `AP_MAX_FILE_SIZE_MB`, default: **25 MB**)
 
+- **Maximum Flow Run Log Size**: **25 MB**  
+  (Configurable via `AP_MAX_FLOW_RUN_LOG_SIZE_MB`, default: **25 MB**)  
+  > This is the total combined size of all inputs and outputs for each step in a single flow run.
 ---
 
 ### Key / Value Storage Limits

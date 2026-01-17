@@ -51,6 +51,7 @@ const executieSingleStepOrFlowOperation = async (input: ExecuteFlowOperation): P
             projectId: input.projectId,
             engineToken: input.engineToken,
             sampleData: input.sampleData,
+            engineConstants: constants,
         })
         const step = flowStructureUtil.getActionOrThrow(input.stepNameToTest!, input.flowVersion.trigger)
         return flowExecutor.execute({
@@ -78,6 +79,7 @@ async function getFlowExecutionState(input: ExecuteFlowOperation, flowContext: F
             break
         }
         case ExecutionType.RESUME: {
+            flowContext = flowContext.addTags(input.executionState.tags)
             break
         }
     }

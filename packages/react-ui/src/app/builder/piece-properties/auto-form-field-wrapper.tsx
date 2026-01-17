@@ -54,7 +54,7 @@ function AutoFormFieldWrapper({
       dynamicInputModeToggled={dynamicInputModeToggled}
     >
       <FormItem className="flex flex-col gap-1">
-        {!hideLabel && (
+        {(!hideLabel || placeBeforeLabelText) && (
           <FormLabel className="flex items-center gap-1 ">
             {placeBeforeLabelText && !dynamicInputModeToggled && children}
             <div className="pt-1">

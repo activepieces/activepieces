@@ -3,9 +3,11 @@ import { Pencil, Trash } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { AIProviderWithoutSensitiveData } from '@activepieces/shared';
+import {
+  AiProviderInfo,
+  AIProviderWithoutSensitiveData,
+} from '@activepieces/shared';
 
-import { AiProviderInfo } from './supported-ai-providers';
 import { UpsertAIProviderDialog } from './upsert-provider-dialog';
 
 type AIProviderCardProps = {

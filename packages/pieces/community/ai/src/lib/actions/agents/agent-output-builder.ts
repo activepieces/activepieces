@@ -6,6 +6,7 @@ import {
   AgentToolType,
   assertNotNullOrUndefined,
   ContentBlockType,
+  ExecutionToolStatus,
   isNil,
   MarkdownContentBlock,
   ToolCallBase,
@@ -20,17 +21,23 @@ export const agentOutputBuilder = (prompt: string) => {
   let structuredOutput: Record<string, unknown> | undefined = undefined;
 
   return {
-    fail({ message }: FinishParams) {
-      if (!isNil(message)) {
-        this.addMarkdown(message);
-      }
-      status = AgentTaskStatus.FAILED;
-    },
     setStatus(_status: AgentTaskStatus) {
       status = _status;
     },
     setStructuredOutput(output: Record<string, unknown>) {
       structuredOutput = output;
+    },
+    appendErrorToStructuredOutput(errorDetails: unknown) {
+      if (structuredOutput) {
+        structuredOutput["errors"] = [...(structuredOutput["errors"] as string[] || []), errorDetails];
+      }
+    },
+    fail({ message }: FinishParams) {
+      status = AgentTaskStatus.FAILED;
+      if (!isNil(message)) {
+        this.addMarkdown(message);
+        this.appendErrorToStructuredOutput({ message });
+      }
     },
     addMarkdown(markdown: string) {
       if (
@@ -80,6 +87,23 @@ export const agentOutputBuilder = (prompt: string) => {
         output,
       };
     },
+    failToolCall({ toolCallId }: FaildToolCallParams) {
+      const toolIdx = steps.findIndex(
+        (block) =>
+          block.type === ContentBlockType.TOOL_CALL &&
+          (block as ToolCallContentBlock).toolCallId === toolCallId
+      );
+      const tool = steps[toolIdx] as ToolCallContentBlock;
+      assertNotNullOrUndefined(tool, 'Last block must be a tool call');
+      steps[toolIdx] = {
+        ...tool,
+        status: ToolCallStatus.COMPLETED,
+        endTime: new Date().toISOString(),
+        output: {
+          status: ExecutionToolStatus.FAILED
+        },
+      };
+    },
     build(): AgentResult {
       return {
         status,
@@ -94,6 +118,10 @@ export const agentOutputBuilder = (prompt: string) => {
 type FinishToolCallParams = {
   toolCallId: string;
   output: Record<string, unknown>;
+};
+
+type FaildToolCallParams = {
+  toolCallId: string;
 };
 
 type StartToolCallParams = {

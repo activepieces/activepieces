@@ -604,6 +604,7 @@ async function queueOrCreateInstantly(params: CreateParams, log: FastifyBaseLogg
         stepNameToTest: params.stepNameToTest,
         created: now,
         updated: now,
+        tags: [],
         steps: {},
         triggeredBy: params.triggeredBy,
     }

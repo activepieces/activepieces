@@ -81,6 +81,7 @@ export const WorkerSettingsResponse = Type.Object({
     LOG_PRETTY: Type.String(),
     ENVIRONMENT: Type.String(),
     APP_WEBHOOK_SECRETS: Type.String(),
+    MAX_FLOW_RUN_LOG_SIZE_MB: Type.Number(),
     MAX_FILE_SIZE_MB: Type.Number(),
     SANDBOX_MEMORY_LIMIT: Type.String(),
     SANDBOX_PROPAGATED_ENV_VARS: Type.Array(Type.String()),
