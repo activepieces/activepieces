@@ -13,6 +13,7 @@ export const quickModule: FastifyPluginAsyncTypebox = async (app) => {
                     const chatUpdate: ChatSessionUpdate = {
                         sessionId: data.data.sessionId,
                         part: data.data.part,
+                        plan: data.data.plan,
                     }
                     socket.to(data.userId).emit(data.event, chatUpdate)
                     break;

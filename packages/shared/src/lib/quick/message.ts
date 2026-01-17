@@ -6,15 +6,6 @@ export const UserConversationMessage = Type.Object({
 })
 export type UserConversationMessage = Static<typeof UserConversationMessage>
 
-export const PlanConversationMessage = Type.Object({
-    type: Type.Literal('plan'),
-    items: Type.Array(Type.Object({
-        text: Type.String(),
-        status: Type.Union([Type.Literal('completed'), Type.Literal('not-started')]),
-    })),
-})
-export type PlanConversationMessage = Static<typeof PlanConversationMessage>
-
 export const TextConversationMessage = Type.Object({
     type: Type.Literal('text'),
     message: Type.String(),
@@ -23,9 +14,28 @@ export const TextConversationMessage = Type.Object({
 export type TextConversationMessage = Static<typeof TextConversationMessage>
 
 
+export const ToolCallConversationMessage = Type.Object({
+    type: Type.Literal('tool-call'),
+    toolCallId: Type.String(),
+    toolName: Type.String(),
+    input: Type.Record(Type.String(), Type.Any()),
+})
+export type ToolCallConversationMessage = Static<typeof ToolCallConversationMessage>
+
+export const ToolResultConversationMessage = Type.Object({
+    type: Type.Literal('tool-result'),
+    toolCallId: Type.String(),
+    toolName: Type.String(),
+    output: Type.Record(Type.String(), Type.Any()),
+})
+
+export type ToolResultConversationMessage = Static<typeof ToolResultConversationMessage>
+
+
 export const AssistantConversationContent = Type.Union([
     TextConversationMessage,
-    PlanConversationMessage,
+    ToolCallConversationMessage,
+    ToolResultConversationMessage,
 ])
 
 export type AssistantConversationContent = Static<typeof AssistantConversationContent>

@@ -3,23 +3,23 @@ import { ApMarkdown } from '@/components/custom/markdown';
 import { cn } from '@/lib/utils';
 import {
   AssistantConversationMessage,
+  ConversationMessage,
   MarkdownVariant,
 } from '@activepieces/shared';
 
 import { Thinking } from './thinking';
-import { Plan } from './todo';
+import { ToolCallMessage } from './tool-call-message';
 
 interface LLMMessageProps {
   message: AssistantConversationMessage;
+  conversation: ConversationMessage[];
   className?: string;
 }
 
-export function LLMMessage({ message, className }: LLMMessageProps) {
+export function LLMMessage({ message, conversation, className }: LLMMessageProps) {
   const fullText = message.parts
     .map((msg) => {
       if (msg.type === 'text') return msg.message;
-      if (msg.type === 'plan')
-        return msg.items.map((item) => item.text).join('\n');
       return '';
     })
     .join('\n\n');
@@ -39,21 +39,19 @@ export function LLMMessage({ message, className }: LLMMessageProps) {
       )}
     >
       <div className="flex-1 space-y-4">
-        {message.parts.map((message, index) => {
-          if (message.type === 'text') {
+        {message.parts.map((part, index) => {
+          if (part.type === 'text') {
             return (
               <ApMarkdown
                 key={index}
-                markdown={message.message}
+                markdown={part.message}
                 variant={MarkdownVariant.BORDERLESS}
               />
             );
           }
-
-          if (message.type === 'plan') {
-            return <Plan key={index} items={message.items} />;
+          if (part.type === 'tool-call') {
+            return <ToolCallMessage key={index} message={part} conversation={conversation} />;
           }
-
           return null;
         })}
         <div className="h-5 mt-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">

@@ -1,13 +1,12 @@
-import { Circle, CircleCheck } from 'lucide-react';
-import React from 'react';
+import { Circle, CircleCheck, CircleDot, CircleDotDashed, CirclePlay } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
+import { PlanItem as PlanItemType } from '@activepieces/shared';
 
-export type PlanItemStatus = 'not-started' | 'in-progress' | 'completed';
 
 export interface PlanItemProps {
   text: string;
-  status: PlanItemStatus;
+  status: PlanItemType['status'];
   className?: string;
 }
 
@@ -18,9 +17,13 @@ export function PlanItem({ text, status, className }: PlanItemProps) {
         return (
           <CircleCheck className="size-4 text-green-700 dark:text-green-200 shrink-0" />
         );
-      case 'not-started':
+      case 'in_progress':
+        return (
+          <CirclePlay className="size-4 text-yellow-700 dark:text-yellow-200 shrink-0 fill-current" />
+        );
+      case 'pending':
       default:
-        return <Circle className="size-4 text-muted-foreground shrink-0" />;
+        return <CircleDotDashed className="size-4 text-muted-foreground shrink-0" />;
     }
   };
 

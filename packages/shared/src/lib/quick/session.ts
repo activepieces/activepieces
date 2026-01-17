@@ -1,12 +1,19 @@
 import { Static, Type } from "@sinclair/typebox"
 import { BaseModelSchema } from "../common"
 import { ApId } from "../common/id-generator"
-import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage, PlanConversationMessage } from "./message"
+import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage } from "./message"
+
+export const PlanItem = Type.Object({
+    id: Type.String(),
+    content: Type.String(),
+    status: Type.Union([Type.Literal("pending"), Type.Literal("completed"), Type.Literal("in_progress") ]),
+})
+export type PlanItem = Static<typeof PlanItem>
 
 export const ChatSession = Type.Object({
     ...BaseModelSchema,
     userId: ApId,
-    plan: Type.Optional(PlanConversationMessage),
+    plan: Type.Optional(Type.Array(PlanItem)),
     conversation: Type.Array(ConversationMessage),
 })
 export type ChatSession = Static<typeof ChatSession>
@@ -16,6 +23,7 @@ export type CreateChatSessionRequest = Static<typeof CreateChatSessionRequest>
 
 export const ChatSessionUpdate = Type.Object({
     sessionId: Type.String(),
+    plan: Type.Optional(Type.Array(PlanItem)),
     part: AssistantConversationContent,
 })
 export type ChatSessionUpdate = Static<typeof ChatSessionUpdate>
@@ -49,6 +57,15 @@ export const chatSessionUtils = {
         return {
             ...session,
             conversation: newConvo,
+        }
+    },
+    addEmptyAssistantMessage(session: ChatSession): ChatSession {
+        return {
+            ...session,
+            conversation: [...session.conversation, {
+                role: 'assistant',
+                parts: [],
+            }],
         }
     },
     addUserMessage(session: ChatSession, message: string): ChatSession {

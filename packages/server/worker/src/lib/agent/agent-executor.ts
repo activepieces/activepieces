@@ -1,55 +1,74 @@
-import { ChatSessionUpdate, chatSessionUtils, ConversationMessage, ExecuteAgentJobData, ChatSession, WebsocketClientEvent, WebsocketServerEvent, ChatSessionEnded, EmitAgentStreamingEndedRequest } from "@activepieces/shared";
-import { ModelMessage, streamText } from "ai";
+import { ChatSessionUpdate, chatSessionUtils, ConversationMessage, ExecuteAgentJobData, ChatSession, WebsocketClientEvent, WebsocketServerEvent, ChatSessionEnded, EmitAgentStreamingEndedRequest, PlanItem, isNil } from "@activepieces/shared";
+import { ModelMessage, stepCountIs, streamText } from "ai";
 import { systemPrompt } from "./system-prompt";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { appSocket } from "../app-socket";
 import { FastifyBaseLogger } from "fastify";
+import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from "./planning-tool";
+import { LanguageModelV2ToolResultOutput } from "@ai-sdk/provider";
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData) {
         const { conversation } = data.session;
+        let newSession: ChatSession = data.session;
+        const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan };
         const { fullStream } = streamText({
             model: createAnthropic().chat('claude-opus-4-5-20251101'),
             system: systemPrompt(),
+            stopWhen: [stepCountIs(25)],
             messages: convertHistory(conversation),
+            tools: {
+                [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
+            },
         })
 
-        let newSession: ChatSession = data.session;
         let isStreaming = false;
         let previousText = ''
         for await (const chunk of fullStream) {
+            let quickStreamingUpdate: ChatSessionUpdate | undefined;
             switch (chunk.type) {
                 case 'text-start': {
                     isStreaming = true;
                     previousText = '';
+                    quickStreamingUpdate = publishTextUpdate(newSession, '', true);
                     break;
                 }
                 case 'text-delta': {
                     previousText += chunk.text;
+                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, true);
                     break;
                 }
                 case 'text-end': {
                     isStreaming = false;
+                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, false);
+                    break;
+                }
+                case 'tool-call': {
+                    previousText = '';
+                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>);
+                    break;
+                }
+                case 'tool-result': {
+                    previousText = '';
+                    if (chunk.toolName === WRITE_TODOS_TOOL_NAME) {
+                        newSession = { ...newSession, plan: planningState.plan };
+                    }
+                    quickStreamingUpdate = publishToolResultUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>);
                     break;
                 }
                 default: {
                     break;
                 }
             }
-            const quickStreamingUpdate: ChatSessionUpdate = {
-                sessionId: data.session.id,
-                part: {
-                    type: 'text',
-                    message: previousText,
-                    isStreaming: isStreaming,
-                }
+
+            if (!isNil(quickStreamingUpdate)) {
+                newSession = chatSessionUtils.streamChunk(newSession, quickStreamingUpdate);
+                await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, {
+                    userId: data.session.userId,
+                    event: WebsocketClientEvent.AGENT_STREAMING_UPDATE,
+                    data: quickStreamingUpdate,
+                })
             }
-            await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, {
-                userId: data.session.userId,
-                event: WebsocketClientEvent.AGENT_STREAMING_UPDATE,
-                data: quickStreamingUpdate,
-            })
-            newSession = chatSessionUtils.streamChunk(newSession, quickStreamingUpdate);
         }
         const chatSessionEnded: EmitAgentStreamingEndedRequest = {
             userId: data.session.userId,
@@ -62,6 +81,47 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     },
 })
 
+function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolName: string, input: Record<string, any>) {
+    const quickStreamingUpdate: ChatSessionUpdate = {
+        sessionId: session.id,
+        plan: session.plan,
+        part: {
+            type: 'tool-call',
+            toolCallId: toolcallId,
+            toolName: toolName,
+            input: input,
+        }
+    }
+    return quickStreamingUpdate;
+}
+
+function publishToolResultUpdate(session: ChatSession, toolcallId: string, toolName: string, output: Record<string, any>) {
+    const quickStreamingUpdate: ChatSessionUpdate = {
+        sessionId: session.id,
+        plan: session.plan,
+        part: {
+            type: 'tool-result',
+            toolCallId: toolcallId,
+            toolName: toolName,
+            output: output,
+        }
+    }
+    return quickStreamingUpdate;
+}
+
+function publishTextUpdate(session: ChatSession, text: string, isStreaming: boolean) {
+    const quickStreamingUpdate: ChatSessionUpdate = {
+        sessionId: session.id,
+        plan: session.plan,
+        part: {
+            type: 'text',
+            message: text,
+            isStreaming: isStreaming,
+        }
+    }
+    return quickStreamingUpdate;
+}
+
 function convertHistory(conversation: ConversationMessage[]): ModelMessage[] {
     return conversation.map(message => {
         if (message.role === 'user') {
@@ -72,10 +132,27 @@ function convertHistory(conversation: ConversationMessage[]): ModelMessage[] {
         }
         return {
             role: 'assistant',
-            content: message.parts.filter((item) => item.type !== 'plan').map((item) => {
-                return {
-                    type: item.type,
-                    text: item.message,
+            content: message.parts.map((item) => {
+                switch (item.type) {
+                    case 'text':
+                        return {
+                            type: 'text',
+                            text: item.message,
+                        }
+                    case 'tool-call':
+                        return {
+                            type: 'tool-call',
+                            toolCallId: item.toolCallId,
+                            toolName: item.toolName,
+                            input: item.input,
+                        }
+                    case 'tool-result':
+                        return {
+                            type: 'tool-result',
+                            toolCallId: item.toolCallId,
+                            toolName: item.toolName,
+                            output: item.output as LanguageModelV2ToolResultOutput,
+                        }
                 }
             }),
         }

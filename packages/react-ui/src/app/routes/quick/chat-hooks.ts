@@ -18,19 +18,18 @@ export const chatHooks = {
     return useMutation<
       ChatSession,
       Error,
-      { message: string; sessionId: string | null }
+      { message: string; currentSession: ChatSession | null }
     >({
       mutationFn: async (request) => {
-        let chatWithSessionId = request.sessionId;
-        if (isNil(request.sessionId)) {
-          const createSession = await api.post<ChatSession>(
-            '/v1/chat-sessions',
-            {},
-          );
-          chatWithSessionId = createSession.id;
-        }
-        let currentSession = await api.post<ChatSession>(
-          `/v1/chat-sessions/${chatWithSessionId}/chat`,
+        let currentSession = request.currentSession ?? await api.post<ChatSession>(
+          '/v1/chat-sessions',
+          {},
+        );
+        currentSession = chatSessionUtils.addUserMessage(currentSession, request.message);
+        currentSession = chatSessionUtils.addEmptyAssistantMessage(currentSession);
+        setSession(currentSession);
+        await api.post<ChatSession>(
+          `/v1/chat-sessions/${currentSession.id}/chat`,
           {
             message: request.message,
           },
@@ -39,20 +38,21 @@ export const chatHooks = {
           socket.on(
             WebsocketClientEvent.AGENT_STREAMING_UPDATE,
             (data: ChatSessionUpdate) => {
-              if (data.sessionId !== chatWithSessionId) {
+              if (data.sessionId !== currentSession.id) {
                 return;
               }
               currentSession = chatSessionUtils.streamChunk(currentSession, {
-                sessionId: chatWithSessionId,
+                sessionId: currentSession.id,
                 part: data.part,
               });
+              currentSession.plan = data.plan;
               setSession(currentSession);
             },
           );
           socket.on(
             WebsocketClientEvent.AGENT_STREAMING_ENDED,
             (data: ChatSessionEnded) => {
-              if (data.sessionId !== chatWithSessionId) {
+              if (data.sessionId !== currentSession.id) {
                 return;
               }
               socket.off(WebsocketClientEvent.AGENT_STREAMING_UPDATE);

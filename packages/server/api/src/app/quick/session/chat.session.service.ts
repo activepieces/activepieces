@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ApId, ChatSession, chatSessionUtils, ChatWithQuickRequest, ConversationMessage, CreateChatSessionRequest, ErrorCode, ExecuteAgentJobData, LATEST_JOB_DATA_SCHEMA_VERSION, PlanConversationMessage, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ChatSession, chatSessionUtils, ConversationMessage, ErrorCode, ExecuteAgentJobData, WorkerJobType } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ChatSessionEntity } from './chat.session.entity'
@@ -38,7 +38,10 @@ export const chatSessionService= (log: FastifyBaseLogger)=> ({
         return newSession
     },
     async update(sessionId: string, session: ChatSession): Promise<void> {
-        await chatSessionRepo().update(sessionId, session)
+        await chatSessionRepo().update(sessionId, {
+            plan: session.plan,
+            conversation: session.conversation,
+        })
     },
 
     async getOne(params: GetOneParams): Promise<ChatSession | null> {
