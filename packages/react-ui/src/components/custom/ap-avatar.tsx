@@ -7,10 +7,10 @@ import {
   HoverCardContent,
 } from '@/components/ui/hover-card';
 import { userHooks } from '@/hooks/user-hooks';
+import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { UserAvatar } from '../ui/user-avatar';
-import { cn } from '@/lib/utils';
 
 interface ApAvatarProps {
   id: string | null;
@@ -47,11 +47,11 @@ export const ApAvatar = ({
         </div>
       )}
       {includeName && (
-        <span className={cn('text-xs truncate',
-          {
-            'text-xss': size === 'xsmall',
-          }
-        )}>{`${user.firstName}`}</span>
+        <span
+          className={cn('text-xs truncate', {
+            'text-xss opacity-75': size === 'xsmall',
+          })}
+        >{`${user.firstName}`}</span>
       )}
     </div>
   );
@@ -97,14 +97,13 @@ export const ApAvatar = ({
   );
 };
 
-
 function getAvatarSize(size: 'small' | 'medium' | 'xsmall') {
-   switch (size) {
+  switch (size) {
     case 'small':
       return 24;
     case 'medium':
       return 32;
     case 'xsmall':
       return 16;
-   }
+  }
 }
