@@ -107,7 +107,6 @@ export const MarkdownInput = React.forwardRef<
       },
     });
     useImperativeHandle(ref, () => editor, [editor]);
-
     return (
       <div
         className={cn('relative h-full', {
@@ -126,7 +125,7 @@ export const MarkdownInput = React.forwardRef<
         }}
       >
         {/**didn't use tiptap placeholder because it disappears when the editor is not editable */}
-        {editor.getText().trim() === '' && !disabled && (
+        {editor.getMarkdown().trim() === '<br>' && !disabled && (
           <div
             className={cn(
               placeholderClassName,

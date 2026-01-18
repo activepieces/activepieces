@@ -157,63 +157,61 @@ const NoteContent = ({ note, isDragging }: NoteContentProps) => {
         </div>
       )}
 
-      {
-        <div className="flex flex-col gap-2 h-full">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div
-                onContextMenu={(e) => e.stopPropagation()}
-                className="grow h-full overflow-auto "
-                onDoubleClick={(e) => {
+      <div className="flex flex-col gap-2 h-full">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div
+              onContextMenu={(e) => e.stopPropagation()}
+              className="grow h-full overflow-auto "
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                editorRef.current?.commands.focus();
+              }}
+              onKeyDown={(e) => {
+                e.stopPropagation();
+                if (e.key === 'Shift') {
                   e.stopPropagation();
-                  editorRef.current?.commands.focus();
-                }}
-                onKeyDown={(e) => {
-                  e.stopPropagation();
-                  if (e.key === 'Shift') {
-                    e.stopPropagation();
+                }
+              }}
+            >
+              <MarkdownInput
+                ref={editorRef}
+                key={`${localNote.id}-${readonly ? 'readonly' : 'editable'}-${
+                  localNote.position.x
+                }-${localNote.position.y}`}
+                disabled={isDragging || readonly}
+                initialValue={localNote.content}
+                className={cn(
+                  'text-xs h-full',
+                  NoteColorVariantClassName[color],
+                  {
+                    '!cursor-grabbing': isDragging,
+                    '!text-foreground': true,
+                  },
+                )}
+                onlyEditableOnDoubleClick={true}
+                placeholder={t('Double click to edit...')}
+                placeholderClassName={cn(
+                  'text-xs',
+                  NoteColorVariantClassName[color],
+                )}
+                onChange={(value: string) => {
+                  if (value !== localNote.content) {
+                    setLocalNote({ ...localNote, content: value });
+                    debouncedUpdateContent(id, value);
                   }
                 }}
-              >
-                <MarkdownInput
-                  ref={editorRef}
-                  key={`${localNote.id}-${readonly ? 'readonly' : 'editable'}-${
-                    localNote.position.x
-                  }-${localNote.position.y}`}
-                  disabled={isDragging || readonly}
-                  initialValue={localNote.content}
-                  className={cn(
-                    'text-xs h-full',
-                    NoteColorVariantClassName[color],
-                    {
-                      '!cursor-grabbing': isDragging,
-                      '!text-foreground': true,
-                    },
-                  )}
-                  onlyEditableOnDoubleClick={true}
-                  placeholder={t('Double click to edit...')}
-                  placeholderClassName={cn(
-                    'text-xs',
-                    NoteColorVariantClassName[color],
-                  )}
-                  onChange={(value: string) => {
-                    if (value !== localNote.content) {
-                      setLocalNote({ ...localNote, content: value });
-                      debouncedUpdateContent(id, value);
-                    }
-                  }}
-                />
-              </div>
-            </TooltipTrigger>
-            {!readonly && !isDragging && !editorRef.current?.isFocused && (
-              <TooltipContent side="right">
-                {t('Double click to edit')}
-              </TooltipContent>
-            )}
-          </Tooltip>
-          <NoteFooter id={id} isDragging={isDragging} creatorId={creatorId} />
-        </div>
-      }
+              />
+            </div>
+          </TooltipTrigger>
+          {!readonly && !isDragging && !editorRef.current?.isFocused && (
+            <TooltipContent side="right">
+              {t('Double click to edit')}
+            </TooltipContent>
+          )}
+        </Tooltip>
+        <NoteFooter id={id} isDragging={isDragging} creatorId={creatorId} />
+      </div>
     </div>
   );
 };
