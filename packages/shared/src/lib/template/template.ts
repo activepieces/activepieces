@@ -41,7 +41,6 @@ export const Template = Type.Object({
     tags: Type.Array(TemplateTag),
     blogUrl: Nullable(Type.String()),
     metadata: Nullable(Metadata),
-    usageCount: Type.Number(),
     author: Type.String(),
     categories: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
@@ -51,5 +50,5 @@ export const Template = Type.Object({
 })
 export type Template = Static<typeof Template>
 
-export const SharedTemplate = Omit(Template, ['platformId', 'id', 'created', 'updated', 'usageCount'])
+export const SharedTemplate = Omit(Template, ['platformId', 'id', 'created', 'updated'])
 export type SharedTemplate = Static<typeof SharedTemplate>
