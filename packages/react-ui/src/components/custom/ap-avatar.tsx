@@ -10,10 +10,11 @@ import { userHooks } from '@/hooks/user-hooks';
 import { isNil } from '@activepieces/shared';
 
 import { UserAvatar } from '../ui/user-avatar';
+import { cn } from '@/lib/utils';
 
 interface ApAvatarProps {
   id: string | null;
-  size: 'small' | 'medium';
+  size: 'small' | 'medium' | 'xsmall';
   includeAvatar?: boolean;
   includeName?: boolean;
   hideHover?: boolean;
@@ -26,7 +27,7 @@ export const ApAvatar = ({
   size = 'medium',
   hideHover = false,
 }: ApAvatarProps) => {
-  const avatarSize = size === 'small' ? 24 : 32;
+  const avatarSize = getAvatarSize(size);
 
   const { data: user } = userHooks.useUserById(id);
   if (!user || isNil(id)) {
@@ -46,7 +47,11 @@ export const ApAvatar = ({
         </div>
       )}
       {includeName && (
-        <span className="text-xs truncate">{`${user.firstName}`}</span>
+        <span className={cn('text-xs truncate',
+          {
+            'text-xss': size === 'xsmall',
+          }
+        )}>{`${user.firstName}`}</span>
       )}
     </div>
   );
@@ -91,3 +96,15 @@ export const ApAvatar = ({
     </HoverCard>
   );
 };
+
+
+function getAvatarSize(size: 'small' | 'medium' | 'xsmall') {
+   switch (size) {
+    case 'small':
+      return 24;
+    case 'medium':
+      return 32;
+    case 'xsmall':
+      return 16;
+   }
+}
