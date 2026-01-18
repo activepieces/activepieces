@@ -241,9 +241,6 @@ const ViewParams = {
         security: securityAccess.unscoped([PrincipalType.USER]),
     },
     schema: {
-        description: 'View a template.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
     },
 }
@@ -253,9 +250,6 @@ const InstallParams = {
         security: securityAccess.unscoped([PrincipalType.USER]),
     },
     schema: {
-        description: 'Install a template.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
     },
 }
@@ -265,9 +259,6 @@ const SetStatusParams = {
         security: securityAccess.unscoped([PrincipalType.USER]),
     },
     schema: {
-        description: 'Set status of a template.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
         body: SetStatusTemplateRequestBody,
     },
@@ -276,11 +267,6 @@ const SetStatusParams = {
 const ClickExploreButtonParams = {
     config: {
         security: securityAccess.unscoped([PrincipalType.USER]),
-    },
-    schema: {
-        description: 'Click explore button.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
     },
 }
 
