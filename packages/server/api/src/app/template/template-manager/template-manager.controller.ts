@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, PrincipalType, SetStatusTemplateRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, InstallTemplateRequestBody, PrincipalType, SetStatusTemplateRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
@@ -30,7 +30,7 @@ export const templateManagerController: FastifyPluginAsyncTypebox = async (app) 
                 },
             })
         }
-        await templateManagerService(app.log).install(request.params.id, { userId: request.principal.id })
+        await templateManagerService(app.log).install(request.params.id, request.body)
         return reply.status(StatusCodes.OK).send()
     })
     
@@ -43,11 +43,11 @@ export const templateManagerController: FastifyPluginAsyncTypebox = async (app) 
                 },
             })
         }
-        await templateManagerService(app.log).setStatus(request.params.id, { flowId: request.body.flowId, status: request.body.status })
+        await templateManagerService(app.log).setStatus(request.params.id, request.body)
         return reply.status(StatusCodes.OK).send()
     })
     
-    app.post('/click-explore-button', ClickExploreButtonParams, async (request, reply) => {
+    app.post('/click-explore-button', ClickExploreButtonParams, async (_request, reply) => {
         if (edition !== ApEdition.CLOUD) {
             throw new ActivepiecesError({
                 code: ErrorCode.VALIDATION,
@@ -69,7 +69,7 @@ type GetIdParams = Static<typeof GetIdParams>
 
 const ViewParams = {
     config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
+        security: securityAccess.unscoped([PrincipalType.SERVICE]),
     },
     schema: {
         params: GetIdParams,
@@ -78,16 +78,17 @@ const ViewParams = {
 
 const InstallParams = {
     config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
+        security: securityAccess.unscoped([PrincipalType.SERVICE]),
     },
     schema: {
         params: GetIdParams,
+        body: InstallTemplateRequestBody,
     },
 }
 
 const SetStatusParams = {
     config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
+        security: securityAccess.unscoped([PrincipalType.SERVICE]),
     },
     schema: {
         params: GetIdParams,
@@ -97,6 +98,6 @@ const SetStatusParams = {
 
 const ClickExploreButtonParams = {
     config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
+        security: securityAccess.unscoped([PrincipalType.SERVICE]),
     },
 }
