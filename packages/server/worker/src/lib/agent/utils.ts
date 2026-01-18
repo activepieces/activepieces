@@ -9,11 +9,11 @@ const removeTrailingSlash = (url: string): string => {
 }
 
 export const agentUtils = {
-    async getModel(modelId: string): Promise<LanguageModelV2> {
+    async getModel(modelId: string, engineToken: string): Promise<LanguageModelV2> {
 
         const client = new ApAxiosClient(
             removeTrailingSlash(workerMachine.getInternalApiUrl()),
-            workerMachine.getWorkerToken()
+            engineToken
         );
         const response = await client.get<GetProviderConfigResponse>(
             `/v1/ai-providers/${AIProviderName.ACTIVEPIECES}/config`,

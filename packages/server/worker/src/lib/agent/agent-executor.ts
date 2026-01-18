@@ -7,24 +7,38 @@ import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from "./planning-tool";
 import { LanguageModelV2ToolResultOutput } from "@ai-sdk/provider";
 import { agentUtils } from "./utils";
 
-
+async function getFirecrawlTools() {
+    const firecrawlAisdk = await import('firecrawl-aisdk');
+    return {
+        scrape: firecrawlAisdk.scrapeTool,
+        search: firecrawlAisdk.searchTool,
+        map: firecrawlAisdk.mapTool,
+        crawl: firecrawlAisdk.crawlTool,
+        batchScrape: firecrawlAisdk.batchScrapeTool,
+        extract: firecrawlAisdk.extractTool,
+        poll: firecrawlAisdk.pollTool,
+        status: firecrawlAisdk.statusTool,
+        cancel: firecrawlAisdk.cancelTool,
+    };
+}
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
-    async execute(data: ExecuteAgentJobData) {
+    async execute(data: ExecuteAgentJobData, engineToken: string) {
+     
         const { conversation, modelId } = data.session;
         let newSession: ChatSession = data.session;
         const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan };
-
+        const firecrawlTools = await getFirecrawlTools();
         const { fullStream } = streamText({
-            model: await agentUtils.getModel(modelId),
+            model: await agentUtils.getModel(modelId, engineToken),
             system: systemPrompt(),
             stopWhen: [stepCountIs(25)],
             messages: convertHistory(conversation),
             tools: {
+                ...firecrawlTools,
                 [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
             },
         })
-
         let isStreaming = false;
         let previousText = ''
         for await (const chunk of fullStream) {

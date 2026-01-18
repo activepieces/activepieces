@@ -4,6 +4,8 @@ import { repoFactory } from '../../core/db/repo-factory'
 import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { ChatSessionEntity } from './chat.session.entity'
+import { projectService } from '../../project/project-service'
+import { platformProjectService } from '../../ee/projects/platform-project-service'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
@@ -23,10 +25,12 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
             id: params.sessionId,
             userId: params.userId,
         })
+        const project = await projectService.getPersonalProject(params.userId)
         const newSession = chatSessionUtils.addUserMessage(session, params.message)
         await chatSessionRepo().save(newSession)
         const jobData: ExecuteAgentJobData = {
             platformId: params.platformId,
+            projectId: project.id,
             session: newSession,
             jobType: WorkerJobType.EXECUTE_AGENT,
         }

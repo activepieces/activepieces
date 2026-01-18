@@ -189,6 +189,7 @@
     "fastify-xml-body-parser": "2.2.0",
     "fetch-retry": "6.0.0",
     "firebase-scrypt": "2.2.0",
+    "firecrawl-aisdk": "0.8.1",
     "flowtoken": "1.0.40",
     "font-awesome": "4.7.0",
     "form-data": "4.0.4",

@@ -214,6 +214,7 @@ export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof Use
 export const ExecuteAgentJobData = Type.Object({
     jobType: Type.Literal(WorkerJobType.EXECUTE_AGENT),
     platformId: Type.String(),
+    projectId: Type.String(),
     session: ChatSession
 })
 export type ExecuteAgentJobData = Static<typeof ExecuteAgentJobData>

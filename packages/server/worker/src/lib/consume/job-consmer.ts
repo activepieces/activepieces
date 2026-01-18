@@ -22,8 +22,8 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
         const timeoutInSeconds = getTimeoutForWorkerJob(jobData.jobType)
         const traceContext = ('traceContext' in jobData && jobData.traceContext) ? jobData.traceContext : {}
         const extractedContext = propagation.extract(context.active(), traceContext)
-        const projectId = 'projectId' in jobData ? jobData.projectId : undefined
-        const platformId = 'platformId' in jobData ? jobData.platformId : undefined
+        const projectId = jobData.projectId
+        const platformId = jobData.platformId
         const engineToken = !isNil(projectId) && !isNil(platformId) ? await tokenUtls.generateEngineToken({ jobId, projectId, platformId }) : undefined
 
         return context.with(extractedContext, () => {
@@ -32,14 +32,14 @@ export const jobConsmer = (log: FastifyBaseLogger) => ({
                     'worker.jobId': jobId,
                     'worker.jobType': jobData.jobType,
                     'worker.attemptsStarted': attemptsStarted,
-                    'worker.projectId': projectId ?? 'unknown',
-                    'worker.platformId': platformId ?? 'unknown',
+                    'worker.projectId': projectId,
+                    'worker.platformId': platformId,
                 },
             }, async (span) => {
                 try {
                     switch (jobData.jobType) {
                         case WorkerJobType.EXECUTE_AGENT:
-                            await agentExecutor(log).execute(jobData)
+                            await agentExecutor(log).execute(jobData, engineToken!)
                             span.setAttribute('worker.completed', true)
                             return {
                                 status: ConsumeJobResponseStatus.OK,
