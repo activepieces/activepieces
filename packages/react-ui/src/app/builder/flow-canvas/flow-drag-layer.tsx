@@ -13,7 +13,7 @@ import {
 import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import type { PointerEvent } from 'react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -34,6 +34,10 @@ import { ApButtonData } from './utils/types';
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   const reactFlow = useReactFlow();
   const previousViewPortRef = useRef({ x: 0, y: 0, zoom: 1 });
+  const [cursorPositionOnActivation, setCursorPositionOnActivation] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 0, y: 0 });
   const [
     setActiveDraggingStep,
     applyOperation,
@@ -93,7 +97,16 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
       const draggedNote = getNoteById(e.active.id.toString());
       if (draggedNote) {
-        setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE);
+        const noteElement = document.getElementById(e.active.id.toString());
+        let offset: { x: number; y: number } | undefined;
+        if (noteElement) {
+          const rect = noteElement.getBoundingClientRect();
+          offset = {
+            x: cursorPositionOnActivation.x - rect.left,
+            y: cursorPositionOnActivation.y - rect.top,
+          };
+        }
+        setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE, offset);
       }
     }
     previousViewPortRef.current = reactFlow.getViewport();
@@ -115,6 +128,11 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     useSensor(PointerSensorIgnoringInteractiveItems, {
       activationConstraint: {
         distance: 10,
+      },
+      onActivation: ({ event }) => {
+        if (event instanceof PointerEvent) {
+          setCursorPositionOnActivation({ x: event.clientX, y: event.clientY });
+        }
       },
     }),
     useSensor(TouchSensor),
@@ -237,7 +255,6 @@ class PointerSensorIgnoringInteractiveItems extends PointerSensor {
         ) {
           return false;
         }
-
         onActivation?.({ event });
         return true;
       },

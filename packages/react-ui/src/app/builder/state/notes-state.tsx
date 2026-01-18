@@ -24,12 +24,17 @@ export type NotesState = {
   draggedNote: Note | null;
   updateContent: (id: string, content: string) => void;
   updateNoteColor: (id: string, color: NoteColorVariant) => void;
-  setDraggedNote: (note: Note | null, mode: NoteDragOverlayMode | null) => void;
+  setDraggedNote: (
+    note: Note | null,
+    mode: NoteDragOverlayMode | null,
+    offset?: { x: number; y: number },
+  ) => void;
   noteDragOverlayMode: NoteDragOverlayMode | null;
   setNoteDragOverlayMode: (
     noteDragOverlayMode: NoteDragOverlayMode | null,
   ) => void;
   getNoteById: (id: string) => Note | null;
+  draggedNoteOffset: { x: number; y: number } | null;
 };
 
 export const createNotesState = (
@@ -133,8 +138,17 @@ export const createNotesState = (
       });
     },
     draggedNote: null,
-    setDraggedNote: (note: Note | null, mode: NoteDragOverlayMode | null) => {
-      set({ draggedNote: note, noteDragOverlayMode: mode });
+    draggedNoteOffset: null,
+    setDraggedNote: (
+      note: Note | null,
+      mode: NoteDragOverlayMode | null,
+      offset?: { x: number; y: number },
+    ) => {
+      set({
+        draggedNote: note,
+        noteDragOverlayMode: mode,
+        draggedNoteOffset: offset ?? null,
+      });
     },
     getNoteById: (id: string) => {
       return get().flowVersion.notes.find((note) => note.id === id) ?? null;

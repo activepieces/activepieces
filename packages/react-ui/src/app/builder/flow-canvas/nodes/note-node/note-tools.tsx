@@ -1,10 +1,14 @@
 import { Editor } from '@tiptap/core';
+import { t } from 'i18next';
 import { TrashIcon } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
-import { MarkdownTools } from '@/components/ui/markdown-input/tools';
+import {
+  MarkdownTools,
+  ToolWrapper,
+} from '@/components/ui/markdown-input/tools';
 import {
   Popover,
   PopoverContent,
@@ -36,15 +40,17 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
           />
           <MarkdownTools editor={editor} />
           <Separator orientation="vertical" className="h-[30px]"></Separator>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              deleteNote(id);
-            }}
-          >
-            <TrashIcon className="size-4 text-destructive" />
-          </Button>
+          <ToolWrapper tooltip={t('Delete')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                deleteNote(id);
+              }}
+            >
+              <TrashIcon className="size-4 text-destructive" />
+            </Button>
+          </ToolWrapper>
         </div>
       </div>
     </div>
@@ -69,18 +75,21 @@ const NoteColorPicker = ({
   const popoverTriggerRef = useRef<HTMLDivElement>(null);
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <div
-          ref={popoverTriggerRef}
-          className={cn(
-            NoteColorPickerClassName[currentColor] ??
-              NoteColorPickerClassName[NoteColorVariant.YELLOW],
-            'mx-0.5 size-5 shrink-0  rounded-full cursor-pointer',
-          )}
-          tabIndex={0}
-          role="button"
-        ></div>
-      </PopoverTrigger>
+      <ToolWrapper tooltip={t('Color')}>
+        <PopoverTrigger asChild>
+          <div
+            ref={popoverTriggerRef}
+            className={cn(
+              NoteColorPickerClassName[currentColor] ??
+                NoteColorPickerClassName[NoteColorVariant.YELLOW],
+              'mx-0.5 size-5 shrink-0  rounded-full cursor-pointer',
+            )}
+            tabIndex={0}
+            role="button"
+          ></div>
+        </PopoverTrigger>
+      </ToolWrapper>
+
       <PopoverContent
         container={container}
         side="top"
