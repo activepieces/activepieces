@@ -3,6 +3,8 @@ import { BaseModelSchema } from "../common"
 import { ApId } from "../common/id-generator"
 import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage } from "./message"
 
+export const DEFAULT_CHAT_MODEL = 'openai/gpt-5.1' 
+
 export const PlanItem = Type.Object({
     id: Type.String(),
     content: Type.String(),
@@ -15,11 +17,15 @@ export const ChatSession = Type.Object({
     userId: ApId,
     plan: Type.Optional(Type.Array(PlanItem)),
     conversation: Type.Array(ConversationMessage),
+    modelId: Type.String()
 })
 export type ChatSession = Static<typeof ChatSession>
 
 export const CreateChatSessionRequest = Type.Object({})
 export type CreateChatSessionRequest = Static<typeof CreateChatSessionRequest>
+
+export const UpdateChatSessionRequest = Type.Object({ modelId: Type.String() })
+export type UpdateChatSessionRequest = Static<typeof UpdateChatSessionRequest>
 
 export const ChatSessionUpdate = Type.Object({
     sessionId: Type.String(),
