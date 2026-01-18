@@ -11,6 +11,7 @@ import {
     Principal,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
+    SetStatusTemplateRequestBody,
     Template,
     TemplateType,
     UpdateTemplateRequestBody,
@@ -24,11 +25,10 @@ import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
-import { communityTemplates } from './community-flow-template.service'
+import { communityTemplates } from './community-templates.service'
 import { templateService } from './template.service'
 
 const edition = system.getEdition()
-
 
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
@@ -125,6 +125,26 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
+    
+    app.post('/:id/view', ViewParams, async (request, reply) => {
+        await communityTemplates.view(request.params.id)
+        return reply.status(StatusCodes.OK).send()
+    })
+
+    app.post('/:id/install', InstallParams, async (request, reply) => {
+        await communityTemplates.install({ id: request.params.id, userId: request.principal.id })
+        return reply.status(StatusCodes.OK).send()
+    })
+    
+    app.post('/:id/status', SetStatusParams, async (request, reply) => {
+        await communityTemplates.setStatus({ id: request.params.id, flowId: request.body.flowId, status: request.body.status })
+        return reply.status(StatusCodes.OK).send()
+    })
+    
+    app.post('/click-explore-button', ClickExploreButtonParams, async (request, reply) => {
+        await communityTemplates.clickExploreButton({ userId: request.principal.id })
+        return reply.status(StatusCodes.OK).send()
+    })
 }
 
 const GetIdParams = Type.Object({
@@ -216,6 +236,53 @@ const IncrementUsageCountParams = {
     },
 }
 
+const ViewParams = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER]),
+    },
+    schema: {
+        description: 'View a template.',
+        tags: ['templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: GetIdParams,
+    },
+}
+
+const InstallParams = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER]),
+    },
+    schema: {
+        description: 'Install a template.',
+        tags: ['templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: GetIdParams,
+    },
+}
+
+const SetStatusParams = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER]),
+    },
+    schema: {
+        description: 'Set status of a template.',
+        tags: ['templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+        params: GetIdParams,
+        body: SetStatusTemplateRequestBody,
+    },
+}
+
+const ClickExploreButtonParams = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER]),
+    },
+    schema: {
+        description: 'Click explore button.',
+        tags: ['templates'],
+        security: [SERVICE_KEY_SECURITY_OPENAPI],
+    },
+}
 
 async function loadOfficialTemplatesOrReturnEmpty(
     log: FastifyBaseLogger,
