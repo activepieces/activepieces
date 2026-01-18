@@ -16,7 +16,11 @@ interface LLMMessageProps {
   className?: string;
 }
 
-export function LLMMessage({ message, conversation, className }: LLMMessageProps) {
+export function LLMMessage({
+  message,
+  conversation,
+  className,
+}: LLMMessageProps) {
   const fullText = message.parts
     .map((msg) => {
       if (msg.type === 'text') return msg.message;
@@ -50,7 +54,13 @@ export function LLMMessage({ message, conversation, className }: LLMMessageProps
             );
           }
           if (part.type === 'tool-call') {
-            return <ToolCallMessage key={index} message={part} conversation={conversation} />;
+            return (
+              <ToolCallMessage
+                key={index}
+                message={part}
+                conversation={conversation}
+              />
+            );
           }
           return null;
         })}

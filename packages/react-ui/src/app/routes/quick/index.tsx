@@ -5,11 +5,11 @@ import { useState } from 'react';
 
 import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 import { Conversation } from '@/features/chat-v2/conversation';
+import { Plan } from '@/features/chat-v2/plan/plan';
 import PromptInput from '@/features/chat-v2/prompt-input';
 import { ChatSession, isNil } from '@activepieces/shared';
 
 import { chatHooks } from './chat-hooks';
-import { Plan } from '@/features/chat-v2/plan/plan';
 
 export function QuickPage() {
   const [session, setSession] = useState<ChatSession | null>();

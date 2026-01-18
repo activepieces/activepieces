@@ -2,7 +2,10 @@ import { t } from 'i18next';
 import { ListTodo, Wrench } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { ConversationMessage, ToolCallConversationMessage } from '@activepieces/shared';
+import {
+  ConversationMessage,
+  ToolCallConversationMessage,
+} from '@activepieces/shared';
 
 interface ToolCallMessageProps {
   message: ToolCallConversationMessage;
@@ -10,11 +13,22 @@ interface ToolCallMessageProps {
   className?: string;
 }
 
-export function ToolCallMessage({ message, conversation, className }: ToolCallMessageProps) {
+export function ToolCallMessage({
+  message,
+  conversation,
+  className,
+}: ToolCallMessageProps) {
   const isWriteTodos = message.toolName === 'write_todos';
 
-  const isCompleted = conversation.some(msg => msg.role === 'assistant' && msg.parts.some(part => part.type === 'tool-result' && part.toolCallId === message.toolCallId));
-  
+  const isCompleted = conversation.some(
+    (msg) =>
+      msg.role === 'assistant' &&
+      msg.parts.some(
+        (part) =>
+          part.type === 'tool-result' && part.toolCallId === message.toolCallId,
+      ),
+  );
+
   const getIcon = () => {
     if (isWriteTodos) {
       return <ListTodo className="size-4  shrink-0" />;
@@ -26,7 +40,9 @@ export function ToolCallMessage({ message, conversation, className }: ToolCallMe
     if (isWriteTodos) {
       return isCompleted ? t('Planning completed') : t('Planning...');
     }
-    return isCompleted ? t('Used {{toolName}}', { toolName: message.toolName }) : t('Using {{toolName}}', { toolName: message.toolName });
+    return isCompleted
+      ? t('Used {{toolName}}', { toolName: message.toolName })
+      : t('Using {{toolName}}', { toolName: message.toolName });
   };
 
   return (
@@ -41,4 +57,3 @@ export function ToolCallMessage({ message, conversation, className }: ToolCallMe
     </div>
   );
 }
-

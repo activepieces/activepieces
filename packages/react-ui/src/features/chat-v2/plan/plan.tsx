@@ -1,7 +1,9 @@
 import { t } from 'i18next';
 import { ListTodo } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { PlanItem as PlanItemType } from '@activepieces/shared';
+
 import { PlanItem } from './plan-item';
 
 export interface PlanItemData {
@@ -31,9 +33,7 @@ export function Plan({ items, className }: PlanProps) {
         ) : (
           <ListTodo className="size-5" />
         )}
-        <span className="font-medium text-base">
-          {t('Plan')}
-        </span>
+        <span className="font-medium text-base">{t('Plan')}</span>
       </div>
       <div className="flex flex-col gap-2 p-4">
         {hasItems ? (
@@ -43,7 +43,9 @@ export function Plan({ items, className }: PlanProps) {
         ) : (
           <div className="flex flex-col items-center justify-center py-4 text-center">
             <p className="text-sm text-muted-foreground">
-              {t('Quick will break down complex tasks into steps and track progress here')}
+              {t(
+                'Quick will break down complex tasks into steps and track progress here',
+              )}
             </p>
           </div>
         )}

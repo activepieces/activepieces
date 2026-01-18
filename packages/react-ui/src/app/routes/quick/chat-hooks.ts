@@ -8,7 +8,6 @@ import {
   ChatSessionEnded,
   ChatSessionUpdate,
   chatSessionUtils,
-  isNil,
   WebsocketClientEvent,
 } from '@activepieces/shared';
 
@@ -21,12 +20,15 @@ export const chatHooks = {
       { message: string; currentSession: ChatSession | null }
     >({
       mutationFn: async (request) => {
-        let currentSession = request.currentSession ?? await api.post<ChatSession>(
-          '/v1/chat-sessions',
-          {},
+        let currentSession =
+          request.currentSession ??
+          (await api.post<ChatSession>('/v1/chat-sessions', {}));
+        currentSession = chatSessionUtils.addUserMessage(
+          currentSession,
+          request.message,
         );
-        currentSession = chatSessionUtils.addUserMessage(currentSession, request.message);
-        currentSession = chatSessionUtils.addEmptyAssistantMessage(currentSession);
+        currentSession =
+          chatSessionUtils.addEmptyAssistantMessage(currentSession);
         setSession(currentSession);
         await api.post<ChatSession>(
           `/v1/chat-sessions/${currentSession.id}/chat`,

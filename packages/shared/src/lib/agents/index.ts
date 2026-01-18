@@ -58,10 +58,11 @@ export enum AgentPieceProps {
     AI_PROVIDER_MODEL = 'aiProviderModel',
 }
 
-export type AgentProviderModel = {
-    provider: AIProviderName
-    model: string
-}
+export const AgentProviderModel = Type.Object({
+    provider: Type.Enum(AIProviderName),
+    model: Type.String(),
+})
+export type AgentProviderModel = Static<typeof AgentProviderModel>
 
 export const MarkdownContentBlock = Type.Object({
     type: Type.Literal(ContentBlockType.MARKDOWN),

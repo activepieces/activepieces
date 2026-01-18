@@ -1,4 +1,4 @@
-import { CircleCheck, CircleDotDashed, CirclePlay, Loader } from 'lucide-react';
+import { CircleCheck, CircleDotDashed, Loader } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 import {
@@ -37,7 +37,9 @@ export function PlanItem({ text, status, className }: PlanItemProps) {
         );
       case 'pending':
       default:
-        return <CircleDotDashed className="size-4 text-muted-foreground shrink-0" />;
+        return (
+          <CircleDotDashed className="size-4 text-muted-foreground shrink-0" />
+        );
     }
   };
 
