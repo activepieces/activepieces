@@ -22,9 +22,13 @@ const NoteDragOverlay = () => {
   const builderNavigationBar = document.getElementById(
     flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID,
   );
-  const [draggedNote, noteDragOverlayMode, addNote] = useBuilderStateContext(
-    (state) => [state.draggedNote, state.noteDragOverlayMode, state.addNote],
-  );
+  const [draggedNote, noteDragOverlayMode, addNote, draggedNoteOffset] =
+    useBuilderStateContext((state) => [
+      state.draggedNote,
+      state.noteDragOverlayMode,
+      state.addNote,
+      state.draggedNoteOffset,
+    ]);
   const reactFlow = useReactFlow();
   const containerRef = useRef<HTMLDivElement>(null);
   const builderNavigationBarWidth = open
@@ -36,10 +40,16 @@ const NoteDragOverlay = () => {
     height: (draggedNote?.size.height ?? 0) * reactFlow.getZoom(),
   };
 
-  const left = `${
-    overlayPosition.x - nodeSizeWithZoom.width / 2 - builderNavigationBarWidth
-  }px`;
-  const top = `${overlayPosition.y - 50 - nodeSizeWithZoom.height / 2}px`;
+  // Use the captured offset if available, otherwise fallback to centering
+  const offsetX = draggedNoteOffset
+    ? draggedNoteOffset.x * reactFlow.getZoom()
+    : nodeSizeWithZoom.width / 2;
+  const offsetY = draggedNoteOffset
+    ? draggedNoteOffset.y * reactFlow.getZoom()
+    : nodeSizeWithZoom.height / 2;
+
+  const left = `${overlayPosition.x - offsetX - builderNavigationBarWidth}px`;
+  const top = `${overlayPosition.y - 50 - offsetY}px`;
   useCursorPositionEffect((position) => {
     setOverlayPosition(position);
   });
@@ -72,8 +82,8 @@ const NoteDragOverlay = () => {
       style={{
         left,
         top,
-        height: `${draggedNote.size.height * reactFlow.getZoom()}px`,
-        width: `${draggedNote.size.width * reactFlow.getZoom()}px`,
+        height: `${draggedNote.size.height * reactFlow.getZoom()}px !important`,
+        width: `${draggedNote.size.width * reactFlow.getZoom()}px !important`,
       }}
     >
       <NoteContent
