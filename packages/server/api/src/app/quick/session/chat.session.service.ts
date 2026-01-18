@@ -1,22 +1,21 @@
-import { ActivepiecesError, apId, ChatSession, chatSessionUtils, ConversationMessage, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, WorkerJobType } from '@activepieces/shared'
-import { isNil } from '@activepieces/shared'
-import { repoFactory } from '../../core/db/repo-factory'
-import { ChatSessionEntity } from './chat.session.entity'
-import { jobQueue } from '../../workers/queue/job-queue'
+import { ActivepiecesError, apId, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, isNil, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
+import { repoFactory } from '../../core/db/repo-factory'
+import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
+import { ChatSessionEntity } from './chat.session.entity'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
-export const chatSessionService= (log: FastifyBaseLogger)=> ({
+export const chatSessionService = (log: FastifyBaseLogger)=> ({
     async create(userId: string): Promise<ChatSession> {
         const newSession: Partial<ChatSession> = {
             id: apId(),
-            userId: userId,
+            userId,
             conversation: [],
-            modelId: DEFAULT_CHAT_MODEL
+            modelId: DEFAULT_CHAT_MODEL,
         }
-        return await chatSessionRepo().save(newSession)
+        return chatSessionRepo().save(newSession)
     },
 
     async chatWithSession(params: ChatWithSessionParams): Promise<ChatSession> {
@@ -24,7 +23,7 @@ export const chatSessionService= (log: FastifyBaseLogger)=> ({
             id: params.sessionId,
             userId: params.userId,
         })
-        const newSession = await chatSessionUtils.addUserMessage(session, params.message)
+        const newSession = chatSessionUtils.addUserMessage(session, params.message)
         await chatSessionRepo().save(newSession)
         const jobData: ExecuteAgentJobData = {
             platformId: params.platformId,
@@ -42,16 +41,16 @@ export const chatSessionService= (log: FastifyBaseLogger)=> ({
         await chatSessionRepo().update(sessionId, {
             plan: session.plan,
             conversation: session.conversation,
-            modelId: session.modelId
+            modelId: session.modelId,
         })
     },
 
     async updateSessionModel(params: UpdateSessionModelIdParams): Promise<ChatSession> {
         await chatSessionRepo().update(params.id, {
-            modelId: params.modelId
+            modelId: params.modelId,
         })
 
-        return await this.getOneOrThrow({ id: params.id, userId: params.userId })
+        return this.getOneOrThrow({ id: params.id, userId: params.userId })
     },
 
     async getOne(params: GetOneParams): Promise<ChatSession | null> {
@@ -96,19 +95,19 @@ export const chatSessionService= (log: FastifyBaseLogger)=> ({
 })
 
 type ChatWithSessionParams = {
-    platformId: string;
-    userId: string;
-    sessionId: string;
-    message: string;
+    platformId: string
+    userId: string
+    sessionId: string
+    message: string
 }
 
 type GetOneParams = {
-    id: string;
-    userId: string;
+    id: string
+    userId: string
 }
 
 type UpdateSessionModelIdParams = {
-    id: string;
-    modelId: string;
+    id: string
+    modelId: string
     userId: string
 }

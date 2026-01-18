@@ -40,7 +40,7 @@ const ListAIProviders = {
 
 const GetAIProviderConfig = {
     config: {
-        security: securityAccess.unscoped([ PrincipalType.ENGINE, PrincipalType.WORKER ])
+        security: securityAccess.unscoped([ PrincipalType.ENGINE, PrincipalType.WORKER ]),
     },
     schema: {
         params: Type.Object({

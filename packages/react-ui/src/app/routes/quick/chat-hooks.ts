@@ -98,5 +98,5 @@ export const chatHooks = {
         console.error(error);
       },
     });
-  }
+  },
 };

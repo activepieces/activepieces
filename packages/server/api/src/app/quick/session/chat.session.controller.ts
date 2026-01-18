@@ -1,9 +1,9 @@
+import { securityAccess } from '@activepieces/server-shared'
+import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType, UpdateChatSessionRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType, UpdateChatSessionRequest } from '@activepieces/shared'
-import { securityAccess } from '@activepieces/server-shared'
-import { chatSessionService } from './chat.session.service'
 import { requestUtils } from '../../core/request/request-utils'
+import { chatSessionService } from './chat.session.service'
 
 export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateChatSessionRequestConfig, async (request) => {
@@ -12,7 +12,7 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
     })
 
     app.post('/:id/update-model', UpdateChatSessionModelRequestConfig, async (request) => {
-        return await chatSessionService(request.log).updateSessionModel({ id: request.params.id, modelId: request.body.modelId, userId: request.principal.id })
+        return chatSessionService(request.log).updateSessionModel({ id: request.params.id, modelId: request.body.modelId, userId: request.principal.id })
     })
 
     app.get(
@@ -20,11 +20,11 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
         GetChatSessionRequest,
         async (request) => {
 
-            return await chatSessionService(request.log).getOneOrThrow({
+            return chatSessionService(request.log).getOneOrThrow({
                 id: request.params.id,
                 userId: request.principal.id,
             })
-        }
+        },
     )
 
     app.post(
@@ -37,7 +37,7 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
                 sessionId: request.params.id,
                 message: request.body.message,
             })
-        }
+        },
     )
 
     app.delete(
@@ -49,7 +49,7 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
                 userId: request.principal.id,
             })
             reply.code(StatusCodes.NO_CONTENT).send()
-        }
+        },
     )
 }
 
@@ -94,8 +94,8 @@ const UpdateChatSessionModelRequestConfig = {
         summary: 'Update chat session',
         body: UpdateChatSessionRequest,
         response: {
-            [StatusCodes.OK]: ChatSession
-        }
+            [StatusCodes.OK]: ChatSession,
+        },
     },
 }
 

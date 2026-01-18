@@ -6,7 +6,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import { AIModelSelector } from './model-selector';
-import { ChatSession } from '@activepieces/shared';
 
 interface PromptInputProps {
   defaultModel?: string;
@@ -107,7 +106,10 @@ const PromptInput = React.forwardRef<HTMLTextAreaElement, PromptInputProps>(
                 />
               </div>
               <div className="flex justify-between mx-2 mb-3">
-                <AIModelSelector updateChatModel={updateChatModel} defaultModel={defaultModel} />
+                <AIModelSelector
+                  updateChatModel={updateChatModel}
+                  defaultModel={defaultModel}
+                />
                 <Button
                   variant="default"
                   size="icon"

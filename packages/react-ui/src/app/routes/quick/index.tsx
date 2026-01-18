@@ -13,7 +13,7 @@ export function QuickPage() {
   const [session, setSession] = useState<ChatSession | null>();
   const { mutate: sendMessage, isPending: isStreaming } =
     chatHooks.useSendMessage(setSession);
-  const { mutate: updateChatModel } = chatHooks.useUpdateChatModel(setSession)
+  const { mutate: updateChatModel } = chatHooks.useUpdateChatModel(setSession);
 
   return (
     <div className="flex gap-8 w-full min-h-screen px-4">
@@ -42,10 +42,12 @@ export function QuickPage() {
           <div className="max-w-4xl px-4">
             <PromptInput
               defaultModel={session?.modelId || DEFAULT_CHAT_MODEL}
-              updateChatModel={(modelId) => updateChatModel({
+              updateChatModel={(modelId) =>
+                updateChatModel({
                   modelId,
                   currentSession: isNil(session) ? null : session,
-              })}
+                })
+              }
               onMessageSend={(message) =>
                 sendMessage({
                   message,

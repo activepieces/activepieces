@@ -1,9 +1,9 @@
-import { EntitySchema } from 'typeorm';
-import { ChatSession} from '@activepieces/shared';
+import { ChatSession } from '@activepieces/shared'
+import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-} from '../../database/database-common';
+} from '../../database/database-common'
 
 export const ChatSessionEntity = new EntitySchema<ChatSession>({
     name: 'chat_session',
@@ -25,8 +25,8 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
         },
         modelId: {
             type: String,
-            nullable: false
-        }
+            nullable: false,
+        },
     },
 
     indices: [],
@@ -44,4 +44,4 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
             },
         },
     },
-});
+})
