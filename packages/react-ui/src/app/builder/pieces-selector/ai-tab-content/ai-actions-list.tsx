@@ -1,26 +1,20 @@
-import { t } from 'i18next';
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-
-import { useTelemetry } from '@/components/telemetry-provider';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { flagsHooks } from '@/hooks/flags-hooks';
 import {
   PieceSelectorOperation,
   StepMetadataWithSuggestions,
 } from '@/lib/types';
-import {
-  ApFlagId,
-  FlowActionType,
-  TelemetryEventName,
-} from '@activepieces/shared';
 
-import { usePieceSearchContext } from '../../../../features/pieces/lib/piece-search-context';
-import { useBuilderStateContext } from '../../builder-hooks';
 import { convertStepMetadataToPieceSelectorItems } from '../piece-actions-or-triggers-list';
 
 import AIActionItem from './ai-action';
+import {
+  getActionIcon,
+  getActionVideo,
+  getItemKey,
+  isRunAgentAction,
+} from './ai-actions-constants';
+import { AIActionsFooter } from './ai-actions-footer';
+import { useAIActionHandler } from './use-ai-action-handler';
 
 type AIPieceActionsListProps = {
   hidePieceIconAndDescription: boolean;
@@ -28,86 +22,59 @@ type AIPieceActionsListProps = {
   operation: PieceSelectorOperation;
 };
 
-const ACTION_ICON_MAP: Record<string, string> = {
-  run_agent: 'https://cdn.activepieces.com/pieces/agent.png',
-  generateImage: 'https://cdn.activepieces.com/pieces/image-ai.svg',
-  askAi: 'https://cdn.activepieces.com/pieces/text-ai.svg',
-  summarizeText: 'https://cdn.activepieces.com/pieces/text-ai.svg',
-  classifyText: 'https://cdn.activepieces.com/pieces/text-ai.svg',
-  extractStructuredData: 'https://cdn.activepieces.com/pieces/ai-utility.svg',
-};
-
 export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
   stepMetadataWithSuggestions,
   hidePieceIconAndDescription,
   operation,
 }) => {
-  const { capture } = useTelemetry();
-  const { searchQuery } = usePieceSearchContext();
-  const [handleAddingOrUpdatingStep] = useBuilderStateContext((state) => [
-    state.handleAddingOrUpdatingStep,
-  ]);
-  const { data: isAgentsConfigured } = flagsHooks.useFlag<boolean>(
-    ApFlagId.AGENTS_CONFIGURED,
-  );
-  const navigate = useNavigate();
+  const { handleActionClick } = useAIActionHandler(operation);
 
   const aiActions = convertStepMetadataToPieceSelectorItems(
-    stepMetadataWithSuggestions,
+    stepMetadataWithSuggestions
   );
 
-  return (
-    <ScrollArea className="h-full" viewPortClassName="h-full">
-      <div className="grid grid-cols-3 p-2 gap-3 min-w-[350px]">
-        {aiActions.map((item, index) => {
-          const actionIcon =
-            item.type === FlowActionType.PIECE
-              ? ACTION_ICON_MAP[item.actionOrTrigger.name]
-              : 'https://cdn.activepieces.com/pieces/image-ai.svg';
-          return (
-            <AIActionItem
-              key={index}
-              item={item}
-              hidePieceIconAndDescription={hidePieceIconAndDescription}
-              stepMetadataWithSuggestions={{
-                ...stepMetadataWithSuggestions,
-                logoUrl: actionIcon,
-              }}
-              onClick={() => {
-                if (!isAgentsConfigured) {
-                  toast('Connect to OpenAI', {
-                    description: t(
-                      "To create an agent, you'll first need to connect to OpenAI in platform settings.",
-                    ),
-                    action: {
-                      label: 'Set Up',
-                      onClick: () => {
-                        navigate('/platform/setup/ai');
-                      },
-                    },
-                  });
-                  return;
-                }
+  const agentAction = aiActions.find(isRunAgentAction);
+  const otherActions = aiActions.filter((item) => !isRunAgentAction(item));
 
-                if (item.type === FlowActionType.PIECE) {
-                  capture({
-                    name: TelemetryEventName.PIECE_SELECTOR_SEARCH,
-                    payload: {
-                      search: searchQuery,
-                      isTrigger: false,
-                      selectedActionOrTriggerName: item.actionOrTrigger.name,
-                    },
-                  });
-                }
-                handleAddingOrUpdatingStep({
-                  pieceSelectorItem: item,
-                  operation,
-                  selectStepAfter: true,
-                });
-              }}
-            />
-          );
-        })}
+  return (
+    <ScrollArea className="h-full w-full" viewPortClassName="h-full">
+      <div className="flex flex-col h-full p-2 gap-2 min-w-0">
+        {/* Main content grid */}
+        <div className="grid grid-cols-2 gap-2 flex-1 min-h-0 min-w-0 w-full">
+          {/* Left side - AI Agent card */}
+          {agentAction && (
+            <div className="w-full min-w-0 shrink-0">
+              <AIActionItem
+                item={agentAction}
+                hidePieceIconAndDescription={hidePieceIconAndDescription}
+                stepMetadataWithSuggestions={stepMetadataWithSuggestions}
+                actionIcon={getActionIcon(agentAction)}
+                actionVideo={getActionVideo(agentAction)}
+                isAgent={true}
+                onClick={() => handleActionClick(agentAction)}
+              />
+            </div>
+          )}
+
+          {/* Right side - Other actions grid */}
+          <div className="grid grid-cols-1 gap-2 min-w-0 auto-rows-fr">
+            {otherActions.map((item, index) => (
+              <AIActionItem
+                key={getItemKey(item, index)}
+                item={item}
+                hidePieceIconAndDescription={hidePieceIconAndDescription}
+                stepMetadataWithSuggestions={stepMetadataWithSuggestions}
+                actionIcon={getActionIcon(item)}
+                actionVideo={getActionVideo(item)}
+                isAgent={false}
+                onClick={() => handleActionClick(item)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Footer with available models */}
+        <AIActionsFooter />
       </div>
     </ScrollArea>
   );

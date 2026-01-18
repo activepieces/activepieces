@@ -12,9 +12,9 @@ export enum PieceSelectorTabType {
 
 export const PieceSelectorTabsContext = createContext({
   selectedTab: PieceSelectorTabType.EXPLORE,
-  setSelectedTab: (tab: PieceSelectorTabType) => {},
-  resetToBeforeNoneWasSelected: () => {},
-  setSelectedPieceInExplore: (piece: StepMetadataWithSuggestions | null) => {},
+  setSelectedTab: (tab: PieceSelectorTabType) => { },
+  resetToBeforeNoneWasSelected: () => { },
+  setSelectedPieceInExplore: (piece: StepMetadataWithSuggestions | null) => { },
   selectedPieceInExplore: null as null | StepMetadataWithSuggestions,
 });
 
@@ -59,7 +59,7 @@ export const usePieceSelectorTabs = () => {
   const context = useContext(PieceSelectorTabsContext);
   if (!context) {
     throw new Error(
-      'usePieceSelectorTabs must be used within a PieceSelectorTabsProvider',
+      'usePieceSelectorTabs must be used within a PieceSelectorTabsProvider'
     );
   }
   return context;

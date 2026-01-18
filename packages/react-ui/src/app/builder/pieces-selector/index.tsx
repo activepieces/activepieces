@@ -38,7 +38,7 @@ import { PiecesCardList } from './pieces-card-list';
 
 const getTabsList = (
   operationType: FlowOperationType,
-  isEmbeddingEnabled: boolean,
+  isEmbeddingEnabled: boolean
 ) => {
   const baseTabs = [
     {
@@ -53,7 +53,7 @@ const getTabsList = (
     },
     {
       value: PieceSelectorTabType.UTILITY,
-      name: t('Utility'),
+      name: t('Utilities'),
       icon: <WrenchIcon className="size-5" />,
     },
   ];
@@ -66,7 +66,7 @@ const getTabsList = (
   if (replaceOrAddAction && !isEmbeddingEnabled) {
     baseTabs.splice(1, 0, {
       value: PieceSelectorTabType.AI_AND_AGENTS,
-      name: t('AI & Agents'),
+      name: t('Activepieces AI'),
       icon: <SparklesIcon className="size-5" />,
     });
   }
@@ -108,7 +108,7 @@ const PieceSelectorContent = ({
     state.setOpenedPieceSelectorStepNameOrAddButtonId,
     state.setSelectedPieceMetadataInPieceSelector,
     state.flowVersion.trigger.type === FlowTriggerType.EMPTY &&
-      id === 'trigger',
+    id === 'trigger',
     state.deselectStep,
   ]);
   const { searchQuery, setSearchQuery } = usePieceSearchContext();
@@ -120,7 +120,7 @@ const PieceSelectorContent = ({
   const isMobile = useIsMobile();
   const { listHeightRef, popoverTriggerRef } =
     pieceSelectorUtils.useAdjustPieceListHeightToAvailableSpace();
-  const listHeight = Math.min(listHeightRef.current, 300);
+  const listHeight = Math.min(listHeightRef.current, 400);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (isOpen) {
@@ -138,7 +138,7 @@ const PieceSelectorContent = ({
   const { platform } = platformHooks.useCurrentPlatform();
   const tabsList = useMemo(
     () => getTabsList(operation.type, platform?.plan.embeddingEnabled ?? false),
-    [operation.type, platform?.plan.embeddingEnabled],
+    [operation.type, platform?.plan.embeddingEnabled]
   );
 
   return (
@@ -201,7 +201,7 @@ const PieceSelectorContent = ({
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
-              className=" flex flex-row max-h-[300px]"
+              className=" flex flex-row max-h-[400px]"
               style={{
                 height: listHeight + 'px',
               }}

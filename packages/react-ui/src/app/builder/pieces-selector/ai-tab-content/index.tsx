@@ -19,7 +19,7 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
   if (
     selectedTab !== PieceSelectorTabType.AI_AND_AGENTS ||
     ![FlowOperationType.ADD_ACTION, FlowOperationType.UPDATE_ACTION].includes(
-      operation.type,
+      operation.type
     )
   ) {
     return null;
@@ -40,17 +40,19 @@ const AITabContent = ({ operation }: { operation: PieceSelectorOperation }) => {
 
   const pieceMetadataWithSuggestion = {
     ...metadata,
-    suggestedActions: Object.values(pieceModel?.actions),
-    suggestedTriggers: Object.values(pieceModel.triggers),
+    suggestedActions: Object.values(pieceModel.actions ?? {}),
+    suggestedTriggers: Object.values(pieceModel.triggers ?? {}),
   };
 
   return (
-    <div className="w-full">
-      <AIPieceActionsList
-        stepMetadataWithSuggestions={pieceMetadataWithSuggestion}
-        hidePieceIconAndDescription={false}
-        operation={operation}
-      />
+    <div className="w-full h-full flex flex-col">
+      <div className="flex-1 overflow-y-auto">
+        <AIPieceActionsList
+          stepMetadataWithSuggestions={pieceMetadataWithSuggestion}
+          hidePieceIconAndDescription={false}
+          operation={operation}
+        />
+      </div>
     </div>
   );
 };

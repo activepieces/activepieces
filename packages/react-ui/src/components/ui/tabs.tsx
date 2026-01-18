@@ -34,7 +34,7 @@ const tabsTriggerVariants = cva('inline-flex items-center justify-center', {
 });
 interface TabsListProps
   extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>,
-    VariantProps<typeof tabsListVariants> {}
+  VariantProps<typeof tabsListVariants> { }
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -50,7 +50,7 @@ TabsList.displayName = TabsPrimitive.List.displayName;
 
 interface TabsTriggerProps
   extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>,
-    VariantProps<typeof tabsTriggerVariants> {}
+  VariantProps<typeof tabsTriggerVariants> { }
 
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
@@ -72,7 +72,7 @@ const TabsContent = React.forwardRef<
     ref={ref}
     className={cn(
       'mt-5 ring-offset-background focus-visible:outline-hidden',
-      className,
+      className
     )}
     {...props}
   />

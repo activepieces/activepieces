@@ -54,10 +54,10 @@ const ExploreTabContent = ({
   }
 
   return (
-    <ScrollArea className="h-full w-full">
-      <div className="flex  p-2  ">
+    <ScrollArea className="h-full w-full min-h-[400px] min-w-[400px]">
+      <div className="flex p-2 h-full">
         {categories.map((category) => (
-          <div key={category.title} className="flex w-[50%] flex-col gap-0.5 ">
+          <div key={category.title} className="flex w-[50%] flex-col gap-0.5">
             <div className="text-sm text-muted-foreground mb-1.5">
               {category.title}
             </div>
@@ -78,7 +78,7 @@ const ExploreTabContent = ({
                   <div className="grow h-full flex items-center justify-left text-sm">
                     {pieceMetadata.displayName}
                   </div>
-                </div>{' '}
+                </div>
               </CardListItem>
             ))}
           </div>
