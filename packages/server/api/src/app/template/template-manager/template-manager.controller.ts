@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ActivepiecesError, ApEdition, ErrorCode, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, SetStatusTemplateRequestBody } from '@activepieces/shared'
+import { ActivepiecesError, ApEdition, ErrorCode, PrincipalType, SetStatusTemplateRequestBody } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Static, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { system } from '../../helper/system/system'
