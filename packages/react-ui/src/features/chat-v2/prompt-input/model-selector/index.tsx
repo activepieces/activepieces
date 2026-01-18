@@ -23,7 +23,7 @@ import {
 type AIModelSelectorProps = {
   defaultModel?: string;
   disabled?: boolean;
-  onChange: (value: { provider?: string; model?: string }) => void;
+  updateChatModel: (modelId: string) => void;
 };
 
 const getProviderFromModelId = (modelId: string): string => {
@@ -57,7 +57,7 @@ const getProviderName = (providerName: string) => {
 export function AIModelSelector({
   defaultModel,
   disabled = false,
-  onChange,
+  updateChatModel,
 }: AIModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<string | undefined>(
@@ -78,7 +78,7 @@ export function AIModelSelector({
 
   const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);
-    onChange({ provider: AIProviderName.ACTIVEPIECES, model: modelId });
+    updateChatModel(modelId);
     setOpen(false);
   };
 

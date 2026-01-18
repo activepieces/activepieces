@@ -71,4 +71,32 @@ export const chatHooks = {
       },
     });
   },
+  useUpdateChatModel(setSession: (session: ChatSession) => void) {
+    return useMutation<
+      ChatSession,
+      Error,
+      {
+        currentSession: ChatSession | null;
+        modelId: string;
+      }
+    >({
+      mutationFn: async ({ currentSession, modelId }) => {
+        let session =
+          currentSession ??
+          (await api.post<ChatSession>('/v1/chat-sessions', {}));
+
+        session = await api.post<ChatSession>(
+          `/v1/chat-sessions/${session.id}/update-model`,
+          { modelId },
+        );
+
+        setSession(session);
+        return session;
+      },
+      onError: (error) => {
+        internalErrorToast();
+        console.error(error);
+      },
+    });
+  }
 };

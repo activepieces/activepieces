@@ -1,13 +1,18 @@
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType } from '@activepieces/shared'
+import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType, UpdateChatSessionRequest } from '@activepieces/shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { chatSessionService } from './chat.session.service'
+import { requestUtils } from '../../core/request/request-utils'
 
 export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
     app.post('/', CreateChatSessionRequestConfig, async (request) => {
         const session = await chatSessionService(request.log).create(request.principal.id)
         return session
+    })
+
+    app.post('/:id/update-model', UpdateChatSessionModelRequestConfig, async (request) => {
+        return await chatSessionService(request.log).updateSessionModel({ id: request.params.id, modelId: request.body.modelId, userId: request.principal.id })
     })
 
     app.get(
@@ -76,6 +81,24 @@ const ChatWithSessionRequest = {
         summary: 'Chat with a session',
     },
 }
+
+const UpdateChatSessionModelRequestConfig = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER]),
+    },
+    schema: {
+        params: Type.Object({
+            id: ApId,
+        }),
+        tags: ['chat-sessions'],
+        summary: 'Update chat session',
+        body: UpdateChatSessionRequest,
+        response: {
+            [StatusCodes.OK]: ChatSession
+        }
+    },
+}
+
 const GetChatSessionRequest = {
     config: {
         security: securityAccess.unscoped([PrincipalType.USER]),

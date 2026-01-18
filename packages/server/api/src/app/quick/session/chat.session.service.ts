@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ChatSession, chatSessionUtils, ConversationMessage, ErrorCode, ExecuteAgentJobData, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ChatSession, chatSessionUtils, ConversationMessage, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, WorkerJobType } from '@activepieces/shared'
 import { isNil } from '@activepieces/shared'
 import { repoFactory } from '../../core/db/repo-factory'
 import { ChatSessionEntity } from './chat.session.entity'
@@ -14,6 +14,7 @@ export const chatSessionService= (log: FastifyBaseLogger)=> ({
             id: apId(),
             userId: userId,
             conversation: [],
+            modelId: DEFAULT_CHAT_MODEL
         }
         return await chatSessionRepo().save(newSession)
     },
@@ -41,7 +42,16 @@ export const chatSessionService= (log: FastifyBaseLogger)=> ({
         await chatSessionRepo().update(sessionId, {
             plan: session.plan,
             conversation: session.conversation,
+            modelId: session.modelId
         })
+    },
+
+    async updateSessionModel(params: UpdateSessionModelIdParams): Promise<ChatSession> {
+        await chatSessionRepo().update(params.id, {
+            modelId: params.modelId
+        })
+
+        return await this.getOneOrThrow({ id: params.id, userId: params.userId })
     },
 
     async getOne(params: GetOneParams): Promise<ChatSession | null> {
@@ -95,4 +105,10 @@ type ChatWithSessionParams = {
 type GetOneParams = {
     id: string;
     userId: string;
+}
+
+type UpdateSessionModelIdParams = {
+    id: string;
+    modelId: string;
+    userId: string
 }

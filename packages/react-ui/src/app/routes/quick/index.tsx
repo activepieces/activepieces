@@ -1,5 +1,3 @@
-'use client';
-
 import { t } from 'i18next';
 import { useState } from 'react';
 
@@ -7,7 +5,7 @@ import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 import { Conversation } from '@/features/chat-v2/conversation';
 import { Plan } from '@/features/chat-v2/plan/plan';
 import PromptInput from '@/features/chat-v2/prompt-input';
-import { ChatSession, isNil } from '@activepieces/shared';
+import { ChatSession, DEFAULT_CHAT_MODEL, isNil } from '@activepieces/shared';
 
 import { chatHooks } from './chat-hooks';
 
@@ -15,6 +13,7 @@ export function QuickPage() {
   const [session, setSession] = useState<ChatSession | null>();
   const { mutate: sendMessage, isPending: isStreaming } =
     chatHooks.useSendMessage(setSession);
+  const { mutate: updateChatModel } = chatHooks.useUpdateChatModel(setSession)
 
   return (
     <div className="flex gap-8 w-full min-h-screen px-4">
@@ -42,6 +41,11 @@ export function QuickPage() {
         <div className="sticky bottom-0 left-0 right-0 pb-4 pt-4 bg-background z-10">
           <div className="max-w-4xl px-4">
             <PromptInput
+              defaultModel={session?.modelId || DEFAULT_CHAT_MODEL}
+              updateChatModel={(modelId) => updateChatModel({
+                  modelId,
+                  currentSession: isNil(session) ? null : session,
+              })}
               onMessageSend={(message) =>
                 sendMessage({
                   message,

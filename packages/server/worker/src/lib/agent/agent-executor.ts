@@ -1,19 +1,22 @@
-import { ChatSessionUpdate, chatSessionUtils, ConversationMessage, ExecuteAgentJobData, ChatSession, WebsocketClientEvent, WebsocketServerEvent, ChatSessionEnded, EmitAgentStreamingEndedRequest, PlanItem, isNil } from "@activepieces/shared";
+import { ChatSessionUpdate, chatSessionUtils, ConversationMessage, ExecuteAgentJobData, ChatSession, WebsocketClientEvent, WebsocketServerEvent, EmitAgentStreamingEndedRequest,  isNil } from "@activepieces/shared";
 import { ModelMessage, stepCountIs, streamText } from "ai";
 import { systemPrompt } from "./system-prompt";
-import { createAnthropic } from "@ai-sdk/anthropic";
 import { appSocket } from "../app-socket";
 import { FastifyBaseLogger } from "fastify";
 import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from "./planning-tool";
 import { LanguageModelV2ToolResultOutput } from "@ai-sdk/provider";
+import { agentUtils } from "./utils";
+
+
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData) {
-        const { conversation } = data.session;
+        const { conversation, modelId } = data.session;
         let newSession: ChatSession = data.session;
         const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan };
+
         const { fullStream } = streamText({
-            model: createAnthropic().chat('claude-opus-4-5-20251101'),
+            model: await agentUtils.getModel(modelId),
             system: systemPrompt(),
             stopWhen: [stepCountIs(25)],
             messages: convertHistory(conversation),
