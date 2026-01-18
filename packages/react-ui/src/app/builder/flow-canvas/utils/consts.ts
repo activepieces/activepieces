@@ -120,4 +120,5 @@ export const flowCanvasConsts = {
   SIDEBAR_ANIMATION_DURATION: 200,
   DEFAULT_NOTE_CONTENT: '<br>',
   DEFAULT_NOTE_COLOR: NoteColorVariant.BLUE,
+  BUILDER_HEADER_HEIGHT: 60,
 };

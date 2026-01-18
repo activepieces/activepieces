@@ -169,8 +169,12 @@ function offsetGraph(
         x: node.position.x + offset.x,
         y: node.position.y + offset.y,
       },
+      zIndex: 1000,
     })),
-    edges: graph.edges,
+    edges: graph.edges.map((edge) => ({
+      ...edge,
+      zIndex: 1000,
+    })),
   };
 }
 

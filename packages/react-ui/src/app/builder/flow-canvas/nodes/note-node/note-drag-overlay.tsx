@@ -13,7 +13,6 @@ import {
 import { flowCanvasConsts } from '../../utils/consts';
 
 import { NoteContent } from '.';
-
 const NoteDragOverlay = () => {
   const { open } = useSidebar();
   const { cursorPosition } = useCursorPosition();
@@ -40,16 +39,17 @@ const NoteDragOverlay = () => {
     height: (draggedNote?.size.height ?? 0) * reactFlow.getZoom(),
   };
 
-  // Use the captured offset if available, otherwise fallback to centering
   const offsetX = draggedNoteOffset
-    ? draggedNoteOffset.x * reactFlow.getZoom()
+    ? draggedNoteOffset.x
     : nodeSizeWithZoom.width / 2;
   const offsetY = draggedNoteOffset
-    ? draggedNoteOffset.y * reactFlow.getZoom()
+    ? draggedNoteOffset.y
     : nodeSizeWithZoom.height / 2;
 
   const left = `${overlayPosition.x - offsetX - builderNavigationBarWidth}px`;
-  const top = `${overlayPosition.y - 50 - offsetY}px`;
+  const top = `${
+    overlayPosition.y - offsetY - flowCanvasConsts.BUILDER_HEADER_HEIGHT
+  }px`;
   useCursorPositionEffect((position) => {
     setOverlayPosition(position);
   });
@@ -60,7 +60,7 @@ const NoteDragOverlay = () => {
   }
   return (
     <div
-      className={'absolute left-0 top-0  !cursor-grabbing note-drag-overlay'}
+      className={'absolute !cursor-grabbing note-drag-overlay'}
       ref={containerRef}
       onClick={() => {
         if (noteDragOverlayMode === NoteDragOverlayMode.CREATE) {
@@ -82,18 +82,16 @@ const NoteDragOverlay = () => {
       style={{
         left,
         top,
-        height: `${draggedNote.size.height * reactFlow.getZoom()}px !important`,
-        width: `${draggedNote.size.width * reactFlow.getZoom()}px !important`,
+        height: `${draggedNote.size.height}px`,
+        width: `${draggedNote.size.width}px`,
+        transform: `scale(${reactFlow.getZoom()})`,
+        transformOrigin: '0 0',
       }}
     >
       <NoteContent
         isDragging={true}
         note={{
           ...draggedNote,
-          size: {
-            width: draggedNote.size.width * reactFlow.getZoom(),
-            height: draggedNote.size.height * reactFlow.getZoom(),
-          },
         }}
       ></NoteContent>
     </div>
