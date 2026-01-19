@@ -39,18 +39,20 @@ const StepDragOverlay = ({ step }: { step: FlowAction | FlowTrigger }) => {
   return (
     <div
       className={
-        'p-4 absolute left-0 top-0 cursor-grabbing  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-background'
+        'p-4 absolute left-0 top-0 cursor-grabbing z-50  opacity-75  flex items-center justify-center rounded-2xl border border-solid border bg-background cursor-grabbing'
       }
       style={{
         left,
         top,
         height: `${flowCanvasConsts.STEP_DRAG_OVERLAY_HEIGHT}px`,
         width: `${flowCanvasConsts.STEP_DRAG_OVERLAY_WIDTH}px`,
+        zIndex: 99999,
       }}
+      id={'dragged-step-overlay'}
     >
       <img
         id={t('logo')}
-        className={'object-contain left-0 right-0 static'}
+        className={'object-contain left-0 right-0 static !cursor-grabbing'}
         src={step?.settings?.customLogoUrl ?? stepMetadata?.logoUrl}
         alt={t('Step Icon')}
       />
