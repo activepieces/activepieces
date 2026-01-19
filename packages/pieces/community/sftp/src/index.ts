@@ -22,13 +22,22 @@ export async function getProtocolBackwardCompatibility(protocol: string | undefi
   }
   return protocol;
 }
-export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, allow_unauthorized_certificates: boolean | undefined, username: string, password: string | undefined, privateKey: string | undefined, algorithm: string[] | undefined }): Promise<T> {
-  const { protocol, host, port, allow_unauthorized_certificates, username, password, privateKey, algorithm } = auth;
+export async function getClient<T extends Client | FTPClient>(auth: { protocol: string | undefined, host: string, port: number, allow_unauthorized_certificates: boolean | undefined, allow_anonymous_login: boolean | undefined, username: string, password: string | undefined, privateKey: string | undefined, algorithm: string[] | undefined }): Promise<T> {
+  const { protocol, host, port, allow_unauthorized_certificates, allow_anonymous_login, username, password, privateKey, algorithm } = auth;
   const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(protocol);
   if (protocolBackwardCompatibility === 'sftp') {
     const sftp = new Client();
 
-    if (privateKey) {
+    if (password) {
+      await sftp.connect({
+        host,
+        port,
+        username,
+        password,
+        timeout: 10000,
+      });
+    }
+    else if (privateKey) {
       if (!algorithm || algorithm.length === 0) {
         throw new Error('At least one algorithm must be selected for SFTP Private Key authentication.');
       }
@@ -42,17 +51,7 @@ export async function getClient<T extends Client | FTPClient>(auth: { protocol: 
         }  as Client.ConnectOptions['algorithms'],
         timeout: 10000,
       });
-
-      return sftp as T;
     }
-
-    await sftp.connect({
-      host,
-      port,
-      username,
-      password,
-      timeout: 10000,
-    });
 
     return sftp as T;
   } else {
@@ -98,6 +97,13 @@ export const sftpAuth = PieceAuth.CustomAuth({
       displayName: 'Allow Unauthorized Certificates',
       description:
         'Allow connections to servers with self-signed certificates',
+      defaultValue: false,
+      required: false,
+    }),
+    allow_anonymous_login: Property.Checkbox({
+      displayName: 'Allow Anonymous Login',
+      description:
+        'Allow anonymous login to FTP servers (only applicable for FTP/FTPS)',
       defaultValue: false,
       required: false,
     }),
@@ -149,8 +155,22 @@ export const sftpAuth = PieceAuth.CustomAuth({
     let client: Client | FTPClient | null = null;
     const protocolBackwardCompatibility = await getProtocolBackwardCompatibility(auth.protocol);
     try {
+      if (!auth.privateKey && !auth.password && !auth.allow_anonymous_login) {
+        return {
+          valid: false,
+          error: 'Either password or private key must be provided for non-anonymous authentication.',
+        };
+      };
+
       switch (protocolBackwardCompatibility) {
         case 'sftp': {
+          if (auth.allow_anonymous_login) {
+            return {
+              valid: false,
+              error: 'Anonymous login is not supported for SFTP protocol.',
+            };
+          };
+
           client = await getClient<Client>(auth);
           break;
         }
