@@ -18,7 +18,7 @@ export const ToolCallConversationMessage = Type.Object({
     type: Type.Literal('tool-call'),
     toolCallId: Type.String(),
     toolName: Type.String(),
-    input: Type.Record(Type.String(), Type.Any()),
+    input: Type.Optional(Type.Record(Type.String(), Type.Any())),
 })
 export type ToolCallConversationMessage = Static<typeof ToolCallConversationMessage>
 

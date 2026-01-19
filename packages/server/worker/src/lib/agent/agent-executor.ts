@@ -98,7 +98,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
     },
 })
 
-function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolName: string, input: Record<string, any>) {
+function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolName: string, input?: Record<string, any>) {
     const quickStreamingUpdate: ChatSessionUpdate = {
         sessionId: session.id,
         plan: session.plan,
