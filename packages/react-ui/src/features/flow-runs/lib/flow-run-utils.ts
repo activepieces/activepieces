@@ -11,6 +11,7 @@ import {
 
 import { cn } from '@/lib/utils';
 import {
+  executionJournal,
   FlowActionType,
   FlowRun,
   FlowRunStatus,
@@ -28,6 +29,7 @@ import {
 export const flowRunUtils = {
   findLastStepWithStatus,
   findLoopsState,
+  updateRunSteps,
   extractStepOutput: (
     stepName: string,
     loopsIndexes: Record<string, number>,
@@ -321,4 +323,8 @@ function getStepOutputFromIteration({
   }
 
   return targetIteration[targetStepName] as LoopStepOutput | undefined;
+}
+
+function updateRunSteps(steps: Record<string, StepOutput>, stepName: string, path: readonly [string, number][], output: StepOutput) {
+  return executionJournal.upsertStep({ stepName, stepOutput: output, path, steps })
 }
