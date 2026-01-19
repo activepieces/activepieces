@@ -484,6 +484,9 @@
       ],
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-paywhirl": [
+        "packages/pieces/community/paywhirl/src/index.ts"
       ]
     },
     "resolveJsonModule": true
