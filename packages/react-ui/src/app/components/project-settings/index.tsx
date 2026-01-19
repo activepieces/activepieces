@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -170,14 +171,24 @@ export function ProjectSettingsDialog({
   };
 
   const renderTabHeader = () => {
+    const hasUnsavedChanges = activeTab === 'general' && form.formState.isDirty;
     return (
-      <span className="text-lg font-bold">
-        {tabs.find((tab) => tab.id === activeTab)?.label}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-lg font-bold">
+          {tabs.find((tab) => tab.id === activeTab)?.label}
+        </span>
+        {hasUnsavedChanges && (
+          <Badge variant="ghost" className="text-muted-foreground">
+            {t('Unsaved changes')}
+          </Badge>
+        )}
+      </div>
     );
   };
   const renderDialogFooter = () => {
     if (activeTab !== 'general') return null;
+
+    const hasUnsavedChanges = form.formState.isDirty;
 
     return (
       <div className="border-t bg-background rounded-br-md">
@@ -201,6 +212,8 @@ export function ProjectSettingsDialog({
       </div>
     );
   };
+
+  const currentIconColor = form.watch('icon')?.color ?? project.icon.color;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -242,7 +255,7 @@ export function ProjectSettingsDialog({
                   <ProjectAvatar
                     displayName={project.displayName}
                     projectType={project.type}
-                    iconColor={project.icon.color}
+                    iconColor={currentIconColor}
                     size="md"
                     showBackground={true}
                   />
