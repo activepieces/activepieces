@@ -82,6 +82,7 @@ export function SidebarUser() {
                     <UserAvatar
                       name={user.firstName + ' ' + user.lastName}
                       email={user.email}
+                      imageUrl={user.imageUrl}
                       size={28}
                       disableTooltip={true}
                     />
@@ -102,6 +103,7 @@ export function SidebarUser() {
                   <UserAvatar
                     name={user.firstName + ' ' + user.lastName}
                     email={user.email}
+                    imageUrl={user.imageUrl}
                     size={32}
                     disableTooltip={true}
                   />
@@ -126,6 +128,7 @@ export function SidebarUser() {
                 <UserAvatar
                   name={user.firstName + ' ' + user.lastName}
                   email={user.email}
+                  imageUrl={user.imageUrl}
                   size={32}
                   disableTooltip={true}
                 />
