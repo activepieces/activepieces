@@ -6,6 +6,8 @@ import {
   Download,
   UploadCloud,
   Edit2,
+  Import,
+  FileJson,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -25,10 +27,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import EditableText from '@/components/ui/editable-text';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
+import { gitSyncHooks } from '@/features/project-releases/lib/git-sync-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
   getProjectName,
@@ -38,6 +42,7 @@ import { Permission } from '@activepieces/shared';
 
 import { useTableState } from './ap-table-state-provider';
 import { ImportTableDialog } from './import-table-dialog';
+import { tablesUtils } from '../lib/utils';
 
 interface ApTableHeaderProps {
   onBack: () => void;
@@ -70,8 +75,9 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   const userHasPermissionToPushToGit = useAuthorization().checkAccess(
     Permission.WRITE_PROJECT_RELEASE,
   );
+  const showPushToGit = gitSyncHooks.useShowPushToGit();
 
-  const exportTable = async () => {
+  const exportTemplate = async () => {
     const { tablesApi } = await import('../lib/tables-api');
     const { downloadFile } = await import('@/lib/utils');
     const tableTemplate = await tablesApi.getTemplate(table.id);
@@ -80,6 +86,12 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
       fileName: tableTemplate.name,
       extension: 'json',
     });
+  };
+
+  const downloadCsv = async () => {
+    const { tablesApi } = await import('../lib/tables-api');
+    const exportedTable = await tablesApi.export(table.id);
+    tablesUtils.exportTables([exportedTable]);
   };
 
   const titleContent = (
@@ -126,20 +138,42 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                     <Edit2 className="mr-2 h-4 w-4" />
                     {t('Rename')}
                   </DropdownMenuItem>
-                  <PermissionNeededTooltip
-                    hasPermission={userHasPermissionToPushToGit}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => setIsImportTableDialogOpen(true)}
                   >
-                    <PushToGitDialog type="table" tables={[table]}>
-                      <DropdownMenuItem
-                        disabled={!userHasPermissionToPushToGit}
-                        onSelect={(e) => e.preventDefault()}
-                        onClick={(e) => e.stopPropagation()}
+                    <Import className="mr-2 h-4 w-4" />
+                    {t('Import')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={exportTemplate}>
+                    <FileJson className="mr-2 h-4 w-4" />
+                    {t('Export Template')}
+                  </DropdownMenuItem>
+                  {showPushToGit && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <PermissionNeededTooltip
+                        hasPermission={userHasPermissionToPushToGit}
                       >
-                        <UploadCloud className="mr-2 h-4 w-4" />
-                        {t('Push to Git')}
-                      </DropdownMenuItem>
-                    </PushToGitDialog>
-                  </PermissionNeededTooltip>
+                        <PushToGitDialog type="table" tables={[table]}>
+                          <DropdownMenuItem
+                            disabled={!userHasPermissionToPushToGit}
+                            onSelect={(e) => e.preventDefault()}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <UploadCloud className="mr-2 h-4 w-4" />
+                            {t('Push to Git')}
+                          </DropdownMenuItem>
+                        </PushToGitDialog>
+                      </PermissionNeededTooltip>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {!showPushToGit && <DropdownMenuSeparator />}
+                  <DropdownMenuItem onSelect={downloadCsv}>
+                    <Download className="mr-2 h-4 w-4" />
+                    {t('Download CSV')}
+                  </DropdownMenuItem>
                   <PermissionNeededTooltip
                     hasPermission={userHasTableWritePermission}
                   >
@@ -225,10 +259,10 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
         <Button
           variant="ghost"
           className="flex gap-2 items-center"
-          onClick={exportTable}
+          onClick={downloadCsv}
         >
           <Download className="size-4" />
-          {t('Export')}
+          {t('Download CSV')}
         </Button>
         <ImportTableDialog
           open={isImportTableDialogOpen}
