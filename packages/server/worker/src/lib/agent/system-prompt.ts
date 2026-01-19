@@ -1,3 +1,4 @@
+import { CODE_EXECUTION_SYSTEM_PROMPT } from './execute-code'
 import { TODO_SYSTEM_PROMPT } from './planning-tool'
 
 
@@ -16,5 +17,6 @@ Today's date is ${new Date().toISOString().split('T')[0]}.
 - Avoid assumptions: Base decisions on available information, tools, and prior responses. If something is unclear, use tools to gather more data rather than guessing.
 
 ${TODO_SYSTEM_PROMPT}
+${CODE_EXECUTION_SYSTEM_PROMPT}
 `.trim()
 }

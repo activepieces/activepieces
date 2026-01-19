@@ -6,6 +6,9 @@ import { appSocket } from '../app-socket'
 import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from './planning-tool'
 import { systemPrompt } from './system-prompt'
 import { agentUtils } from './utils'
+import { createExecuteCodeTool, EXECUTE_CODE_TOOL_NAME } from './execute-code'
+import { workerMachine } from '../utils/machine'
+
 
 async function getFirecrawlTools() {
     const firecrawlAisdk = await import('firecrawl-aisdk')
@@ -30,6 +33,8 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
         const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan }
         const firecrawlTools = webSearchEnabled ? await getFirecrawlTools() : {}
 
+        const e2bApiKey = workerMachine.getSettings().E2B_API_KEY
+
         const { fullStream } = streamText({
             model: await agentUtils.getModel(modelId, engineToken),
             system: systemPrompt(),
@@ -38,6 +43,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             tools: {
                 ...firecrawlTools,
                 [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
+                [EXECUTE_CODE_TOOL_NAME]: createExecuteCodeTool(e2bApiKey)
             },
         })
         let isStreaming = false

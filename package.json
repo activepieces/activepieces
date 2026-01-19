@@ -33,6 +33,7 @@
     "@activepieces/import-fresh-webpack": "3.3.0",
     "@ai-sdk/anthropic": "2.0.3",
     "@ai-sdk/azure": "2.0.12",
+    "@e2b/code-interpreter": "2.3.3",
     "@ai-sdk/google": "2.0.6",
     "@ai-sdk/mcp": "1.0.1 ",
     "@ai-sdk/openai": "2.0.12",

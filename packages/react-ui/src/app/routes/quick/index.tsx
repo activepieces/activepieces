@@ -40,7 +40,7 @@ export function QuickPage() {
               className="gap-2"
             >
               <Trash className="size-4" />
-              Clear Chat
+              {t("Clear Chat")}
             </Button>
           )}
         </div>
