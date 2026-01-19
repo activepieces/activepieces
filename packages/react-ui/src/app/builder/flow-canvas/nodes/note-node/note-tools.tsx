@@ -78,7 +78,11 @@ const NoteColorPicker = ({
       <ToolWrapper tooltip={t('Color')}>
         <PopoverTrigger asChild>
           <div>
-          <ColorButton  color={currentColor} big={true}  ref={popoverTriggerRef} />
+            <ColorButton
+              color={currentColor}
+              big={true}
+              ref={popoverTriggerRef}
+            />
           </div>
         </PopoverTrigger>
       </ToolWrapper>
@@ -90,13 +94,17 @@ const NoteColorPicker = ({
       >
         <div className="flex items-center cursor-default gap-1 justify-between flex-wrap w-full ">
           {Object.values(NoteColorVariant).map((color) => (
-          <ColorButton key={color} color={color} onClick={() => {
-            setCurrentColor(color);
-            setOpen(false);
-            requestAnimationFrame(() => {
-              popoverTriggerRef.current?.focus();
-            });
-          }} />
+            <ColorButton
+              key={color}
+              color={color}
+              onClick={() => {
+                setCurrentColor(color);
+                setOpen(false);
+                requestAnimationFrame(() => {
+                  popoverTriggerRef.current?.focus();
+                });
+              }}
+            />
           ))}
         </div>
       </PopoverContent>
@@ -117,35 +125,40 @@ type NoteColorPickerProps = {
   container: HTMLDivElement | null;
 };
 
-const ColorButton = forwardRef<HTMLButtonElement, ColorButtonProps>(({ color, onClick, big }, ref) => {
-  return (<Button
-    key={color}
-    ref={ref}
-    variant="ghost"
-    size="icon"
-    role="button"
-    className={cn("size-5 shrink-0 grow flex items-center justify-center",
-      {"size-6": big}
-    )}
-    onClick={onClick}
-    onFocus={()=>{
-      console.log('focus');
-    }}
-  >
-    <div
-      className={cn(
-        NoteColorPickerClassName[color] ??
-          NoteColorPickerClassName[NoteColorVariant.YELLOW],
-        'size-4 shrink-0 rounded-full',
-        {
-          "size-5": big
-        }
-      )}
-    ></div>
-  </Button>)
-});
+const ColorButton = forwardRef<HTMLButtonElement, ColorButtonProps>(
+  ({ color, onClick, big }, ref) => {
+    return (
+      <Button
+        key={color}
+        ref={ref}
+        variant="ghost"
+        size="icon"
+        role="button"
+        className={cn('size-5 shrink-0 grow flex items-center justify-center', {
+          'size-6': big,
+        })}
+        onClick={onClick}
+        onFocus={() => {
+          console.log('focus');
+        }}
+      >
+        <div
+          className={cn(
+            NoteColorPickerClassName[color] ??
+              NoteColorPickerClassName[NoteColorVariant.YELLOW],
+            'size-4 shrink-0 rounded-full',
+            {
+              'size-5': big,
+            },
+          )}
+        ></div>
+      </Button>
+    );
+  },
+);
+ColorButton.displayName = 'ColorButton';
 type ColorButtonProps = {
   color: NoteColorVariant;
   onClick?: () => void;
   big?: boolean;
-}
+};

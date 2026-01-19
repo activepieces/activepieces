@@ -107,7 +107,10 @@ export const MarkdownInput = React.forwardRef<
       },
     });
     useImperativeHandle(ref, () => editor, [editor]);
-    const showPlaceholder = editor.getMarkdown().trim().replaceAll('<br>', '') === '' && !disabled && !editor.isEditable;
+    const showPlaceholder =
+      editor.getMarkdown().trim().replaceAll('<br>', '') === '' &&
+      !disabled &&
+      !editor.isEditable;
     return (
       <div
         className={cn('relative h-full', {
