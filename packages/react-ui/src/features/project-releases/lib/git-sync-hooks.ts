@@ -31,10 +31,10 @@ export const gitSyncHooks = {
     const userHasPermissionToPushToGit = useAuthorization().checkAccess(
       Permission.WRITE_PROJECT_RELEASE,
     );
-    
+
     return (
       userHasPermissionToPushToGit &&
-     !isNil(gitSync) &&
+      !isNil(gitSync) &&
       gitSync.branchType === GitBranchType.DEVELOPMENT
     );
   },

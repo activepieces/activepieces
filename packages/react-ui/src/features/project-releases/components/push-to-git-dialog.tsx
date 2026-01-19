@@ -25,7 +25,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  GitBranchType,
   GitPushOperationType,
   PushGitRepoRequest,
   PushFlowsGitRepoRequest,

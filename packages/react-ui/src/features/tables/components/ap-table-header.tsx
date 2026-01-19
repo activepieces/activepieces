@@ -40,9 +40,10 @@ import {
 } from '@/hooks/project-collection';
 import { Permission } from '@activepieces/shared';
 
+import { tablesUtils } from '../lib/utils';
+
 import { useTableState } from './ap-table-state-provider';
 import { ImportTableDialog } from './import-table-dialog';
-import { tablesUtils } from '../lib/utils';
 
 interface ApTableHeaderProps {
   onBack: () => void;
@@ -172,7 +173,7 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                   {!showPushToGit && <DropdownMenuSeparator />}
                   <DropdownMenuItem onSelect={downloadCsv}>
                     <Download className="mr-2 h-4 w-4" />
-                    {t('Download CSV')}
+                    {t('Download Data')}
                   </DropdownMenuItem>
                   <PermissionNeededTooltip
                     hasPermission={userHasTableWritePermission}
@@ -262,12 +263,13 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
           onClick={downloadCsv}
         >
           <Download className="size-4" />
-          {t('Download CSV')}
+          {t('Download Data')}
         </Button>
         <ImportTableDialog
           open={isImportTableDialogOpen}
           setIsOpen={setIsImportTableDialogOpen}
           tableId={table.id}
+          allowedFileTypes={['json', 'csv']}
           onImportSuccess={() => window.location.reload()}
         />
       </div>

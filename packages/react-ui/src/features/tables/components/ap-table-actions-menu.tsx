@@ -1,5 +1,12 @@
 import { t } from 'i18next';
-import { Download, PencilIcon, TrashIcon, UploadCloud, Import, FileJson } from 'lucide-react';
+import {
+  Download,
+  PencilIcon,
+  TrashIcon,
+  UploadCloud,
+  Import,
+  FileJson,
+} from 'lucide-react';
 import React, { useState } from 'react';
 
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
@@ -61,7 +68,9 @@ const ApTableActionsMenu = ({
       <DropdownMenu modal={true}>
         <DropdownMenuTrigger asChild>{children}</DropdownMenuTrigger>
         <DropdownMenuContent>
-          <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateTable}
+          >
             <RenameTableDialog
               tableName={table.name}
               tableId={table.id}
@@ -88,9 +97,7 @@ const ApTableActionsMenu = ({
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem
-            onSelect={() => setIsImportTableDialogOpen(true)}
-          >
+          <DropdownMenuItem onSelect={() => setIsImportTableDialogOpen(true)}>
             <Import className="mr-2 h-4 w-4" />
             {t('Import')}
           </DropdownMenuItem>
@@ -103,7 +110,9 @@ const ApTableActionsMenu = ({
           {showPushToGit && (
             <>
               <DropdownMenuSeparator />
-              <PermissionNeededTooltip hasPermission={userHasPermissionToPushToGit}>
+              <PermissionNeededTooltip
+                hasPermission={userHasPermissionToPushToGit}
+              >
                 <PushToGitDialog type="table" tables={[table]}>
                   <DropdownMenuItem
                     disabled={!userHasPermissionToPushToGit}
@@ -122,10 +131,12 @@ const ApTableActionsMenu = ({
 
           <DropdownMenuItem onSelect={downloadCsv}>
             <Download className="mr-2 h-4 w-4" />
-            {t('Download CSV')}
+            {t('Download Data')}
           </DropdownMenuItem>
 
-          <PermissionNeededTooltip hasPermission={userHasPermissionToUpdateTable}>
+          <PermissionNeededTooltip
+            hasPermission={userHasPermissionToUpdateTable}
+          >
             <DropdownMenuItem
               disabled={!userHasPermissionToUpdateTable}
               onSelect={(e) => e.preventDefault()}
@@ -157,6 +168,7 @@ const ApTableActionsMenu = ({
         setIsOpen={setIsImportTableDialogOpen}
         showTrigger={false}
         tableId={table.id}
+        allowedFileTypes={['json', 'csv']}
         onImportSuccess={() => {
           refetch?.();
         }}
