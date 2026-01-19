@@ -1,18 +1,9 @@
-import {
-  AP_MAXIMUM_PROFILE_PICTURE_SIZE,
-  PROFILE_PICTURE_ALLOWED_TYPES,
-  UserWithBadges,
-} from '@activepieces/shared';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Camera, Mail } from 'lucide-react';
 import { useRef } from 'react';
 import { toast } from 'sonner';
-
-import { DeleteAccount } from './delete-account';
-import LanguageToggle from './language-toggle';
-import ThemeToggle from './theme-toggle';
 
 import { UserBadges } from '@/components/custom/user-badges';
 import {
@@ -26,6 +17,15 @@ import { Separator } from '@/components/ui/separator';
 import { UserAvatar } from '@/components/ui/user-avatar';
 import { userHooks } from '@/hooks/user-hooks';
 import { userApi } from '@/lib/user-api';
+import {
+  AP_MAXIMUM_PROFILE_PICTURE_SIZE,
+  PROFILE_PICTURE_ALLOWED_TYPES,
+  UserWithBadges,
+} from '@activepieces/shared';
+
+import { DeleteAccount } from './delete-account';
+import LanguageToggle from './language-toggle';
+import ThemeToggle from './theme-toggle';
 
 export interface AccountSettingsDialogProps {
   open: boolean;

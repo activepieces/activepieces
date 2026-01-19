@@ -2,7 +2,6 @@ import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } fro
 import {
     ActivepiecesError,
     apId,
-    ApMultipartFile,
     assertNotNullOrUndefined,
     ErrorCode,
     File,
@@ -279,7 +278,7 @@ type GetOneParams = {
 }
 
 type UploadPublicAssetParams = {
-    file: ApMultipartFile | unknown
+    file: unknown
     type: FileType
     platformId: string
     allowedMimeTypes?: string[]

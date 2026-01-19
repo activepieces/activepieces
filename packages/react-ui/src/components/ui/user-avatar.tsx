@@ -1,8 +1,8 @@
 import Avatar from 'boring-avatars';
 
-import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
-
 import { cn } from '@/lib/utils';
+
+import { Tooltip, TooltipTrigger, TooltipContent } from './tooltip';
 
 type UserAvatarProps = {
   name: string;
@@ -35,7 +35,7 @@ export function UserAvatar({
       name={email}
       size={size}
       colors={['#0a0310', '#49007e', '#ff005b', '#ff7d10', '#ffb238']}
-      variant="bauhaus"
+      variant="beam"
       square
       className="rounded-full"
     />
