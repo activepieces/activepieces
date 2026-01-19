@@ -1,10 +1,14 @@
 import { Editor } from '@tiptap/core';
+import { t } from 'i18next';
 import { TrashIcon } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { forwardRef, useRef, useState } from 'react';
 
 import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { Button } from '@/components/ui/button';
-import { MarkdownTools } from '@/components/ui/markdown-input/tools';
+import {
+  MarkdownTools,
+  ToolWrapper,
+} from '@/components/ui/markdown-input/tools';
 import {
   Popover,
   PopoverContent,
@@ -36,15 +40,17 @@ export const NoteTools = ({ editor, currentColor, id }: NoteToolsProps) => {
           />
           <MarkdownTools editor={editor} />
           <Separator orientation="vertical" className="h-[30px]"></Separator>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              deleteNote(id);
-            }}
-          >
-            <TrashIcon className="size-4 text-destructive" />
-          </Button>
+          <ToolWrapper tooltip={t('Delete')}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                deleteNote(id);
+              }}
+            >
+              <TrashIcon className="size-4 text-destructive" />
+            </Button>
+          </ToolWrapper>
         </div>
       </div>
     </div>
@@ -66,21 +72,21 @@ const NoteColorPicker = ({
   container,
 }: NoteColorPickerProps) => {
   const [open, setOpen] = useState(false);
-  const popoverTriggerRef = useRef<HTMLDivElement>(null);
+  const popoverTriggerRef = useRef<HTMLButtonElement>(null);
   return (
     <Popover onOpenChange={setOpen} open={open}>
-      <PopoverTrigger asChild>
-        <div
-          ref={popoverTriggerRef}
-          className={cn(
-            NoteColorPickerClassName[currentColor] ??
-              NoteColorPickerClassName[NoteColorVariant.YELLOW],
-            'mx-0.5 size-5 shrink-0  rounded-full cursor-pointer',
-          )}
-          tabIndex={0}
-          role="button"
-        ></div>
-      </PopoverTrigger>
+      <ToolWrapper tooltip={t('Color')}>
+        <PopoverTrigger asChild>
+          <div>
+            <ColorButton
+              color={currentColor}
+              big={true}
+              ref={popoverTriggerRef}
+            />
+          </div>
+        </PopoverTrigger>
+      </ToolWrapper>
+
       <PopoverContent
         container={container}
         side="top"
@@ -88,24 +94,17 @@ const NoteColorPicker = ({
       >
         <div className="flex items-center cursor-default gap-1 justify-between flex-wrap w-full ">
           {Object.values(NoteColorVariant).map((color) => (
-            <div
+            <ColorButton
               key={color}
-              role="button"
-              className="size-5  shrink-0 cursor-pointer grow flex items-center justify-center"
+              color={color}
               onClick={() => {
                 setCurrentColor(color);
                 setOpen(false);
-                popoverTriggerRef.current?.focus();
+                requestAnimationFrame(() => {
+                  popoverTriggerRef.current?.focus();
+                });
               }}
-            >
-              <div
-                className={cn(
-                  NoteColorPickerClassName[color] ??
-                    NoteColorPickerClassName[NoteColorVariant.YELLOW],
-                  'size-4 shrink-0 rounded-full',
-                )}
-              ></div>
-            </div>
+            />
           ))}
         </div>
       </PopoverContent>
@@ -124,4 +123,42 @@ type NoteColorPickerProps = {
   currentColor: NoteColorVariant;
   setCurrentColor: (color: NoteColorVariant) => void;
   container: HTMLDivElement | null;
+};
+
+const ColorButton = forwardRef<HTMLButtonElement, ColorButtonProps>(
+  ({ color, onClick, big }, ref) => {
+    return (
+      <Button
+        key={color}
+        ref={ref}
+        variant="ghost"
+        size="icon"
+        role="button"
+        className={cn('size-5 shrink-0 grow flex items-center justify-center', {
+          'size-6': big,
+        })}
+        onClick={onClick}
+        onFocus={() => {
+          console.log('focus');
+        }}
+      >
+        <div
+          className={cn(
+            NoteColorPickerClassName[color] ??
+              NoteColorPickerClassName[NoteColorVariant.YELLOW],
+            'size-4 shrink-0 rounded-full',
+            {
+              'size-5': big,
+            },
+          )}
+        ></div>
+      </Button>
+    );
+  },
+);
+ColorButton.displayName = 'ColorButton';
+type ColorButtonProps = {
+  color: NoteColorVariant;
+  onClick?: () => void;
+  big?: boolean;
 };

@@ -187,7 +187,7 @@ function SidebarPlatformAdminButton() {
   return (
     <DropdownMenuGroup>
       <DropdownMenuItem
-        onClick={() => navigate('/platform')}
+        onClick={() => navigate('/platform/projects')}
         className="w-full flex items-center justify-center relative"
       >
         <div className={`w-full flex items-center gap-2`}>
