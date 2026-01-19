@@ -13,18 +13,15 @@ import {
   CommandSeparator,
 } from '@/components/ui/command';
 import { aiModelHooks } from '@/features/agents/ai-model/hooks';
+import { chatHooks } from '@/features/chat-v2/lib/chat-hooks';
+import { useChatSessionStore } from '@/features/chat-v2/store';
 import { cn } from '@/lib/utils';
 import {
   AIProviderName,
+  DEFAULT_CHAT_MODEL,
   isNil,
   SUPPORTED_AI_PROVIDERS,
 } from '@activepieces/shared';
-
-type AIModelSelectorProps = {
-  defaultModel?: string;
-  disabled?: boolean;
-  updateChatModel: (modelId: string) => void;
-};
 
 const getProviderFromModelId = (modelId: string): string => {
   if (modelId.includes('/')) {
@@ -54,15 +51,17 @@ const getProviderName = (providerName: string) => {
   );
 };
 
-export function AIModelSelector({
-  defaultModel,
-  disabled = false,
-  updateChatModel,
-}: AIModelSelectorProps) {
+export function AIModelSelector() {
   const [open, setOpen] = useState(false);
+  const { session, setSession } = useChatSessionStore();
+
+  const { mutate: updateChatModel } = chatHooks.useUpdateChatModel(setSession);
+
+  const defaultModel = session?.modelId || DEFAULT_CHAT_MODEL;
   const [selectedModel, setSelectedModel] = useState<string | undefined>(
     defaultModel,
   );
+
   const { data: models = [], isLoading } = aiModelHooks.useGetModelsForProvider(
     AIProviderName.ACTIVEPIECES,
   );
@@ -78,7 +77,10 @@ export function AIModelSelector({
 
   const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);
-    updateChatModel(modelId);
+    updateChatModel({
+      modelId,
+      currentSession: isNil(session) ? null : session,
+    });
     setOpen(false);
   };
 
@@ -113,7 +115,7 @@ export function AIModelSelector({
         onClick={() => setOpen(true)}
         role="combobox"
         aria-expanded={open}
-        disabled={disabled || isLoading}
+        disabled={isLoading}
       >
         {getSelectedLabel()}
         <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />

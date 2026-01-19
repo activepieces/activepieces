@@ -1,86 +1,73 @@
 import { t } from 'i18next';
-import { useState } from 'react';
+import { Trash } from 'lucide-react';
 
 import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
+import { Button } from '@/components/ui/button';
 import { Conversation } from '@/features/chat-v2/conversation';
 import { Plan } from '@/features/chat-v2/plan/plan';
-import PromptInput from '@/features/chat-v2/prompt-input';
-import { ChatSession, DEFAULT_CHAT_MODEL, isNil } from '@activepieces/shared';
+import { PromptInput } from '@/features/chat-v2/prompt-input';
+import { isNil } from '@activepieces/shared';
 
-import { chatHooks } from './chat-hooks';
+import { EmptyConversation } from '@/features/chat-v2/empty-conversation';
+import { chatHooks } from '@/features/chat-v2/lib/chat-hooks';
+import { useChatSessionStore } from '@/features/chat-v2/store';
 
 export function QuickPage() {
-  const [session, setSession] = useState<ChatSession | null>();
-  const { mutate: sendMessage, isPending: isStreaming } =
-    chatHooks.useSendMessage(setSession);
-  const { mutate: updateChatModel } = chatHooks.useUpdateChatModel(setSession);
-  const { mutate: toggleSearchTool } =
-    chatHooks.useToggleSearchTool(setSession);
-
-  console.log('2222222222222222222222');
-  console.log(session);
-  console.log('2222222222222222222222');
+  const { session, setSession } = useChatSessionStore();
+  const { mutate: deleteChatSession, isPending: deletingChatSession } =
+    chatHooks.useDeleteChatSession(setSession);
 
   return (
-    <div className="flex gap-8 w-full min-h-screen px-4">
-      <div className="flex-1 flex flex-col gap-2 relative">
-        <div className="h-10"></div>
-        <div className="flex-1">
-          {!isNil(session) && !isNil(session.conversation) ? (
-            <Conversation
-              conversation={session.conversation}
-              className="w-full max-w-4xl px-4 py-4 space-y-10"
-            />
-          ) : (
-            <div className="flex flex-col items-center justify-center h-full">
-              <img
-                src={quickLogoUrl}
-                alt="Quick Logo"
-                className="size-16 mb-4"
-              />
-              <p className="text-muted-foreground text-center">
-                {t('Ask Quick to help with your tasks')}
-              </p>
-            </div>
+    <div className="flex h-screen w-full overflow-hidden">
+      <div className="flex-1 flex flex-col">
+        <div className="h-16 border-b flex items-center justify-between px-6">
+          <div className="flex items-center gap-3">
+            <img src={quickLogoUrl} alt="Quick Logo" className="size-8" />
+            <h1 className="text-lg font-semibold">Quick Assistant</h1>
+          </div>
+
+          {!isNil(session?.conversation) && session.conversation.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() =>
+                deleteChatSession({
+                  currentSession: !isNil(session) ? session : null,
+                })
+              }
+              loading={deletingChatSession}
+              disabled={deletingChatSession}
+              className="gap-2"
+            >
+              <Trash className="size-4" />
+              Clear Chat
+            </Button>
           )}
         </div>
-        <div className="sticky bottom-0 z-10 bg-background py-4 flex justify-center border">
-          <div className="w-4xl px-4">
-            <PromptInput
-              enabled={
-                !isNil(session?.webSearchEnabled)
-                  ? session.webSearchEnabled
-                  : true
-              }
-              toggleWebSearchTool={(enabled) =>
-                toggleSearchTool({
-                  enabled,
-                  currentSession: isNil(session) ? null : session,
-                })
-              }
-              defaultModel={
-                !isNil(session?.modelId) ? session.modelId : DEFAULT_CHAT_MODEL
-              }
-              updateChatModel={(modelId) =>
-                updateChatModel({
-                  modelId,
-                  currentSession: isNil(session) ? null : session,
-                })
-              }
-              onMessageSend={(message) =>
-                sendMessage({
-                  message,
-                  currentSession: isNil(session) ? null : session,
-                })
-              }
-              placeholder="Ask Quick..."
-              loading={isStreaming}
-            />
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-4xl mx-auto w-full">
+            {!isNil(session?.conversation) &&
+            session?.conversation.length > 0 ? (
+              <Conversation
+                conversation={session.conversation}
+                className="px-6 py-8 space-y-6"
+              />
+            ) : (
+              <EmptyConversation />
+            )}
           </div>
         </div>
+
+        <div className="max-w-4xl mx-auto w-full px-6 py-4">
+          <PromptInput placeholder="Ask Quick..." />
+        </div>
       </div>
-      <div className="w-100 sticky top-4 h-fit">
-        <Plan items={session?.plan ?? []} />
+
+      <div className="w-96 border-l bg-muted/30 overflow-y-auto">
+        <div className="sticky top-0 p-6">
+          <Plan items={session?.plan ?? []} />
+        </div>
       </div>
     </div>
   );

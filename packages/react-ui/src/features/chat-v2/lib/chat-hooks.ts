@@ -127,4 +127,27 @@ export const chatHooks = {
       },
     });
   },
+  useDeleteChatSession(setSession: (session: ChatSession | null) => void) {
+    return useMutation<
+      void,
+      Error,
+      {
+        currentSession: ChatSession | null;
+      }
+    >({
+      mutationFn: async ({ currentSession }) => {
+        const session =
+          currentSession ??
+          (await api.post<ChatSession>('/v1/chat-sessions', {}));
+
+        await api.delete(`/v1/chat-sessions/${session.id}`);
+
+        setSession(null);
+      },
+      onError: (error) => {
+        internalErrorToast();
+        console.error(error);
+      },
+    });
+  },
 };
