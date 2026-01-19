@@ -188,8 +188,6 @@ export function ProjectSettingsDialog({
   const renderDialogFooter = () => {
     if (activeTab !== 'general') return null;
 
-    const hasUnsavedChanges = form.formState.isDirty;
-
     return (
       <div className="border-t bg-background rounded-br-md">
         <div className="flex items-center justify-end gap-3 px-6 py-4">
@@ -222,8 +220,8 @@ export function ProjectSettingsDialog({
           <div className="w-[238px]">
             <nav className="bg-sidebar space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
-                title={project.displayName}
-                icon={project.icon}
+                title={form.watch('projectName') ?? project.displayName}
+                icon={form.watch('icon') ?? project.icon}
                 containerClassName="px-3 my-4"
                 titleClassName="text-md font-bold"
                 maxLengthToNotShowTooltip={18}
