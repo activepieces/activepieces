@@ -123,7 +123,11 @@ const selectAgentFormComponentForProperty = (
       );
     }
     default: {
-      return selectGenericFormComponentForProperty(params);
+      return selectGenericFormComponentForProperty({
+        ...params,
+        enableMarkdownForInputWithMention:
+          propertyName === AgentPieceProps.PROMPT,
+      });
     }
   }
 };

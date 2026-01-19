@@ -7,7 +7,7 @@ import { FastifyBaseLogger } from 'fastify'
 import { registryPieceManager } from '../../../cache/pieces/production/registry-piece-manager'
 import { GLOBAL_CACHE_COMMON_PATH, GLOBAL_CODE_CACHE_PATH } from '../../../cache/worker-cache'
 import { workerMachine } from '../../../utils/machine'
-import { EngineProcess } from './engine-factory-types'
+import { CreateProcessParams, ProcessMaker } from './types'
 
 const getIsolateExecutableName = (): string => {
     const defaultName = 'isolate'
@@ -19,23 +19,31 @@ const getIsolateExecutableName = (): string => {
     return executableNameMap[arch] ?? defaultName
 }
 
-const currentDir = process.cwd()
 const nodeExecutablePath = process.execPath
-const isolateBinaryPath = path.resolve(currentDir, 'packages/server/api/src/assets', getIsolateExecutableName())
+const isolateBinaryPath = path.resolve(process.cwd(), 'packages/server/api/src/assets', getIsolateExecutableName())
+const sandboxIndex: Record<string, number> = {}
 
-export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => ({
+
+export const isolateSandboxProcess = (log: FastifyBaseLogger): ProcessMaker => ({
     create: async (params) => {
-        const { workerId, workerIndex, options } = params
+        const { env, sandboxId } = params
+        const sandboxNumber = getSandboxNumber(sandboxId)
 
-        await execPromise(`${isolateBinaryPath} --box-id=${workerIndex} --cleanup`)
-        await execPromise(`${isolateBinaryPath} --box-id=${workerIndex} --init`)
+        await execPromise(`${isolateBinaryPath} --box-id=${sandboxNumber} --cleanup`)
+        await execPromise(`${isolateBinaryPath} --box-id=${sandboxNumber} --init`)
 
-        const propagatedEnvVars = getEnvironmentVariables(options.env, workerId)
-        const dirsToBindArgs: string[] = await getDirsToBindArgs(log, params.flowVersionId, params.platformId, params.reusable)
+        const propagatedEnvVars = Object.entries({
+            ...env,
+            SANDBOX_ID: sandboxId,
+            AP_BASE_CODE_DIRECTORY: '/codes',
+            HOME: '/tmp/',
+        }).map(([key, value]) => `--env=${key}='${value}'`)
+
+        const dirsToBindArgs: string[] = await getDirsToBindArgs(log, params)
         const args = [
             ...dirsToBindArgs,
             '--share-net',
-            `--box-id=${workerIndex}`,
+            `--box-id=${sandboxNumber}`,
             '--processes',
             '--chdir=/root',
             '--run',
@@ -60,16 +68,8 @@ export const isolateSandboxProcess = (log: FastifyBaseLogger): EngineProcess => 
     },
 })
 
-function getEnvironmentVariables(env: Record<string, string | undefined>, workerId: string): string[] {
-    return Object.entries({
-        ...env,
-        AP_BASE_CODE_DIRECTORY: '/codes',
-        HOME: '/tmp/',
-        WORKER_ID: workerId,
-    }).map(([key, value]) => `--env=${key}='${value}'`)
-}
 
-async function getDirsToBindArgs(log: FastifyBaseLogger, flowVersionId: string | undefined, platformId: string, reusable: boolean): Promise<string[]> {
+async function getDirsToBindArgs(log: FastifyBaseLogger, options: CreateProcessParams): Promise<string[]> {
     const etcDir = path.resolve('./packages/server/api/src/assets/etc/')
 
     const dirsToBind = [
@@ -78,12 +78,18 @@ async function getDirsToBindArgs(log: FastifyBaseLogger, flowVersionId: string |
         `--dir=/root=${path.resolve(GLOBAL_CACHE_COMMON_PATH)}`,
     ]
 
-    const codePieceDirectoryToBind = await getCodePieceDirectoryToBind(flowVersionId, reusable)
-    if (!isNil(codePieceDirectoryToBind)) {
-        dirsToBind.push(codePieceDirectoryToBind)
+    if (options.reusable) {
+        dirsToBind.push(`--dir=/codes=${path.resolve(GLOBAL_CODE_CACHE_PATH)}`)
+    }
+    else {
+        const flowVersionId = options.flowVersionId
+        const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
+        if (fExists) {
+            dirsToBind.push(`--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`)
+        }
     }
 
-    const customPiecesPath = registryPieceManager(log).getCustomPiecesPath(platformId)
+    const customPiecesPath = registryPieceManager(log).getCustomPiecesPath(options.platformId)
     if (customPiecesPath) {
         dirsToBind.push(`--dir=/node_modules=${path.resolve(customPiecesPath, 'node_modules')}:maybe`)
         dirsToBind.push(`--dir=/pieces=${path.resolve(customPiecesPath, 'pieces')}:maybe`)
@@ -103,13 +109,10 @@ async function getDirsToBindArgs(log: FastifyBaseLogger, flowVersionId: string |
     return dirsToBind
 }
 
-async function getCodePieceDirectoryToBind(flowVersionId: string | undefined, reusable: boolean): Promise<string | undefined> {
-    if (reusable) {
-        return `--dir=/codes=${path.resolve(GLOBAL_CODE_CACHE_PATH)}`
+function getSandboxNumber(sandboxId: string): number {
+    if (!isNil(sandboxIndex[sandboxId])) {
+        return sandboxIndex[sandboxId]
     }
-    const fExists = !isNil(flowVersionId) && await fileSystemUtils.fileExists(path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId))
-    if (fExists) {
-        return `--dir=${path.join('/codes', flowVersionId)}=${path.resolve(GLOBAL_CODE_CACHE_PATH, flowVersionId)}`
-    }
-    return undefined
+    sandboxIndex[sandboxId] = Object.keys(sandboxIndex).length
+    return sandboxIndex[sandboxId]
 }

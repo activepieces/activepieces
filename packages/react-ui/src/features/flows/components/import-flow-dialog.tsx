@@ -32,7 +32,6 @@ import { internalErrorToast } from '@/components/ui/sonner';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
-import { templatesApi } from '@/features/templates/lib/templates-api';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
@@ -129,7 +128,6 @@ const ImportFlowDialog = (
           multiple: flows.length > 1,
         },
       });
-      templatesApi.incrementUsageCount(templates[0].id);
 
       toast.success(
         t(`flowsImported`, {
