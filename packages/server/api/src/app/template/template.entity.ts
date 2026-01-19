@@ -53,10 +53,6 @@ export const TemplateEntity = new EntitySchema<TemplateSchema>({
             type: 'jsonb',
             nullable: true,
         },
-        usageCount: {
-            type: Number,
-            nullable: false,
-        },
         author: {
             type: String,
             nullable: false,
