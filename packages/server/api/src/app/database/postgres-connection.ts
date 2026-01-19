@@ -675,7 +675,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddNotesToFlowVersion1768130030028,
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
         RemoveUsageCountFromTemplates1768738475196,
-        AddTemplateIdToFlowEntity1768829135202
+        AddTemplateIdToFlowEntity1768829135202,
     ]
     return migrations
 }
