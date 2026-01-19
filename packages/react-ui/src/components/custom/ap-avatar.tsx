@@ -41,6 +41,7 @@ export const ApAvatar = ({
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
             email={user.email}
+            imageUrl={user.imageUrl}
             size={avatarSize}
             disableTooltip={true}
           />
@@ -73,6 +74,7 @@ export const ApAvatar = ({
           <UserAvatar
             name={`${user.firstName} ${user.lastName}`}
             email={user.email}
+            imageUrl={user.imageUrl}
             size={36}
             disableTooltip={true}
           />
