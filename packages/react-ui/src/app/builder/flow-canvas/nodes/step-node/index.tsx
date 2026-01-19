@@ -118,6 +118,7 @@ const ApStepCanvasNode = React.memo(
 
     const stepNodeDivAttributes = isPieceSelectorOpened ? {} : attributes;
     const stepNodeDivListeners = isPieceSelectorOpened ? {} : listeners;
+
     return (
       <div
         {...{
