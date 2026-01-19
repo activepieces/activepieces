@@ -1,26 +1,16 @@
 # EmailIt Piece for Activepieces
 
-This piece integrates EmailIt's transactional email service with Activepieces.
+This piece integrates EmailIt's transactional email service (API v2) with Activepieces.
 
 ## Features
 
-- Send HTML emails through EmailIt API
+- Send HTML or plain text emails through EmailIt API v2
 - Simple API key authentication
 - Customizable sender information
+- Support for multiple recipients (TO, CC, BCC)
 - Reply-to header support
-- Error handling and validation
-
-## Installation
-
-### From npm Registry
-```bash
-npm install dennisklappe-piece-emailit
-```
-
-### In Activepieces Cloud
-1. Go to Settings → My Pieces → Install Piece
-2. Enter package name: `dennisklappe-piece-emailit`
-3. Click Install
+- Open and click tracking options
+- Custom API call action for advanced use cases
 
 ## Configuration
 
@@ -28,26 +18,20 @@ npm install dennisklappe-piece-emailit
 2. Add the EmailIt piece to your flow
 3. Configure the required fields:
    - **API Key**: Your EmailIt API key
-   - **From Name**: Sender display name
-   - **From Email**: Sender email address
-   - **To Email**: Recipient email address
+   - **Sender Name**: Display name for the sender
+   - **Sender Email**: Sender email address
+   - **To**: Recipient email addresses (array, up to 50 total)
    - **Subject**: Email subject line
-   - **Body**: Email content (HTML supported)
-   - **Reply-To Email** (optional): Alternative reply address
+   - **Content Type**: Plain text or HTML
+   - **Content**: Email body content
 
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Build the piece
-npm run build
-
-# Publish to npm
-npm run publish-piece
-```
+4. Optional fields:
+   - **CC**: Carbon copy recipients
+   - **BCC**: Blind carbon copy recipients
+   - **Reply-To**: Alternative reply address
+   - **Track Opens**: Enable open tracking
+   - **Track Clicks**: Enable click tracking
 
 ## API Documentation
 
-For more information about EmailIt's API, visit [EmailIt Documentation](https://docs.emailit.com)
+For more information about EmailIt's API, visit [EmailIt Documentation](https://emailit.com/docs/api-reference)

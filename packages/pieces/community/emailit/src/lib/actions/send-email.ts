@@ -1,79 +1,140 @@
+import { createAction, Property } from '@activepieces/pieces-framework';
 import {
-  createAction,
-  Property,
-} from '@activepieces/pieces-framework';
-import { emailitAuth } from '../../index';
+  HttpMethod,
+  AuthenticationType,
+  httpClient,
+} from '@activepieces/pieces-common';
+import { emailitAuth } from '../..';
 
 export const sendEmail = createAction({
-  name: 'send-email',
-  displayName: 'Send Email',
-  description: 'Send an email using EmailIt API',
   auth: emailitAuth,
+  name: 'send_email',
+  displayName: 'Send Email',
+  description: 'Send a text or HTML email using EmailIt API v2',
   props: {
-    fromName: Property.ShortText({
-      displayName: 'From Name',
+    to: Property.Array({
+      displayName: 'To',
+      description: 'Email addresses of the recipients (up to 50 total across TO, CC, BCC)',
+      required: true,
+    }),
+    from_name: Property.ShortText({
+      displayName: 'Sender Name',
       description: 'The name of the sender',
       required: true,
     }),
-    fromEmail: Property.ShortText({
-      displayName: 'From Email',
+    from_email: Property.ShortText({
+      displayName: 'Sender Email',
       description: 'The email address of the sender',
       required: true,
     }),
-    to: Property.ShortText({
-      displayName: 'To Email',
-      description: 'The recipient email address',
-      required: true,
+    cc: Property.Array({
+      displayName: 'CC',
+      description: 'Email addresses for carbon copy',
+      required: false,
+    }),
+    bcc: Property.Array({
+      displayName: 'BCC',
+      description: 'Email addresses for blind carbon copy',
+      required: false,
+    }),
+    reply_to: Property.ShortText({
+      displayName: 'Reply-To',
+      description: 'Email address to receive replies (defaults to sender)',
+      required: false,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
-      description: 'The email subject',
+      description: 'The email subject line',
       required: true,
     }),
-    body: Property.LongText({
-      displayName: 'Body',
-      description: 'The email body (HTML supported)',
+    content_type: Property.Dropdown<'text' | 'html'>({
+      displayName: 'Content Type',
+      refreshers: [],
+      required: true,
+      defaultValue: 'html',
+      options: async () => {
+        return {
+          disabled: false,
+          options: [
+            { label: 'Plain Text', value: 'text' },
+            { label: 'HTML', value: 'html' },
+          ],
+        };
+      },
+    }),
+    content: Property.LongText({
+      displayName: 'Content',
+      description: 'The email body content',
       required: true,
     }),
-    replyTo: Property.ShortText({
-      displayName: 'Reply-To Email',
-      description: 'Optional reply-to email address',
+    track_opens: Property.Checkbox({
+      displayName: 'Track Opens',
+      description: 'Enable open tracking (overrides domain defaults)',
       required: false,
+      defaultValue: false,
+    }),
+    track_clicks: Property.Checkbox({
+      displayName: 'Track Clicks',
+      description: 'Enable click tracking (overrides domain defaults)',
+      required: false,
+      defaultValue: false,
     }),
   },
   async run(context) {
-    const { fromName, fromEmail, to, subject, body, replyTo } = context.propsValue;
-    const apiKey = context.auth;
+    const {
+      to,
+      from_name,
+      from_email,
+      cc,
+      bcc,
+      reply_to,
+      subject,
+      content_type,
+      content,
+      track_opens,
+      track_clicks,
+    } = context.propsValue;
 
-    try {
-      const response = await fetch('https://api.emailit.com/v1/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: `${fromName} <${fromEmail}>`,
-          to: to,
-          subject: subject,
-          html: body,
-          ...(replyTo && { reply_to: replyTo }),
-        }),
-      });
+    const requestBody: Record<string, unknown> = {
+      from: from_name ? `${from_name} <${from_email}>` : from_email,
+      to: to,
+      subject: subject,
+    };
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-      }
-
-      const data = await response.json();
-      return {
-        success: true,
-        message: 'Email sent successfully',
-        data: data,
-      };
-    } catch (error) {
-      throw new Error(`Failed to send email: ${error instanceof Error ? error.message : String(error)}`);
+    if (content_type === 'text') {
+      requestBody['text'] = content;
+    } else {
+      requestBody['html'] = content;
     }
+
+    if (cc && cc.length > 0) {
+      requestBody['cc'] = cc;
+    }
+
+    if (bcc && bcc.length > 0) {
+      requestBody['bcc'] = bcc;
+    }
+
+    if (reply_to) {
+      requestBody['reply_to'] = reply_to;
+    }
+
+    if (track_opens !== undefined) {
+      requestBody['track_opens'] = track_opens;
+    }
+
+    if (track_clicks !== undefined) {
+      requestBody['track_clicks'] = track_clicks;
+    }
+
+    return await httpClient.sendRequest({
+      method: HttpMethod.POST,
+      url: 'https://api.emailit.com/v2/emails',
+      body: requestBody,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: context.auth,
+      },
+    });
   },
 });
