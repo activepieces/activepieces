@@ -1,6 +1,6 @@
 import { tool } from 'ai'
 import { z } from 'zod'
-import { CommandResult, Execution, Sandbox } from '@e2b/code-interpreter'
+import type { CommandResult, Sandbox, Execution } from '@e2b/code-interpreter'
 
 export const EXECUTE_CODE_TOOL_NAME = 'execute_code'
 
@@ -14,7 +14,9 @@ Execute code in a secure sandboxed environment. Use this tool for:
 The sandbox provides a clean, isolated environment that resets after execution.
 `
 
-export function createExecuteCodeTool(apiKey: string) {
+export async function createExecuteCodeTool(apiKey: string) {
+    const e2bLib = await import("@e2b/code-interpreter") 
+
     return tool({
         description,
         inputSchema: z.object({
@@ -29,7 +31,7 @@ export function createExecuteCodeTool(apiKey: string) {
             let sandbox: Sandbox | null = null
             
             try {
-                sandbox = await Sandbox.create({ apiKey })
+                sandbox = await e2bLib.Sandbox.create({ apiKey })
 
                 let execution
                 switch (language) {

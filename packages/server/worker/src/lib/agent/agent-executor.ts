@@ -43,7 +43,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             tools: {
                 ...firecrawlTools,
                 [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
-                [EXECUTE_CODE_TOOL_NAME]: createExecuteCodeTool(e2bApiKey)
+                [EXECUTE_CODE_TOOL_NAME]: await createExecuteCodeTool(e2bApiKey)
             },
         })
         let isStreaming = false
