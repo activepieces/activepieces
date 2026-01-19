@@ -36,7 +36,6 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
           className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none p-0 bg-transparent"
           placeholder={placeholder}
           onChange={(e) => props.onChange(e.target.value)}
-          data-testid="pieces-search-input"
         />
         {props.value !== '' && (
           <SelectUtilButton
