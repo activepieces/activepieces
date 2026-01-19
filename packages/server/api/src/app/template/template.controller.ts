@@ -108,11 +108,6 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.OK).send(result)
     })
 
-    app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => {
-        await templateService(app.log).incrementUsageCount({ id: request.params.id })
-        return reply.status(StatusCodes.OK).send()
-    })
-
     app.delete('/:id', DeleteParams, async (request, reply) => {
         const template = await templateService(app.log).getOneOrThrow({ id: request.params.id })
 
@@ -221,18 +216,6 @@ const UpdateParams = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
         body: UpdateTemplateRequestBody,
-    },
-}
-
-const IncrementUsageCountParams = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-    schema: {
-        description: 'Increment usage count of a template.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: GetIdParams,
     },
 }
 
