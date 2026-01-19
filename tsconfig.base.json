@@ -484,6 +484,9 @@
       ],
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-mooninvoice": [
+        "packages/pieces/community/mooninvoice/src/index.ts"
       ]
     },
     "resolveJsonModule": true
