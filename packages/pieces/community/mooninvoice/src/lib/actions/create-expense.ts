@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mooninvoiceAuth } from '../common/auth';
 import { getAccessToken, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { companyIdProp, contactIdProp } from '../common/props';
 
 export const createExpense = createAction({
   auth: mooninvoiceAuth,
@@ -9,11 +10,7 @@ export const createExpense = createAction({
   displayName: 'Create Expense',
   description: 'Create a new expense in MoonInvoice',
   props: {
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'CompanyID is for create expense of specific Company',
-      required: true,
-    }),
+    companyId: companyIdProp,
     date: Property.ShortText({
       displayName: 'Date',
       description: 'Date of Expense (e.g., "2025-02-20")',
@@ -24,11 +21,7 @@ export const createExpense = createAction({
       description: 'Expense Number',
       required: true,
     }),
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'Contact Identifier',
-      required: true,
-    }),
+    contactId: contactIdProp,
     expenseCost: Property.Number({
       displayName: 'Expense Cost',
       description: 'Cost of Expense',

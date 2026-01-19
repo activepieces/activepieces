@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mooninvoiceAuth } from '../common/auth';
 import { getAccessToken, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { companyIdProp, contactIdProp } from '../common/props';
 
 export const createCreditNote = createAction({
   auth: mooninvoiceAuth,
@@ -9,16 +10,8 @@ export const createCreditNote = createAction({
   displayName: 'Create Credit Note',
   description: 'Create a new credit note in MoonInvoice',
   props: {
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'CompanyID is for create Credit Note of specific Company',
-      required: true,
-    }),
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'Contact Identifier of Credit Note',
-      required: true,
-    }),
+    companyId: companyIdProp,
+    contactId: contactIdProp,
     creditNotesNumber: Property.ShortText({
       displayName: 'Credit Note Number',
       description: 'Credit Note Number',

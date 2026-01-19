@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mooninvoiceAuth } from '../common/auth';
 import { getAccessToken, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { companyIdProp } from '../common/props';
 
 export const createProduct = createAction({
   auth: mooninvoiceAuth,
@@ -9,11 +10,7 @@ export const createProduct = createAction({
   displayName: 'Create Product',
   description: 'Create a new product in MoonInvoice',
   props: {
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'CompanyId is for create product by specific Company',
-      required: true,
-    }),
+    companyId: companyIdProp,
     productName: Property.ShortText({
       displayName: 'Product Name',
       description: 'Name of product',

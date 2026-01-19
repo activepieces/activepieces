@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mooninvoiceAuth } from '../common/auth';
 import { getAccessToken, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { companyIdProp } from '../common/props';
 
 export const addNewContact = createAction({
   auth: mooninvoiceAuth,
@@ -9,11 +10,7 @@ export const addNewContact = createAction({
   displayName: 'Add New Contact',
   description: 'Add a new contact to a company in MoonInvoice',
   props: {
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'The ID of the company to add the contact to',
-      required: true,
-    }),
+    companyId:companyIdProp,
     organization: Property.ShortText({
       displayName: 'Organization',
       description: 'Name of Organization/Company',

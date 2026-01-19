@@ -1,4 +1,4 @@
-import { PieceAuth } from '@activepieces/pieces-framework';
+import { PieceAuth, Property } from '@activepieces/pieces-framework';
 
 export const mooninvoiceAuth = PieceAuth.CustomAuth({
   displayName: 'MoonInvoice API Key',
@@ -20,14 +20,15 @@ For more information about MoonInvoice API, visit: https://www.mooninvoice.com/d
   `,
   required: true,
   props: {
-    email: PieceAuth.SecretText({
+    email: Property.ShortText({
       displayName: 'Email',
       description: 'Your MoonInvoice account email address',
       required: true,
     }),
-    secret_text: PieceAuth.SecretText({
+    secret_text: Property.ShortText({
       displayName: 'Secret Key',
-      description: 'Your MoonInvoice API secret key (contact support@mooninvoice.com if you need one)',
+      description:
+        'Your MoonInvoice API secret key (contact support@mooninvoice.com if you need one)',
       required: true,
     }),
   },

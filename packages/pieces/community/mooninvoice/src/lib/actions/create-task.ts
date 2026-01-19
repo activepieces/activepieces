@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mooninvoiceAuth } from '../common/auth';
 import { getAccessToken, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { companyIdProp, projectIdProp } from '../common/props';
 
 export const createTask = createAction({
   auth: mooninvoiceAuth,
@@ -9,21 +10,13 @@ export const createTask = createAction({
   displayName: 'Create Task',
   description: 'Create a new task in MoonInvoice',
   props: {
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'CompanyID is for create task of specific Company',
-      required: true,
-    }),
+    companyId: companyIdProp,
     taskName: Property.ShortText({
       displayName: 'Task Name',
       description: 'Name of Task',
       required: true,
     }),
-    projectId: Property.ShortText({
-      displayName: 'Project ID',
-      description: 'Project Identifier',
-      required: true,
-    }),
+    projectId: projectIdProp,
     hours: Property.Number({
       displayName: 'Hours',
       description: 'Task hours',

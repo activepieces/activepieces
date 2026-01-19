@@ -2,6 +2,7 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { mooninvoiceAuth } from '../common/auth';
 import { getAccessToken, makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { companyIdProp, contactIdProp } from '../common/props';
 
 export const createEstimate = createAction({
   auth: mooninvoiceAuth,
@@ -9,16 +10,8 @@ export const createEstimate = createAction({
   displayName: 'Create Estimate',
   description: 'Create a new estimate in MoonInvoice',
   props: {
-    companyId: Property.ShortText({
-      displayName: 'Company ID',
-      description: 'CompanyID is for create estimate of specific Company',
-      required: true,
-    }),
-    contactId: Property.ShortText({
-      displayName: 'Contact ID',
-      description: 'Contact Identifier of Estimate',
-      required: true,
-    }),
+    companyId: companyIdProp,
+    contactId: contactIdProp,
     estimateNumber: Property.ShortText({
       displayName: 'Estimate Number',
       description: 'Estimate Number',
