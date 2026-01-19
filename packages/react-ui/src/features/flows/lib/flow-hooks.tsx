@@ -33,6 +33,7 @@ import {
   SeekPage,
   Template,
   UncategorizedFolderId,
+  UpdateRunProgressRequest,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -277,7 +278,7 @@ export const flowHooks = {
     onUpdateRun,
   }: {
     flowVersionId: string;
-    onUpdateRun: (run: FlowRun) => void;
+    onUpdateRun: (stepResponse: UpdateRunProgressRequest) => void;
   }) => {
     const socket = useSocket();
     return useMutation<void>({

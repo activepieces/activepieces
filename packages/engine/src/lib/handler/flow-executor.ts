@@ -38,6 +38,11 @@ export const flowExecutor = {
         const trigger = input.flowVersion.trigger
         if (input.executionType === ExecutionType.BEGIN) {
             await triggerHelper.executeOnStart(trigger, constants, input.triggerPayload)
+            await progressService.sendUpdate({
+                engineConstants: constants,
+                flowExecutorContext: executionState,
+                stepNameToUpdate: trigger.name,
+            })
         }
         return flowExecutor.execute({
             action: trigger.nextAction,
@@ -52,19 +57,22 @@ export const flowExecutor = {
     }): Promise<FlowExecutorContext> {
         const flowStartTime = performance.now()
         let flowExecutionContext = executionState
+        let previousAction: FlowAction | null | undefined = action
         let currentAction: FlowAction | null | undefined = action
 
         while (!isNil(currentAction)) {
             const testSingleStepMode = !isNil(constants.stepNameToTest)
             if (currentAction.skip && !testSingleStepMode) {
+                previousAction = currentAction
                 currentAction = currentAction.nextAction
                 continue
             }
             const handler = this.getExecutorForAction(currentAction.type)
 
-            progressService.sendUpdate({
+            await progressService.sendUpdate({
                 engineConstants: constants,
                 flowExecutorContext: flowExecutionContext,
+                stepNameToUpdate: previousAction?.name,
             }).catch(error => {
                 console.error('Error sending update:', error)
             })
@@ -80,6 +88,7 @@ export const flowExecutor = {
                 break
             }
 
+            previousAction = currentAction
             currentAction = currentAction.nextAction
         }
 

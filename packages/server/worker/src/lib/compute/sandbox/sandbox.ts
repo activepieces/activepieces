@@ -1,5 +1,5 @@
 import { ChildProcess } from 'child_process'
-import { ActivepiecesError, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, ErrorCode, ExecutionMode, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest } from '@activepieces/shared'
+import { ActivepiecesError, assertNotNullOrUndefined, EngineOperation, EngineOperationType, EngineResponse, EngineSocketEvent, EngineStderr, EngineStdout, ErrorCode, ExecutionMode, isNil, SendFlowResponseRequest, UpdateRunProgressRequest, UpdateStepProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import treeKill from 'tree-kill'
 import { workerMachine } from '../../utils/machine'
@@ -82,6 +82,9 @@ export const createSandbox = (log: FastifyBaseLogger, sandboxId: string, options
                             break
                         case EngineSocketEvent.SEND_FLOW_RESPONSE:
                             await sandboxSockerHandler(log).sendFlowResponse(payload as SendFlowResponseRequest)
+                            break
+                        case EngineSocketEvent.UPLOAD_RUN_LOG:
+                            await sandboxSockerHandler(log).uploadRunLogs(payload as UploadRunLogsRequest)
                             break
                         case EngineSocketEvent.UPDATE_RUN_PROGRESS:
                             await sandboxSockerHandler(log).updateRunProgress(payload as UpdateRunProgressRequest)

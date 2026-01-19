@@ -11,7 +11,7 @@ import {
 
 import { cn } from '@/lib/utils';
 import {
-  executionJournal,
+  ExecutionJournal,
   FlowActionType,
   FlowRun,
   FlowRunStatus,
@@ -326,5 +326,5 @@ function getStepOutputFromIteration({
 }
 
 function updateRunSteps(steps: Record<string, StepOutput>, stepName: string, path: readonly [string, number][], output: StepOutput) {
-  return executionJournal.upsertStep({ stepName, stepOutput: output, path, steps })
+  return new ExecutionJournal(steps).upsertStep({ stepName, stepOutput: output, path })
 }

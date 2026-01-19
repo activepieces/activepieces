@@ -1,5 +1,5 @@
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, StepOutput, StepOutputStatus, StepRunResponse, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -9,14 +9,14 @@ import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 
 
-let lastScheduledUpdateId: NodeJS.Timeout | null = null
-let lastActionExecutionTime: number | undefined = undefined
 let isGraceShutdownSignalReceived = false
-const MAXIMUM_UPDATE_THRESHOLD = 15000
-const DEBOUNCE_THRESHOLD = 5000
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
+
+// logs backup consts
+const BACKUP_INTERVAL_MS = 15000 // 15 seconds
+export let latestUpdateParams: UpdateStepProgressParams | null = null
 
 process.on('SIGTERM', () => {
     isGraceShutdownSignalReceived = true
@@ -27,21 +27,35 @@ process.on('SIGINT', () => {
 })
 
 export const progressService = {
+    init: async (): Promise<void> => {
+        setInterval(async () => {
+            if (isNil(latestUpdateParams)) {
+                return
+            }
+            await progressService.backup(latestUpdateParams)
+        }, BACKUP_INTERVAL_MS)
+    },
     sendUpdate: async (params: UpdateStepProgressParams): Promise<void> => {
         return updateLock.runExclusive(async () => {
-            if (lastScheduledUpdateId) {
-                clearTimeout(lastScheduledUpdateId)
-            }
-
-            const shouldUpdateNow = isNil(lastActionExecutionTime) || (Date.now() - lastActionExecutionTime > MAXIMUM_UPDATE_THRESHOLD) || isGraceShutdownSignalReceived
-            if (shouldUpdateNow || params.updateImmediate) {
-                await sendUpdateRunRequest(params)
+            const { engineConstants, flowExecutorContext, stepNameToUpdate } = params
+            latestUpdateParams = params
+            if (!stepNameToUpdate || !engineConstants.isTestFlow) { // live runs are updated by backup job
                 return
             }
 
-            lastScheduledUpdateId = setTimeout(async () => {
-                await sendUpdateRunRequest(params)
-            }, DEBOUNCE_THRESHOLD)
+            const step = flowExecutorContext.getStepOutput(stepNameToUpdate)
+            if (isNil(step)) {
+                return
+            }
+            await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, {
+                projectId: engineConstants.projectId,
+                step: {
+                    name: stepNameToUpdate,
+                    path: flowExecutorContext.currentPath.path,
+                    output: step,
+                },
+                flowRunId: engineConstants.flowRunId,
+            })
         })
     },
     createOutputContext: (params: CreateOutputContextParams): OutputContext => {
@@ -63,6 +77,59 @@ export const progressService = {
             },
         }
     },
+    backup: async (updateParams: BackUpLogsParams): Promise<void> => {
+        const isRunningMcp = updateParams.engineConstants.flowRunId === DEFAULT_MCP_DATA.flowRunId
+        if (isRunningMcp) {
+            return
+        }
+        await lock.runExclusive(async () => {
+            const params = updateParams
+            const { flowExecutorContext, engineConstants } = params!
+            const executionState = await logSerializer.serialize({
+                executionState: {   
+                    steps: flowExecutorContext.steps,
+                    tags: Array.from(flowExecutorContext.tags),
+                },
+            })
+           
+            const logsUploadUrl = engineConstants.logsUploadUrl
+            if (isNil(logsUploadUrl)) {
+                throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
+            }
+            const uploadLogResponse = await uploadExecutionState(logsUploadUrl!, executionState)
+            if (!uploadLogResponse.ok) {
+                throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
+            }
+    
+            const stepResponse = extractStepResponse({
+                steps: flowExecutorContext.steps,
+                runId: engineConstants.flowRunId,
+                stepName: engineConstants.stepNameToTest,
+            })
+    
+            const request: UploadRunLogsRequest = {
+                runId: engineConstants.flowRunId,
+                projectId: engineConstants.projectId,
+                workerHandlerId: engineConstants.serverHandlerId ?? null,
+                httpRequestId: engineConstants.httpRequestId ?? null,
+                status: flowExecutorContext.verdict.status,
+                progressUpdateType: engineConstants.progressUpdateType,
+                logsFileId: engineConstants.logsFileId,
+                failedStep: flowExecutorContext.verdict.status === FlowRunStatus.FAILED ? flowExecutorContext.verdict.failedStep : undefined,
+                stepNameToTest: engineConstants.stepNameToTest,
+                stepResponse,
+                pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
+                finishTime: isFlowRunStateTerminal({
+                    status: flowExecutorContext.verdict.status,
+                    ignoreInternalError: false,
+                }) ? dayjs().toISOString() : undefined,
+                tags: Array.from(flowExecutorContext.tags),
+                stepsCount: flowExecutorContext.stepsCount,
+            }
+    
+            await sendLogsUpdate(request)
+        })
+    }
 }
 
 type CreateOutputContextParams = {
@@ -72,74 +139,10 @@ type CreateOutputContextParams = {
     stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
 }
 
-const queueUpdates: UpdateStepProgressParams[] = []
 
-const sendUpdateRunRequest = async (updateParams: UpdateStepProgressParams): Promise<void> => {
-    const isRunningMcp = updateParams.engineConstants.flowRunId === DEFAULT_MCP_DATA.flowRunId
-    if (updateParams.engineConstants.isRunningApTests || isRunningMcp) {
-        return
-    }
-    queueUpdates.push(updateParams)
-    await lock.runExclusive(async () => {
-        const params = queueUpdates.pop()
-        while (queueUpdates.length > 0) {
-            queueUpdates.pop()
-        }
-        if (isNil(params)) {
-            return
-        }
-        lastActionExecutionTime = Date.now()
-        const { flowExecutorContext, engineConstants } = params
-        const executionState = await logSerializer.serialize({
-            executionState: {   
-                steps: flowExecutorContext.steps,
-                tags: Array.from(flowExecutorContext.tags),
-            },
-        })
-
-        if (isNil(engineConstants.logsUploadUrl)) {
-            throw new EngineGenericError('LogsUploadUrlNotSetError', 'Logs upload URL is not set')
-        }
-        const uploadLogResponse = await uploadExecutionState(engineConstants.logsUploadUrl, executionState)
-        if (!uploadLogResponse.ok) {
-            throw new EngineGenericError('ProgressUpdateError', 'Failed to upload execution state', uploadLogResponse)
-        }
-
-        const stepResponse = extractStepResponse({
-            steps: flowExecutorContext.steps,
-            runId: engineConstants.flowRunId,
-            stepName: engineConstants.stepNameToTest,
-        })
-
-        const request: UpdateRunProgressRequest = {
-            runId: engineConstants.flowRunId,
-            projectId: engineConstants.projectId,
-            workerHandlerId: engineConstants.serverHandlerId ?? null,
-            httpRequestId: engineConstants.httpRequestId ?? null,
-            status: flowExecutorContext.verdict.status,
-            progressUpdateType: engineConstants.progressUpdateType,
-            logsFileId: engineConstants.logsFileId,
-            failedStep: flowExecutorContext.verdict.status === FlowRunStatus.FAILED ? flowExecutorContext.verdict.failedStep : undefined,
-            stepNameToTest: engineConstants.stepNameToTest,
-            stepResponse,
-            pauseMetadata: flowExecutorContext.verdict.status === FlowRunStatus.PAUSED ? flowExecutorContext.verdict.pauseMetadata : undefined,
-            finishTime: isFlowRunStateTerminal({
-                status: flowExecutorContext.verdict.status,
-                ignoreInternalError: false,
-            }) ? dayjs().toISOString() : undefined,
-            tags: Array.from(flowExecutorContext.tags),
-            stepsCount: flowExecutorContext.stepsCount,
-        }
-
-   
-        await sendProgressUpdate(request)
-
-    })
-}
-
-const sendProgressUpdate = async (request: UpdateRunProgressRequest): Promise<void> => {
+const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() => 
-        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, request),
+        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPLOAD_RUN_LOG, request),
     )
     if (result.error) {
         throw new EngineGenericError('ProgressUpdateError', 'Failed to send progress update', result.error)
@@ -187,7 +190,13 @@ const extractStepResponse = (params: ExtractStepResponse): StepRunResponse | und
 type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
-    updateImmediate?: boolean
+    stepNameToUpdate?: string
+}
+
+type BackUpLogsParams = {
+    engineConstants: EngineConstants
+    flowExecutorContext: FlowExecutorContext
+    stepNameToUpdate?: string
 }
 
 type ExtractStepResponse = {

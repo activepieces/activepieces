@@ -14,6 +14,7 @@ import {
   BulkActionOnRunsRequestBody,
   BulkArchiveActionOnRunsRequestBody,
   BulkCancelFlowRequestBody,
+  UpdateRunProgressRequest,
 } from '@activepieces/shared';
 
 type TestStepParams = {
@@ -45,11 +46,13 @@ export const flowRunsApi = {
   async testFlow(
     socket: Socket,
     request: TestFlowRunRequestBody,
-    onUpdate: (response: FlowRun) => void,
+    onUpdate: (response: UpdateRunProgressRequest) => void,
   ): Promise<void> {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const initialRun = await getInitialRun(socket, request.flowVersionId);
-    onUpdate(initialRun);
+    const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
+      onUpdate(response);
+    };
+    socket.on(WebsocketClientEvent.UPDATE_RUN_PROGRESS, handleUpdateRunProgress);
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
     const { socket, request, onProgress, onFinish } = params;
