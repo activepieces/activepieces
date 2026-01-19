@@ -3,6 +3,7 @@ import { context, propagation, trace } from '@opentelemetry/api'
 import { Job } from 'bullmq'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
+import { agentExecutor } from '../agent/agent-executor'
 import { workerMachine } from '../utils/machine'
 import { tokenUtls } from '../utils/token-utils'
 import { executeTriggerExecutor } from './executors/execute-trigger-executor'
@@ -10,7 +11,6 @@ import { flowJobExecutor } from './executors/flow-job-executor'
 import { renewWebhookExecutor } from './executors/renew-webhook-executor'
 import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
 import { webhookExecutor } from './executors/webhook-job-executor'
-import { agentExecutor } from '../agent/agent-executor'
 
 const tracer = trace.getTracer('job-consumer')
 

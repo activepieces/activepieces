@@ -6,11 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 
 import { AIModelSelector } from './model-selector';
+import { WebSearchToolToggle } from './tools/web-search';
 
 interface PromptInputProps {
-  defaultModel?: string;
+  enabled: boolean;
+  defaultModel: string;
   onMessageSend: (message: string) => void;
   updateChatModel: (modelId: string) => void;
+  toggleWebSearchTool: (enabled: boolean) => void;
   loading?: boolean;
   readOnly?: boolean;
   value?: string;
@@ -23,6 +26,8 @@ interface PromptInputProps {
 const PromptInput = React.forwardRef<HTMLTextAreaElement, PromptInputProps>(
   (
     {
+      enabled,
+      toggleWebSearchTool,
       defaultModel,
       onMessageSend,
       updateChatModel,
@@ -106,10 +111,16 @@ const PromptInput = React.forwardRef<HTMLTextAreaElement, PromptInputProps>(
                 />
               </div>
               <div className="flex justify-between mx-2 mb-3">
-                <AIModelSelector
-                  updateChatModel={updateChatModel}
-                  defaultModel={defaultModel}
-                />
+                <div className="flex justify-start items-center gap-x-1">
+                  <WebSearchToolToggle
+                    enabled={enabled}
+                    toggleWebSearchTool={toggleWebSearchTool}
+                  />
+                  <AIModelSelector
+                    updateChatModel={updateChatModel}
+                    defaultModel={defaultModel}
+                  />
+                </div>
                 <Button
                   variant="default"
                   size="icon"

@@ -1,11 +1,10 @@
 import { ActivepiecesError, apId, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, isNil, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
+import { projectService } from '../../project/project-service'
 import { jobQueue } from '../../workers/queue/job-queue'
 import { JobType } from '../../workers/queue/queue-manager'
 import { ChatSessionEntity } from './chat.session.entity'
-import { projectService } from '../../project/project-service'
-import { platformProjectService } from '../../ee/projects/platform-project-service'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
@@ -16,6 +15,7 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
             userId,
             conversation: [],
             modelId: DEFAULT_CHAT_MODEL,
+            webSearchEnabled: true,
         }
         return chatSessionRepo().save(newSession)
     },
@@ -52,6 +52,14 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
     async updateSessionModel(params: UpdateSessionModelIdParams): Promise<ChatSession> {
         await chatSessionRepo().update(params.id, {
             modelId: params.modelId,
+        })
+
+        return this.getOneOrThrow({ id: params.id, userId: params.userId })
+    },
+
+    async toggleSearchTool(params: ToggleSearchToolParams): Promise<ChatSession> {
+        await chatSessionRepo().update(params.id, {
+            webSearchEnabled: params.enabled,
         })
 
         return this.getOneOrThrow({ id: params.id, userId: params.userId })
@@ -114,4 +122,10 @@ type UpdateSessionModelIdParams = {
     id: string
     modelId: string
     userId: string
+}
+
+type ToggleSearchToolParams = {
+    id: string
+    userId: string
+    enabled: boolean
 }

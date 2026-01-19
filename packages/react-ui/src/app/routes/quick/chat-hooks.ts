@@ -99,4 +99,32 @@ export const chatHooks = {
       },
     });
   },
+  useToggleSearchTool(setSession: (session: ChatSession) => void) {
+    return useMutation<
+      ChatSession,
+      Error,
+      {
+        currentSession: ChatSession | null;
+        enabled: boolean;
+      }
+    >({
+      mutationFn: async ({ currentSession, enabled }) => {
+        let session =
+          currentSession ??
+          (await api.post<ChatSession>('/v1/chat-sessions', {}));
+
+        session = await api.post<ChatSession>(
+          `/v1/chat-sessions/${session.id}/toggle-search-tool`,
+          { enabled },
+        );
+
+        setSession(session);
+        return session;
+      },
+      onError: (error) => {
+        internalErrorToast();
+        console.error(error);
+      },
+    });
+  },
 };

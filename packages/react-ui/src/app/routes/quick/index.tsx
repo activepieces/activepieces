@@ -14,6 +14,12 @@ export function QuickPage() {
   const { mutate: sendMessage, isPending: isStreaming } =
     chatHooks.useSendMessage(setSession);
   const { mutate: updateChatModel } = chatHooks.useUpdateChatModel(setSession);
+  const { mutate: toggleSearchTool } =
+    chatHooks.useToggleSearchTool(setSession);
+
+  console.log('2222222222222222222222');
+  console.log(session);
+  console.log('2222222222222222222222');
 
   return (
     <div className="flex gap-8 w-full min-h-screen px-4">
@@ -38,10 +44,23 @@ export function QuickPage() {
             </div>
           )}
         </div>
-        <div className="sticky bottom-0 left-0 right-0 pb-4 pt-4 bg-background z-10">
-          <div className="max-w-4xl px-4">
+        <div className="sticky bottom-0 z-10 bg-background py-4 flex justify-center border">
+          <div className="w-4xl px-4">
             <PromptInput
-              defaultModel={session?.modelId || DEFAULT_CHAT_MODEL}
+              enabled={
+                !isNil(session?.webSearchEnabled)
+                  ? session.webSearchEnabled
+                  : true
+              }
+              toggleWebSearchTool={(enabled) =>
+                toggleSearchTool({
+                  enabled,
+                  currentSession: isNil(session) ? null : session,
+                })
+              }
+              defaultModel={
+                !isNil(session?.modelId) ? session.modelId : DEFAULT_CHAT_MODEL
+              }
               updateChatModel={(modelId) =>
                 updateChatModel({
                   modelId,

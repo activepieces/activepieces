@@ -17,7 +17,8 @@ export const ChatSession = Type.Object({
     userId: ApId,
     plan: Type.Optional(Type.Array(PlanItem)),
     conversation: Type.Array(ConversationMessage),
-    modelId: Type.String()
+    modelId: Type.String(),
+    webSearchEnabled: Type.Boolean()
 })
 export type ChatSession = Static<typeof ChatSession>
 
@@ -26,6 +27,9 @@ export type CreateChatSessionRequest = Static<typeof CreateChatSessionRequest>
 
 export const UpdateChatSessionRequest = Type.Object({ modelId: Type.String() })
 export type UpdateChatSessionRequest = Static<typeof UpdateChatSessionRequest>
+
+export const ToggleSearchToolRequest = Type.Object({ enabled: Type.Boolean() })
+export type ToggleSearchToolRequest = Static<typeof ToggleSearchToolRequest>
 
 export const ChatSessionUpdate = Type.Object({
     sessionId: Type.String(),

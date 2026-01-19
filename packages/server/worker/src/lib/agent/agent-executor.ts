@@ -1,14 +1,14 @@
-import { ChatSessionUpdate, chatSessionUtils, ConversationMessage, ExecuteAgentJobData, ChatSession, WebsocketClientEvent, WebsocketServerEvent, EmitAgentStreamingEndedRequest,  isNil } from "@activepieces/shared";
-import { ModelMessage, stepCountIs, streamText } from "ai";
-import { systemPrompt } from "./system-prompt";
-import { appSocket } from "../app-socket";
-import { FastifyBaseLogger } from "fastify";
-import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from "./planning-tool";
-import { LanguageModelV2ToolResultOutput } from "@ai-sdk/provider";
-import { agentUtils } from "./utils";
+import { ChatSession, ChatSessionUpdate, chatSessionUtils, ConversationMessage, EmitAgentStreamingEndedRequest, ExecuteAgentJobData, isNil, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
+import { ModelMessage, stepCountIs, streamText } from 'ai'
+import { FastifyBaseLogger } from 'fastify'
+import { appSocket } from '../app-socket'
+import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from './planning-tool'
+import { systemPrompt } from './system-prompt'
+import { agentUtils } from './utils'
 
 async function getFirecrawlTools() {
-    const firecrawlAisdk = await import('firecrawl-aisdk');
+    const firecrawlAisdk = await import('firecrawl-aisdk')
     return {
         scrape: firecrawlAisdk.scrapeTool,
         search: firecrawlAisdk.searchTool,
@@ -19,16 +19,17 @@ async function getFirecrawlTools() {
         poll: firecrawlAisdk.pollTool,
         status: firecrawlAisdk.statusTool,
         cancel: firecrawlAisdk.cancelTool,
-    };
+    }
 }
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
      
-        const { conversation, modelId } = data.session;
-        let newSession: ChatSession = data.session;
-        const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan };
-        const firecrawlTools = await getFirecrawlTools();
+        const { conversation, modelId, webSearchEnabled } = data.session
+        let newSession: ChatSession = data.session
+        const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan }
+        const firecrawlTools = webSearchEnabled ? await getFirecrawlTools() : {}
+
         const { fullStream } = streamText({
             model: await agentUtils.getModel(modelId, engineToken),
             system: systemPrompt(),
@@ -39,47 +40,47 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                 [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
             },
         })
-        let isStreaming = false;
+        let isStreaming = false
         let previousText = ''
         for await (const chunk of fullStream) {
-            let quickStreamingUpdate: ChatSessionUpdate | undefined;
+            let quickStreamingUpdate: ChatSessionUpdate | undefined
             switch (chunk.type) {
                 case 'text-start': {
-                    isStreaming = true;
-                    previousText = '';
-                    quickStreamingUpdate = publishTextUpdate(newSession, '', true);
-                    break;
+                    isStreaming = true
+                    previousText = ''
+                    quickStreamingUpdate = publishTextUpdate(newSession, '', true)
+                    break
                 }
                 case 'text-delta': {
-                    previousText += chunk.text;
-                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, true);
-                    break;
+                    previousText += chunk.text
+                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, true)
+                    break
                 }
                 case 'text-end': {
-                    isStreaming = false;
-                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, false);
-                    break;
+                    isStreaming = false
+                    quickStreamingUpdate = publishTextUpdate(newSession, previousText, false)
+                    break
                 }
                 case 'tool-call': {
-                    previousText = '';
-                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>);
-                    break;
+                    previousText = ''
+                    quickStreamingUpdate = publishToolCallUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.input as Record<string, any>)
+                    break
                 }
                 case 'tool-result': {
-                    previousText = '';
+                    previousText = ''
                     if (chunk.toolName === WRITE_TODOS_TOOL_NAME) {
-                        newSession = { ...newSession, plan: planningState.plan };
+                        newSession = { ...newSession, plan: planningState.plan }
                     }
-                    quickStreamingUpdate = publishToolResultUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>);
-                    break;
+                    quickStreamingUpdate = publishToolResultUpdate(newSession, chunk.toolCallId, chunk.toolName, chunk.output as Record<string, any>)
+                    break
                 }
                 default: {
-                    break;
+                    break
                 }
             }
 
             if (!isNil(quickStreamingUpdate)) {
-                newSession = chatSessionUtils.streamChunk(newSession, quickStreamingUpdate);
+                newSession = chatSessionUtils.streamChunk(newSession, quickStreamingUpdate)
                 await appSocket(log).emitWithAck(WebsocketServerEvent.EMIT_AGENT_PROGRESS, {
                     userId: data.session.userId,
                     event: WebsocketClientEvent.AGENT_STREAMING_UPDATE,
@@ -105,11 +106,11 @@ function publishToolCallUpdate(session: ChatSession, toolcallId: string, toolNam
         part: {
             type: 'tool-call',
             toolCallId: toolcallId,
-            toolName: toolName,
-            input: input,
-        }
+            toolName,
+            input,
+        },
     }
-    return quickStreamingUpdate;
+    return quickStreamingUpdate
 }
 
 function publishToolResultUpdate(session: ChatSession, toolcallId: string, toolName: string, output: Record<string, any>) {
@@ -119,11 +120,11 @@ function publishToolResultUpdate(session: ChatSession, toolcallId: string, toolN
         part: {
             type: 'tool-result',
             toolCallId: toolcallId,
-            toolName: toolName,
-            output: output,
-        }
+            toolName,
+            output,
+        },
     }
-    return quickStreamingUpdate;
+    return quickStreamingUpdate
 }
 
 function publishTextUpdate(session: ChatSession, text: string, isStreaming: boolean) {
@@ -133,10 +134,10 @@ function publishTextUpdate(session: ChatSession, text: string, isStreaming: bool
         part: {
             type: 'text',
             message: text,
-            isStreaming: isStreaming,
-        }
+            isStreaming,
+        },
     }
-    return quickStreamingUpdate;
+    return quickStreamingUpdate
 }
 
 function convertHistory(conversation: ConversationMessage[]): ModelMessage[] {

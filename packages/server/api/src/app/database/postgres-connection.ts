@@ -330,6 +330,7 @@ import { AddOutdatedToReport1767994436597 } from './migration/postgres/176799443
 import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130030028-AddNotesToFlowVersion'
 import { AddSessions1768596349320 } from './migration/postgres/1768596349320-AddSessions'
 import { AddModelIdToSessionEntity1768745485957 } from './migration/postgres/1768745485957-addModelIdToSessionEntity'
+import { AddSearchEnabledColumn1768836652533 } from './migration/postgres/1768836652533-addSearchEnabledColumn'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -676,6 +677,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
         AddSessions1768596349320,
         AddModelIdToSessionEntity1768745485957,
+        AddSearchEnabledColumn1768836652533,
     ]
     return migrations
 }
