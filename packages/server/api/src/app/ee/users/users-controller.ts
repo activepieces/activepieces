@@ -1,21 +1,19 @@
-import { securityAccess, WorkerSystemProp } from '@activepieces/server-shared'
+import { securityAccess } from '@activepieces/server-shared'
 import {
-    ActivepiecesError,
+    AP_MAXIMUM_PROFILE_PICTURE_SIZE,
     ApId,
     ApMultipartFile,
-    ErrorCode,
-    FileCompression,
     FileType,
-    isMultipartFile,
     isNil,
     PrincipalType,
+    PROFILE_PICTURE_ALLOWED_TYPES,
+    UpdateMeResponse,
     UserWithBadges,
 } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { userIdentityService } from '../../authentication/user-identity/user-identity-service'
 import { fileService } from '../../file/file.service'
-import { system } from '../../helper/system/system'
 import { userService } from '../../user/user-service'
 
 export const usersController: FastifyPluginAsyncTypebox = async (app) => {
@@ -25,62 +23,26 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
         return userService.getOneByIdAndPlatformIdOrThrow({ id: userId, platformId })
     })
 
-    app.post('/me/profile-picture', UploadProfilePictureRequest, async (req) => {
+    app.post('/me', UpdateMeRequest, async (req) => {
         const userId = req.principal.id
         const user = await userService.getOrThrow({ id: userId })
         const identityId = user.identityId
+        const platformId = req.principal.platform.id
 
-        const file = req.body.file
-        if (isNil(file) || !isMultipartFile(file)) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'File is required',
-                },
-            })
-        }
-
-        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-        if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP',
-                },
-            })
-        }
-
-        const maxSize = 5 * 1024 * 1024 // 5MB
-        if (file.data.length > maxSize) {
-            throw new ActivepiecesError({
-                code: ErrorCode.VALIDATION,
-                params: {
-                    message: 'File size exceeds 5MB limit',
-                },
-            })
-        }
-
-        const savedFile = await fileService(app.log).save({
-            data: file.data,
-            size: file.data.length,
+        const imageUrl = await fileService(app.log).uploadPublicAsset({
+            file: req.body.profilePicture,
             type: FileType.USER_PROFILE_PICTURE,
-            compression: FileCompression.NONE,
-            platformId: req.principal.platform.id,
-            fileName: file.filename,
-            metadata: {
-                identityId,
-                mimetype: file.mimetype ?? '',
-            },
+            platformId,
+            allowedMimeTypes: PROFILE_PICTURE_ALLOWED_TYPES,
+            maxFileSizeInBytes: AP_MAXIMUM_PROFILE_PICTURE_SIZE,
+            metadata: { identityId },
         })
 
-        const imageUrl = `${system.get(WorkerSystemProp.FRONTEND_URL)}/api/v1/users/profile-pictures/${savedFile.id}`
+        if (!isNil(imageUrl)) {
+            await userIdentityService(app.log).update(identityId, { imageUrl })
+        }
 
-        await userIdentityService(app.log).updateImageUrl({
-            id: identityId,
-            imageUrl,
-        })
-
-        return { imageUrl }
+        return userIdentityService(app.log).getBasicInformation(identityId)
     })
 
     app.delete('/me/profile-picture', DeleteProfilePictureRequest, async (req) => {
@@ -88,28 +50,11 @@ export const usersController: FastifyPluginAsyncTypebox = async (app) => {
         const user = await userService.getOrThrow({ id: userId })
         const identityId = user.identityId
 
-        await userIdentityService(app.log).updateImageUrl({
-            id: identityId,
-            imageUrl: null,
-        })
+        await userIdentityService(app.log).update(identityId, { imageUrl: null })
 
         return { success: true }
     })
 
-    app.get('/profile-pictures/:id', GetProfilePictureRequest, async (req, reply) => {
-        const file = await fileService(app.log).getFileOrThrow({ fileId: req.params.id, type: FileType.USER_PROFILE_PICTURE })
-        const data = await fileService(app.log).getDataOrThrow({ fileId: req.params.id, type: FileType.USER_PROFILE_PICTURE })
-
-        return reply
-            .header(
-                'Content-Disposition',
-                `inline; filename="${encodeURI(file.fileName ?? '')}"`,
-            )
-            .header('Cache-Control', 'public, max-age=86400')
-            .type(file.metadata?.mimetype ?? 'image/jpeg')
-            .status(StatusCodes.OK)
-            .send(data.data)
-    })
 }
 
 const GetUserByIdRequest = {
@@ -126,19 +71,17 @@ const GetUserByIdRequest = {
     },
 }
 
-const UploadProfilePictureRequest = {
+const UpdateMeRequest = {
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
     },
     schema: {
         consumes: ['multipart/form-data'],
         body: Type.Object({
-            file: ApMultipartFile,
+            profilePicture: Type.Optional(ApMultipartFile),
         }),
         response: {
-            [StatusCodes.OK]: Type.Object({
-                imageUrl: Type.String(),
-            }),
+            [StatusCodes.OK]: UpdateMeResponse,
         },
     },
 }
@@ -153,16 +96,5 @@ const DeleteProfilePictureRequest = {
     },
     config: {
         security: securityAccess.publicPlatform([PrincipalType.USER]),
-    },
-}
-
-const GetProfilePictureRequest = {
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
-    },
-    config: {
-        security: securityAccess.public(),
     },
 }

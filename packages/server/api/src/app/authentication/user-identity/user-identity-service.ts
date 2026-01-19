@@ -8,7 +8,7 @@ import { UserIdentityEntity } from './user-identity-entity'
 export const userIdentityRepository = repoFactory(UserIdentityEntity)
 
 export const userIdentityService = (log: FastifyBaseLogger) => ({
-    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'>): Promise<UserIdentity> {
+    async create(params: Pick<UserIdentity, 'email' | 'password' | 'firstName' | 'lastName' | 'trackEvents' | 'newsLetter' | 'provider' | 'verified'> & { imageUrl?: string }): Promise<UserIdentity> {
         log.info({
             email: params.email,
         }, 'Creating user identity')
@@ -38,6 +38,7 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             trackEvents: params.trackEvents,
             newsLetter: params.newsLetter,
             tokenVersion: nanoid(),
+            imageUrl: params.imageUrl,
         }
         const identity = await userIdentityRepository().save(newUserIdentity)
         return identity
@@ -109,12 +110,8 @@ export const userIdentityService = (log: FastifyBaseLogger) => ({
             verified: true,
         })
     },
-    async updateImageUrl(params: UpdateImageUrlParams): Promise<UserIdentity> {
-        const user = await userIdentityRepository().findOneByOrFail({ id: params.id })
-        return userIdentityRepository().save({
-            ...user,
-            imageUrl: params.imageUrl,
-        })
+    async update(id: string, params: UpdateParams): Promise<void> {
+        await userIdentityRepository().update(id, params)
     },
 })
 
@@ -133,9 +130,8 @@ type UpdatePasswordParams = {
     newPassword: string
 }
 
-type UpdateImageUrlParams = {
-    id: string
-    imageUrl: string | null
+type UpdateParams = {
+    imageUrl?: string | null
 }
 
 type VerifyIdentityPasswordParams = {

@@ -1,4 +1,8 @@
-import { UserWithBadges } from '@activepieces/shared';
+import {
+  AP_MAXIMUM_PROFILE_PICTURE_SIZE,
+  PROFILE_PICTURE_ALLOWED_TYPES,
+  UserWithBadges,
+} from '@activepieces/shared';
 import { DialogTitle } from '@radix-ui/react-dialog';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
@@ -37,7 +41,7 @@ export function AccountSettingsDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const uploadMutation = useMutation({
-    mutationFn: (file: File) => userApi.uploadProfilePicture(file),
+    mutationFn: (file: File) => userApi.updateMe(file),
     onSuccess: () => {
       userHooks.invalidateCurrentUser(queryClient);
       toast.success(t('Profile picture updated successfully'));
@@ -50,17 +54,11 @@ export function AccountSettingsDialog({
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > AP_MAXIMUM_PROFILE_PICTURE_SIZE) {
         toast.error(t('File size exceeds 5MB limit'));
         return;
       }
-      const allowedTypes = [
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-      ];
-      if (!allowedTypes.includes(file.type)) {
+      if (!PROFILE_PICTURE_ALLOWED_TYPES.includes(file.type)) {
         toast.error(
           t('Invalid file type. Allowed types: JPEG, PNG, GIF, WEBP'),
         );
