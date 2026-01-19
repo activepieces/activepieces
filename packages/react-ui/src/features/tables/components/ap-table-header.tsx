@@ -38,8 +38,10 @@ import {
   getProjectName,
   projectCollectionUtils,
 } from '@/hooks/project-collection';
+import { downloadFile } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
 
+import { tablesApi } from '../lib/tables-api';
 import { tablesUtils } from '../lib/utils';
 
 import { useTableState } from './ap-table-state-provider';
@@ -79,8 +81,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   const showPushToGit = gitSyncHooks.useShowPushToGit();
 
   const exportTemplate = async () => {
-    const { tablesApi } = await import('../lib/tables-api');
-    const { downloadFile } = await import('@/lib/utils');
     const tableTemplate = await tablesApi.getTemplate(table.id);
     downloadFile({
       obj: JSON.stringify(tableTemplate, null, 2),
@@ -90,7 +90,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
   };
 
   const downloadCsv = async () => {
-    const { tablesApi } = await import('../lib/tables-api');
     const exportedTable = await tablesApi.export(table.id);
     tablesUtils.exportTables([exportedTable]);
   };
@@ -185,7 +184,6 @@ export function ApTableHeader({ onBack }: ApTableHeaderProps) {
                       )}
                       entityName={t('table')}
                       mutationFn={async () => {
-                        const { tablesApi } = await import('../lib/tables-api');
                         await tablesApi.delete(table.id);
                         onBack();
                       }}
