@@ -17,6 +17,10 @@ export type SearchInputProps = Omit<
 
 const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
   ({ type, placeholder = t('Search'), ...props }, ref) => {
+    const inputRef = React.useRef<HTMLInputElement>(null);
+
+    React.useImperativeHandle(ref, () => inputRef.current!);
+
     return (
       <div
         className={cn(
@@ -28,7 +32,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
         <Input
           {...props}
           type={type}
-          ref={ref}
+          ref={inputRef}
           className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none p-0 bg-transparent"
           placeholder={placeholder}
           onChange={(e) => props.onChange(e.target.value)}
@@ -41,6 +45,7 @@ const SearchInput = React.forwardRef<HTMLInputElement, SearchInputProps>(
               e.stopPropagation();
               e.preventDefault();
               props.onChange('');
+              inputRef.current?.focus();
             }}
             Icon={X}
           ></SelectUtilButton>
