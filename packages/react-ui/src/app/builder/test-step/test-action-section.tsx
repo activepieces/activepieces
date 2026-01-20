@@ -3,16 +3,13 @@ import React, { useContext, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Dot } from '@/components/ui/dot';
-import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   FlowAction,
   FlowActionType,
   Step,
-  TodoType,
   flowStructureUtil,
   isNil,
   StepRunResponse,
-  PopulatedTodo,
   AgentResult,
 } from '@activepieces/shared';
 
@@ -20,7 +17,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { DynamicPropertiesContext } from '../piece-properties/dynamic-properties-context';
 
 import { defaultAgentOutput, isRunAgent } from './agent-test-step';
-import { TodoTestingDialog } from './custom-test-step/test-todo-dialog';
 import TestWebhookDialog from './custom-test-step/test-webhook-dialog';
 import { TestSampleDataViewer } from './test-sample-data-viewer';
 import { TestButtonTooltip } from './test-step-tooltip';
@@ -33,17 +29,8 @@ type TestActionComponentProps = {
 
 enum DialogType {
   NONE = 'NONE',
-  TODO_CREATE_TASK = 'TODO_CREATE_TASK',
   WEBHOOK = 'WEBHOOK',
 }
-
-const isTodoCreateTask = (step: FlowAction) => {
-  return (
-    step.type === FlowActionType.PIECE &&
-    step.settings.pieceName === '@activepieces/piece-todos' &&
-    step.settings.actionName === 'createTodoAndWait'
-  );
-};
 
 const isReturnResponseAndWaitForWebhook = (step: FlowAction) => {
   return (
@@ -82,36 +69,12 @@ const TestStepSectionImplementation = React.memo(
         currentStep,
         setErrorMessage,
         setConsoleLogs,
-        onSuccess: () => {
-          setTodo(null);
-        },
+        onSuccess: undefined,
       });
 
-    const [todo, setTodo] = useState<PopulatedTodo | null>(null);
     const lastTestDate = currentStep.settings.sampleData?.lastTestDate;
     const sampleDataExists = !isNil(lastTestDate) || !isNil(errorMessage);
 
-    const handleTodoTest = async () => {
-      setActiveDialog(DialogType.TODO_CREATE_TASK);
-      testAction({
-        type: 'todoAction',
-        onProgress: async (progress: StepRunResponse) => {
-          if (progress.success) {
-            const todoId = getTodoIdFromStepRunResponse(progress);
-            if (todoId) {
-              const todo = await todosApi.get(todoId);
-              setTodo(todo);
-            } else {
-              setErrorMessage(
-                `${t(`Can't find todo ID in the response`)} ${JSON.stringify(
-                  progress.output,
-                )}`,
-              );
-            }
-          }
-        },
-      });
-    };
     const handleAgentTest = async () => {
       testAction({
         type: 'agentAction',
@@ -128,9 +91,7 @@ const TestStepSectionImplementation = React.memo(
     };
 
     const onTestButtonClick = async () => {
-      if (isTodoCreateTask(currentStep)) {
-        handleTodoTest();
-      } else if (isRunAgent(currentStep)) {
+      if (isRunAgent(currentStep)) {
         setLiveAgentResult(defaultAgentOutput);
         handleAgentTest();
       } else if (isReturnResponseAndWaitForWebhook(currentStep)) {
@@ -142,7 +103,6 @@ const TestStepSectionImplementation = React.memo(
 
     const handleCloseDialog = () => {
       setActiveDialog(DialogType.NONE);
-      setTodo(null);
       abortControllerRef.current.abort();
       setMutationKey([Date.now().toString()]);
     };
@@ -187,27 +147,6 @@ const TestStepSectionImplementation = React.memo(
             onRetest={onTestButtonClick}
           ></TestSampleDataViewer>
         )}
-        {activeDialog === DialogType.TODO_CREATE_TASK &&
-          currentStep.type === FlowActionType.PIECE &&
-          todo && (
-            <TodoTestingDialog
-              open={true}
-              key={todo.id}
-              onOpenChange={(open) => {
-                if (!open) {
-                  handleCloseDialog();
-                }
-              }}
-              todo={todo}
-              currentStep={currentStep}
-              setErrorMessage={setErrorMessage}
-              type={
-                currentStep.settings.actionName === 'createTodoAndWait'
-                  ? TodoType.INTERNAL
-                  : TodoType.EXTERNAL
-              }
-            />
-          )}
         {activeDialog === DialogType.WEBHOOK && (
           <TestWebhookDialog
             testingMode="returnResponseAndWaitForNextWebhook"
@@ -241,14 +180,3 @@ TestStepSectionImplementation.displayName = 'TestStepSectionImplementation';
 TestActionSection.displayName = 'TestActionSection';
 
 export { TestActionSection };
-const getTodoIdFromStepRunResponse = (stepRunResponse: StepRunResponse) => {
-  if (
-    stepRunResponse.output &&
-    typeof stepRunResponse.output === 'object' &&
-    'id' in stepRunResponse.output &&
-    typeof stepRunResponse.output.id === 'string'
-  ) {
-    return stepRunResponse.output.id;
-  }
-  return null;
-};

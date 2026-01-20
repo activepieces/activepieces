@@ -61,19 +61,6 @@ export const CORE_ACTIONS_METADATA = [
   CORE_STEP_METADATA[FlowActionType.ROUTER],
 ] as const;
 
-export const TODO_ACTIONS = {
-  createTodo: 'createTodo',
-  createTodoAndWait: 'createTodoAndWait',
-  waitForApproval: 'wait_for_approval',
-};
-
-export const HIDDEN_ACTIONS = [
-  {
-    pieceName: '@activepieces/piece-todos',
-    actions: [TODO_ACTIONS.createTodoAndWait, TODO_ACTIONS.waitForApproval],
-  },
-];
-
 export const stepUtils = {
   getKeys(
     step: FlowAction | FlowTrigger,
