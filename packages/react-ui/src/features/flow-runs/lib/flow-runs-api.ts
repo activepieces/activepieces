@@ -19,7 +19,7 @@ import {
 type TestStepParams = {
   socket: Socket;
   request: CreateStepRunRequestBody;
-  // optional callback for steps like agent and todo
+  // optional callback for steps like agent
   onProgress?: (progress: StepRunResponse) => void;
   onFinish?: () => void;
 };

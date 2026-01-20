@@ -57,7 +57,7 @@ export const testStepHooks = {
       }: {
         response:
           | {
-              testType: 'trigger' | 'mockData' | 'todo';
+              testType: 'trigger' | 'mockData';
               output?: unknown;
               success: boolean;
             }
@@ -369,7 +369,7 @@ type TestActionMutationParams =
       onProgress: undefined;
     }
   | {
-      type: 'todoAction' | 'agentAction';
+      type: 'agentAction';
       onProgress: (progress: StepRunResponse) => void;
       onFinish?: () => void;
     }

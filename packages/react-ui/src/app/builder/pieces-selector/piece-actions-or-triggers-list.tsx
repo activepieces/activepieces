@@ -22,7 +22,6 @@ import {
 import { usePieceSearchContext } from '../../../features/pieces/lib/piece-search-context';
 import { useBuilderStateContext } from '../builder-hooks';
 
-import { CreateTodoDialog } from './add-todo-step-dialog';
 import GenericActionOrTriggerItem from './generic-piece-selector-item';
 type PieceActionsOrTriggersListProps = {
   hidePieceIconAndDescription: boolean;
@@ -95,20 +94,6 @@ export const PieceActionsOrTriggersList: React.FC<
       <CardList className="min-w-[350px] h-full gap-0" listClassName="gap-0">
         {actionsOrTriggers &&
           actionsOrTriggers.map((item, index) => {
-            const isCreateTodoAction =
-              item.type === FlowActionType.PIECE &&
-              item.actionOrTrigger.name === 'createTodo';
-
-            if (isCreateTodoAction) {
-              return (
-                <CreateTodoDialog
-                  key={index}
-                  pieceSelectorItem={item}
-                  operation={operation}
-                  hidePieceIconAndDescription={hidePieceIconAndDescription}
-                />
-              );
-            }
             return (
               <GenericActionOrTriggerItem
                 key={index}
