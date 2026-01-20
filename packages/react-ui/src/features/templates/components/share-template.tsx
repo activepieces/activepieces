@@ -8,20 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { internalErrorToast } from '@/components/ui/sonner';
-import { flowsApi } from '@/features/flows/lib/flows-api';
+import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { api } from '@/lib/api';
 import { authenticationSession } from '@/lib/authentication-session';
 import { FROM_QUERY_PARAM } from '@/lib/navigation-utils';
 import {
   ApErrorParams,
   ErrorCode,
-  FlowOperationType,
-  Template,
   isNil,
+  Template,
 } from '@activepieces/shared';
 
 import { PieceIconList } from '../../pieces/components/piece-icon-list';
-import { templatesApi } from '../lib/templates-api';
 
 const TemplateViewer = ({ template }: { template: Template }) => {
   const navigate = useNavigate();
@@ -30,26 +28,13 @@ const TemplateViewer = ({ template }: { template: Template }) => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      const flow = await flowsApi.create({
+      const flows = await flowHooks.importFlowsFromTemplates({
+        templates: [template],
         projectId: authenticationSession.getProjectId()!,
-        displayName: template.name,
       });
-      const flowTemplate = template.flows?.[0];
-      if (!flowTemplate) {
-        throw new Error('Template does not have a flow template');
-      }
-      const updatedFlow = await flowsApi.update(flow.id, {
-        type: FlowOperationType.IMPORT_FLOW,
-        request: {
-          displayName: flowTemplate.displayName,
-          trigger: flowTemplate.trigger,
-          schemaVersion: flowTemplate.schemaVersion,
-        },
-      });
-      return updatedFlow;
+      return flows[0];
     },
     onSuccess: (data) => {
-      templatesApi.incrementUsageCount(template.id);
       navigate(`/flows/${data.id}`);
     },
     onError: (error) => {

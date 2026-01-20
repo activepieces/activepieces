@@ -1,7 +1,7 @@
 {
   "name": "activepieces",
-  "version": "0.76.1",
-  "rcVersion": "0.77.0-rc.0",
+  "version": "0.77.4",
+  "rcVersion": "0.78.0-rc.0",
   "scripts": {
     "prepare": "husky install",
     "prebuild": "node tools/scripts/install-bun.js",
@@ -122,10 +122,13 @@
     "@tiptap/extension-document": "3.15.3",
     "@tiptap/extension-hard-break": "3.15.3",
     "@tiptap/extension-history": "3.15.3",
+    "@tiptap/extension-image": "3.15.3",
     "@tiptap/extension-mention": "3.15.3",
     "@tiptap/extension-paragraph": "3.15.3",
     "@tiptap/extension-placeholder": "3.15.3",
+    "@tiptap/extension-table": "3.15.3",
     "@tiptap/extension-text": "3.15.3",
+    "@tiptap/markdown": "3.15.3",
     "@tiptap/pm": "3.15.3",
     "@tiptap/react": "3.15.3",
     "@tiptap/starter-kit": "3.15.3",

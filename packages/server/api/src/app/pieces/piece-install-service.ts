@@ -17,7 +17,7 @@ import {
     WorkerJobType,
 } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { EngineHelperExtractPieceInformation, EngineHelperResponse } from 'server-worker'
+import { OperationResponse } from 'server-worker'
 import { fileService } from '../file/file.service'
 import { pubsub } from '../helper/pubsub'
 import { userInteractionWatcher } from '../workers/user-interaction-watcher'
@@ -102,7 +102,7 @@ async function savePiecePackage(platformId: string | undefined, projectId: strin
 }
 
 const extractPieceInformation = async (request: ExecuteExtractPieceMetadata, projectId: string | undefined, log: FastifyBaseLogger): Promise<PieceMetadata> => {
-    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<EngineHelperResponse<EngineHelperExtractPieceInformation>>({
+    const engineResponse = await userInteractionWatcher(log).submitAndWaitForResponse<OperationResponse<PieceMetadata>>({
         jobType: WorkerJobType.EXECUTE_EXTRACT_PIECE_INFORMATION,
         platformId: request.platformId,
         piece: request,

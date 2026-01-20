@@ -21,6 +21,7 @@ const AllCategoriesViewSkeleton = ({
 
 type AllCategoriesViewProps = {
   templatesByCategory: Record<string, Template[]>;
+  categories: string[];
   onCategorySelect: (category: string) => void;
   onTemplateSelect: (template: Template) => void;
   isLoading?: boolean;
@@ -29,6 +30,7 @@ type AllCategoriesViewProps = {
 
 export const AllCategoriesView = ({
   templatesByCategory,
+  categories,
   onCategorySelect,
   onTemplateSelect,
   isLoading = false,
@@ -40,7 +42,7 @@ export const AllCategoriesView = ({
 
   return (
     <div className="space-y-6">
-      {Object.keys(templatesByCategory).map((category) => {
+      {categories.map((category) => {
         const categoryTemplates = templatesByCategory[category];
 
         return (

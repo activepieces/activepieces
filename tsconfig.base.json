@@ -454,6 +454,51 @@
       ],
       "@activepieces/piece-billplz": [
         "packages/pieces/community/billplz/src/index.ts"
+      ],
+      "@activepieces/piece-vouchery-io": [
+        "packages/pieces/community/vouchery-io/src/index.ts"
+      ],
+      "@activepieces/piece-lokalise": [
+        "packages/pieces/community/lokalise/src/index.ts"
+      ],
+      "@activepieces/piece-digital-ocean": [
+        "packages/pieces/community/digital-ocean/src/index.ts"
+      ],
+      "@activepieces/piece-hashi-corp-vault": [
+        "packages/pieces/community/hashi-corp-vault/src/index.ts"
+      ],
+      "@activepieces/piece-leap-ai": [
+        "packages/pieces/community/leap-ai/src/index.ts"
+      ],
+      "@activepieces/piece-time-ops": [
+        "packages/pieces/community/time-ops/src/index.ts"
+      ],
+      "@activepieces/piece-formitable": [
+        "packages/pieces/community/formitable/src/index.ts"
+      ],
+      "@activepieces/piece-gender-api": [
+        "packages/pieces/community/gender-api/src/index.ts"
+      ],
+      "@activepieces/piece-plausible": [
+        "packages/pieces/community/plausible/src/index.ts"
+      ],
+      "@activepieces/piece-woodpecker": [
+        "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-moveo-ai": [
+        "packages/pieces/community/moveo-ai/src/index.ts"
+      ],
+      "@activepieces/piece-oneclickimpact": [
+        "packages/pieces/community/oneclickimpact/src/index.ts"
+      ],
+      "@activepieces/piece-bokio": [
+        "packages/pieces/community/bokio/src/index.ts"
+      ],
+      "@activepieces/piece-vidnoz": [
+        "packages/pieces/community/vidnoz/src/index.ts"
+      ],
+      "@activepieces/piece-lets-calendar": [
+        "packages/pieces/community/lets-calendar/src/index.ts"
       ]
     },
     "resolveJsonModule": true

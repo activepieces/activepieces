@@ -63,6 +63,7 @@ export const UserWithMetaInformation = Type.Object({
     created: Type.String(),
     updated: Type.String(),
     lastActiveDate: Nullable(Type.String()),
+    imageUrl: Nullable(Type.String()),
 })
 
 export type UserWithMetaInformation = Static<typeof UserWithMetaInformation>
@@ -74,3 +75,29 @@ export const UserWithBadges = Type.Object({
 })
 
 export type UserWithBadges = Static<typeof UserWithBadges>
+
+export const AP_MAXIMUM_PROFILE_PICTURE_SIZE = 5 * 1024 * 1024 // 5 MB
+
+export const PROFILE_PICTURE_ALLOWED_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+]
+
+export const UpdateMeRequestBody = Type.Object({
+    profilePicture: Type.Optional(Type.Any()),
+})
+
+export type UpdateMeRequestBody = Static<typeof UpdateMeRequestBody>
+
+export const UpdateMeResponse = Type.Object({
+    email: Type.String(),
+    firstName: Type.String(),
+    lastName: Type.String(),
+    trackEvents: Type.Boolean(),
+    newsLetter: Type.Boolean(),
+    imageUrl: Nullable(Type.String()),
+})
+
+export type UpdateMeResponse = Static<typeof UpdateMeResponse>

@@ -24,6 +24,7 @@ const flowVersionWithBranching: FlowVersion = {
     updatedBy: '',
     displayName: 'Standup Reminder',
     agentIds: [],
+    notes: [],
     trigger: {
         name: 'trigger',
         type: FlowTriggerType.PIECE,
@@ -146,6 +147,7 @@ function createCodeAction(name: string): FlowAction {
     }
 }
 const emptyScheduleFlowVersion: FlowVersion = {
+    notes: [],
     id: 'pj0KQ7Aypoa9OQGHzmKDl',
     created: '2023-05-24T00:16:41.353Z',
     updated: '2023-05-24T00:16:41.353Z',
@@ -198,6 +200,7 @@ describe('Flow Helper', () => {
         }
         const result = flowOperations.apply(flowVersionWithBranching, operation)
         const expectedFlowVersion: FlowVersion = {
+            notes: [],
             id: 'pj0KQ7Aypoa9OQGHzmKDl',
             updatedBy: '',
             created: '2023-05-24T00:16:41.353Z',
@@ -348,6 +351,7 @@ describe('Flow Helper', () => {
 
 test('Duplicate Flow With Loops using Import', () => {
     const flowVersion: FlowVersion = {
+        notes: [],
         id: '2XuLcKZWSgKkiHh6RqWXg',
         created: '2023-05-23T00:14:47.809Z',
         updated: '2023-05-23T00:14:47.809Z',

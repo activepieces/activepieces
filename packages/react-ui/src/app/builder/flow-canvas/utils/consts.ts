@@ -1,3 +1,5 @@
+import { NoteColorVariant } from '@activepieces/shared';
+
 import { ApLoopReturnLineCanvasEdge as ApLoopReturnCanvasEdge } from '../edges/loop-return-edge';
 import { ApLoopStartLineCanvasEdge as ApLoopStartCanvasEdge } from '../edges/loop-start-edge';
 import { ApRouterEndCanvasEdge } from '../edges/router-end-edge';
@@ -6,6 +8,7 @@ import { ApStraightLineCanvasEdge } from '../edges/straight-line-edge';
 import { ApBigAddButtonCanvasNode } from '../nodes/big-add-button-node';
 import ApGraphEndWidgetNode from '../nodes/flow-end-widget-node';
 import ApLoopReturnCanvasNode from '../nodes/loop-return-node';
+import { ApNoteCanvasNode } from '../nodes/note-node';
 import { ApStepCanvasNode } from '../nodes/step-node';
 
 import { ApEdgeType, ApNodeType } from './types';
@@ -26,13 +29,16 @@ const LABEL_HEIGHT = 30;
 const LABEL_VERTICAL_PADDING = 12;
 const STEP_DRAG_OVERLAY_WIDTH = 75;
 const STEP_DRAG_OVERLAY_HEIGHT = 75;
+const NOTE_CREATION_OVERLAY_WIDTH = 150;
+const NOTE_CREATION_OVERLAY_HEIGHT = 150;
 const VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD =
   VERTICAL_OFFSET_BETWEEN_LOOP_AND_CHILD + LABEL_HEIGHT;
 const LINE_WIDTH = 1.5;
 const DRAGGED_STEP_TAG = 'dragged-step';
+const DRAGGED_NOTE_TAG = 'dragged-note';
 const HORIZONTAL_SPACE_BETWEEN_NODES = 80;
 const AP_NODE_SIZE: Record<
-  Exclude<ApNodeType, ApNodeType.GRAPH_START_WIDGET>,
+  Exclude<ApNodeType, ApNodeType.GRAPH_START_WIDGET | ApNodeType.NOTE>,
   { height: number; width: number }
 > = {
   [ApNodeType.BIG_ADD_BUTTON]: {
@@ -82,6 +88,7 @@ export const flowCanvasConsts = {
   LABEL_HEIGHT,
   ARC_LEFT_UP,
   VERTICAL_OFFSET_BETWEEN_ROUTER_AND_CHILD,
+
   doesNodeAffectBoundingBox: doesNodeAffectBoundingBoxWidth,
   edgeTypes: {
     [ApEdgeType.STRAIGHT_LINE]: ApStraightLineCanvasEdge,
@@ -95,16 +102,23 @@ export const flowCanvasConsts = {
     [ApNodeType.LOOP_RETURN_NODE]: ApLoopReturnCanvasNode,
     [ApNodeType.BIG_ADD_BUTTON]: ApBigAddButtonCanvasNode,
     [ApNodeType.GRAPH_END_WIDGET]: ApGraphEndWidgetNode,
+    [ApNodeType.NOTE]: ApNoteCanvasNode,
   },
   DRAGGED_STEP_TAG,
+  DRAGGED_NOTE_TAG,
   HORIZONTAL_SPACE_BETWEEN_NODES,
   HANDLE_STYLING: { opacity: 0, cursor: 'default' },
   LABEL_VERTICAL_PADDING,
   STEP_DRAG_OVERLAY_WIDTH,
   STEP_DRAG_OVERLAY_HEIGHT,
+  NOTE_CREATION_OVERLAY_WIDTH,
+  NOTE_CREATION_OVERLAY_HEIGHT,
   STEP_CONTEXT_MENU_ATTRIBUTE: 'step-context-menu',
   SELECTION_RECT_CHEVRON_ATTRIBUTE: 'selection-rect-chevron',
   BUILDER_NAVIGATION_SIDEBAR_ID: 'builder-navigation-sidebar',
   NODE_SELECTION_RECT_CLASS_NAME: 'react-flow__nodesselection-rect',
   SIDEBAR_ANIMATION_DURATION: 200,
+  DEFAULT_NOTE_CONTENT: '<br>',
+  DEFAULT_NOTE_COLOR: NoteColorVariant.BLUE,
+  BUILDER_HEADER_HEIGHT: 60,
 };

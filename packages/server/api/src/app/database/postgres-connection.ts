@@ -327,6 +327,10 @@ import { MigrateOldTemplateCategoriesToDynamicOne1767624311536 } from './migrati
 import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
 import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
 import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
+import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130030028-AddNotesToFlowVersion'
+import { AddTablesIntoTemplateEntity1768306510367 } from './migration/postgres/1768306510367-AddTablesIntoTemplateEntity'
+import { AddImageToUser1768502658760 } from './migration/postgres/1768502658760-ADDIMAGETOUSER'
+import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres/1768738475196-RemoveUsageCountFromTemplates'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -669,7 +673,11 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddTriggeredBy1767697998391,
         UpdateCacheStructure1767904545112,
         AddOutdatedToReport1767994436597,
+        AddNotesToFlowVersion1768130030028,
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
+        AddImageToUser1768502658760,
+        RemoveUsageCountFromTemplates1768738475196,
+        AddTablesIntoTemplateEntity1768306510367,
     ]
     return migrations
 }
