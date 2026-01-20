@@ -45,19 +45,18 @@ export const AppSidebarHeader = () => {
                     'w-full flex items-center justify-center h-9',
                   )}
                 >
-                  <img
-                    src={
-                      state === 'collapsed'
-                        ? branding.logos.logoIconUrl
-                        : branding.logos.fullLogoUrl
-                    }
-                    alt={t('home')}
-                    className={cn(
-                      'object-contain',
-                      state === 'collapsed' ? 'h-5 w-5' : 'w-full h-9',
-                    )}
-                    draggable={false}
-                  />
+                  {state === 'collapsed' ? (
+                    <img
+                      src={branding.logos.logoIconUrl}
+                      alt={t('home')}
+                      className="h-5 w-5 object-contain"
+                      draggable={false}
+                    />
+                  ) : (
+                    <span className="font-semibold text-sm truncate">
+                      {branding.websiteName}
+                    </span>
+                  )}
                 </div>
               </Link>
             </div>
