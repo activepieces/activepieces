@@ -493,6 +493,9 @@
       ],
       "@activepieces/piece-vidnoz": [
         "packages/pieces/community/vidnoz/src/index.ts"
+      ],
+      "@activepieces/piece-lets-calendar": [
+        "packages/pieces/community/lets-calendar/src/index.ts"
       ]
     },
     "resolveJsonModule": true
