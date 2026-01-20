@@ -485,6 +485,9 @@
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
       ],
+      "@activepieces/piece-paywhirl": [
+        "packages/pieces/community/paywhirl/src/index.ts"
+      ],
       "@activepieces/piece-smsmode": [
         "packages/pieces/community/smsmode/src/index.ts"
       ],
