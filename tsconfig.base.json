@@ -484,6 +484,9 @@
       ],
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-visible": [
+        "packages/pieces/community/visible/src/index.ts"
       ]
     },
     "resolveJsonModule": true
