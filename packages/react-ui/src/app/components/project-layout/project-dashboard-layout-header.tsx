@@ -1,11 +1,5 @@
 import { t } from 'i18next';
-import {
-  History,
-  Link2,
-  Package,
-  Table2,
-  Workflow,
-} from 'lucide-react';
+import { History, Link2, Package, Table2, Workflow } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useEmbedding } from '@/components/embed-provider';
@@ -102,12 +96,13 @@ export const ProjectDashboardLayoutHeader = () => {
         {!embedState.hideSideNav && (
           <TabsList variant="outline">
             {visiblePrimaryTabs.map(renderTab)}
-            {visiblePrimaryTabs.length > 0 && visibleSecondaryTabs.length > 0 && (
-              <Separator
-                orientation="vertical"
-                className="mx-2 h-5 self-center mb-2"
-              />
-            )}
+            {visiblePrimaryTabs.length > 0 &&
+              visibleSecondaryTabs.length > 0 && (
+                <Separator
+                  orientation="vertical"
+                  className="mx-2 h-5 self-center mb-2"
+                />
+              )}
             {visibleSecondaryTabs.map(renderTab)}
           </TabsList>
         )}

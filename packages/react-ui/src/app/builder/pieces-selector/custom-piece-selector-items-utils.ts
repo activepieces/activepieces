@@ -1,11 +1,6 @@
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
-import {
-  PieceSelectorOperation,
-  PieceSelectorPieceItem,
-} from '@/lib/types';
-import {
-  FlowOperationType,
-} from '@activepieces/shared';
+import { PieceSelectorOperation, PieceSelectorPieceItem } from '@/lib/types';
+import { FlowOperationType } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
 
