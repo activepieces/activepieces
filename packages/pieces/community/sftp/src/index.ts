@@ -160,7 +160,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
           valid: false,
           error: 'Either password or private key must be provided for non-anonymous authentication.',
         };
-      };
+      }
 
       switch (protocolBackwardCompatibility) {
         case 'sftp': {
@@ -169,7 +169,7 @@ export const sftpAuth = PieceAuth.CustomAuth({
               valid: false,
               error: 'Anonymous login is not supported for SFTP protocol.',
             };
-          };
+          }
 
           client = await getClient<Client>(auth);
           break;
