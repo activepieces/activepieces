@@ -487,6 +487,15 @@
       ],
       "@activepieces/piece-detecting-ai": [
         "packages/pieces/community/detecting-ai/src/index.ts"
+      ],
+      "@activepieces/piece-oneclickimpact": [
+        "packages/pieces/community/oneclickimpact/src/index.ts"
+      ],
+      "@activepieces/piece-bokio": [
+        "packages/pieces/community/bokio/src/index.ts"
+      ],
+      "@activepieces/piece-vidnoz": [
+        "packages/pieces/community/vidnoz/src/index.ts"
       ]
     },
     "resolveJsonModule": true
