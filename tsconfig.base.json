@@ -484,6 +484,9 @@
       ],
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-chain-aware": [
+        "packages/pieces/community/chain-aware/src/index.ts"
       ]
     },
     "resolveJsonModule": true
