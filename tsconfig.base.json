@@ -520,6 +520,9 @@
       ],
       "@activepieces/piece-predis-ai": [
         "packages/pieces/community/predis-ai/src/index.ts"
+      ],
+      "@activepieces/piece-week-done": [
+        "packages/pieces/community/week-done/src/index.ts"
       ]
     },
     "resolveJsonModule": true
