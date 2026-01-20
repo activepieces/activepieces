@@ -142,7 +142,7 @@ const AIActionItem = ({
   if (isAgent) {
     return (
       <div
-        className="relative h-full rounded-md bg-card hover:bg-[#f5f5f5] hover:text-accent-foreground transition-colors cursor-pointer overflow-hidden group"
+        className="relative h-full rounded-md bg-card hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer overflow-hidden group"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={onClick}
@@ -189,7 +189,7 @@ const AIActionItem = ({
 
   return (
     <div
-      className="relative w-full h-full rounded-md bg-card hover:bg-[#f5f5f5] transition-colors cursor-pointer overflow-hidden group flex"
+      className="relative w-full h-full rounded-md bg-card hover:bg-accent transition-colors cursor-pointer overflow-hidden group flex"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
