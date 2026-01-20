@@ -508,6 +508,9 @@
       ],
       "@activepieces/piece-lets-calendar": [
         "packages/pieces/community/lets-calendar/src/index.ts"
+      ],
+      "@activepieces/piece-predis-ai": [
+        "packages/pieces/community/predis-ai/src/index.ts"
       ]
     },
     "resolveJsonModule": true
