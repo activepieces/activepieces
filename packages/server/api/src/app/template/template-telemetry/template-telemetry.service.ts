@@ -82,6 +82,7 @@ function getEventConfig(event: TemplateTelemetryEvent): { url: string, body?: Re
         case TemplateTelemetryEventType.EXPLORE_VIEW:
             return {
                 url: `${INTERNAL_TELEMETRY_URL}/explore/view`,
+                body: event,
             }
         default:
             throw new Error(`Unknown template telemetry event type: ${(event as { eventType: string }).eventType}`)
