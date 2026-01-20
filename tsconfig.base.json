@@ -487,6 +487,9 @@
       ],
       "@activepieces/piece-bokio": [
         "packages/pieces/community/bokio/src/index.ts"
+      ],
+      "@activepieces/piece-vidnoz": [
+        "packages/pieces/community/vidnoz/src/index.ts"
       ]
     },
     "resolveJsonModule": true
