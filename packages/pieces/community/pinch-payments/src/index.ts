@@ -31,7 +31,7 @@ export const pinchPayments = createPiece({
   minimumSupportedRelease: '0.36.1',
   categories: [PieceCategory.PAYMENT_PROCESSING],
   logoUrl: "https://cdn.activepieces.com/pieces/pinch-payments.png",
-  authors: ['onyedikachi-david'],
+  authors: ['onyedikachi-david', 'dkarzon'],
   actions: [
     createOrUpdatePayerAction,
     createRealtimePaymentAction,
