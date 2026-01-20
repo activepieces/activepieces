@@ -5,6 +5,7 @@ import { StepMetadataWithSuggestions } from '@/lib/types';
 export enum PieceSelectorTabType {
   EXPLORE = 'EXPLORE',
   AI_AND_AGENTS = 'AI_AND_AGENTS',
+  APPROVALS = 'APPROVALS',
   APPS = 'APPS',
   UTILITY = 'UTILITY',
   NONE = 'NONE',
