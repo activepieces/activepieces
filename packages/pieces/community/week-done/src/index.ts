@@ -30,7 +30,7 @@ export const weekdone = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: 'https://cdn.activepieces.com/pieces/week-done.png',
   categories: [PieceCategory.PRODUCTIVITY],
-  authors: [],
+  authors: ['onyedikachi-david'],
   auth: weekdoneAuth,
   actions: [
     searchItemsAction,
