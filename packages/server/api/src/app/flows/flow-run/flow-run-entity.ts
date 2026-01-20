@@ -4,15 +4,12 @@ import {
     FlowRun,
     FlowVersion,
     Project,
+    User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
-    ARRAY_COLUMN_TYPE,
     BaseColumnSchemaPart,
-    isPostgres,
-    JSONB_COLUMN_TYPE,
-    TIMESTAMP_COLUMN_TYPE,
 } from '../../database/database-common'
 
 type FlowRunSchema = FlowRun & {
@@ -20,6 +17,7 @@ type FlowRunSchema = FlowRun & {
     flow: Flow
     flowVersion: FlowVersion
     logsFile: File
+    triggeredByUser?: User
 }
 
 export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
@@ -50,24 +48,28 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
             type: String,
         },
         tags: {
-            type: ARRAY_COLUMN_TYPE,
-            array: isPostgres(),
+            type: String,
+            array: true,
             nullable: true,
         },
         startTime: {
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
+            nullable: true,
+        },
+        triggeredBy: {
+            type: String,
             nullable: true,
         },
         finishTime: {
             nullable: true,
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
         },
         pauseMetadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
         failedStep: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
         archivedAt: {
@@ -78,6 +80,11 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         stepNameToTest: {
             type: String,
             nullable: true,
+        },
+        stepsCount: {
+            type: Number,
+            nullable: false,
+            default: 0,
         },
     },
     indices: [
@@ -115,6 +122,16 @@ export const FlowRunEntity = new EntitySchema<FlowRunSchema>({
         },
     ],
     relations: {
+        triggeredByUser: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'SET NULL',
+            joinColumn: {
+                name: 'triggeredBy',
+                foreignKeyConstraintName: 'fk_flow_run_triggered_by_user_id',
+            },
+        },
         project: {
             type: 'many-to-one',
             target: 'project',

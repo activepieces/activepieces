@@ -32,6 +32,9 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
             rejectedPromiseHandler(updateCache(log), log)
         })
     },
+    async refresh(): Promise<void> {
+        await updateCache(log)
+    },
     async getSortedbyNameAscThenVersionDesc(): Promise<PieceMetadataSchema[]> {
         if (environment === ApEnvironment.TESTING) {
             const { data, error } = await fetchPieces()

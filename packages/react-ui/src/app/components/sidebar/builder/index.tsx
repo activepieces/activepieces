@@ -1,4 +1,4 @@
-import { BUILDER_NAVIGATION_SIDEBAR_ID } from '@/app/builder/flow-canvas/utils/consts';
+import { flowCanvasConsts } from '@/app/builder/flow-canvas/utils/consts';
 import { useEmbedding } from '@/components/embed-provider';
 import {
   Sidebar,
@@ -7,14 +7,11 @@ import {
   SidebarInset,
   SidebarProvider,
   SidebarSeparator,
-  useSidebar,
 } from '@/components/ui/sidebar-shadcn';
 import { PurchaseExtraFlowsDialog } from '@/features/billing/components/active-flows-addon/purchase-active-flows-dialog';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { cn } from '@/lib/utils';
 import { ApEdition, ApFlagId } from '@activepieces/shared';
 
-import { AllowOnlyLoggedInUserOnlyGuard } from '../../allow-logged-in-user-only-guard';
 import { AppSidebarHeader } from '../sidebar-header';
 import { SidebarUser } from '../sidebar-user';
 
@@ -22,19 +19,13 @@ import { FlowsNavigation } from './flows-navigation';
 import { TablesNavigation } from './tables-navigation';
 
 function BuilderSidebarContent() {
-  const { state, setOpen } = useSidebar();
-
   return (
     <Sidebar
-      id={BUILDER_NAVIGATION_SIDEBAR_ID}
+      id={flowCanvasConsts.BUILDER_NAVIGATION_SIDEBAR_ID}
       variant="inset"
-      onClick={() => setOpen(true)}
-      className={cn(
-        state === 'collapsed' ? 'cursor-nesw-resize' : '',
-        'group',
-        'p-1',
-      )}
+      className="group p-1"
     >
+      {/* onClick removed - handled in base Sidebar component to prevent auto-expansion on navigation */}
       <AppSidebarHeader />
       <SidebarContent className="gap-y-0">
         <FlowsNavigation />
@@ -57,14 +48,12 @@ export function BuilderNavigationSidebar({
   const { embedState } = useEmbedding();
 
   return (
-    <AllowOnlyLoggedInUserOnlyGuard>
-      <SidebarProvider keyForStateInLocalStorage="builder-sidebar">
-        {!embedState.isEmbedded && <BuilderSidebarContent />}
-        <SidebarInset>
-          {children}
-          {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
-        </SidebarInset>
-      </SidebarProvider>
-    </AllowOnlyLoggedInUserOnlyGuard>
+    <SidebarProvider>
+      {!embedState.isEmbedded && <BuilderSidebarContent />}
+      <SidebarInset>
+        {children}
+        {edition === ApEdition.CLOUD && <PurchaseExtraFlowsDialog />}
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

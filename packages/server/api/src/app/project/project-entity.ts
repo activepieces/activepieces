@@ -17,8 +17,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
-    TIMESTAMP_COLUMN_TYPE,
 } from '../database/database-common'
 
 type ProjectSchema = Project & {
@@ -41,7 +39,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
     columns: {
         ...BaseColumnSchemaPart,
         deleted: {
-            type: TIMESTAMP_COLUMN_TYPE,
+            type: 'timestamp with time zone',
             deleteDate: true,
             nullable: true,
         },
@@ -65,7 +63,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             nullable: true,
         },
         icon: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: false,
         },
         releasesEnabled: {
@@ -74,7 +72,7 @@ export const ProjectEntity = new EntitySchema<ProjectSchema>({
             default: false,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
     },

@@ -7,8 +7,10 @@ import {
   StaticPropsValue,
   InputPropertyMap,
   FilesService,
+  DynamicPropsValue,
   AppConnectionValueForAuthProperty,
   ExtractPieceAuthPropertyTypeForMethods,
+  ApFile,
 } from '@activepieces/pieces-framework';
 import {
   HttpError,
@@ -18,9 +20,10 @@ import {
   QueryParams,
   httpClient,
 } from '../http';
-import { assertNotNullOrUndefined, isNil } from '@activepieces/shared';
+import { assertNotNullOrUndefined, isEmpty, isNil } from '@activepieces/shared';
 import fs from 'fs';
 import mime from 'mime-types';
+import FormData from 'form-data';
 
 export const getAccessTokenOrThrow = (
   auth: OAuth2PropertyValue | undefined
@@ -47,9 +50,13 @@ const joinBaseUrlWithRelativePath = ({
   return `${baseUrlWithSlash}${relativePathWithoutSlash}`;
 };
 
-const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>(
+const getBaseUrlForDescription = <
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
+>(
   baseUrl: BaseUrlGetter<PieceAuth>,
-  auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>
+  auth?: AppConnectionValueForAuthProperty<
+    ExtractPieceAuthPropertyTypeForMethods<PieceAuth>
+  >
 ) => {
   const exampleBaseUrl = `https://api.example.com`;
   try {
@@ -65,8 +72,16 @@ const getBaseUrlForDescription =  <PieceAuth extends PieceAuthProperty| PieceAut
     }
   }
 };
-type BaseUrlGetter<PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined> = (auth?: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>) => string
-export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| PieceAuthProperty[] | undefined>({
+type BaseUrlGetter<
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
+> = (
+  auth?: AppConnectionValueForAuthProperty<
+    ExtractPieceAuthPropertyTypeForMethods<PieceAuth>
+  >
+) => string;
+export function createCustomApiCallAction<
+  PieceAuth extends PieceAuthProperty | PieceAuthProperty[] | undefined
+>({
   auth,
   baseUrl,
   authMapping,
@@ -80,7 +95,9 @@ export function createCustomApiCallAction<PieceAuth extends PieceAuthProperty| P
   auth?: PieceAuth;
   baseUrl: BaseUrlGetter<PieceAuth>;
   authMapping?: (
-    auth: AppConnectionValueForAuthProperty<ExtractPieceAuthPropertyTypeForMethods<PieceAuth>>,
+    auth: AppConnectionValueForAuthProperty<
+      ExtractPieceAuthPropertyTypeForMethods<PieceAuth>
+    >,
     propsValue: StaticPropsValue<any>
   ) => Promise<HttpHeaders | QueryParams>;
   //   add description as a parameter that can be null
@@ -151,15 +168,98 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         required: true,
         ...(props?.queryParams ?? {}),
       }),
-      body: Property.Json({
-        displayName: 'Body',
+      body_type: Property.StaticDropdown({
+        displayName: 'Body Type',
         required: false,
-        ...(props?.body ?? {}),
+        defaultValue: 'none',
+        options: {
+          disabled: false,
+          options: [
+            {
+              label: 'None',
+              value: 'none',
+            },
+            {
+              label: 'JSON',
+              value: 'json',
+            },
+            {
+              label: 'Form Data',
+              value: 'form_data',
+            },
+            {
+              label: 'Raw',
+              value: 'raw',
+            },
+          ],
+        },
+      }),
+      body: Property.DynamicProperties({
+        auth,
+        displayName: 'Body',
+        refreshers: ['body_type'],
+        required: false,
+        props: async ({ body_type }) => {
+          if (!body_type) return {};
+
+          const bodyTypeInput = body_type as unknown as string;
+
+          const fields: DynamicPropsValue = {};
+
+          switch (bodyTypeInput) {
+            case 'none':
+              break;
+            case 'json':
+              fields['data'] = Property.Json({
+                displayName: 'JSON Body',
+                required: true,
+                ...(props?.body ?? {}),
+              });
+              break;
+            case 'raw':
+              fields['data'] = Property.LongText({
+                displayName: 'Raw Body',
+                required: true,
+              });
+              break;
+            case 'form_data':
+              fields['data'] = Property.Array({
+                displayName: 'Form Data',
+                required: true,
+                properties: {
+                  fieldName: Property.ShortText({
+                    displayName: 'Field Name',
+                    required: true,
+                  }),
+                  fieldType: Property.StaticDropdown({
+                    displayName: 'Field Type',
+                    required: true,
+                    options: {
+                      disabled: false,
+                      options: [
+                        { label: 'Text', value: 'text' },
+                        { label: 'File', value: 'file' },
+                      ],
+                    },
+                  }),
+                  textFieldValue: Property.LongText({
+                    displayName: 'Text Field Value',
+                    required: false,
+                  }),
+                  fileFieldValue: Property.File({
+                    displayName: 'File Field Value',
+                    required: false,
+                  }),
+                },
+              });
+              break;
+          }
+          return fields;
+        },
       }),
       response_is_binary: Property.Checkbox({
         displayName: 'Response is Binary ?',
-        description:
-          'Enable for files like PDFs, images, etc..',
+        description: 'Enable for files like PDFs, images, etc.',
         required: false,
         defaultValue: false,
       }),
@@ -183,6 +283,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
         headers,
         queryParams,
         body,
+        body_type,
         failsafe,
         timeout,
         response_is_binary,
@@ -190,7 +291,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       assertNotNullOrUndefined(method, 'Method');
       assertNotNullOrUndefined(url, 'URL');
 
-      const authValue = !isNil(authMapping) 
+      const authValue = !isNil(authMapping)
         ? await authMapping(context.auth, context.propsValue)
         : {};
 
@@ -202,7 +303,7 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
               baseUrl: baseUrl(context.auth),
               relativePath: urlValue,
             });
-      const request: HttpRequest<Record<string, unknown>> = {
+      const request: HttpRequest = {
         method,
         url: fullUrl,
         headers: {
@@ -224,7 +325,40 @@ i.e ${getBaseUrlForDescription(baseUrl, auth)}/resource or /resource`,
       }
 
       if (body) {
-        request.body = body;
+        if (body_type && body_type !== 'none') {
+          const bodyInput = body['data'];
+          if (body_type === 'form_data') {
+            const formBodyInput = bodyInput as Array<{
+              fieldName: string;
+              fieldType: 'text' | 'file';
+              textFieldValue?: string;
+              fileFieldValue?: ApFile;
+            }>;
+
+            const formData = new FormData();
+
+            for (const {
+              fieldName,
+              fieldType,
+              textFieldValue,
+              fileFieldValue,
+            } of formBodyInput) {
+              if (fieldType === 'text' && !isEmpty(textFieldValue)) {
+                formData.append(fieldName, textFieldValue);
+              } else if (fieldType === 'file' && !isEmpty(fileFieldValue)) {
+                formData.append(fieldName, fileFieldValue!.data, {
+                  filename: fileFieldValue?.filename,
+                });
+              }
+            }
+            request.body = formData;
+            request.headers = { ...request.headers, ...formData.getHeaders() };
+          } else {
+            request.body = bodyInput;
+          }
+        } else if (!body_type) {
+          request.body = body;
+        }
       }
 
       try {
@@ -266,9 +400,19 @@ const handleBinaryResponse = async (
       : headers?.['content-type'];
     const fileExtension: string =
       mime.extension(contentTypeValue ?? '') || 'txt';
+
+    let bufferData: Buffer;
+    if (bodyContent instanceof ArrayBuffer) {
+      bufferData = Buffer.from(new Uint8Array(bodyContent));
+    } else if (Buffer.isBuffer(bodyContent)) {
+      bufferData = bodyContent;
+    } else {
+      bufferData = Buffer.from(bodyContent);
+    }
+
     body = await files.write({
       fileName: `output.${fileExtension}`,
-      data: Buffer.from(bodyContent as any ),
+      data: bufferData,
     });
   } else {
     body = bodyContent;
@@ -280,4 +424,3 @@ const handleBinaryResponse = async (
 const isBinaryBody = (body: string | ArrayBuffer | Buffer) => {
   return body instanceof ArrayBuffer || Buffer.isBuffer(body);
 };
-

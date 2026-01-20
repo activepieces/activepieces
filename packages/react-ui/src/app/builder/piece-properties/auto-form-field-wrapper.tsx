@@ -32,6 +32,7 @@ import { TextInputWithMentions } from './text-input-with-mentions';
 
 function AutoFormFieldWrapper({
   placeBeforeLabelText = false,
+  hideLabel,
   children,
   allowDynamicValues,
   propertyName,
@@ -53,31 +54,32 @@ function AutoFormFieldWrapper({
       dynamicInputModeToggled={dynamicInputModeToggled}
     >
       <FormItem className="flex flex-col gap-1">
-        <FormLabel className="flex items-center gap-1 ">
-          {placeBeforeLabelText && !dynamicInputModeToggled && children}
-          <div className="pt-1">
-            <span>
-              {isAuthProperty ? t('Connection') : property.displayName}
-            </span>{' '}
-            {(isAuthProperty || property.required) && (
-              <span className="text-destructive">*</span>
+        {(!hideLabel || placeBeforeLabelText) && (
+          <FormLabel className="flex items-center gap-1 ">
+            {placeBeforeLabelText && !dynamicInputModeToggled && children}
+            <div className="pt-1">
+              <span>
+                {isAuthProperty ? t('Connection') : property.displayName}
+              </span>{' '}
+              {(isAuthProperty || property.required) && (
+                <span className="text-destructive">*</span>
+              )}
+            </div>
+            {property && !isAuthProperty && (
+              <PropertyTypeTooltip property={property} />
             )}
-          </div>
-          {property && !isAuthProperty && (
-            <PropertyTypeTooltip property={property} />
-          )}
-          <span className="grow"></span>
-          {allowDynamicValues && (
-            <DynamicValueToggle
-              propertyName={propertyName}
-              inputName={inputName}
-              property={property}
-              disabled={disabled}
-              isToggled={dynamicInputModeToggled ?? false}
-            />
-          )}
-        </FormLabel>
-
+            <span className="grow"></span>
+            {allowDynamicValues && (
+              <DynamicValueToggle
+                propertyName={propertyName}
+                inputName={inputName}
+                property={property}
+                disabled={disabled}
+                isToggled={dynamicInputModeToggled ?? false}
+              />
+            )}
+          </FormLabel>
+        )}
         {dynamicInputModeToggled && !isArrayProperty && (
           <TextInputWithMentions
             disabled={disabled}
@@ -243,9 +245,7 @@ function DynamicValueToggle({
             />
           </Toggle>
         </TooltipTrigger>
-        <TooltipContent side="top" className="bg-background">
-          {t('Dynamic value')}
-        </TooltipContent>
+        <TooltipContent side="top">{t('Dynamic value')}</TooltipContent>
       </Tooltip>
     </div>
   );
@@ -305,6 +305,7 @@ type DynamicValueToggleProps = {
 
 type AutoFormFieldWrapperProps = {
   children: React.ReactNode;
+  hideLabel?: boolean;
   allowDynamicValues: boolean;
   propertyName: string;
   hideDescription?: boolean;

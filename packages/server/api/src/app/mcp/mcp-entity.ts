@@ -31,6 +31,8 @@ export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
         project: {
             type: 'many-to-one',
             target: 'project',
+            cascade: true,
+            onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectId',
                 referencedColumnName: 'id',

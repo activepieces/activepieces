@@ -1,7 +1,15 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { FileText, Pencil, Plus, Trash } from 'lucide-react';
+import {
+  FileText,
+  Pencil,
+  Plus,
+  Trash,
+  Tag,
+  Clock,
+  Puzzle,
+} from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -17,6 +25,7 @@ import {
   BulkAction,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
@@ -25,12 +34,12 @@ import {
 import { PieceIconList } from '@/features/pieces/components/piece-icon-list';
 import { templatesApi } from '@/features/templates/lib/templates-api';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { formatUtils } from '@/lib/utils';
-import { FlowTemplate } from '@activepieces/shared';
+import { Template, TemplateType } from '@activepieces/shared';
 
-import { UpsertTemplateDialog } from './upsert-template-dialog';
+import { CreateTemplateDialog } from './create-template-dialog';
+import { UpdateTemplateDialog } from './update-template-dialog';
 
-export default function TemplatesPage() {
+const PlatformTemplatesPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
   const [searchParams] = useSearchParams();
@@ -38,11 +47,13 @@ export default function TemplatesPage() {
     queryKey: ['templates', searchParams.toString()],
     staleTime: 0,
     queryFn: () => {
-      return templatesApi.list({});
+      return templatesApi.list({
+        type: TemplateType.CUSTOM,
+      });
     },
   });
 
-  const [selectedRows, setSelectedRows] = useState<FlowTemplate[]>([]);
+  const [selectedRows, setSelectedRows] = useState<Template[]>([]);
 
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
@@ -56,9 +67,13 @@ export default function TemplatesPage() {
     },
   });
 
-  const columnsWithCheckbox: ColumnDef<RowDataWithActions<FlowTemplate>>[] = [
+  const columnsWithCheckbox: ColumnDef<RowDataWithActions<Template>>[] = [
     {
       id: 'select',
+      accessorKey: 'select',
+      size: 40,
+      minSize: 40,
+      maxSize: 40,
       header: ({ table }) => (
         <Checkbox
           checked={
@@ -100,12 +115,12 @@ export default function TemplatesPage() {
           />
         );
       },
-      accessorKey: 'select',
     },
     {
       accessorKey: 'name',
+      size: 200,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         return <div className="text-left">{row.original.name}</div>;
@@ -113,34 +128,41 @@ export default function TemplatesPage() {
     },
     {
       accessorKey: 'createdAt',
+      size: 150,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },
     },
     {
       accessorKey: 'pieces',
+      size: 100,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Pieces')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Pieces')}
+          icon={Puzzle}
+        />
       ),
       cell: ({ row }) => {
-        return (
-          <PieceIconList
-            trigger={row.original.template.trigger}
-            maxNumberOfIconsToShow={2}
-          />
-        );
+        const trigger = row.original.flows?.[0]?.trigger;
+        if (!trigger) return null;
+        return <PieceIconList trigger={trigger} maxNumberOfIconsToShow={2} />;
       },
     },
   ];
 
-  const bulkActions: BulkAction<FlowTemplate>[] = useMemo(
+  const bulkActions: BulkAction<Template>[] = useMemo(
     () => [
       {
         render: (_, resetSelection) => (
@@ -191,7 +213,7 @@ export default function TemplatesPage() {
           )}
           title={t('Templates')}
         >
-          <UpsertTemplateDialog onDone={() => refetch()}>
+          <CreateTemplateDialog onDone={() => refetch()}>
             <Button
               size="sm"
               className="flex items-center justify-center gap-2"
@@ -199,7 +221,7 @@ export default function TemplatesPage() {
               <Plus className="size-4" />
               {t('New Template')}
             </Button>
-          </UpsertTemplateDialog>
+          </CreateTemplateDialog>
         </DashboardPageHeader>
         <DataTable
           emptyStateTextTitle={t('No templates found')}
@@ -218,14 +240,14 @@ export default function TemplatesPage() {
                 <div className="flex items-end justify-end">
                   <Tooltip>
                     <TooltipTrigger>
-                      <UpsertTemplateDialog
+                      <UpdateTemplateDialog
                         onDone={() => refetch()}
                         template={row}
                       >
                         <Button variant="ghost" className="size-8 p-0">
                           <Pencil className="size-4" />
                         </Button>
-                      </UpsertTemplateDialog>
+                      </UpdateTemplateDialog>
                     </TooltipTrigger>
                     <TooltipContent side="bottom">
                       {t('Edit template')}
@@ -239,4 +261,6 @@ export default function TemplatesPage() {
       </div>
     </LockedFeatureGuard>
   );
-}
+};
+
+export { PlatformTemplatesPage };

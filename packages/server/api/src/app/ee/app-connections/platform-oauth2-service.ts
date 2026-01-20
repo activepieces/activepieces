@@ -25,7 +25,6 @@ export const platformOAuth2Service = (log: FastifyBaseLogger) => ({
         const { auth } = await pieceMetadataService(log).getOrThrow({
             name: pieceName,
             version: undefined,
-            projectId,
             platformId,
         })
         if (isNil(auth)) {

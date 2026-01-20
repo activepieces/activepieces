@@ -7,12 +7,13 @@ import { useApErrorDialogStore } from '@/components/custom/ap-error-dialog/ap-er
 import { useSocket } from '@/components/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
+import { foldersApi } from '@/features/folders/lib/folders-api';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import { piecesApi } from '@/features/pieces/lib/pieces-api';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
-import { downloadFile } from '@/lib/utils';
+import { downloadFile, NEW_FLOW_QUERY_PARAM } from '@/lib/utils';
 import {
   ApFlagId,
   FlowOperationType,
@@ -20,6 +21,7 @@ import {
   FlowStatus,
   FlowVersion,
   FlowVersionMetadata,
+  FlowVersionTemplate,
   ListFlowsRequest,
   PopulatedFlow,
   FlowTrigger,
@@ -27,6 +29,10 @@ import {
   WebsocketClientEvent,
   FlowStatusUpdatedResponse,
   isNil,
+  ErrorCode,
+  SeekPage,
+  Template,
+  UncategorizedFolderId,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
@@ -128,8 +134,21 @@ export const flowHooks = {
         }
         onSuccess?.(response);
       },
-      onError: (_uncaughtError: unknown) => {
-        internalErrorToast();
+      onError: (error: unknown) => {
+        const errorCode = (error as any)?.response?.data?.code;
+        const errorMessage = (error as any)?.response?.data?.params?.message;
+
+        if (
+          errorCode === ErrorCode.FLOW_OPERATION_IN_PROGRESS &&
+          errorMessage
+        ) {
+          toast.error(t('Flow Is Busy'), {
+            description: errorMessage,
+            duration: 5000,
+          });
+        } else {
+          internalErrorToast();
+        }
       },
     });
   },
@@ -183,14 +202,18 @@ export const flowHooks = {
   useOverWriteDraftWithVersion: ({
     onSuccess,
   }: {
-    onSuccess: (flowVersion: PopulatedFlow) => void;
+    onSuccess: (flow: PopulatedFlow) => void;
   }) => {
-    return useMutation<PopulatedFlow, Error, FlowVersionMetadata>({
-      mutationFn: async (flowVersion) => {
-        const result = await flowsApi.update(flowVersion.flowId, {
+    return useMutation<
+      PopulatedFlow,
+      Error,
+      { flowId: string; versionId: string }
+    >({
+      mutationFn: async ({ flowId, versionId }) => {
+        const result = await flowsApi.update(flowId, {
           type: FlowOperationType.USE_AS_DRAFT,
           request: {
-            versionId: flowVersion.id,
+            versionId,
           },
         });
         return result;
@@ -267,6 +290,158 @@ export const flowHooks = {
           onUpdateRun,
         ),
     });
+  },
+  useListFlowVersions: (flowId: string) => {
+    return useQuery<SeekPage<FlowVersionMetadata>, Error>({
+      queryKey: ['flow-versions', flowId],
+      queryFn: () =>
+        flowsApi.listVersions(flowId, {
+          limit: 1000,
+          cursor: undefined,
+        }),
+      staleTime: 0,
+    });
+  },
+  useGetFlowVersionNumber: ({
+    flowId,
+    versionId,
+  }: {
+    flowId: string;
+    versionId: string;
+  }) => {
+    const { data: flowVersions } = flowHooks.useListFlowVersions(flowId);
+    return flowVersions?.data
+      ? flowVersions.data.length -
+          flowVersions.data.findIndex((version) => version.id === versionId)
+      : '';
+  },
+  useStartFromScratch: (folderId: string) => {
+    const navigate = useNavigate();
+    return useMutation<PopulatedFlow, Error, void>({
+      mutationFn: async () => {
+        const folder =
+          folderId !== UncategorizedFolderId
+            ? await foldersApi.get(folderId)
+            : undefined;
+        const flow = await flowsApi.create({
+          projectId: authenticationSession.getProjectId()!,
+          displayName: t('Untitled'),
+          folderName: folder?.displayName,
+        });
+        return flow;
+      },
+      onSuccess: (flow) => {
+        navigate(`/flows/${flow.id}?${NEW_FLOW_QUERY_PARAM}=true`);
+      },
+    });
+  },
+  importFlowIntoExisting: async ({
+    template,
+    existingFlowId,
+  }: {
+    template: Template;
+    existingFlowId: string;
+  }): Promise<PopulatedFlow> => {
+    const flows = template.flows || [];
+    if (flows.length === 0) {
+      throw new Error('Template has no flows');
+    }
+
+    const templateFlow = flows[0];
+    const flow = await flowsApi.get(existingFlowId);
+
+    const oldExternalId = !isNil(template.metadata?.externalId)
+      ? (template.metadata['externalId'] as string)
+      : flow.externalId;
+
+    const triggerString = JSON.stringify(templateFlow.trigger).replaceAll(
+      oldExternalId,
+      flow.externalId,
+    );
+    const updatedTrigger = JSON.parse(triggerString);
+
+    return await flowsApi.update(flow.id, {
+      type: FlowOperationType.IMPORT_FLOW,
+      request: {
+        displayName: templateFlow.displayName,
+        trigger: updatedTrigger,
+        schemaVersion: templateFlow.schemaVersion,
+      },
+    });
+  },
+  importFlowsFromTemplates: async ({
+    templates,
+    projectId,
+    folderName,
+  }: {
+    templates: Template[];
+    projectId: string;
+    folderName?: string;
+  }): Promise<PopulatedFlow[]> => {
+    if (templates.length === 0) {
+      return [];
+    }
+
+    const allFlowsToImport: Array<{
+      flow: PopulatedFlow;
+      templateFlow: FlowVersionTemplate;
+      oldExternalId: string;
+    }> = [];
+
+    for (const template of templates) {
+      const flows = template.flows || [];
+      if (flows.length === 0) {
+        continue;
+      }
+
+      for (const templateFlow of flows) {
+        const flow = await flowsApi.create({
+          displayName: templateFlow.displayName,
+          templateId: template.id,
+          projectId,
+          folderName,
+        });
+
+        const oldExternalId = !isNil(template.metadata?.externalId)
+          ? (template.metadata['externalId'] as string)
+          : flow.externalId;
+
+        allFlowsToImport.push({
+          flow,
+          templateFlow,
+          oldExternalId,
+        });
+      }
+    }
+
+    const externalIdMap = new Map<string, string>();
+    for (const { oldExternalId, flow } of allFlowsToImport) {
+      externalIdMap.set(oldExternalId, flow.externalId);
+    }
+
+    const importPromises = allFlowsToImport.map(
+      async ({ flow, templateFlow }) => {
+        let triggerString = JSON.stringify(templateFlow.trigger);
+
+        for (const [oldId, newId] of externalIdMap.entries()) {
+          triggerString = triggerString.replaceAll(oldId, newId);
+        }
+
+        const updatedTrigger = JSON.parse(triggerString);
+
+        return await flowsApi.update(flow.id, {
+          type: FlowOperationType.IMPORT_FLOW,
+          request: {
+            displayName: templateFlow.displayName,
+            trigger: updatedTrigger,
+            schemaVersion: templateFlow.schemaVersion,
+            notes: templateFlow.notes,
+          },
+        });
+      },
+    );
+
+    return await Promise.all(importPromises);
   },
 };
 

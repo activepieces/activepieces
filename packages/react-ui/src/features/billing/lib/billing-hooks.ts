@@ -4,14 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 import { internalErrorToast } from '@/components/ui/sonner';
-import { api } from '@/lib/api';
 import {
-  ToggleAiCreditsOverageEnabledParams,
-  SetAiCreditsOverageLimitParams,
   UpdateActiveFlowsAddonParams,
   CreateSubscriptionParams,
+  CreateAICreditCheckoutSessionParamsSchema,
+  UpdateAICreditsAutoTopUpParamsSchema,
 } from '@activepieces/ee-shared';
-import { ApErrorParams, ErrorCode } from '@activepieces/shared';
 
 import { platformBillingApi } from './api';
 
@@ -65,54 +63,42 @@ export const billingMutations = {
       },
     });
   },
-  useSetAiCreditOverageLimit: (queryClient: QueryClient) => {
+  useCreateAICreditCheckoutSession: (setIsOpen?: (isOpen: boolean) => void) => {
     return useMutation({
-      mutationFn: (params: SetAiCreditsOverageLimitParams) =>
-        platformBillingApi.setAiCreditsOverageLimit(params),
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({
-          queryKey: billingKeys.platformSubscription(data.platformId),
-        });
-        toast.success(t('AI credit usage limit updated successfully'), {
+      mutationFn: async (params: CreateAICreditCheckoutSessionParamsSchema) => {
+        const { stripeCheckoutUrl } =
+          await platformBillingApi.createAICreditCheckoutSession(params);
+        window.open(stripeCheckoutUrl, '_blank');
+      },
+      onSuccess: () => {
+        setIsOpen?.(false);
+      },
+      onError: (error) => {
+        toast.error(t('Starting Checkout Session failed'), {
+          description: t(error.message),
           duration: 3000,
         });
       },
-      onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.VALIDATION) {
-            toast.error(t('Setting AI credit usage limit failed'), {
-              description: t(apError.params.message),
-              duration: 3000,
-            });
-            return;
-          }
-        }
-        internalErrorToast();
-      },
     });
   },
-  useToggleAiCreditOverageEnabled: (queryClient: QueryClient) => {
+  useUpdateAutoTopUp: (queryClient: QueryClient) => {
     return useMutation({
-      mutationFn: (params: ToggleAiCreditsOverageEnabledParams) =>
-        platformBillingApi.toggleAiCreditsOverageEnabled(params),
-      onSuccess: (data) => {
+      mutationFn: async (params: UpdateAICreditsAutoTopUpParamsSchema) => {
+        const { stripeCheckoutUrl } = await platformBillingApi.updateAutoTopUp(
+          params,
+        );
+        if (stripeCheckoutUrl) {
+          window.open(stripeCheckoutUrl, '_blank');
+        }
+      },
+      onSuccess: (_, variables) => {
         queryClient.invalidateQueries({
-          queryKey: billingKeys.platformSubscription(data.platformId),
+          queryKey: ['platform-billing-subscription'],
         });
-        toast.success(t('AI credits overage updated successfully'), {});
+        toast.success(t('Auto top-up config saved'));
       },
       onError: (error) => {
-        if (api.isError(error)) {
-          const apError = error.response?.data as ApErrorParams;
-          if (apError.code === ErrorCode.VALIDATION) {
-            toast.error(t('Setting AI credit usage limit failed'), {
-              description: t(apError.params.message),
-              duration: 3000,
-            });
-            return;
-          }
-        }
+        toast.error(t('Auto top-up config change failed'));
         internalErrorToast();
       },
     });

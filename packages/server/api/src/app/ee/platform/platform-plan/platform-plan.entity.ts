@@ -3,7 +3,6 @@ import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../../database/database-common'
 
 export type PlatformPlanSchema = PlatformPlan & {
@@ -22,13 +21,24 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsOverageLimit: {
+        aiCreditsAutoTopUpCreditsToAdd: {
             type: Number,
             nullable: true,
         },
-        aiCreditsOverageState: {
-            type: String,
+        lastFreeAiCreditsRenewalDate: {
+            type: 'timestamp with time zone',
             nullable: true,
+        },
+        maxAutoTopUpCreditsMonthly: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpThreshold: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpState: {
+            type: String,
         },
         stripeSubscriptionStartDate: {
             type: Number,
@@ -116,14 +126,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         agentsEnabled: {
             type: Boolean,
         },
-        openRouterApiKeyHash: {
-            type: String,
-            nullable: true,
-        },
-        openRouterApiKey: {
-            type: String,
-            nullable: true,
-        },
         activeFlowsLimit: {
             type: Number,
             nullable: true,
@@ -132,7 +134,7 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: Boolean,
         },
         dedicatedWorkers: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
     },

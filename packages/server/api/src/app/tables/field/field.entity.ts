@@ -1,6 +1,6 @@
 import { Cell, Field, FieldType, Project, Table } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
-import { ApIdSchema, BaseColumnSchemaPart, JSONB_COLUMN_TYPE } from '../../database/database-common'
+import { ApIdSchema, BaseColumnSchemaPart } from '../../database/database-common'
 
 type FieldSchema = Field & {
     table: Table
@@ -33,7 +33,7 @@ export const FieldEntity = new EntitySchema<FieldSchema>({
             nullable: false,
         },
         data: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
             nullable: true,
         },
     },

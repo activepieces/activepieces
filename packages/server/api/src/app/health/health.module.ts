@@ -1,4 +1,5 @@
-import { ALL_PRINCIPAL_TYPES } from '@activepieces/shared'
+import { securityAccess } from '@activepieces/server-shared'
+import { GetSystemHealthChecksResponse, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { healthStatusService } from './health.service'
@@ -12,16 +13,31 @@ const healthController: FastifyPluginAsyncTypebox = async (app) => {
         '/',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
         },
         async (_request, reply) => {
-            const isHealthy = healthStatusService.isHealthy()
+            const isHealthy = await healthStatusService(app.log).isHealthy()
             if (!isHealthy) {
                 await reply.status(StatusCodes.SERVICE_UNAVAILABLE).send({ status: 'Unhealthy' })
                 return
             }
             await reply.status(StatusCodes.OK).send({ status: 'Healthy' })
         },
-    )
+    ),
+    app.get('/system', GetSystemHealthChecks, async (_request, reply) => {
+        await reply.status(StatusCodes.OK).send(await healthStatusService(app.log).getSystemHealthChecks())
+    })
+}
+
+const GetSystemHealthChecks = {
+    config: {
+        security: securityAccess.platformAdminOnly([PrincipalType.USER]),
+    },
+    response: {
+        200: {
+            description: 'System health checks',
+            type: GetSystemHealthChecksResponse,
+        },
+    },
 }

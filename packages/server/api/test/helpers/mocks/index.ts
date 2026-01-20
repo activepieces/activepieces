@@ -16,7 +16,8 @@ import {
 } from '@activepieces/ee-shared'
 import { LATEST_CONTEXT_VERSION } from '@activepieces/pieces-framework'
 import { apDayjs } from '@activepieces/server-shared'
-import { AiOverageState,
+import {
+    AiCreditsAutoTopUpState,
     AIProvider,
     AIProviderName,
     apId,
@@ -39,7 +40,6 @@ import { AiOverageState,
     FlowRun,
     FlowRunStatus,
     FlowStatus,
-    FlowTemplate,
     FlowTriggerType,
     FlowVersion,
     FlowVersionState,
@@ -63,6 +63,8 @@ import { AiOverageState,
     RunEnvironment,
     Table,
     TeamProjectsLimit,
+    Template,
+    TemplateStatus,
     TemplateType,
     User,
     UserIdentity,
@@ -132,22 +134,25 @@ export const createMockOAuthApp = async (
 }
 
 export const createMockTemplate = (
-    template?: Partial<FlowTemplate>,
-): FlowTemplate => {
+    template?: Partial<Template>,
+): Template => {
     return {
-        name: template?.name ?? faker.lorem.word(),
-        description: template?.description ?? faker.lorem.sentence(),
-        type: template?.type ?? faker.helpers.enumValue(TemplateType),
-        tags: template?.tags ?? [],
-        pieces: template?.pieces ?? [],
-        blogUrl: template?.blogUrl ?? faker.internet.url(),
-        template: template?.template ?? createMockFlowVersion(),
-        projectId: template?.projectId ?? apId(),
-        platformId: template?.platformId ?? apId(),
         id: template?.id ?? apId(),
         created: template?.created ?? faker.date.recent().toISOString(),
         updated: template?.updated ?? faker.date.recent().toISOString(),
+        pieces: template?.pieces ?? [],
+        flows: template?.flows ?? [createMockFlowVersion()],
+        platformId: template?.platformId ?? apId(),
+        name: template?.name ?? faker.lorem.word(),
+        type: template?.type ?? TemplateType.CUSTOM,
+        description: template?.description ?? faker.lorem.sentence(),
+        summary: template?.summary ?? faker.lorem.sentence(),
+        tags: template?.tags ?? [],
+        blogUrl: template?.blogUrl ?? faker.internet.url(),
         metadata: template?.metadata ?? null,
+        author: template?.author ?? faker.person.fullName(),
+        categories: template?.categories ?? [],
+        status: template?.status ?? TemplateStatus.PUBLISHED,
     }
 }
 
@@ -226,8 +231,7 @@ export const createMockPlatformPlan = (platformPlan?: Partial<PlatformPlan>): Pl
         stripeSubscriptionId: undefined,
         ssoEnabled: platformPlan?.ssoEnabled ?? false,
         agentsEnabled: platformPlan?.agentsEnabled ?? false,
-        aiCreditsOverageLimit: platformPlan?.aiCreditsOverageLimit ?? 0,
-        aiCreditsOverageState: platformPlan?.aiCreditsOverageState ?? AiOverageState.ALLOWED_BUT_OFF,
+        aiCreditsAutoTopUpState: AiCreditsAutoTopUpState.DISABLED,
         environmentsEnabled: platformPlan?.environmentsEnabled ?? false,
         analyticsEnabled: platformPlan?.analyticsEnabled ?? false,
         auditLogEnabled: platformPlan?.auditLogEnabled ?? false,
@@ -270,7 +274,6 @@ export const createMockPlatform = (platform?: Partial<Platform>): Platform => {
         filteredPieceBehavior:
             platform?.filteredPieceBehavior ??
             faker.helpers.enumValue(FilteredPieceBehavior),
-        smtp: platform?.smtp,
         cloudAuthEnabled: platform?.cloudAuthEnabled ?? faker.datatype.boolean(),
     }
 }
@@ -526,6 +529,7 @@ export const createMockFlowVersion = (
         state: flowVersion?.state ?? faker.helpers.enumValue(FlowVersionState),
         updatedBy: flowVersion?.updatedBy,
         valid: flowVersion?.valid ?? faker.datatype.boolean(),
+        notes: flowVersion?.notes ?? [],
     }
 }
 
@@ -644,7 +648,7 @@ export const mockBasicUser = async ({ userIdentity, user }: { userIdentity?: Par
     const mockUserIdentity = createMockUserIdentity({
         verified: true,
         ...userIdentity,
-    })  
+    })
     await databaseConnection().getRepository('user_identity').save(mockUserIdentity)
     const mockUser = createMockUser({
         ...user,
@@ -675,7 +679,7 @@ export const mockAndSaveBasicSetup = async (params?: MockBasicSetupParams): Prom
         ownerId: mockOwner.id,
         filteredPieceBehavior: params?.platform?.filteredPieceBehavior ?? FilteredPieceBehavior.BLOCKED,
     })
-    
+
     await databaseConnection().getRepository('platform').save(mockPlatform)
     const hasPlanTable = databaseConnection().hasMetadata(PlatformPlanEntity)
     if (hasPlanTable) {
@@ -773,10 +777,12 @@ export const createMockAIProvider = async (aiProvider?: Partial<AIProvider>): Pr
         platformId: aiProvider?.platformId ?? apId(),
         provider: aiProvider?.provider ?? faker.helpers.enumValue(AIProviderName),
         displayName: aiProvider?.displayName ?? faker.lorem.word(),
-        config: await encryptUtils.encryptObject({
-            apiKey: aiProvider?.config?.apiKey ?? process.env.OPENAI_API_KEY ?? faker.string.uuid(),
+        auth: await encryptUtils.encryptObject({
+            apiKey: process.env.OPENAI_API_KEY ?? faker.string.uuid(),
         }),
+        config: {},
     }
+    
 }
 
 export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promise<Omit<AIProviderSchema, 'platform'>> => {
@@ -784,7 +790,6 @@ export const mockAndSaveAIProvider = async (params?: Partial<AIProvider>): Promi
     await databaseConnection().getRepository('ai_provider').upsert(mockAIProvider, ['platformId', 'provider'])
     return mockAIProvider
 }
-
 
 type CreateMockPlatformWithOwnerParams = {
     platform?: Partial<Omit<Platform, 'ownerId'>>

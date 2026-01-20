@@ -167,7 +167,7 @@ const JsonViewer = React.memo(
         )}
       >
         <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
-          <div className="flex-grow justify-center items-center">
+          <div className="grow justify-center items-center">
             <span className="text-md">{title}</span>
           </div>
           <div className="flex items-center gap-0">

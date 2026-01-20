@@ -3,11 +3,8 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Eye, Repeat } from 'lucide-react';
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-import {
-  LeftSideBarType,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
 import { CardListItem } from '@/components/custom/card-list';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
 import { Button } from '@/components/ui/button';
@@ -17,6 +14,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
 } from '@/components/ui/dropdown-menu';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import {
   Tooltip,
@@ -53,35 +51,8 @@ const FlowRunCard = React.memo(
       Permission.WRITE_RUN,
     );
     const projectId = authenticationSession.getProjectId();
+    const navigate = useNavigate();
 
-    const [setLeftSidebar, setRun] = useBuilderStateContext((state) => [
-      state.setLeftSidebar,
-      state.setRun,
-    ]);
-    const { mutate: viewRun, isPending: isFetchingRun } = useMutation<
-      {
-        run: FlowRun;
-        populatedFlow: PopulatedFlow;
-      },
-      Error,
-      string
-    >({
-      mutationFn: async (flowRunId) => {
-        const run = await flowRunsApi.getPopulated(flowRunId);
-        const populatedFlow = await flowsApi.get(run.flowId, {
-          versionId: run.flowVersionId,
-        });
-        return {
-          run,
-          populatedFlow,
-        };
-      },
-      onSuccess: ({ run, populatedFlow }) => {
-        setRun(run, populatedFlow.version);
-        setLeftSidebar(LeftSideBarType.RUN_DETAILS);
-        refetchRuns();
-      },
-    });
     const [isRetryDropdownOpen, setIsRetryDropdownOpen] =
       useState<boolean>(false);
 
@@ -112,10 +83,9 @@ const FlowRunCard = React.memo(
         }
         throw Error("Project id isn't defined");
       },
-      onSuccess: ({ populatedFlow, run }) => {
+      onSuccess: ({ run }) => {
         refetchRuns();
-        setRun(run, populatedFlow.version);
-        setLeftSidebar(LeftSideBarType.RUN_DETAILS);
+        navigate(`/runs/${run.id}`);
       },
     });
 
@@ -126,9 +96,7 @@ const FlowRunCard = React.memo(
         })}
         style={{ height: `${FLOW_CARD_HEIGHT}px` }}
         onClick={() => {
-          if (!isFetchingRun) {
-            viewRun(run.id);
-          }
+          navigate(`/runs/${run.id}`);
         }}
         key={run.id}
       >
@@ -158,7 +126,11 @@ const FlowRunCard = React.memo(
         </div>
         <div className="grid gap-2">
           <div className="text-sm font-medium leading-none flex gap-2 items-center">
-            {formatUtils.formatDate(new Date(run.created ?? new Date()))}{' '}
+            <FormattedDate
+              date={new Date(run.created ?? new Date())}
+              includeTime={true}
+              className="text-sm font-medium leading-none select-none cursor-default"
+            ></FormattedDate>
             {run.id === viewedRunId && <Eye className="w-3.5 h-3.5"></Eye>}
           </div>
           {isFlowRunStateTerminal({
@@ -189,11 +161,11 @@ const FlowRunCard = React.memo(
           )}
         </div>
         <div className="ml-auto font-medium">
-          {(isFetchingRun || isRetryingRun) && (
+          {isRetryingRun && (
             <LoadingSpinner className="size-4"></LoadingSpinner>
           )}
 
-          {!isFetchingRun && !isRetryingRun && (
+          {!isRetryingRun && (
             <PermissionNeededTooltip
               hasPermission={userHasPermissionToRetryRun}
             >

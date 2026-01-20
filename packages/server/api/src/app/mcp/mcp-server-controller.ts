@@ -1,27 +1,28 @@
-import { ALL_PRINCIPAL_TYPES, ApId, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { AgentMcpTool, ApId, buildAuthHeaders, createTransportConfig, isNil, Permission, PopulatedMcpServer, PrincipalType, SERVICE_KEY_SECURITY_OPENAPI, UpdateMcpServerRequest } from '@activepieces/shared'
+import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { mcpServerService } from './mcp-service'
-
 
 export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
 
 
     app.get('/', GetMcpRequest, async (req) => {
-        return mcpServerService(req.log).getPopulatedByProjectId(req.principal.projectId)
+        return mcpServerService(req.log).getPopulatedByProjectId(req.projectId)
     })
 
     app.post('/', UpdateMcpRequest, async (req) => {
         const { status } = req.body
         return mcpServerService(req.log).update({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
             status,
         })
     })
 
     app.post('/rotate', RotateTokenRequest, async (req) => {
         return mcpServerService(req.log).rotateToken({
-            projectId: req.principal.projectId,
+            projectId: req.projectId,
         })
     })
 
@@ -37,7 +38,6 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
             mcp,
         })
 
-        
         const transport: StreamableHTTPServerTransport = new StreamableHTTPServerTransport({
             sessionIdGenerator: undefined,
         })
@@ -51,6 +51,31 @@ export const mcpServerController: FastifyPluginAsyncTypebox = async (app) => {
         await transport.handleRequest(req.raw, reply.raw, req.body)
     })
 
+    app.post('/validate-agent-mcp-tool', AddMcpServerToolRequest, async (req) => {
+        const tool = req.body
+        let mcpClient: MCPClient | null = null
+
+        try {
+            mcpClient = await createMCPClient({
+                transport: createTransportConfig(
+                    tool.protocol,
+                    tool.serverUrl,
+                    buildAuthHeaders(tool.auth),
+                ) as MCPTransport,
+            })
+            const mcpTools = await mcpClient.tools()
+
+            return { toolNames: Object.keys(mcpTools).map(toolName => toolName), error: null }
+        }
+        catch (error) {
+            return { toolNames: null, error: `Error connecting to mcp server ${tool.toolName}, Error: ${error}` }
+        }
+        finally {
+            if (!isNil(mcpClient)) {
+                await mcpClient.close()
+            }
+        }
+    })
 }
 
 function validateAuthorizationHeader(authHeader: string | undefined, mcp: PopulatedMcpServer) {
@@ -60,7 +85,7 @@ function validateAuthorizationHeader(authHeader: string | undefined, mcp: Popula
 
 const StreamableHttpRequestRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
         skipAuth: true,
     },
     schema: {
@@ -72,8 +97,13 @@ const StreamableHttpRequestRequest = {
 
 export const UpdateMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
@@ -86,11 +116,40 @@ export const UpdateMcpRequest = {
     },
 }
 
+export const AddMcpServerToolRequest = {
+    config: {
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_FLOW,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
+    },
+    schema: {
+        tags: ['agent'],
+        description: 'Validate agent MCP tool',
+        params: Type.Object({
+            projectId: ApId,
+        }),
+        body: Type.Composite([
+            Type.Omit(AgentMcpTool, ['auth']), 
+            Type.Object({
+                auth: Type.Any(),
+            }),
+        ]),
+    },
+}
 
 const GetMcpRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.READ_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.READ_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],
@@ -104,8 +163,13 @@ const GetMcpRequest = {
 
 const RotateTokenRequest = {
     config: {
-        allowedPrincipals: [PrincipalType.USER] as const,
-        permissions: [Permission.WRITE_MCP],
+        security: securityAccess.project(
+            [PrincipalType.USER],
+            Permission.WRITE_MCP,
+            {
+                type: ProjectResourceType.PARAM,
+            },
+        ),
     },
     schema: {
         tags: ['mcp'],

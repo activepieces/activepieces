@@ -168,7 +168,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
 
                     <SelectTrigger className="flex gap-2 items-center">
                       <SelectValue
-                        className="truncate flex-grow flex-shrink"
+                        className="truncate grow shrink"
                         placeholder={t('Select a connection')}
                         data-testid="select-connection-value"
                       >
@@ -180,7 +180,7 @@ function ConnectionSelect(params: ConnectionSelectProps) {
                               removeBrackets(field.value),
                           ),
                         ) ? (
-                          <div className="truncate flex-grow flex-shrink flex items-center gap-2">
+                          <div className="truncate grow shrink flex items-center gap-2">
                             {connections?.data?.find(
                               (connection) =>
                                 connection.externalId ===

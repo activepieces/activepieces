@@ -30,13 +30,13 @@ export type ApErrorParams =
     | EmailIsNotVerifiedErrorParams
     | EngineOperationFailureParams
     | EntityNotFoundErrorParams
-    | ExecutionTimeoutErrorParams
     | ExistingUserErrorParams
     | FileNotFoundErrorParams
     | FlowFormNotFoundError
     | FlowNotFoundErrorParams
     | FlowIsLockedErrorParams
     | FlowOperationErrorParams
+    | FlowOperationInProgressErrorParams
     | FlowRunNotFoundErrorParams
     | InvalidApiKeyParams
     | InvalidAppConnectionParams
@@ -82,7 +82,9 @@ export type ApErrorParams =
     | InvalidGitCredentialsParams
     | InvalidReleaseTypeParams
     | ProjectExternalIdAlreadyExistsParams
-    | MemoryIssueParams
+    | SandboxMemoryIssueParams
+    | SandboxExecutionTimeoutParams
+    | SandboxInternalErrorParams
     | InvalidCustomDomainErrorParams
     | McpPieceRequiresConnectionParams
     | McpPieceConnectionMismatchParams
@@ -104,9 +106,20 @@ export type BaseErrorParams<T, V> = {
     params: V
 }
 
-export type MemoryIssueParams = BaseErrorParams<ErrorCode.MEMORY_ISSUE, {
+export type SandboxMemoryIssueParams = BaseErrorParams<ErrorCode.SANDBOX_MEMORY_ISSUE, {
     standardOutput: string
     standardError: string
+}>
+
+export type SandboxExecutionTimeoutParams = BaseErrorParams<ErrorCode.SANDBOX_EXECUTION_TIMEOUT, {
+    standardOutput: string
+    standardError: string
+}>
+
+export type SandboxInternalErrorParams = BaseErrorParams<ErrorCode.SANDBOX_INTERNAL_ERROR, {
+    standardOutput: string
+    standardError: string
+    reason: string
 }>
 
 export type InvitationOnlySignUpParams = BaseErrorParams<
@@ -285,6 +298,11 @@ ErrorCode.FLOW_OPERATION_INVALID,
 }
 >
 
+export type FlowOperationInProgressErrorParams = BaseErrorParams<
+ErrorCode.FLOW_OPERATION_IN_PROGRESS, {
+    message: string
+}>
+
 export type FlowFormNotFoundError = BaseErrorParams<
 ErrorCode.FLOW_FORM_NOT_FOUND,
 {
@@ -326,14 +344,6 @@ export type InvalidCustomDomainErrorParams = BaseErrorParams<
 ErrorCode.INVALID_CUSTOM_DOMAIN,
 {
     message: string
-}
->
-
-export type ExecutionTimeoutErrorParams = BaseErrorParams<
-ErrorCode.EXECUTION_TIMEOUT,
-{
-    standardOutput: string
-    standardError: string
 }
 >
 
@@ -509,8 +519,9 @@ export enum ErrorCode {
     EMAIL_IS_NOT_VERIFIED = 'EMAIL_IS_NOT_VERIFIED',
     ENGINE_OPERATION_FAILURE = 'ENGINE_OPERATION_FAILURE',
     ENTITY_NOT_FOUND = 'ENTITY_NOT_FOUND',
-    EXECUTION_TIMEOUT = 'EXECUTION_TIMEOUT',
-    MEMORY_ISSUE = 'MEMORY_ISSUE',
+    SANDBOX_EXECUTION_TIMEOUT = 'SANDBOX_EXECUTION_TIMEOUT',
+    SANDBOX_MEMORY_ISSUE = 'SANDBOX_MEMORY_ISSUE',
+    SANDBOX_INTERNAL_ERROR = 'SANDBOX_INTERNAL_ERROR',
     TRIGGER_EXECUTION_FAILED = 'TRIGGER_EXECUTION_FAILED',
     EMAIL_AUTH_DISABLED = 'EMAIL_AUTH_DISABLED',
     EXISTING_USER = 'EXISTING_USER',
@@ -521,6 +532,7 @@ export enum ErrorCode {
     FLOW_INSTANCE_NOT_FOUND = 'INSTANCE_NOT_FOUND',
     FLOW_NOT_FOUND = 'FLOW_NOT_FOUND',
     FLOW_OPERATION_INVALID = 'FLOW_OPERATION_INVALID',
+    FLOW_OPERATION_IN_PROGRESS = 'FLOW_OPERATION_IN_PROGRESS',
     FLOW_IN_USE = 'FLOW_IN_USE',
     FLOW_RUN_NOT_FOUND = 'FLOW_RUN_NOT_FOUND',
     INVALID_API_KEY = 'INVALID_API_KEY',

@@ -176,13 +176,13 @@ export const stripePaymentFailed = createTrigger({
   async test(context) {
     const response = await httpClient.sendRequest<{ data: { id: string }[] }>({
       method: HttpMethod.GET,
-      url: 'https://api.stripe.com/v1/charges',
+      url: 'https://api.stripe.com/v1/charges/search',
       headers: {
         Authorization: 'Bearer ' + context.auth.secret_text,
         'Content-Type': 'application/x-www-form-urlencoded',
       },
       queryParams: {
-        status: 'failed',
+        query: 'status:"failed"',
         limit: '5',
       },
     });

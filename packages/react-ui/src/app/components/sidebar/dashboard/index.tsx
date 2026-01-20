@@ -1,19 +1,19 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { t } from 'i18next';
-import { Compass, Search, Loader2, Plus } from 'lucide-react';
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { Search, Plus, LineChart, Trophy, Compass } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDebounce } from 'use-debounce';
 
 import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dialog';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { SearchInput } from '@/components/ui/search-input';
 import {
   Sidebar,
   SidebarContent,
@@ -31,13 +31,14 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
   isNil,
   PlatformRole,
   ProjectType,
+  ProjectWithLimits,
   TeamProjectsLimit,
 } from '@activepieces/shared';
 
@@ -49,48 +50,23 @@ import SidebarUsageLimits from '../sidebar-usage-limits';
 import { SidebarUser } from '../sidebar-user';
 
 export function ProjectDashboardSidebar() {
-  const {
-    data: projectPages,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch: refetchProjects,
-  } = projectHooks.useProjectsInfinite(20);
+  const { data: projects } = projectCollectionUtils.useAll();
   const { embedState } = useEmbedding();
-  const { state, setOpen } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { setCurrentProject } = projectHooks.useCurrentProject();
   const projectsScrollRef = useRef<HTMLDivElement>(null);
   const { data: currentUser } = userHooks.useCurrentUser();
   const { platform } = platformHooks.useCurrentPlatform();
-
-  const {
-    data: searchResults,
-    isLoading: isSearching,
-    refetch: refetchSearchResults,
-  } = projectHooks.useProjects({
-    displayName: debouncedSearchQuery,
-    limit: 100,
-  });
 
   useEffect(() => {
     if (!searchOpen) {
       setSearchQuery('');
     }
   }, [searchOpen]);
-
-  const allProjects = useMemo(() => {
-    const projects = projectPages?.pages.flatMap((page) => page.data) ?? [];
-    const uniqueProjects = Array.from(
-      new Map(projects.map((project) => [project.id, project])).values(),
-    );
-    return uniqueProjects;
-  }, [projectPages]);
 
   const shouldShowNewProjectButton = useMemo(() => {
     if (platform.plan.teamProjectsLimit === TeamProjectsLimit.NONE) {
@@ -108,47 +84,66 @@ export function ProjectDashboardSidebar() {
 
   const shouldDisableNewProjectButton = useMemo(() => {
     if (platform.plan.teamProjectsLimit === TeamProjectsLimit.ONE) {
-      const teamProjects = allProjects.filter(
+      const teamProjects = projects.filter(
         (project) => project.type === ProjectType.TEAM,
       );
       return teamProjects.length >= 1;
     }
     return false;
-  }, [platform.plan.teamProjectsLimit, allProjects]);
+  }, [platform.plan.teamProjectsLimit, projects]);
 
   const isSearchMode = debouncedSearchQuery.length > 0;
 
   const displayProjects = useMemo(() => {
     if (isSearchMode) {
-      return searchResults ?? [];
+      const query = debouncedSearchQuery.toLowerCase();
+      return projects.filter((project) =>
+        project.displayName.toLowerCase().includes(query),
+      );
     }
-    return allProjects;
-  }, [isSearchMode, searchResults, allProjects]);
+    return projects;
+  }, [isSearchMode, debouncedSearchQuery, projects]);
 
-  useEffect(() => {
-    const scrollContainer = projectsScrollRef.current;
-    if (!scrollContainer || isSearchMode) return;
+  const handleProjectSelect = useCallback(
+    async (projectId: string) => {
+      await projectCollectionUtils.setCurrentProject(projectId);
+      navigate(`/projects/${projectId}/flows`);
+      setSearchOpen(false);
+    },
+    [navigate],
+  );
 
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
-      const scrollThreshold = 100;
-      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+  // Virtual scrolling setup
+  const ITEM_HEIGHT = state === 'collapsed' ? 40 : 44;
 
-      if (
-        distanceFromBottom < scrollThreshold &&
-        hasNextPage &&
-        !isFetchingNextPage
-      ) {
-        fetchNextPage();
-      }
-    };
+  const rowVirtualizer = useVirtualizer({
+    count: displayProjects.length,
+    getScrollElement: () => projectsScrollRef.current,
+    estimateSize: useCallback(() => ITEM_HEIGHT, [ITEM_HEIGHT]),
+    overscan: 10,
+    getItemKey: useCallback(
+      (index: number) => displayProjects[index]?.id ?? index,
+      [displayProjects],
+    ),
+  });
 
-    scrollContainer.addEventListener('scroll', handleScroll);
+  const virtualItems = rowVirtualizer.getVirtualItems();
 
-    handleScroll();
-
-    return () => scrollContainer.removeEventListener('scroll', handleScroll);
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isSearchMode]);
+  const renderProjectItem = useCallback(
+    (project: ProjectWithLimits) => {
+      return (
+        <ProjectSideBarItem
+          key={project.id}
+          project={project}
+          isCurrentProject={location.pathname.includes(
+            `/projects/${project.id}`,
+          )}
+          handleProjectSelect={handleProjectSelect}
+        />
+      );
+    },
+    [location.pathname, handleProjectSelect],
+  );
 
   const permissionFilter = (link: SidebarGeneralItemType) => {
     if (link.type === 'link') {
@@ -159,7 +154,7 @@ export function ProjectDashboardSidebar() {
 
   const exploreLink: SidebarItemType = {
     type: 'link',
-    to: '/explore',
+    to: '/templates',
     label: t('Explore'),
     show: true,
     icon: Compass,
@@ -167,29 +162,34 @@ export function ProjectDashboardSidebar() {
     isSubItem: false,
   };
 
-  const items = [exploreLink].filter(permissionFilter);
-
-  const handleProjectSelect = async (projectId: string) => {
-    const project = displayProjects?.find((p) => p.id === projectId);
-    if (project) {
-      await setCurrentProject(queryClient, project);
-      navigate('/');
-      setSearchOpen(false);
-    }
+  const impactLink: SidebarItemType = {
+    type: 'link',
+    to: '/impact',
+    label: t('Impact'),
+    icon: LineChart,
+    show: true,
+    hasPermission: true,
+    isSubItem: false,
   };
+
+  const leaderboardLink: SidebarItemType = {
+    type: 'link',
+    to: '/leaderboard',
+    label: t('Leaderboard'),
+    icon: Trophy,
+    show: true,
+    hasPermission: true,
+    isSubItem: false,
+  };
+
+  const items = [exploreLink, impactLink, leaderboardLink].filter(
+    permissionFilter,
+  );
 
   return (
     !embedState.hideSideNav && (
-      <Sidebar
-        variant="inset"
-        collapsible="icon"
-        onClick={() => setOpen(true)}
-        className={cn(
-          state === 'collapsed' ? 'cursor-nesw-resize' : '',
-          'group',
-          'p-1',
-        )}
-      >
+      <Sidebar variant="inset" collapsible="icon" className="group p-1">
+        {/* onClick removed - handled in base Sidebar component to prevent auto-expansion on navigation */}
         <AppSidebarHeader />
 
         {state === 'collapsed' && <div className="mt-1" />}
@@ -205,7 +205,7 @@ export function ProjectDashboardSidebar() {
             'overflow-hidden',
           )}
         >
-          <SidebarGroup className="cursor-default flex-shrink-0">
+          <SidebarGroup className="cursor-default shrink-0">
             <SidebarGroupContent>
               <SidebarMenu>
                 {items.map((item) => (
@@ -215,12 +215,7 @@ export function ProjectDashboardSidebar() {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          <SidebarSeparator
-            className={cn(
-              state === 'collapsed' ? 'mb-3' : 'mb-5',
-              'flex-shrink-0',
-            )}
-          />
+          <SidebarSeparator className="mb-3 shrink-0" />
 
           <SidebarGroup className="flex-1 flex flex-col overflow-hidden">
             {state === 'expanded' && (
@@ -231,9 +226,8 @@ export function ProjectDashboardSidebar() {
                     <>
                       {!shouldDisableNewProjectButton ? (
                         <NewProjectDialog
-                          onCreate={() => {
-                            refetchProjects();
-                            refetchSearchResults();
+                          onCreate={(project) => {
+                            navigate(`/projects/${project.id}/flows`);
                           }}
                         >
                           <Button
@@ -297,10 +291,10 @@ export function ProjectDashboardSidebar() {
                         side="right"
                         sideOffset={8}
                       >
-                        <Input
+                        <SearchInput
                           placeholder={t('Search projects...')}
                           value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onChange={(e) => setSearchQuery(e)}
                           className="h-9"
                           autoFocus
                         />
@@ -318,39 +312,50 @@ export function ProjectDashboardSidebar() {
                   ? 'flex flex-col items-center scrollbar-none'
                   : 'scrollbar-hover',
               )}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+              }}
             >
-              <SidebarMenu
-                className={cn(
-                  state === 'collapsed'
-                    ? 'gap-2 flex flex-col items-center'
-                    : '',
-                )}
-              >
-                {displayProjects.map((project) => (
-                  <ProjectSideBarItem
-                    key={project.id}
-                    project={project}
-                    isCurrentProject={location.pathname.includes(
-                      `/projects/${project.id}`,
-                    )}
-                    handleProjectSelect={handleProjectSelect}
-                  />
-                ))}
-                {(isFetchingNextPage || (isSearchMode && isSearching)) && (
-                  <div className="flex items-center gap-2 px-2 py-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    {state === 'expanded' && <span>{t('Loading...')}</span>}
-                  </div>
-                )}
-                {isSearchMode &&
-                  !isSearching &&
-                  displayProjects.length === 0 && (
-                    <div className="px-2 py-2 text-sm text-muted-foreground">
-                      {state === 'expanded' && t('No projects found.')}
-                    </div>
+              {displayProjects.length > 0 ? (
+                <SidebarMenu
+                  className={cn(
+                    state === 'collapsed'
+                      ? 'gap-2 flex flex-col items-center'
+                      : '',
                   )}
-              </SidebarMenu>
+                  style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: '100%',
+                    position: 'relative',
+                  }}
+                >
+                  {virtualItems.map((virtualItem) => {
+                    const project = displayProjects[virtualItem.index];
+                    return (
+                      <div
+                        key={virtualItem.key}
+                        data-virtual-index={virtualItem.index}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: `${virtualItem.size}px`,
+                          transform: `translateY(${virtualItem.start}px)`,
+                        }}
+                      >
+                        {renderProjectItem(project)}
+                      </div>
+                    );
+                  })}
+                </SidebarMenu>
+              ) : (
+                isSearchMode && (
+                  <div className="px-2 py-2 text-sm text-muted-foreground">
+                    {state === 'expanded' && t('No projects found.')}
+                  </div>
+                )
+              )}
             </div>
           </SidebarGroup>
         </SidebarContent>

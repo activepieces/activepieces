@@ -10,14 +10,10 @@ const ShowPoweredBy = ({ show, position = 'sticky' }: ShowPoweredByProps) => {
   }
   return (
     <div
-      className={cn(
-        'bottom-3 right-5 pointer-events-none z-[10000]',
-        position,
-        {
-          '-mt-[30px]': position === 'sticky',
-          'mr-5': position === 'sticky',
-        },
-      )}
+      className={cn('bottom-3 right-5 pointer-events-none z-10000', position, {
+        '-mt-[30px]': position === 'sticky',
+        'mr-5': position === 'sticky',
+      })}
     >
       <div
         className={cn(

@@ -5,7 +5,8 @@ import {
     UpsertConnectionFromToken,
     UpsertSigningKeyConnection,
 } from '@activepieces/ee-shared'
-import { ALL_PRINCIPAL_TYPES, AppConnectionScope, PrincipalType } from '@activepieces/shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { AppConnectionScope, PrincipalType } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox } from '@fastify/type-provider-typebox'
 import { FastifyRequest } from 'fastify'
 import { StatusCodes } from 'http-status-codes'
@@ -26,7 +27,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -52,7 +53,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 querystring: GetOrDeleteConnectionFromTokenRequest,
@@ -71,7 +72,7 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
         '/app-connections',
         {
             config: {
-                allowedPrincipals: ALL_PRINCIPAL_TYPES,
+                security: securityAccess.public(),
             },
             schema: {
                 body: UpsertConnectionFromToken,
@@ -89,14 +90,20 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 querystring: ListConnectionKeysRequest,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                security: securityAccess.project(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    undefined,
+                    {
+                        type: ProjectResourceType.QUERY,
+                    },
+                ),
             },
         },
         async (
             request,
         ) => {
             return connectionKeyService(request.log).list(
-                request.principal.projectId,
+                request.projectId,
                 request.query.cursor ?? null,
                 request.query.limit ?? DEFAULT_LIMIT_SIZE,
             )
@@ -110,14 +117,20 @@ const connectionKeyController: FastifyPluginAsyncTypebox = async (fastify) => {
                 body: UpsertSigningKeyConnection,
             },
             config: {
-                allowedPrincipals: [PrincipalType.USER, PrincipalType.SERVICE] as const,
+                security: securityAccess.project(
+                    [PrincipalType.USER, PrincipalType.SERVICE],
+                    undefined,
+                    {
+                        type: ProjectResourceType.BODY,
+                    },
+                ),
             },
         },
         async (
             request,
         ) => {
             return connectionKeyService(request.log).upsert({
-                projectId: request.principal.projectId,
+                projectId: request.projectId,
                 request: request.body,
             })
         },

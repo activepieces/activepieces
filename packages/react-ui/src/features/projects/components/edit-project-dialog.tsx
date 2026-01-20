@@ -1,4 +1,3 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -20,21 +19,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { internalErrorToast } from '@/components/ui/sonner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
-import { api } from '@/lib/api';
-import { projectApi } from '@/lib/project-api';
-import {
-  Permission,
-  PlatformRole,
-  ProjectWithLimits,
-  ApErrorParams,
-  ErrorCode,
-  TeamProjectsLimit,
-} from '@activepieces/shared';
+import { Permission, PlatformRole } from '@activepieces/shared';
 
 interface EditProjectDialogProps {
   open: boolean;
@@ -42,7 +31,6 @@ interface EditProjectDialogProps {
   projectId: string;
   initialValues?: {
     projectName?: string;
-    aiCredits?: string;
     externalId?: string;
   };
   renameOnly?: boolean;
@@ -50,7 +38,6 @@ interface EditProjectDialogProps {
 
 type FormValues = {
   projectName: string;
-  aiCredits: string;
   externalId?: string;
 };
 
@@ -64,13 +51,10 @@ export function EditProjectDialog({
   const { checkAccess } = useAuthorization();
   const { platform } = platformHooks.useCurrentPlatform();
   const platformRole = userHooks.getCurrentUserPlatformRole();
-  const queryClient = useQueryClient();
-  const { updateCurrentProject } = projectHooks.useCurrentProject();
 
   const form = useForm<FormValues>({
     defaultValues: {
       projectName: initialValues?.projectName,
-      aiCredits: initialValues?.aiCredits || '',
       externalId: initialValues?.externalId,
     },
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
@@ -81,50 +65,6 @@ export function EditProjectDialog({
       form.reset(initialValues);
     }
   }, [open]);
-
-  const mutation = useMutation<
-    ProjectWithLimits,
-    Error,
-    {
-      displayName: string;
-      externalId?: string;
-    }
-  >({
-    mutationFn: (request) => {
-      updateCurrentProject(queryClient, request);
-      return projectApi.update(projectId, {
-        ...request,
-        externalId:
-          request.externalId?.trim() !== '' ? request.externalId : undefined,
-      });
-    },
-    onSuccess: () => {
-      toast.success(t('Your changes have been saved.'), {
-        duration: 3000,
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['current-project'],
-      });
-      onClose();
-    },
-    onError: (error) => {
-      if (api.isError(error)) {
-        const apError = error.response?.data as ApErrorParams;
-        switch (apError.code) {
-          case ErrorCode.PROJECT_EXTERNAL_ID_ALREADY_EXISTS: {
-            form.setError('root.serverError', {
-              message: t('The external ID is already taken.'),
-            });
-            break;
-          }
-          default: {
-            internalErrorToast();
-            break;
-          }
-        }
-      }
-    },
-  });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -140,12 +80,16 @@ export function EditProjectDialog({
         <Form {...form}>
           <form
             className="space-y-4"
-            onSubmit={form.handleSubmit((values) =>
-              mutation.mutate({
+            onSubmit={form.handleSubmit((values) => {
+              projectCollectionUtils.update(projectId, {
                 displayName: values.projectName,
                 externalId: values.externalId,
-              }),
-            )}
+              });
+              toast.success(t('Your changes have been saved.'), {
+                duration: 3000,
+              });
+              onClose();
+            })}
           >
             <FormField
               name="projectName"
@@ -162,39 +106,6 @@ export function EditProjectDialog({
                 </FormItem>
               )}
             />
-
-            {!renameOnly &&
-              platform.plan.teamProjectsLimit !== TeamProjectsLimit.NONE && (
-                <FormField
-                  name="aiCredits"
-                  render={({ field }) => (
-                    <FormItem>
-                      <Label htmlFor="aiCredits">{t('AI Credits')}</Label>
-                      <div className="relative">
-                        <Input
-                          {...field}
-                          type="number"
-                          id="aiCredits"
-                          placeholder={t('AI Credits')}
-                          className="rounded-sm pr-16"
-                        />
-                        {!field.disabled && (
-                          <Button
-                            variant="link"
-                            type="button"
-                            tabIndex={-1}
-                            className="absolute right-1 top-1/2 -translate-y-1/2 text-xs px-2 py-1 h-7"
-                            onClick={() => form.setValue('aiCredits', '')}
-                          >
-                            {t('Clear')}
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
 
             {!renameOnly &&
               platform.plan.embeddingEnabled &&

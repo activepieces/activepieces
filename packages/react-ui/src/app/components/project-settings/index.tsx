@@ -2,16 +2,17 @@ import { t } from 'i18next';
 import { Bell, GitBranch, Puzzle, Settings, Users } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { McpSvg } from '@/assets/img/custom/mcp';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import { cn } from '@/lib/utils';
 import {
@@ -28,7 +29,6 @@ import { ProjectAvatar } from '../project-avatar';
 import { AlertsSettings } from './alerts';
 import { EnvironmentSettings } from './environment';
 import { GeneralSettings, FormValues } from './general';
-import { useGeneralSettingsMutation } from './general/hook';
 import { McpServerSettings } from './mcp-server';
 import { MembersSettings } from './members';
 import { PiecesSettings } from './pieces';
@@ -59,7 +59,7 @@ export function ProjectSettingsDialog({
 }: ProjectSettingsDialogProps) {
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const { checkAccess } = useAuthorization();
-  const { project } = projectHooks.useCurrentProject();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const previousOpenRef = useRef(open);
 
   const { data: showAlerts } = flagsHooks.useFlag(ApFlagId.SHOW_ALERTS);
@@ -78,14 +78,16 @@ export function ProjectSettingsDialog({
     disabled: checkAccess(Permission.WRITE_PROJECT) === false,
   });
 
-  const projectMutation = useGeneralSettingsMutation(project.id, form);
-
   const handleSave = (values: FormValues) => {
-    projectMutation.mutate({
+    projectCollectionUtils.update(project.id, {
       displayName: values.projectName,
-      icon: values.icon,
       externalId: values.externalId,
+      icon: values.icon,
     });
+    toast.success(t('Your changes have been saved.'), {
+      duration: 3000,
+    });
+    onClose();
   };
 
   useEffect(() => {
@@ -130,6 +132,12 @@ export function ProjectSettingsDialog({
         !showAlerts,
     },
     {
+      id: 'mcp' as TabId,
+      label: t('MCP Server'),
+      icon: <McpSvg className="w-4 h-4" />,
+      disabled: false,
+    },
+    {
       id: 'pieces' as TabId,
       label: t('Pieces'),
       icon: <Puzzle className="w-4 h-4" />,
@@ -141,20 +149,12 @@ export function ProjectSettingsDialog({
       icon: <GitBranch className="w-4 h-4" />,
       disabled: !checkAccess(Permission.READ_PROJECT_RELEASE),
     },
-    {
-      id: 'mcp' as TabId,
-      label: t('MCP Server'),
-      icon: <McpSvg className="w-4 h-4" />,
-      disabled: false,
-    },
   ].filter((tab) => !tab.disabled);
 
   const renderTabContent = () => {
     switch (activeTab) {
       case 'general':
-        return (
-          <GeneralSettings form={form} isSaving={projectMutation.isPending} />
-        );
+        return <GeneralSettings form={form} isSaving={false} />;
       case 'members':
         return <MembersSettings />;
       case 'alerts':
@@ -171,10 +171,18 @@ export function ProjectSettingsDialog({
   };
 
   const renderTabHeader = () => {
+    const hasUnsavedChanges = activeTab === 'general' && form.formState.isDirty;
     return (
-      <span className="text-lg font-bold">
-        {tabs.find((tab) => tab.id === activeTab)?.label}
-      </span>
+      <div className="flex items-center gap-2">
+        <span className="text-lg font-bold">
+          {tabs.find((tab) => tab.id === activeTab)?.label}
+        </span>
+        {hasUnsavedChanges && (
+          <Badge variant="ghost" className="text-muted-foreground">
+            {t('Unsaved changes')}
+          </Badge>
+        )}
+      </div>
     );
   };
   const renderDialogFooter = () => {
@@ -187,28 +195,23 @@ export function ProjectSettingsDialog({
             variant="outline"
             size="sm"
             onClick={onClose}
-            disabled={projectMutation.isPending}
+            disabled={false}
           >
             {t('Close')}
           </Button>
           <Button
-            disabled={projectMutation.isPending}
+            disabled={false}
             size="sm"
             onClick={form.handleSubmit(handleSave)}
           >
-            {projectMutation.isPending ? (
-              <>
-                <LoadingSpinner className="w-4 h-4 mr-2" />
-                {t('Saving...')}
-              </>
-            ) : (
-              t('Save Changes')
-            )}
+            {t('Save Changes')}
           </Button>
         </div>
       </div>
     );
   };
+
+  const currentIconColor = form.watch('icon')?.color ?? project.icon.color;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -217,8 +220,8 @@ export function ProjectSettingsDialog({
           <div className="w-[238px]">
             <nav className="bg-sidebar space-y-1 bg-muted rounded-sm rounded-r-none h-full flex flex-col rounded-l-md">
               <ApProjectDisplay
-                title={project.displayName}
-                icon={project.icon}
+                title={form.watch('projectName') ?? project.displayName}
+                icon={form.watch('icon') ?? project.icon}
                 containerClassName="px-3 my-4"
                 titleClassName="text-md font-bold"
                 maxLengthToNotShowTooltip={18}
@@ -229,9 +232,9 @@ export function ProjectSettingsDialog({
                   <div
                     key={tab.id}
                     className={cn(
-                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-sidebar-active',
+                      'flex items-center gap-2 rounded-sm px-2 py-1.5 text-sm font-medium transition-all cursor-pointer hover:bg-sidebar-accent',
                       {
-                        'bg-sidebar-active': activeTab === tab.id,
+                        'bg-sidebar-accent': activeTab === tab.id,
                       },
                     )}
                     onClick={() => setActiveTab(tab.id)}
@@ -250,7 +253,7 @@ export function ProjectSettingsDialog({
                   <ProjectAvatar
                     displayName={project.displayName}
                     projectType={project.type}
-                    iconColor={project.icon.color}
+                    iconColor={currentIconColor}
                     size="md"
                     showBackground={true}
                   />

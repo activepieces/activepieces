@@ -165,7 +165,7 @@ const PreviewImage = ({ todoType }: { todoType: TodoType }) => {
 
         <div className="w-full h-[350px]  rounded mb-2 flex items-center justify-center bg-muted/50 relative">
           <img src={image} alt={alt} className="w-full h-full object-contain" />
-          <div className="absolute -bottom-1 left-0 right-0 h-28 bg-gradient-to-t from-white dark:from-background to-transparent"></div>
+          <div className="absolute -bottom-1 left-0 right-0 h-28 bg-linear-to-t from-white dark:from-background to-transparent"></div>
         </div>
 
         <p className="text-sm text-muted-foreground italic text-center mb-2">

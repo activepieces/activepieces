@@ -34,7 +34,7 @@ export const AgentTimeline = ({
   return (
     <div className={`h-full flex w-full flex-col ${className}`}>
       <ScrollArea className="flex-1 min-h-0 relative">
-        <div className="absolute left-2 top-4 bottom-8 w-[1px] bg-border" />
+        <div className="absolute left-2 top-4 bottom-8 w-px bg-border" />
 
         <div className="space-y-7 pb-4">
           {agentResult.prompt.length > 0 && (

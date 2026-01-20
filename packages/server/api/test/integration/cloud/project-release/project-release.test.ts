@@ -51,6 +51,6 @@ describe('Create Project Release', () => {
             },
         })
 
-        expect(response?.statusCode).toBe(StatusCodes.FORBIDDEN)
+        expect(response?.statusCode).toBe(StatusCodes.NOT_FOUND)
     })
 })

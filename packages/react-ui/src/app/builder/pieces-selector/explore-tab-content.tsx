@@ -75,7 +75,7 @@ const ExploreTabContent = ({
                     showTooltip={false}
                     size={'sm'}
                   />
-                  <div className="flex-grow h-full flex items-center justify-left text-sm">
+                  <div className="grow h-full flex items-center justify-left text-sm">
                     {pieceMetadata.displayName}
                   </div>
                 </div>{' '}

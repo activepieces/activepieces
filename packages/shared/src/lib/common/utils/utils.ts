@@ -145,3 +145,24 @@ export function partition<T>(array: T[], predicate: (item: T, index: number, arr
 export function unique<T>(array: T[]): T[] {
     return array.filter((item, index, self) => index === self.findIndex(other => JSON.stringify(other) === JSON.stringify(item)))
 }
+
+export function mapsAreSame<K, V>(a: Map<K, V>, b: Map<K, V>): boolean {
+    if (a.size !== b.size) return false
+    for (const [key, value] of a) {
+        if (!b.has(key)) return false
+        if (b.get(key) !== value) return false
+    }
+    return true
+}
+
+export function validateIndexBound({
+    index, limit,
+}: { index: number, limit: number }) {
+    if (index < 0) {
+        return 0
+    }
+    if (index >= limit) {
+        return limit - 1
+    }
+    return index
+}

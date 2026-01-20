@@ -1,11 +1,10 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Lock, User } from 'lucide-react';
+import { Lock, User, Tag, Users, Workflow, Clock, Hash } from 'lucide-react';
 
-import { Badge } from '@/components/ui/badge';
 import { RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
-import { formatUtils } from '@/lib/utils';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   isNil,
   PlatformWithoutSensitiveData,
@@ -20,7 +19,6 @@ type ProjectsTableColumnsProps = {
 
 export const projectsTableColumns = ({
   platform,
-  currentUserId,
 }: ProjectsTableColumnsProps): ColumnDef<
   RowDataWithActions<ProjectWithLimits>
 >[] => {
@@ -28,23 +26,17 @@ export const projectsTableColumns = ({
     {
       accessorKey: 'displayName',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => {
         const locked = row.original.plan.locked;
         const isPersonal = row.original.type === ProjectType.PERSONAL;
-        const isOwner = row.original.ownerId === currentUserId;
 
         return (
           <div className="text-left flex items-center justify-start ">
             {locked && <Lock className="size-3 mr-1.5" strokeWidth={2.5} />}
             {isPersonal && <User className="size-4 mr-1.5"></User>}
             <span>{row.original.displayName}</span>
-            {isPersonal && isOwner && (
-              <Badge variant={'outline'} className="text-xs font-medium ml-2">
-                You
-              </Badge>
-            )}
           </div>
         );
       },
@@ -56,7 +48,11 @@ export const projectsTableColumns = ({
     {
       accessorKey: 'users',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Active Users')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Active Users')}
+          icon={Users}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -70,7 +66,11 @@ export const projectsTableColumns = ({
     {
       accessorKey: 'flows',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Active Flows')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Active Flows')}
+          icon={Workflow}
+        />
       ),
       cell: ({ row }) => {
         return (
@@ -84,12 +84,16 @@ export const projectsTableColumns = ({
     {
       accessorKey: 'createdAt',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => {
         return (
           <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.created))}
+            <FormattedDate date={new Date(row.original.created)} />
           </div>
         );
       },
@@ -100,7 +104,11 @@ export const projectsTableColumns = ({
     columns.push({
       accessorKey: 'externalId',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('External ID')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('External ID')}
+          icon={Hash}
+        />
       ),
       cell: ({ row }) => {
         const displayValue =
@@ -108,7 +116,7 @@ export const projectsTableColumns = ({
           row.original.externalId?.length === 0
             ? '-'
             : row.original.externalId;
-        return <div className="text-left">{displayValue}</div>;
+        return <div className="text-left truncate">{displayValue}</div>;
       },
     });
   }

@@ -18,13 +18,13 @@ import { LanguageModelV2 } from '@ai-sdk/provider';
 import mime from 'mime-types';
 import { isNil } from '@activepieces/shared';
 import { createAIModel } from '../../common/ai-sdk';
-import { AIProviderName } from '../../common/types';
+import { AIProviderName } from '@activepieces/shared';
 import { aiProps } from '../../common/props';
 
 export const generateImageAction = createAction({
   name: 'generateImage',
   displayName: 'Generate Image',
-  description: '',
+  description: 'Create unique, high-quality images from simple text descriptions using AI.',
   props: {
     provider: aiProps({ modelType: 'image' }).provider,
     model: aiProps({ modelType: 'image' }).model,
@@ -138,15 +138,18 @@ export const generateImageAction = createAction({
     }),
   },
   async run(context) {
-    const providerId = context.propsValue.provider;
+    const provider = context.propsValue.provider;
     const modelId = context.propsValue.model;
 
     const image = await getGeneratedImage({
-      providerId,
+      provider: provider as AIProviderName,
       modelId,
       engineToken: context.server.token,
       apiUrl: context.server.apiUrl,
       prompt: context.propsValue.prompt,
+      projectId: context.project.id,
+      flowId: context.flows.current.id,
+      runId: context.run.id,
       advancedOptions: context.propsValue.advancedOptions,
     });
 
@@ -163,32 +166,42 @@ export const generateImageAction = createAction({
 });
 
 const getGeneratedImage = async ({
-  providerId,
+  provider,
   modelId,
   engineToken,
   apiUrl,
   prompt,
+  projectId,
+  flowId,
+  runId,
   advancedOptions,
 }: {
-  providerId: string;
+  provider: AIProviderName;
   modelId: string;
   engineToken: string;
   apiUrl: string;
   prompt: string;
+  projectId: string;
+  flowId: string;
+  runId: string;
   advancedOptions?: DynamicPropsValue;
 }): Promise<GeneratedFile> => {
   const model = await createAIModel({
-    providerId,
+    provider,
     modelId,
     engineToken,
     apiUrl,
+    projectId,
+    flowId,
+    runId,
     isImage: true,
   });
 
-  switch (providerId) {
+  switch (provider) {
     case AIProviderName.GOOGLE:
     case AIProviderName.ACTIVEPIECES:
     case AIProviderName.OPENROUTER:
+    case AIProviderName.CLOUDFLARE_GATEWAY:
       return generateImageUsingGenerateText({
         model: model as unknown as LanguageModelV2,
         prompt,
@@ -199,7 +212,7 @@ const getGeneratedImage = async ({
         model,
         prompt,
         providerOptions: {
-          [providerId]: { ...advancedOptions },
+          [provider]: { ...advancedOptions },
         },
       });
       return image

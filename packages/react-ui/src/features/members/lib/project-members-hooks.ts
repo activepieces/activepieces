@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 
+import { flagsHooks } from '@/hooks/flags-hooks';
 import { ProjectMemberWithUser } from '@activepieces/ee-shared';
+import { ApFlagId, assertNotNullOrUndefined } from '@activepieces/shared';
 
 import { authenticationSession } from '../../../lib/authentication-session';
 
@@ -8,13 +10,12 @@ import { projectMembersApi } from './project-members-api';
 
 export const projectMembersHooks = {
   useProjectMembers: () => {
+    const { data } = flagsHooks.useFlag<boolean>(ApFlagId.SHOW_PROJECT_MEMBERS);
     const query = useQuery<ProjectMemberWithUser[]>({
-      queryKey: ['project-members'],
+      queryKey: ['project-members', authenticationSession.getProjectId()],
       queryFn: async () => {
         const projectId = authenticationSession.getProjectId();
-        if (projectId === null) {
-          throw new Error('Project ID is null');
-        }
+        assertNotNullOrUndefined(projectId, 'Project ID is null');
         const res = await projectMembersApi.list({
           projectId: projectId,
           projectRoleId: undefined,
@@ -23,7 +24,7 @@ export const projectMembersHooks = {
         });
         return res.data;
       },
-      staleTime: Infinity,
+      enabled: !!data,
     });
     return {
       projectMembers: query.data,

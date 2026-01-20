@@ -1,6 +1,12 @@
 import { FlowVersion, FlowVersionState, FlowVersionTemplate } from '@activepieces/shared'
 import { migrateBranchToRouter } from './migrate-v0-branch-to-router'
 import { migrateConnectionIds } from './migrate-v1-connection-ids'
+import { migrateV10AiPiecesProviderId } from './migrate-v10-ai-pieces-provider-id'
+import { migrateV11TablesToV2 } from './migrate-v11-tables-to-v2'
+import { migrateV12FixPieceVersion } from './migrate-v12-fix-piece-version'
+import { migrateV13AddNotes } from './migrate-v13-add-notes'
+import { migrateV14AgentProviderModel } from './migrate-v14-agent-provider-model'
+import { migrateV15AgentProviderModel } from './migrate-v15-agent-provider-model'
 import { migrateAgentPieceV2 } from './migrate-v2-agent-piece'
 import { migrateAgentPieceV3 } from './migrate-v3-agent-piece'
 import { migrateAgentPieceV4 } from './migrate-v4-agent-piece'
@@ -26,6 +32,12 @@ const migrations: Migration[] = [
     moveAgentsToFlowVerion,
     cleanUpAgentTools,
     migrateV9AiPieces,
+    migrateV10AiPiecesProviderId,
+    migrateV11TablesToV2,
+    migrateV12FixPieceVersion,
+    migrateV13AddNotes,
+    migrateV14AgentProviderModel,
+    migrateV15AgentProviderModel,
 ] as const
 
 export const flowMigrations = {
@@ -39,7 +51,7 @@ export const flowMigrations = {
     },
 }
 
-export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger'], schemaVersion: FlowVersion['schemaVersion']): Promise<FlowVersionTemplate> => {
+export const migrateFlowVersionTemplate = async ({ trigger, schemaVersion, notes, valid }: Pick<FlowVersionTemplate, 'trigger' | 'schemaVersion' | 'notes' | 'valid'>): Promise<FlowVersionTemplate> => {
     return flowMigrations.apply({
         agentIds: [],
         connectionIds: [],
@@ -49,9 +61,16 @@ export const migrateFlowVersionTemplate = async (trigger: FlowVersion['trigger']
         id: '',
         updated: new Date().toISOString(),
         updatedBy: '',
-        valid: false,
+        valid,
         trigger,
         state: FlowVersionState.DRAFT,
         schemaVersion,
+        notes: notes ?? [],
     })
+}
+
+export const migrateFlowVersionTemplateList = async (flowVersions: FlowVersionTemplate[]): Promise<FlowVersionTemplate[]> => {
+    return Promise.all(flowVersions.map(async (flowVersion) => {
+        return migrateFlowVersionTemplate(flowVersion)
+    }))
 }

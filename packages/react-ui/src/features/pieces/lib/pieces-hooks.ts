@@ -152,6 +152,7 @@ export const piecesHooks = {
       queryKey: ['pieces', searchQuery, includeHidden],
       queryFn: () =>
         piecesApi.list({
+          projectId: authenticationSession.getProjectId()!,
           searchQuery,
           includeHidden,
           includeTags,
@@ -253,6 +254,11 @@ export const piecesHooks = {
         return {
           isLoading: false,
           data: getAiAndAgentsPieces(piecesMetadataWithoutEmptySuggestions),
+        };
+      case PieceSelectorTabType.APPROVALS:
+        return {
+          isLoading: false,
+          data: [],
         };
       case PieceSelectorTabType.APPS: {
         const popularAppsCategory = {

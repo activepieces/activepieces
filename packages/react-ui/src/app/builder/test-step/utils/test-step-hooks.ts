@@ -9,6 +9,7 @@ import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { sampleDataHooks } from '@/features/flows/lib/sample-data-hooks';
 import { triggerEventsApi } from '@/features/flows/lib/trigger-events-api';
 import { api } from '@/lib/api';
+import { authenticationSession } from '@/lib/authentication-session';
 import { wait } from '@/lib/utils';
 import {
   FlowAction,
@@ -129,9 +130,15 @@ export const testStepHooks = {
       mutationFn: async (abortSignal: AbortSignal) => {
         setErrorMessage?.(undefined);
         const ids = (
-          await triggerEventsApi.list({ flowId, cursor: undefined, limit: 5 })
+          await triggerEventsApi.list({
+            projectId: authenticationSession.getProjectId()!,
+            flowId,
+            cursor: undefined,
+            limit: 5,
+          })
         ).data.map((triggerEvent) => triggerEvent.id);
         await triggerEventsApi.test({
+          projectId: authenticationSession.getProjectId()!,
           flowId,
           flowVersionId,
           testStrategy: TriggerTestStrategy.SIMULATION,
@@ -142,6 +149,7 @@ export const testStepHooks = {
             return [];
           }
           const newData = await triggerEventsApi.list({
+            projectId: authenticationSession.getProjectId()!,
             flowId,
             cursor: undefined,
             limit: 5,
@@ -189,6 +197,7 @@ export const testStepHooks = {
     return useMutation({
       mutationFn: async (mockData: unknown) => {
         const data = await triggerEventsApi.saveTriggerMockdata({
+          projectId: authenticationSession.getProjectId()!,
           flowId,
           mockData,
         });
@@ -222,6 +231,7 @@ export const testStepHooks = {
       mutationFn: async () => {
         setErrorMessage(undefined);
         const { data } = await triggerEventsApi.test({
+          projectId: authenticationSession.getProjectId()!,
           flowId,
           flowVersionId,
           testStrategy: TriggerTestStrategy.TEST_FUNCTION,
@@ -301,11 +311,12 @@ export const testStepHooks = {
         const response = await flowRunsApi.testStep({
           socket,
           request: {
+            projectId: authenticationSession.getProjectId()!,
             flowVersionId,
             stepName: currentStep.name,
           },
           onProgress: params?.onProgress,
-          onFinsih:
+          onFinish:
             params?.type === 'agentAction' ? params.onFinish : undefined,
         });
         return response;

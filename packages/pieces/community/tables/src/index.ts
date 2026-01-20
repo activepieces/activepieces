@@ -14,7 +14,7 @@ export const tables = createPiece({
   displayName: 'Tables',
   logoUrl: 'https://cdn.activepieces.com/pieces/tables_piece.svg',
   categories: [PieceCategory.CORE],
-  minimumSupportedRelease: '0.71.5',
+  minimumSupportedRelease: '0.75.0',
   authors: ['amrdb'],
   auth: PieceAuth.None(),
   actions: [createRecords, deleteRecord, updateRecord, getRecord, findRecords, clearTable],

@@ -4,6 +4,7 @@ import { TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -27,6 +28,7 @@ interface ConfirmationDeleteDialogProps {
   onOpenChange?: (open: boolean) => void;
   showToast?: boolean;
   onError?: (error: Error) => void;
+  warning?: React.ReactNode | string;
 }
 
 export const ConfirmationDeleteDialog = ({
@@ -41,6 +43,7 @@ export const ConfirmationDeleteDialog = ({
   open,
   onError,
   onOpenChange,
+  warning,
 }: ConfirmationDeleteDialogProps) => {
   const [isControlled] = useState(
     open !== undefined && onOpenChange !== undefined,
@@ -80,6 +83,12 @@ export const ConfirmationDeleteDialog = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription className="pt-2">{message}</DialogDescription>
         </DialogHeader>
+        {warning && (
+          <Alert variant="warning">
+            <TriangleAlert className="h-4 w-4" />
+            <AlertDescription>{warning}</AlertDescription>
+          </Alert>
+        )}
         <DialogFooter className="mt-4">
           <Button
             variant="outline"

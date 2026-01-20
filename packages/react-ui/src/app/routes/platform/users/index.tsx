@@ -1,6 +1,18 @@
 import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
-import { CircleMinus, Pencil, RotateCcw, Trash, User } from 'lucide-react';
+import {
+  CircleMinus,
+  Pencil,
+  RotateCcw,
+  Trash,
+  User,
+  Mail,
+  Tag,
+  Hash,
+  Shield,
+  Clock,
+  Activity,
+} from 'lucide-react';
 import { toast } from 'sonner';
 
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
@@ -9,6 +21,8 @@ import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { TruncatedColumnTextValue } from '@/components/ui/data-table/truncated-column-text-value';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import {
   Tooltip,
   TooltipContent,
@@ -16,7 +30,6 @@ import {
 } from '@/components/ui/tooltip';
 import { platformUserHooks } from '@/hooks/platform-user-hooks';
 import { platformUserApi } from '@/lib/platform-user-api';
-import { formatUtils } from '@/lib/utils';
 import { PlatformRole, UserStatus } from '@activepieces/shared';
 
 import { UpdateUserDialog } from './update-user-dialog';
@@ -73,7 +86,7 @@ export default function UsersPage() {
         <DashboardPageHeader
           title={t('Users')}
           description={t(
-            'Manage, delete, active and desactivate users on platfrom',
+            'Manage, delete, activate and deactivate users on platform',
           )}
         />
         <DataTable
@@ -83,32 +96,44 @@ export default function UsersPage() {
           columns={[
             {
               accessorKey: 'email',
+              size: 200,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Email')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Email')}
+                  icon={Mail}
+                />
               ),
               cell: ({ row }) => {
-                return <div className="text-left">{row.original.email}</div>;
+                return <TruncatedColumnTextValue value={row.original.email} />;
               },
             },
             {
               accessorKey: 'name',
+              size: 150,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Name')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Name')}
+                  icon={Tag}
+                />
               ),
               cell: ({ row }) => {
                 return (
-                  <div className="text-left">
-                    {row.original.firstName} {row.original.lastName}
-                  </div>
+                  <TruncatedColumnTextValue
+                    value={row.original.firstName + ' ' + row.original.lastName}
+                  />
                 );
               },
             },
             {
               accessorKey: 'externalId',
+              size: 120,
               header: ({ column }) => (
                 <DataTableColumnHeader
                   column={column}
                   title={t('External Id')}
+                  icon={Hash}
                 />
               ),
               cell: ({ row }) => {
@@ -119,8 +144,13 @@ export default function UsersPage() {
             },
             {
               accessorKey: 'role',
+              size: 100,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Role')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Role')}
+                  icon={Shield}
+                />
               ),
               cell: ({ row }) => {
                 return (
@@ -136,21 +166,53 @@ export default function UsersPage() {
             },
             {
               accessorKey: 'createdAt',
+              size: 150,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Created')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Created')}
+                  icon={Clock}
+                />
               ),
               cell: ({ row }) => {
                 return (
                   <div className="text-left">
-                    {formatUtils.formatDate(new Date(row.original.created))}
+                    <FormattedDate date={new Date(row.original.created)} />
                   </div>
                 );
               },
             },
             {
-              accessorKey: 'status',
+              accessorKey: 'lastActiveDate',
+              size: 150,
               header: ({ column }) => (
-                <DataTableColumnHeader column={column} title={t('Status')} />
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Last Active')}
+                  icon={Clock}
+                />
+              ),
+              cell: ({ row }) => {
+                return row.original.lastActiveDate ? (
+                  <div className="text-left">
+                    <FormattedDate
+                      date={new Date(row.original.lastActiveDate)}
+                    />
+                  </div>
+                ) : (
+                  '-'
+                );
+              },
+            },
+            {
+              accessorKey: 'status',
+              size: 100,
+              header: ({ column }) => (
+                <DataTableColumnHeader
+                  column={column}
+                  title={t('Status')}
+                  icon={Activity}
+                />
               ),
               cell: ({ row }) => {
                 return (

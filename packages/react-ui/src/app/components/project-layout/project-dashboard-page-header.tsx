@@ -1,32 +1,25 @@
-import { DotsHorizontalIcon } from '@radix-ui/react-icons';
-import {
-  UserPlus,
-  UsersRound,
-  Users,
-  Settings,
-  PencilIcon,
-} from 'lucide-react';
+import { t } from 'i18next';
+import { UserPlus, UsersRound, Settings, Lock } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-import { useEmbedding } from '@/components/embed-provider';
-import { Badge } from '@/components/ui/badge';
+import { PageHeader } from '@/components/custom/page-header';
 import { Button } from '@/components/ui/button';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Separator } from '@/components/ui/separator';
-import { SidebarTrigger } from '@/components/ui/sidebar-shadcn';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { InviteUserDialog } from '@/features/members/component/invite-user-dialog';
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
-import { EditProjectDialog } from '@/features/projects/components/edit-project-dialog';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import {
+  getProjectName,
+  projectCollectionUtils,
+} from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
 import {
   ApFlagId,
@@ -34,33 +27,31 @@ import {
   Permission,
   PlatformRole,
   ProjectType,
+  UserStatus,
 } from '@activepieces/shared';
 
 import { ApProjectDisplay } from '../ap-project-display';
-import { ProjectAvatar } from '../project-avatar';
 import { ProjectSettingsDialog } from '../project-settings';
 
 export const ProjectDashboardPageHeader = ({
-  title,
   children,
   description,
 }: {
-  title: string;
   children?: React.ReactNode;
   description?: React.ReactNode;
 }) => {
-  const { project } = projectHooks.useCurrentProject();
-  const { data: currentUser } = userHooks.useCurrentUser();
+  const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const [inviteOpen, setInviteOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [renameProjectOpen, setRenameProjectOpen] = useState(false);
   const [settingsInitialTab, setSettingsInitialTab] = useState<
     'general' | 'members' | 'alerts' | 'pieces' | 'environment'
   >('general');
-  const { embedState } = useEmbedding();
   const location = useLocation();
   const { projectMembers } = projectMembersHooks.useProjectMembers();
+  const activeProjectMembers = projectMembers?.filter(
+    (member) => member.user.status === UserStatus.ACTIVE,
+  );
   const { checkAccess } = useAuthorization();
   const { data: user } = userHooks.useCurrentUser();
   const userHasPermissionToReadProjectMembers = checkAccess(
@@ -71,29 +62,20 @@ export const ProjectDashboardPageHeader = ({
     ApFlagId.SHOW_PROJECT_MEMBERS,
   );
 
-  const isEmbedded = embedState.isEmbedded;
-
   const userHasPermissionToInviteUser = checkAccess(
     Permission.WRITE_INVITATION,
   );
 
   const showProjectMembersIcons =
-    !isEmbedded &&
     showProjectMembersFlag &&
     userHasPermissionToReadProjectMembers &&
-    !isNil(projectMembers) &&
+    !isNil(activeProjectMembers) &&
     project.type === ProjectType.TEAM;
 
   const showInviteUserButton =
-    !isEmbedded &&
-    userHasPermissionToInviteUser &&
-    project.type === ProjectType.TEAM;
-  const showSettingsButton = !isEmbedded;
-  const isProjectPage = location.pathname.includes('/projects/');
+    userHasPermissionToInviteUser && project.type === ProjectType.TEAM;
 
-  const showRenameProjectButton =
-    project.type !== ProjectType.PERSONAL &&
-    checkAccess(Permission.WRITE_PROJECT);
+  const isProjectPage = location.pathname.includes('/projects/');
 
   const hasGeneralSettings =
     project.type === ProjectType.TEAM ||
@@ -116,133 +98,89 @@ export const ProjectDashboardPageHeader = ({
     return 'pieces';
   };
 
-  if (embedState.hidePageHeader) {
-    return null;
-  }
-  return (
-    <div className="flex items-center justify-between min-w-full py-3">
-      <div className="flex items-center justify-between w-full">
-        <div className="flex items-center gap-2">
-          <SidebarTrigger />
-          <Separator orientation="vertical" className="h-5 mr-2" />
-          <div>
-            <div className="flex items-center gap-2">
-              <ApProjectDisplay
-                title={title}
-                maxLengthToNotShowTooltip={30}
-                titleClassName="text-lg font-semibold"
-                projectType={project.type}
-              />
-              {project.type === ProjectType.PERSONAL &&
-                user?.platformRole === PlatformRole.ADMIN &&
-                currentUser?.id === project.ownerId && (
-                  <Badge variant={'outline'} className="text-xs font-medium">
-                    You
-                  </Badge>
-                )}
-            </div>
-            {description && (
-              <span className="text-xs text-muted-foreground">
-                {description}
-              </span>
-            )}
-          </div>
-        </div>
-        {isProjectPage && (
-          <div className="flex items-center gap-3">
-            {showProjectMembersIcons && (
-              <div className="flex items-center gap-2 px-3 py-1.5 ">
-                <UsersRound className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {projectMembers?.length}
-                </span>
-              </div>
-            )}
-            {showInviteUserButton && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-2 shadow-sm"
-                onClick={() => setInviteOpen(true)}
-              >
-                <UserPlus className="w-4 h-4" />
-                <span className="text-sm font-medium">Invite</span>
-              </Button>
-            )}
-            {showSettingsButton && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="shadow-sm px-2"
-                  >
-                    <DotsHorizontalIcon className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-60">
-                  <div className="mb-2">
-                    <ProjectAvatar
-                      displayName={project.displayName}
-                      projectType={project.type}
-                      iconColor={project.icon.color}
-                      size="md"
-                      showBackground={true}
-                      showDetails={true}
-                      createdDate={new Date(project.created)}
-                    />
-                  </div>
-                  {showRenameProjectButton && (
-                    <DropdownMenuItem
-                      onClick={() => setRenameProjectOpen(true)}
-                    >
-                      <PencilIcon className="w-4 h-4 mr-2" />
-                      Rename
-                    </DropdownMenuItem>
-                  )}
-                  {showInviteUserButton && (
-                    <DropdownMenuItem onClick={() => setInviteOpen(true)}>
-                      <UserPlus className="w-4 h-4 mr-2" />
-                      Invite
-                    </DropdownMenuItem>
-                  )}
-                  {showProjectMembersIcons && (
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setSettingsInitialTab('members');
-                        setSettingsOpen(true);
-                      }}
-                    >
-                      <Users className="w-4 h-4 mr-2" />
-                      Members
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSettingsInitialTab(getFirstAvailableTab());
-                      setSettingsOpen(true);
-                    }}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        )}
-      </div>
-      {children}
-      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
-      <EditProjectDialog
-        open={renameProjectOpen}
-        onClose={() => setRenameProjectOpen(false)}
-        projectId={project.id}
-        initialValues={{
-          projectName: project?.displayName,
-        }}
-        renameOnly={true}
+  const titleContent = (
+    <div className="flex items-center gap-2">
+      <ApProjectDisplay
+        title={getProjectName(project)}
+        maxLengthToNotShowTooltip={30}
+        titleClassName="text-base"
+        projectType={project.type}
       />
+      {project.type === ProjectType.PERSONAL && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Lock className="w-4 h-4" />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>
+                {t(
+                  'This is your private project. Only you can see and access it.',
+                )}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+    </div>
+  );
+
+  const rightContent = isProjectPage ? (
+    <div className="flex items-center gap-3">
+      {showProjectMembersIcons && (
+        <Button
+          variant="ghost"
+          className="gap-2"
+          aria-label={`View ${activeProjectMembers?.length} team member${
+            activeProjectMembers?.length !== 1 ? 's' : ''
+          }`}
+          onClick={() => {
+            setSettingsInitialTab('members');
+            setSettingsOpen(true);
+          }}
+        >
+          <UsersRound className="w-4 h-4" />
+          <span className="text-sm font-medium">
+            {activeProjectMembers?.length}
+          </span>
+        </Button>
+      )}
+      {showInviteUserButton && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-2"
+          onClick={() => setInviteOpen(true)}
+        >
+          <UserPlus className="w-4 h-4" />
+          <span className="text-sm font-medium">Invite</span>
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+        onClick={() => {
+          setSettingsInitialTab(getFirstAvailableTab());
+          setSettingsOpen(true);
+        }}
+      >
+        <Settings className="w-4 h-4" />
+      </Button>
+    </div>
+  ) : (
+    children
+  );
+
+  return (
+    <>
+      <PageHeader
+        title={titleContent}
+        description={description}
+        rightContent={rightContent}
+        className="min-w-full"
+      />
+      <InviteUserDialog open={inviteOpen} setOpen={setInviteOpen} />
       <ProjectSettingsDialog
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
@@ -251,6 +189,6 @@ export const ProjectDashboardPageHeader = ({
           projectName: project?.displayName,
         }}
       />
-    </div>
+    </>
   );
 };

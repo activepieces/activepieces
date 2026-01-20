@@ -1,8 +1,8 @@
-import { DialogTrigger } from '@radix-ui/react-dialog';
 import { useQuery } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { Search } from 'lucide-react';
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -10,7 +10,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
@@ -19,110 +18,89 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
-  PopulatedFlow,
   AgentTool,
   FlowTriggerType,
   AgentToolType,
+  AgentFlowTool,
 } from '@activepieces/shared';
 
+import { useFlowToolDialogStore } from '../stores/flows-tools';
+
+import { CreateMcpFlowButton } from './create-mcp-flow-button';
 import { FlowDialogContent } from './flow-dialog-content';
 
 type AgentFlowToolDialogProps = {
-  children: React.ReactNode;
-  selectedFlows: string[];
-  open: boolean;
   onToolsUpdate: (tools: AgentTool[]) => void;
-  onClose: () => void;
   tools: AgentTool[];
 };
 
 export function AgentFlowToolDialog({
-  open,
-  selectedFlows: initialSelectedFlows,
   onToolsUpdate,
-  children,
-  onClose,
   tools,
 }: AgentFlowToolDialogProps) {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFlows, setSelectedFlows] =
-    useState<string[]>(initialSelectedFlows);
+  const [selectedFlows, setSelectedFlows] = useState<AgentFlowTool[]>(
+    tools.filter((tools) => tools.type === AgentToolType.FLOW),
+  );
+
+  const {
+    showAddFlowDialog,
+    setShowAddFlowDialog,
+    searchQuery,
+    setSearchQuery,
+  } = useFlowToolDialogStore();
 
   const projectId = authenticationSession.getProjectId();
 
-  const { data: flows } = useQuery({
+  const { data } = useQuery({
     queryKey: ['flows', projectId],
     queryFn: async () => {
-      const flows = await flowsApi
-        .list({
-          cursor: undefined,
-          limit: 1000,
-          projectId: projectId!,
-        })
-        .then((response) => {
-          return response.data.filter(
-            (flow: PopulatedFlow) =>
-              flow.version.trigger.type === FlowTriggerType.PIECE &&
-              flow.version.trigger.settings.pieceName ===
-                '@activepieces/piece-mcp',
-          );
-        });
-      return flows;
+      return await flowsApi.list({
+        cursor: undefined,
+        limit: 1000,
+        projectId: projectId!,
+      });
     },
   });
 
-  const handleSave = () => {
-    const newTools = selectedFlows.map((flowId) => ({
-      type: AgentToolType.FLOW,
-      flowId: flowId,
-      toolName: flowId,
-    })) as AgentTool[];
+  const flows = useMemo(() => {
+    return data?.data.filter(
+      (flow) =>
+        flow.version.trigger.type === FlowTriggerType.PIECE &&
+        flow.version.trigger.settings.pieceName === '@activepieces/piece-mcp',
+    );
+  }, [data]);
 
-    const nonFlowTools: AgentTool[] = tools.filter(
+  const handleSave = () => {
+    const noneFlowTools: AgentTool[] = tools.filter(
       (tool) => tool.type !== AgentToolType.FLOW,
     );
 
-    const updatedTools = [...nonFlowTools, ...newTools];
+    const updatedTools = [...noneFlowTools, ...selectedFlows];
+    setShowAddFlowDialog(false);
     onToolsUpdate(updatedTools);
-    handleClose();
-  };
-
-  const handleClose = () => {
-    setSearchQuery('');
-    onClose();
+    toast('Changes to flow tools saved');
   };
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(open) => {
-        if (!open) {
-          handleClose();
-        }
-      }}
-    >
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden">
-        <DialogHeader>
+    <Dialog open={showAddFlowDialog} onOpenChange={setShowAddFlowDialog}>
+      <DialogContent className="w-[90vw] max-w-[750px] h-[80vh] max-h-[800px] flex flex-col overflow-hidden p-0">
+        <DialogHeader className="min-h-16 flex px-4 items-start justify-center mb-0 border-b">
           <DialogTitle>{t('Add Flow Tools')}</DialogTitle>
-          <DialogDescription>
-            {t('Select flows to add as agent tools')}
-          </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 px-1">
-          <div className="relative mt-1">
-            <Search className="absolute left-2 top-3 h-4 w-4 text-muted-foreground" />
+        <div className="px-4 py-3 border-b">
+          <div className="relative border rounded-sm">
+            <Search className="absolute left-2 top-2.5 size-4 text-muted-foreground" />
             <Input
-              placeholder={t('Search flows')}
+              placeholder={t('Search')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
+              className="pl-9 shadow-none border-none"
             />
           </div>
         </div>
 
-        <ScrollArea className="flex-grow overflow-y-auto px-1 pt-4">
+        <ScrollArea className="grow overflow-y-auto">
           <FlowDialogContent
             flows={flows || []}
             searchQuery={searchQuery}
@@ -131,7 +109,8 @@ export function AgentFlowToolDialog({
           />
         </ScrollArea>
 
-        <DialogFooter>
+        <DialogFooter className="border-t p-4 mt-auto">
+          <CreateMcpFlowButton />
           <DialogClose asChild>
             <Button type="button" variant="ghost">
               {t('Close')}

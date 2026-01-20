@@ -80,17 +80,13 @@ export const RunsTable = () => {
       const createdBefore = searchParams.get('createdBefore');
       const archivedParam = searchParams.get('archivedAt');
 
-      let archived: boolean;
-      if (archivedParam === 'true') archived = true;
-      else archived = false;
-
       return flowRunsApi.list({
         status: status ?? undefined,
         projectId,
         flowId,
         cursor: cursor ?? undefined,
         limit,
-        archived,
+        includeArchived: archivedParam === 'true',
         createdAfter: createdAfter ?? undefined,
         createdBefore: createdBefore ?? undefined,
         failedStepName,

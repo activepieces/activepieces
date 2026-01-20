@@ -3,7 +3,6 @@ import {
   ArrowLeft,
   Palette,
   LayoutGrid,
-  LineChart,
   Server,
   Users,
   Bot,
@@ -29,8 +28,10 @@ import {
   SidebarMenu,
   SidebarHeader,
   SidebarGroup,
+  SidebarGroupContent,
   SidebarMenuButton,
   SidebarGroupLabel,
+  SidebarSeparator,
 } from '@/components/ui/sidebar-shadcn';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
@@ -48,6 +49,45 @@ export function PlatformSidebar() {
   const { checkAccess } = useAuthorization();
   const defaultRoute = determineDefaultRoute(checkAccess);
   const branding = flagsHooks.useWebsiteBranding();
+  const isEmbeddingEnabled = platform.plan.embeddingEnabled;
+
+  const setupItems = [
+    {
+      to: '/platform/setup/ai',
+      label: t('AI'),
+      icon: Bot,
+    },
+    {
+      to: '/platform/setup/branding',
+      label: t('Branding'),
+      icon: Palette,
+      locked: !platform.plan.customAppearanceEnabled,
+    },
+    {
+      to: '/platform/setup/connections',
+      label: t('Global Connections'),
+      icon: Unplug,
+      locked: !platform.plan.globalConnectionsEnabled,
+    },
+    {
+      to: '/platform/setup/pieces',
+      label: t('Pieces'),
+      icon: Puzzle,
+      locked: !platform.plan.managePiecesEnabled,
+    },
+    {
+      to: '/platform/setup/templates',
+      label: t('Templates'),
+      icon: LayoutGrid,
+      locked: !platform.plan.manageTemplatesEnabled,
+    },
+    {
+      to: '/platform/setup/billing',
+      label: t('Billing'),
+      icon: Receipt,
+      locked: edition === ApEdition.COMMUNITY,
+    },
+  ].filter((item) => !(item.label === t('AI') && isEmbeddingEnabled));
 
   const groups: {
     label: string;
@@ -61,12 +101,6 @@ export function PlatformSidebar() {
     {
       label: t('General'),
       items: [
-        {
-          to: '/platform/analytics',
-          label: t('Overview'),
-          icon: LineChart,
-          locked: !platform.plan.analyticsEnabled,
-        },
         {
           to: '/platform/projects',
           label: t('Projects'),
@@ -82,43 +116,7 @@ export function PlatformSidebar() {
     },
     {
       label: t('Setup'),
-      items: [
-        {
-          to: '/platform/setup/ai',
-          label: t('AI'),
-          icon: Bot,
-        },
-        {
-          to: '/platform/setup/branding',
-          label: t('Branding'),
-          icon: Palette,
-          locked: !platform.plan.customAppearanceEnabled,
-        },
-        {
-          to: '/platform/setup/connections',
-          label: t('Global Connections'),
-          icon: Unplug,
-          locked: !platform.plan.globalConnectionsEnabled,
-        },
-        {
-          to: '/platform/setup/pieces',
-          label: t('Pieces'),
-          icon: Puzzle,
-          locked: !platform.plan.managePiecesEnabled,
-        },
-        {
-          to: '/platform/setup/templates',
-          label: t('Templates'),
-          icon: LayoutGrid,
-          locked: !platform.plan.manageTemplatesEnabled,
-        },
-        {
-          to: '/platform/setup/billing',
-          label: t('Billing'),
-          icon: Receipt,
-          locked: edition === ApEdition.COMMUNITY,
-        },
-      ],
+      items: setupItems,
     },
     {
       label: t('Security'),
@@ -178,8 +176,8 @@ export function PlatformSidebar() {
   ];
 
   return (
-    <Sidebar className="px-4" variant="inset">
-      <SidebarHeader>
+    <Sidebar className="p-1" variant="inset">
+      <SidebarHeader className="px-3">
         <div className="w-full pb-2 flex items-center gap-2">
           <Link
             to={defaultRoute}
@@ -193,38 +191,47 @@ export function PlatformSidebar() {
           </Link>
           <h1 className="truncate font-semibold">{branding.websiteName}</h1>
         </div>
-
-        <SidebarMenu>
-          <SidebarMenuButton
-            onClick={() => navigate('/')}
-            className="py-5 px-2"
-          >
-            <ArrowLeft />
-            {t('Exit platform admin')}
-          </SidebarMenuButton>
-        </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent>
-        {groups.map((group) => (
-          <SidebarGroup
-            key={group.label}
-            className="px-0 border-t border-gray-300 pt-4 list-none"
-          >
-            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
-            {group.items.map((item) => (
-              <ApSidebarItem
-                type="link"
-                key={item.label}
-                to={item.to}
-                label={item.label}
-                icon={item.icon}
-                locked={item.locked}
-              />
-            ))}
+      <div className="flex-1 overflow-y-auto scrollbar-hover">
+        <SidebarContent className="px-1 gap-0">
+          <SidebarGroup className="cursor-default shrink-0">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuButton
+                  onClick={() => navigate('/')}
+                  className="py-5 px-2"
+                >
+                  <ArrowLeft />
+                  {t('Exit platform admin')}
+                </SidebarMenuButton>
+              </SidebarMenu>
+            </SidebarGroupContent>
           </SidebarGroup>
-        ))}
-      </SidebarContent>
-      <SidebarFooter>
+          <SidebarSeparator className="mb-3" />
+          {groups.map((group, idx) => (
+            <SidebarGroup key={group.label} className="cursor-default shrink-0">
+              {idx > 0 && <SidebarSeparator className="mb-3" />}
+              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {group.items.map((item) => (
+                    <ApSidebarItem
+                      type="link"
+                      key={item.label}
+                      to={item.to}
+                      label={item.label}
+                      icon={item.icon}
+                      locked={item.locked}
+                    />
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          ))}
+        </SidebarContent>
+      </div>
+
+      <SidebarFooter className="px-3">
         <SidebarUser />
       </SidebarFooter>
     </Sidebar>

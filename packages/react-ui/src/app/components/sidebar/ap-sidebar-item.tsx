@@ -38,9 +38,13 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     location.pathname.startsWith(item.to) || item.isActive?.(location.pathname);
   const isCollapsed = state === 'collapsed';
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <SidebarMenuItem
-      onClick={(e) => e.stopPropagation()}
+      onClick={handleClick}
       className={cn(isCollapsed && 'flex justify-center')}
     >
       {isCollapsed ? (
@@ -51,9 +55,10 @@ export const ApSidebarItem = (item: SidebarItemType) => {
                 to={item.to}
                 target={item.newWindow ? '_blank' : ''}
                 rel={item.newWindow ? 'noopener noreferrer' : undefined}
+                onClick={handleClick}
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
-                  isLinkActive && 'bg-sidebar-active hover:!bg-sidebar-active',
+                  isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
                   'relative',
                 )}
               >
@@ -74,15 +79,17 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       ) : (
         <SidebarMenuButton
           asChild
+          onClick={handleClick}
           className={cn(
             'px-2 py-5',
-            isLinkActive && 'bg-sidebar-active hover:!bg-sidebar-active',
+            isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
           )}
         >
           <Link
             to={item.to}
             target={item.newWindow ? '_blank' : ''}
             rel={item.newWindow ? 'noopener noreferrer' : undefined}
+            onClick={handleClick}
           >
             <div className="w-full flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 w-full">

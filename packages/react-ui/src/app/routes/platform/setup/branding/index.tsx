@@ -3,7 +3,6 @@ import { t } from 'i18next';
 import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AppearanceSection } from '@/app/routes/platform/setup/branding/appearance-section';
-import { SmtpSection } from '@/app/routes/platform/setup/branding/smtp-section';
 import { platformHooks } from '@/hooks/platform-hooks';
 
 export const BrandingPage = () => {
@@ -21,11 +20,8 @@ export const BrandingPage = () => {
       <div className="w-full flex flex-col gap-4">
         <DashboardPageHeader
           title={t('Branding')}
-          description={t(
-            'Configure the appearance and SMTP settings for your platform.',
-          )}
+          description={t('Configure the appearance for your platform.')}
         />
-        <SmtpSection />
         <AppearanceSection />
       </div>
     </LockedFeatureGuard>

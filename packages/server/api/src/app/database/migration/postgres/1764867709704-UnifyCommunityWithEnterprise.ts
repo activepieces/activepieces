@@ -16,13 +16,10 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             ALTER TABLE "app_credential" DROP CONSTRAINT "FK_d82bfb4c7432a69dc2419083a0e"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_usage_project_created"
+            DROP INDEX "idx_plan_stripe_customer_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_plan_stripe_customer_id"
-        `)
-        await queryRunner.query(`
-            DROP INDEX "public"."idx_app_credentials_projectId_appName"
+            DROP INDEX "idx_app_credentials_projectId_appName"
         `)
         await queryRunner.query(`
             CREATE TABLE "project_member" (
@@ -276,10 +273,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             ALTER TABLE "project_plan" DROP COLUMN "subscriptionStartDatetime"
         `)
         await queryRunner.query(`
-            ALTER TABLE "ai_usage"
-            ADD "platformId" character varying NOT NULL
-        `)
-        await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD "pieces" character varying array NOT NULL
         `)
@@ -294,9 +287,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
         await queryRunner.query(`
             ALTER TABLE "project_plan"
             ADD "aiCredits" integer
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("platformId", "created", "projectId")
         `)
         await queryRunner.query(`
             ALTER TABLE "project"
@@ -446,9 +436,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             ALTER TABLE "project" DROP CONSTRAINT "fk_project_platform_id"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_ai_usage_project_created"
-        `)
-        await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "aiCredits"
         `)
         await queryRunner.query(`
@@ -459,9 +446,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan" DROP COLUMN "pieces"
-        `)
-        await queryRunner.query(`
-            ALTER TABLE "ai_usage" DROP COLUMN "platformId"
         `)
         await queryRunner.query(`
             ALTER TABLE "project_plan"
@@ -476,7 +460,7 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             ADD "stripeCustomerId" character varying NOT NULL
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_platform_plan_platform_id"
+            DROP INDEX "idx_platform_plan_platform_id"
         `)
         await queryRunner.query(`
             DROP TABLE "platform_plan"
@@ -488,34 +472,34 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             DROP TABLE "platform_analytics_report"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_release_project_id"
+            DROP INDEX "idx_project_release_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "project_release"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."audit_event_platform_id_action_idx"
+            DROP INDEX "audit_event_platform_id_action_idx"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."audit_event_platform_id_user_id_action_idx"
+            DROP INDEX "audit_event_platform_id_user_id_action_idx"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."audit_event_platform_id_project_id_user_id_action_idx"
+            DROP INDEX "audit_event_platform_id_project_id_user_id_action_idx"
         `)
         await queryRunner.query(`
             DROP TABLE "audit_event"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_git_repo_project_id"
+            DROP INDEX "idx_git_repo_project_id"
         `)
         await queryRunner.query(`
             DROP TABLE "git_repo"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_flow_template_pieces"
+            DROP INDEX "idx_flow_template_pieces"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_flow_template_tags"
+            DROP INDEX "idx_flow_template_tags"
         `)
         await queryRunner.query(`
             DROP TABLE "flow_template"
@@ -524,13 +508,13 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             DROP TABLE "api_key"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_otp_identity_id_type"
+            DROP INDEX "idx_otp_identity_id_type"
         `)
         await queryRunner.query(`
             DROP TABLE "otp"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_oauth_app_platformId_pieceName"
+            DROP INDEX "idx_oauth_app_platformId_pieceName"
         `)
         await queryRunner.query(`
             DROP TABLE "oauth_app"
@@ -539,13 +523,13 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
             DROP TABLE "signing_key"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."custom_domain_domain_unique"
+            DROP INDEX "custom_domain_domain_unique"
         `)
         await queryRunner.query(`
             DROP TABLE "custom_domain"
         `)
         await queryRunner.query(`
-            DROP INDEX "public"."idx_project_member_project_id_user_id_platform_id"
+            DROP INDEX "idx_project_member_project_id_user_id_platform_id"
         `)
         await queryRunner.query(`
             DROP TABLE "project_member"
@@ -555,9 +539,6 @@ export class UnifyCommunityWithEnterprise1764867709704 implements MigrationInter
         `)
         await queryRunner.query(`
             CREATE UNIQUE INDEX "idx_plan_stripe_customer_id" ON "project_plan" ("stripeCustomerId")
-        `)
-        await queryRunner.query(`
-            CREATE INDEX "idx_ai_usage_project_created" ON "ai_usage" ("created", "projectId")
         `)
         await queryRunner.query(`
             ALTER TABLE "app_credential"
