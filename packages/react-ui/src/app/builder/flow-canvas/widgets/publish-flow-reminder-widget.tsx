@@ -53,7 +53,6 @@ const PublishFlowReminderWidget = () => {
     flowVersion,
     isPublishing,
     run,
-    isValid,
     isSaving,
   });
   const { mutate: discardChange, isPending: isDiscardingChanges } = useMutation(
@@ -119,18 +118,25 @@ const PublishFlowReminderWidget = () => {
 
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button
-                size="sm"
-                variant="default"
-                loading={isSaving}
-                //for e2e tests
-                name="Publish"
-                onClick={() => publish()}
-              >
-                {t('Publish')}
-              </Button>
+              <div className="tooltip-wrapper">
+                <Button
+                  size="sm"
+                  variant="default"
+                  className="z-50"
+                  loading={isSaving}
+                  //for e2e tests
+                  name="Publish"
+                  onClick={() => publish()}
+                  disabled={!isValid}
+                >
+                  {t('Publish')}
+                </Button>
+              </div>
             </TooltipTrigger>
             {isSaving && <TooltipContent>{t('Saving...')}</TooltipContent>}
+            {!isValid && (
+              <TooltipContent>{t('You have incomplete steps')}</TooltipContent>
+            )}
           </Tooltip>
         </div>
       )}
@@ -145,13 +151,11 @@ const useShouldShowPublishButton = ({
   flowVersion,
   isPublishing,
   run,
-  isValid,
   isSaving,
 }: {
   flowVersion: FlowVersion;
   isPublishing: boolean;
   run: FlowRun | null;
-  isValid: boolean;
   isSaving: boolean;
 }) => {
   const { checkAccess } = useAuthorization();
@@ -162,8 +166,7 @@ const useShouldShowPublishButton = ({
     ((permissionToEditFlow && isViewingPublishableVersion) ||
       isPublishing ||
       isSaving) &&
-    isNil(run) &&
-    isValid
+    isNil(run)
   );
 };
 
