@@ -1,0 +1,32 @@
+{
+  "name": "pieces-image-toolkit",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/image-toolkit/src",
+  "projectType": "library",
+  "release": {
+    "version": {
+      "manifestRootsToUpdate": ["dist/{projectRoot}"],
+      "currentVersionResolver": "git-tag",
+      "fallbackCurrentVersionResolver": "disk"
+    }
+  },
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/image-toolkit",
+        "tsConfig": "packages/pieces/community/image-toolkit/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/image-toolkit/package.json",
+        "main": "packages/pieces/community/image-toolkit/src/index.ts",
+        "assets": ["packages/pieces/community/image-toolkit/*.md"]
+      }
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
+      }
+    }
+  }
+}
