@@ -488,6 +488,15 @@
       "@activepieces/piece-visible": [
         "packages/pieces/community/visible/src/index.ts"
       ],
+      "@activepieces/piece-chain-aware": [
+        "packages/pieces/community/chain-aware/src/index.ts"
+      ],
+      "@activepieces/piece-detecting-ai": [
+        "packages/pieces/community/detecting-ai/src/index.ts"
+      ],
+      "@activepieces/piece-moveo-ai": [
+        "packages/pieces/community/moveo-ai/src/index.ts"
+      ],
       "@activepieces/piece-oneclickimpact": [
         "packages/pieces/community/oneclickimpact/src/index.ts"
       ],
@@ -496,6 +505,9 @@
       ],
       "@activepieces/piece-vidnoz": [
         "packages/pieces/community/vidnoz/src/index.ts"
+      ],
+      "@activepieces/piece-lets-calendar": [
+        "packages/pieces/community/lets-calendar/src/index.ts"
       ]
     },
     "resolveJsonModule": true
