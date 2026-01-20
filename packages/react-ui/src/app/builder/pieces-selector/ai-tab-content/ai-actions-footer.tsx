@@ -1,6 +1,6 @@
 export const AIActionsFooter = () => {
   return (
-    <div className="flex items-center gap-3 pt-3 border-t border-border shrink-0">
+    <div className="flex items-center gap-3 p-2 border-t border-border shrink-0">
       <span className="text-sm text-muted-foreground">Available Models:</span>
       <div className="flex items-center gap-2">
         <img

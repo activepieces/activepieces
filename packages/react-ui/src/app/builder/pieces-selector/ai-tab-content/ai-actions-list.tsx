@@ -37,13 +37,16 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
   const otherActions = aiActions.filter((item) => !isRunAgentAction(item));
 
   return (
-    <ScrollArea className="h-full w-full" viewPortClassName="h-full">
-      <div className="flex flex-col h-full p-2 gap-2 min-w-0">
+    <ScrollArea
+      className="h-full w-full min-h-[500px] min-w-[400px]"
+      viewPortClassName="h-full"
+    >
+      <div className="flex flex-col h-full gap-2 min-w-0">
         {/* Main content grid */}
-        <div className="grid grid-cols-2 gap-2 flex-1 min-h-0 min-w-0 w-full">
+        <div className="grid grid-cols-7 gap-4 flex-1 p-4 pb-0 min-h-0 min-w-0 w-full">
           {/* Left side - AI Agent card */}
           {agentAction && (
-            <div className="w-full min-w-0 shrink-0">
+            <div className="w-full col-span-3 min-w-0 shrink-0">
               <AIActionItem
                 item={agentAction}
                 hidePieceIconAndDescription={hidePieceIconAndDescription}
@@ -57,7 +60,7 @@ export const AIPieceActionsList: React.FC<AIPieceActionsListProps> = ({
           )}
 
           {/* Right side - Other actions grid */}
-          <div className="grid grid-cols-1 gap-2 min-w-0 auto-rows-fr">
+          <div className="col-span-4 grid grid-cols-1 gap-2 min-w-0 auto-rows-fr">
             {otherActions.map((item, index) => (
               <AIActionItem
                 key={getItemKey(item, index)}

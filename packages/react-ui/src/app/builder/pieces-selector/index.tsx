@@ -201,9 +201,9 @@ const PieceSelectorContent = ({
               <Separator orientation="horizontal" className="mt-1" />
             </div>
             <div
-              className=" flex flex-row max-h-[400px]"
+              className=" flex flex-row max-h-[550px]"
               style={{
-                height: listHeight + 'px',
+                height: listHeight + 100 + 'px',
               }}
             >
               <ExploreTabContent operation={operation} />

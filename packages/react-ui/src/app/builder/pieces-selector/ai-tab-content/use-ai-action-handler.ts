@@ -6,7 +6,11 @@ import { toast } from 'sonner';
 import { useTelemetry } from '@/components/telemetry-provider';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { PieceSelectorItem, PieceSelectorOperation } from '@/lib/types';
-import { ApFlagId, FlowActionType, TelemetryEventName } from '@activepieces/shared';
+import {
+  ApFlagId,
+  FlowActionType,
+  TelemetryEventName,
+} from '@activepieces/shared';
 
 import { usePieceSearchContext } from '../../../../features/pieces/lib/piece-search-context';
 import { useBuilderStateContext } from '../../builder-hooks';

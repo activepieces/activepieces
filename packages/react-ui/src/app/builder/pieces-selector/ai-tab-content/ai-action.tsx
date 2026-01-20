@@ -53,12 +53,6 @@ const VideoSection = ({
   const videoClasses = isAgent
     ? 'w-full h-full object-cover rounded-t-md'
     : 'w-full h-full object-cover rounded-l-md';
-  const gradientClasses = isAgent
-    ? 'absolute inset-0 bg-gradient-to-b from-primary/10 to-transparent/20 rounded-full flex items-center justify-center'
-    : 'absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent/20 rounded-full flex items-center justify-center';
-  const iconContainerClasses = isAgent
-    ? 'w-full h-full flex items-center justify-center bg-gradient-to-b from-primary/10 to-transparent/20 rounded-full'
-    : 'w-full h-full flex items-center justify-center bg-gradient-to-r from-primary/10 to-transparent/20 rounded-full';
 
   if (actionVideo) {
     return (
@@ -72,14 +66,17 @@ const VideoSection = ({
           playsInline
           aria-label="Action preview video"
         />
-        <div className={gradientClasses} aria-hidden="true" />
+        <div
+          className="absolute inset-0 rounded-full flex items-center justify-center"
+          aria-hidden="true"
+        />
       </div>
     );
   }
 
   return (
     <div className={containerClasses}>
-      <div className={iconContainerClasses}>
+      <div className="w-full h-full flex items-center justify-center rounded-full">
         <PieceIcon
           logoUrl={actionIcon || stepMetadataWithSuggestions.logoUrl}
           displayName={stepMetadataWithSuggestions.displayName}
@@ -108,7 +105,7 @@ const ActionContent = ({
   };
 
   return (
-    <div className="flex-1 p-2 flex flex-col justify-between">
+    <div className="flex-1 p-2 flex flex-row justify-between">
       <div>
         <h3 className="font-semibold text-xs leading-tight mb-1">
           {displayName}
@@ -117,10 +114,10 @@ const ActionContent = ({
           {description}
         </p>
       </div>
-      <div className="flex justify-end mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="h-full absolute right-0 top-[50%] -translate-y-1/2 flex justify-center backdrop-blur-lg px-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
         <button
           onClick={handleButtonClick}
-          className="px-2 py-0.5 bg-transparent text-xs text-black font-medium rounded-md transition-all"
+          className="px-2 py-0.5 bg-transparent text-xs text-foreground font-medium rounded-md transition-all"
           aria-label={`Add ${displayName} action`}
         >
           Add
@@ -145,7 +142,7 @@ const AIActionItem = ({
   if (isAgent) {
     return (
       <div
-        className="relative h-full rounded-md border border-border bg-card hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer overflow-hidden group"
+        className="relative h-full rounded-md bg-card hover:bg-[#f5f5f5] hover:text-accent-foreground transition-colors cursor-pointer overflow-hidden group"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={onClick}
@@ -179,7 +176,7 @@ const AIActionItem = ({
                 e.stopPropagation();
                 onClick();
               }}
-              className="absolute right-5 bottom-5 px-2 py-0.5 bg-transparent text-xs text-black font-medium rounded-md transition-all"
+              className="absolute right-5 bottom-5 px-2 py-0.5 bg-transparent text-xs text-foreground font-medium rounded-md transition-all"
               aria-label={`Add ${pieceSelectorItemInfo.displayName} action`}
             >
               Add
@@ -192,7 +189,7 @@ const AIActionItem = ({
 
   return (
     <div
-      className="relative w-full h-full rounded-md border border-border bg-card hover:bg-accent/50 transition-colors cursor-pointer overflow-hidden group flex"
+      className="relative w-full h-full rounded-md bg-card hover:bg-[#f5f5f5] transition-colors cursor-pointer overflow-hidden group flex"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
