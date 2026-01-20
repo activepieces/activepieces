@@ -484,6 +484,9 @@
       ],
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-smsmode": [
+        "packages/pieces/community/smsmode/src/index.ts"
       ]
     },
     "resolveJsonModule": true
