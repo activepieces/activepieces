@@ -485,6 +485,9 @@
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
       ],
+      "@activepieces/piece-moveo-ai": [
+        "packages/pieces/community/moveo-ai/src/index.ts"
+      ],
       "@activepieces/piece-oneclickimpact": [
         "packages/pieces/community/oneclickimpact/src/index.ts"
       ],
