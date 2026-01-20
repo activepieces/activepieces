@@ -519,7 +519,7 @@
 
 }
 
-.note-node:hover  {
+.note-node:focus-within:hover  {
   ::-webkit-scrollbar-thumb {
     background: hsla(0, 1%, 66%, 0.328);
     border-radius: 100px;

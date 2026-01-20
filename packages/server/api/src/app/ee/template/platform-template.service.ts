@@ -19,7 +19,6 @@ export const platformTemplateService = () => ({
             blogUrl,
             metadata,
             author,
-            usageCount: 0,
             categories,
             pieces,
             flows,
