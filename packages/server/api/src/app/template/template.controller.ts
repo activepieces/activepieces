@@ -11,7 +11,6 @@ import {
     Principal,
     PrincipalType,
     SERVICE_KEY_SECURITY_OPENAPI,
-    SetStatusTemplateRequestBody,
     Template,
     TemplateType,
     UpdateTemplateRequestBody,
@@ -121,25 +120,6 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
     
-    app.post('/:id/view', ViewParams, async (request, reply) => {
-        await communityTemplates.view(request.params.id)
-        return reply.status(StatusCodes.OK).send()
-    })
-
-    app.post('/:id/install', InstallParams, async (request, reply) => {
-        await communityTemplates.install({ id: request.params.id, userId: request.principal.id })
-        return reply.status(StatusCodes.OK).send()
-    })
-    
-    app.post('/:id/status', SetStatusParams, async (request, reply) => {
-        await communityTemplates.setStatus({ id: request.params.id, flowId: request.body.flowId, status: request.body.status })
-        return reply.status(StatusCodes.OK).send()
-    })
-    
-    app.post('/click-explore-button', ClickExploreButtonParams, async (request, reply) => {
-        await communityTemplates.clickExploreButton({ userId: request.principal.id })
-        return reply.status(StatusCodes.OK).send()
-    })
 }
 
 const GetIdParams = Type.Object({
@@ -216,40 +196,6 @@ const UpdateParams = {
         security: [SERVICE_KEY_SECURITY_OPENAPI],
         params: GetIdParams,
         body: UpdateTemplateRequestBody,
-    },
-}
-
-const ViewParams = {
-    config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
-    },
-    schema: {
-        params: GetIdParams,
-    },
-}
-
-const InstallParams = {
-    config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
-    },
-    schema: {
-        params: GetIdParams,
-    },
-}
-
-const SetStatusParams = {
-    config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
-    },
-    schema: {
-        params: GetIdParams,
-        body: SetStatusTemplateRequestBody,
-    },
-}
-
-const ClickExploreButtonParams = {
-    config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
     },
 }
 
