@@ -23,7 +23,7 @@ export const createOrUpdatePayerAction = createAction({
           };
         }
 
-        const credentials = auth.props as { username: string; password: string };
+        const credentials = auth.props as { username: string; password: string; environment: string };
         const response = await listPayers(credentials, { pageSize: 500 });
 
         return {
@@ -173,6 +173,7 @@ export const createOrUpdatePayerAction = createAction({
       {
         username: context.auth.props.username,
         password: context.auth.props.password,
+        environment: context.auth.props.environment
       },
       payerData as any
     );
