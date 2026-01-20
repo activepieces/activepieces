@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { AIModelSelector } from './model-selector';
+import { CodeExecutionToolToggle } from './tools/code-execution';
 import { WebSearchToolToggle } from './tools/web-search';
 
 interface PromptInputProps {
@@ -71,6 +72,7 @@ export const PromptInput = ({ placeholder }: PromptInputProps) => {
             <div className="flex justify-between mx-2 mb-3">
               <div className="flex justify-start items-center gap-x-1">
                 <WebSearchToolToggle />
+                <CodeExecutionToolToggle />
                 <AIModelSelector />
               </div>
               <Button

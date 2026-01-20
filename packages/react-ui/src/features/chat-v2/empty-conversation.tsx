@@ -61,7 +61,7 @@ export function EmptyConversation() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[60vh] px-4">
+    <div className="flex flex-col items-center justify-center h-full min-h-[60vh] px-4 mt-16">
       <div className="text-center mb-12">
         <img
           src={quickLogoUrl}

@@ -31,6 +31,10 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
             type: Boolean,
             nullable: false,
         },
+        codeExecutionEnabled: {
+            type: Boolean,
+            nullable: false,
+        },
     },
 
     indices: [],

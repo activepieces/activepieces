@@ -6,9 +6,8 @@ import { appSocket } from '../app-socket'
 import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from './tools/planning-tool'
 import { systemPrompt } from './system-prompt'
 import { agentUtils } from './utils'
-import { createExecuteCodeTool, EXECUTE_CODE_TOOL_NAME } from './tools/execute-code'
+import { createExecuteCodeTool } from './tools/execute-code'
 import { workerMachine } from '../utils/machine'
-
 
 async function getFirecrawlTools() {
     const firecrawlAisdk = await import('firecrawl-aisdk')
@@ -27,13 +26,13 @@ async function getFirecrawlTools() {
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
-     
-        const { conversation, modelId, webSearchEnabled } = data.session
+
+        const { conversation, modelId, webSearchEnabled, codeExecutionEnabled } = data.session
         let newSession: ChatSession = data.session
         const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan }
         const firecrawlTools = webSearchEnabled ? await getFirecrawlTools() : {}
-
-        const e2bApiKey = workerMachine.getSettings().E2B_API_KEY
+        const codeTools = codeExecutionEnabled ? await createExecuteCodeTool(workerMachine.getSettings().E2B_API_KEY) : {}
+        
 
         const { fullStream } = streamText({
             model: await agentUtils.getModel(modelId, engineToken),
@@ -42,17 +41,15 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             messages: convertHistory(conversation),
             tools: {
                 ...firecrawlTools,
+                ...codeTools,
                 [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
-                [EXECUTE_CODE_TOOL_NAME]: await createExecuteCodeTool(e2bApiKey)
             },
         })
-        let isStreaming = false
         let previousText = ''
         for await (const chunk of fullStream) {
             let quickStreamingUpdate: ChatSessionUpdate | undefined
             switch (chunk.type) {
                 case 'text-start': {
-                    isStreaming = true
                     previousText = ''
                     quickStreamingUpdate = publishTextUpdate(newSession, '', true)
                     break
@@ -63,7 +60,6 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
                     break
                 }
                 case 'text-end': {
-                    isStreaming = false
                     quickStreamingUpdate = publishTextUpdate(newSession, previousText, false)
                     break
                 }
@@ -149,36 +145,34 @@ function publishTextUpdate(session: ChatSession, text: string, isStreaming: bool
 function convertHistory(conversation: ConversationMessage[]): ModelMessage[] {
     return conversation.map(message => {
         if (message.role === 'user') {
-            return {
+            return [{
                 role: 'user',
                 content: message.content,
-            }
+            }]
         }
-        return {
-            role: 'assistant',
-            content: message.parts.map((item) => {
-                switch (item.type) {
-                    case 'text':
-                        return {
-                            type: 'text',
-                            text: item.message,
-                        }
-                    case 'tool-call':
-                        return {
-                            type: 'tool-call',
-                            toolCallId: item.toolCallId,
-                            toolName: item.toolName,
-                            input: item.input,
-                        }
-                    case 'tool-result':
-                        return {
+        return message.parts.map(item => {
+            switch (item.type) {
+                case 'tool-result':
+                    return {
+                        role: 'tool',
+                        content: {
                             type: 'tool-result',
                             toolCallId: item.toolCallId,
                             toolName: item.toolName,
                             output: item.output as LanguageModelV2ToolResultOutput,
-                        }
-                }
-            }),
-        }
-    })
+                        },
+                    }
+                case 'text':
+                    return {
+                        role: 'assistant',
+                        content: {
+                            type: 'text',
+                            text: item.message,
+                        },
+                    }
+                default:
+                    return undefined
+            }
+        })
+    }).flat().filter(f => !isNil(f)) as ModelMessage[]
 }

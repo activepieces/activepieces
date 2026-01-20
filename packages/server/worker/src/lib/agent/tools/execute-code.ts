@@ -1,6 +1,7 @@
-import { tool } from 'ai'
+import { Tool, tool } from 'ai'
 import { z } from 'zod'
 import type { CommandResult, Sandbox, Execution } from '@e2b/code-interpreter'
+import { assertNotNullOrUndefined } from '@activepieces/shared'
 
 export const EXECUTE_CODE_TOOL_NAME = 'execute_code'
 
@@ -14,85 +15,87 @@ Execute code in a secure sandboxed environment. Use this tool for:
 The sandbox provides a clean, isolated environment that resets after execution.
 `
 
-export async function createExecuteCodeTool(apiKey: string) {
-    const e2bLib = await import("@e2b/code-interpreter") 
+export async function createExecuteCodeTool(apiKey: string | undefined): Promise<Record<string, Tool>> {
+    const e2bLib = await import("@e2b/code-interpreter")
+    assertNotNullOrUndefined(apiKey, 'E2B API key is required')
+    return {
+        [EXECUTE_CODE_TOOL_NAME]: tool({
+            description,
+            inputSchema: z.object({
+                language: z
+                    .enum(['python', 'javascript', 'bash'])
+                    .describe('Programming language to execute'),
+                code: z
+                    .string()
+                    .describe('The code to execute in the sandbox')
+            }),
+            execute: async ({ language, code }) => {
+                let sandbox: Sandbox | null = null
 
-    return tool({
-        description,
-        inputSchema: z.object({
-            language: z
-                .enum(['python', 'javascript', 'bash'])
-                .describe('Programming language to execute'),
-            code: z
-                .string()
-                .describe('The code to execute in the sandbox')
-        }),
-        execute: async ({ language, code }) => {
-            let sandbox: Sandbox | null = null
-            
-            try {
-                sandbox = await e2bLib.Sandbox.create({ apiKey })
+                try {
+                    sandbox = await e2bLib.Sandbox.create({ apiKey })
 
-                let execution
-                switch (language) {
-                    case 'python':
-                        execution = await sandbox.runCode(code)
-                        break
-                    case 'javascript':
-                        execution = await sandbox.runCode(code, {
-                            language: 'js'
-                        })
-                        break
-                    case 'bash':
-                        execution = await sandbox.commands.run(code)
-                        break
-                    default:
-                        throw new Error(`Unsupported language: ${language}`)
-                }
-
-                const isBashResult = 'exitCode' in execution
-                
-                let result
-                if (isBashResult) {
-                    const cmdResult = execution as CommandResult
-                    result = {
-                        success: cmdResult.exitCode === 0,
-                        stdout: cmdResult.stdout || '',
-                        stderr: cmdResult.stderr || '',
-                        exitCode: cmdResult.exitCode,
-                        error: cmdResult.exitCode !== 0 ? cmdResult.stderr : undefined,
+                    let execution
+                    switch (language) {
+                        case 'python':
+                            execution = await sandbox.runCode(code)
+                            break
+                        case 'javascript':
+                            execution = await sandbox.runCode(code, {
+                                language: 'js'
+                            })
+                            break
+                        case 'bash':
+                            execution = await sandbox.commands.run(code)
+                            break
+                        default:
+                            throw new Error(`Unsupported language: ${language}`)
                     }
-                } else {
-                    const execResult = execution as Execution
-                    result = {
-                        success: !execResult.error,
-                        stdout: execResult.logs?.stdout?.join('\n') || '',
-                        stderr: execResult.logs?.stderr?.join('\n') || '',
-                        error: execResult.error?.value || execResult.error?.name,
-                        results: execResult.results || [],
+
+                    const isBashResult = 'exitCode' in execution
+
+                    let result
+                    if (isBashResult) {
+                        const cmdResult = execution as CommandResult
+                        result = {
+                            success: cmdResult.exitCode === 0,
+                            stdout: cmdResult.stdout || '',
+                            stderr: cmdResult.stderr || '',
+                            exitCode: cmdResult.exitCode,
+                            error: cmdResult.exitCode !== 0 ? cmdResult.stderr : undefined,
+                        }
+                    } else {
+                        const execResult = execution as Execution
+                        result = {
+                            success: !execResult.error,
+                            stdout: execResult.logs?.stdout?.join('\n') || '',
+                            stderr: execResult.logs?.stderr?.join('\n') || '',
+                            error: execResult.error?.value || execResult.error?.name,
+                            results: execResult.results || [],
+                        }
+                    }
+
+                    return {
+                        message: `Code executed successfully in ${language}.\n\n` +
+                            `${result.stdout ? `Output:\n${result.stdout}\n` : ''}` +
+                            `${result.stderr ? `Errors:\n${result.stderr}\n` : ''}` +
+                            `${"results" in result && result.results.length > 0 ? `Results: ${JSON.stringify(result.results)}\n` : ''}`,
+                        ...result
+                    }
+                } catch (error) {
+                    return {
+                        success: false,
+                        message: `Code execution failed: ${error instanceof Error ? error.message : String(error)}`,
+                        error: String(error)
+                    }
+                } finally {
+                    if (sandbox) {
+                        await sandbox.kill()
                     }
                 }
-
-                return {
-                    message: `Code executed successfully in ${language}.\n\n` +
-                        `${result.stdout ? `Output:\n${result.stdout}\n` : ''}` +
-                        `${result.stderr ? `Errors:\n${result.stderr}\n` : ''}` +
-                        `${"results" in result && result.results.length > 0 ? `Results: ${JSON.stringify(result.results)}\n` : ''}`,
-                    ...result
-                }
-            } catch (error) {
-                return {
-                    success: false,
-                    message: `Code execution failed: ${error instanceof Error ? error.message : String(error)}`,
-                    error: String(error)
-                }
-            } finally {
-                if (sandbox) {
-                    await sandbox.kill()
-                }
-            }
-        },
-    })
+            },
+        })
+    }
 }
 
 export const CODE_EXECUTION_SYSTEM_PROMPT = `

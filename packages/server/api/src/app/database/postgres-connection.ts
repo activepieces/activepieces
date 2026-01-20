@@ -331,6 +331,7 @@ import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130
 import { AddSessions1768596349320 } from './migration/postgres/1768596349320-AddSessions'
 import { AddModelIdToSessionEntity1768745485957 } from './migration/postgres/1768745485957-addModelIdToSessionEntity'
 import { AddSearchEnabledColumn1768836652533 } from './migration/postgres/1768836652533-addSearchEnabledColumn'
+import { AddCodeExecutionEnabledColumn1768836652534 } from './migration/postgres/1768836652534-addCodeExecutionEnabledColumn'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -678,6 +679,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddSessions1768596349320,
         AddModelIdToSessionEntity1768745485957,
         AddSearchEnabledColumn1768836652533,
+        AddCodeExecutionEnabledColumn1768836652534,
     ]
     return migrations
 }

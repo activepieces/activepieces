@@ -1,5 +1,5 @@
 import { securityAccess } from '@activepieces/server-shared'
-import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType, ToggleSearchToolRequest, UpdateChatSessionRequest } from '@activepieces/shared'
+import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType, UpdateChatSessionRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
 import { chatSessionService } from './chat.session.service'
@@ -10,12 +10,14 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
         return session
     })
 
-    app.post('/:id/update-model', UpdateChatSessionModelRequestConfig, async (request) => {
-        return chatSessionService(request.log).updateSessionModel({ id: request.params.id, modelId: request.body.modelId, userId: request.principal.id })
-    })
-
-    app.post('/:id/toggle-search-tool', ToggleSearchToolRequestConfig, async (request) => {
-        return chatSessionService(request.log).toggleSearchTool({ id: request.params.id, enabled: request.body.enabled, userId: request.principal.id })
+    app.patch('/:id', UpdateChatSessionRequestConfig, async (request) => {
+        return chatSessionService(request.log).updateSession({
+            id: request.params.id,
+            userId: request.principal.id,
+            modelId: request.body.modelId,
+            webSearchEnabled: request.body.webSearchEnabled,
+            codeExecutionEnabled: request.body.codeExecutionEnabled,
+        })
     })
 
     app.get(
@@ -85,7 +87,7 @@ const ChatWithSessionRequest = {
     },
 }
 
-const UpdateChatSessionModelRequestConfig = {
+const UpdateChatSessionRequestConfig = {
     config: {
         security: securityAccess.unscoped([PrincipalType.USER]),
     },
@@ -96,23 +98,6 @@ const UpdateChatSessionModelRequestConfig = {
         tags: ['chat-sessions'],
         summary: 'Update chat session',
         body: UpdateChatSessionRequest,
-        response: {
-            [StatusCodes.OK]: ChatSession,
-        },
-    },
-}
-
-const ToggleSearchToolRequestConfig = {
-    config: {
-        security: securityAccess.unscoped([PrincipalType.USER]),
-    },
-    schema: {
-        params: Type.Object({
-            id: ApId,
-        }),
-        tags: ['chat-sessions'],
-        summary: 'Update chat session',
-        body: ToggleSearchToolRequest,
         response: {
             [StatusCodes.OK]: ChatSession,
         },

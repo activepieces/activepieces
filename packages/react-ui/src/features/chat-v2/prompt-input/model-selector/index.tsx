@@ -55,7 +55,7 @@ export function AIModelSelector() {
   const [open, setOpen] = useState(false);
   const { session, setSession } = useChatSessionStore();
 
-  const { mutate: updateChatModel } = chatHooks.useUpdateChatModel(setSession);
+  const { mutate: updateChatSession } = chatHooks.useUpdateChatSession(setSession);
 
   const defaultModel = session?.modelId || DEFAULT_CHAT_MODEL;
   const [selectedModel, setSelectedModel] = useState<string | undefined>(
@@ -77,7 +77,7 @@ export function AIModelSelector() {
 
   const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);
-    updateChatModel({
+    updateChatSession({
       modelId,
       currentSession: isNil(session) ? null : session,
     });

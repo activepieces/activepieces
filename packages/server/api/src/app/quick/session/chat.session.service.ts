@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, isNil, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, isNil, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
@@ -8,7 +8,7 @@ import { ChatSessionEntity } from './chat.session.entity'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
-export const chatSessionService = (log: FastifyBaseLogger)=> ({
+export const chatSessionService = (log: FastifyBaseLogger) => ({
     async create(userId: string): Promise<ChatSession> {
         const newSession: Partial<ChatSession> = {
             id: apId(),
@@ -16,6 +16,7 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
             conversation: [],
             modelId: DEFAULT_CHAT_MODEL,
             webSearchEnabled: true,
+            codeExecutionEnabled: true,
         }
         return chatSessionRepo().save(newSession)
     },
@@ -49,19 +50,12 @@ export const chatSessionService = (log: FastifyBaseLogger)=> ({
         })
     },
 
-    async updateSessionModel(params: UpdateSessionModelIdParams): Promise<ChatSession> {
+    async updateSession(params: UpdateSessionParams): Promise<ChatSession> {
         await chatSessionRepo().update(params.id, {
-            modelId: params.modelId,
+            ...spreadIfDefined('modelId', params.modelId),
+            ...spreadIfDefined('webSearchEnabled', params.webSearchEnabled),
+            ...spreadIfDefined('codeExecutionEnabled', params.codeExecutionEnabled),
         })
-
-        return this.getOneOrThrow({ id: params.id, userId: params.userId })
-    },
-
-    async toggleSearchTool(params: ToggleSearchToolParams): Promise<ChatSession> {
-        await chatSessionRepo().update(params.id, {
-            webSearchEnabled: params.enabled,
-        })
-
         return this.getOneOrThrow({ id: params.id, userId: params.userId })
     },
 
@@ -118,14 +112,10 @@ type GetOneParams = {
     userId: string
 }
 
-type UpdateSessionModelIdParams = {
-    id: string
-    modelId: string
-    userId: string
-}
-
-type ToggleSearchToolParams = {
+type UpdateSessionParams = {
     id: string
     userId: string
-    enabled: boolean
+    modelId?: string
+    webSearchEnabled?: boolean
+    codeExecutionEnabled?: boolean
 }

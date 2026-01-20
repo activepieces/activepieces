@@ -83,7 +83,7 @@ export const machineService = (log: FastifyBaseLogger) => {
                 REDIS_FAILED_JOB_RETENTION_DAYS: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS),
                 REDIS_FAILED_JOB_RETENTION_MAX_COUNT: system.getNumberOrThrow(AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT),
                 EDITION: system.getOrThrow(AppSystemProp.EDITION),
-                E2B_API_KEY: system.getOrThrow(AppSystemProp.E2B_API_KEY)
+                E2B_API_KEY: system.get(AppSystemProp.E2B_API_KEY)
             }
         },
         async list(): Promise<WorkerMachineWithStatus[]> {

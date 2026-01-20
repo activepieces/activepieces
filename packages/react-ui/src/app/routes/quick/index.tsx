@@ -17,16 +17,18 @@ export function QuickPage() {
   const { mutate: deleteChatSession, isPending: deletingChatSession } =
     chatHooks.useDeleteChatSession(setSession);
 
+  const hasConversation = !isNil(session?.conversation) && session.conversation.length > 0;
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <div className="flex-1 flex flex-col">
-        <div className="h-16 border-b flex items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <img src={quickLogoUrl} alt="Quick Logo" className="size-8" />
-            <h1 className="text-lg font-semibold">Quick Assistant</h1>
-          </div>
+        {hasConversation && (
+          <div className="h-16 border-b flex items-center justify-between px-6">
+            <div className="flex items-center gap-3">
+              <img src={quickLogoUrl} alt="Quick Logo" className="size-8" />
+              <h1 className="text-lg font-semibold">Quick</h1>
+            </div>
 
-          {!isNil(session?.conversation) && session.conversation.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
@@ -42,13 +44,12 @@ export function QuickPage() {
               <Trash className="size-4" />
               {t("Clear Chat")}
             </Button>
-          )}
-        </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-4xl mx-auto w-full">
-            {!isNil(session?.conversation) &&
-            session?.conversation.length > 0 ? (
+            {hasConversation ? (
               <Conversation
                 conversation={session.conversation}
                 className="px-6 py-8 space-y-6"
@@ -65,7 +66,7 @@ export function QuickPage() {
       </div>
 
       <div className="w-96 border-l bg-muted/30 overflow-y-auto">
-        <div className="sticky top-0 p-6">
+        <div className="sticky top-0 p-3">
           <Plan items={session?.plan ?? []} />
         </div>
       </div>

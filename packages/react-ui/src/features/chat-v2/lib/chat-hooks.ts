@@ -71,51 +71,25 @@ export const chatHooks = {
       },
     });
   },
-  useUpdateChatModel(setSession: (session: ChatSession) => void) {
+  useUpdateChatSession(setSession: (session: ChatSession) => void) {
     return useMutation<
       ChatSession,
       Error,
       {
         currentSession: ChatSession | null;
-        modelId: string;
+        modelId?: string;
+        webSearchEnabled?: boolean;
+        codeExecutionEnabled?: boolean;
       }
     >({
-      mutationFn: async ({ currentSession, modelId }) => {
+      mutationFn: async ({ currentSession, modelId, webSearchEnabled, codeExecutionEnabled }) => {
         let session =
           currentSession ??
           (await api.post<ChatSession>('/v1/chat-sessions', {}));
 
-        session = await api.post<ChatSession>(
-          `/v1/chat-sessions/${session.id}/update-model`,
-          { modelId },
-        );
-
-        setSession(session);
-        return session;
-      },
-      onError: (error) => {
-        internalErrorToast();
-        console.error(error);
-      },
-    });
-  },
-  useToggleSearchTool(setSession: (session: ChatSession) => void) {
-    return useMutation<
-      ChatSession,
-      Error,
-      {
-        currentSession: ChatSession | null;
-        enabled: boolean;
-      }
-    >({
-      mutationFn: async ({ currentSession, enabled }) => {
-        let session =
-          currentSession ??
-          (await api.post<ChatSession>('/v1/chat-sessions', {}));
-
-        session = await api.post<ChatSession>(
-          `/v1/chat-sessions/${session.id}/toggle-search-tool`,
-          { enabled },
+        session = await api.patch<ChatSession>(
+          `/v1/chat-sessions/${session.id}`,
+          { modelId, webSearchEnabled, codeExecutionEnabled },
         );
 
         setSession(session);
