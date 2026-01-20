@@ -14,26 +14,6 @@ export const detectingAiAuth = PieceAuth.SecretText({
   description:
     'You can obtain your API key from the [DETECTING-AI.COM Dashboard](https://detecting-ai.com) in the API section.',
   required: true,
-  validate: async ({ auth }) => {
-    try {
-      await httpClient.sendRequest({
-        method: HttpMethod.GET,
-        url: `${BASE_URL}/v2/usage`,
-        headers: {
-          'X-API-Key': auth,
-        },
-      });
-
-      return {
-        valid: true,
-      };
-    } catch {
-      return {
-        valid: false,
-        error: 'Invalid API Key',
-      };
-    }
-  },
 });
 
 export type DetectingAiApiCallParams = {
