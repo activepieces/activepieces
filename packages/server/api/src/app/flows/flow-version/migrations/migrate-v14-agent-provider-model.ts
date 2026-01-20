@@ -6,7 +6,7 @@ import {
 } from '@activepieces/shared'
 import { Migration } from '.'
 
-export const migrateV13AgentProviderModel: Migration = {
+export const migrateV14AgentProviderModel: Migration = {
     targetSchemaVersion: '14',
     migrate: async (flowVersion: FlowVersion): Promise<FlowVersion> => {
         const newVersion = flowStructureUtil.transferFlow(flowVersion, (step) => {

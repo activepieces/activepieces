@@ -255,6 +255,11 @@ export const piecesHooks = {
           isLoading: false,
           data: getAiAndAgentsPieces(piecesMetadataWithoutEmptySuggestions),
         };
+      case PieceSelectorTabType.APPROVALS:
+        return {
+          isLoading: false,
+          data: [],
+        };
       case PieceSelectorTabType.APPS: {
         const popularAppsCategory = {
           ...popularCategory,
