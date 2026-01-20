@@ -24,7 +24,7 @@ import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
-import { communityTemplates } from './community-flow-template.service'
+import { communityTemplates } from './community-templates.service'
 import { templateService } from './template.service'
 
 const edition = system.getEdition()

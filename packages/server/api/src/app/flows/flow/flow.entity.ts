@@ -71,6 +71,10 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: String,
             nullable: true,
         },
+        templateId: {
+            type: String,
+            nullable: true,
+        },
     },
     indices: [
         {
