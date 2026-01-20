@@ -484,6 +484,12 @@
       ],
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
+      ],
+      "@activepieces/piece-bokio": [
+        "packages/pieces/community/bokio/src/index.ts"
+      ],
+      "@activepieces/piece-vidnoz": [
+        "packages/pieces/community/vidnoz/src/index.ts"
       ]
     },
     "resolveJsonModule": true
