@@ -1,11 +1,14 @@
 ---
 title: 'Project Releases'
-description: 'Learn how to manage and deploy project releases across environments'
+description: 'Learn how to manage and deploy releases across projects'
 icon: 'rocket'
 ---
 
-Project Releases allow you to sync flows, connections, and tables between different environments. This is essential for teams that want to develop in one project and deploy to another, or maintain version control through Git integration.
+Project Releases allow you to sync flows, connections, and tables between different projects—essential for teams that want to develop in one environment and deploy to another with confidence.
 
+<Tip>
+**Example:** Build and test your automations in a **Staging** project, then seamlessly promote them to **Production** when ready. Simply navigate to your Production project → **Releases** → create a release from Staging, and all your changes will be applied instantly.
+</Tip>
 ## Overview
 
 There are three ways to create a release:
@@ -13,25 +16,20 @@ There are three ways to create a release:
 | Source | Description |
 |--------|-------------|
 | **Git** | Pull changes from a connected Git repository |
-| **Project** | Copy flows from another project in your platform |
+| **Project** | Copy flows from another project in your instance |
 | **Rollback** | Restore a previous release state |
 
-![Project Releases Overview](/resources/screenshots/project-releases-overview.png)
 
 ## Prerequisites
 
-<Note>
-  Git integration requires **Environments** to be enabled on your platform plan. If you only need to sync between projects or rollback releases, you can skip this section.
-</Note>
 
 ### Enabling Environments
 
-To use Git sync with Project Releases, you must first have the Environments feature enabled on your platform. This feature allows you to deploy flows across development, staging, and production environments with version control and team collaboration.
+In your project dashboard, go to settings then to Environments and hit the enable button.
 
-Contact your platform administrator to enable Environments if you see a locked feature screen when accessing the Environment settings.
+![Enable Environments](/resources/screenshots/enable-environments-1.png)
 
-![Enable Environments](/resources/screenshots/enable-environments.png)
-
+![Enable Environments](/resources/screenshots/enable-environments-2.png)
 ## Getting Started
 
 Navigate to the **Releases** page from your project sidebar to view all releases and create new ones.
@@ -40,50 +38,38 @@ Navigate to the **Releases** page from your project sidebar to view all releases
 
 ## Connecting Git (Optional)
 
-If you want to use Git as your source of truth, you'll need to connect a Git repository first. This requires the Environments feature to be enabled.
-
-<Steps>
-  <Step title="Open Environment Settings">
-    Go to **Project Settings** → **Environment** to access the Git configuration.
-  </Step>
-  <Step title="Click Connect Git">
-    Click the **Connect Git** button to open the configuration dialog.
-  </Step>
-  <Step title="Enter Repository Details">
-    Fill in the following information:
-    - **Remote URL**: Your Git repository SSH URL (e.g., `git@github.com:yourorg/yourrepo.git`)
-    - **Branch**: The branch to sync with (e.g., `main`)
-    - **Folder**: The folder name where project files will be stored
-    - **SSH Private Key**: Your SSH private key for authentication
-  </Step>
-  <Step title="Connect">
-    Click **Connect** to establish the connection.
-  </Step>
-</Steps>
-
-![Environment Settings](/resources/screenshots/environment-settings.png)
-
-![Connect Git Dialog](/resources/screenshots/connect-git-dialog.png)
-
-<Tip>
-  Make sure your SSH key has read/write access to the repository. The key should start with `-----BEGIN OPENSSH PRIVATE KEY-----`.
-</Tip>
-
-### Disconnecting Git
-
-If you need to disconnect your Git repository:
-
-1. Go to **Project Settings** → **Environment**
-2. Click the **Disconnect** button next to your connected repository
-3. Confirm the disconnection
-
-After disconnecting, you can connect a different repository or continue using Project Releases without Git.
+If you want to use Git to track your changes, you'll need to connect a Git repository first. This requires the Environments feature to be enabled.
 
 ## Creating a Release
 
-### From Git
+### From Project
 
-Pull the latest changes from your connected Git repository.
+Apply changes from flows, connections and tables in one project to another.
+
+<Steps>
+  <Step title="Open Create Release Menu">
+    Click the **Create Release** dropdown button.
+  </Step>
+  <Step title="Select From Project">
+    Choose **From Project** from the dropdown menu.
+  </Step>
+  <Step title="Select Source Project">
+    Choose the project you want to copy flows, connections and tables from.
+  </Step>
+  <Step title="Review and Apply">
+    Review the changes, and click **Apply Changes**.
+  </Step>
+</Steps>
+
+![Create Release from Project](/resources/screenshots/create-release-from-project-1.png)
+
+![Create Release from Project](/resources/screenshots/create-release-from-project-2.png)
+<Warning>
+  New connections created during a release are placeholders and need to be reconnected with valid credentials after the release is applied.
+</Warning>
+
+
+### From Git
 
 <Steps>
   <Step title="Open Create Release Menu">
@@ -108,37 +94,13 @@ Pull the latest changes from your connected Git repository.
     Click **Apply Changes** to create the release.
   </Step>
 </Steps>
+![Create Release from Git](/resources/screenshots/create-git-release.png)
 
-![Create Release from Git](/resources/screenshots/create-release-from-git.png)
 
-### From Project
-
-Copy flows from another project in your platform.
-
-<Steps>
-  <Step title="Open Create Release Menu">
-    Click the **Create Release** dropdown button.
-  </Step>
-  <Step title="Select From Project">
-    Choose **From Project** from the dropdown menu.
-  </Step>
-  <Step title="Select Source Project">
-    Choose the project you want to copy flows from.
-  </Step>
-  <Step title="Review and Apply">
-    Review the changes, select the flows to include, and click **Apply Changes**.
-  </Step>
-</Steps>
-
-![Create Release from Project](/resources/screenshots/create-release-from-project.png)
-
-<Warning>
-  New connections created during a release are placeholders and need to be reconnected with valid credentials after the release is applied.
-</Warning>
 
 ## Push Everything to Git
 
-If your project is connected to a Git repository as a development branch, you can push all your flows, connections, and tables to Git.
+If your project is connected to a Git repository, you can push all your flows, connections, and tables to Git.
 
 <Steps>
   <Step title="Click Push Everything">
@@ -152,16 +114,15 @@ If your project is connected to a Git repository as a development branch, you ca
   </Step>
 </Steps>
 
-![Push Everything to Git Dialog](/resources/screenshots/push-everything-dialog.png)
+![Push Everything to Git Dialog](/resources/screenshots/push-everything-to-git.png)
 
-<Info>
-  The Push Everything button is only available when your project is connected to Git as a **development** branch.
-</Info>
 
 ## Pushing Individual Flows or Tables
 
 You can also push specific flows or tables to Git without pushing everything.
-
+<Warning>
+ You can only push published flows to git
+</Warning>
 <Steps>
   <Step title="Select Items">
     Navigate to your flows or tables and select the items you want to push.
@@ -177,7 +138,9 @@ You can also push specific flows or tables to Git without pushing everything.
   </Step>
 </Steps>
 
-![Push to Git Dialog](/resources/screenshots/push-to-git-dialog.png)
+![Push to Git Dialog](/resources/screenshots/push-flows-to-git-1.png)
+
+![Push to Git Dialog](/resources/screenshots/push-flows-to-git-2.png)
 
 ## Rolling Back a Release
 
@@ -221,20 +184,19 @@ When creating a release, you'll see a preview of all changes:
 
 ### Flow Changes
 
-- <span style={{color: 'green'}}>**Green (+ icon)**</span>: New flows that will be created
-- <span style={{color: 'blue'}}>**Blue (pencil icon)**</span>: Existing flows that will be updated
-- <span style={{color: 'red'}}>**Red (trash icon)**</span>: Flows that will be deleted
+- New flows that will be created
+- Existing flows that will be updated
+- Flows that will be deleted
 
 ### Connection Changes
 
 - New connections are placeholders and must be reconnected after the release
-- Renamed connections show both the old and new names
+- Renamed connections
 
 ### Table Changes
 
 - New, updated, and deleted tables are shown with their respective indicators
 
-![Changes Preview](/resources/screenshots/changes-preview.png)
 
 ## Best Practices
 
@@ -255,16 +217,16 @@ When creating a release, you'll see a preview of all changes:
 
 ## Permissions
 
-To create and manage releases, you need the **Write Project Release** permission. Contact your platform administrator if you don't have access to the releases feature.
+To create and manage releases, you need the **Write Project Release** permission. Contact your instance administrator if you don't have access to the releases feature.
 
 ## Troubleshooting
 
 <AccordionGroup>
   <Accordion title="Environment settings are locked">
-    The Environments feature must be enabled on your platform plan to use Git sync. Contact your platform administrator to upgrade your plan or enable this feature.
+    The Environments feature must be enabled on your instance plan to use Git sync. Contact your instance administrator to upgrade your plan or enable this feature.
   </Accordion>
   <Accordion title="Git connection fails">
-    - Verify your SSH private key is correct and has proper permissions
+    - Verify your SSH private key is correctly formatted (ends with an endline), and make sure it has an empty phrase.
     - Ensure the remote URL is in SSH format (not HTTPS)
     - Check that the branch exists in the repository
   </Accordion>
@@ -275,9 +237,9 @@ To create and manage releases, you need the **Write Project Release** permission
     After applying a release with new connections, navigate to the Connections page and reconnect them with valid credentials.
   </Accordion>
   <Accordion title="Push Everything button not visible">
-    This button only appears when your project is connected to Git as a development branch. Check your Git configuration.
+    Make sure you configured your git settings and if you are selecting flows, make sure they are published.
   </Accordion>
   <Accordion title="Cannot find Environment settings">
-    Navigate to **Project Settings** from the sidebar, then click on **Environment**. If you don't see this option, the Environments feature may not be enabled for your platform.
+    Navigate to **Project Settings** from the sidebar, then click on **Environment**. If you don't see this option, the Environments feature may not be enabled for your instance.
   </Accordion>
 </AccordionGroup>
