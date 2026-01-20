@@ -29,6 +29,7 @@ import { templateService } from './template.service'
 
 const edition = system.getEdition()
 
+
 export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/:id', GetParams, async (request) => {
         const template = await templateService(app.log).getOne({ id: request.params.id })
@@ -119,7 +120,6 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
         })
         return reply.status(StatusCodes.NO_CONTENT).send()
     })
-    
 }
 
 const GetIdParams = Type.Object({

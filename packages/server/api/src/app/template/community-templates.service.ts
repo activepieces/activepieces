@@ -8,7 +8,6 @@ import {
 } from '@activepieces/shared'
 
 const TEMPLATES_SOURCE_URL = 'https://cloud.activepieces.com/api/v1/templates'
-
 export const communityTemplates = {
     getOrThrow: async (id: string): Promise<Template> => {
         const url = `${TEMPLATES_SOURCE_URL}/${id}`
