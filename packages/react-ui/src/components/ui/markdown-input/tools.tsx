@@ -1,4 +1,5 @@
 import { Editor } from '@tiptap/react';
+import { t } from 'i18next';
 import {
   ImageIcon,
   UnderlineIcon,
@@ -12,6 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '../button';
 import { Input } from '../input';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../tooltip';
 
 export const MarkdownTools = ({ editor }: { editor: Editor }) => {
   const isStrikeActive = editor.isActive('strike');
@@ -76,34 +78,42 @@ export const MarkdownTools = ({ editor }: { editor: Editor }) => {
       className="flex items-center gap-0.5 text-foreground"
     >
       <ImageTool editor={editor} containerRef={containerRef} />
-      <Button
-        onClick={handleStrike}
-        size={'icon'}
-        variant={isStrikeActive ? 'default' : 'ghost'}
-      >
-        <Strikethrough className="size-4" />
-      </Button>
-      <Button
-        onClick={handleBold}
-        size={'icon'}
-        variant={isBoldActive ? 'default' : 'ghost'}
-      >
-        <BoldIcon className="size-4" />
-      </Button>
-      <Button
-        onClick={handleItalic}
-        size={'icon'}
-        variant={isItalicActive ? 'default' : 'ghost'}
-      >
-        <ItalicIcon className="size-4" />
-      </Button>
-      <Button
-        onClick={handleUnderline}
-        size={'icon'}
-        variant={isUnderlineActive ? 'default' : 'ghost'}
-      >
-        <UnderlineIcon className="size-4" />
-      </Button>
+      <ToolWrapper tooltip={t('Strike')}>
+        <Button
+          onClick={handleStrike}
+          size={'icon'}
+          variant={isStrikeActive ? 'default' : 'ghost'}
+        >
+          <Strikethrough className="size-4" />
+        </Button>
+      </ToolWrapper>
+      <ToolWrapper tooltip={t('Bold')}>
+        <Button
+          onClick={handleBold}
+          size={'icon'}
+          variant={isBoldActive ? 'default' : 'ghost'}
+        >
+          <BoldIcon className="size-4" />
+        </Button>
+      </ToolWrapper>
+      <ToolWrapper tooltip={t('Italic')}>
+        <Button
+          onClick={handleItalic}
+          size={'icon'}
+          variant={isItalicActive ? 'default' : 'ghost'}
+        >
+          <ItalicIcon className="size-4" />
+        </Button>
+      </ToolWrapper>
+      <ToolWrapper tooltip={t('Underline')}>
+        <Button
+          onClick={handleUnderline}
+          size={'icon'}
+          variant={isUnderlineActive ? 'default' : 'ghost'}
+        >
+          <UnderlineIcon className="size-4" />
+        </Button>
+      </ToolWrapper>
     </div>
   );
 };
@@ -129,11 +139,13 @@ const ImageTool = ({
   };
   return (
     <Popover modal={false} open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button size={'icon'} variant={'ghost'}>
-          <ImageIcon className="size-4" />
-        </Button>
-      </PopoverTrigger>
+      <ToolWrapper tooltip={t('Image')}>
+        <PopoverTrigger asChild>
+          <Button size={'icon'} variant={'ghost'}>
+            <ImageIcon className="size-4" />
+          </Button>
+        </PopoverTrigger>
+      </ToolWrapper>
       <PopoverContent
         side="top"
         className="p-1 px-1.5 mb-1"
@@ -160,5 +172,20 @@ const ImageTool = ({
         </div>
       </PopoverContent>
     </Popover>
+  );
+};
+
+export const ToolWrapper = ({
+  children,
+  tooltip,
+}: {
+  children: React.ReactNode;
+  tooltip: string;
+}) => {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
   );
 };

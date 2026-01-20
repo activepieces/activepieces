@@ -2,6 +2,7 @@ import { Omit, Static, Type } from '@sinclair/typebox'
 import { BaseModelSchema, ColorHex, Metadata, Nullable } from '../common'
 import { Note } from '../flows'
 import { FlowVersion } from '../flows/flow-version'
+import { TableState } from '../project-release/project-state'
 
 export const TemplateTag = Type.Object({
     title: Type.String(),
@@ -32,6 +33,24 @@ export enum TemplateStatus {
     ARCHIVED = 'ARCHIVED',
 }
 
+export enum TableImportDataType {
+    CSV = 'CSV',
+}
+
+export const TableDataState = Type.Object({
+    type: Type.Enum(TableImportDataType),
+    rows: Type.Array(Type.Array(Type.Object({
+        fieldId: Type.String(),
+        value: Type.String(),
+    }))),
+})
+export type TableDataState = Static<typeof TableDataState>
+
+export const TableTemplate = Type.Composite([Type.Omit(TableState, ['id', 'created', 'updated']), Type.Object({
+    data: Nullable(TableDataState),
+})])
+export type TableTemplate = Static<typeof TableTemplate>
+
 export const Template = Type.Object({
     ...BaseModelSchema,
     name: Type.String(),
@@ -41,15 +60,15 @@ export const Template = Type.Object({
     tags: Type.Array(TemplateTag),
     blogUrl: Nullable(Type.String()),
     metadata: Nullable(Metadata),
-    usageCount: Type.Number(),
     author: Type.String(),
     categories: Type.Array(Type.String()),
     pieces: Type.Array(Type.String()),
     platformId: Nullable(Type.String()),
     flows: Type.Optional(Type.Array(FlowVersionTemplate)),
+    tables: Type.Optional(Type.Array(TableTemplate)),
     status: Type.Enum(TemplateStatus),
 })
 export type Template = Static<typeof Template>
 
-export const SharedTemplate = Omit(Template, ['platformId', 'id', 'created', 'updated', 'usageCount'])
+export const SharedTemplate = Omit(Template, ['platformId', 'id', 'created', 'updated'])
 export type SharedTemplate = Static<typeof SharedTemplate>

@@ -17,10 +17,13 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
     <Tabs
       value={selectedTab}
       onValueChange={(value) => setSelectedTab(value as PieceSelectorTabType)}
-      className="w-full"
+      className="max-w-md w-full"
     >
       <TabsList
-        className={`h-14 flex p-0 bg-background justify-start rounded-none`}
+        className={`h-14 w-full grid p-0 bg-background justify-start rounded-none`}
+        style={{
+          gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
+        }}
       >
         {tabs.map((tab) => (
           <TabsTrigger
