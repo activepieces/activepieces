@@ -3,10 +3,10 @@ import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
 import { ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
 import { appSocket } from '../app-socket'
-import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from './planning-tool'
+import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from './tools/planning-tool'
 import { systemPrompt } from './system-prompt'
 import { agentUtils } from './utils'
-import { createExecuteCodeTool, EXECUTE_CODE_TOOL_NAME } from './execute-code'
+import { createExecuteCodeTool, EXECUTE_CODE_TOOL_NAME } from './tools/execute-code'
 import { workerMachine } from '../utils/machine'
 
 

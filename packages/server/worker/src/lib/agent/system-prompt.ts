@@ -1,5 +1,5 @@
-import { CODE_EXECUTION_SYSTEM_PROMPT } from './execute-code'
-import { TODO_SYSTEM_PROMPT } from './planning-tool'
+import { CODE_EXECUTION_SYSTEM_PROMPT } from './tools/execute-code'
+import { TODO_SYSTEM_PROMPT } from './tools/planning-tool'
 
 
 export const systemPrompt = () => {
