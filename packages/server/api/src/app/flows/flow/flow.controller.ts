@@ -48,6 +48,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.projectId,
             request: request.body,
             ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
+            templateId: request.body.templateId,
         })
 
         applicationEvents.sendUserEvent(request, {
