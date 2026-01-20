@@ -678,8 +678,8 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
         AddImageToUser1768502658760,
         RemoveUsageCountFromTemplates1768738475196,
-        AddTemplateIdToFlowEntity1768829135202,
         AddTablesIntoTemplateEntity1768306510367,
+        AddTemplateIdToFlowEntity1768829135202,
     ]
     return migrations
 }
