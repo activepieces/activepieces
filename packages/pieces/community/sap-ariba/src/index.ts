@@ -23,7 +23,7 @@ export const sapAriba = createPiece({
   minimumSupportedRelease: '0.36.1',
   logoUrl: "https://cdn.activepieces.com/pieces/sap-ariba.png",
   categories: [PieceCategory.BUSINESS_INTELLIGENCE, PieceCategory.COMMERCE],
-  authors: [],
+  authors: ['onyedikachi-david'],
   actions: [
     listPurchaseOrders,
     listPurchaseOrderItems,
