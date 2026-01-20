@@ -274,7 +274,7 @@ export const scrape = createAction({
       url: `${FIRECRAWL_API_BASE_URL}/scrape`,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${auth}`,
+        'Authorization': `Bearer ${auth.secret_text}`,
       },
       body: body,
     });
