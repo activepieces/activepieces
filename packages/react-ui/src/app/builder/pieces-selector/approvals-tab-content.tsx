@@ -1,5 +1,4 @@
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   PieceSelectorTabType,
   usePieceSelectorTabs,
@@ -7,7 +6,6 @@ import {
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { stepUtils } from '@/features/pieces/lib/step-utils';
 import { PieceSelectorOperation } from '@/lib/types';
-import { ActionBase } from '@activepieces/pieces-framework';
 import { FlowActionType, FlowOperationType, isNil } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../builder-hooks';
@@ -64,11 +62,13 @@ const ApprovalsTabContent = ({
     );
   }
 
-  // Flatten all approval actions from all pieces into a single list
-  const allApprovalActions = pieceQueries.flatMap((query, index) => {
+  const allApprovalActions = pieceQueries.flatMap((query) => {
     if (!query.data) return [];
 
-    const config = APPROVAL_PIECES_CONFIG[index];
+    const config = APPROVAL_PIECES_CONFIG.find(
+      (config) => config.pieceName === query.data.name,
+    );
+    if (isNil(config)) return [];
     const pieceMetadata = stepUtils.mapPieceToMetadata({
       piece: query.data,
       type: 'action',
@@ -78,54 +78,44 @@ const ApprovalsTabContent = ({
       .map((actionName) => {
         const action = query.data.actions[actionName];
         if (!action) return null;
-
         return {
           action,
           pieceMetadata,
         };
       })
-      .filter(
-        (
-          item,
-        ): item is {
-          action: ActionBase;
-          pieceMetadata: typeof pieceMetadata;
-        } => !isNil(item),
-      );
+      .filter((item) => !isNil(item));
   });
 
   return (
-    <ScrollArea className="h-full w-full">
-      <CardList className="p-2 gap-0" listClassName="gap-0">
-        {allApprovalActions.map((item) => (
-          <GenericActionOrTriggerItem
-            key={`${item.pieceMetadata.pieceName}-${item.action.name}`}
-            item={{
-              actionOrTrigger: item.action,
-              type: FlowActionType.PIECE,
-              pieceMetadata: item.pieceMetadata,
-            }}
-            hidePieceIconAndDescription={false}
-            stepMetadataWithSuggestions={{
-              ...item.pieceMetadata,
-              suggestedActions: [item.action],
-              suggestedTriggers: [],
-            }}
-            onClick={() => {
-              handleAddingOrUpdatingStep({
-                pieceSelectorItem: {
-                  actionOrTrigger: item.action,
-                  type: FlowActionType.PIECE,
-                  pieceMetadata: item.pieceMetadata,
-                },
-                operation,
-                selectStepAfter: true,
-              });
-            }}
-          />
-        ))}
-      </CardList>
-    </ScrollArea>
+    <CardList listClassName="gap-0">
+      {allApprovalActions.map((item) => (
+        <GenericActionOrTriggerItem
+          key={`${item.pieceMetadata.pieceName}-${item.action.name}`}
+          item={{
+            actionOrTrigger: item.action,
+            type: FlowActionType.PIECE,
+            pieceMetadata: item.pieceMetadata,
+          }}
+          hidePieceIconAndDescription={false}
+          stepMetadataWithSuggestions={{
+            ...item.pieceMetadata,
+            suggestedActions: [item.action],
+            suggestedTriggers: [],
+          }}
+          onClick={() => {
+            handleAddingOrUpdatingStep({
+              pieceSelectorItem: {
+                actionOrTrigger: item.action,
+                type: FlowActionType.PIECE,
+                pieceMetadata: item.pieceMetadata,
+              },
+              operation,
+              selectStepAfter: true,
+            });
+          }}
+        />
+      ))}
+    </CardList>
   );
 };
 
