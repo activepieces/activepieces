@@ -1,11 +1,10 @@
-import { dynamicTool, LanguageModel, Tool, ToolSet } from "ai";
+import { dynamicTool, LanguageModel, Tool } from "ai";
 import z from "zod";
 import { agentUtils } from "./utils";
 import { agentOutputBuilder } from "./agent-output-builder";
-import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, isNil, McpAuthConfig, McpAuthType, McpProtocol, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
+import { AgentMcpTool, AgentOutputField, AgentTaskStatus, AgentTool, AgentToolType, buildAuthHeaders, createTransportConfig, isNil, McpServerTools, TASK_COMPLETION_TOOL_NAME } from "@activepieces/shared";
 import { ActionContext } from "@activepieces/pieces-framework";
-import { experimental_createMCPClient as createMCPClient, MCPClient } from '@ai-sdk/mcp';
-import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
+import { experimental_createMCPClient as createMCPClient, MCPClient, MCPTransport } from '@ai-sdk/mcp';
 
 type FlattenedMcpResult = {
   mcpClients: MCPClient[];
@@ -29,72 +28,6 @@ function flattenMcpServers(
     return { mcpClients, tools };
 }
 
-function buildAuthHeaders(authConfig: McpAuthConfig): Record<string, string> {
-  let headers: Record<string, string> = {};
-
-  switch (authConfig.type) {
-    case McpAuthType.NONE:
-      break;
-    case McpAuthType.HEADERS: {
-      headers = authConfig.headers
-      break;
-    }
-    case McpAuthType.ACCESS_TOKEN: {
-      headers['Authorization'] = `Bearer ${authConfig.accessToken}`
-      break;
-    }
-    case McpAuthType.API_KEY: {
-      const headerName = authConfig.apiKeyHeader;
-      headers[headerName] = authConfig.apiKey
-      break;
-    }
-  }
-
-  return headers;
-}
-
-function createTransportConfig(
-  protocol: McpProtocol,
-  serverUrl: string,
-  headers: Record<string, string> = {}
-): any {
-  const url = new URL(serverUrl);
-
-  switch (protocol) {
-    case McpProtocol.SIMPLE_HTTP: {
-      return {
-        type: 'http',
-        url: serverUrl,
-        headers: headers,
-      };
-    }
-    case McpProtocol.STREAMABLE_HTTP: {
-      const sessionId = crypto.randomUUID()
-      return new StreamableHTTPClientTransport(url, {
-        sessionId: sessionId,
-        requestInit: {
-          headers
-        }
-      })
-    }
-    case McpProtocol.SSE: {
-      return {
-        type: 'sse',
-        url: serverUrl,
-        headers: headers,
-      };
-    }
-    default:
-      throw new Error(`Unsupported MCP protocol type: ${protocol}`);
-  }
-}
-
-type McpServerTools = {
-  mcpName: string;
-  mcpClient: MCPClient;
-  tools: Record<string, Tool>
-}
-
 async function constructMcpServersTools(
     tools: AgentMcpTool[]
   ): Promise<McpServerTools[]> {
@@ -107,7 +40,7 @@ async function constructMcpServersTools(
             tool.protocol,
             tool.serverUrl,
             buildAuthHeaders(tool.auth)
-          ),
+          ) as MCPTransport,
         });
 
         const mcpTools = await mcpClient.tools();
