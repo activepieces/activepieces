@@ -103,7 +103,7 @@ export const emailService = (log: FastifyBaseLogger) => ({
             [OtpType.PASSWORD_RESET]: 'reset-password',
         }
 
-        const setupLink = await domainHelper.getPublicUrl({
+        const setupLink = await domainHelper.getInternalUrl({
             platformId,
             path: frontendPath[type] + `?otpcode=${otp}&identityId=${userIdentity.id}`,
         })
@@ -127,28 +127,6 @@ export const emailService = (log: FastifyBaseLogger) => ({
             emails: [userIdentity.email],
             platformId: platformId ?? undefined,
             templateData: otpToTemplate[type],
-        })
-    },
-
-    async sendExceedFailureThresholdAlert(projectId: string, flowName: string): Promise<void> {
-        const alerts = await alertsService(log) .list({ projectId, cursor: undefined, limit: 50 })
-        const emails = alerts.data.filter((alert) => alert.channel === AlertChannel.EMAIL).map((alert) => alert.receiver)
-        const project = await projectService.getOneOrThrow(projectId)
-
-        if (emails.length === 0) {
-            return
-        }
-
-        await emailSender(log).send({
-            emails,
-            platformId: project.platformId,
-            templateData: {
-                name: 'trigger-failure',
-                vars: {
-                    flowName,
-                    projectName: project.displayName,
-                },
-            },
         })
     },
 
