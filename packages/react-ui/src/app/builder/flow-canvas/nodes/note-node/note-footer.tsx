@@ -1,21 +1,17 @@
-import { TextWithTooltip } from '@/components/custom/text-with-tooltip';
-import { userHooks } from '@/hooks/user-hooks';
+import { ApAvatar } from '@/components/custom/ap-avatar';
 import { isNil } from '@activepieces/shared';
 
-export const NoteFooter = ({ creatorId }: NoteFooterProps) => {
-  const { data: user } = userHooks.useUserById(creatorId ?? null);
-  const creator =
-    user?.firstName && user?.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user?.email;
-
+export const NoteFooter = ({ creatorId, isDragging }: NoteFooterProps) => {
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center justify-between gap-2 cursor-grabbing">
       <div className="grow">
-        {!isNil(creator) && (
-          <TextWithTooltip tooltipMessage={creator}>
-            <div className="text-xs opacity-65">{creator}</div>
-          </TextWithTooltip>
+        {!isNil(creatorId) && (
+          <ApAvatar
+            size="xsmall"
+            id={creatorId}
+            includeName={true}
+            hideHover={isDragging}
+          />
         )}
       </div>
     </div>
