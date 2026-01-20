@@ -331,6 +331,7 @@ import { AddNotesToFlowVersion1768130030028 } from './migration/postgres/1768130
 import { AddTablesIntoTemplateEntity1768306510367 } from './migration/postgres/1768306510367-AddTablesIntoTemplateEntity'
 import { AddImageToUser1768502658760 } from './migration/postgres/1768502658760-ADDIMAGETOUSER'
 import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres/1768738475196-RemoveUsageCountFromTemplates'
+import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -678,6 +679,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddImageToUser1768502658760,
         RemoveUsageCountFromTemplates1768738475196,
         AddTablesIntoTemplateEntity1768306510367,
+        AddTemplateIdToFlowEntity1768829135202,
     ]
     return migrations
 }
