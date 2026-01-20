@@ -1,5 +1,3 @@
-import { t } from 'i18next';
-
 import { CardList, CardListItemSkeleton } from '@/components/custom/card-list';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -19,7 +17,10 @@ import GenericActionOrTriggerItem from './generic-piece-selector-item';
 const APPROVAL_PIECES_CONFIG = [
   {
     pieceName: '@activepieces/piece-slack',
-    approvalActionNames: ['request_approval_message', 'request_approval_direct_message'],
+    approvalActionNames: [
+      'request_approval_message',
+      'request_approval_direct_message',
+    ],
   },
   {
     pieceName: '@activepieces/piece-discord',
@@ -83,7 +84,14 @@ const ApprovalsTabContent = ({
           pieceMetadata,
         };
       })
-      .filter((item): item is { action: ActionBase; pieceMetadata: typeof pieceMetadata } => !isNil(item));
+      .filter(
+        (
+          item,
+        ): item is {
+          action: ActionBase;
+          pieceMetadata: typeof pieceMetadata;
+        } => !isNil(item),
+      );
   });
 
   return (

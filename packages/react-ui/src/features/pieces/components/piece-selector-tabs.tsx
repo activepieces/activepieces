@@ -21,7 +21,9 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
     >
       <TabsList
         className={`h-14 w-full grid p-0 bg-background justify-start rounded-none`}
-        style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+        style={{
+          gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))`,
+        }}
       >
         {tabs.map((tab) => (
           <TabsTrigger
