@@ -1,5 +1,4 @@
 import { createAction, Property } from '@activepieces/pieces-framework';
-import { OneClickImpact } from 'makeimpact';
 import { oneclickimpactAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
