@@ -13,6 +13,7 @@ import {
 import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'
 import { utils } from './utils'
+import { progressService } from './services/progress.service'
 
 const WS_URL = 'ws://127.0.0.1:12345'
 
@@ -21,6 +22,7 @@ let socket: Socket | undefined
 async function executeFromSocket(operation: EngineOperation, operationType: EngineOperationType): Promise<void> {
     const result = await execute(operationType, operation)
     const resultParsed = JSON.parse(JSON.stringify(result))
+    progressService.shutdown()
     await workerSocket.sendToWorkerWithAck(EngineSocketEvent.ENGINE_RESPONSE, resultParsed)
 }
 

@@ -36,35 +36,20 @@ export const createRunState = (
     loopsIndexes:
       initialState.run && initialState.run.steps
         ? flowRunUtils.findLoopsState(
-            initialState.flowVersion,
             initialState.run,
             {},
           )
         : {},
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {
-        const lastStepWithStatus = flowRunUtils.findLastStepWithStatus(
-          run.status,
-          run.steps,
+        const loopsIndexes = flowRunUtils.findLoopsState(
+          run,
+          state.loopsIndexes,
         );
-        const initiallySelectedStep = run.steps
-          ? flowCanvasUtils.determineInitiallySelectedStep(
-              lastStepWithStatus,
-              flowVersion,
-            )
-          : state.selectedStep ?? 'trigger';
         return {
-          loopsIndexes: flowRunUtils.findLoopsState(
-            flowVersion,
-            run,
-            state.loopsIndexes,
-          ),
+          loopsIndexes,
           run,
           flowVersion,
-          rightSidebar: initiallySelectedStep
-            ? RightSideBarType.PIECE_SETTINGS
-            : RightSideBarType.NONE,
-          selectedStep: initiallySelectedStep,
           readonly: true,
         };
       }),

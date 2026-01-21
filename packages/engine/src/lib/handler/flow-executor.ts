@@ -92,6 +92,14 @@ export const flowExecutor = {
             currentAction = currentAction.nextAction
         }
 
+        await progressService.sendUpdate({
+            engineConstants: constants,
+            flowExecutorContext: flowExecutionContext,
+            stepNameToUpdate: previousAction?.name,
+        }).catch(error => {
+            console.error('Error sending update:', error)
+        })
+
         const flowEndTime = performance.now()
         return flowExecutionContext.setDuration(flowEndTime - flowStartTime)
     },

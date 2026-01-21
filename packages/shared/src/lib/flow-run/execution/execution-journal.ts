@@ -1,5 +1,6 @@
+import { isNil } from "../../common";
 import { FlowActionType } from "../../flows/actions/action";
-import { LoopStepOutput, StepOutput } from "./step-output";
+import { LoopStepOutput, StepOutput, StepOutputStatus } from "./step-output";
 
 export class ExecutionJournal {
     steps: Record<string, StepOutput>
@@ -8,41 +9,128 @@ export class ExecutionJournal {
         this.steps = steps ?? {}
     }
 
-    upsertStep({ stepName, stepOutput, path }: UpsertStepParams): Record<string, StepOutput> {
+    upsertStep({ stepName, stepOutput, path, createLoopIterationIfNotExists }: UpsertStepParams): Record<string, StepOutput> {
         const steps = { ...this.steps }
-        let target = this.getStateAtPath({ path, steps })
+        let target = createLoopIterationIfNotExists ? this.getOrCreateStateAtPath({ path, steps }) : this.getStateAtPath({ path, steps })
         target[stepName] = stepOutput
-        console.log('this.steps', this.steps)
-
-        console.log('steps', steps)
-        console.log('target', target)
-
         return steps
     }
 
-    getStep({ stepName, path }: GetStepParams): StepOutput | undefined {
-        let target = this.getStateAtPath({ path, steps: this.steps })
+    getStep({ stepName, path, steps }: GetStepParams): StepOutput | undefined {
+        let target = this.getStateAtPath({ path, steps: steps ?? this.steps })
         return target[stepName]
     }
 
     getStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
       let target = steps
+    
       for(const [parentStepName, iteration] of path) {
-          const step = target[parentStepName]
+          let step = target[parentStepName]
           if (!step) {
               throw new Error(`Step ${parentStepName} not found in path ${path}`)
           }
           if (step.type !== FlowActionType.LOOP_ON_ITEMS) {
               throw new Error(`Step ${parentStepName} is not a loop on items step in path ${path}`)
           }
-          const loopStepOutput = step as LoopStepOutput
-          const iterationOutput = loopStepOutput.output?.iterations[iteration]
+          let loopStepOutput = step as LoopStepOutput
+          let iterationOutput = loopStepOutput.output?.iterations[iteration]
           if (!iterationOutput) {
               throw new Error(`Iteration ${iteration} not found in path ${path}`)
           }
           target = iterationOutput
       }
-        return target
+      return target
+    }
+
+    /*
+     * if the steps object does not include loop step mentioned in the path, it gets created.
+     * same for the iteration in the path. If the iteration is not found, it gets created.
+     */
+    getOrCreateStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
+      let target = steps
+    
+      const log = path.length > 1;
+      for(const [parentStepName, iteration] of path) {
+          let step = target[parentStepName]
+          if(log) console.info(parentStepName, 'step before', step)
+          if (!step ) {
+              step = LoopStepOutput.init({ input: null })
+          }
+          if (step.type !== FlowActionType.LOOP_ON_ITEMS) {
+              throw new Error(`Step ${parentStepName} is not a loop on items step in path ${path}`)
+          }
+          if(log) console.info(parentStepName, 'step after', step)
+          let loopStepOutput = step as LoopStepOutput
+          let iterationOutput = loopStepOutput.output?.iterations[iteration]
+          if (!iterationOutput ) {
+            loopStepOutput = loopStepOutput.setItemAndIndex({ item: undefined, index: iteration }).addIteration()
+            iterationOutput = loopStepOutput.output?.iterations[iteration] ?? {}
+          } 
+          if(log) console.info(parentStepName, 'after after', loopStepOutput)
+          target[parentStepName] = loopStepOutput
+          target = iterationOutput
+      }
+      return target
+    }
+
+    static findLastStepWithStatus(steps: Record<string, StepOutput>, status: StepOutputStatus | undefined): string | null {
+      let lastStepWithStatus: string | null = null
+      Object.entries(steps).forEach(([stepName, step]) => {
+          if ( step.type === FlowActionType.LOOP_ON_ITEMS && step.output ) {
+            const iterations = step.output.iterations
+            iterations.forEach((iteration) => {
+              const lastOneInIteration = this.findLastStepWithStatus(iteration, status)
+              if (!isNil(lastOneInIteration)) {
+                lastStepWithStatus = lastOneInIteration
+              }
+            })
+          }
+          if (isNil(status)) {
+            lastStepWithStatus = stepName
+            return
+          } 
+          if (step.status === status) {
+            lastStepWithStatus = stepName
+            return
+          }
+      })
+      return lastStepWithStatus
+    }
+
+    static getLoopSteps(steps: Record<string, StepOutput>): Record<string, LoopStepOutput> {
+      let result: Record<string, LoopStepOutput> = {}
+      Object.entries(steps).forEach(([stepName, step]) => {
+        if (step.type === FlowActionType.LOOP_ON_ITEMS) {
+          const iterationsResult = step.output?.iterations.reduce((acc, iteration) => {
+            return {
+              ...acc,
+              ...this.getLoopSteps(iteration),
+            }
+          }, {} as Record<string, LoopStepOutput>)
+          if (isNil(iterationsResult)) {
+            result[stepName] = step as LoopStepOutput
+            return
+          }
+          result = {
+            ...result,
+            ...iterationsResult as Record<string, LoopStepOutput>,
+            [stepName]: step as LoopStepOutput
+          }
+        }
+      })
+      return result
+    }
+
+    static isChildOf(parent: StepOutput, child: string): boolean {
+      if (parent.type !== FlowActionType.LOOP_ON_ITEMS) return false
+      if (!parent.output?.iterations) return false;
+      for (const iteration of parent.output.iterations) {
+        for (const [name, output] of Object.entries(iteration)) {
+          if (name === child) return true;
+          if (this.isChildOf(output, child)) return true;
+        }
+      }
+      return false;
     }
 }
 
@@ -50,11 +138,13 @@ export type UpsertStepParams = {
     stepName: string
     stepOutput: StepOutput
     path: readonly [string, number][]
+    createLoopIterationIfNotExists?: boolean
 }
 
 export type GetStepParams = {
     stepName: string
     path: readonly [string, number][]
+    steps?: Record<string, StepOutput>
 }
 
 export type GetStateAtPathParams = {

@@ -131,8 +131,8 @@ export class FlowExecutorContext {
         })
     }
 
-    public getStepOutput(stepName: string): StepOutput | undefined {
-        return this.journal.getStep({ stepName, path: this.currentPath.path })
+    public getStepOutput(stepName: string, path?: StepExecutionPath['path']): StepOutput | undefined {
+        return this.journal.getStep({ stepName, path: path ?? this.currentPath.path })
     }
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {

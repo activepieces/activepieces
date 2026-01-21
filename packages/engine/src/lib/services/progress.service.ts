@@ -1,5 +1,5 @@
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, StepOutput, StepOutputStatus, StepRunResponse, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, LoopStepOutput, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -14,17 +14,8 @@ const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
 
-// logs backup consts
-const BACKUP_INTERVAL_MS = 15000 // 15 seconds
+const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
-
-process.on('SIGTERM', () => {
-    isGraceShutdownSignalReceived = true
-})
-
-process.on('SIGINT', () => {
-    isGraceShutdownSignalReceived = true
-})
 
 export const progressService = {
     init: async (): Promise<void> => {
@@ -43,11 +34,12 @@ export const progressService = {
                 return
             }
 
-            const step = flowExecutorContext.getStepOutput(stepNameToUpdate)
-            if (isNil(step)) {
+            let step = flowExecutorContext.getStepOutput(stepNameToUpdate)
+             if (isNil(step)) {
                 return
             }
-            await workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, {
+
+            await sendUpdateProgress({
                 projectId: engineConstants.projectId,
                 step: {
                     name: stepNameToUpdate,
@@ -129,8 +121,15 @@ export const progressService = {
     
             await sendLogsUpdate(request)
         })
-    }
+    },
+    shutdown: () => {
+        isGraceShutdownSignalReceived = true
+        latestUpdateParams = null
+    },
 }
+
+process.on('SIGTERM', progressService.shutdown)
+process.on('SIGINT', progressService.shutdown)
 
 type CreateOutputContextParams = {
     engineConstants: EngineConstants
@@ -139,13 +138,21 @@ type CreateOutputContextParams = {
     stepOutput: GenericStepOutput<FlowActionType.PIECE, unknown>
 }
 
+const sendUpdateProgress = async (request: UpdateRunProgressRequest): Promise<void> => {
+    const result = await utils.tryCatchAndThrowOnEngineError(() => 
+        workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPDATE_RUN_PROGRESS, request),
+    )
+    if (result.error) {
+        throw new EngineGenericError('ProgressUpdateError', 'Failed to send UPDATE_RUN_PROGRESS event', result.error)
+    }
+}
 
 const sendLogsUpdate = async (request: UploadRunLogsRequest): Promise<void> => {
     const result = await utils.tryCatchAndThrowOnEngineError(() => 
         workerSocket.sendToWorkerWithAck(EngineSocketEvent.UPLOAD_RUN_LOG, request),
     )
     if (result.error) {
-        throw new EngineGenericError('ProgressUpdateError', 'Failed to send progress update', result.error)
+        throw new EngineGenericError('ProgressUpdateError', 'Failed to send UPLOAD_RUN_LOG event', result.error)
     }
 }
 

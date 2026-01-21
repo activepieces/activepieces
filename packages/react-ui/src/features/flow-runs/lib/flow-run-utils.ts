@@ -8,7 +8,6 @@ import {
   Play,
   Timer,
 } from 'lucide-react';
-
 import { cn } from '@/lib/utils';
 import {
   ExecutionJournal,
@@ -17,7 +16,6 @@ import {
   FlowRunStatus,
   flowStructureUtil,
   FlowTrigger,
-  FlowVersion,
   isFailedState,
   isNil,
   LoopOnItemsAction,
@@ -26,10 +24,71 @@ import {
   StepOutputStatus,
 } from '@activepieces/shared';
 
+
 export const flowRunUtils = {
-  findLastStepWithStatus,
-  findLoopsState,
-  updateRunSteps,
+  updateRunSteps: (steps: Record<string, StepOutput>, stepName: string, path: readonly [string, number][], output: StepOutput) => {
+    return new ExecutionJournal(steps).upsertStep({ stepName, stepOutput: output, path, createLoopIterationIfNotExists: true })
+  },
+  /*
+  * Find the last step that has a status , or the last failed step
+  */
+  findLastStepWithStatus(runStatus: FlowRunStatus, steps: Record<string, StepOutput>): string | null {
+    let lastStepWithStatus: string | null = null
+    if (runStatus === FlowRunStatus.SUCCEEDED) {
+      return null;
+      }
+    const runFailed = isFailedState(runStatus)
+  
+    Object.entries(steps).forEach(([stepName, step]) => {
+        if (runFailed && step.status === StepOutputStatus.FAILED) {
+          lastStepWithStatus = stepName
+        }
+        if (!runFailed) {
+          lastStepWithStatus = stepName
+        }
+
+        if (step.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
+          const iterations = step.output.iterations
+          iterations.forEach((iteration) => {
+            const lastOneInIteration = flowRunUtils.findLastStepWithStatus(runStatus, iteration)
+            if (!isNil(lastOneInIteration)) {
+              lastStepWithStatus = lastOneInIteration
+            }
+          })
+        }
+      
+    })
+    return lastStepWithStatus
+  },
+  findLoopsState(
+    run: FlowRun,
+    //runs get updated if they aren't terminated yet, so we shouldn't reset the loops state on each update
+    currentLoopsState: Record<string, number>,
+  ) {
+  
+    const loopsOutputs = ExecutionJournal.getLoopSteps(run.steps);
+    const failedStep = run.steps
+      ? flowRunUtils.findLastStepWithStatus(run.status, run.steps)
+      : null;
+    const result = currentLoopsState
+  
+     Object.entries(loopsOutputs).forEach(([loopName, loopOutput]) => {
+      const doesLoopIncludeFailedStep =
+        failedStep && ExecutionJournal.isChildOf(loopOutput, failedStep);
+  
+      if (isNil(loopOutput.output)) {
+        result[loopName] = 0;
+        return;
+      }
+      if (doesLoopIncludeFailedStep && loopOutput.output) {
+        result[loopName] = loopOutput.output.iterations.length - 1;
+        return;
+      }
+      result[loopName] = currentLoopsState[loopName] ?? 0;
+    });
+    return result;
+  },
+  
   extractStepOutput: (
     stepName: string,
     loopsIndexes: Record<string, number>,
@@ -40,6 +99,7 @@ export const flowRunUtils = {
     if (!isNil(stepOutput)) {
       return stepOutput;
     }
+
     const parents: LoopOnItemsAction[] = flowStructureUtil
       .findPathToStep(trigger, stepName)
       .filter(
@@ -53,6 +113,7 @@ export const flowRunUtils = {
     }
     return undefined;
   },
+
   getStatusIconForStep(stepOutput: StepOutputStatus): {
     variant: 'default' | 'success' | 'error';
     Icon: LucideIcon;
@@ -86,6 +147,7 @@ export const flowRunUtils = {
         };
     }
   },
+
   getStatusContainerClassName(variant: 'default' | 'success' | 'error') {
     return cn('text-xs   border rounded-md leading-none', {
       'text-green-800 bg-green-50 border-green-200 dark:text-green-200 dark:bg-green-900 dark:border-green-800':
@@ -95,6 +157,7 @@ export const flowRunUtils = {
       'bg-background  border-border text-foreground': variant === 'default',
     });
   },
+
   getStatusIcon(status: FlowRunStatus): {
     variant: 'default' | 'success' | 'error';
     Icon: LucideIcon;
@@ -154,104 +217,6 @@ export const flowRunUtils = {
   },
 };
 
-function findLoopsState(
-  flowVersion: FlowVersion,
-  run: FlowRun,
-  //runs get updated if they aren't terminated yet, so we shouldn't reset the loops state on each update
-  currentLoopsState: Record<string, number>,
-) {
-  const loops = flowStructureUtil
-    .getAllSteps(flowVersion.trigger)
-    .filter((s) => s.type === FlowActionType.LOOP_ON_ITEMS);
-
-  const loopsOutputs = loops.map((loop) => {
-    //TODO: fix step outputs so we don't have to cast here
-    const output = run.steps
-      ? (run.steps[loop.name] as LoopStepOutput | undefined)
-      : undefined;
-    return {
-      output,
-      step: loop,
-    };
-  });
-  const failedStep = run.steps
-    ? findLastStepWithStatus(run.status, run.steps)
-    : null;
-
-  return loopsOutputs.reduce((res, { step, output }) => {
-    const doesLoopIncludeFailedStep =
-      failedStep && flowStructureUtil.isChildOf(step, failedStep);
-    if (isNil(output)) {
-      return {
-        ...res,
-        [step.name]: 0,
-      };
-    }
-    if (doesLoopIncludeFailedStep && output.output) {
-      return {
-        ...res,
-        [step.name]: output.output.iterations.length - 1,
-      };
-    }
-    return {
-      ...res,
-      [step.name]: currentLoopsState[step.name] ?? 0,
-    };
-  }, currentLoopsState);
-}
-
-function findLastStepWithStatus(
-  runStatus: FlowRunStatus,
-  steps: Record<string, StepOutput> | undefined,
-): string | null {
-  if (isNil(steps)) {
-    return null;
-  }
-  if (runStatus === FlowRunStatus.SUCCEEDED) {
-    return null;
-  }
-  const stepStatus = isFailedState(runStatus)
-    ? StepOutputStatus.FAILED
-    : undefined;
-  return Object.entries(steps).reduce((res, [stepName, step]) => {
-    if (
-      step.type === FlowActionType.LOOP_ON_ITEMS &&
-      step.output &&
-      isNil(res)
-    ) {
-      const latestStepInLoop = findLatestStepInLoop(
-        step as LoopStepOutput,
-        runStatus,
-      );
-      if (!isNil(latestStepInLoop)) {
-        return latestStepInLoop;
-      }
-    }
-    if (!isNil(stepStatus)) {
-      if (step.status === stepStatus) {
-        return stepName;
-      }
-      return null;
-    }
-    return stepName;
-  }, null as null | string);
-}
-
-function findLatestStepInLoop(
-  loopStepResult: LoopStepOutput,
-  runStatus: FlowRunStatus,
-): string | null {
-  if (!loopStepResult.output) {
-    return null;
-  }
-  for (const iteration of loopStepResult.output.iterations) {
-    const lastStep = findLastStepWithStatus(runStatus, iteration);
-    if (!isNil(lastStep)) {
-      return lastStep;
-    }
-  }
-  return null;
-}
 
 function getLoopChildStepOutput(
   parents: LoopOnItemsAction[],
@@ -318,6 +283,7 @@ function getStepOutputFromIteration({
   }
 
   const targetIteration = iterations[iterationIndex];
+
   if (isNil(targetIteration)) {
     return undefined;
   }
@@ -325,6 +291,3 @@ function getStepOutputFromIteration({
   return targetIteration[targetStepName] as LoopStepOutput | undefined;
 }
 
-function updateRunSteps(steps: Record<string, StepOutput>, stepName: string, path: readonly [string, number][], output: StepOutput) {
-  return new ExecutionJournal(steps).upsertStep({ stepName, stepOutput: output, path })
-}

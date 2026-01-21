@@ -49,6 +49,12 @@ export const flowRunsApi = {
     onUpdate: (response: UpdateRunProgressRequest) => void,
   ): Promise<void> {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
+    const initialRun = await getInitialRun(socket, request.flowVersionId);
+    onUpdate({
+      projectId: initialRun.projectId,
+      flowRunId: initialRun.id,
+      flowRun: initialRun,
+    });
     const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
       onUpdate(response);
     };
