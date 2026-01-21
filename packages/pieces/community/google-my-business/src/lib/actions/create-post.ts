@@ -29,6 +29,7 @@ export const createPost = createAction({
           { label: 'Event', value: 'EVENT' },
           { label: 'Offer', value: 'OFFER' },
           { label: 'Alert', value: 'ALERT' },
+          { label: 'Unspecified', value: 'LOCAL_POST_TOPIC_TYPE_UNSPECIFIED' },
         ],
       },
       defaultValue: 'STANDARD',
@@ -51,11 +52,12 @@ export const createPost = createAction({
       options: {
         options: [
           { label: 'Book', value: 'BOOK' },
-          { label: 'Order Online', value: 'ORDER_ONLINE' },
-          { label: 'Buy', value: 'BUY' },
+          { label: 'Order', value: 'ORDER' },
+          { label: 'Shop', value: 'SHOP' },
           { label: 'Learn More', value: 'LEARN_MORE' },
           { label: 'Sign Up', value: 'SIGN_UP' },
           { label: 'Call', value: 'CALL' },
+          { label: 'Unspecified', value: 'ACTION_TYPE_UNSPECIFIED' },
         ],
       },
     }),
@@ -67,7 +69,16 @@ export const createPost = createAction({
   },
   auth: googleAuth,
   async run(ctx) {
-    const { account, location, summary, topicType, languageCode, mediaSourceUrl, callToActionType, callToActionUrl } = ctx.propsValue;
+    const {
+      account,
+      location,
+      summary,
+      topicType,
+      languageCode,
+      mediaSourceUrl,
+      callToActionType,
+      callToActionUrl,
+    } = ctx.propsValue;
 
     // Build the request body
     const body: any = {
@@ -100,7 +111,7 @@ export const createPost = createAction({
 
     // The location value from the dropdown is already in the format: accounts/{accountId}/locations/{locationId}
     const response = await httpClient.sendRequest({
-      url: `https://mybusiness.googleapis.com/v4/${location}/localPosts`,
+      url: `https://mybusiness.googleapis.com/v4/${account}/${location}/localPosts`,
       method: HttpMethod.POST,
       headers: {
         Authorization: `Bearer ${(ctx.auth as OAuth2PropertyValue).access_token}`,
