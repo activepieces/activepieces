@@ -23,7 +23,6 @@ type MakeToolsParams = {
 
 export const pieceToolExecutor = (log: FastifyBaseLogger) => ({
     async makeTools({ tools, engineToken, platformId, projectId, modelId }: MakeToolsParams): Promise<Record<string, Tool>> {
-        const executor = this
         const pieceTools = await Promise.all(
             tools.map(async (agentTool) => {
                 const pieceMetadata = await engineApiService(engineToken).getPiece(
@@ -41,7 +40,7 @@ export const pieceToolExecutor = (log: FastifyBaseLogger) => ({
                             instruction: z.string().describe('A natural language instruction describing what you want this tool to do. Specify the goal clearly, and provide all required details or parameters for the task.'),
                         }),
                         execute: async ({ instruction }) => {
-                            return executor.executeTool(engineToken, {
+                            return pieceToolExecutor(log).executeTool(engineToken, {
                                 instruction,
                                 pieceName: agentTool.pieceMetadata.pieceName,
                                 pieceVersion: agentTool.pieceMetadata.pieceVersion,
