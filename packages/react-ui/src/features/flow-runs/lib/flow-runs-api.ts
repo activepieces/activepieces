@@ -48,7 +48,20 @@ export const flowRunsApi = {
     onUpdate: (response: FlowRun) => void,
   ): Promise<void> {
     socket.emit(WebsocketServerEvent.TEST_FLOW_RUN, request);
-    const initialRun = await getInitialRun(socket, request.flowVersionId);
+    const initialRun = await getInitialRun(
+      socket,
+      request.flowVersionId,
+      false,
+    );
+    onUpdate(initialRun);
+  },
+  async startManualTrigger(
+    socket: Socket,
+    request: TestFlowRunRequestBody,
+    onUpdate: (response: FlowRun) => void,
+  ): Promise<void> {
+    socket.emit(WebsocketServerEvent.MANUAL_TRIGGER_RUN_STARTED, request);
+    const initialRun = await getInitialRun(socket, request.flowVersionId, true);
     onUpdate(initialRun);
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
@@ -95,16 +108,31 @@ export const flowRunsApi = {
 function getInitialRun(
   socket: Socket,
   flowVersionId: string,
+  forManualTrigger: boolean,
 ): Promise<FlowRun> {
   return new Promise<FlowRun>((resolve) => {
     const onRunStarted = (run: FlowRun) => {
       if (run.flowVersionId !== flowVersionId) {
         return;
       }
-      socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      if (forManualTrigger) {
+        socket.on(
+          WebsocketClientEvent.TEST_MANUAL_TRIGGER_RUN_STARTED,
+          onRunStarted,
+        );
+      } else {
+        socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+      }
       resolve(run);
     };
 
-    socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    if (forManualTrigger) {
+      socket.on(
+        WebsocketClientEvent.TEST_MANUAL_TRIGGER_RUN_STARTED,
+        onRunStarted,
+      );
+    } else {
+      socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+    }
   });
 }

@@ -356,6 +356,13 @@ const isChatTrigger = (pieceName: string, triggerName: string) => {
     triggerName === 'chat_submission'
   );
 };
+
+const isManualTrigger = (pieceName: string, triggerName: string) => {
+  return (
+    pieceName === '@activepieces/piece-manual-trigger' &&
+    triggerName === 'manual_trigger'
+  );
+};
 const getStepNameFromOperationType = (
   operation: PieceSelectorOperation,
   flowVersion: FlowVersion,
@@ -376,4 +383,5 @@ export const pieceSelectorUtils = {
   isChatTrigger,
   removeHiddenActions,
   getStepNameFromOperationType,
+  isManualTrigger,
 };
