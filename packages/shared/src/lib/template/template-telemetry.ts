@@ -1,4 +1,5 @@
 import { Static, Type } from '@sinclair/typebox'
+import { DiscriminatedUnion } from '../common'
 
 export enum TemplateTelemetryEventType {
     VIEW = 'VIEW',
@@ -36,11 +37,11 @@ const ExploreViewEvent = Type.Object({
     userId: Type.Optional(Type.String()),
 })
 
-export const TemplateTelemetryEvent = Type.Union([
-    ViewEvent,
+export const TemplateTelemetryEvent = DiscriminatedUnion('eventType', [
     InstallEvent,
     ActivateEvent,
     DeactivateEvent,
+    ViewEvent,
     ExploreViewEvent,
 ])
 export type TemplateTelemetryEvent = Static<typeof TemplateTelemetryEvent>
