@@ -25,11 +25,14 @@ import {
 import { flowHooks } from '@/features/flows/lib/flow-hooks';
 import { foldersApi } from '@/features/folders/lib/folders-api';
 import { foldersHooks } from '@/features/folders/lib/folders-hooks';
+import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { authenticationSession } from '@/lib/authentication-session';
 import {
   PopulatedFlow,
   Template,
+  TemplateTelemetryEventType,
+  TemplateType,
   UncategorizedFolderId,
   isNil,
 } from '@activepieces/shared';
@@ -118,6 +121,16 @@ export const UseTemplateDialog = ({
       return;
     }
     createFlow({ projectId: selectedProjectId, folderId: selectedFolderId });
+
+    const userId = authenticationSession.getCurrentUserId();
+
+    if (template.type === TemplateType.OFFICIAL && userId) {
+      templatesTelemetryApi.sendEvent({
+        eventType: TemplateTelemetryEventType.INSTALL,
+        templateId: template.id,
+        userId,
+      });
+    }
   };
 
   const flowCount = template.flows?.length || 0;
