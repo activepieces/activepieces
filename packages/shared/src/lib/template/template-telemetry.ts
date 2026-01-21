@@ -33,6 +33,7 @@ const DeactivateEvent = Type.Object({
 
 const ExploreViewEvent = Type.Object({
     eventType: Type.Literal(TemplateTelemetryEventType.EXPLORE_VIEW),
+    userId: Type.Optional(Type.String()),
 })
 
 export const TemplateTelemetryEvent = Type.Union([
