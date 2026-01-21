@@ -118,8 +118,9 @@ export const progressService = {
                 tags: Array.from(flowExecutorContext.tags),
                 stepsCount: flowExecutorContext.stepsCount,
             }
-    
-            await sendLogsUpdate(request)
+            if (params.sendSocketUpdate) {
+                await sendLogsUpdate(request)
+            }
         })
     },
     shutdown: () => {
@@ -204,6 +205,7 @@ type BackUpLogsParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepNameToUpdate?: string
+    sendSocketUpdate?: boolean
 }
 
 type ExtractStepResponse = {

@@ -8,6 +8,7 @@ import {
   Play,
   Timer,
 } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import {
   ExecutionJournal,
@@ -16,6 +17,7 @@ import {
   FlowRunStatus,
   flowStructureUtil,
   FlowTrigger,
+  FlowVersion,
   isFailedState,
   isNil,
   LoopOnItemsAction,
@@ -24,6 +26,21 @@ import {
   StepOutputStatus,
 } from '@activepieces/shared';
 
+
+function mapFlowRunStatusToStepOutputStatus(status: FlowRunStatus): StepOutputStatus | undefined {
+  switch (status) {
+    case FlowRunStatus.FAILED:
+      return StepOutputStatus.FAILED
+    case FlowRunStatus.SUCCEEDED:
+      return StepOutputStatus.SUCCEEDED
+    case FlowRunStatus.PAUSED:
+      return StepOutputStatus.PAUSED
+    case FlowRunStatus.RUNNING:
+      return StepOutputStatus.RUNNING
+    default:
+      return undefined
+  }
+}
 
 export const flowRunUtils = {
   updateRunSteps: (steps: Record<string, StepOutput>, stepName: string, path: readonly [string, number][], output: StepOutput) => {
@@ -93,25 +110,18 @@ export const flowRunUtils = {
     stepName: string,
     loopsIndexes: Record<string, number>,
     runOutput: Record<string, StepOutput>,
-    trigger: FlowTrigger,
   ): StepOutput | undefined => {
     const stepOutput = runOutput[stepName];
     if (!isNil(stepOutput)) {
       return stepOutput;
     }
 
-    const parents: LoopOnItemsAction[] = flowStructureUtil
-      .findPathToStep(trigger, stepName)
-      .filter(
-        (p) =>
-          p.type === FlowActionType.LOOP_ON_ITEMS &&
-          flowStructureUtil.isChildOf(p, stepName),
-      ) as LoopOnItemsAction[];
-
-    if (parents.length > 0) {
-      return getLoopChildStepOutput(parents, loopsIndexes, stepName, runOutput);
+    const path = ExecutionJournal.getPathToStep(runOutput, stepName, loopsIndexes) ?? [];
+    try {
+      return new ExecutionJournal(runOutput).getStep({ stepName, path });
+    } catch (error) {
+      return undefined;
     }
-    return undefined;
   },
 
   getStatusIconForStep(stepOutput: StepOutputStatus): {

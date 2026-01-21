@@ -86,7 +86,6 @@ export const createRunState = (
             childLoop.name,
             loopsIndexes,
             state.run?.steps ?? {},
-            state.flowVersion.trigger,
           ) as LoopStepOutput | undefined;
 
           if (isNil(childLoopOutput) || isNil(childLoopOutput.output)) {

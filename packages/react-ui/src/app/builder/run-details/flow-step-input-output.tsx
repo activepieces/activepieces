@@ -45,7 +45,6 @@ export const FlowStepInputOutput = () => {
           selectedStep.name,
           loopsIndexes,
           run.steps,
-          flowVersion.trigger,
         )
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);

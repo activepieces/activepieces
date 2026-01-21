@@ -33,7 +33,6 @@ const StepNodeRunDurationAndPieceName = ({
           stepName,
           loopIndexes,
           run.steps,
-          flowVersion.trigger,
         )
       : null;
   }, [run, stepName, loopIndexes, flowVersion.trigger]);

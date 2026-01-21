@@ -488,7 +488,6 @@ const getStepStatus = (
     stepName,
     loopIndexes,
     run.steps,
-    flowVersion.trigger,
   );
   return stepOutput?.status;
 };

@@ -30,7 +30,6 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
           stepName,
           loopsIndexes,
           run.steps,
-          flowVersion.trigger,
         )
       : null;
   }, [run, stepName, loopsIndexes, flowVersion.trigger]);

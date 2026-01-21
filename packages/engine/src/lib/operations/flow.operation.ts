@@ -30,6 +30,7 @@ export const flowOperation = {
         await progressService.backup({
             engineConstants: constants,
             flowExecutorContext: output,
+            sendSocketUpdate: true,
         })
         return {
             status: EngineResponseStatus.OK,

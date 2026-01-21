@@ -128,6 +128,29 @@ export class ExecutionJournal {
       }
       return false;
     }
+
+    static getPathToStep(
+      steps: Record<string, StepOutput>,
+      stepName: string, loopsIndexes: Record<string, number>,
+      currentPath: readonly [string, number][] = []
+    ): readonly [string, number][] | undefined {
+
+
+      for(const [currentStepName, step] of Object.entries(steps)) {
+        if (currentStepName === stepName) {
+          return currentPath;
+        }
+
+        if (step.type !== FlowActionType.LOOP_ON_ITEMS) continue;
+        if (!step.output?.iterations) continue;
+
+        for (const iteration of step.output.iterations) {
+            const nestedPath = this.getPathToStep(iteration, stepName, loopsIndexes, [...currentPath, [currentStepName, loopsIndexes[currentStepName]]])
+            if (nestedPath) return nestedPath;
+        }
+      }
+      return undefined
+    }
 }
 
 export type UpsertStepParams = {
