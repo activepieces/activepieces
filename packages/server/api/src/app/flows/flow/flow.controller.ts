@@ -48,6 +48,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.projectId,
             request: request.body,
             ownerId: request.principal.type === PrincipalType.SERVICE ? undefined : request.principal.id,
+            templateId: request.body.templateId,
         })
 
         applicationEvents.sendUserEvent(request, {
@@ -80,7 +81,12 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
         },
         preValidation: async (request) => {
             if (request.body?.type === FlowOperationType.IMPORT_FLOW) {
-                const migratedFlowTemplate = await migrateFlowVersionTemplate(request.body.request.trigger, request.body.request.schemaVersion, request.body.request.notes ?? [])
+                const migratedFlowTemplate = await migrateFlowVersionTemplate({
+                    trigger: request.body.request.trigger,
+                    schemaVersion: request.body.request.schemaVersion,
+                    notes: request.body.request.notes ?? [],
+                    valid: false,
+                })
                 request.body.request = {
                     ...request.body.request,
                     trigger: migratedFlowTemplate.trigger,

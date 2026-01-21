@@ -50,7 +50,7 @@ import { FlowEntity } from './flow.entity'
 import { flowRepo } from './flow.repo'
 
 export const flowService = (log: FastifyBaseLogger) => ({
-    async create({ projectId, request, externalId, ownerId }: CreateParams): Promise<PopulatedFlow> {
+    async create({ projectId, request, externalId, ownerId, templateId }: CreateParams): Promise<PopulatedFlow> {
         const folderId = await getFolderIdFromRequest({ projectId, folderId: request.folderId, folderName: request.folderName, log })
         const newFlow: NewFlow = {
             id: apId(),
@@ -62,6 +62,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
             externalId: externalId ?? apId(),
             metadata: request.metadata,
             operationStatus: FlowOperationStatus.NONE,
+            templateId,
         }
         const savedFlow = await flowRepo().save(newFlow)
 
@@ -338,7 +339,7 @@ export const flowService = (log: FastifyBaseLogger) => ({
                 throw new ActivepiecesError({
                     code: ErrorCode.FLOW_OPERATION_IN_PROGRESS,
                     params: {
-                        message: `This flow is getting deleted.`,
+                        message: 'This flow is getting deleted.',
                     },
                 })
             }
@@ -774,6 +775,7 @@ type CreateParams = {
     request: CreateFlowRequest
     ownerId?: UserId
     externalId?: string
+    templateId?: string
 }
 
 type ListParamsBase = {

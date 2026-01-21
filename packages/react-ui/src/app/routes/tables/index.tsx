@@ -10,6 +10,7 @@ import {
   EllipsisVertical,
   Tag,
   Clock,
+  Import,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -28,6 +29,7 @@ import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
+import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
@@ -39,6 +41,7 @@ import { Permission, Table } from '@activepieces/shared';
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const [selectedRows, setSelectedRows] = useState<Table[]>([]);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
@@ -115,20 +118,6 @@ const ApTablesPage = () => {
   const bulkActions: BulkAction<Table>[] = useMemo(
     () => [
       {
-        render: (_, __) => (
-          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Button
-              onClick={() => createTable({ name: t('New Table') })}
-              className="flex items-center gap-2"
-              disabled={!userHasTableWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New Table')}
-            </Button>
-          </PermissionNeededTooltip>
-        ),
-      },
-      {
         render: (_, resetSelection) => (
           <div onClick={(e) => e.stopPropagation()}>
             <ConfirmationDeleteDialog
@@ -178,6 +167,35 @@ const ApTablesPage = () => {
           </div>
         ),
       },
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => setIsImportDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Import className="h-4 w-4" />
+              {t('Import')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
     ],
     [bulkDeleteMutation, selectedRows, userHasPermissionToPushToGit],
   );
@@ -225,6 +243,11 @@ const ApTablesPage = () => {
           bulkActions={bulkActions}
         />
       </div>
+      <ImportTableDialog
+        open={isImportDialogOpen}
+        setIsOpen={setIsImportDialogOpen}
+        showTrigger={false}
+      />
     </LockedFeatureGuard>
   );
 };

@@ -154,3 +154,15 @@ export function mapsAreSame<K, V>(a: Map<K, V>, b: Map<K, V>): boolean {
     }
     return true
 }
+
+export function validateIndexBound({
+    index, limit,
+}: { index: number, limit: number }) {
+    if (index < 0) {
+        return 0
+    }
+    if (index >= limit) {
+        return limit - 1
+    }
+    return index
+}

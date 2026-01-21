@@ -7,7 +7,7 @@ import { FlowTrigger } from './triggers/trigger'
 
 export type FlowVersionId = ApId
 
-export const LATEST_FLOW_SCHEMA_VERSION = '14'
+export const LATEST_FLOW_SCHEMA_VERSION = '16'
 
 export enum FlowVersionState {
     LOCKED = 'LOCKED',

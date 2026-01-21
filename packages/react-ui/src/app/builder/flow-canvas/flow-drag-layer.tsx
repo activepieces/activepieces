@@ -8,10 +8,12 @@ import {
   rectIntersection,
   useSensor,
   useSensors,
+  PointerSensorOptions,
 } from '@dnd-kit/core';
-import { ReactFlowInstance, useReactFlow, useViewport } from '@xyflow/react';
+import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { useCallback, useState } from 'react';
+import type { PointerEvent } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
@@ -30,8 +32,12 @@ import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
 
 const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
-  const viewport = useViewport();
-  const [previousViewPort, setPreviousViewPort] = useState(viewport);
+  const reactFlow = useReactFlow();
+  const previousViewPortRef = useRef({ x: 0, y: 0, zoom: 1 });
+  const [cursorPositionOnActivation, setCursorPositionOnActivation] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 0, y: 0 });
   const [
     setActiveDraggingStep,
     applyOperation,
@@ -58,9 +64,11 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       }
       const { x, y } = args.pointerCoordinates;
       const { width, height } = args.collisionRect;
+      const currentViewport = reactFlow.getViewport();
+      const previousViewPort = previousViewPortRef.current;
       const deltaViewport = {
-        x: previousViewPort.x - viewport.x,
-        y: previousViewPort.y - viewport.y,
+        x: previousViewPort.x - currentViewport.x,
+        y: previousViewPort.y - currentViewport.y,
       };
       const updated = {
         ...args,
@@ -77,7 +85,7 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
       };
       return rectIntersection(updated);
     },
-    [viewport.x, viewport.y, previousViewPort.x, previousViewPort.y],
+    [reactFlow],
   );
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
@@ -89,17 +97,26 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
     if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
       const draggedNote = getNoteById(e.active.id.toString());
       if (draggedNote) {
-        setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE);
+        const noteElement = document.getElementById(e.active.id.toString());
+        let offset: { x: number; y: number } | undefined;
+        if (noteElement) {
+          const rect = noteElement.getBoundingClientRect();
+          offset = {
+            x: cursorPositionOnActivation.x - rect.left,
+            y: cursorPositionOnActivation.y - rect.top,
+          };
+        }
+        setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE, offset);
       }
     }
-    setPreviousViewPort(viewport);
+    previousViewPortRef.current = reactFlow.getViewport();
   };
 
-  const handleDragCancel = () => {
+  const handleDragCancel = useCallback(() => {
     setActiveDraggingStep(null);
     setDraggedNote(null, null);
-  };
-  const reactFlow = useReactFlow();
+  }, [setActiveDraggingStep, setDraggedNote]);
+
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
     setDraggedNote(null, null);
@@ -108,9 +125,14 @@ const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(PointerSensorIgnoringInteractiveItems, {
       activationConstraint: {
         distance: 10,
+      },
+      onActivation: ({ event }) => {
+        if (event instanceof PointerEvent) {
+          setCursorPositionOnActivation({ x: event.clientX, y: event.clientY });
+        }
       },
     }),
     useSensor(TouchSensor),
@@ -211,4 +233,50 @@ function handleNoteDragEnd({
       }
     }
   }
+}
+
+class PointerSensorIgnoringInteractiveItems extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: (
+        { nativeEvent: event }: PointerEvent,
+        { onActivation }: PointerSensorOptions,
+      ) => {
+        const target = event.target as HTMLElement;
+        if (target?.closest('[contenteditable="true"]')) {
+          return false;
+        }
+
+        if (
+          !event.isPrimary ||
+          event.button !== 0 ||
+          isInteractiveElement(event.target as Element)
+        ) {
+          return false;
+        }
+        onActivation?.({ event });
+        return true;
+      },
+    },
+  ];
+}
+
+function isInteractiveElement(element: Element | null): boolean {
+  const interactiveElements = [
+    'button',
+    'input',
+    'textarea',
+    'select',
+    'option',
+  ];
+
+  if (
+    element?.tagName &&
+    interactiveElements.includes(element.tagName.toLowerCase())
+  ) {
+    return true;
+  }
+
+  return false;
 }

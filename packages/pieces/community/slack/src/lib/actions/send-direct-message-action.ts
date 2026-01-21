@@ -9,6 +9,7 @@ import {
   username,
   blocks,
   mentionOriginFlow,
+  iconEmoji,
 } from '../common/props';
 import { Block,KnownBlock } from '@slack/web-api';
 
@@ -23,6 +24,7 @@ export const slackSendDirectMessageAction = createAction({
     text,
     username,
     profilePicture,
+    iconEmoji,
     mentionOriginFlow,
     blocks,
     unfurlLinks: Property.Checkbox({
@@ -42,7 +44,7 @@ export const slackSendDirectMessageAction = createAction({
 
     const blockList: (KnownBlock | Block)[] = [{ type: 'section', text: { type: 'mrkdwn', text } }]
 
-    if(blocks && Array.isArray(blocks)) { 
+    if(blocks && Array.isArray(blocks)) {
       blockList.push(...(blocks as unknown as (KnownBlock | Block)[]))
     }
 
@@ -60,6 +62,7 @@ export const slackSendDirectMessageAction = createAction({
       text,
       username: context.propsValue.username,
       profilePicture: context.propsValue.profilePicture,
+      iconEmoji: context.propsValue.iconEmoji,
       conversationId: userId,
       blocks:blockList,
       unfurlLinks,

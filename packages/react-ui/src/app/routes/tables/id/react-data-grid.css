@@ -1,5 +1,6 @@
 
 * {
+    content-visibility: visible !important;
     --rdg-row-selected-background-color: none !important;
     --rdg-row-selected-hover-background-color: none !important;
     --rdg-selection-color: none !important;
