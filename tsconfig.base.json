@@ -269,6 +269,9 @@
       "@activepieces/piece-tiny-talk-ai": [
         "packages/pieces/community/tiny-talk-ai/src/index.ts"
       ],
+      "@activepieces/piece-sap-ariba": [
+        "packages/pieces/community/sap-ariba/src/index.ts"
+      ],
       "@activepieces/piece-hastewire": [
         "packages/pieces/community/hastewire/src/index.ts"
       ],
@@ -485,6 +488,9 @@
       "@activepieces/piece-woodpecker": [
         "packages/pieces/community/woodpecker/src/index.ts"
       ],
+      "@activepieces/piece-visible": [
+        "packages/pieces/community/visible/src/index.ts"
+      ],
       "@activepieces/piece-paywhirl": [
         "packages/pieces/community/paywhirl/src/index.ts"
       ],
@@ -517,6 +523,9 @@
       ],
       "@activepieces/piece-predis-ai": [
         "packages/pieces/community/predis-ai/src/index.ts"
+      ],
+      "@activepieces/piece-week-done": [
+        "packages/pieces/community/week-done/src/index.ts"
       ]
     },
     "resolveJsonModule": true
