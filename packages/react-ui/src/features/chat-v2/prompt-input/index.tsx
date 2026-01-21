@@ -1,4 +1,4 @@
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Paperclip } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { isNil } from '@activepieces/shared';
 
 import { FileInputPreview, UploadingFile } from './file-input-preview';
 import { AIModelSelector } from './model-selector';
-import { CodeExecutionToolToggle } from './tools/code-execution';
 import ToolsButton from './tools';
 
 interface PromptInputProps {
@@ -34,7 +33,6 @@ export const PromptInput = ({ placeholder }: PromptInputProps) => {
 
   const handleFileChange = (selectedFiles: File[]) => {
     if (selectedFiles.length > 0) {
-      // Start uploading each file immediately
       for (const file of selectedFiles) {
         const id = crypto.randomUUID();
         const newUploadingFile: UploadingFile = {
@@ -45,7 +43,6 @@ export const PromptInput = ({ placeholder }: PromptInputProps) => {
 
         setUploadingFiles((prev) => [...prev, newUploadingFile]);
 
-        // Start upload immediately
         uploadFile(file)
           .then((url) => {
             setUploadingFiles((prev) =>
@@ -184,7 +181,6 @@ export const PromptInput = ({ placeholder }: PromptInputProps) => {
                   className="hidden"
                 />
                 <ToolsButton />
-                <CodeExecutionToolToggle />
               </div>
               <div className="flex justify-center items-center gap-x-2">
                 <AIModelSelector />

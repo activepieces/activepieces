@@ -78,7 +78,7 @@ export function AIModelSelector() {
 
   const handleModelSelect = (modelId: string) => {
     setSelectedModel(modelId);
-    updateChatSession({
+    updateChatModel({
       update: { modelId },
       currentSession: isNil(session) ? null : session,
     });

@@ -31,10 +31,6 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
             type: 'jsonb',
             nullable: false,
         },
-        codeExecutionEnabled: {
-            type: Boolean,
-            nullable: false,
-        },
     },
 
     indices: [],
