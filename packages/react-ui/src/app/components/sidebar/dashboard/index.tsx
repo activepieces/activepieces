@@ -30,6 +30,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { templatesTelemetryApi } from '@/features/templates/lib/templates-telemetry-api';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { projectCollectionUtils } from '@/hooks/project-collection';
 import { userHooks } from '@/hooks/user-hooks';
@@ -40,6 +41,7 @@ import {
   ProjectType,
   ProjectWithLimits,
   TeamProjectsLimit,
+  TemplateTelemetryEventType,
 } from '@activepieces/shared';
 
 import { SidebarGeneralItemType } from '../ap-sidebar-group';
@@ -152,6 +154,13 @@ export function ProjectDashboardSidebar() {
     return true;
   };
 
+  const handleExploreClick = useCallback(() => {
+    templatesTelemetryApi.sendEvent({
+      eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
+      userId: currentUser?.id,
+    });
+  }, []);
+
   const exploreLink: SidebarItemType = {
     type: 'link',
     to: '/templates',
@@ -160,6 +169,7 @@ export function ProjectDashboardSidebar() {
     icon: Compass,
     hasPermission: true,
     isSubItem: false,
+    onClick: handleExploreClick,
   };
 
   const impactLink: SidebarItemType = {
