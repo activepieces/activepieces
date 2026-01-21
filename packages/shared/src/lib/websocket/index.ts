@@ -2,7 +2,7 @@ import { Static, Type } from '@sinclair/typebox'
 import { TriggerUpdateStatusErrorParams } from '../common/activepieces-error'
 import { PopulatedFlow } from '../flows/flow'
 import { StepRunResponse } from '../flows/sample-data'
-import { AssistantConversationContent, ChatSession, ChatSessionEnded, ChatSessionUpdate } from '../quick'
+import { ChatSession, ChatSessionUpdate } from '../quick'
 
 export enum WebsocketClientEvent {
     TEST_FLOW_RUN_STARTED = 'TEST_FLOW_RUN_STARTED',
@@ -65,7 +65,7 @@ export type EmitAgentStreamingEndedRequest = {
     userId: string
     event: WebsocketClientEvent.AGENT_STREAMING_ENDED
     data: {
-        session: ChatSession;
+        session: ChatSession
     }
 }
 
@@ -81,7 +81,7 @@ export enum WebsocketServerEvent {
     WORKER_HEALTHCHECK = 'WORKER_HEALTHCHECK',
     EMIT_TEST_STEP_PROGRESS = 'EMIT_TEST_STEP_PROGRESS',
     EMIT_TEST_STEP_FINISHED = 'EMIT_TEST_STEP_FINISHED',
-    EMIT_AGENT_PROGRESS = 'EMIT_AGENT_PROGRESS'
+    EMIT_AGENT_PROGRESS = 'EMIT_AGENT_PROGRESS',
 }
 
 export * from './socket-utils'

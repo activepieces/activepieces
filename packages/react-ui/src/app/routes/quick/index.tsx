@@ -4,13 +4,12 @@ import { Trash } from 'lucide-react';
 import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 import { Button } from '@/components/ui/button';
 import { Conversation } from '@/features/chat-v2/conversation';
-import { Plan } from '@/features/chat-v2/plan/plan';
-import { PromptInput } from '@/features/chat-v2/prompt-input';
-import { isNil } from '@activepieces/shared';
-
 import { EmptyConversation } from '@/features/chat-v2/empty-conversation';
 import { chatHooks } from '@/features/chat-v2/lib/chat-hooks';
+import { Plan } from '@/features/chat-v2/plan/plan';
+import { PromptInput } from '@/features/chat-v2/prompt-input';
 import { useChatSessionStore } from '@/features/chat-v2/store';
+import { isNil } from '@activepieces/shared';
 
 export function QuickPage() {
   const { session, setSession } = useChatSessionStore();
@@ -42,7 +41,7 @@ export function QuickPage() {
               className="gap-2"
             >
               <Trash className="size-4" />
-              {t("Clear Chat")}
+              {t('Clear Chat')}
             </Button>
           </div>
         )}
