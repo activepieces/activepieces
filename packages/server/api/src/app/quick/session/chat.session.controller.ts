@@ -1,7 +1,9 @@
-import { securityAccess } from '@activepieces/server-shared'
-import { ApId, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, PrincipalType, UpdateChatSessionRequest } from '@activepieces/shared'
+import { AppSystemProp, securityAccess } from '@activepieces/server-shared'
+import { ApId, ApMultipartFile, ChatSession, ChatWithQuickRequest, CreateChatSessionRequest, FileType, PrincipalType, UpdateChatSessionRequest } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
+import { fileService } from '../../file/file.service'
+import { system } from '../../helper/system/system'
 import { chatSessionService } from './chat.session.service'
 
 export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
@@ -41,6 +43,7 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
                 userId: request.principal.id,
                 sessionId: request.params.id,
                 message: request.body.message,
+                files: request.body.files,
             })
         },
     )
@@ -54,6 +57,25 @@ export const chatSessionController: FastifyPluginAsyncTypebox = async (app) => {
                 userId: request.principal.id,
             })
             reply.code(StatusCodes.NO_CONTENT).send()
+        },
+    )
+
+    app.post(
+        '/attachments',
+        UploadChatAttachmentRequest,
+        async (request) => {
+            const platformId = request.principal.platform.id
+            const maxFileSizeMb = system.getNumberOrThrow(AppSystemProp.MAX_CHAT_ATTACHMENT_SIZE_MB)
+            const url = await fileService(request.log).uploadPublicAsset({
+                file: request.body.file,
+                type: FileType.CHAT_ATTACHMENT,
+                platformId,
+                maxFileSizeInBytes: maxFileSizeMb * 1024 * 1024,
+                metadata: {
+                    uploadedBy: request.principal.id,
+                },
+            })
+            return { url }
         },
     )
 }
@@ -132,6 +154,25 @@ const DeleteChatSessionRequest = {
         }),
         response: {
             [StatusCodes.NO_CONTENT]: Type.Null(),
+        },
+    },
+}
+
+const UploadChatAttachmentRequest = {
+    config: {
+        security: securityAccess.unscoped([PrincipalType.USER]),
+    },
+    schema: {
+        tags: ['chat-sessions'],
+        summary: 'Upload a chat attachment',
+        consumes: ['multipart/form-data'],
+        body: Type.Object({
+            file: ApMultipartFile,
+        }),
+        response: {
+            [StatusCodes.OK]: Type.Object({
+                url: Type.Optional(Type.String()),
+            }),
         },
     },
 }

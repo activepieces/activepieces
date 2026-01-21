@@ -4,6 +4,7 @@ import { useSocket } from '@/components/socket-provider';
 import { internalErrorToast } from '@/components/ui/sonner';
 import { api } from '@/lib/api';
 import {
+  ChatFileAttachment,
   ChatSession,
   ChatSessionEnded,
   ChatSessionUpdate,
@@ -11,21 +12,64 @@ import {
   WebsocketClientEvent,
 } from '@activepieces/shared';
 
+import { UploadingFile } from '../prompt-input/file-input-preview';
+
+export const uploadFile = async (file: File): Promise<string | undefined> => {
+  const formData = new FormData();
+  formData.append('file', file, file.name);
+  const response = await api.any<{ url?: string }>(
+    '/v1/chat-sessions/attachments',
+    {
+      method: 'POST',
+      data: formData,
+    },
+  );
+  return response.url;
+};
+
+const convertUploadingFilesToAttachments = (
+  uploadingFiles: UploadingFile[],
+): ChatFileAttachment[] => {
+  return uploadingFiles
+    .filter((f) => f.status === 'completed' && f.url)
+    .map((f) => ({
+      name: f.file.name,
+      mimeType: f.file.type,
+      url: f.url!,
+    }));
+};
+
 export const chatHooks = {
   useSendMessage(setSession: (session: ChatSession) => void) {
     const socket = useSocket();
     return useMutation<
       ChatSession,
       Error,
-      { message: string; currentSession: ChatSession | null }
+      {
+        message: string;
+        uploadingFiles?: UploadingFile[];
+        currentSession: ChatSession | null;
+      }
     >({
       mutationFn: async (request) => {
         let currentSession =
           request.currentSession ??
           (await api.post<ChatSession>('/v1/chat-sessions', {}));
+
+        // Convert already-uploaded files to attachments
+        const uploadedFiles = request.uploadingFiles
+          ? convertUploadingFilesToAttachments(request.uploadingFiles)
+          : undefined;
+
+        const filesForDisplay = uploadedFiles?.map((file) => ({
+          name: file.name,
+          type: file.mimeType,
+          url: file.url,
+        }));
         currentSession = chatSessionUtils.addUserMessage(
           currentSession,
           request.message,
+          filesForDisplay,
         );
         currentSession =
           chatSessionUtils.addEmptyAssistantMessage(currentSession);
@@ -34,6 +78,7 @@ export const chatHooks = {
           `/v1/chat-sessions/${currentSession.id}/chat`,
           {
             message: request.message,
+            files: uploadedFiles,
           },
         );
         return new Promise((resolve) => {

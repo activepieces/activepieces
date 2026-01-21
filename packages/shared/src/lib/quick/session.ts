@@ -1,7 +1,7 @@
 import { Static, Type } from "@sinclair/typebox"
 import { BaseModelSchema } from "../common"
 import { ApId } from "../common/id-generator"
-import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage } from "./message"
+import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage, UserConversationMessage } from "./message"
 
 export const DEFAULT_CHAT_MODEL = 'openai/gpt-5.1' 
 
@@ -80,12 +80,46 @@ export const chatSessionUtils = {
             }],
         }
     },
-    addUserMessage(session: ChatSession, message: string): ChatSession {
+    addUserMessage(
+        session: ChatSession, 
+        message: string, 
+        files?: { name: string; type: string; url: string }[]
+    ): ChatSession {
+        const content: UserConversationMessage['content'] = []
+        
+        // Add text message if present
+        if (message.trim()) {
+            content.push({
+                type: 'text',
+                message,
+            })
+        }
+        
+        // Add file attachments
+        if (files && files.length > 0) {
+            for (const file of files) {
+                if (file.type.startsWith('image/')) {
+                    content.push({
+                        type: 'image',
+                        image: file.url,
+                        name: file.name,
+                    })
+                } else {
+                    content.push({
+                        type: 'file',
+                        file: file.url,
+                        name: file.name,
+                        mimeType: file.type,
+                    })
+                }
+            }
+        }
+        
         return {
             ...session,
             conversation: [...session.conversation, {
                 role: 'user',
-                content: message,
+                content,
             }],
         }
     }

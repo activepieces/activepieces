@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, isNil, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, apId, ChatFileAttachment, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, isNil, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
@@ -27,7 +27,12 @@ export const chatSessionService = (log: FastifyBaseLogger) => ({
             userId: params.userId,
         })
         const project = await projectService.getPersonalProject(params.userId)
-        const newSession = chatSessionUtils.addUserMessage(session, params.message)
+        const filesForMessage = params.files?.map(file => ({
+            name: file.name,
+            type: file.mimeType,
+            url: file.url,
+        }))
+        const newSession = chatSessionUtils.addUserMessage(session, params.message, filesForMessage)
         await chatSessionRepo().save(newSession)
         const jobData: ExecuteAgentJobData = {
             platformId: params.platformId,
@@ -105,6 +110,7 @@ type ChatWithSessionParams = {
     userId: string
     sessionId: string
     message: string
+    files?: ChatFileAttachment[]
 }
 
 type GetOneParams = {

@@ -32,7 +32,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
         const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan }
         const firecrawlTools = webSearchEnabled ? await getFirecrawlTools() : {}
         const codeTools = codeExecutionEnabled ? await createExecuteCodeTool(workerMachine.getSettings().E2B_API_KEY) : {}
-        
+
 
         const { fullStream } = streamText({
             model: await agentUtils.getModel(modelId, engineToken),
@@ -147,7 +147,29 @@ function convertHistory(conversation: ConversationMessage[]): ModelMessage[] {
         if (message.role === 'user') {
             return [{
                 role: 'user',
-                content: message.content,
+                content: message.content.map(part => {
+                    switch (part.type) {
+                        case 'text':
+                            return {
+                                type: 'text',
+                                text: part.message,
+                            }
+                        case 'image':
+                            return {
+                                type: 'image',
+                                image: part.image,
+                            }
+                        case 'file':
+                            return {
+                                type: 'file',
+                                file: part.file,
+                                name: part.name,
+                                mimeType: part.mimeType,
+                            }
+                        default:
+                            return undefined
+                    }
+                }),
             }]
         }
         return message.parts.map(item => {
@@ -155,20 +177,17 @@ function convertHistory(conversation: ConversationMessage[]): ModelMessage[] {
                 case 'tool-result':
                     return {
                         role: 'tool',
-                        content: {
+                        content: [{
                             type: 'tool-result',
                             toolCallId: item.toolCallId,
                             toolName: item.toolName,
-                            output: item.output as LanguageModelV2ToolResultOutput,
-                        },
+                            result: item.output as LanguageModelV2ToolResultOutput,
+                        }],
                     }
                 case 'text':
                     return {
                         role: 'assistant',
-                        content: {
-                            type: 'text',
-                            text: item.message,
-                        },
+                        content: item.message,
                     }
                 default:
                     return undefined

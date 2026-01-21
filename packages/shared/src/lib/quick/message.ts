@@ -1,8 +1,40 @@
 import { Static, Type } from "@sinclair/typebox";
 
+export const ChatFileAttachment = Type.Object({
+    name: Type.String(),
+    mimeType: Type.String(),
+    url: Type.String(),
+})
+export type ChatFileAttachment = Static<typeof ChatFileAttachment>
+
+export const UserTextConversationMessage = Type.Object({
+    type: Type.Literal('text'),
+    message: Type.String(),
+})
+export type UserTextConversationMessage = Static<typeof UserTextConversationMessage>
+
+export const UserImageConversationMessage = Type.Object({
+    type: Type.Literal('image'),
+    image: Type.String(),
+    name: Type.Optional(Type.String()),
+})
+export type UserImageConversationMessage = Static<typeof UserImageConversationMessage>
+
+export const UserFileConversationMessage = Type.Object({
+    type: Type.Literal('file'),
+    file: Type.String(),
+    name: Type.Optional(Type.String()),
+    mimeType: Type.Optional(Type.String()),
+})
+export type UserFileConversationMessage = Static<typeof UserFileConversationMessage>
+
 export const UserConversationMessage = Type.Object({
     role: Type.Literal('user'),
-    content: Type.String(),
+    content: Type.Array(Type.Union([
+        UserTextConversationMessage,
+        UserImageConversationMessage,
+        UserFileConversationMessage,
+    ])),
 })
 export type UserConversationMessage = Static<typeof UserConversationMessage>
 
@@ -56,6 +88,7 @@ export type ConversationMessage = Static<typeof ConversationMessage>
 
 export const ChatWithQuickRequest = Type.Object({
     message: Type.String(),
+    files: Type.Optional(Type.Array(ChatFileAttachment)),
 })
 
 export type ChatWithQuickRequest = Static<typeof ChatWithQuickRequest>

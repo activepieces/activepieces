@@ -27,6 +27,11 @@ export enum FileType {
      * User profile pictures, should be stored in the database.
      */
     USER_PROFILE_PICTURE = 'USER_PROFILE_PICTURE',
+    /**
+     * Chat attachments uploaded by users in chat sessions.
+     * Scoped to platform and requires authentication to access.
+     */
+    CHAT_ATTACHMENT = 'CHAT_ATTACHMENT',
 }
 export enum FileCompression {
     NONE = 'NONE',

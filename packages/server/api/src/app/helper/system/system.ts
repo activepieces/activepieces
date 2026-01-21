@@ -38,6 +38,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.LOG_LEVEL]: 'info',
     [AppSystemProp.LOG_PRETTY]: 'false',
     [AppSystemProp.S3_USE_SIGNED_URLS]: 'false',
+    [AppSystemProp.MAX_CHAT_ATTACHMENT_SIZE_MB]: '25',
     [AppSystemProp.MAX_FILE_SIZE_MB]: '25',
     [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: '25',
     [AppSystemProp.FILE_STORAGE_LOCATION]: FileLocation.DB,
