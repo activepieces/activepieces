@@ -278,7 +278,6 @@ export const httpSendRequestAction = createAction({
       use_proxy,
       authType,
       authFields,
-      stopFlow,
       followRedirects,
     } = context.propsValue;
 
