@@ -49,24 +49,20 @@ export class ExecutionJournal {
     getOrCreateStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
       let target = steps
     
-      const log = path.length > 1;
       for(const [parentStepName, iteration] of path) {
           let step = target[parentStepName]
-          if(log) console.info(parentStepName, 'step before', step)
           if (!step ) {
               step = LoopStepOutput.init({ input: null })
           }
           if (step.type !== FlowActionType.LOOP_ON_ITEMS) {
               throw new Error(`Step ${parentStepName} is not a loop on items step in path ${path}`)
           }
-          if(log) console.info(parentStepName, 'step after', step)
           let loopStepOutput = step as LoopStepOutput
           let iterationOutput = loopStepOutput.output?.iterations[iteration]
           if (!iterationOutput ) {
             loopStepOutput = loopStepOutput.setItemAndIndex({ item: undefined, index: iteration }).addIteration()
             iterationOutput = loopStepOutput.output?.iterations[iteration] ?? {}
           } 
-          if(log) console.info(parentStepName, 'after after', loopStepOutput)
           target[parentStepName] = loopStepOutput
           target = iterationOutput
       }
