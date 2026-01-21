@@ -157,6 +157,7 @@ export function ProjectDashboardSidebar() {
   const handleExploreClick = useCallback(() => {
     templatesTelemetryApi.sendEvent({
       eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
+      userId: currentUser?.id,
     });
   }, []);
 
