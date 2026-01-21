@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ChatFileAttachment, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, ExecuteAgentJobData, isNil, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
+import { ActivepiecesError, AgentTool, AgentToolType, apId, ChatFileAttachment, ChatSession, chatSessionUtils, DEFAULT_CHAT_MODEL, ErrorCode, EXECUTE_TOOL, ExecuteAgentJobData, isNil, SEARCH_TOOL, spreadIfDefined, WorkerJobType } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { projectService } from '../../project/project-service'
@@ -8,15 +8,24 @@ import { ChatSessionEntity } from './chat.session.entity'
 
 export const chatSessionRepo = repoFactory<ChatSession>(ChatSessionEntity)
 
-export const chatSessionService = (log: FastifyBaseLogger) => ({
+const agentSearchTool: AgentTool = {
+    toolName: SEARCH_TOOL,
+    type: AgentToolType.SEARCH,
+}
+
+const agentExecuteTool: AgentTool = {
+    toolName: EXECUTE_TOOL,
+    type: AgentToolType.EXECUTE_CODE,
+}
+
+export const chatSessionService = (log: FastifyBaseLogger)=> ({
     async create(userId: string): Promise<ChatSession> {
         const newSession: Partial<ChatSession> = {
             id: apId(),
             userId,
             conversation: [],
             modelId: DEFAULT_CHAT_MODEL,
-            webSearchEnabled: true,
-            codeExecutionEnabled: true,
+            tools: [agentExecuteTool, agentSearchTool],
         }
         return chatSessionRepo().save(newSession)
     },
@@ -47,19 +56,12 @@ export const chatSessionService = (log: FastifyBaseLogger) => ({
         })
         return newSession
     },
-    async update(sessionId: string, session: ChatSession): Promise<void> {
-        await chatSessionRepo().update(sessionId, {
-            plan: session.plan,
-            conversation: session.conversation,
-            modelId: session.modelId,
-        })
-    },
-
-    async updateSession(params: UpdateSessionParams): Promise<ChatSession> {
+    async update(params: UpdateChastSessionParams): Promise<ChatSession> {
         await chatSessionRepo().update(params.id, {
-            ...spreadIfDefined('modelId', params.modelId),
-            ...spreadIfDefined('webSearchEnabled', params.webSearchEnabled),
-            ...spreadIfDefined('codeExecutionEnabled', params.codeExecutionEnabled),
+            ...spreadIfDefined('plan', params.session.plan),
+            ...spreadIfDefined('conversation', params.session.conversation),
+            ...spreadIfDefined('modelId', params.session.modelId),
+            ...spreadIfDefined('tools', params.session.tools),
         })
         return this.getOneOrThrow({ id: params.id, userId: params.userId })
     },
@@ -118,10 +120,8 @@ type GetOneParams = {
     userId: string
 }
 
-type UpdateSessionParams = {
+type UpdateChastSessionParams = {
     id: string
     userId: string
-    modelId?: string
-    webSearchEnabled?: boolean
-    codeExecutionEnabled?: boolean
+    session: Partial<ChatSession>
 }

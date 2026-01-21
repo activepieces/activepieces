@@ -22,7 +22,7 @@ export const quickModule: FastifyPluginAsyncTypebox = async (app) => {
                     const chatEnded: ChatSessionEnded = {
                         sessionId: data.data.session.id,
                     }
-                    await chatSessionService(app.log).update(data.data.session.id, data.data.session)
+                    await chatSessionService(app.log).update({ id: data.data.session.id, userId: data.userId, session: data.data.session })
                     socket.to(data.userId).emit(data.event, chatEnded)
                     break
                 }

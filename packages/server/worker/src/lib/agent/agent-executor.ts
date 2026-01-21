@@ -1,4 +1,4 @@
-import { ChatSession, ChatSessionUpdate, chatSessionUtils, ConversationMessage, EmitAgentStreamingEndedRequest, ExecuteAgentJobData, isNil, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { AgentTool, AgentToolType, BATCH_SCRAPE_TOOL, CANCEL_TOOL, ChatSession, ChatSessionUpdate, chatSessionUtils, ConversationMessage, CRAWL_TOOL, EmitAgentStreamingEndedRequest, EXECUTE_TOOL, ExecuteAgentJobData, EXTRACT_TOOL, isNil, MAP_TOOL, POLL_TOOL, SCRAPE_TOOL, SEARCH_TOOL, STATUS_TOOL, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
 import { ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -6,33 +6,43 @@ import { appSocket } from '../app-socket'
 import { createPlanningTool, WRITE_TODOS_TOOL_NAME } from './tools/planning-tool'
 import { systemPrompt } from './system-prompt'
 import { agentUtils } from './utils'
-import { createExecuteCodeTool } from './tools/execute-code'
+import { createExecuteCodeTool } from './execute-code'
 import { workerMachine } from '../utils/machine'
 
-async function getFirecrawlTools() {
+
+async function getFirecrawlTools(tools: AgentTool[]): Promise<Record<string, unknown>> {
     const firecrawlAisdk = await import('firecrawl-aisdk')
-    return {
-        scrape: firecrawlAisdk.scrapeTool,
-        search: firecrawlAisdk.searchTool,
-        map: firecrawlAisdk.mapTool,
-        crawl: firecrawlAisdk.crawlTool,
-        batchScrape: firecrawlAisdk.batchScrapeTool,
-        extract: firecrawlAisdk.extractTool,
-        poll: firecrawlAisdk.pollTool,
-        status: firecrawlAisdk.statusTool,
-        cancel: firecrawlAisdk.cancelTool,
-    }
+    const firecrawlTool = tools.find(tool => tool.type === AgentToolType.SEARCH)
+
+    return !isNil(firecrawlTool) ? {
+        [SCRAPE_TOOL]: firecrawlAisdk.scrapeTool,
+        [SEARCH_TOOL]: firecrawlAisdk.searchTool,
+        [MAP_TOOL]: firecrawlAisdk.mapTool,
+        [CRAWL_TOOL]: firecrawlAisdk.crawlTool,
+        [BATCH_SCRAPE_TOOL]: firecrawlAisdk.batchScrapeTool,
+        [EXTRACT_TOOL]: firecrawlAisdk.extractTool,
+        [POLL_TOOL]: firecrawlAisdk.pollTool,
+        [STATUS_TOOL]: firecrawlAisdk.statusTool,
+        [CANCEL_TOOL]: firecrawlAisdk.cancelTool,
+    } : {}
 }
+
+async function getExecuteCodeTool(tools: AgentTool[]): Promise<Record<string, unknown>> {
+    const e2bApiKey = workerMachine.getSettings().E2B_API_KEY!
+    const executeCodeTool = tools.find(tool => tool.type === AgentToolType.EXECUTE_CODE)
+
+    return !isNil(executeCodeTool) ? { 
+        [EXECUTE_TOOL]: await createExecuteCodeTool(e2bApiKey) 
+    } : {}
+}
+
 
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
-        const { conversation, modelId, webSearchEnabled, codeExecutionEnabled } = data.session
+        const { conversation, modelId, tools  } = data.session
         let newSession: ChatSession = data.session
         const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan }
-        const firecrawlTools = webSearchEnabled ? await getFirecrawlTools() : {}
-        const codeTools = codeExecutionEnabled ? await createExecuteCodeTool(workerMachine.getSettings().E2B_API_KEY) : {}
-
 
         const { fullStream } = streamText({
             model: await agentUtils.getModel(modelId, engineToken),
@@ -40,9 +50,10 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             stopWhen: [stepCountIs(25)],
             messages: convertHistory(conversation),
             tools: {
-                ...firecrawlTools,
-                ...codeTools,
+                ...(await getFirecrawlTools(tools)),
+                ...(await getExecuteCodeTool(tools)),
                 [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
+                
             },
         })
         let previousText = ''

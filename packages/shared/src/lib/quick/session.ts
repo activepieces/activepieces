@@ -1,14 +1,15 @@
-import { Static, Type } from "@sinclair/typebox"
-import { BaseModelSchema } from "../common"
-import { ApId } from "../common/id-generator"
-import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage, UserConversationMessage } from "./message"
+import { Static, Type } from '@sinclair/typebox'
+import { AgentTool } from '../agents'
+import { BaseModelSchema } from '../common'
+import { ApId } from '../common/id-generator'
+import { AssistantConversationContent, AssistantConversationMessage, ConversationMessage, UserConversationMessage } from './message'
 
 export const DEFAULT_CHAT_MODEL = 'openai/gpt-5.1' 
 
 export const PlanItem = Type.Object({
     id: Type.String(),
     content: Type.String(),
-    status: Type.Union([Type.Literal("pending"), Type.Literal("completed"), Type.Literal("in_progress") ]),
+    status: Type.Union([Type.Literal('pending'), Type.Literal('completed'), Type.Literal('in_progress') ]),
 })
 export type PlanItem = Static<typeof PlanItem>
 
@@ -18,8 +19,7 @@ export const ChatSession = Type.Object({
     plan: Type.Optional(Type.Array(PlanItem)),
     conversation: Type.Array(ConversationMessage),
     modelId: Type.String(),
-    webSearchEnabled: Type.Boolean(),
-    codeExecutionEnabled: Type.Boolean()
+    tools: Type.Array(AgentTool),
 })
 export type ChatSession = Static<typeof ChatSession>
 
@@ -27,9 +27,7 @@ export const CreateChatSessionRequest = Type.Object({})
 export type CreateChatSessionRequest = Static<typeof CreateChatSessionRequest>
 
 export const UpdateChatSessionRequest = Type.Object({
-    modelId: Type.Optional(Type.String()),
-    webSearchEnabled: Type.Optional(Type.Boolean()),
-    codeExecutionEnabled: Type.Optional(Type.Boolean()),
+    session: Type.Partial(ChatSession)
 })
 export type UpdateChatSessionRequest = Static<typeof UpdateChatSessionRequest>
 
@@ -48,23 +46,24 @@ export type ChatSessionEnded = Static<typeof ChatSessionEnded>
 
 export const chatSessionUtils = {
     streamChunk(session: ChatSession, chunk: ChatSessionUpdate): ChatSession {
-        const newConvo: ConversationMessage[] = [...session.conversation];
-        const lastMessageIsAssistant = session.conversation.length > 0 && newConvo[newConvo.length - 1].role === 'assistant';
+        const newConvo: ConversationMessage[] = [...session.conversation]
+        const lastMessageIsAssistant = session.conversation.length > 0 && newConvo[newConvo.length - 1].role === 'assistant'
         if (!lastMessageIsAssistant) {
             newConvo.push({
                 role: 'assistant',
                 parts: [],
-            });
+            })
         }
-        const lastAssistantMessage = newConvo[newConvo.length - 1] as AssistantConversationMessage;
-        const lastPartMatch = lastAssistantMessage.parts.length > 0 && lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1].type === chunk.part.type;
+        const lastAssistantMessage = newConvo[newConvo.length - 1] as AssistantConversationMessage
+        const lastPartMatch = lastAssistantMessage.parts.length > 0 && lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1].type === chunk.part.type
         if (lastPartMatch) {
             lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1] = {
                 ...lastAssistantMessage.parts[lastAssistantMessage.parts.length - 1],
                 ...chunk.part,
             } 
-        } else {
-            lastAssistantMessage.parts.push(chunk.part);
+        }
+        else {
+            lastAssistantMessage.parts.push(chunk.part)
         }
         return {
             ...session,
@@ -122,5 +121,5 @@ export const chatSessionUtils = {
                 content,
             }],
         }
-    }
+    },
 }
