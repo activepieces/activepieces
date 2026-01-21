@@ -11,7 +11,7 @@ import {
 
 import { cn } from '@/lib/utils';
 import {
-  ExecutionJournal,
+  executionJournal,
   FlowActionType,
   FlowRun,
   FlowRunStatus,
@@ -28,10 +28,11 @@ export const flowRunUtils = {
     path: readonly [string, number][],
     output: StepOutput,
   ) => {
-    return new ExecutionJournal(steps).upsertStep({
+    return executionJournal.upsertStep({
       stepName,
       stepOutput: output,
       path,
+      steps,
       createLoopIterationIfNotExists: true,
     });
   },
@@ -76,7 +77,7 @@ export const flowRunUtils = {
     //runs get updated if they aren't terminated yet, so we shouldn't reset the loops state on each update
     currentLoopsState: Record<string, number>,
   ) {
-    const loopsOutputs = ExecutionJournal.getLoopSteps(run.steps);
+    const loopsOutputs = executionJournal.getLoopSteps(run.steps);
     const failedStep = run.steps
       ? flowRunUtils.findLastStepWithStatus(run.status, run.steps)
       : null;
@@ -84,7 +85,7 @@ export const flowRunUtils = {
 
     Object.entries(loopsOutputs).forEach(([loopName, loopOutput]) => {
       const doesLoopIncludeFailedStep =
-        failedStep && ExecutionJournal.isChildOf(loopOutput, failedStep);
+        failedStep && executionJournal.isChildOf(loopOutput, failedStep);
 
       if (isNil(loopOutput.output)) {
         result[loopName] = 0;
@@ -110,9 +111,9 @@ export const flowRunUtils = {
     }
 
     const path =
-      ExecutionJournal.getPathToStep(runOutput, stepName, loopsIndexes) ?? [];
+      executionJournal.getPathToStep(runOutput, stepName, loopsIndexes) ?? [];
     try {
-      return new ExecutionJournal(runOutput).getStep({ stepName, path });
+      return executionJournal.getStep({ stepName, path, steps: runOutput });
     } catch (error) {
       return undefined;
     }

@@ -2,24 +2,17 @@ import { isNil } from '../../common'
 import { FlowActionType } from '../../flows/actions/action'
 import { LoopStepOutput, StepOutput, StepOutputStatus } from './step-output'
 
-export class ExecutionJournal {
-    steps: Record<string, StepOutput>
-
-    constructor(steps?: Record<string, StepOutput>) {
-        this.steps = steps ?? {}
-    }
-
-    upsertStep({ stepName, stepOutput, path, createLoopIterationIfNotExists }: UpsertStepParams): Record<string, StepOutput> {
-        const steps = { ...this.steps }
+export const executionJournal = {
+  
+    upsertStep({ stepName, stepOutput, path, steps, createLoopIterationIfNotExists }: UpsertStepParams): Record<string, StepOutput> {
         const target = createLoopIterationIfNotExists ? this.getOrCreateStateAtPath({ path, steps }) : this.getStateAtPath({ path, steps })
         target[stepName] = stepOutput
         return steps
-    }
+    },
 
     getStep({ stepName, path, steps }: GetStepParams): StepOutput | undefined {
-        const target = this.getStateAtPath({ path, steps: steps ?? this.steps })
-        return target[stepName]
-    }
+        return this.getStateAtPath({ path, steps })[stepName]
+    },
 
     getStateAtPath({ path, steps }: GetStateAtPathParams): Record<string, StepOutput> {
         let target = steps
@@ -40,7 +33,7 @@ export class ExecutionJournal {
             target = iterationOutput
         }
         return target
-    }
+    },
 
     /*
      * if the steps object does not include loop step mentioned in the path, it gets created.
@@ -67,9 +60,9 @@ export class ExecutionJournal {
             target = iterationOutput
         }
         return target
-    }
+    },
 
-    static findLastStepWithStatus(steps: Record<string, StepOutput>, status: StepOutputStatus | undefined): string | null {
+    findLastStepWithStatus(steps: Record<string, StepOutput>, status: StepOutputStatus | undefined): string | null {
         let lastStepWithStatus: string | null = null
         Object.entries(steps).forEach(([stepName, step]) => {
             if ( step.type === FlowActionType.LOOP_ON_ITEMS && step.output ) {
@@ -91,9 +84,9 @@ export class ExecutionJournal {
             }
         })
         return lastStepWithStatus
-    }
+    },
 
-    static getLoopSteps(steps: Record<string, StepOutput>): Record<string, LoopStepOutput> {
+    getLoopSteps(steps: Record<string, StepOutput>): Record<string, LoopStepOutput> {
         let result: Record<string, LoopStepOutput> = {}
         Object.entries(steps).forEach(([stepName, step]) => {
             if (step.type === FlowActionType.LOOP_ON_ITEMS) {
@@ -115,9 +108,9 @@ export class ExecutionJournal {
             }
         })
         return result
-    }
+    },
 
-    static isChildOf(parent: StepOutput, child: string): boolean {
+    isChildOf(parent: StepOutput, child: string): boolean {
         if (parent.type !== FlowActionType.LOOP_ON_ITEMS) return false
         if (!parent.output?.iterations) return false
         for (const iteration of parent.output.iterations) {
@@ -127,11 +120,12 @@ export class ExecutionJournal {
             }
         }
         return false
-    }
+    },
 
-    static getPathToStep(
+    getPathToStep(
         steps: Record<string, StepOutput>,
-        stepName: string, loopsIndexes: Record<string, number>,
+        stepName: string,
+        loopsIndexes: Record<string, number>,
         currentPath: readonly [string, number][] = [],
     ): readonly [string, number][] | undefined {
 
@@ -150,20 +144,21 @@ export class ExecutionJournal {
             }
         }
         return undefined
-    }
+    },
 }
 
 export type UpsertStepParams = {
     stepName: string
     stepOutput: StepOutput
     path: readonly [string, number][]
+    steps: Record<string, StepOutput>
     createLoopIterationIfNotExists?: boolean
 }
 
 export type GetStepParams = {
     stepName: string
     path: readonly [string, number][]
-    steps?: Record<string, StepOutput>
+    steps: Record<string, StepOutput>
 }
 
 export type GetStateAtPathParams = {

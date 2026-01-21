@@ -1,4 +1,4 @@
-import { assertEqual, EngineGenericError, ExecutionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
+import { assertEqual, EngineGenericError, executionJournal, FailedStep, FlowActionType, FlowRunStatus, GenericStepOutput, isNil, LoopStepOutput, LoopStepResult, PauseMetadata, PauseType, RespondResponse, StepOutput, StepOutputStatus } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { nanoid } from 'nanoid'
 import { loggingUtils } from '../../helper/logging-utils'
@@ -20,7 +20,7 @@ export type FlowVerdict = {
 
 export class FlowExecutorContext {
     tags: readonly string[]
-    journal: ExecutionJournal
+    steps: Record<string, StepOutput>
     pauseRequestId: string
     verdict: FlowVerdict
     currentPath: StepExecutionPath
@@ -34,17 +34,13 @@ export class FlowExecutorContext {
 
     constructor(copyFrom?: FlowExecutorContext) {
         this.tags = copyFrom?.tags ?? []
-        this.journal = copyFrom?.journal ?? new ExecutionJournal()
+        this.steps = copyFrom?.steps ?? {}
         this.pauseRequestId = copyFrom?.pauseRequestId ?? nanoid()
         this.duration = copyFrom?.duration ?? -1
         this.verdict = copyFrom?.verdict ?? { status: FlowRunStatus.RUNNING }
         this.currentPath = copyFrom?.currentPath ?? StepExecutionPath.empty()
         this.stepNameToTest = copyFrom?.stepNameToTest ?? false
         this.stepsCount = copyFrom?.stepsCount ?? 0
-    }
-
-    public get steps(): Record<string, StepOutput> {
-        return this.journal.steps
     }
 
     static empty(): FlowExecutorContext {
@@ -76,7 +72,7 @@ export class FlowExecutorContext {
     }
 
     public getLoopStepOutput({ stepName }: { stepName: string }): LoopStepOutput | undefined {
-        const stateAtPath = this.journal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
+        const stateAtPath = executionJournal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
 
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
@@ -88,7 +84,7 @@ export class FlowExecutorContext {
     }
 
     public isCompleted({ stepName }: { stepName: string }): boolean {
-        const stateAtPath = this.journal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
+        const stateAtPath = executionJournal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -97,7 +93,7 @@ export class FlowExecutorContext {
     }
 
     public isPaused({ stepName }: { stepName: string }): boolean {
-        const stateAtPath = this.journal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
+        const stateAtPath = executionJournal.getStateAtPath({ path: this.currentPath.path, steps: this.steps })
         const stepOutput = stateAtPath[stepName]
         if (isNil(stepOutput)) {
             return false
@@ -123,16 +119,16 @@ export class FlowExecutorContext {
     }
 
     public upsertStep(stepName: string, stepOutput: StepOutput): FlowExecutorContext {
-        const steps = this.journal.upsertStep({ stepName, stepOutput, path: this.currentPath.path })
+        const steps = executionJournal.upsertStep({ stepName, stepOutput, path: this.currentPath.path, steps: this.steps })
         const trimmedSteps = this.currentPath.path.length === 0 ? loggingUtils.trimExecutionInput(steps) : steps
         return new FlowExecutorContext({
             ...this,
-            journal: new ExecutionJournal(trimmedSteps),
+            steps: trimmedSteps,
         })
     }
 
     public getStepOutput(stepName: string, path?: StepExecutionPath['path']): StepOutput | undefined {
-        return this.journal.getStep({ stepName, path: path ?? this.currentPath.path })
+        return executionJournal.getStep({ stepName, path: path ?? this.currentPath.path, steps: this.steps })
     }
 
     public setCurrentPath(currentStatePath: StepExecutionPath): FlowExecutorContext {
