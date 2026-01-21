@@ -1,4 +1,4 @@
-import { ArrowUp, Paperclip } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { isNil } from '@activepieces/shared';
 import { FileInputPreview, UploadingFile } from './file-input-preview';
 import { AIModelSelector } from './model-selector';
 import { CodeExecutionToolToggle } from './tools/code-execution';
-import { WebSearchToolToggle } from './tools/web-search';
+import ToolsButton from './tools';
 
 interface PromptInputProps {
   placeholder?: string;
@@ -183,19 +183,21 @@ export const PromptInput = ({ placeholder }: PromptInputProps) => {
                   }}
                   className="hidden"
                 />
-                <WebSearchToolToggle />
+                <ToolsButton />
                 <CodeExecutionToolToggle />
-                <AIModelSelector />
               </div>
-              <Button
-                variant="default"
-                size="icon"
-                onClick={handleSend}
-                loading={isStreaming}
-                disabled={!canSend}
-              >
-                <ArrowUp className="w-5 h-5 stroke-[3px]" />
-              </Button>
+              <div className="flex justify-center items-center gap-x-2">
+                <AIModelSelector />
+                <Button
+                  variant="default"
+                  size="icon"
+                  onClick={handleSend}
+                  loading={isStreaming}
+                  disabled={!canSend}
+                >
+                  <ArrowUp className="w-5 h-5 stroke-[3px]" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>

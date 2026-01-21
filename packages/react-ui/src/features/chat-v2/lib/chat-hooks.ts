@@ -122,19 +122,17 @@ export const chatHooks = {
       Error,
       {
         currentSession: ChatSession | null;
-        modelId?: string;
-        webSearchEnabled?: boolean;
-        codeExecutionEnabled?: boolean;
+        update: Partial<ChatSession>;
       }
     >({
-      mutationFn: async ({ currentSession, modelId, webSearchEnabled, codeExecutionEnabled }) => {
+      mutationFn: async ({ currentSession, update }) => {
         let session =
           currentSession ??
           (await api.post<ChatSession>('/v1/chat-sessions', {}));
 
-        session = await api.patch<ChatSession>(
-          `/v1/chat-sessions/${session.id}`,
-          { modelId, webSearchEnabled, codeExecutionEnabled },
+        session = await api.post<ChatSession>(
+          `/v1/chat-sessions/${session.id}/update`,
+          { session: update },
         );
 
         setSession(session);
