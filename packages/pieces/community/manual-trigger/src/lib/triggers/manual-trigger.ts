@@ -18,10 +18,12 @@ async test() {
     return [{}];
 },
 async onEnable() {
+    return void 0;
 },
 async onDisable() {
+    return void 0;
 },
-async run(context) {
+async run() {
     return [{}]
 },
 });
