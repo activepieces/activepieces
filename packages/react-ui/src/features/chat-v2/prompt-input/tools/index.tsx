@@ -44,6 +44,7 @@ function ToolsButton() {
   const executeToolEnabled = tools.some(
     (tool) => tool.type === AgentToolType.EXECUTE_CODE,
   );
+  const pieceTools = tools.filter(tool => tool.type === AgentToolType.PIECE)
 
   const handleToggleTool = ({
     type,
@@ -63,7 +64,6 @@ function ToolsButton() {
   };
 
   const onToolsUpdate = (updatedTools: AgentTool[]) => {
-    if (isNil(session)) return;
 
     updateChatSession({
       update: { tools: updatedTools },
@@ -194,7 +194,7 @@ function ToolsButton() {
                   emptyStateLabel="Connect custom apps."
                   label="Custom Tools"
                   hideAddButton={true}
-                  tools={tools}
+                  tools={pieceTools}
                   onToolsUpdate={onToolsUpdate}
                 />
                 <Button
