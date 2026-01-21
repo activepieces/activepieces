@@ -1,4 +1,4 @@
-import { AgentTool, AgentToolType, BATCH_SCRAPE_TOOL, CANCEL_TOOL, ChatSession, ChatSessionUpdate, chatSessionUtils, ConversationMessage, CRAWL_TOOL, EmitAgentStreamingEndedRequest, EXECUTE_TOOL, ExecuteAgentJobData, EXTRACT_TOOL, isNil, MAP_TOOL, POLL_TOOL, SCRAPE_TOOL, SEARCH_TOOL, STATUS_TOOL, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
+import { AgentPieceTool, AgentTool, AgentToolType, BATCH_SCRAPE_TOOL, CANCEL_TOOL, ChatSession, ChatSessionUpdate, chatSessionUtils, ConversationMessage, CRAWL_TOOL, EmitAgentStreamingEndedRequest, EXECUTE_TOOL, ExecuteAgentJobData, EXTRACT_TOOL, isNil, MAP_TOOL, POLL_TOOL, SCRAPE_TOOL, SEARCH_TOOL, STATUS_TOOL, WebsocketClientEvent, WebsocketServerEvent } from '@activepieces/shared'
 import { LanguageModelV2ToolResultOutput } from '@ai-sdk/provider'
 import { ModelMessage, stepCountIs, streamText } from 'ai'
 import { FastifyBaseLogger } from 'fastify'
@@ -8,6 +8,7 @@ import { systemPrompt } from './system-prompt'
 import { agentUtils } from './utils'
 import { createExecuteCodeTool } from './execute-code'
 import { workerMachine } from '../utils/machine'
+import { pieceToolExecutor } from './tools/piece-tool-executor'
 
 
 async function getFirecrawlTools(tools: AgentTool[]): Promise<Record<string, unknown>> {
@@ -40,7 +41,8 @@ async function getExecuteCodeTool(tools: AgentTool[]): Promise<Record<string, un
 export const agentExecutor = (log: FastifyBaseLogger) => ({
     async execute(data: ExecuteAgentJobData, engineToken: string) {
 
-        const { conversation, modelId, tools  } = data.session
+        const { platformId, projectId } = data
+        const { conversation, modelId, tools } = data.session
         let newSession: ChatSession = data.session
         const planningState: Pick<ChatSession, 'plan'> = { plan: data.session.plan }
 
@@ -50,6 +52,7 @@ export const agentExecutor = (log: FastifyBaseLogger) => ({
             stopWhen: [stepCountIs(25)],
             messages: convertHistory(conversation),
             tools: {
+                ...(await pieceToolExecutor(log).makeTools({ tools: tools.filter(tool => tool.type === AgentToolType.PIECE) as AgentPieceTool[], engineToken, platformId, projectId, modelId })),
                 ...(await getFirecrawlTools(tools)),
                 ...(await getExecuteCodeTool(tools)),
                 [WRITE_TODOS_TOOL_NAME]: createPlanningTool(planningState),
