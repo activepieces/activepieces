@@ -20,7 +20,6 @@ export async function getNotebooksDropdown(auth: OAuth2PropertyValue) {
 		};
 	} catch (error) {
 		console.error('Error fetching notebooks:', error);
-		
 		return {
 			disabled: true,
 			placeholder: 'Failed to load notebooks',
