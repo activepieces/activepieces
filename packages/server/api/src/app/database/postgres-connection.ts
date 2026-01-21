@@ -332,6 +332,10 @@ import { AddSessions1768596349320 } from './migration/postgres/1768596349320-Add
 import { AddModelIdToSessionEntity1768745485957 } from './migration/postgres/1768745485957-addModelIdToSessionEntity'
 import { AddSearchEnabledColumn1768836652533 } from './migration/postgres/1768836652533-addSearchEnabledColumn'
 import { AddCodeExecutionEnabledColumn1768836652534 } from './migration/postgres/1768836652534-addCodeExecutionEnabledColumn'
+import { AddTablesIntoTemplateEntity1768306510367 } from './migration/postgres/1768306510367-AddTablesIntoTemplateEntity'
+import { AddImageToUser1768502658760 } from './migration/postgres/1768502658760-ADDIMAGETOUSER'
+import { RemoveUsageCountFromTemplates1768738475196 } from './migration/postgres/1768738475196-RemoveUsageCountFromTemplates'
+import { AddTemplateIdToFlowEntity1768829135202 } from './migration/postgres/1768829135202-AddTemplateIdToFlowEntity'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -680,6 +684,10 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         AddModelIdToSessionEntity1768745485957,
         AddSearchEnabledColumn1768836652533,
         AddCodeExecutionEnabledColumn1768836652534,
+        AddImageToUser1768502658760,
+        RemoveUsageCountFromTemplates1768738475196,
+        AddTablesIntoTemplateEntity1768306510367,
+        AddTemplateIdToFlowEntity1768829135202,
     ]
     return migrations
 }

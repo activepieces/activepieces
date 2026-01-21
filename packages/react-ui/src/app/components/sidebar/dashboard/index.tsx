@@ -16,12 +16,12 @@ import { NewProjectDialog } from '@/app/routes/platform/projects/new-project-dia
 import quickLogoUrl from '@/assets/img/custom/quick-logo.svg';
 import { useEmbedding } from '@/components/embed-provider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { SearchInput } from '@/components/ui/search-input';
 import {
   Sidebar,
   SidebarContent,
@@ -320,10 +320,10 @@ export function ProjectDashboardSidebar() {
                         side="right"
                         sideOffset={8}
                       >
-                        <Input
+                        <SearchInput
                           placeholder={t('Search projects...')}
                           value={searchQuery}
-                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onChange={(e) => setSearchQuery(e)}
                           className="h-9"
                           autoFocus
                         />

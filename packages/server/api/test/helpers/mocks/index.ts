@@ -150,7 +150,6 @@ export const createMockTemplate = (
         tags: template?.tags ?? [],
         blogUrl: template?.blogUrl ?? faker.internet.url(),
         metadata: template?.metadata ?? null,
-        usageCount: template?.usageCount ?? 0,
         author: template?.author ?? faker.person.fullName(),
         categories: template?.categories ?? [],
         status: template?.status ?? TemplateStatus.PUBLISHED,

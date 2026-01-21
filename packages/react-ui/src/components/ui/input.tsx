@@ -13,7 +13,7 @@ export type InputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export const inputClass =
-  'flex h-9 w-full rounded-md border border-input-border bg-background px-3 py-1 text-base shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
+  'flex h-9 w-full rounded-md border border-input-border  bg-background px-3 py-1 text-base shadow-xs transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground  focus-within:outline-hidden focus-within:ring-1 focus-within:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm placeholder:text-muted-foreground';
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, thin = false, defaultFileName, ...props }, ref) => {
     const [fileName, setFileName] = React.useState<string | null>(null);
