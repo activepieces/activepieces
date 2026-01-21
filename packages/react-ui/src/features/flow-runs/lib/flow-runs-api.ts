@@ -117,7 +117,7 @@ function getInitialRun(
       }
       if (forManualTrigger) {
         socket.on(
-          WebsocketClientEvent.TEST_MANUAL_TRIGGER_RUN_STARTED,
+          WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED,
           onRunStarted,
         );
       } else {
@@ -128,7 +128,7 @@ function getInitialRun(
 
     if (forManualTrigger) {
       socket.on(
-        WebsocketClientEvent.TEST_MANUAL_TRIGGER_RUN_STARTED,
+        WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED,
         onRunStarted,
       );
     } else {

@@ -29,7 +29,7 @@ export const flowModule: FastifyPluginAsyncTypebox = async (app) => {
                 flowVersionId: data.flowVersionId,
                 triggeredBy: principal.id,
             })
-            socket.emit(WebsocketClientEvent.TEST_MANUAL_TRIGGER_RUN_STARTED, flowRun)
+            socket.emit(WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED, flowRun)
         }
     })
     websocketService.addListener(PrincipalType.WORKER, WebsocketServerEvent.EMIT_TEST_STEP_PROGRESS, (socket) => {
