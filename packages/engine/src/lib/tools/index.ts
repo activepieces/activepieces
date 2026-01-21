@@ -311,17 +311,22 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
         description: property.description,
     }
 
-    if (
-        property.type === PropertyType.DROPDOWN ||
-        property.type === PropertyType.MULTI_SELECT_DROPDOWN ||
-        property.type === PropertyType.STATIC_DROPDOWN ||
-        property.type === PropertyType.STATIC_MULTI_SELECT_DROPDOWN
-    ) {
-        const options = await loadOptions(propertyName, operation, input)
-        return {
-            ...baseDetail,
-            options,
+    switch (property.type) {
+        case PropertyType.STATIC_DROPDOWN:
+        case PropertyType.STATIC_MULTI_SELECT_DROPDOWN: {
+            const options = property.options.options
+            return {
+                ...baseDetail,
+                options,
+            }
         }
+        case PropertyType.DROPDOWN:
+        case PropertyType.MULTI_SELECT_DROPDOWN:
+            const options = await loadOptions(propertyName, operation, input)
+            return {
+                ...baseDetail,
+                options,
+            }
     }
 
     return baseDetail
