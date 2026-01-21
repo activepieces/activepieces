@@ -29,6 +29,7 @@ export type SidebarItemType = {
   isSubItem?: boolean;
   show?: boolean;
   hasPermission?: boolean;
+  onClick?: () => void;
 };
 
 export const ApSidebarItem = (item: SidebarItemType) => {
@@ -38,24 +39,21 @@ export const ApSidebarItem = (item: SidebarItemType) => {
     location.pathname.startsWith(item.to) || item.isActive?.(location.pathname);
   const isCollapsed = state === 'collapsed';
 
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const linkProps = {
+    to: item.to,
+    target: item.newWindow ? '_blank' : '',
+    rel: item.newWindow ? 'noopener noreferrer' : undefined,
+    ...(item.onClick && { onClick: item.onClick }),
   };
 
   return (
-    <SidebarMenuItem
-      onClick={handleClick}
-      className={cn(isCollapsed && 'flex justify-center')}
-    >
+    <SidebarMenuItem className={cn(isCollapsed && 'flex justify-center')}>
       {isCollapsed ? (
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
-                to={item.to}
-                target={item.newWindow ? '_blank' : ''}
-                rel={item.newWindow ? 'noopener noreferrer' : undefined}
-                onClick={handleClick}
+                {...linkProps}
                 className={cn(
                   buttonVariants({ variant: 'ghost', size: 'icon' }),
                   isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
@@ -79,18 +77,12 @@ export const ApSidebarItem = (item: SidebarItemType) => {
       ) : (
         <SidebarMenuButton
           asChild
-          onClick={handleClick}
           className={cn(
             'px-2 py-5',
             isLinkActive && 'bg-sidebar-accent hover:!bg-sidebar-accent',
           )}
         >
-          <Link
-            to={item.to}
-            target={item.newWindow ? '_blank' : ''}
-            rel={item.newWindow ? 'noopener noreferrer' : undefined}
-            onClick={handleClick}
-          >
+          <Link {...linkProps}>
             <div className="w-full flex items-center justify-between gap-2">
               <div className="flex items-center gap-2 w-full">
                 <div className="flex items-center gap-2">
