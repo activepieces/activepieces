@@ -27,8 +27,8 @@ export const ChatSessionEntity = new EntitySchema<ChatSession>({
             type: String,
             nullable: false,
         },
-        webSearchEnabled: {
-            type: Boolean,
+        tools: {
+            type: 'jsonb',
             nullable: false,
         },
         codeExecutionEnabled: {
