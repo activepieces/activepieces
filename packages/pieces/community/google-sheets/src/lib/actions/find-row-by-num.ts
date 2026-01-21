@@ -6,7 +6,7 @@ import { commonProps } from '../common/props';
 export const findRowByNumAction = createAction({
 	auth: googleSheetsAuth,
 	name: 'find_row_by_num',
-	displayName: 'Get Row by ID',
+	displayName: 'Get Single Row by ID',
 	description: 'Retrieve a specific row using its unique ID.',
 	props: {
 		...commonProps,
