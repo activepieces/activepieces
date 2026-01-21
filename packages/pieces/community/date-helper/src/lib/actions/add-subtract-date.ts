@@ -193,8 +193,7 @@ function addSubtractTime(date: Date, expression: string, timeZone?: string): day
       case timeParts.unix_time:
         break;
       default: {
-        const nvr: never = val;
-        console.error(nvr, 'unhandled case was reached');
+        console.error(val, 'unhandled case was reached');
       }
     }
   }
