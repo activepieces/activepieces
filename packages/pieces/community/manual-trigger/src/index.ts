@@ -8,7 +8,7 @@ export const manualTriggerPiece = createPiece({
       auth: PieceAuth.None(),
       minimumSupportedRelease: '0.77.6',
       logoUrl: "https://cdn.activepieces.com/mouse-pointer-click.svg",
-      authors: [],
+      authors: ['AbdulTheActivePiecer'],
       actions: [],
       triggers: [manualTrigger],
       categories:[PieceCategory.CORE]

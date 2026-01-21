@@ -116,12 +116,12 @@ function getInitialRun(
         return;
       }
       if (forManualTrigger) {
-        socket.on(
+        socket.off(
           WebsocketClientEvent.MANUAL_TRIGGER_RUN_STARTED,
           onRunStarted,
         );
       } else {
-        socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
+        socket.off(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onRunStarted);
       }
       resolve(run);
     };
