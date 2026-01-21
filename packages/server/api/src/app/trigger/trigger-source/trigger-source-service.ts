@@ -1,4 +1,4 @@
-import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, PopulatedTriggerSource, TemplateTelemetryEvent, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
+import { ActivepiecesError, apId, ErrorCode, FlowVersion, isNil, PopulatedTriggerSource, TemplateTelemetryEventType, TriggerSource } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
 import { repoFactory } from '../../core/db/repo-factory'
 import { flowVersionService } from '../../flows/flow-version/flow-version.service'
@@ -47,12 +47,11 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             })
 
             if (templateId) {
-                const templateTelemetryEvent: TemplateTelemetryEvent = {
+                templateTelemetryService(log).sendEvent({
                     eventType: TemplateTelemetryEventType.ACTIVATE,
                     templateId,
                     flowId: flowVersion.flowId,
-                }
-                templateTelemetryService(log).sendEvent(templateTelemetryEvent)
+                })
             }
 
             log.info('[triggerSourceService#enable] Enabled flow trigger side effect')
@@ -152,12 +151,11 @@ export const triggerSourceService = (log: FastifyBaseLogger) => {
             })
             log.info('[triggerSourceService#disable] Soft deleted trigger source')
             if (templateId) {
-                const templateTelemetryEvent: TemplateTelemetryEvent = {
+                templateTelemetryService(log).sendEvent({
                     eventType: TemplateTelemetryEventType.DEACTIVATE,
                     templateId,
                     flowId,
-                }
-                templateTelemetryService(log).sendEvent(templateTelemetryEvent)
+                })
             }
         },
     }

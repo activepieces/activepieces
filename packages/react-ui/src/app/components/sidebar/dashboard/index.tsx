@@ -41,7 +41,6 @@ import {
   ProjectType,
   ProjectWithLimits,
   TeamProjectsLimit,
-  TemplateTelemetryEvent,
   TemplateTelemetryEventType,
 } from '@activepieces/shared';
 
@@ -156,10 +155,9 @@ export function ProjectDashboardSidebar() {
   };
 
   const handleExploreClick = useCallback(() => {
-    const event: TemplateTelemetryEvent = {
+    templatesTelemetryApi.sendEvent({
       eventType: TemplateTelemetryEventType.EXPLORE_VIEW,
-    };
-    templatesTelemetryApi.sendEvent(event);
+    });
   }, []);
 
   const exploreLink: SidebarItemType = {

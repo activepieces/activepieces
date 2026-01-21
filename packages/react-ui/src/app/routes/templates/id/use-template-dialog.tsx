@@ -31,7 +31,6 @@ import { authenticationSession } from '@/lib/authentication-session';
 import {
   PopulatedFlow,
   Template,
-  TemplateTelemetryEvent,
   TemplateTelemetryEventType,
   TemplateType,
   UncategorizedFolderId,
@@ -126,12 +125,11 @@ export const UseTemplateDialog = ({
     const userId = authenticationSession.getCurrentUserId();
 
     if (template.type === TemplateType.OFFICIAL && userId) {
-      const event: TemplateTelemetryEvent = {
+      templatesTelemetryApi.sendEvent({
         eventType: TemplateTelemetryEventType.INSTALL,
         templateId: template.id,
         userId,
-      };
-      templatesTelemetryApi.sendEvent(event);
+      });
     }
   };
 
