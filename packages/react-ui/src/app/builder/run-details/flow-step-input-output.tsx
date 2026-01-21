@@ -68,7 +68,11 @@ export const FlowStepInputOutput = () => {
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
 
-  if (!isRunDone && run.status !== FlowRunStatus.PAUSED && isNil(selectedStepOutput)) {
+  if (
+    !isRunDone &&
+    run.status !== FlowRunStatus.PAUSED &&
+    isNil(selectedStepOutput)
+  ) {
     return <OutputSkeleton />;
   }
 
@@ -161,10 +165,13 @@ function handleRunFailureOrEmptyLog(
   run: FlowRun | null,
   retentionDays: number | null,
 ) {
-  if (isNil(run) || !isFlowRunStateTerminal({ status: run.status, ignoreInternalError: true })) {
+  if (
+    isNil(run) ||
+    !isFlowRunStateTerminal({ status: run.status, ignoreInternalError: true })
+  ) {
     return null;
   }
-  
+
   if ([FlowRunStatus.INTERNAL_ERROR].includes(run.status)) {
     return t(
       'There are no logs captured for this run, because of an internal error, please contact support.',

@@ -26,18 +26,14 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
     ]);
   const stepOutput = useMemo(() => {
     return run && run.steps
-      ? flowRunUtils.extractStepOutput(
-          stepName,
-          loopsIndexes,
-          run.steps,
-        )
+      ? flowRunUtils.extractStepOutput(stepName, loopsIndexes, run.steps)
       : null;
   }, [run, stepName, loopsIndexes, flowVersion.trigger]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const prevIndexRef = useRef(currentIndex);
-  
+
   useEffect(() => {
     if (prevIndexRef.current !== currentIndex) {
       setIsAnimating(true);
@@ -81,9 +77,7 @@ const LoopIterationInput = ({ stepName }: { stepName: string }) => {
             <Input
               ref={inputRef}
               className={`py-2 w-[35px] px-0 h-[35px] animate-in fade-in bg-background border-solid rounded-md text-center !text-xs transition-all duration-300 ease-in-out ${
-                isAnimating
-                  ? 'border-2 border-primary'
-                  : 'border border-border'
+                isAnimating ? 'border-2 border-primary' : 'border border-border'
               }`}
               type="number"
               value={currentIndex + 1}

@@ -1,6 +1,6 @@
 import { isNil } from '@activepieces/shared'
-import { workerSocket } from './lib/worker-socket'
 import { progressService } from './lib/services/progress.service'
+import { workerSocket } from './lib/worker-socket'
 
 const SANDBOX_ID = process.env.SANDBOX_ID
 process.title = `sandbox-${SANDBOX_ID}`

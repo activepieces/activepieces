@@ -1,9 +1,9 @@
 import { Static, Type } from '@sinclair/typebox'
 import { Nullable } from '../common'
 import { FlowRunStatus, PauseMetadata } from '../flow-run/execution/flow-execution'
+import { StepOutput } from '../flow-run/execution/step-output'
 import { FailedStep, FlowRun } from '../flow-run/flow-run'
 import { StepRunResponse } from '../flows/sample-data'
-import { StepOutput } from '../flow-run/execution/step-output'
 import { ProgressUpdateType } from './engine-operation'
 
 
@@ -71,12 +71,12 @@ export const GetFlowVersionForWorkerRequest = Type.Object({
 export type GetFlowVersionForWorkerRequest = Static<typeof GetFlowVersionForWorkerRequest>
 
 export type UpdateRunProgressRequest = {
-    projectId: string,
-    flowRunId: string,
-    flowRun?: FlowRun,
+    projectId: string
+    flowRunId: string
+    flowRun?: FlowRun
     step?: {
-        name: string,
-        path: readonly [string, number][],
-        output: StepOutput,
+        name: string
+        path: readonly [string, number][]
+        output: StepOutput
     }
 }

@@ -1,5 +1,5 @@
 import { OutputContext } from '@activepieces/pieces-framework'
-import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, LoopStepOutput, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
+import { DEFAULT_MCP_DATA, EngineGenericError, EngineSocketEvent, FlowActionType, FlowRunStatus, GenericStepOutput, isFlowRunStateTerminal, isNil, logSerializer, StepOutput, StepOutputStatus, StepRunResponse, UpdateRunProgressRequest, UploadRunLogsRequest } from '@activepieces/shared'
 import { Mutex } from 'async-mutex'
 import dayjs from 'dayjs'
 import fetchRetry from 'fetch-retry'
@@ -9,7 +9,6 @@ import { utils } from '../utils'
 import { workerSocket } from '../worker-socket'
 
 
-let isGraceShutdownSignalReceived = false
 const lock = new Mutex()
 const updateLock = new Mutex()
 const fetchWithRetry = fetchRetry(global.fetch)
@@ -18,7 +17,7 @@ const BACKUP_INTERVAL_MS = 15000
 export let latestUpdateParams: UpdateStepProgressParams | null = null
 
 export const progressService = {
-    init: async (): Promise<void> => {
+    init: (): void => {
         setInterval(async () => {
             if (isNil(latestUpdateParams)) {
                 return
@@ -34,8 +33,8 @@ export const progressService = {
                 return
             }
 
-            let step = flowExecutorContext.getStepOutput(stepNameToUpdate)
-             if (isNil(step)) {
+            const step = flowExecutorContext.getStepOutput(stepNameToUpdate)
+            if (isNil(step)) {
                 return
             }
 
@@ -124,7 +123,6 @@ export const progressService = {
         })
     },
     shutdown: () => {
-        isGraceShutdownSignalReceived = true
         latestUpdateParams = null
     },
 }

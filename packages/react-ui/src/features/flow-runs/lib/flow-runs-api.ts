@@ -58,7 +58,10 @@ export const flowRunsApi = {
     const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
       onUpdate(response);
     };
-    socket.on(WebsocketClientEvent.UPDATE_RUN_PROGRESS, handleUpdateRunProgress);
+    socket.on(
+      WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+      handleUpdateRunProgress,
+    );
   },
   async testStep(params: TestStepParams): Promise<StepRunResponse> {
     const { socket, request, onProgress, onFinish } = params;

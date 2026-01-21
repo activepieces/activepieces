@@ -29,11 +29,7 @@ const StepNodeRunDurationAndPieceName = ({
   ]);
   const selectedStepOutput = useMemo(() => {
     return run && run.steps
-      ? flowRunUtils.extractStepOutput(
-          stepName,
-          loopIndexes,
-          run.steps,
-        )
+      ? flowRunUtils.extractStepOutput(stepName, loopIndexes, run.steps)
       : null;
   }, [run, stepName, loopIndexes, flowVersion.trigger]);
 

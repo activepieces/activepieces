@@ -1,9 +1,10 @@
 import { useMutation } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { ImperativePanelHandle } from 'react-resizable-panels';
 import { usePrevious } from 'react-use';
+import { useDebouncedCallback } from 'use-debounce';
 
 import { useEmbedding } from '@/components/embed-provider';
 import { useSocket } from '@/components/socket-provider';
@@ -23,7 +24,6 @@ import { useBuilderStateContext } from '../builder-hooks';
 import { textMentionUtils } from '../piece-properties/text-input-with-mentions/text-input-utils';
 
 import { flowCanvasUtils } from './utils/flow-canvas-utils';
-import { useDebouncedCallback } from 'use-debounce';
 
 export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
   const handleRef = useRef<ImperativePanelHandle>(null);
@@ -171,21 +171,19 @@ export const useFocusOnStep = () => {
     previousStatus ?? FlowRunStatus.RUNNING,
     currentRun?.steps ?? {},
   );
- 
 
-  const focusCurrentStep = useDebouncedCallback(()=>{
+  const focusCurrentStep = useDebouncedCallback(() => {
     if (!isNil(currentStep)) {
-    console.log('focusing on step', currentStep);
+      console.log('focusing on step', currentStep);
       fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
       selectStep(currentStep);
     }
-   }, 500)
+  }, 500);
 
   const { fitView } = useReactFlow();
   useEffect(() => {
-    
-    focusCurrentStep()
-  }, [ currentStep, selectStep, fitView]);
+    focusCurrentStep();
+  }, [currentStep, selectStep, fitView]);
 };
 
 export const useResizeCanvas = (

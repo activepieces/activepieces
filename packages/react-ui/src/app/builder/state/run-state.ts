@@ -1,7 +1,6 @@
 import { StoreApi } from 'zustand';
 
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { RightSideBarType } from '@/lib/types';
 import {
   FlowActionType,
   FlowRun,
@@ -12,7 +11,6 @@ import {
 } from '@activepieces/shared';
 
 import { BuilderState } from '../builder-hooks';
-import { flowCanvasUtils } from '../flow-canvas/utils/flow-canvas-utils';
 
 export type RunState = {
   run: FlowRun | null;
@@ -35,10 +33,7 @@ export const createRunState = (
     run: initialState.run,
     loopsIndexes:
       initialState.run && initialState.run.steps
-        ? flowRunUtils.findLoopsState(
-            initialState.run,
-            {},
-          )
+        ? flowRunUtils.findLoopsState(initialState.run, {})
         : {},
     setRun: async (run: FlowRun, flowVersion: FlowVersion) =>
       set((state) => {

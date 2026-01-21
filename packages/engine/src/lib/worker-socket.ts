@@ -12,8 +12,8 @@ import {
 } from '@activepieces/shared'
 import { io, type Socket } from 'socket.io-client'
 import { execute } from './operations'
-import { utils } from './utils'
 import { progressService } from './services/progress.service'
+import { utils } from './utils'
 
 const WS_URL = 'ws://127.0.0.1:12345'
 
