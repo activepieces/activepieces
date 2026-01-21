@@ -29,7 +29,7 @@ export const PieceSelectorTabs = ({ tabs }: { tabs: TabType[] }) => {
           <TabsTrigger
             key={tab.value}
             value={tab.value}
-            className={`flex flex-col  bg-background grow  h-full rounded-md  min-w-[65px]
+            className={`flex flex-col  bg-background grow  h-full rounded-md  w-[85px] max-w-[85px] shrink-0
               hover:bg-gray-300/30 dark:hover:bg-gray-300/10
                data-[state=active]:text-primary data-[state=active]:shadow-none
                border-transparent data-[state=active]:border-primary data-[state=active]:active
