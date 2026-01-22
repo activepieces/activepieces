@@ -93,6 +93,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "If the first row is headers": "If the first row is headers",
   "The values to insert": "The values to insert",
   "Use below Filter properties to insert only the rows that meet your conditions.": "Use below Filter properties to insert only the rows that meet your conditions.",

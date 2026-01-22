@@ -43,6 +43,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Search query (Searches through the filled fields of the lead).": "Search query (Searches through the filled fields of the lead).",
   "List of tag names or IDs to add.": "List of tag names or IDs to add.",
   "List of tag names or IDs to remove.": "List of tag names or IDs to remove.",

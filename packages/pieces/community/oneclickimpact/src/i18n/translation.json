@@ -24,6 +24,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The amount of carbon to capture in lbs (1 and 10,000,000)": "The amount of carbon to capture in lbs (1 and 10,000,000)",
   "The email of the customer on whose behalf the carbon is being captured": "The email of the customer on whose behalf the carbon is being captured",
   "The name of the customer on whose behalf the carbon is being captured": "The name of the customer on whose behalf the carbon is being captured",

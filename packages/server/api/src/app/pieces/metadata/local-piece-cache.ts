@@ -214,23 +214,32 @@ async function loadDevPiecesIfEnabled(log: FastifyBaseLogger): Promise<PieceMeta
 }
 
 async function getOrCreateCache(): Promise<KVCacheInstance> {
-    if (isNil(cacheInstance)) {
-        const baseDir = system.getOrThrow(AppSystemProp.CONFIG_PATH)
-        const dbPath = path.join(baseDir, 'pieces-cache-db')
-        const db = new Level<string, unknown>(dbPath, {
-            valueEncoding: 'json',
-            keyEncoding: 'utf8',
-        })
-
-        await db.open()
-
-        const registry = (await db.get<string, PieceRegistryEntry[]>(META_REGISTRY_KEY, { valueEncoding: 'json' })) ?? []
-        cacheInstance = {
-            db,
-            registry,
-        }
+    if (!isNil(cacheInstance)) {
+        return cacheInstance
     }
-    return cacheInstance
+    return memoryLock.runExclusive({
+        key: 'create-piece-kv-cache',
+        fn: async () => {
+            if (!isNil(cacheInstance)) {
+                return cacheInstance
+            }
+            const baseDir = system.getOrThrow(AppSystemProp.CONFIG_PATH)
+            const dbPath = path.join(baseDir, 'pieces-cache-db')
+            const db = new Level<string, unknown>(dbPath, {
+                valueEncoding: 'json',
+                keyEncoding: 'utf8',
+            })
+
+            await db.open()
+
+            const registry = (await db.get<string, PieceRegistryEntry[]>(META_REGISTRY_KEY, { valueEncoding: 'json' })) ?? []
+            cacheInstance = {
+                db,
+                registry,
+            }
+            return cacheInstance
+        },
+    })
 }
 
 type State = {

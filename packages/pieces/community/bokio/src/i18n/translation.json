@@ -68,6 +68,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Name of the customer": "Name of the customer",
   "Type of the customer": "Type of the customer",
   "Customer VAT number": "Customer VAT number",

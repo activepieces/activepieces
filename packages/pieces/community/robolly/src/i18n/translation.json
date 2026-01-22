@@ -17,6 +17,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select your template. (If you want to use Template ID. Click on the \"(x)\" above this field. Template ID can be found by opening a template and going to “Render”. Being there copy the template ID from the top right.)": "Select your template. (If you want to use Template ID. Click on the \"(x)\" above this field. Template ID can be found by opening a template and going to “Render”. Being there copy the template ID from the top right.)",
   "The format of the image to generate.": "The format of the image to generate.",
   "The values to apply to the fields in the template.": "The values to apply to the fields in the template.",
