@@ -329,6 +329,7 @@ async function buildPropertyDetail(propertyName: string, property: PieceProperty
             }
     }
 
+
     return baseDetail
 }
 

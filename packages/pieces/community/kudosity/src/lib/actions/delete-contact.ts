@@ -2,7 +2,6 @@ import { createAction, Property } from '@activepieces/pieces-framework';
 import { kudosityAuth } from '../common/auth';
 import { makeRequest } from '../common/client';
 import { HttpMethod } from '@activepieces/pieces-common';
-import { fa } from 'zod/v4/locales';
 
 export const deleteContact = createAction({
   auth: kudosityAuth,
