@@ -6,8 +6,8 @@ import { PieceCategory } from "@activepieces/shared";
 export const manualTriggerPiece = createPiece({
       displayName: "Manual Trigger",
       auth: PieceAuth.None(),
-      minimumSupportedRelease: '0.77.6',
-      logoUrl: "https://cdn.activepieces.com/mouse-pointer-click.svg",
+      minimumSupportedRelease: '0.77.7',
+      logoUrl: "https://cdn.activepieces.com/pieces/new-core/manual-trigger.svg",
       authors: ['AbdulTheActivePiecer'],
       actions: [],
       triggers: [manualTrigger],
