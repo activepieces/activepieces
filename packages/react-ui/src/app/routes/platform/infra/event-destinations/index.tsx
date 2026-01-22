@@ -35,9 +35,7 @@ const EventDestinationsPage = () => {
 
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h2 className="text-2xl font-semibold">
-              {t('Event Streaming')}
-            </h2>
+            <h2 className="text-2xl font-semibold">{t('Event Streaming')}</h2>
             <p className="text-muted-foreground">
               {t('Manage destinations that receive platform events')}
             </p>

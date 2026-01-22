@@ -1,3 +1,20 @@
+import {
+  Navigate,
+  RouterProvider,
+  createBrowserRouter,
+  createMemoryRouter,
+  useLocation,
+} from 'react-router-dom';
+
+import { PageTitle } from '@/app/components/page-title';
+import { ChatPage } from '@/app/routes/chat';
+import { EmbedPage } from '@/app/routes/embed';
+import AnalyticsPage from '@/app/routes/impact';
+import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
+import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
+import { SSOPage } from '@/app/routes/platform/security/sso';
+import AIProvidersPage from '@/app/routes/platform/setup/ai';
+import { BrandingPage } from '@/app/routes/platform/setup/branding';
 import { PlatformPiecesPage } from '@/app/routes/platform/setup/pieces';
 import { RedirectPage } from '@/app/routes/redirect';
 import { useEmbedding } from '@/components/embed-provider';
@@ -7,13 +24,6 @@ import { Success } from '@/features/billing/components/success';
 import { AcceptInvitation } from '@/features/members/component/accept-invitation';
 import { routesThatRequireProjectId } from '@/lib/utils';
 import { Permission } from '@activepieces/shared';
-import {
-  Navigate,
-  RouterProvider,
-  createBrowserRouter,
-  createMemoryRouter,
-  useLocation,
-} from 'react-router-dom';
 
 import { ApTableStateProvider } from '../../features/tables/components/ap-table-state-provider';
 import { PlatformLayout } from '../components/platform-layout';
@@ -61,15 +71,7 @@ import {
   TokenCheckerWrapper,
 } from './project-route-wrapper';
 import { TemplateDetailsWrapper } from './template-details-wrapper';
-import { PageTitle } from '@/app/components/page-title';
-import { ChatPage } from '@/app/routes/chat';
-import { EmbedPage } from '@/app/routes/embed';
-import AnalyticsPage from '@/app/routes/impact';
-import { ApiKeysPage } from '@/app/routes/platform/security/api-keys';
-import { SigningKeysPage } from '@/app/routes/platform/security/signing-keys';
-import { SSOPage } from '@/app/routes/platform/security/sso';
-import AIProvidersPage from '@/app/routes/platform/setup/ai';
-import { BrandingPage } from '@/app/routes/platform/setup/branding';
+
 
 const SettingsRerouter = () => {
   const { hash } = useLocation();

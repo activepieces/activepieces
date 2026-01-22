@@ -1,4 +1,3 @@
-import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
 import { t } from 'i18next';
 import {
   ArrowLeft,
@@ -22,9 +21,6 @@ import {
 import { ComponentType, SVGProps } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { ApSidebarItem } from '../ap-sidebar-item';
-import { SidebarUser } from '../sidebar-user';
-
 import { buttonVariants } from '@/components/ui/button';
 import {
   Sidebar,
@@ -42,6 +38,10 @@ import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { cn, determineDefaultRoute } from '@/lib/utils';
+import { ApEdition, ApFlagId, TeamProjectsLimit } from '@activepieces/shared';
+
+import { ApSidebarItem } from '../ap-sidebar-item';
+import { SidebarUser } from '../sidebar-user';
 
 export function PlatformSidebar() {
   const navigate = useNavigate();
