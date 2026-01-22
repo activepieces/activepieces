@@ -25,7 +25,7 @@ import { deleteChatMessageAction } from './lib/actions/delete-chat-message';
 import { requestApprovalDirectMessage } from './lib/actions/request-approval-direct-message';
 import { requestApprovalInChannel } from './lib/actions/request-approval-channel-message';
 
-const authDesc = `./lib/actions/request-approval-direct-message
+const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
 2. From the left sidebar, go to **Microsoft Enfra ID**.
 3. Under **Manage**, click on **App registrations**.
