@@ -113,24 +113,19 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        tablesEnabled: {
-            type: Boolean,
-        },
-        todosEnabled: {
-            type: Boolean,
-        },
         projectsLimit: {
             type: Number,
             nullable: true,
         },
-        agentsEnabled: {
+        tablesEnabled: {
             type: Boolean,
+            nullable: true,
         },
         activeFlowsLimit: {
             type: Number,
             nullable: true,
         },
-        mcpsEnabled: {
+        eventStreamingEnabled: {
             type: Boolean,
         },
         dedicatedWorkers: {

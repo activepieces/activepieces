@@ -291,6 +291,25 @@ export const flowHooks = {
         ),
     });
   },
+  useStartManualTrigger: ({
+    flowVersionId,
+    onUpdateRun,
+  }: {
+    flowVersionId: string;
+    onUpdateRun: (run: FlowRun) => void;
+  }) => {
+    const socket = useSocket();
+    return useMutation<void>({
+      mutationFn: () =>
+        flowRunsApi.startManualTrigger(
+          socket,
+          {
+            flowVersionId,
+          },
+          onUpdateRun,
+        ),
+    });
+  },
   useListFlowVersions: (flowId: string) => {
     return useQuery<SeekPage<FlowVersionMetadata>, Error>({
       queryKey: ['flow-versions', flowId],
@@ -397,6 +416,7 @@ export const flowHooks = {
       for (const templateFlow of flows) {
         const flow = await flowsApi.create({
           displayName: templateFlow.displayName,
+          templateId: template.id,
           projectId,
           folderName,
         });

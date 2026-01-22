@@ -236,7 +236,7 @@ function DefaultFolder({
           <SidebarMenuButton className="px-2 group/item mb-1 pr-0">
             <Shapes className="size-3.5!" />
             <span>{t('Uncategorized')}</span>
-            <div className="ml-auto relative">
+            <div className="ml-auto flex items-center relative">
               <ImportFlowButton
                 folderId={UncategorizedFolderId}
                 variant="small"

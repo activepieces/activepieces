@@ -50,9 +50,7 @@ export const FlowStepInputOutput = () => {
       : null;
   }, [run, selectedStep?.name, loopsIndexes, flowVersion.trigger]);
   const isAgent = isRunAgent(selectedStep);
-  const isStepRunning =
-    selectedStepOutput?.status === StepOutputStatus.RUNNING ||
-    selectedStepOutput?.status === StepOutputStatus.PAUSED;
+  const isStepRunning = selectedStepOutput?.status === StepOutputStatus.RUNNING;
   const parsedOutput =
     selectedStepOutput?.errorMessage ??
     selectedStepOutput?.output ??
@@ -71,7 +69,7 @@ export const FlowStepInputOutput = () => {
     ApFlagId.EXECUTION_DATA_RETENTION_DAYS,
   );
 
-  if (!isRunDone) {
+  if (!isRunDone && run.status !== FlowRunStatus.PAUSED) {
     return <OutputSkeleton />;
   }
 

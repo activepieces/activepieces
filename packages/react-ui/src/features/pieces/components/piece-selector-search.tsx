@@ -45,6 +45,7 @@ const PiecesSearchInput = ({
       <SearchInput
         placeholder={t('Search')}
         value={searchQuery}
+        data-testid="pieces-search-input"
         ref={searchInputRef}
         onChange={(e) => {
           setSearchQuery(e);

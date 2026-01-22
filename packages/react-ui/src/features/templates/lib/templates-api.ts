@@ -24,9 +24,6 @@ export const templatesApi = {
   delete(templateId: string) {
     return api.delete<void>(`/v1/templates/${templateId}`);
   },
-  incrementUsageCount(templateId: string) {
-    return api.post<void>(`/v1/templates/${templateId}/increment-usage-count`);
-  },
   getCategories() {
     return api.get<Flag>(`/v1/templates/categories`);
   },

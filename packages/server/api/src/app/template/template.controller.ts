@@ -24,7 +24,7 @@ import { flagService } from '../flags/flag.service'
 import { migrateFlowVersionTemplateList } from '../flows/flow-version/migrations'
 import { system } from '../helper/system/system'
 import { platformService } from '../platform/platform.service'
-import { communityTemplates } from './community-flow-template.service'
+import { communityTemplates } from './community-templates.service'
 import { templateService } from './template.service'
 
 const edition = system.getEdition()
@@ -106,11 +106,6 @@ export const templateController: FastifyPluginAsyncTypebox = async (app) => {
     }, async (request, reply) => {
         const result = await templateService(app.log).update({ id: request.params.id, params: request.body })
         return reply.status(StatusCodes.OK).send(result)
-    })
-
-    app.post('/:id/increment-usage-count', IncrementUsageCountParams, async (request, reply) => {
-        await templateService(app.log).incrementUsageCount({ id: request.params.id })
-        return reply.status(StatusCodes.OK).send()
     })
 
     app.delete('/:id', DeleteParams, async (request, reply) => {
@@ -203,19 +198,6 @@ const UpdateParams = {
         body: UpdateTemplateRequestBody,
     },
 }
-
-const IncrementUsageCountParams = {
-    config: {
-        security: securityAccess.publicPlatform([PrincipalType.USER, PrincipalType.SERVICE]),
-    },
-    schema: {
-        description: 'Increment usage count of a template.',
-        tags: ['templates'],
-        security: [SERVICE_KEY_SECURITY_OPENAPI],
-        params: GetIdParams,
-    },
-}
-
 
 async function loadOfficialTemplatesOrReturnEmpty(
     log: FastifyBaseLogger,

@@ -46,6 +46,7 @@ const systemPropDefaultValues: Partial<Record<SystemProp, string>> = {
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: '60',
     [AppSystemProp.RUNS_METADATA_UPDATE_CONCURRENCY]: '10',
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: '180',
+    [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: '10',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_DAYS]: '30',
     [AppSystemProp.REDIS_FAILED_JOB_RETENTION_MAX_COUNT]: '100000',
     [AppSystemProp.TELEMETRY_ENABLED]: 'true',

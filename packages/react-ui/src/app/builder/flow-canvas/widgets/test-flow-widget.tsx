@@ -16,12 +16,14 @@ const TestFlowWidget = () => {
     readonly,
     hideTestWidget,
     setRun,
+    publishedVersionId,
   ] = useBuilderStateContext((state) => [
     state.setChatDrawerOpenSource,
     state.flowVersion,
     state.readonly,
     state.hideTestWidget,
     state.setRun,
+    state.flow.publishedVersionId,
   ]);
 
   const triggerHasSampleData =
@@ -32,13 +34,24 @@ const TestFlowWidget = () => {
     flowVersion.trigger.settings.pieceName,
     flowVersion.trigger.settings.triggerName,
   );
+  const isManualTrigger = pieceSelectorUtils.isManualTrigger(
+    flowVersion.trigger.settings.pieceName,
+    flowVersion.trigger.settings.triggerName,
+  );
 
-  const { mutate: runFlow, isPending } = flowHooks.useTestFlow({
+  const { mutate: runFlow, isPending: isTestingFlow } = flowHooks.useTestFlow({
     flowVersionId: flowVersion.id,
     onUpdateRun: (run) => {
       setRun(run, flowVersion);
     },
   });
+  const { mutate: startManualTrigger, isPending: isStartingManualTrigger } =
+    flowHooks.useStartManualTrigger({
+      flowVersionId: flowVersion.id,
+      onUpdateRun: (run) => {
+        setRun(run, flowVersion);
+      },
+    });
 
   if (!flowVersion.valid) {
     return null;
@@ -46,6 +59,18 @@ const TestFlowWidget = () => {
 
   if (hideTestWidget) {
     return null;
+  }
+  if (
+    isManualTrigger &&
+    (publishedVersionId !== flowVersion.id || isNil(publishedVersionId))
+  ) {
+    return null;
+  }
+
+  if (readonly) {
+    return (
+      <EditFlowOrViewDraftButton onCanvas={true}></EditFlowOrViewDraftButton>
+    );
   }
 
   if (isChatTrigger) {
@@ -55,25 +80,23 @@ const TestFlowWidget = () => {
           setChatDrawerOpenSource(ChatDrawerSource.TEST_FLOW);
         }}
         text={t('Open Chat')}
-        loading={isPending}
+        loading={isTestingFlow}
       />
-    );
-  }
-
-  if (readonly) {
-    return (
-      <EditFlowOrViewDraftButton onCanvas={true}></EditFlowOrViewDraftButton>
     );
   }
 
   return (
     <AboveTriggerButton
       onClick={() => {
-        runFlow();
+        if (isManualTrigger) {
+          startManualTrigger();
+        } else {
+          runFlow();
+        }
       }}
-      text={t('Test Flow')}
-      triggerHasNoSampleData={!triggerHasSampleData}
-      loading={isPending}
+      text={isManualTrigger ? t('Run Flow') : t('Test Flow')}
+      disable={!triggerHasSampleData && !isManualTrigger}
+      loading={isTestingFlow || isStartingManualTrigger}
     />
   );
 };

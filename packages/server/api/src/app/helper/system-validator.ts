@@ -53,6 +53,7 @@ const systemPropValidators: {
     [AppSystemProp.TRIGGER_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.TRIGGER_HOOKS_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.FLOW_TIMEOUT_SECONDS]: numberValidator,
+    [AppSystemProp.EVENT_DESTINATION_TIMEOUT_SECONDS]: numberValidator,
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
@@ -75,6 +76,7 @@ const systemPropValidators: {
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
+    [AppSystemProp.TEMPLATE_MANAGER_API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,
