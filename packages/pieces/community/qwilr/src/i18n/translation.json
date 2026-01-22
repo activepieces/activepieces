@@ -21,6 +21,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "ID of the template to use for the page": "ID of the template to use for the page",
   "Title of the page, visible as the browser page title": "Title of the page, visible as the browser page title",
   "Whether the page is publicly available; false means the page will be in Draft status": "Whether the page is publicly available; false means the page will be in Draft status",

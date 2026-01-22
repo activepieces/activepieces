@@ -37,6 +37,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Duration in minutes.": "Duration in minutes.",
   "The names of the labels to be added to the task.": "The names of the labels to be added to the task.",
   "The names of the labels to be added to the task": "The names of the labels to be added to the task",

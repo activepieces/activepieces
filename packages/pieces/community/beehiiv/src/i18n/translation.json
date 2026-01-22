@@ -46,6 +46,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The email address of the new subscription.": "The email address of the new subscription.",
   "Whether to reactivate the subscription if they have already unsubscribed. Use only if the subscription is knowingly resubscribing.": "Whether to reactivate the subscription if they have already unsubscribed. Use only if the subscription is knowingly resubscribing.",
   "Whether to send the default welcome email to the subscription.": "Whether to send the default welcome email to the subscription.",
