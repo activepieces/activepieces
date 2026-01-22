@@ -155,7 +155,7 @@ function sortByNameAndVersionDesc(a: PieceMetadataSchema, b: PieceMetadataSchema
 async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBaseLogger): Promise<void> {
     const cache = await getOrCreateCache()
     const { db } = cache
-    cache.registry = sortedPieces.map(piece => ({
+    cache.registry = sortedPieces.filter(piece => isOfficialPiece(piece)).map(piece => ({
         name: piece.name,
         version: piece.version,
         minimumSupportedRelease: piece.minimumSupportedRelease,
