@@ -127,9 +127,10 @@ async function initializeLevelDB(): Promise<void> {
 
     await db.open()
     
+    const registry = (await db.get<string, PieceRegistryEntry[]>('meta:registry', { valueEncoding: 'json' })) ?? []
     cacheInstance = {
         db,
-        registry: [],
+        registry,
     }
 }
 
@@ -246,6 +247,8 @@ async function populateCache(pieces: PieceMetadataSchema[], log: FastifyBaseLogg
         minimumSupportedRelease: piece.minimumSupportedRelease,
         maximumSupportedRelease: piece.maximumSupportedRelease,
     }))
+
+    await db.put('meta:registry', cache.registry, { valueEncoding: 'json' })
 
     const latestVersions = getLatestVersionOfEachPiece(pieces)
     
