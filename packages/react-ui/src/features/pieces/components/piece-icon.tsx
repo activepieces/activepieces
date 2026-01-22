@@ -40,7 +40,7 @@ const pieceIconVariantsWithPadding = cva('', {
       xxl: 'p-4',
       xl: 'p-3',
       lg: 'p-2',
-      md: 'p-1.5',
+      md: 'p-0.75',
       sm: 'p-1.25',
       xs: '',
     },
