@@ -22,12 +22,14 @@ export function BuilderStateProvider({
   const { checkAccess } = useAuthorization();
   const readonly = !checkAccess(Permission.WRITE_FLOW) || props.readonly;
   projectHooks.useReloadPageIfProjectIdChanged(props.flow.projectId);
-  storeRef.current = createBuilderStore({
-    ...props,
-    readonly,
-    outputSampleData: sampleData,
-    inputSampleData: sampleDataInput,
-  });
+  if (!storeRef.current) {
+    storeRef.current = createBuilderStore({
+      ...props,
+      readonly,
+      outputSampleData: sampleData,
+      inputSampleData: sampleDataInput,
+    });
+  }
 
   return (
     <BuilderStateContext.Provider value={storeRef.current}>

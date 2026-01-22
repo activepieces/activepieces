@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
 import { useEffect, useRef } from 'react';
@@ -9,6 +9,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/embed-provider';
 import { useSocket } from '@/components/socket-provider';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
+import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { RightSideBarType } from '@/lib/types';
@@ -50,6 +51,34 @@ const useSetSocketListener = (refetchPiece: () => void) => {
     };
   }, [socket.id, run?.id]);
 };
+
+const useRefetchRun = () => {
+  const [run, setRun, flowVersion] = useBuilderStateContext((state) => [
+    state.run,
+    state.setRun,
+    state.flowVersion,
+  ]);
+
+  const { data } = useQuery({
+    queryKey: ['refetched-run', run?.id],
+    queryFn: async () => {
+      if (isNil(run)) {
+        return null;
+      }
+      const flowRun = await flowRunsApi.getPopulated(run.id);
+      return flowRun;
+    },
+    enabled: !isNil(run),
+    refetchInterval: 5000,
+  });
+
+  useEffect(() => {
+    if (data) {
+      setRun(data, flowVersion);
+    }
+  }, [data]);
+};
+
 const useShowBuilderIsSavingWarningBeforeLeaving = () => {
   const {
     embedState: { isEmbedded },
@@ -210,4 +239,5 @@ export const flowCanvasHooks = {
   useFocusOnStep,
   useResizeCanvas,
   useSwitchToDraft,
+  useRefetchRun,
 };
