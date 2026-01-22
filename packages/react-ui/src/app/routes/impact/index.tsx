@@ -36,7 +36,7 @@ export default function AnalyticsPage() {
   const selectedProjectId = searchParams.get('projectId') || undefined;
   const selectedTimePeriod =
     (searchParams.get('timePeriod') as AnalyticsTimePeriod) ||
-    AnalyticsTimePeriod.LAST_MONTH;
+    AnalyticsTimePeriod.ALL_TIME;
   const { data: projects } = projectCollectionUtils.useAll();
   const { data, isLoading } = platformAnalyticsHooks.useAnalyticsTimeBased(
     selectedTimePeriod,
@@ -59,7 +59,7 @@ export default function AnalyticsPage() {
 
   const handleTimePeriodChange = (timePeriod: string) => {
     const newParams = new URLSearchParams(searchParams);
-    if (timePeriod === AnalyticsTimePeriod.LAST_MONTH) {
+    if (timePeriod === AnalyticsTimePeriod.ALL_TIME) {
       newParams.delete('timePeriod');
     } else {
       newParams.set('timePeriod', timePeriod);

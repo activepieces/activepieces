@@ -60,7 +60,7 @@ export const appSocket = (log: FastifyBaseLogger) => ({
         socket.connect()
 
         socket.on(WebsocketServerEvent.WORKER_HEALTHCHECK, async (_, callback) => {
-            const settings = await workerMachine.getSystemInfo()
+            const settings = await workerMachine.getSystemInfo(log)
             callback?.(settings)
         })
     },

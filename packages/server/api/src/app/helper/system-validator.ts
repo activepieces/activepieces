@@ -57,6 +57,7 @@ const systemPropValidators: {
     [AppSystemProp.PAUSED_FLOW_TIMEOUT_DAYS]: numberValidator,
     [AppSystemProp.APP_WEBHOOK_SECRETS]: stringValidator,
     [AppSystemProp.MAX_FILE_SIZE_MB]: numberValidator,
+    [AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB]: numberValidator,
     [AppSystemProp.SANDBOX_MEMORY_LIMIT]: numberValidator,
     [AppSystemProp.SANDBOX_PROPAGATED_ENV_VARS]: stringValidator,
     [AppSystemProp.SENTRY_DSN]: urlValidator,
@@ -75,6 +76,7 @@ const systemPropValidators: {
     // AppSystemProp
     [AppSystemProp.API_KEY]: stringValidator,
     [AppSystemProp.TEMPLATES_API_KEY]: stringValidator,
+    [AppSystemProp.TEMPLATE_MANAGER_API_KEY]: stringValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_ENABLED]: booleanValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_MAX]: numberValidator,
     [AppSystemProp.API_RATE_LIMIT_AUTHN_WINDOW]: stringValidator,

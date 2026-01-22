@@ -45,6 +45,7 @@ import {
 } from '@activepieces/shared';
 
 import FlowActionMenu from '../../components/flow-actions-menu';
+import { flowCanvasConsts } from '../flow-canvas/utils/consts';
 
 import { BuilderFlowStatusSection } from './flow-status';
 
@@ -203,13 +204,19 @@ export const BuilderHeader = () => {
   const leftContent = embedState.isEmbedded ? <HomeButton /> : null;
 
   return (
-    <PageHeader
-      title={titleContent}
-      rightContent={rightContent}
-      leftContent={leftContent}
-      showBorder={true}
-      className="select-none"
-      hideSidebarTrigger={embedState.isEmbedded}
-    />
+    <div
+      style={{
+        height: `$${flowCanvasConsts.BUILDER_HEADER_HEIGHT}px`,
+      }}
+    >
+      <PageHeader
+        title={titleContent}
+        rightContent={rightContent}
+        leftContent={leftContent}
+        showBorder={true}
+        className="select-none"
+        hideSidebarTrigger={embedState.isEmbedded}
+      />
+    </div>
   );
 };

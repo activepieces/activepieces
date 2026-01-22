@@ -9,7 +9,8 @@ import { InviteUserDialog } from '@/features/members/component/invite-user-dialo
 import { projectMembersHooks } from '@/features/members/lib/project-members-hooks';
 import { userInvitationsHooks } from '@/features/members/lib/user-invitations-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
-import { Permission } from '@activepieces/shared';
+import { authenticationSession } from '@/lib/authentication-session';
+import { Permission, UserStatus } from '@activepieces/shared';
 
 import { membersTableColumns, MemberRowData } from './columns';
 
@@ -39,19 +40,25 @@ export const MembersSettings = () => {
   }, [refetchProjectMembers, refetchInvitations]);
 
   const combinedData: MemberRowData[] = useMemo(() => {
+    const currentProjectId = authenticationSession.getProjectId();
+
     const members: MemberRowData[] =
-      projectMembers?.map((member) => ({
-        id: member.id,
-        type: 'member' as const,
-        data: member,
-      })) ?? [];
+      projectMembers
+        ?.filter((member) => member.user.status === UserStatus.ACTIVE)
+        .map((member) => ({
+          id: member.id,
+          type: 'member' as const,
+          data: member,
+        })) ?? [];
 
     const pendingInvitations: MemberRowData[] =
-      invitations?.map((invitation) => ({
-        id: invitation.id,
-        type: 'invitation' as const,
-        data: invitation,
-      })) ?? [];
+      invitations
+        ?.filter((invitation) => invitation.projectId === currentProjectId)
+        .map((invitation) => ({
+          id: invitation.id,
+          type: 'invitation' as const,
+          data: invitation,
+        })) ?? [];
 
     return [...members, ...pendingInvitations];
   }, [projectMembers, invitations]);
