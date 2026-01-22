@@ -1,7 +1,14 @@
+import {
+  ApplicationEventName,
+  EventDestination,
+  CreatePlatformEventDestinationRequestBody,
+} from '@activepieces/ee-shared';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+
+import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -23,13 +30,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  ApplicationEventName,
-  EventDestination,
-  CreatePlatformEventDestinationRequestBody,
-} from '@activepieces/ee-shared';
-
-import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 
 interface EventDestinationDialogProps {
   children: React.ReactNode;

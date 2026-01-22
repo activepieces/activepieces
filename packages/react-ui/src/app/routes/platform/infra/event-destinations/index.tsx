@@ -22,21 +22,21 @@ const EventDestinationsPage = () => {
     <LockedFeatureGuard
       featureKey="EVENT_DESTINATIONS"
       locked={!isEnabled}
-      lockTitle={t('Unlock Event Destinations')}
+      lockTitle={t('Unlock Event Streaming')}
       lockDescription={t(
         'Configure destination URL to receive events from your platform to your external system',
       )}
     >
       <div className="flex flex-col w-full gap-4">
         <DashboardPageHeader
-          title={t('Event Destinations')}
+          title={t('Event Streaming')}
           description={t('Configure event destinations for your platform')}
         />
 
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-2xl font-semibold">
-              {t('Event Destinations')}
+              {t('Event Streaming')}
             </h2>
             <p className="text-muted-foreground">
               {t('Manage destinations that receive platform events')}
