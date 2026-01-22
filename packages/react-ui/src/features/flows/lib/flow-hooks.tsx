@@ -33,6 +33,7 @@ import {
   Template,
   UncategorizedFolderId,
   UpdateRunProgressRequest,
+  FlowRun,
 } from '@activepieces/shared';
 
 import { flowsApi } from './flows-api';
