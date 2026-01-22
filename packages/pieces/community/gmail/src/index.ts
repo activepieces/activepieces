@@ -8,7 +8,6 @@ import { PieceCategory } from '@activepieces/shared';
 import { gmailSendEmailAction } from './lib/actions/send-email-action';
 import { gmailReplyToEmailAction } from './lib/actions/reply-to-email-action';
 import { gmailCreateDraftReplyAction } from './lib/actions/create-draft-reply-action';
-import { gmailCreateLabelAction } from './lib/actions/create-label-action';
 import { gmailNewEmailTrigger } from './lib/triggers/new-email';
 import { gmailNewLabeledEmailTrigger } from './lib/triggers/new-labeled-email';
 import { gmailNewAttachmentTrigger } from './lib/triggers/new-attachment';
@@ -26,7 +25,6 @@ export const gmailAuth = PieceAuth.OAuth2({
     'email',
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/gmail.compose',
-    'https://www.googleapis.com/auth/gmail.labels',
   ],
 });
 
@@ -41,7 +39,6 @@ export const gmail = createPiece({
     gmailSendEmailAction,
     gmailReplyToEmailAction,
     gmailCreateDraftReplyAction,
-    gmailCreateLabelAction,
     gmailGetEmailAction,
     gmailSearchMailAction,
     createCustomApiCallAction({
