@@ -1,12 +1,12 @@
 {
-  "ChatFly allows you to build AI chatbots trained on your data.": "聊天Fly允许您构建在您数据上培训的 AI 聊天bots。",
-  "Enter your ChatFly API key": "输入您的聊天Fly API 密钥",
-  "Send Message": "发送消息",
-  "Send a message to ChatFly bot": "发送一条消息给ChatFly bot",
+  "ChatFly allows you to build AI chatbots trained on your data.": "ChatFly allows you to build AI chatbots trained on your data.",
+  "Enter your ChatFly API key": "Enter your ChatFly API key",
+  "Send Message": "Send Message",
+  "Send a message to ChatFly bot": "Send a message to ChatFly bot",
   "Bot ID": "Bot ID",
-  "Message": "留言",
-  "Session ID": "会话ID",
-  "The ID of your bot": "你的机器人的 ID",
-  "The message to send": "要发送的消息",
-  "The ID of the session": "会话的 ID"
+  "Message": "Message",
+  "Session ID": "Session ID",
+  "The ID of your bot": "The ID of your bot",
+  "The message to send": "The message to send",
+  "The ID of the session": "The ID of the session"
 }
