@@ -35,6 +35,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The list to create the task in.": "The list to create the task in.",
   "Description of the checklist, often used with subtasks (items).": "Description of the checklist, often used with subtasks (items).",
   "The list to update the task in.": "The list to update the task in.",
