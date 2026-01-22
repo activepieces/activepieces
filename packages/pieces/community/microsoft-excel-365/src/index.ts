@@ -42,6 +42,7 @@ import { updatedRowTrigger } from './lib/trigger/updated-row';
 
 import { appendMultipleRowsAction } from './lib/actions/append-multiple-rows';
 import { excelCommon } from './lib/common/common';
+import { getWorksheetColumnsAction } from './lib/actions/get-wroksheet-columns';
 
 const authDesc = `
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
@@ -96,6 +97,7 @@ export const microsoftExcel = createPiece({
     clearWorksheetAction,
     deleteWorksheetAction,
     getWorkbooksAction,
+    getWorksheetColumnsAction,
     deleteWorkbookAction,
     addWorksheetAction,
     getTableRowsAction,
