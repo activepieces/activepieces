@@ -43,10 +43,12 @@ const TemplatesPage = () => {
 
   const handleTemplateSelect = (template: Template) => {
     navigate(`/templates/${template.id}`);
-    templatesTelemetryApi.sendEvent({
-      eventType: TemplateTelemetryEventType.VIEW,
-      templateId: template.id,
-    });
+    if (template.type === TemplateType.OFFICIAL) {
+      templatesTelemetryApi.sendEvent({
+        eventType: TemplateTelemetryEventType.VIEW,
+        templateId: template.id,
+      });
+    }
   };
 
   const templatesByCategory = useMemo(() => {
