@@ -9,7 +9,7 @@ import {
   ApFlagId,
   isNil,
   TelemetryEvent,
-  UserWithMetaInformationAndProject,
+  UserWithMetaInformation,
 } from '@activepieces/shared';
 
 interface TelemetryProviderProps {
@@ -21,7 +21,7 @@ const TelemetryProvider = ({ children }: TelemetryProviderProps) => {
   const [analytics, setAnalytics] = useState<AnalyticsBrowser | null>(null);
   const initializedUserEmail = useRef<string | null>(null);
 
-  const [user, setUser] = useState<UserWithMetaInformationAndProject | null>(
+  const [user, setUser] = useState<UserWithMetaInformation | null>(
     currentUser ?? null,
   );
   const { data: telemetryEnabled } = flagsHooks.useFlag<boolean>(

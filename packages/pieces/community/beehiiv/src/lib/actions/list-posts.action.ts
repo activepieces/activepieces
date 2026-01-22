@@ -100,7 +100,7 @@ export const listPostsAction = createAction({
 
 		if (isNil(page) && isNil(limit)) {
 			const response = await BeehiivPaginatedApiCall({
-				apiKey: context.auth,
+				apiKey: context.auth.secret_text,
 				method: HttpMethod.GET,
 				resourceUri: `/publications/${publicationId}/automations`,
 				query: queryParams,
@@ -110,7 +110,7 @@ export const listPostsAction = createAction({
 		}
 
 		const response = await beehiivApiCall<{ data: Record<string, any>[] }>({
-			apiKey: context.auth,
+			apiKey: context.auth.secret_text,
 			method: HttpMethod.GET,
 			resourceUri: `/publications/${publicationId}/automations`,
 			query: {

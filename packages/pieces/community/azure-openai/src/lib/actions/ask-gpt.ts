@@ -1,4 +1,4 @@
-import { AzureOpenAIAuth } from '../../';
+import { azureOpenaiAuth } from '../../';
 import {
     Property,
     StoreScope,
@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { propsValidation } from '@activepieces/pieces-common';
 
 export const askGpt = createAction({
+    auth: azureOpenaiAuth,
     name: 'ask_gpt',
     displayName: 'Ask GPT',
     description: 'Ask ChatGPT anything you want!',
@@ -76,7 +77,7 @@ export const askGpt = createAction({
 
     async run(context) {
         const { propsValue, store } = context;
-        const auth: AzureOpenAIAuth = context.auth as AzureOpenAIAuth;
+        const auth = context.auth.props;
 
         await propsValidation.validateZod(propsValue, {
             temperature: z.number().min(0).max(1.0).optional(),

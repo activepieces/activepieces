@@ -13,41 +13,25 @@ import { useTranslation } from 'react-i18next';
 import { EmbeddingProvider } from '@/components/embed-provider';
 import TelemetryProvider from '@/components/telemetry-provider';
 import { ThemeProvider } from '@/components/theme-provider';
-import { SidebarProvider } from '@/components/ui/sidebar-shadcn';
-import { Toaster } from '@/components/ui/toaster';
+import { internalErrorToast, Toaster } from '@/components/ui/sonner';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import {
-  INTERNAL_ERROR_TOAST,
-  RESOURCE_LOCKED_MESSAGE,
-  toast,
-} from '@/components/ui/use-toast';
-import { useManagePlanDialogStore } from '@/features/billing/components/upgrade-dialog/store';
+import { useManagePlanDialogStore } from '@/features/billing/lib/active-flows-addon-dialog-state';
+import { RefreshAnalyticsProvider } from '@/features/platform-admin/lib/refresh-analytics-context';
 import { api } from '@/lib/api';
-import {
-  ErrorCode,
-  isNil,
-  QuotaExceededParams,
-  ResourceLockedParams,
-} from '@activepieces/shared';
+import { ErrorCode, isNil } from '@activepieces/shared';
 
-import { ChangelogProvider } from './components/changelog-provider';
 import { EmbeddingFontLoader } from './components/embedding-font-loader';
 import { InitialDataGuard } from './components/initial-data-guard';
-import { ApRouter } from './router';
+import { ApRouter } from './guards';
 
 const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     onError: (err: Error, _, __, mutation) => {
-      console.error(err);
-      if (api.isApError(err, ErrorCode.RESOURCE_LOCKED)) {
-        const error = err.response?.data as ResourceLockedParams;
-        toast(RESOURCE_LOCKED_MESSAGE(error.params.message));
-      } else if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
-        const error = err.response?.data as QuotaExceededParams;
+      if (api.isApError(err, ErrorCode.QUOTA_EXCEEDED)) {
         const { openDialog } = useManagePlanDialogStore.getState();
-        openDialog({ metric: error.params.metric });
+        openDialog();
       } else if (isNil(mutation.options.onError)) {
-        toast(INTERNAL_ERROR_TOAST);
+        internalErrorToast();
       }
     },
   }),
@@ -66,25 +50,24 @@ export function App() {
   const { i18n } = useTranslation();
   return (
     <QueryClientProvider client={queryClient}>
-      <EmbeddingProvider>
-        <InitialDataGuard>
-          <EmbeddingFontLoader>
-            <TelemetryProvider>
-              <TooltipProvider>
-                <React.Fragment key={i18n.language}>
-                  <ThemeProvider storageKey="vite-ui-theme">
-                    <SidebarProvider>
+      <RefreshAnalyticsProvider>
+        <EmbeddingProvider>
+          <InitialDataGuard>
+            <EmbeddingFontLoader>
+              <TelemetryProvider>
+                <TooltipProvider>
+                  <React.Fragment key={i18n.language}>
+                    <ThemeProvider storageKey="vite-ui-theme">
                       <ApRouter />
-                      <Toaster />
-                      <ChangelogProvider />
-                    </SidebarProvider>
-                  </ThemeProvider>
-                </React.Fragment>
-              </TooltipProvider>
-            </TelemetryProvider>
-          </EmbeddingFontLoader>
-        </InitialDataGuard>
-      </EmbeddingProvider>
+                      <Toaster position="bottom-right" />
+                    </ThemeProvider>
+                  </React.Fragment>
+                </TooltipProvider>
+              </TelemetryProvider>
+            </EmbeddingFontLoader>
+          </InitialDataGuard>
+        </EmbeddingProvider>
+      </RefreshAnalyticsProvider>
     </QueryClientProvider>
   );
 }

@@ -27,7 +27,7 @@ export const createMemAction = createAction({
   },
   async run(context) {
     const { input, instructions, context: contextInfo } = context.propsValue;
-    const apiKey = context.auth as string;
+    const apiKey = context.auth.secret_text;
 
     const body = {
       input,

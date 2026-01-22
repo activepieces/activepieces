@@ -23,8 +23,8 @@ export const gristUpdatedRecordTrigger = createTrigger({
     const readinessColumn = context.propsValue.readiness_column;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
 
     const response = await client.createDocumentWebhook(documentId, {
@@ -52,8 +52,8 @@ export const gristUpdatedRecordTrigger = createTrigger({
 
     if (webhookId != null) {
       const client = new GristAPIClient({
-        domainUrl: context.auth.domain,
-        apiKey: context.auth.apiKey,
+        domainUrl: context.auth.props.domain,
+        apiKey: context.auth.props.apiKey,
       });
       await client.deleteDocumentWebhook(documentId, webhookId);
     }
@@ -67,8 +67,8 @@ export const gristUpdatedRecordTrigger = createTrigger({
     const tableId = context.propsValue.table_id;
 
     const client = new GristAPIClient({
-      domainUrl: context.auth.domain,
-      apiKey: context.auth.apiKey,
+      domainUrl: context.auth.props.domain,
+      apiKey: context.auth.props.apiKey,
     });
 
     const response = await client.listRecordsFromTable(documentId, tableId, {

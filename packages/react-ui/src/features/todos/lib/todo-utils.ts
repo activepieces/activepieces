@@ -37,4 +37,22 @@ export const todoUtils = {
     }
     return 'flow';
   },
+  getAuthorEmail: (todo: PopulatedTodo | TodoActivityWithUser) => {
+    if ('createdByUser' in todo && todo.createdByUser) {
+      return todo.createdByUser?.email;
+    }
+    if ('user' in todo && todo.user) {
+      return todo.user?.email;
+    }
+    return undefined;
+  },
+  getAuthorId: (todo: PopulatedTodo | TodoActivityWithUser) => {
+    if ('createdByUser' in todo && todo.createdByUser) {
+      return todo.createdByUser?.id;
+    }
+    if ('user' in todo && todo.user) {
+      return todo.user?.id;
+    }
+    return undefined;
+  },
 };

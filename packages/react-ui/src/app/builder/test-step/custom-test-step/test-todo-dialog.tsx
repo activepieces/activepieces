@@ -6,18 +6,18 @@ import { todosApi } from '@/features/todos/lib/todos-api';
 import {
   PopulatedTodo,
   TodoType,
-  Action,
+  FlowAction,
   CreateTodoResult,
   CreateAndWaitTodoResult,
 } from '@activepieces/shared';
 
-import { testStepHooks } from '../test-step-hooks';
+import { testStepHooks } from '../utils/test-step-hooks';
 
 type TodoTestingDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   todo: PopulatedTodo;
-  currentStep: Action;
+  currentStep: FlowAction;
   type: TodoType;
   setErrorMessage: (errorMessage: string | undefined) => void;
 };
@@ -64,7 +64,7 @@ function TodoTestingDialog({
       setErrorMessage(undefined);
       const output = formatTodoResult(response);
       updateSampleData({
-        response: { output, success: true },
+        response: { testType: 'todo', output, success: true },
       });
       onOpenChange(false);
     },

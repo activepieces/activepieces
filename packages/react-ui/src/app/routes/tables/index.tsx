@@ -1,38 +1,48 @@
 import { useMutation } from '@tanstack/react-query';
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
-import { Trash2, Plus, CheckIcon, Table2, UploadCloud } from 'lucide-react';
+import {
+  Trash2,
+  Plus,
+  CheckIcon,
+  Table2,
+  UploadCloud,
+  EllipsisVertical,
+  Tag,
+  Clock,
+  Import,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   BulkAction,
   DataTable,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import { PushToGitDialog } from '@/features/git-sync/components/push-to-git-dialog';
+import { PushToGitDialog } from '@/features/project-releases/components/push-to-git-dialog';
 import { ApTableActionsMenu } from '@/features/tables/components/ap-table-actions-menu';
+import { ImportTableDialog } from '@/features/tables/components/import-table-dialog';
 import { tableHooks } from '@/features/tables/lib/table-hooks';
 import { tablesApi } from '@/features/tables/lib/tables-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { platformHooks } from '@/hooks/platform-hooks';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { useNewWindow } from '@/lib/navigation-utils';
-import { formatUtils } from '@/lib/utils';
 import { Permission, Table } from '@activepieces/shared';
 
 const ApTablesPage = () => {
   const openNewWindow = useNewWindow();
   const [selectedRows, setSelectedRows] = useState<Table[]>([]);
-  const { data: project } = projectHooks.useCurrentProject();
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const { project } = projectCollectionUtils.useCurrentProject();
   const { platform } = platformHooks.useCurrentPlatform();
   const userHasTableWritePermission = useAuthorization().checkAccess(
     Permission.WRITE_TABLE,
@@ -46,70 +56,26 @@ const ApTablesPage = () => {
   const navigate = useNavigate();
   const columns: ColumnDef<RowDataWithActions<Table>, unknown>[] = [
     {
-      id: 'select',
-      accessorKey: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          variant="secondary"
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original);
-              setSelectedRows(allRows);
-            } else {
-              setSelectedRows([]);
-            }
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <Checkbox
-            variant="secondary"
-            checked={isChecked}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                newSelectedRows.push(row.original);
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
-          />
-        );
-      },
-    },
-    {
       accessorKey: 'name',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
+        <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
       ),
       cell: ({ row }) => <div className="text-left">{row.original.name}</div>,
     },
     {
       accessorKey: 'created',
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Created')} />
+        <DataTableColumnHeader
+          column={column}
+          title={t('Created')}
+          icon={Clock}
+        />
       ),
       cell: ({ row }) => (
-        <div className="text-left">
-          {formatUtils.formatDate(new Date(row.original.created))}
-        </div>
+        <FormattedDate
+          date={new Date(row.original.created)}
+          className="text-left"
+        />
       ),
     },
     {
@@ -129,11 +95,11 @@ const ApTablesPage = () => {
             }}
             className="flex items-center justify-end w-full"
           >
-            <ApTableActionsMenu
-              table={row.original}
-              refetch={refetch}
-              deleteMutation={bulkDeleteMutation}
-            />
+            <ApTableActionsMenu table={row.original} refetch={refetch}>
+              <Button variant="ghost" size="icon">
+                <EllipsisVertical />
+              </Button>
+            </ApTableActionsMenu>
           </div>
         );
       },
@@ -201,6 +167,35 @@ const ApTablesPage = () => {
           </div>
         ),
       },
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => setIsImportDialogOpen(true)}
+              variant="outline"
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Import className="h-4 w-4" />
+              {t('Import')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
+      {
+        render: (_, __) => (
+          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
+            <Button
+              onClick={() => createTable({ name: t('New Table') })}
+              className="flex items-center gap-2"
+              disabled={!userHasTableWritePermission}
+            >
+              <Plus className="h-4 w-4" />
+              {t('New Table')}
+            </Button>
+          </PermissionNeededTooltip>
+        ),
+      },
     ],
     [bulkDeleteMutation, selectedRows, userHasPermissionToPushToGit],
   );
@@ -218,25 +213,6 @@ const ApTablesPage = () => {
       )}
     >
       <div className="flex-col w-full gap-4">
-        <div className="flex justify-between items-center">
-          <TableTitle
-            description={t(
-              'Create and manage your tables to store your automation data',
-            )}
-          >
-            {t('Tables')}
-          </TableTitle>
-          <PermissionNeededTooltip hasPermission={userHasTableWritePermission}>
-            <Button
-              onClick={() => createTable({ name: t('New Table') })}
-              className="flex items-center gap-2"
-              disabled={!userHasTableWritePermission}
-            >
-              <Plus className="h-4 w-4" />
-              {t('New Table')}
-            </Button>
-          </PermissionNeededTooltip>
-        </div>
         <DataTable
           filters={[
             {
@@ -244,7 +220,6 @@ const ApTablesPage = () => {
               type: 'input',
               title: t('Name'),
               icon: CheckIcon,
-              options: [],
             },
           ]}
           emptyStateIcon={<Table2 className="size-14" />}
@@ -263,9 +238,16 @@ const ApTablesPage = () => {
               navigate(path);
             }
           }}
+          selectColumn={true}
+          onSelectedRowsChange={setSelectedRows}
           bulkActions={bulkActions}
         />
       </div>
+      <ImportTableDialog
+        open={isImportDialogOpen}
+        setIsOpen={setIsImportDialogOpen}
+        showTrigger={false}
+      />
     </LockedFeatureGuard>
   );
 };

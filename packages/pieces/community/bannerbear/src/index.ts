@@ -24,7 +24,7 @@ export const bannerbear = createPiece({
       baseUrl: () => 'https://sync.api.bannerbear.com/v2',
       auth: bannerbearAuth,
       authMapping: async (auth) => ({
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       }),
     }),
   ],

@@ -1,15 +1,11 @@
-import {
-  useHeaderRowSelection,
-  useRowSelection,
-  type Column,
-} from 'react-data-grid';
+import { useHeaderRowSelection, useRowSelection } from 'react-data-grid';
 
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 
 import { Row } from '../lib/types';
 
-function SelectHeaderCell() {
+export function SelectHeaderCell() {
   const { isRowSelected, onRowSelectionChange } = useHeaderRowSelection();
 
   return (
@@ -31,10 +27,21 @@ function SelectHeaderCell() {
   );
 }
 
-function SelectCell({ row, rowIndex }: { row: Row; rowIndex: number }) {
+export function SelectCell({
+  row,
+  rowIndex,
+  onClick,
+}: {
+  row: Row;
+  rowIndex: number;
+  onClick?: () => void;
+}) {
   const { isRowSelected, onRowSelectionChange } = useRowSelection();
   return (
-    <div className="flex items-center justify-start h-full pl-4 group">
+    <div
+      className={cn('flex items-center justify-start h-full pl-4 group')}
+      onClick={onClick}
+    >
       <div
         className={cn('group-hover:block hidden', isRowSelected && '!block')}
       >
@@ -62,18 +69,3 @@ function SelectCell({ row, rowIndex }: { row: Row; rowIndex: number }) {
     </div>
   );
 }
-
-export const SelectColumn: Column<Row, { id: string }> = {
-  key: 'select-row',
-  name: 'Select',
-  width: 66,
-  minWidth: 66,
-  maxWidth: 66,
-  resizable: false,
-  sortable: false,
-  frozen: true,
-  renderHeaderCell: () => <SelectHeaderCell />,
-  renderCell: (props) => (
-    <SelectCell row={props.row} rowIndex={props.rowIdx + 1} />
-  ),
-};

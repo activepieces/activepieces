@@ -1,4 +1,4 @@
-import { AppSystemProp, exceptionHandler, fileCompressor } from '@activepieces/server-shared'
+import { AppSystemProp, exceptionHandler, fileCompressor, WorkerSystemProp } from '@activepieces/server-shared'
 import {
     ActivepiecesError,
     apId,
@@ -9,6 +9,7 @@ import {
     FileId,
     FileLocation,
     FileType,
+    isMultipartFile,
     isNil,
     ProjectId,
 } from '@activepieces/shared'
@@ -19,6 +20,8 @@ import { repoFactory } from '../core/db/repo-factory'
 import { system } from '../helper/system/system'
 import { FileEntity } from './file.entity'
 import { s3Helper } from './s3-helper'
+
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml', 'image/tiff', 'image/bmp', 'image/ico', 'image/avif', 'image/apng']
 
 export const fileRepo = repoFactory<File>(FileEntity)
 const EXECUTION_DATA_RETENTION_DAYS = system.getNumberOrThrow(AppSystemProp.EXECUTION_DATA_RETENTION_DAYS)
@@ -53,16 +56,17 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 return saveFileToDb(baseFile, params.data)
             }
             case FileLocation.S3: {
-                try {                    
-                    const s3Key = s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
+                try {
+                    const s3Key = await s3Helper(log).constructS3Key(params.platformId, params.projectId, params.type, baseFile.id)
                     if (!isNil(params.data)) {
                         await s3Helper(log).uploadFile(s3Key, params.data)
                     }
-                    return (await fileRepo().save({
+                    const savedFile = await fileRepo().save({
                         ...baseFile,
                         location: FileLocation.S3,
                         s3Key,
-                    }))
+                    })
+                    return savedFile
                 }
                 catch (error) {
                     exceptionHandler.handle(error, log)
@@ -70,6 +74,14 @@ export const fileService = (log: FastifyBaseLogger) => ({
                 }
             }
         }
+    },
+    async exists(params: GetOneParams): Promise<boolean> {
+        const file = await fileRepo().findOneBy({
+            projectId: params.projectId,
+            id: params.fileId,
+            type: params.type,
+        })
+        return !isNil(file)
     },
     async getFile({ projectId, fileId, type }: GetOneParams): Promise<File | null> {
         const file = await fileRepo().findOneBy({
@@ -122,6 +134,7 @@ export const fileService = (log: FastifyBaseLogger) => ({
             compression: file.compression,
         })
         return {
+            metadata: file.metadata,
             data,
             fileName: file.fileName,
         }
@@ -161,12 +174,63 @@ export const fileService = (log: FastifyBaseLogger) => ({
             types,
         }, '[FileService#deleteStaleBulk] completed')
     },
+    async uploadPublicAsset(params: UploadPublicAssetParams): Promise<string | undefined> {
+        const { file, type, platformId, allowedMimeTypes = IMAGE_MIME_TYPES, maxFileSizeInBytes, metadata } = params
+        
+        if (isNil(file)) {
+            return undefined
+        }
+        
+        if (!isMultipartFile(file)) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: 'File must be a multipart file',
+                },
+            })
+        }
+
+        if (!allowedMimeTypes.includes(file.mimetype ?? '')) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `Invalid file type. Allowed types: ${allowedMimeTypes.join(', ')}`,
+                },
+            })
+        }
+
+        if (!isNil(maxFileSizeInBytes) && file.data.length > maxFileSizeInBytes) {
+            throw new ActivepiecesError({
+                code: ErrorCode.VALIDATION,
+                params: {
+                    message: `File size exceeds ${Math.round(maxFileSizeInBytes / (1024 * 1024))}MB limit`,
+                },
+            })
+        }
+
+        const savedFile = await this.save({
+            data: file.data,
+            size: file.data.length,
+            type,
+            compression: FileCompression.NONE,
+            platformId,
+            fileName: file.filename,
+            metadata: {
+                ...metadata,
+                mimetype: file.mimetype ?? '',
+            },
+        })
+
+        return `${system.get(WorkerSystemProp.FRONTEND_URL)}/api/v1/platforms/assets/${savedFile.id}`
+    },
 })
 
 type GetDataResponse = {
+    metadata?: Record<string, string>
     data: Buffer
     fileName?: string
 }
+
 function getLocationForFile(type: FileType) {
     const FILE_LOCATION = system.getOrThrow<FileLocation>(AppSystemProp.FILE_STORAGE_LOCATION)
     if (isExecutionDataFileThatExpires(type)) {
@@ -179,12 +243,16 @@ function isExecutionDataFileThatExpires(type: FileType) {
     switch (type) {
         case FileType.FLOW_RUN_LOG:
         case FileType.FLOW_STEP_FILE:
+        case FileType.TRIGGER_PAYLOAD:
         case FileType.TRIGGER_EVENT_FILE:
+        case FileType.PLATFORM_ASSET:
+        case FileType.USER_PROFILE_PICTURE:
             return true
         case FileType.SAMPLE_DATA:
         case FileType.SAMPLE_DATA_INPUT:
         case FileType.PACKAGE_ARCHIVE:
         case FileType.PROJECT_RELEASE:
+        case FileType.FLOW_VERSION_BACKUP:
             return false
         default:
             throw new Error(`File type ${type} is not supported`)
@@ -207,4 +275,13 @@ type GetOneParams = {
     fileId: FileId
     projectId?: ProjectId
     type?: FileType
+}
+
+type UploadPublicAssetParams = {
+    file: unknown
+    type: FileType
+    platformId: string
+    allowedMimeTypes?: string[]
+    maxFileSizeInBytes?: number
+    metadata?: Record<string, string>
 }

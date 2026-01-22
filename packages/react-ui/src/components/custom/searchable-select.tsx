@@ -1,7 +1,7 @@
 import deepEqual from 'deep-equal';
 import { t } from 'i18next';
 import { Check, ChevronsUpDown, RefreshCcw, X } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 
 import { SelectUtilButton } from '@/components/custom/select-util-button';
 import {
@@ -40,10 +40,33 @@ type SearchableSelectProps<T> = {
   showRefresh?: boolean;
   onClose?: () => void;
   triggerClassName?: string;
-  valuesRendering?: (value: T) => React.ReactNode;
+  valuesRendering?: (value: unknown) => React.ReactNode;
+  openState?: {
+    open: boolean;
+    setOpen: (open: boolean) => void;
+  };
+  refreshOnSearch?: (searchValue: string) => void;
+  /**Use to show the selected option when search doesn't return the selected option */
+  cachedOptions?: {
+    value: T;
+    label: string;
+  }[];
 };
 
-export const SearchableSelect = <T extends React.Key>({
+const useOpenState = (openStateInitializer?: {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  if (openStateInitializer) {
+    return openStateInitializer;
+  }
+  return {
+    open: isOpen,
+    setOpen: setIsOpen,
+  };
+};
+export const SearchableSelect = <T,>({
   options,
   onChange,
   value,
@@ -56,51 +79,43 @@ export const SearchableSelect = <T extends React.Key>({
   onClose,
   triggerClassName,
   valuesRendering,
+  openState: openStateInitializer,
+  refreshOnSearch,
+  cachedOptions = [],
 }: SearchableSelectProps<T>) => {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [open, setOpen] = useState(false);
-  const [filterOptionsIndices, setFilteredOptions] = useState<number[]>([]);
+  const { open, setOpen } = useOpenState(openStateInitializer);
   const triggerWidth = `${triggerRef.current?.clientWidth ?? 0}px`;
-  const [selectedIndex, setSelectedIndex] = useState(
-    options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
-  );
-
-  useEffect(() => {
-    setSelectedIndex(
-      options.findIndex((option) => deepEqual(option.value, value)) ?? -1,
-    );
-  }, [value, options]);
-
-  useEffect(() => {
-    if (searchTerm.length === 0) {
-      setFilteredOptions(options.map((_, index) => index));
-    } else {
-      const filteredOptions = options
-        .map((option, index) => {
-          return {
-            label: option.label,
-            value: option.value,
-            index: index,
-            description: option.description ?? '',
-          };
-        })
-        .filter((option) => {
-          return (
-            option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            option.description.toLowerCase().includes(searchTerm.toLowerCase())
-          );
-        });
-      setFilteredOptions(filteredOptions.map((op) => op.index));
-    }
-  }, [searchTerm, options]);
+  const selectedOption =
+    [...cachedOptions, ...options].find((option) =>
+      deepEqual(option.value, value),
+    ) ?? undefined;
+  const filterOptionsIndices = options
+    .map((option, index) => {
+      return {
+        label: option.label,
+        value: option.value,
+        index: index,
+        description: option.description ?? '',
+      };
+    })
+    .filter((option) => {
+      if (refreshOnSearch || searchTerm.length === 0) {
+        return true;
+      }
+      return (
+        option.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        option.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    })
+    .map((option) => option.index);
 
   const onSelect = (index: string) => {
     const optionIndex =
       Number.isInteger(parseInt(index)) && !Number.isNaN(parseInt(index))
         ? parseInt(index)
         : -1;
-    setSelectedIndex(optionIndex);
     setSearchTerm('');
 
     if (optionIndex === -1) {
@@ -116,6 +131,10 @@ export const SearchableSelect = <T extends React.Key>({
       onOpenChange={(open) => {
         if (!open) {
           onClose?.();
+        }
+        if (refreshOnSearch && searchTerm.length > 0) {
+          refreshOnSearch('');
+          setSearchTerm('');
         }
         setOpen(open);
       }}
@@ -142,22 +161,21 @@ export const SearchableSelect = <T extends React.Key>({
             aria-expanded={open}
             className={cn('w-full justify-between', triggerClassName)}
             onClick={(e) => {
-              console.log('clicked');
-              setOpen((prev) => !prev);
+              setOpen(!open);
               e.preventDefault();
             }}
           >
             <span className="flex w-full truncate select-none">
-              {selectedIndex > -1 && options[selectedIndex]
+              {selectedOption
                 ? valuesRendering
-                  ? valuesRendering(options[selectedIndex].value)
-                  : options[selectedIndex].label
+                  ? valuesRendering(selectedOption.value)
+                  : selectedOption.label
                 : placeholder}
             </span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
           <div className="right-10 top-2 absolute flex gap-2  z-50 items-center">
-            {showDeselect && !disabled && value && !loading && (
+            {showDeselect && !disabled && selectedOption && !loading && (
               <SelectUtilButton
                 tooltipText={t('Unset')}
                 onClick={(e) => {
@@ -197,6 +215,9 @@ export const SearchableSelect = <T extends React.Key>({
             value={searchTerm}
             onValueChange={(e) => {
               setSearchTerm(e);
+              if (refreshOnSearch) {
+                refreshOnSearch(e);
+              }
             }}
           />
           {filterOptionsIndices.length === 0 && (
@@ -210,6 +231,7 @@ export const SearchableSelect = <T extends React.Key>({
                 viewPortClassName={'max-h-[200px]'}
               >
                 {filterOptionsIndices &&
+                  !loading &&
                   filterOptionsIndices.map((filterIndex) => {
                     const option = options[filterIndex];
                     if (!option) {
@@ -234,8 +256,8 @@ export const SearchableSelect = <T extends React.Key>({
                             option.label
                           )}
                           <Check
-                            className={cn('flex-shrink-0 w-4 h-4', {
-                              hidden: selectedIndex !== filterIndex,
+                            className={cn('shrink-0 w-4 h-4', {
+                              hidden: selectedOption?.value !== option.value,
                             })}
                           />
                         </div>
@@ -247,6 +269,9 @@ export const SearchableSelect = <T extends React.Key>({
                       </CommandItem>
                     );
                   })}
+                {loading && (
+                  <CommandItem disabled>{t('Loading...')}</CommandItem>
+                )}
               </ScrollArea>
             </CommandList>
           </CommandGroup>

@@ -15,6 +15,7 @@ export const subscribeMultipleAction = createAction({
   description: 'Add a new subscriber to a multiple lists',
   props: {
     lists: Property.MultiSelectDropdown({
+      auth: sendyAuth,
       displayName: 'Lists',
       description: 'Select the lists to subscribe to',
       required: true,

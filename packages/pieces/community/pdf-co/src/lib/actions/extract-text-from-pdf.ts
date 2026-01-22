@@ -83,7 +83,7 @@ export const extractTextFromPdf = createAction({
                 method: HttpMethod.POST,
                 url: `${BASE_URL}/pdf/convert/to/text-simple`,
                 headers: {
-                    'x-api-key': auth as string,
+                    'x-api-key': auth.secret_text,
                     'Content-Type': 'application/json',
                 },
                 body: requestBody,

@@ -1,0 +1,23 @@
+{
+  "Apify": "Apify",
+  "Your full‑stack platform for web scraping": "Ваша полномасштабная стековая платформа для веб-лома",
+  "API Key": "Ключ API",
+  "Find your API key on Apify in the settings, API & Integrations section.": "Найдите ваш API ключ на Apify в разделе настройки, API и Интеграции.",
+  "Enter API key authentication details": "Введите данные проверки подлинности ключа API",
+  "Get Dataset Items": "Получить предметы набора данных",
+  "Get user's Actors": "Получить пользовательские акторы",
+  "Get last run details": "Получить данные о последнем запуске",
+  "Start an Apify Actor": "Начать Apify актер",
+  "Gets the data from an Actors run.": "Получает данные от исполнителей.",
+  "Gets the list of Actors available to the user.": "Получает список Actors доступных пользователю.",
+  "Gets last run details for a given Actor.": "Возвращает последний запуск деталей для данного актера.",
+  "Starts an Apify Actor web scraper": "Запускает веб-скрепер Apify Actor",
+  "The runid of the Actor (alphanumeric)": "Руна актера (альфанумерический)",
+  "The id of the Actor (alphanumeric)": "Идентификатор актера (буквенно-цифровый)",
+  "The id or name of the Actor (alphanumeric)": "Идентификатор или имя актера (буквенно-цифровый)",
+  "JSON input": "JSON input",
+  "The runid of the completed Actors run [defaultDatasetId] (compulsory)": "The runid of the completed Actors run [defaultDatasetId] (compulsory)",
+  "The id [defaultDatasetId] of the Actor to get run information [you can also use the username then ~ then the name] (compulsory)": "id [defaultDatasetId] актера для получения информации о запуске [вы также можете использовать имя пользователя, затем ~ то имя] (обязательно)",
+  "The id of the Actor to run [Use either id, or the username then ~ then the name] (compulsory)": "Идентификатор актора для запуска [Используйте идентификатор или имя пользователя, затем ~ то имя] (обязательно)",
+  "The JSON input to pass to the Actor [you can get the JSON from a run in your Apify account]. If left blank will use defaults. (optional)": "Ввод JSON, который передается Исполнительу [вы можете получить JSON с запуска в вашем аккаунте Apif]. Если оставить пустым будет использовать значения по умолчанию. (опционально)"
+}

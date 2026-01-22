@@ -9,12 +9,18 @@ import {
 } from '@activepieces/pieces-common';
 import { Property, OAuth2PropertyValue } from '@activepieces/pieces-framework';
 import { isNil } from '@activepieces/shared';
+import { githubAuth } from '../..';
 
 export const githubCommon = {
   baseUrl: 'https://api.github.com',
-  repositoryDropdown: Property.Dropdown<{ repo: string; owner: string }>({
+  repositoryDropdown: Property.Dropdown<
+    { repo: string; owner: string },
+    true,
+    typeof githubAuth
+  >({
     displayName: 'Repository',
     refreshers: [],
+    auth: githubAuth,
     required: true,
     options: async ({ auth }) => {
       if (!auth) {
@@ -40,8 +46,149 @@ export const githubCommon = {
       };
     },
   }),
+  milestoneDropdown: (required = false) =>
+    Property.Dropdown({
+      auth: githubAuth,
+      displayName: 'Milestone',
+      description: 'The milestone to associate this issue with.',
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a repository first',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        const milestones = await githubPaginatedApiCall<{
+          number: number;
+          title: string;
+        }>({
+          accessToken: auth.access_token,
+          method: HttpMethod.GET,
+          resourceUri: `/repos/${owner}/${repo}/milestones`,
+        });
+        return {
+          disabled: false,
+          options: milestones.map((milestone) => {
+            return {
+              label: milestone.title,
+              value: milestone.number,
+            };
+          }),
+        };
+      },
+    }),
+  branchDropdown: (displayName: string, desc: string, required = true) =>
+    Property.Dropdown({
+      auth: githubAuth,
+      displayName,
+      description: desc,
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a repository first',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        const branches = await githubPaginatedApiCall<{ name: string }>({
+          accessToken: auth.access_token,
+          method: HttpMethod.GET,
+          resourceUri: `/repos/${owner}/${repo}/branches`,
+        });
+        return {
+          disabled: false,
+          options: branches.map((branch) => {
+            return {
+              label: branch.name,
+              value: branch.name,
+            };
+          }),
+        };
+      },
+    }),
+
+  issueDropdown: (required = true) =>
+    Property.Dropdown({
+      auth: githubAuth,
+      displayName: 'Issue',
+      description: 'The issue to select.',
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'Please select a repository first',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        // Fetch open issues from the repository
+        const issues = await githubPaginatedApiCall<{
+          number: number;
+          title: string;
+          pull_request?: Record<string, any>;
+        }>({
+          accessToken: auth.access_token,
+          method: HttpMethod.GET,
+          resourceUri: `/repos/${owner}/${repo}/issues`,
+          query: {
+            state: 'open', // We will list open issues
+          },
+        });
+        return {
+          disabled: false,
+          options: issues
+            .filter((issue) => !issue.pull_request)
+            .map((issue) => {
+              return {
+                label: `#${issue.number} - ${issue.title}`,
+                value: issue.number,
+              };
+            }),
+        };
+      },
+    }),
+
+  assigneeSingleDropdown: (required = false) =>
+    Property.Dropdown({
+      auth: githubAuth,
+      displayName: 'Assignee',
+      description: 'Filter issues by a specific assignee.',
+      required,
+      refreshers: ['repository'],
+      options: async ({ auth, repository }) => {
+        if (!auth || !repository) {
+          return {
+            disabled: true,
+            options: [],
+            placeholder: 'please authenticate first and select repo',
+          };
+        }
+        const { owner, repo } = repository as RepositoryProp;
+        const assignees = await getAssignee(auth, owner, repo);
+        return {
+          disabled: false,
+          options: assignees.map((assignee) => {
+            return {
+              label: assignee.login,
+              value: assignee.login,
+            };
+          }),
+        };
+      },
+    }),
+
   assigneeDropDown: (required = false) =>
     Property.MultiSelectDropdown({
+      auth: githubAuth,
       displayName: 'Assignees',
       description: 'Assignees for the Issue',
       refreshers: ['repository'],
@@ -55,7 +202,7 @@ export const githubCommon = {
             placeholder: 'please authenticate first and select repo',
           };
         }
-        const authProp: OAuth2PropertyValue = auth as OAuth2PropertyValue;
+        const authProp: OAuth2PropertyValue = auth;
         const { owner, repo } = repository as RepositoryProp;
         const assignees = await getAssignee(authProp, owner, repo);
         return {
@@ -71,6 +218,7 @@ export const githubCommon = {
     }),
   labelDropDown: (required = false) =>
     Property.MultiSelectDropdown({
+      auth: githubAuth,
       displayName: 'Labels',
       description: 'Labels for the Issue',
       refreshers: ['repository'],

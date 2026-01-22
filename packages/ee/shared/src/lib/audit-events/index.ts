@@ -32,6 +32,7 @@ export enum ApplicationEventName {
     FLOW_CREATED = 'flow.created',
     FLOW_DELETED = 'flow.deleted',
     FLOW_UPDATED = 'flow.updated',
+    FLOW_RUN_RESUMED = 'flow.run.resumed',
     FLOW_RUN_STARTED = 'flow.run.started',
     FLOW_RUN_FINISHED = 'flow.run.finished',
     FOLDER_CREATED = 'folder.created',
@@ -102,6 +103,7 @@ export const FlowRunEvent = Type.Object({
     action: Type.Union([
         Type.Literal(ApplicationEventName.FLOW_RUN_STARTED),
         Type.Literal(ApplicationEventName.FLOW_RUN_FINISHED),
+        Type.Literal(ApplicationEventName.FLOW_RUN_RESUMED),
     ]),
     data: Type.Object({
         flowRun: Type.Pick(FlowRun, [
@@ -109,9 +111,11 @@ export const FlowRunEvent = Type.Object({
             'startTime',
             'finishTime',
             'duration',
+            'triggeredBy',
             'environment',
             'flowId',
             'flowVersionId',
+            'stepNameToTest',
             'flowDisplayName',
             'status',
         ]),
@@ -267,6 +271,9 @@ export function summarizeApplicationEvent(event: ApplicationEvent) {
         case ApplicationEventName.FLOW_RUN_FINISHED: {
             return `Flow run ${event.data.flowRun.id} is finished`
         }
+        case ApplicationEventName.FLOW_RUN_RESUMED: {
+            return `Flow run ${event.data.flowRun.id} is resumed`
+        }
         case ApplicationEventName.FLOW_CREATED:
             return `Flow ${event.data.flow.id} is created`
         case ApplicationEventName.FLOW_DELETED:
@@ -365,6 +372,10 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
         }
         case FlowOperationType.UPDATE_METADATA:
             return `Updated metadata for flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_MINUTES_SAVED:
+            return `Updated minutes saved for flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_OWNER:
+            return `Updated owner for flow "${event.data.flowVersion.displayName}" to "${event.data.request.request.ownerId}".`
         case FlowOperationType.MOVE_BRANCH:
             return `Moved branch number ${
                 event.data.request.request.sourceBranchIndex + 1
@@ -373,5 +384,11 @@ function convertUpdateActionToDetails(event: FlowUpdatedEvent) {
             } in flow "${event.data.flowVersion.displayName}" for the step "${
                 event.data.request.request.stepName
             }".`
+        case FlowOperationType.ADD_NOTE:
+            return `Added note to flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.UPDATE_NOTE:
+            return `Updated note in flow "${event.data.flowVersion.displayName}".`
+        case FlowOperationType.DELETE_NOTE:
+            return `Deleted note in flow "${event.data.flowVersion.displayName}".`
     }
 }

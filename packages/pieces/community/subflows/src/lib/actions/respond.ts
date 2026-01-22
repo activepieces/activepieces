@@ -1,4 +1,4 @@
-import { DynamicPropsValue, Property, StoreScope, createAction } from '@activepieces/pieces-framework';
+import { DynamicPropsValue, PieceAuth, Property, StoreScope, createAction } from '@activepieces/pieces-framework';
 import { callableFlowKey, CallableFlowResponse, MOCK_CALLBACK_IN_TEST_FLOW_URL } from '../common';
 import { httpClient, HttpMethod } from '@activepieces/pieces-common';
 import { isNil } from '@activepieces/shared';
@@ -29,6 +29,7 @@ export const response = createAction({
       },
     }),
     response: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Response',
       required: true,
       refreshers: ['mode'],
@@ -62,6 +63,7 @@ export const response = createAction({
         method: HttpMethod.POST,
         url: callbackUrl,
         body: {
+          status: 'success',
           data: response
         },
         retries: 10,

@@ -1,19 +1,12 @@
 import { Property, createAction } from '@activepieces/pieces-framework';
 import {
   optionalTimeFormats,
+  parseDate,
   timeFormat,
   timeFormatDescription,
   timeZoneOptions,
   getCorrectedFormat,
 } from '../common';
-import dayjs from 'dayjs';
-import utc from 'dayjs/plugin/utc';
-import timezone from 'dayjs/plugin/timezone';
-import advancedFormat from 'dayjs/plugin/advancedFormat';
-
-dayjs.extend(utc);
-dayjs.extend(timezone);
-dayjs.extend(advancedFormat);
 
 export const formatDateAction = createAction({
   name: 'format_date',
@@ -69,6 +62,7 @@ export const formatDateAction = createAction({
     }),
   },
   async run(context) {
+    
     const inputDate = context.propsValue.inputDate;
     const inputFormat = getCorrectedFormat(context.propsValue.inputFormat);
     const inputTimeZone = context.propsValue.inputTimeZone as string;
@@ -96,5 +90,7 @@ function changeDateFormat(
   outputFormat: string,
   outputTimeZone: string
 ): string {
-  return dayjs.tz(inputDate, inputFormat, inputTimeZone).tz(outputTimeZone).format(outputFormat);
+  const parsedDate = parseDate(inputDate, inputFormat);
+  
+  return parsedDate.tz(inputTimeZone, true).tz(outputTimeZone).format(outputFormat);
 }

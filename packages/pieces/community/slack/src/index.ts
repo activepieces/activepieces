@@ -1,10 +1,15 @@
-import { createCustomApiCallAction } from '@activepieces/pieces-common';
 import {
+  createCustomApiCallAction,
+  httpClient,
+  HttpMethod,
+} from '@activepieces/pieces-common';
+import {
+  createPiece,
   OAuth2PropertyValue,
   PieceAuth,
-  createPiece,
   Property,
 } from '@activepieces/pieces-framework';
+
 import { PieceCategory } from '@activepieces/shared';
 import crypto from 'node:crypto';
 import { requestActionDirectMessageAction } from './lib/actions/request-action-direct-message';
@@ -43,6 +48,7 @@ import { newSavedMessageTrigger } from './lib/triggers/new-saved-message';
 import { newTeamCustomEmojiTrigger } from './lib/triggers/new-team-custom-emoji';
 import { inviteUserToChannelAction } from './lib/actions/invite-user-to-channel';
 import { listUsers } from './lib/actions/list-users';
+import { deleteMessageAction } from './lib/actions/delete-message';
 
 export const slackAuth = PieceAuth.OAuth2({
   description: '',
@@ -77,32 +83,68 @@ export const slackAuth = PieceAuth.OAuth2({
     'emoji:read',
     'users.profile:read',
     'channels:write.invites',
-    'groups:write.invites'
+    'groups:write.invites',
   ],
 });
 
 export const slack = createPiece({
   displayName: 'Slack',
   description: 'Channel-based messaging platform',
-  minimumSupportedRelease: '0.30.0',
+  minimumSupportedRelease: '0.66.7',
   logoUrl: 'https://cdn.activepieces.com/pieces/slack.png',
   categories: [PieceCategory.COMMUNICATION],
   auth: slackAuth,
   events: {
-    parseAndReply: ({ payload }) => {
-      const payloadBody = payload.body as PayloadBody;
-      if (payloadBody.challenge) {
+    parseAndReply: ({ payload, server }) => {
+      if (
+        payload.headers['content-type'] === 'application/x-www-form-urlencoded'
+      ) {
+        if (
+          payload.body &&
+          typeof payload.body == 'object' &&
+          'payload' in payload.body
+        ) {
+          const interactionPayloadBody = JSON.parse(
+            (payload.body as { payload: string }).payload
+          ) as InteractionPayloadBody;
+          if (interactionPayloadBody.type === 'block_actions') {
+            const action = interactionPayloadBody.actions?.[0];
+            if (
+              action &&
+              action.type === 'button' &&
+              action.value?.startsWith(server.publicUrl)
+            ) {
+              // We don't await the promise as we don't handle the response anyway
+              httpClient.sendRequest({
+                url: action.value,
+                method: HttpMethod.POST,
+                body: interactionPayloadBody,
+              });
+            }
+          }
+        }
         return {
           reply: {
-            body: payloadBody['challenge'],
             headers: {},
+            body: {},
           },
         };
+      } else {
+        const eventPayloadBody = payload.body as EventPayloadBody;
+        if (eventPayloadBody.challenge) {
+          return {
+            reply: {
+              body: eventPayloadBody['challenge'],
+              headers: {},
+            },
+          };
+        }
+
+        return {
+          event: eventPayloadBody?.event?.type,
+          identifierValue: eventPayloadBody.team_id,
+        };
       }
-      return {
-        event: payloadBody?.event?.type,
-        identifierValue: payloadBody.team_id,
-      };
     },
     verify: ({ webhookSecret, payload }) => {
       // Construct the signature base string
@@ -141,6 +183,7 @@ export const slack = createPiece({
     findUserByIdAction,
     listUsers,
     updateMessage,
+    deleteMessageAction,
     createChannelAction,
     updateProfileAction,
     getChannelHistory,
@@ -196,10 +239,19 @@ export const slack = createPiece({
   ],
 });
 
-type PayloadBody = {
+type EventPayloadBody = {
+  // Event payload
   challenge: string;
   event: {
     type: string;
   };
   team_id: string;
+};
+type InteractionPayloadBody = {
+  // Interaction payload
+  type?: string;
+  actions?: {
+    type: string;
+    value: string;
+  }[];
 };

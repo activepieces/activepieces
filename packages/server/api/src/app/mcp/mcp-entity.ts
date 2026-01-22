@@ -1,23 +1,20 @@
-import { Agent, McpWithTools } from '@activepieces/shared'
+import { McpServer, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-type McpWithToolsWithSchema = McpWithTools & {  
-    agent: Agent
+type McpServerWithSchema = McpServer & {  
+    project: Project
 }
-export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
-    name: 'mcp',
+
+export const McpServerEntity = new EntitySchema<McpServerWithSchema>({
+    name: 'mcp_server',
     columns: {
         ...BaseColumnSchemaPart,
-        name: {
+        projectId: ApIdSchema,
+        status: {
             type: String,
             nullable: false,
-        },  
-        agentId: {
-            type: String,
-            nullable: true,
         },
-        projectId: ApIdSchema,
         token: {
             type: String,
             nullable: false,
@@ -25,32 +22,20 @@ export const McpEntity = new EntitySchema<McpWithToolsWithSchema>({
     },
     indices: [
         {
-            name: 'mcp_project_id',
+            name: 'mcp_server_project_id',
             columns: ['projectId'],
-            unique: false,
-        },
-        {
-            name: 'mcp_agent_id',
-            columns: ['agentId'],
-            unique: false,
+            unique: true,
         },
     ],
     relations: {
-        tools: {
-            type: 'one-to-many',
-            target: 'mcp_tool',
-            inverseSide: 'mcp',
-            cascade: true,
-            onDelete: 'CASCADE',
-        },
-        agent: {
+        project: {
             type: 'many-to-one',
-            target: 'agent',
+            target: 'project',
             cascade: true,
             onDelete: 'CASCADE',
             joinColumn: {
-                name: 'agentId',
-                foreignKeyConstraintName: 'fk_mcp_agent_id',
+                name: 'projectId',
+                referencedColumnName: 'id',
             },
         },
     },

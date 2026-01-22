@@ -16,12 +16,12 @@ export const removeBackground = createAction({
   },
   async run({ auth, propsValue, files }) {
     const form = new FormData();
-    form.append('image_file', new Blob([propsValue.file.data]));
+    form.append('image_file', new Blob([propsValue.file.data as any]));
     const response = await httpClient.sendRequest({
       url: `https://sdk.photoroom.com/v1/segment`,
       method: HttpMethod.POST,
       headers: {
-        'x-api-key': auth.apiKey,
+        'x-api-key': auth.props.apiKey,
         'Content-Type': 'multipart/form-data',
       },
       body: form,

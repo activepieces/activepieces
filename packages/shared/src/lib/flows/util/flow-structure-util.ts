@@ -1,23 +1,26 @@
 import { isNil } from '../../common'
 import { ActivepiecesError, ErrorCode } from '../../common/activepieces-error'
-import { Action, ActionType, BranchCondition, BranchExecutionType, emptyCondition, LoopOnItemsAction, RouterAction } from '../actions/action'
+import { BranchCondition, BranchExecutionType, emptyCondition, FlowAction, FlowActionType, LoopOnItemsAction, RouterAction } from '../actions/action'
 import { FlowVersion } from '../flow-version'
-import { Trigger, TriggerType } from '../triggers/trigger'
+import { FlowTrigger, FlowTriggerType } from '../triggers/trigger'
 
-export type Step = Action | Trigger
+
+export const AI_PIECE_NAME = '@activepieces/piece-ai'
+
+export type Step = FlowAction | FlowTrigger
 type StepWithIndex = Step & {
     dfsIndex: number
 }
 
-function isAction(type: ActionType | TriggerType | undefined): type is ActionType {
-    return Object.entries(ActionType).some(([, value]) => value === type)
+function isAction(type: FlowActionType | FlowTriggerType | undefined): type is FlowActionType {
+    return Object.entries(FlowActionType).some(([, value]) => value === type)
 }
 
-function isTrigger(type: ActionType | TriggerType | undefined): type is TriggerType {
-    return Object.entries(TriggerType).some(([, value]) => value === type)
+function isTrigger(type: FlowActionType | FlowTriggerType | undefined): type is FlowTriggerType {
+    return Object.entries(FlowTriggerType).some(([, value]) => value === type)
 }
 
-function getActionOrThrow(name: string, flowRoot: Step): Action {
+function getActionOrThrow(name: string, flowRoot: Step): FlowAction {
     const step = getStepOrThrow(name, flowRoot)
     if (!isAction(step.type)) {
         throw new ActivepiecesError({
@@ -27,10 +30,10 @@ function getActionOrThrow(name: string, flowRoot: Step): Action {
             },
         })
     }
-    return step as Action
+    return step as FlowAction
 }
 
-function getTriggerOrThrow(name: string, flowRoot: Step): Trigger {
+function getTriggerOrThrow(name: string, flowRoot: Step): FlowTrigger {
     const step = getStepOrThrow(name, flowRoot)
     if (!isTrigger(step.type)) {
         throw new ActivepiecesError({
@@ -40,7 +43,7 @@ function getTriggerOrThrow(name: string, flowRoot: Step): Trigger {
             },
         })
     }
-    return step as Trigger
+    return step as FlowTrigger
 }
 
 function getStep(name: string, flowRoot: Step): Step | undefined {
@@ -66,21 +69,21 @@ function transferStep<T extends Step>(
 ): Step {
     const updatedStep = transferFunction(step as T)
     switch (updatedStep.type) {
-        case ActionType.LOOP_ON_ITEMS: {
+        case FlowActionType.LOOP_ON_ITEMS: {
             const { firstLoopAction } = updatedStep
             if (firstLoopAction) {
                 updatedStep.firstLoopAction = transferStep(
                     firstLoopAction,
                     transferFunction,
-                ) as Action
+                ) as FlowAction
             }
             break
         }
-        case ActionType.ROUTER: {
+        case FlowActionType.ROUTER: {
             const { children } = updatedStep
             if (children) {
                 updatedStep.children = children.map((child) =>
-                    child ? (transferStep(child, transferFunction) as Action) : null,
+                    child ? (transferStep(child, transferFunction) as FlowAction) : null,
                 )
             }
             break
@@ -93,7 +96,7 @@ function transferStep<T extends Step>(
         updatedStep.nextAction = transferStep(
             updatedStep.nextAction,
             transferFunction,
-        ) as Action
+        ) as FlowAction
     }
 
     return updatedStep
@@ -108,7 +111,7 @@ function transferFlow<T extends Step>(
     clonedFlow.trigger = transferStep(
         clonedFlow.trigger,
         transferFunction,
-    ) as Trigger
+    ) as FlowTrigger
     return clonedFlow
 }
 
@@ -130,7 +133,7 @@ const createBranch = (branchName: string, conditions: BranchCondition[][] | unde
     }
 }
 
-function findPathToStep(trigger: Trigger, targetStepName: string): StepWithIndex[] {
+function findPathToStep(trigger: FlowTrigger, targetStepName: string): StepWithIndex[] {
     const steps = flowStructureUtil.getAllSteps(trigger).map((step, dfsIndex) => ({
         ...step,
         dfsIndex,
@@ -153,8 +156,8 @@ function getAllChildSteps(action: LoopOnItemsAction | RouterAction): Step[] {
 
 function isChildOf(parent: Step, childStepName: string): boolean {
     switch (parent.type) {
-        case ActionType.ROUTER:
-        case ActionType.LOOP_ON_ITEMS: {
+        case FlowActionType.ROUTER:
+        case FlowActionType.LOOP_ON_ITEMS: {
             const children = getAllChildSteps(parent)
             return children.findIndex((c) => c.name === childStepName) > -1
         }
@@ -164,7 +167,7 @@ function isChildOf(parent: Step, childStepName: string): boolean {
     return false
 }
 
-const findUnusedNames = (source: Trigger | string[], count = 1) => {
+const findUnusedNames = (source: FlowTrigger | string[], count = 1) => {
     const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
     const unusedNames = []
     for (let i = 1; i <= count; i++) {
@@ -175,7 +178,7 @@ const findUnusedNames = (source: Trigger | string[], count = 1) => {
     return unusedNames
 }
 
-const findUnusedName = (source: Trigger | string[]) => {
+const findUnusedName = (source: FlowTrigger | string[]) => {
     const names = Array.isArray(source) ? source : flowStructureUtil.getAllSteps(source).map((f) => f.name)
     let index = 1
     let name = 'step_1'
@@ -200,13 +203,32 @@ function getAllNextActionsWithoutChildren(start: Step): Step[] {
 }
 
 
-const extractConnectionIdsFromAuth = (auth: string): string[] =>
-    auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
-        ?.[1]
-        .split(/'\s*,\s*'/)
-        .map(id => id.trim()) ?? []
+function extractConnectionIdsFromAuth(auth: string): string[] {
+    const match = auth.match(/{{connections\['([^']*(?:'\s*,\s*'[^']*)*)'\]}}/)
+    if (!match || !match[1]) {
+        return []
+    }
+    return match[1].split(/'\s*,\s*'/).map(id => id.trim())
+}
 
-const extractConnectionIds = (flowVersion: FlowVersion): string[] => {
+function extractAgentIds(flowVersion: FlowVersion): string[] {
+    const getExternalAgentId = (action: Step) => {
+        if (isAgentPiece(action) && 'agentId' in action.settings.input) {
+            return action.settings.input.agentId
+        }
+        return null
+    }
+
+    return flowStructureUtil.getAllSteps(flowVersion.trigger).map(step => getExternalAgentId(step)).filter(step => step !== null && step !== '')
+}
+
+function isAgentPiece(action: Step) {
+    return (
+        action.type === FlowActionType.PIECE && action.settings.pieceName === AI_PIECE_NAME
+    )
+}
+
+function extractConnectionIds(flowVersion: FlowVersion): string[] {
     const triggerAuthIds = flowVersion.trigger.settings?.input?.auth
         ? extractConnectionIdsFromAuth(flowVersion.trigger.settings.input.auth)
         : []
@@ -240,4 +262,6 @@ export const flowStructureUtil = {
     getAllNextActionsWithoutChildren,
     getAllChildSteps,
     extractConnectionIds,
+    isAgentPiece,
+    extractAgentIds,
 }

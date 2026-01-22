@@ -3,11 +3,14 @@ import { t } from 'i18next';
 import {
   CheckIcon,
   Globe,
-  AppWindow,
   Tag,
-  User,
   Replace,
   Trash2,
+  Plus,
+  Clock,
+  Activity,
+  Workflow,
+  Puzzle,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -15,21 +18,20 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { NewConnectionDialog } from '@/app/connections/new-connection-dialog';
 import { ReconnectButtonDialog } from '@/app/connections/reconnect-button-dialog';
 import { ReplaceConnectionsDialog } from '@/app/connections/replace-connections-dialog';
-import { ApAvatar } from '@/components/custom/ap-avatar';
 import { CopyTextTooltip } from '@/components/custom/clipboard/copy-text-tooltip';
 import { PermissionNeededTooltip } from '@/components/custom/permission-needed-tooltip';
-import { TableTitle } from '@/components/custom/table-title';
 import { ConfirmationDeleteDialog } from '@/components/delete-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   BulkAction,
   CURSOR_QUERY_PARAM,
   DataTable,
+  DataTableFilters,
   LIMIT_QUERY_PARAM,
   RowDataWithActions,
 } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
+import { FormattedDate } from '@/components/ui/formatted-date';
 import { StatusIconWithText } from '@/components/ui/status-icon-with-text';
 import {
   Tooltip,
@@ -46,6 +48,7 @@ import { appConnectionUtils } from '@/features/connections/lib/utils';
 import PieceIconWithPieceName from '@/features/pieces/components/piece-icon-from-name';
 import { piecesHooks } from '@/features/pieces/lib/pieces-hooks';
 import { useAuthorization } from '@/hooks/authorization-hooks';
+import { ownerColumnHooks } from '@/hooks/owner-column-hooks';
 import { userHooks } from '@/hooks/user-hooks';
 import { authenticationSession } from '@/lib/authentication-session';
 import { formatUtils } from '@/lib/utils';
@@ -121,294 +124,213 @@ function AppConnectionsPage() {
   const userHasPermissionToWriteAppConnection = checkAccess(
     Permission.WRITE_APP_CONNECTION,
   );
-
   const { data: owners } = appConnectionsQueries.useConnectionsOwners();
-
-  const ownersOptions = owners?.map((owner) => ({
-    label: `${owner.firstName} ${owner.lastName} (${owner.email})`,
-    value: owner.email,
-  }));
-  const filters = [
-    {
-      type: 'select',
-      title: t('Status'),
-      accessorKey: 'status',
-      options: Object.values(AppConnectionStatus).map((status) => {
-        return {
-          label: formatUtils.convertEnumToHumanReadable(status),
-          value: status,
-        };
-      }),
-      icon: CheckIcon,
-    } as const,
-    {
-      type: 'select',
-      title: t('Pieces'),
-      accessorKey: 'pieceName',
-      icon: AppWindow,
-      options: pieceOptions,
-    } as const,
-    {
-      type: 'input',
-      title: t('Name'),
-      accessorKey: 'displayName',
-      icon: Tag,
-      options: [],
-    } as const,
-    {
-      type: 'select',
-      title: t('Owner'),
-      accessorKey: 'owner',
-      icon: User,
-      options: ownersOptions ?? [],
-    } as const,
-  ];
+  const filters: DataTableFilters<keyof AppConnectionWithoutSensitiveData>[] =
+    ownerColumnHooks.useOwnerColumnFilter<AppConnectionWithoutSensitiveData>(
+      [
+        {
+          type: 'select',
+          title: t('Status'),
+          accessorKey: 'status',
+          options: Object.values(AppConnectionStatus).map((status) => {
+            return {
+              label: formatUtils.convertEnumToHumanReadable(status),
+              value: status,
+            };
+          }),
+          icon: CheckIcon,
+        },
+        {
+          type: 'select',
+          title: t('Pieces'),
+          accessorKey: 'pieceName',
+          icon: Puzzle,
+          options: pieceOptions,
+        },
+        {
+          type: 'input',
+          title: t('Name'),
+          accessorKey: 'displayName',
+          icon: Tag,
+        },
+      ],
+      4,
+      owners,
+    );
 
   const columns: ColumnDef<
     RowDataWithActions<AppConnectionWithoutSensitiveData>,
     unknown
-  >[] = [
-    {
-      id: 'select',
-      header: ({ table }) => (
-        <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            table.getIsSomePageRowsSelected()
-          }
-          variant="secondary"
-          onCheckedChange={(value) => {
-            const isChecked = !!value;
-            table.toggleAllPageRowsSelected(isChecked);
-
-            if (isChecked) {
-              const allRows = table
-                .getRowModel()
-                .rows.map((row) => row.original)
-                .filter((row) => row.scope !== AppConnectionScope.PLATFORM);
-
-              const newSelectedRows = [...allRows, ...selectedRows];
-
-              const uniqueRows = Array.from(
-                new Map(
-                  newSelectedRows.map((item) => [item.id, item]),
-                ).values(),
-              );
-
-              setSelectedRows(uniqueRows);
-            } else {
-              const filteredRows = selectedRows.filter((row) => {
-                return !table
-                  .getRowModel()
-                  .rows.some((r) => r.original.id === row.id);
-              });
-              setSelectedRows(filteredRows);
-            }
-          }}
-        />
-      ),
-      cell: ({ row }) => {
-        const isPlatformConnection =
-          row.original.scope === AppConnectionScope.PLATFORM;
-        const isChecked = selectedRows.some(
-          (selectedRow) => selectedRow.id === row.original.id,
-        );
-        return (
-          <Checkbox
-            variant="secondary"
-            checked={isChecked}
-            disabled={isPlatformConnection}
-            onCheckedChange={(value) => {
-              const isChecked = !!value;
-              let newSelectedRows = [...selectedRows];
-              if (isChecked) {
-                const exists = newSelectedRows.some(
-                  (selectedRow) => selectedRow.id === row.original.id,
-                );
-                if (!exists) {
-                  newSelectedRows.push(row.original);
-                }
-              } else {
-                newSelectedRows = newSelectedRows.filter(
-                  (selectedRow) => selectedRow.id !== row.original.id,
-                );
-              }
-              setSelectedRows(newSelectedRows);
-              row.toggleSelected(!!value);
-            }}
+  >[] = ownerColumnHooks.useOwnerColumn<AppConnectionWithoutSensitiveData>(
+    [
+      {
+        accessorKey: 'pieceName',
+        size: 150,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Piece')}
+            icon={Puzzle}
           />
-        );
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">
+              <PieceIconWithPieceName pieceName={row.original.pieceName} />
+            </div>
+          );
+        },
       },
-      accessorKey: 'select',
-    },
-    {
-      accessorKey: 'pieceName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('App')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            <PieceIconWithPieceName pieceName={row.original.pieceName} />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'displayName',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Name')} />
-      ),
-      cell: ({ row }) => {
-        const isPlatformConnection = row.original.scope === 'PLATFORM';
-        return (
-          <div className="flex items-center gap-2">
-            {isPlatformConnection && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Globe className="w-4 h-4" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>
-                    {t(
-                      'This connection is global and can be managed in the platform admin',
-                    )}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            )}
+      {
+        accessorKey: 'displayName',
+        size: 200,
+        header: ({ column }) => (
+          <DataTableColumnHeader column={column} title={t('Name')} icon={Tag} />
+        ),
+        cell: ({ row }) => {
+          const isPlatformConnection = row.original.scope === 'PLATFORM';
+          return (
+            <div className="flex items-center gap-2">
+              {isPlatformConnection && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Globe className="w-4 h-4" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {t(
+                        'This connection is global and can be managed in the platform admin',
+                      )}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
 
-            <CopyTextTooltip
-              title={t('External ID')}
-              text={row.original.externalId || ''}
-            >
-              <div className="text-left">{row.original.displayName}</div>
-            </CopyTextTooltip>
-          </div>
-        );
+              <CopyTextTooltip
+                title={t('External ID')}
+                text={row.original.externalId || ''}
+              >
+                <div className="text-left truncate max-w-[120px] 2xl:max-w-[250px]">
+                  {row.original.displayName}
+                </div>
+              </CopyTextTooltip>
+            </div>
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'status',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Status')} />
-      ),
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const { variant, icon: Icon } =
-          appConnectionUtils.getStatusIcon(status);
-        return (
-          <div className="text-left">
-            <StatusIconWithText
-              icon={Icon}
-              text={formatUtils.convertEnumToHumanReadable(status)}
-              variant={variant}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'updated',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Connected At')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {formatUtils.formatDate(new Date(row.original.updated))}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'owner',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Owner')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div className="text-left">
-            {row.original.owner && (
-              <ApAvatar
-                type="user"
-                includeName={true}
-                size="small"
-                userEmail={row.original.owner.email}
-                fullName={
-                  row.original.owner.firstName +
-                  ' ' +
-                  row.original.owner.lastName
-                }
+      {
+        accessorKey: 'status',
+        size: 120,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Status')}
+            icon={Activity}
+          />
+        ),
+        cell: ({ row }) => {
+          const status = row.original.status;
+          const { variant, icon: Icon } =
+            appConnectionUtils.getStatusIcon(status);
+          return (
+            <div className="text-left">
+              <StatusIconWithText
+                icon={Icon}
+                text={formatUtils.convertEnumToHumanReadable(status)}
+                variant={variant}
               />
-            )}
-            {!row.original.owner && <div className="text-left">-</div>}
-          </div>
-        );
+            </div>
+          );
+        },
       },
-    },
-    {
-      accessorKey: 'flowCount',
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title={t('Flows')} />
-      ),
-      cell: ({ row }) => {
-        return (
-          <div
-            className="text-left underline cursor-pointer"
-            onClick={() => {
-              navigate(
-                `/flows?connectionExternalId=${row.original.externalId}`,
-              );
-            }}
-          >
-            {row.original.flowIds?.length}
-          </div>
-        );
+      {
+        accessorKey: 'updated',
+        size: 150,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Connected At')}
+            icon={Clock}
+          />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div className="text-left">
+              <FormattedDate date={new Date(row.original.updated)} />
+            </div>
+          );
+        },
       },
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => {
-        const isPlatformConnection =
-          row.original.scope === AppConnectionScope.PLATFORM;
-        const userHasPermissionToRename = isPlatformConnection
-          ? userPlatformRole === PlatformRole.ADMIN
-          : userHasPermissionToWriteAppConnection;
-        return (
-          <div className="flex items-center gap-2 justify-end">
-            {row.original.scope === AppConnectionScope.PROJECT ? (
-              <RenameConnectionDialog
-                connectionId={row.original.id}
-                currentName={row.original.displayName}
-                onRename={() => {
-                  refetch();
-                }}
-                userHasPermissionToRename={userHasPermissionToRename}
-              />
-            ) : (
-              <EditGlobalConnectionDialog
-                connectionId={row.original.id}
-                currentName={row.original.displayName}
-                projectIds={row.original.projectIds}
-                userHasPermissionToEdit={userHasPermissionToRename}
-                onEdit={() => {
-                  refetch();
-                }}
-              />
-            )}
-            <ReconnectButtonDialog
-              hasPermission={userHasPermissionToRename}
-              connection={row.original}
-              onConnectionCreated={() => {
-                refetch();
+      {
+        accessorKey: 'flowCount',
+        size: 80,
+        header: ({ column }) => (
+          <DataTableColumnHeader
+            column={column}
+            title={t('Flows')}
+            icon={Workflow}
+          />
+        ),
+        cell: ({ row }) => {
+          return (
+            <div
+              className="text-left underline cursor-pointer"
+              onClick={() => {
+                navigate(
+                  `/flows?connectionExternalId=${row.original.externalId}`,
+                );
               }}
-            />
-          </div>
-        );
+            >
+              {row.original.flowIds?.length}
+            </div>
+          );
+        },
       },
-    },
-  ];
+      {
+        id: 'actions',
+        size: 100,
+        cell: ({ row }) => {
+          const isPlatformConnection =
+            row.original.scope === AppConnectionScope.PLATFORM;
+          const userHasPermissionToRename = isPlatformConnection
+            ? userPlatformRole === PlatformRole.ADMIN
+            : userHasPermissionToWriteAppConnection;
+          return (
+            <div className="flex items-center gap-2 justify-end">
+              {row.original.scope === AppConnectionScope.PROJECT ? (
+                <RenameConnectionDialog
+                  connectionId={row.original.id}
+                  currentName={row.original.displayName}
+                  onRename={() => {
+                    refetch();
+                  }}
+                  userHasPermissionToRename={userHasPermissionToRename}
+                />
+              ) : (
+                <EditGlobalConnectionDialog
+                  connectionId={row.original.id}
+                  currentName={row.original.displayName}
+                  projectIds={row.original.projectIds}
+                  userHasPermissionToEdit={userHasPermissionToRename}
+                  onEdit={() => {
+                    refetch();
+                  }}
+                />
+              )}
+              <ReconnectButtonDialog
+                hasPermission={userHasPermissionToRename}
+                connection={row.original}
+                onConnectionCreated={() => {
+                  refetch();
+                }}
+              />
+            </div>
+          );
+        },
+      },
+    ],
+    4,
+  );
 
   const bulkActions: BulkAction<AppConnectionWithoutSensitiveData>[] = useMemo(
     () => [
@@ -422,6 +344,13 @@ function AppConnectionsPage() {
                   message={t(
                     'Are you sure you want to delete these connections? This action cannot be undone.',
                   )}
+                  warning={
+                    <>
+                      {t('Any flows currently using these connections')}{' '}
+                      <strong>{t('will break immediately')}</strong>.{' '}
+                      {t('Please proceed with caution.')}
+                    </>
+                  }
                   mutationFn={async () => {
                     await deleteConnections(selectedRows.map((row) => row.id));
                     refetch();
@@ -435,7 +364,6 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="destructive"
-                    size="sm"
                     onClick={() => setShowDeleteDialog(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -463,7 +391,6 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="outline"
-                    size="sm"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
                     <Replace className="h-4 w-4" />
@@ -483,10 +410,9 @@ function AppConnectionsPage() {
                 >
                   <Button
                     variant="default"
-                    size="sm"
                     disabled={!userHasPermissionToWriteAppConnection}
                   >
-                    {t('New Connection')}
+                    <Plus className="h-4 w-4" /> {t('New Connection')}
                   </Button>
                 </NewConnectionDialog>
               </PermissionNeededTooltip>
@@ -499,11 +425,6 @@ function AppConnectionsPage() {
   );
   return (
     <div className="flex-col w-full">
-      <TableTitle
-        description={t('Manage project connections to external systems.')}
-      >
-        {t('Connections')}
-      </TableTitle>
       <DataTable
         emptyStateTextTitle={t('No connections found')}
         emptyStateTextDescription={t(
@@ -514,6 +435,8 @@ function AppConnectionsPage() {
         page={filteredData}
         isLoading={connectionsLoading}
         filters={filters}
+        selectColumn={true}
+        onSelectedRowsChange={setSelectedRows}
         bulkActions={bulkActions}
       />
     </div>

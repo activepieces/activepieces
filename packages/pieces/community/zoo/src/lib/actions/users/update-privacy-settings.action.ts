@@ -20,7 +20,7 @@ export const updatePrivacySettingsAction = createAction({
       method: HttpMethod.PUT,
       url: 'https://api.zoo.dev/user/privacy',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: propsValue.settings,
     });

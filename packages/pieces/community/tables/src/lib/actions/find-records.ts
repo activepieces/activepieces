@@ -23,6 +23,7 @@ export const findRecords = createAction({
       required: false,
     }),
     filters: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Filters',
       description: 'Filter conditions to apply',
       required: false,
@@ -144,6 +145,7 @@ export const findRecords = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
+      retries: 5,
     });
 
     return response.body.data.map(tablesCommon.formatRecord);

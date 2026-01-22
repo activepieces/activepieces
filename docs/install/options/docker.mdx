@@ -4,10 +4,9 @@ description: "Single docker image deployment with SQLite3 and Memory Queue"
 icon: "docker"
 ---
 
-<Tip>
-Set up Activepieces using Docker Compose for easy deployment - Ideal for personal and testing with SQLite3 and in-memory queue. 
-For production (companies), use PostgreSQL and Redis, Refer to docker compose setup.
-</Tip>
+<Warning>
+This setup is only meant for personal use or testing. It runs on SQLite3 and an in-memory Redis queue, which supports only a single instance on a single machine. For production or multi-instance setups, you must use Docker Compose with PostgreSQL and Redis.
+</Warning>
 
 To get up and running quickly with Activepieces, we will use the Activepieces Docker image. Follow these steps:
 
@@ -22,7 +21,7 @@ You need to have [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing
 Pull the Activepieces Docker image and run the container with the following command:
 
 ```bash
-docker run -d -p 8080:80 -v ~/.activepieces:/root/.activepieces -e AP_QUEUE_MODE=MEMORY -e AP_DB_TYPE=SQLITE3 -e AP_FRONTEND_URL="http://localhost:8080" activepieces/activepieces:latest
+docker run -d -p 8080:80 -v ~/.activepieces:/root/.activepieces -e AP_REDIS_TYPE=MEMORY -e AP_DB_TYPE=SQLITE3 -e AP_FRONTEND_URL="http://localhost:8080" activepieces/activepieces:latest
 ```
 
 ### Configure Webhook URL (Important for Triggers, Optional If you have public IP)
@@ -80,7 +79,7 @@ Before proceeding with the upgrade, it is always a good practice to back up your
 Now, run the updated Activepieces container with the latest image using the same command you used during the initial setup. Be sure to replace `activepieces_container_name` with the desired name for your new container.
 
 ```bash
-docker run -d -p 8080:80 -v ~/.activepieces:/root/.activepieces -e AP_QUEUE_MODE=MEMORY -e AP_DB_TYPE=SQLITE3 -e AP_FRONTEND_URL="http://localhost:8080" --name activepieces_container_name activepieces/activepieces:latest
+docker run -d -p 8080:80 -v ~/.activepieces:/root/.activepieces -e AP_REDIS_TYPE=MEMORY -e AP_DB_TYPE=SQLITE3 -e AP_FRONTEND_URL="http://localhost:8080" --name activepieces_container_name activepieces/activepieces:latest
 ```
 
 

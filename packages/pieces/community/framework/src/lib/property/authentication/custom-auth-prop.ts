@@ -4,7 +4,7 @@ import { PropertyType } from '../input/property-type';
 import { LongTextProperty, ShortTextProperty } from '../input/text-property';
 import { NumberProperty } from '../input/number-property';
 import { CheckboxProperty } from '../input/checkbox-property';
-import { StaticDropdownProperty } from '../input/dropdown/static-dropdown';
+import { StaticDropdownProperty, StaticMultiSelectDropdownProperty } from '../input/dropdown/static-dropdown';
 import { StaticPropsValue } from '..';
 import { SecretTextProperty } from './secret-text-property';
 import { BasePieceAuthSchema } from './common';
@@ -27,6 +27,7 @@ export type CustomAuthProps = Record<
   | StaticDropdownProperty<unknown, boolean>
   | CheckboxProperty<boolean>
   | MarkDownProperty
+  | StaticMultiSelectDropdownProperty<unknown, boolean>
 >;
 
 export const CustomAuthProperty = Type.Composite([

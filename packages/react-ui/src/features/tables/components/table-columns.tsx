@@ -1,21 +1,10 @@
-import { t } from 'i18next';
 import { Plus } from 'lucide-react';
 import { ReactNode } from 'react';
 import { Column, RenderCellProps } from 'react-data-grid';
 
-import {
-  TooltipTrigger,
-  Tooltip,
-  TooltipContent,
-} from '@/components/ui/tooltip';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { flagsHooks } from '@/hooks/flags-hooks';
-import { platformHooks } from '@/hooks/platform-hooks';
-import {
-  ApFlagId,
-  Permission,
-  PlatformUsageMetric,
-} from '@activepieces/shared';
+import { ApFlagId, isNil, Permission } from '@activepieces/shared';
 
 import { ClientRecordData } from '../lib/store/ap-tables-client-state';
 import { Row } from '../lib/types';
@@ -24,12 +13,12 @@ import { ApFieldHeader } from './ap-field-header';
 import { useTableState } from './ap-table-state-provider';
 import { EditableCell } from './editable-cell';
 import { NewFieldPopup } from './new-field-popup';
-import { SelectColumn } from './select-column';
+import { SelectCell, SelectHeaderCell } from './select-column';
 
 export function useTableColumns(createEmptyRecord: () => void) {
-  const [fields, updateRecord] = useTableState((state) => [
+  const [fields, setSelectedAgentRunId] = useTableState((state) => [
     state.fields,
-    state.updateRecord,
+    state.setSelectedAgentRunId,
   ]);
 
   const { data: maxFields } = flagsHooks.useFlag<number>(
@@ -42,7 +31,7 @@ export function useTableColumns(createEmptyRecord: () => void) {
   const isAllowedToCreateField =
     userHasTableWritePermission && maxFields && fields.length < maxFields;
 
-  const newFieldColumn = {
+  const newFieldColumn: Column<Row, { id: string }> = {
     key: 'new-field',
     minWidth: 67,
     maxWidth: 67,
@@ -54,7 +43,26 @@ export function useTableColumns(createEmptyRecord: () => void) {
 
   const columns: Column<Row, { id: string }>[] = [
     {
-      ...SelectColumn,
+      key: 'select-row',
+      name: 'Select',
+      width: 66,
+      minWidth: 66,
+      maxWidth: 66,
+      resizable: false,
+      sortable: false,
+      frozen: true,
+      renderHeaderCell: () => <SelectHeaderCell />,
+      renderCell: (props) => (
+        <SelectCell
+          row={props.row}
+          rowIndex={props.rowIdx + 1}
+          onClick={() => {
+            if (props.row.locked && props.row.agentRunId) {
+              setSelectedAgentRunId(props.row.agentRunId);
+            }
+          }}
+        />
+      ),
       renderSummaryCell: () => (
         <AddRecordButton
           handleClick={createEmptyRecord}
@@ -83,13 +91,11 @@ export function useTableColumns(createEmptyRecord: () => void) {
           column={column}
           rowIdx={rowIdx}
           disabled={!userHasTableWritePermission}
-          onRowChange={(newRow) => {
-            updateRecord(rowIdx, {
-              values: fields.map((field, fIndex) => ({
-                fieldIndex: fIndex,
-                value: newRow[field.uuid] ?? '',
-              })),
-            });
+          locked={row.locked}
+          onClick={() => {
+            if (row.locked && row.agentRunId) {
+              setSelectedAgentRunId(row.agentRunId);
+            }
           }}
         />
       ),
@@ -102,7 +108,6 @@ export function useTableColumns(createEmptyRecord: () => void) {
   if (isAllowedToCreateField) {
     columns.push(newFieldColumn);
   }
-
   return columns;
 }
 
@@ -112,7 +117,11 @@ export function mapRecordsToRows(
 ): Row[] {
   if (!records || records.length === 0) return [];
   return records.map((record: ClientRecordData) => {
-    const row: Row = { id: record.uuid };
+    const row: Row = {
+      id: record.uuid,
+      agentRunId: record.agentRunId ?? null,
+      locked: !isNil(record.agentRunId),
+    };
     record.values.forEach((cell) => {
       const field = fields[cell.fieldIndex];
       if (field) {
@@ -129,22 +138,7 @@ type AddRecordButtonProps = {
 };
 
 function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
-  const exccedTableLimit = platformHooks.useCheckResourceIsLocked(
-    PlatformUsageMetric.TABLES,
-  );
-
-  return exccedTableLimit ? (
-    <Tooltip>
-      <TooltipTrigger className="w-full h-full border-t border-border bg-muted text-muted-foreground flex items-center justify-start pl-4">
-        {icon}
-      </TooltipTrigger>
-      <TooltipContent>
-        {t(
-          'Table limit exceeded. Delete unnecessary tables or upgrade to unlock access.',
-        )}
-      </TooltipContent>
-    </Tooltip>
-  ) : (
+  return (
     <div
       className="w-full h-full border-t border-border  flex items-center justify-start cursor-pointer pl-4"
       onClick={handleClick}
@@ -155,22 +149,7 @@ function AddRecordButton({ handleClick, icon }: AddRecordButtonProps) {
 }
 
 function AddFieldButton() {
-  const exccedTableLimit = platformHooks.useCheckResourceIsLocked(
-    PlatformUsageMetric.TABLES,
-  );
-
-  return exccedTableLimit ? (
-    <Tooltip>
-      <TooltipTrigger className="w-full h-full bg-muted text-muted-foreground flex items-center justify-center new-field">
-        <Plus className="h-4 w-4" />
-      </TooltipTrigger>
-      <TooltipContent>
-        {t(
-          'You have exceeded tables limit please delete extra tables or upgrade to retain access',
-        )}
-      </TooltipContent>
-    </Tooltip>
-  ) : (
+  return (
     <NewFieldPopup>
       <div className="w-full h-full flex items-center justify-center cursor-pointer new-field">
         <Plus className="h-4 w-4" />

@@ -1,0 +1,52 @@
+{
+  "name": "pieces-amazon-ses",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/pieces/community/amazon-ses/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/amazon-ses",
+        "tsConfig": "packages/pieces/community/amazon-ses/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/amazon-ses/package.json",
+        "main": "packages/pieces/community/amazon-ses/src/index.ts",
+        "assets": [
+          "packages/pieces/community/amazon-ses/*.md",
+          {
+            "input": "packages/pieces/community/amazon-ses/src/i18n",
+            "output": "./src/i18n",
+            "glob": "**/!(i18n.json)"
+          }
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
+      },
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/amazon-ses",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    }
+  },
+  "tags": []
+}

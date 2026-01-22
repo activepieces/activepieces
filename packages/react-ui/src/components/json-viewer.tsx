@@ -3,6 +3,7 @@ import { Copy, Download, Eye, EyeOff } from 'lucide-react';
 import React, { useLayoutEffect, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import ReactJson from 'react-json-view';
+import { toast } from 'sonner';
 
 import { useTheme } from '@/components/theme-provider';
 import {
@@ -11,16 +12,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { isStepFileUrl } from '@/lib/utils';
+import { cn, isStepFileUrl } from '@/lib/utils';
 import { isNil } from '@activepieces/shared';
 
 import { Button } from './ui/button';
-import { toast } from './ui/use-toast';
 
 type JsonViewerProps = {
   json: any;
   title: string;
   hideDownload?: boolean;
+  className?: string;
 };
 
 type FileButtonProps = {
@@ -66,7 +67,12 @@ const removeUndefined = (obj: any): any => {
 };
 
 const JsonViewer = React.memo(
-  ({ json: unclearJson, title, hideDownload = false }: JsonViewerProps) => {
+  ({
+    json: unclearJson,
+    title,
+    hideDownload = false,
+    className,
+  }: JsonViewerProps) => {
     const { theme } = useTheme();
     const json = useMemo(() => {
       return removeUndefined(unclearJson);
@@ -75,8 +81,7 @@ const JsonViewer = React.memo(
     const viewerTheme = theme === 'dark' ? 'bright' : 'rjv-default';
     const handleCopy = () => {
       navigator.clipboard.writeText(JSON.stringify(json, null, 2));
-      toast({
-        title: t('Copied to clipboard'),
+      toast.success(t('Copied to clipboard'), {
         duration: 1000,
       });
     };
@@ -155,20 +160,47 @@ const JsonViewer = React.memo(
     }
 
     return (
-      <div className="rounded-lg border border-solid border-dividers overflow-hidden">
+      <div
+        className={cn(
+          'rounded-lg border border-solid border-dividers overflow-hidden relative',
+          className,
+        )}
+      >
         <div className="px-3 py-2 flex border-solid border-b border-dividers justify-center items-center">
-          <div className="flex-grow justify-center items-center">
+          <div className="grow justify-center items-center">
             <span className="text-md">{title}</span>
           </div>
           <div className="flex items-center gap-0">
             {!hideDownload && (
-              <Button variant={'ghost'} size={'sm'} onClick={handleDownload}>
-                <Download className="w-4 h-4" />
-              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={'ghost'}
+                      size={'sm'}
+                      onClick={handleDownload}
+                    >
+                      <Download className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {t('Download JSON')}
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
-            <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
-              <Copy className="w-4 h-4" />
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant={'ghost'} size={'sm'} onClick={handleCopy}>
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {t('Copy to clipboard')}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
@@ -181,29 +213,32 @@ const JsonViewer = React.memo(
             ) : (
               <>
                 {typeof json !== 'string' && typeof json !== 'object' && (
-                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+                  <pre className="text-sm whitespace-pre-wrap  break-all overflow-x-auto p-2">
                     {JSON.stringify(json)}
                   </pre>
                 )}
                 {typeof json === 'string' && (
-                  <pre className="text-sm whitespace-pre-wrap overflow-x-auto p-2">
+                  <pre className="text-sm whitespace-pre-wrap break-all overflow-x-auto p-2">
                     {json}
                   </pre>
                 )}
                 {typeof json === 'object' && (
-                  <ReactJson
-                    style={{
-                      overflowX: 'auto',
-                      padding: '0.5rem',
-                    }}
-                    theme={viewerTheme}
-                    enableClipboard={false}
-                    groupArraysAfterLength={20}
-                    displayDataTypes={false}
-                    name={false}
-                    quotesOnKeys={false}
-                    src={json}
-                  />
+                  <div className="max-w-full">
+                    <ReactJson
+                      style={{
+                        overflowX: 'auto',
+                        padding: '0.5rem',
+                        wordBreak: 'break-word',
+                      }}
+                      theme={viewerTheme}
+                      enableClipboard={false}
+                      groupArraysAfterLength={20}
+                      displayDataTypes={false}
+                      name={false}
+                      quotesOnKeys={false}
+                      src={json}
+                    />
+                  </div>
                 )}
               </>
             )}

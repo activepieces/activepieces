@@ -12,11 +12,11 @@ import { isNil } from '@activepieces/shared';
 export async function sendJiraRequest(request: HttpRequest & { auth: JiraAuth }) {
 	return httpClient.sendRequest({
 		...request,
-		url: `${request.auth.instanceUrl}/rest/api/3/${request.url}`,
+		url: `${request.auth.props.instanceUrl}/rest/api/3/${request.url}`,
 		authentication: {
 			type: AuthenticationType.BASIC,
-			username: request.auth.email,
-			password: request.auth.apiToken,
+			username: request.auth.props.email,
+			password: request.auth.props.apiToken,
 		},
 	});
 }
@@ -134,10 +134,10 @@ export async function searchIssuesByJql({
 	maxResults: number;
 	sanitizeJql: boolean;
 }) {
-	return (
+	const respJql = (
 		(await executeJql({
 			auth,
-			url: 'search',
+			url: 'search/jql',
 			method: HttpMethod.POST,
 			jql,
 			body: {
@@ -146,6 +146,22 @@ export async function searchIssuesByJql({
 			sanitizeJql,
 		})) as { issues: any[] }
 	).issues;
+
+	const issueIds = respJql.map(issue => issue['id']);
+	if (issueIds.length === 0) {
+		return [];
+	}
+
+	return (
+    (await sendJiraRequest({
+      auth,
+      url: 'issue/bulkfetch',
+      method: HttpMethod.POST,
+      body: {
+        issueIdsOrKeys: issueIds,
+      },
+    })).body as any as { issues: any[] }
+  ).issues;
 }
 
 export async function createJiraIssue(data: CreateIssueParams) {
@@ -289,7 +305,7 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 	query,
 	body,
 }: JiraApiCallParams): Promise<T> {
-	const baseUrl = `${auth.instanceUrl}/rest/api/3`;
+	const baseUrl = `${auth.props.instanceUrl}/rest/api/3`;
 	const qs: QueryParams = {};
 	if (query) {
 		for (const [key, value] of Object.entries(query)) {
@@ -306,8 +322,8 @@ export async function jiraApiCall<T extends HttpMessageBody>({
 		body,
 		authentication: {
 			type: AuthenticationType.BASIC,
-			username:auth.email,
-			password:auth.apiToken,
+			username:auth.props.email,
+			password:auth.props.apiToken,
 		},
 	};
 

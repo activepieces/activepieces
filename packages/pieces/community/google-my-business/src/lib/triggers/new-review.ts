@@ -6,6 +6,7 @@ import {
   pollingHelper,
 } from '@activepieces/pieces-common';
 import {
+  AppConnectionValueForAuthProperty,
   createTrigger,
   OAuth2PropertyValue,
   TriggerStrategy,
@@ -48,7 +49,7 @@ export const newReview = createTrigger({
 });
 
 const polling: Polling<
-  OAuth2PropertyValue,
+  AppConnectionValueForAuthProperty<typeof googleAuth>,
   { location: string; account: string }
 > = {
   strategy: DedupeStrategy.TIMEBASED,

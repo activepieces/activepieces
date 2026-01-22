@@ -2,49 +2,50 @@ import { pipedriveAuth } from '../../index';
 import { createAction, Property } from '@activepieces/pieces-framework';
 import { leadCommonProps } from '../common/props';
 import {
-	pipedriveApiCall,
-	pipedrivePaginatedApiCall,
-	pipedriveTransformCustomFields,
+    pipedriveApiCall,
+    pipedrivePaginatedV1ApiCall,
+    pipedriveTransformCustomFields,
+    pipedriveTransformV1CustomFields,
 } from '../common';
-import { GetField, OrganizationCreateResponse } from '../common/types';
 import { HttpMethod } from '@activepieces/pieces-common';
+import { GetField, GetLeadResponse } from '../common/types';
 import dayjs from 'dayjs';
 
 export const createLeadAction = createAction({
-	auth: pipedriveAuth,
-	name: 'create-lead',
-	displayName: 'Create Lead',
-	description: 'Creates a new lead.',
-	props: {
-		title: Property.ShortText({
-			displayName: 'Title',
-			required: true,
-		}),
-		...leadCommonProps,
-	},
-	async run(context) {
-		const {
-			title,
-			ownerId,
-			channel,
-			organizationId,
-			personId,
-			expectedCloseDate,
-			visibleTo,
-			leadValue,
-			leadValueCurrency,
-		} = context.propsValue;
+    auth: pipedriveAuth,
+    name: 'create-lead',
+    displayName: 'Create Lead',
+    description: 'Creates a new lead.',
+    props: {
+        title: Property.ShortText({
+            displayName: 'Title',
+            required: true,
+        }),
+        ...leadCommonProps, 
+    },
+    async run(context) {
+        const {
+            title,
+            leadValue,
+            leadValueCurrency,
+            expectedCloseDate,
+            visibleTo,
+            ownerId,
+            organizationId,
+            personId,
+            channel,
+        } = context.propsValue;
 
-		if (!personId && !organizationId) {
+        if (!personId && !organizationId) {
 			throw new Error(
 				'Neither an Organization nor a Person were provided. One of them must be provided in order to create a lead.',
 			);
 		}
 
-		const labelIds = (context.propsValue.labelIds as string[]) ?? [];
+        const labelIds = (context.propsValue.labelIds as string[]) ?? [];
 		const customFields = context.propsValue.customfields ?? {};
 
-		const leadDefaultFields: Record<string, any> = {
+        const leadDefaultFields: Record<string, any> = {
 			title,
 			owner_id: ownerId,
 			organization_id: organizationId,
@@ -73,39 +74,40 @@ export const createLeadAction = createAction({
 			};
 		}
 
-		const leadCustomFields: Record<string, any> = {};
+        const leadCustomFields: Record<string, any> = {};
 
 		Object.entries(customFields).forEach(([key, value]) => {
 			// Format values if they are arrays
 			leadCustomFields[key] = Array.isArray(value) ? value.join(',') : value;
 		});
 
-		const createdLeadResponse = await pipedriveApiCall<OrganizationCreateResponse>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.POST,
-			resourceUri: '/leads',
-			body: {
+        
+        const createdLeadResponse = await pipedriveApiCall<GetLeadResponse>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.POST,
+            resourceUri: '/v1/leads', 
+           body: {
 				...leadDefaultFields,
 				...leadCustomFields,
 			},
-		});
+        });
 
-		const customFieldsResponse = await pipedrivePaginatedApiCall<GetField>({
-			accessToken: context.auth.access_token,
-			apiDomain: context.auth.data['api_domain'],
-			method: HttpMethod.GET,
-			resourceUri: '/dealFields',
-		});
+        const customFieldsResponse = await pipedrivePaginatedV1ApiCall<GetField>({
+            accessToken: context.auth.access_token,
+            apiDomain: context.auth.data['api_domain'],
+            method: HttpMethod.GET,
+            resourceUri: '/v1/dealFields',
+        });
 
-		const updatedLeadProperties = pipedriveTransformCustomFields(
-			customFieldsResponse,
-			createdLeadResponse.data,
-		);
+        const updatedLeadProperties = pipedriveTransformV1CustomFields(
+            customFieldsResponse,
+            createdLeadResponse.data,
+        );
 
-		return {
-			...createdLeadResponse,
-			data: updatedLeadProperties,
-		};
-	},
+        return {
+            ...createdLeadResponse,
+            data: updatedLeadProperties,
+        };
+    },
 });

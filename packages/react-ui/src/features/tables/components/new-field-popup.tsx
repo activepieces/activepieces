@@ -53,13 +53,13 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
   const form = useForm<NewFieldFormData>({
     resolver: (data) => {
       const errors: FieldErrors<NewFieldFormData> = {};
-      if (data.name.length === 0) {
+      if (data.name.trim().length === 0) {
         errors['name'] = {
           message: t('Name is required'),
           type: 'required',
         };
       } else {
-        if (fields?.find((field) => field.name === data.name)) {
+        if (fields?.find((field) => field.name.trim() === data.name.trim())) {
           errors['name'] = {
             message: t('Name must be unique'),
             type: 'unique',
@@ -76,7 +76,7 @@ export function NewFieldPopup({ children }: NewFieldDialogProps) {
         data.type === FieldType.STATIC_DROPDOWN &&
         (isNil(data.data) ||
           data.data?.options.length === 0 ||
-          !data.data?.options.some((option) => option.length > 0))
+          !data.data?.options.some((option) => option.trim().length > 0))
       ) {
         errors['data'] = {
           options: {

@@ -11,6 +11,7 @@ export const createRecords = createAction({
   props: {
     table_id: tablesCommon.table_id,
     values: Property.DynamicProperties({
+      auth: PieceAuth.None(),
       displayName: 'Records',
       description: 'The records to create.',
       required: true,
@@ -69,6 +70,7 @@ export const createRecords = createAction({
         type: AuthenticationType.BEARER_TOKEN,
         token: context.server.token,
       },
+      retries: 5,
     });
 
     return response.body.map(tablesCommon.formatRecord);

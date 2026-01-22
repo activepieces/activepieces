@@ -1,37 +1,29 @@
 import { QuestionMarkCircledIcon } from '@radix-ui/react-icons';
 import { t } from 'i18next';
-import { ChevronRight, BookOpen, History } from 'lucide-react';
-import { useState } from 'react';
+import { BookOpen, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import {
-  DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu';
-import { SidebarMenuButton } from '@/components/ui/sidebar-shadcn';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { ApFlagId, supportUrl } from '@activepieces/shared';
 
 export const HelpAndFeedback = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const { data: showCommunity } = flagsHooks.useFlag<boolean>(
     ApFlagId.SHOW_COMMUNITY,
   );
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
-        <SidebarMenuButton>
-          <div className="flex items-center gap-2">
-            <QuestionMarkCircledIcon className="size-4" />
-            <span>Help & Feedback</span>
-          </div>
-          <ChevronRight className="size-4" />
-        </SidebarMenuButton>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" side="right" className="w-[220px]">
+    <DropdownMenuSub>
+      <DropdownMenuSubTrigger className="flex items-center w-full text-left px-2 py-1.5 text-sm rounded-sm cursor-pointer">
+        <QuestionMarkCircledIcon className="w-4 h-4 mr-2" />
+        {t('Help & Feedback')}
+      </DropdownMenuSubTrigger>
+      <DropdownMenuSubContent className="w-[220px]">
         <DropdownMenuItem asChild>
           <Link
             to="https://activepieces.com/docs"
@@ -55,7 +47,7 @@ export const HelpAndFeedback = () => {
           >
             <div className="flex items-center gap-2">
               <History className="size-4" />
-              <span>Changelog</span>
+              <span>{t('Changelog')}</span>
             </div>
           </Link>
         </DropdownMenuItem>
@@ -80,7 +72,7 @@ export const HelpAndFeedback = () => {
             </DropdownMenuItem>
           </>
         )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenuSubContent>
+    </DropdownMenuSub>
   );
 };

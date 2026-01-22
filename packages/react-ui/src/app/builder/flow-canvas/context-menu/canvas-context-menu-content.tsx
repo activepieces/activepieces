@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 
 import {
+  ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuSub,
@@ -19,27 +20,24 @@ import {
 } from '@/components/ui/context-menu';
 import { Shortcut, ShortcutProps } from '@/components/ui/shortcut';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
   FlowOperationType,
   flowStructureUtil,
   StepLocationRelativeToParent,
 } from '@activepieces/shared';
 
 import { useBuilderStateContext } from '../../builder-hooks';
+import { CanvasShortcuts } from '../../shortcuts';
 import {
   copySelectedNodes,
   deleteSelectedNodes,
   getLastLocationAsPasteLocation,
   pasteNodes,
   toggleSkipSelectedNodes,
-} from '../bulk-actions';
+} from '../utils/bulk-actions';
 
-import {
-  CanvasContextMenuProps,
-  CanvasShortcuts,
-  ContextMenuType,
-} from './canvas-context-menu';
+import { CanvasContextMenuProps, ContextMenuType } from './canvas-context-menu';
 
 const ShortcutWrapper = ({
   children,
@@ -49,7 +47,7 @@ const ShortcutWrapper = ({
   shortcut: ShortcutProps;
 }) => {
   return (
-    <div className="flex items-center justify-between gap-4 flex-grow">
+    <div className="flex items-center justify-between gap-4 grow">
       <div className="flex gap-2 items-center">{children}</div>
       <Shortcut {...shortcut} className="text-end" />
     </div>
@@ -79,7 +77,8 @@ export const CanvasContextMenuContent = ({
   const disabled = selectedNodes.length === 0;
   const areAllStepsSkipped = selectedNodes.every(
     (node) =>
-      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as Action)?.skip,
+      !!(flowStructureUtil.getStep(node, flowVersion.trigger) as FlowAction)
+        ?.skip,
   );
   const doSelectedNodesIncludeTrigger = selectedNodes.some(
     (node) => node === flowVersion.trigger.name,
@@ -93,12 +92,12 @@ export const CanvasContextMenuContent = ({
     !readonly && contextMenuType === ContextMenuType.CANVAS;
   const showPasteAsFirstLoopAction =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === ActionType.LOOP_ON_ITEMS &&
+    firstSelectedStep?.type === FlowActionType.LOOP_ON_ITEMS &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAsBranchChild =
     selectedNodes.length === 1 &&
-    firstSelectedStep?.type === ActionType.ROUTER &&
+    firstSelectedStep?.type === FlowActionType.ROUTER &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
   const showPasteAfterCurrentStep =
@@ -109,6 +108,7 @@ export const CanvasContextMenuContent = ({
     selectedNodes.length === 1 &&
     !readonly &&
     contextMenuType === ContextMenuType.STEP;
+
   const showCopy =
     !doSelectedNodesIncludeTrigger && contextMenuType === ContextMenuType.STEP;
   const showDuplicate =
@@ -126,7 +126,6 @@ export const CanvasContextMenuContent = ({
     !readonly &&
     contextMenuType === ContextMenuType.STEP &&
     !isTriggerTheOnlySelectedNode;
-
   const duplicateStep = () => {
     applyOperation({
       type: FlowOperationType.DUPLICATE_ACTION,
@@ -135,8 +134,22 @@ export const CanvasContextMenuContent = ({
       },
     });
   };
+  const showContextMenuContent =
+    showReplace ||
+    showCopy ||
+    showDuplicate ||
+    showSkip ||
+    showPasteAsFirstLoopAction ||
+    showPasteAsBranchChild ||
+    showPasteAfterCurrentStep ||
+    showPasteAfterLastStep ||
+    showDelete;
+  if (!showContextMenuContent) {
+    return null;
+  }
+
   return (
-    <>
+    <ContextMenuContent>
       {showReplace && (
         <ContextMenuItem
           disabled={disabled}
@@ -189,7 +202,7 @@ export const CanvasContextMenuContent = ({
               ) : (
                 <RouteOff className="h-4 w-4"></RouteOff>
               )}
-              {t(areAllStepsSkipped ? 'Unskip' : 'Skip')}
+              {areAllStepsSkipped ? t('Unskip') : t('Skip')}
             </ShortcutWrapper>
           </ContextMenuItem>
         )}
@@ -335,6 +348,6 @@ export const CanvasContextMenuContent = ({
           </>
         )}
       </>
-    </>
+    </ContextMenuContent>
   );
 };

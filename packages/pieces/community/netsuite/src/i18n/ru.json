@@ -1,0 +1,21 @@
+{
+  "NetSuite": "NetSuite",
+  "Account ID": "ID клиента",
+  "Consumer Key": "Ключ потребителя",
+  "Consumer Secret": "Секрет потребителя",
+  "Token ID": "Token ID",
+  "Token Secret": "Секрет токена",
+  "Your NetSuite account ID": "ID вашей учетной записи NetSuite",
+  "Your NetSuite consumer key": "Ваш пользовательский ключ NetSuite",
+  "Your NetSuite consumer secret": "Пароль клиента NetSuite",
+  "Your NetSuite token ID": "Идентификатор вашего токена NetSuite",
+  "Your NetSuite token secret": "Ваш секретный ключ NetSuite",
+  "Get Vendor": "Get Vendor",
+  "Get Customer": "Получить клиента",
+  "Gets vendor details from NetSuite.": "Получает информацию о поставщике от NetSuite.",
+  "Gets customer details from NetSuite.": "Получает данные о клиенте из NetSuite.",
+  "Vendor ID": "ID поставщика",
+  "Customer ID": "ID клиента",
+  "The ID of the vendor to retrieve.": "Идентификатор поставщика для извлечения.",
+  "The ID of the customer to retrieve.": "Идентификатор клиента для извлечения."
+}

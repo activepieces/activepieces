@@ -1,24 +1,38 @@
-import { flowMigrations, FlowVersion } from '@activepieces/shared'
+import { 
+    FlowVersion, 
+    isNil,
+    LATEST_FLOW_SCHEMA_VERSION,
+    spreadIfDefined,
+} from '@activepieces/shared'
 import { system } from '../../helper/system/system'
-import { flowVersionRepoWrapper } from './flow-version-repo-wrapper'
+import { flowVersionBackupService } from './flow-version-backup.service'
+import { flowVersionRepo } from './flow-version.service'
+import { flowMigrations } from './migrations'
 
 const log = system.globalLogger()
 
 export const flowVersionMigrationService = {
     async migrate(flowVersion: FlowVersion): Promise<FlowVersion> {
-        log.info('Starting flow version migration')
-     
-        const migratedFlowVersion: FlowVersion = flowMigrations.apply(flowVersion)
-        if (flowVersion.schemaVersion === migratedFlowVersion.schemaVersion) {
+        // Early exit if already at latest version
+        if (flowVersion.schemaVersion === LATEST_FLOW_SCHEMA_VERSION) {
             return flowVersion
         }
-        await flowVersionRepoWrapper.update({
-            id: flowVersion.id,
-            flowVersion: {
-                schemaVersion: migratedFlowVersion.schemaVersion,
-                trigger: migratedFlowVersion.trigger,
-                connectionIds: migratedFlowVersion.connectionIds,
-            },
+
+        log.info('Starting flow version migration')
+
+        const backupFiles = flowVersion.backupFiles ?? {}
+        if (!isNil(flowVersion.schemaVersion)) {
+            backupFiles[flowVersion.schemaVersion] = await flowVersionBackupService.store(flowVersion)
+        }
+
+        const migratedFlowVersion: FlowVersion = await flowMigrations.apply(flowVersion)
+
+        await flowVersionRepo().update(flowVersion.id, {
+            schemaVersion: migratedFlowVersion.schemaVersion,
+            ...spreadIfDefined('trigger', migratedFlowVersion.trigger),
+            connectionIds: migratedFlowVersion.connectionIds,
+            agentIds: migratedFlowVersion.agentIds,
+            backupFiles,
         })
         log.info('Flow version migration completed')
         return migratedFlowVersion

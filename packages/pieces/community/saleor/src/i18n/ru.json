@@ -1,0 +1,19 @@
+{
+  "Saleor": "Продавец",
+  "Saleor API URL": "Saleor API URL",
+  "Saleor token": "Маркер продажи",
+  "Your Saleor GraphQL API endpoint": "Ваша конечная точка GraphQL API продаж",
+  "Your token": "Ваш токен",
+  "Raw GraphQL query": "Запрос сырых GraphQL",
+  "Get an order": "Получить заказ",
+  "Add Order Note": "Добавить заметку к заказу",
+  "Perform a raw GraphQL query": "Выполнить необработанный запрос GraphQL",
+  "Get an order according to the ID": "Получить заказ по идентификатору",
+  "Add a note to a Saleor order": "Добавить заметку к заказу Saleor",
+  "Query": "Запрос",
+  "Parameters": "Параметры",
+  "The ID of the order": "ID заказа",
+  "Order ID": "ID Заказа",
+  "Note Message": "Примечание",
+  "The content of the note": "Содержание записки"
+}

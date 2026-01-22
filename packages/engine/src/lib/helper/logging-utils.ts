@@ -1,128 +1,117 @@
-import { isObject, StepOutput } from '@activepieces/shared'
-import { Queue } from '@datastructures-js/queue'
-import sizeof from 'object-sizeof'
+import { FlowActionType, StepOutput } from '@activepieces/shared'
 import PriorityQueue from 'priority-queue-typescript'
+import { utils } from '../utils'
 
 const TRUNCATION_TEXT_PLACEHOLDER = '(truncated)'
 const ERROR_OFFSET = 256 * 1024
 const DEFAULT_MAX_LOG_SIZE_FOR_TESTING = '10'
-const MAX_LOG_SIZE = Number(process.env.AP_MAX_FILE_SIZE_MB ?? DEFAULT_MAX_LOG_SIZE_FOR_TESTING) * 1024 * 1024
+const MAX_LOG_SIZE = Number(process.env.AP_MAX_FLOW_RUN_LOG_SIZE_MB ?? DEFAULT_MAX_LOG_SIZE_FOR_TESTING) * 1024 * 1024
 const MAX_SIZE_FOR_ALL_ENTRIES = MAX_LOG_SIZE - ERROR_OFFSET
-const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = sizeof(TRUNCATION_TEXT_PLACEHOLDER)
-const nonTruncatableKeys: Key[] = ['status', 'duration', 'type']
+const SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER = utils.sizeof(TRUNCATION_TEXT_PLACEHOLDER)
+
+type InputKeyEntry = {
+    step: StepOutput
+    stepName: string
+    inputKey: string
+    size: number
+}
 
 export const loggingUtils = {
-    async trimExecution(steps: Record<string, StepOutput>): Promise<Record<string, StepOutput>> {
-        const totalJsonSize = sizeof(steps)
-        if (!jsonExceedMaxSize(totalJsonSize)) {
+    trimExecutionInput(steps: Record<string, StepOutput>, maxSize: number = MAX_SIZE_FOR_ALL_ENTRIES): Record<string, StepOutput> {
+        const totalJsonSize = getTotalStepsSize(steps)
+
+        if (!jsonExceedMaxSize(totalJsonSize, maxSize)) {
             return steps
         }
-        return removeLeavesInTopologicalOrder(JSON.parse(JSON.stringify(steps)))
+
+        const priorityQueue = new PriorityQueue<InputKeyEntry>(
+            undefined,
+            (a: InputKeyEntry, b: InputKeyEntry) => a.size - b.size,
+        )
+        traverseStepsAndCollectKeys(steps, priorityQueue)
+
+        // calculate minimalSize: replace all input sizes with placeholder sizes . after that we will re-replace them with actual sizes from smallest until we exceed the limit.
+        let minimalSize = getStepsSizeWithAllInputsTruncated(totalJsonSize, priorityQueue)
+
+        // pop smallest entries from queue, accumulating their sizes until we exceed the limit
+        // The keys that remain in the queue after popping are the ones we need to truncate
+        const keysToRemove = new Set<InputKeyEntry>()
+        while (priorityQueue.size() > 0) {
+            const entry = priorityQueue.poll()!
+            
+            minimalSize += entry.size - SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER
+
+            // if minimalSize exceeds the limit, stop popping
+            // the remaining keys in the queue and current one will be truncated
+            if (minimalSize > maxSize) {
+                keysToRemove.add(entry) 
+                break
+            }
+        }
+
+        while (priorityQueue.size() > 0) {
+            const entry = priorityQueue.poll()!
+            keysToRemove.add(entry)
+        }
+        
+        removeKeysFromSteps(keysToRemove)
+
+        return steps
     },
 }
 
-function removeLeavesInTopologicalOrder(json: Record<string, unknown>): Record<string, StepOutput> {
-    const nodes: Node[] = traverseJsonAndConvertToNodes(json)
-    const leaves = new PriorityQueue<Node>(
-        undefined,
-        (a: Node, b: Node) => b.size - a.size,
-    )
-    nodes.filter((node) => node.numberOfChildren === 0).forEach((node) => leaves.add(node))
-    let totalJsonSize = sizeof(json)
+function getTotalStepsSize(steps: Record<string, StepOutput>): number {
+    return utils.sizeof(steps)
+}
 
-    while (!leaves.empty() && jsonExceedMaxSize(totalJsonSize)) {
-        const curNode = leaves.poll()
+function traverseStepsAndCollectKeys(
+    steps: Record<string, StepOutput>,
+    priorityQueue: PriorityQueue<InputKeyEntry>,
+): void {
+    for (const [stepName, step] of Object.entries(steps)) {
+        if (step?.input) {
+            const input = step.input as Record<string, unknown>
+            for (const [inputKey, value] of Object.entries(input)) {
+                const valueSize = utils.sizeof(value)
+                priorityQueue.add({
+                    step,
+                    stepName,
+                    inputKey,
+                    size: valueSize,
+                })
+            }
+        }
 
-        const isDepthGreaterThanOne = curNode && curNode.depth > 1
-        const isTruncatable = curNode && (!nonTruncatableKeys.includes(curNode.key))
-
-        if (isDepthGreaterThanOne && isTruncatable) {
-            totalJsonSize += SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER - curNode.size
-
-            const parent = curNode.parent
-
-            parent.value[curNode.key] = TRUNCATION_TEXT_PLACEHOLDER
-
-            nodes[parent.index].numberOfChildren--
-            if (nodes[parent.index].numberOfChildren == 0) {
-                leaves.add(nodes[parent.index])
+        if (step?.type === FlowActionType.LOOP_ON_ITEMS && step.output) {
+            const loopOutput = step.output as { iterations: Record<string, StepOutput>[] }
+            if (loopOutput.iterations) {
+                for (const iteration of loopOutput.iterations) {
+                    traverseStepsAndCollectKeys(iteration, priorityQueue)
+                }
             }
         }
     }
-    return json as Record<string, StepOutput>
 }
 
-function traverseJsonAndConvertToNodes(root: unknown) {
-
-    const nodesQueue = new Queue<BfsNode>()
-    nodesQueue.enqueue({ key: '', value: root, parent: { index: -1, value: {} }, depth: 0 })
-
-    const nodes: Node[] = []
-
-    while (!nodesQueue.isEmpty()) {
-        const curNode = nodesQueue.dequeue()
-        const children = findChildren(curNode.value, curNode.key === 'iterations')
-
-        nodes.push({
-            index: nodes.length,
-            size: children.length === 0 ? sizeof(curNode.value) : children.length * SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER,
-            key: curNode.key,
-            parent: {
-                index: curNode.parent.index,
-                value: curNode.parent.value as Record<Key, unknown>,
-            },
-            numberOfChildren: children.length,
-            depth: curNode.depth,
-        })
-
-        children.forEach((child) => {
-            const key = child[0], value = child[1]
-            nodesQueue.enqueue({ value, key, parent: { index: nodes.length - 1, value: curNode.value }, depth: curNode.depth + 1 })
-        })
-    }
-
-    return nodes
-}
-
-function findChildren(curNode: unknown, traverseArray: boolean): [Key, unknown][] {
-    if (isObject(curNode)) {
-        return Object.entries(curNode)
-    }
-    // Array should be treated as a leaf node as If it has too many small items, It will prioritize the other steps first 
-    if (Array.isArray(curNode) && traverseArray) {
-        const children: [Key, unknown][] = []
-        for (let i = 0; i < curNode.length; i++) {
-            children.push([i, curNode[i]])
+function removeKeysFromSteps(
+    keysToRemove: Set<InputKeyEntry>,
+): void {
+    for (const entry of keysToRemove) {
+        if (entry.step?.input) {
+            const input = entry.step.input as Record<string, unknown>
+            input[entry.inputKey] = TRUNCATION_TEXT_PLACEHOLDER
         }
-        return children
     }
-    return []
 }
 
-const jsonExceedMaxSize = (jsonSize: number): boolean => {
-    return jsonSize > MAX_SIZE_FOR_ALL_ENTRIES
-}
-
-type Node = {
-    index: number
-    size: number
-    key: Key
-    parent: {
-        index: number
-        value: Record<Key, unknown>
+const getStepsSizeWithAllInputsTruncated = (totalSize: number, priorityQueue: PriorityQueue<InputKeyEntry> ): number => {
+    let size = totalSize
+    for (const entry of priorityQueue) {
+        size = size - entry.size + SIZE_OF_TRUNCATION_TEXT_PLACEHOLDER
     }
-    numberOfChildren: number
-    depth: number
+    return size
 }
 
-type BfsNode = {
-    value: unknown
-    key: Key
-    parent: {
-        index: number
-        value: unknown
-    }
-    depth: number
+const jsonExceedMaxSize = (jsonSize: number, maxSize: number): boolean => {
+    return jsonSize > maxSize
 }
-
-type Key = string | number | symbol

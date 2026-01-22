@@ -13,6 +13,7 @@ import { SelectUtilButton } from '@/components/custom/select-util-button';
 import { cn } from '@/lib/utils';
 
 import { Badge } from '../ui/badge';
+import { Button } from '../ui/button';
 import {
   Command,
   CommandEmpty,
@@ -194,15 +195,16 @@ const MultiSelect: React.FC<MultiSelectProps> = ({
 
 MultiSelect.displayName = 'MultiSelect';
 
-type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.div>;
+type MultiSelectTriggerElement = React.ElementRef<typeof Primitive.button>;
 
 type MultiSelectTriggerProps = ComponentPropsWithoutRef<
-  typeof Primitive.div
+  typeof Primitive.button
 > & {
   showDeselect?: boolean;
   onDeselect?: () => void;
   showRefresh?: boolean;
   onRefresh?: () => void;
+  loading?: boolean;
 };
 
 const PreventClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -215,20 +217,21 @@ const MultiSelectTrigger = React.forwardRef<
   MultiSelectTriggerProps
 >(
   (
-    { className, children, showDeselect, onDeselect, ...props },
+    { className, children, showDeselect, onDeselect, loading, ...props },
     forwardedRef,
   ) => {
     const { disabled } = useMultiSelect();
 
     return (
       <PopoverPrimitive.Trigger ref={forwardedRef as any} asChild>
-        <div
-          role="combobox"
+        <Button
+          variant="outline"
           aria-disabled={disabled}
-          data-disabled={disabled}
-          {...props}
+          disabled={disabled}
+          role="combobox"
+          loading={loading}
           className={cn(
-            'flex min-h-10  w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-input bg-transparent px-4 py-1 text-sm  ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
+            'flex min-h-10 h-auto  w-full items-center justify-between cursor-pointer gap-2 whitespace-nowrap rounded-sm border border-input bg-transparent px-4 py-1 text-sm  ring-offset-background focus:outline-hidden focus:ring-1 focus:ring-ring [&>span]:line-clamp-1',
             {
               'cursor-not-allowed opacity-80': disabled,
               'cursor-pointer': !disabled,
@@ -263,7 +266,7 @@ const MultiSelectTrigger = React.forwardRef<
               className="h-4 w-4 opacity-50 shrink-0"
             />
           </div>
-        </div>
+        </Button>
       </PopoverPrimitive.Trigger>
     );
   },
@@ -352,11 +355,7 @@ const MultiSelectValue = React.forwardRef<
               return (
                 <Tooltip key={value}>
                   <TooltipTrigger className="inline-flex">{el}</TooltipTrigger>
-                  <TooltipContent
-                    side="bottom"
-                    align="start"
-                    className="z-[51]"
-                  >
+                  <TooltipContent side="bottom" align="start" className="z-51">
                     {content}
                   </TooltipContent>
                 </Tooltip>
@@ -435,7 +434,7 @@ const MultiSelectContent = React.forwardRef<
         sideOffset={4}
         collisionPadding={10}
         className={cn(
-          'z-50 w-full rounded-md border bg-background p-0 text-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
+          'z-50 w-full rounded-md border bg-background p-0 text-foreground shadow-md outline-hidden data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
         )}
         style={
           {
@@ -454,7 +453,7 @@ const MultiSelectContent = React.forwardRef<
       >
         <Command
           className={cn(
-            'px-1 max-h-96 w-full min-w-[var(--radix-select-trigger-width)]',
+            'px-1 max-h-96 w-full min-w-(--radix-select-trigger-width)',
             className,
           )}
           shouldFilter={!context.onSearch}

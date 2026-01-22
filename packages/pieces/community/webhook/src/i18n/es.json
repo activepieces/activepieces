@@ -1,5 +1,4 @@
 {
-  "Webhook": "Webhook",
   "Receive HTTP requests and trigger flows using unique URLs.": "Recibir peticiones HTTP y disparar flujos usando URLs únicas.",
   "Return Response": "Respuesta de retorno",
   "Respond and Wait for Next Webhook": "Respuesta y espera para el próximo webhook",
@@ -20,8 +19,8 @@
   "Authentication": "Autenticación",
   "Authentication Fields": "Campos de autenticación",
   "**Live URL:**\n```text\n{{webhookUrl}}\n```\ngenerate sample data & triggers published flow.\n\n": "**URL vivo:**\n```text\n{{webhookUrl}}\n```\ngenerar datos de ejemplo y desencadenadores de flujo publicado.\n\n",
-  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n",
-  "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n",
+  "**Synchronous Requests:**\n\nIf you expect a response from this webhook, add `/sync` to the end of the URL. \nIf it takes more than 30 seconds, it will return a 408 Request Timeout response.\n\nTo return data, add an Webhook step to your flow with the Return Response action.\n": "**Solicitudes síncronas:**\n\nSi esperas una respuesta de este webhook, agrega `/sync` al final de la URL.  \nSi tarda más de 30 segundos, devolverá una respuesta 408 Tiempo de espera agotado (Request Timeout).\n\nPara devolver datos, agrega un paso de webhook a tu flujo con la acción **Devolver respuesta** (Return Response).\n",
+  "\n**Test URL:**\n\nif you want to generate sample data without triggering the flow, append `/test` to your webhook URL.\n\n": "\n**URL de prueba:**\n\nSi deseas generar datos de ejemplo sin activar el flujo, agrega `/test` al final de la URL de tu webhook.\n\n",
   "None": "Ninguna",
   "Basic Auth": "Auth Básica",
   "Header Auth": "Auth de cabecera"

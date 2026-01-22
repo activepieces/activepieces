@@ -1,14 +1,12 @@
-import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useEffect, useState } from 'react';
 
+import { ApErrorDialog } from '@/components/custom/ap-error-dialog/ap-error-dialog';
 import { LoadingSpinner } from '@/components/ui/spinner';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import {
-  Flow,
-  FlowOperationType,
   FlowStatus,
-  FlowVersion,
+  FlowStatusUpdatedResponse,
   Permission,
   PopulatedFlow,
   isNil,
@@ -20,47 +18,39 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '../../../components/ui/tooltip';
-import { flowsApi } from '../lib/flows-api';
+import { flowHooks } from '../lib/flow-hooks';
 import { flowsUtils } from '../lib/flows-utils';
 
 type FlowStatusToggleProps = {
-  flow: Flow;
-  flowVersion: FlowVersion;
+  flow: PopulatedFlow;
 };
 
-const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
-  const [isFlowPublished, setIsChecked] = useState(
+const FlowStatusToggle = ({ flow }: FlowStatusToggleProps) => {
+  const [isFlowPublished, setIsFlowPublished] = useState(
     flow.status === FlowStatus.ENABLED,
   );
+
+  useEffect(() => {
+    setIsFlowPublished(flow.status === FlowStatus.ENABLED);
+  }, [flow]);
+
   const { checkAccess } = useAuthorization();
   const userHasPermissionToToggleFlowStatus = checkAccess(
     Permission.UPDATE_FLOW_STATUS,
   );
 
-  useEffect(() => {
-    setIsChecked(flow.status === FlowStatus.ENABLED);
-  }, [flow.status]);
-
-  const { mutate: changeStatus, isPending: isLoading } = useMutation<
-    PopulatedFlow,
-    Error,
-    void
-  >({
-    mutationFn: async (): Promise<PopulatedFlow> => {
-      return flowsApi.update(flow.id, {
-        type: FlowOperationType.CHANGE_STATUS,
-        request: {
-          status: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
-        },
-      });
-    },
-    onSuccess: (flow) => {
-      setIsChecked(flow.status === FlowStatus.ENABLED);
-    },
-  });
+  const { mutate: changeStatus, isPending: isLoading } =
+    flowHooks.useChangeFlowStatus({
+      flowId: flow.id,
+      change: isFlowPublished ? FlowStatus.DISABLED : FlowStatus.ENABLED,
+      onSuccess: (response: FlowStatusUpdatedResponse) => {
+        setIsFlowPublished(response.flow.status === FlowStatus.ENABLED);
+      },
+    });
 
   return (
     <>
+      <ApErrorDialog />
       <Tooltip>
         <TooltipTrigger asChild>
           <div className="flex items-center justify-center">
@@ -92,11 +82,11 @@ const FlowStatusToggle = ({ flow, flowVersion }: FlowStatusToggleProps) => {
           <Tooltip>
             <TooltipTrigger asChild onClick={(e) => e.stopPropagation()}>
               <div className="p-2 rounded-full ">
-                {flowsUtils.flowStatusIconRenderer(flow, flowVersion)}
+                {flowsUtils.flowStatusIconRenderer(flow)}
               </div>
             </TooltipTrigger>
             <TooltipContent side="bottom">
-              {flowsUtils.flowStatusToolTipRenderer(flow, flowVersion)}
+              {flowsUtils.flowStatusToolTipRenderer(flow)}
             </TooltipContent>
           </Tooltip>
         )

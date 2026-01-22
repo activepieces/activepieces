@@ -1,10 +1,7 @@
 import { ArrowRight } from 'lucide-react';
-import React, { useEffect } from 'react';
+import { useRef } from 'react';
 
-import {
-  ChatDrawerSource,
-  useBuilderStateContext,
-} from '@/app/builder/builder-hooks';
+import { useBuilderStateContext } from '@/app/builder/builder-hooks';
 import { useSocket } from '@/components/socket-provider';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,6 +10,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer';
+import { ChatDrawerSource } from '@/lib/types';
 import {
   FlowRun,
   RunEnvironment,
@@ -21,32 +19,31 @@ import {
 
 import { FlowChat } from './flow-chat';
 
-interface ChatDrawerProps {
-  source: ChatDrawerSource | null;
-  onOpenChange: (open: boolean) => void;
-}
-
-export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
+export const ChatDrawer = () => {
   const [
-    setRun,
     chatSessionMessages,
     chatSessionId,
     addChatMessage,
     flowVersion,
     setChatSessionId,
+    setRun,
+    chatDrawerOpenSource,
+    setChatDrawerOpenSource,
   ] = useBuilderStateContext((state) => [
-    state.setRun,
     state.chatSessionMessages,
     state.chatSessionId,
     state.addChatMessage,
     state.flowVersion,
     state.setChatSessionId,
+    state.setRun,
+    state.chatDrawerOpenSource,
+    state.setChatDrawerOpenSource,
   ]);
   const socket = useSocket();
-
-  const isListening = React.useRef(false);
-
-  useEffect(() => {
+  const isListening = useRef(false);
+  //shouldn't use testFlow hook here because it would run the flow with sample data not the real user message
+  const listenToTestRun = () => {
+    isListening.current = true;
     const onTestFlowRunStarted = (run: FlowRun) => {
       if (
         run.flowVersionId === flowVersion.id &&
@@ -55,24 +52,21 @@ export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
       ) {
         setRun(run, flowVersion);
         isListening.current = false;
+        socket.off(
+          WebsocketClientEvent.TEST_FLOW_RUN_STARTED,
+          onTestFlowRunStarted,
+        );
       }
     };
     socket.on(WebsocketClientEvent.TEST_FLOW_RUN_STARTED, onTestFlowRunStarted);
-
-    return () => {
-      socket.off(
-        WebsocketClientEvent.TEST_FLOW_RUN_STARTED,
-        onTestFlowRunStarted,
-      );
-    };
-  }, [socket]);
-
+  };
   return (
     <Drawer
-      open={source !== null}
-      onOpenChange={onOpenChange}
+      open={chatDrawerOpenSource !== null}
+      onOpenChange={() => setChatDrawerOpenSource(null)}
       direction="right"
       dismissible={false}
+      modal={false}
     >
       <DrawerContent className="w-[500px] overflow-x-hidden">
         <DrawerHeader>
@@ -82,7 +76,7 @@ export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
                 variant="basic"
                 size={'icon'}
                 className="text-foreground"
-                onClick={() => onOpenChange(false)}
+                onClick={() => setChatDrawerOpenSource(null)}
               >
                 <ArrowRight className="h-5 w-5" />
               </Button>
@@ -94,16 +88,16 @@ export const ChatDrawer = ({ source, onOpenChange }: ChatDrawerProps) => {
           <FlowChat
             flowId={flowVersion.flowId}
             className="h-full"
-            mode={source}
+            mode={chatDrawerOpenSource}
             showWelcomeMessage={true}
             onError={() => {}}
-            closeChat={() => {
-              onOpenChange(false);
-            }}
             onSendingMessage={() => {
-              if (source === 'test-flow') {
-                isListening.current = true;
+              if (chatDrawerOpenSource === ChatDrawerSource.TEST_FLOW) {
+                listenToTestRun();
               }
+            }}
+            closeChat={() => {
+              setChatDrawerOpenSource(null);
             }}
             messages={chatSessionMessages}
             chatSessionId={chatSessionId}

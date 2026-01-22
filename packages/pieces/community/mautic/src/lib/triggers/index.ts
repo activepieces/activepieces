@@ -375,7 +375,7 @@ function registerTrigger({
     sampleData,
     type: TriggerStrategy.WEBHOOK,
     async onEnable(context) {
-      const { base_url, username, password } = context.auth
+      const { base_url, username, password } = context.auth.props
 
       const request: HttpRequest = {
         method: HttpMethod.POST,
@@ -399,7 +399,7 @@ function registerTrigger({
       await context.store.put<WebhookInformation>(`mautic_${name}_trigger`, response.body);
     },
     async onDisable(context) {
-      const { base_url, username, password } = context.auth
+      const { base_url, username, password } = context.auth.props
 
       const webhook = await context.store.get<WebhookInformation>(`mautic_${name}_trigger`);
       if (webhook != null) {

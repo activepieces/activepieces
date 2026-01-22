@@ -97,7 +97,7 @@ export const createNewFeatureRequest = createAction({
   },
 
   async run(context) {
-    const apiKey = context.auth;
+    const apiKey = context.auth.secret_text;
 
     const request: HttpRequest = {
       method: HttpMethod.POST,

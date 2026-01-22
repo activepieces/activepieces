@@ -15,7 +15,7 @@ export default createAction({
     user_id: clockodoCommon.user_id(false),
   },
   async run({ auth, propsValue }) {
-    const client = makeClient(auth);
+    const client = makeClient(auth.props);
     const res = await client.listAbsences({
       year: propsValue.year,
       users_id: propsValue.user_id,

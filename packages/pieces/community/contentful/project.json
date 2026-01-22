@@ -23,34 +23,13 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
-      "dependsOn": ["prebuild", "^build"]
-    },
-    "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/contentful",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-contentful:prebuild",
-          "nx run pieces-contentful:build",
-          "nx run pieces-contentful:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/contentful",
-        "command": "npm install"
-      }
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "publish": {
       "command": "node tools/scripts/publish.mjs pieces-contentful {args.ver} {args.tag}",
@@ -62,6 +41,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/contentful",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   },

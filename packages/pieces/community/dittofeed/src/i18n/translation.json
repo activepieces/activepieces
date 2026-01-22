@@ -1,0 +1,19 @@
+{
+  "Customer data platform for user analytics and tracking": "Customer data platform for user analytics and tracking",
+  "API Key": "API Key",
+  "Base URL": "Base URL",
+  "Your API key of Dittofeed.": "Your API key of Dittofeed.",
+  "The base URL of your Dittofeed instance.": "The base URL of your Dittofeed instance.",
+  "Identify User": "Identify User",
+  "Track Event": "Track Event",
+  "Screen Event": "Screen Event",
+  "Identify a user in Dittofeed.": "Identify a user in Dittofeed.",
+  "Track an event for a user.": "Track an event for a user.",
+  "Track a screen view event.": "Track a screen view event.",
+  "User ID": "User ID",
+  "User Traits": "User Traits",
+  "Event Name": "Event Name",
+  "Event Properties": "Event Properties",
+  "Screen Name": "Screen Name",
+  "Screen Properties": "Screen Properties"
+}

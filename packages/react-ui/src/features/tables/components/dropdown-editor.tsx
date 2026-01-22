@@ -1,41 +1,43 @@
-import { useRef, useState } from 'react';
-import type { RenderEditCellProps } from 'react-data-grid';
+import { useRef } from 'react';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
+import { cn } from '@/lib/utils';
 import { FieldType, StaticDropdownEmptyOption } from '@activepieces/shared';
 
-import { ClientField } from '../lib/store/ap-tables-client-state';
-import { Row } from '../lib/types';
+import { useTableState } from './ap-table-state-provider';
+import { useCellContext } from './cell-context';
 
-const DropdownEditor = ({
-  row,
-  column,
-  onRowChange,
-  value: initialValue,
-  field,
-  onClose,
-}: RenderEditCellProps<Row, { id: string }> & {
-  value: string;
-  field: ClientField;
-}) => {
-  const [value, setValue] = useState(initialValue);
-
+const DropdownEditor = () => {
+  const {
+    value,
+    handleCellChange,
+    setIsEditing,
+    isEditing,
+    columnIdx,
+    disabled,
+  } = useCellContext();
+  const field = useTableState((state) => state.fields[columnIdx]);
   const containerRef = useRef<HTMLDivElement>(null);
-  if (field.type !== FieldType.STATIC_DROPDOWN) {
+  const handleChange = (newValue: string | null) => {
+    handleCellChange(newValue ?? '');
+  };
+  if (field?.type !== FieldType.STATIC_DROPDOWN) {
+    console.log(field);
     console.error('DropdownEditor can only be used for STATIC_DROPDOWN fields');
     return null;
   }
-  const handleChange = (newValue: string | null) => {
-    setValue(newValue ?? '');
-    onRowChange({ ...row, [column.key]: newValue }, true);
-    onClose();
-  };
-
   return (
-    <div className="h-full relative w-full" ref={containerRef}>
+    <div
+      className={cn('h-full w-full', {
+        'border-primary  border-2': isEditing,
+      })}
+      ref={containerRef}
+    >
       <SearchableSelect
-        triggerClassName="rounded-none border-primary  border-2 px-2"
-        onClose={onClose}
+        triggerClassName={cn('rounded-none px-2 border-none bg-transparent')}
+        onClose={() => {
+          setIsEditing(false);
+        }}
         options={[
           StaticDropdownEmptyOption,
           ...field.data.options.map((option) => ({
@@ -45,9 +47,13 @@ const DropdownEditor = ({
         ]}
         onChange={handleChange}
         value={value}
-        disabled={false}
+        disabled={disabled}
         placeholder={''}
         showDeselect={false}
+        openState={{
+          open: isEditing,
+          setOpen: setIsEditing,
+        }}
       ></SearchableSelect>
     </div>
   );

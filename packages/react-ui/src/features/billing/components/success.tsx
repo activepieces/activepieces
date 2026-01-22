@@ -1,5 +1,5 @@
 import { t } from 'i18next';
-import { Check, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Check, TrendingUp, TrendingDown } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -52,13 +52,21 @@ export const Success = () => {
           title: t('Success!'),
           description: t('Subscription created successfully'),
         };
-      case 'setup':
+      case 'ai-credit-auto-topup':
         return {
-          icon: Wallet,
+          icon: Check,
           iconBg: 'bg-primary/10',
           iconColor: 'text-primary',
           title: t('Success!'),
-          description: t('Payment method attached successfully'),
+          description: t('AI credit auto topup enabled successfully'),
+        };
+      case 'ai-credit-payment':
+        return {
+          icon: Check,
+          iconBg: 'bg-primary/10',
+          iconColor: 'text-primary',
+          title: t('Success!'),
+          description: t('AI credits purchased successfully'),
         };
       default:
         return {

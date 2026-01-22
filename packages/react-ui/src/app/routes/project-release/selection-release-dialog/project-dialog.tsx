@@ -4,6 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { SearchableSelect } from '@/components/custom/searchable-select';
 import { Button } from '@/components/ui/button';
@@ -16,9 +17,8 @@ import {
 } from '@/components/ui/dialog';
 import { FormField, FormItem, Form, FormMessage } from '@/components/ui/form';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
-import { projectReleaseApi } from '@/features/project-version/lib/project-release-api';
-import { projectHooks } from '@/hooks/project-hooks';
+import { projectReleaseApi } from '@/features/project-releases/lib/project-release-api';
+import { projectCollectionUtils } from '@/hooks/project-collection';
 import { DiffReleaseRequest, ProjectReleaseType } from '@activepieces/shared';
 
 import { CreateReleaseDialog } from '../create-release-dialog';
@@ -45,8 +45,7 @@ export function ProjectSelectionDialog({
   setOpen,
   onSuccess,
 }: ProjectSelectionDialogProps) {
-  const { data: projects, isLoading: loadingProjects } =
-    projectHooks.useProjects();
+  const { data: projects } = projectCollectionUtils.useAll();
   const [isCreateReleaseDialogOpen, setIsCreateReleaseDialogOpen] =
     useState(false);
   const [syncPlan, setSyncPlan] = useState<any>(null);
@@ -55,13 +54,11 @@ export function ProjectSelectionDialog({
       projectReleaseApi.diff(request),
     onSuccess: (plan) => {
       if (
-        (!plan.operations || plan.operations.length === 0) &&
+        (!plan.flows || plan.flows.length === 0) &&
         (!plan.tables || plan.tables.length === 0)
       ) {
-        toast({
-          title: t('No Changes Found'),
+        toast(t('No Changes Found'), {
           description: t('There are no differences to apply'),
-          variant: 'default',
         });
         return;
       }
@@ -87,6 +84,7 @@ export function ProjectSelectionDialog({
       return;
     }
     loadSyncPlan({
+      projectId,
       type: ProjectReleaseType.PROJECT,
       targetProjectId: data.selectedProject,
     });
@@ -128,7 +126,6 @@ export function ProjectSelectionDialog({
                           label: project.displayName,
                           value: project.id,
                         }))}
-                      loading={loadingProjects}
                     ></SearchableSelect>
 
                     <FormMessage />
@@ -164,6 +161,7 @@ export function ProjectSelectionDialog({
           setOpen={setIsCreateReleaseDialogOpen}
           refetch={onSuccess}
           diffRequest={{
+            projectId,
             targetProjectId: form.getValues('selectedProject'),
             type: ProjectReleaseType.PROJECT,
           }}

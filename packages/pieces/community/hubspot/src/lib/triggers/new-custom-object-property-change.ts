@@ -8,23 +8,25 @@ import {
 import {
 	customObjectDropdown,
 	customObjectPropertiesDropdown,
-	standardObjectPropertiesDropdown,
 } from '../common/props';
 import { DedupeStrategy, Polling, pollingHelper } from '@activepieces/pieces-common';
+import { chunk, isNil } from '@activepieces/shared';
 
 import { Client } from '@hubspot/api-client';
 import dayjs from 'dayjs';
 import { FilterOperatorEnum } from '../common/types';
+import { MAX_SEARCH_PAGE_SIZE, MAX_SEARCH_TOTAL_RESULTS } from '../common/constants';
 
 type Props = {
 	customObjectType?: string;
 	propertyName?: DynamicPropsValue;
 };
 
-const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
+import { AppConnectionValueForAuthProperty } from '@activepieces/pieces-framework';
+const polling: Polling<AppConnectionValueForAuthProperty<typeof hubspotAuth>, Props> = {
 	strategy: DedupeStrategy.TIMEBASED,
 	async items({ auth, propsValue, lastFetchEpochMS }) {
-		const client = new Client({ accessToken: auth.access_token });
+		const client = new Client({ accessToken: auth.access_token, numberOfApiCallRetries: 3 });
 
 		const customObjectType = propsValue.customObjectType as string;
 		const propertyToCheck = propsValue.propertyName?.['values'] as string;
@@ -47,10 +49,10 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 		}
 		//fetch updated custom objects
 		const updatedCustomObjects = [];
-		let after;
+		let after: string | undefined;
 		do {
 			const response = await client.crm.objects.searchApi.doSearch(customObjectType, {
-				limit: 100,
+				limit: MAX_SEARCH_PAGE_SIZE,
 				after,
 				sorts: ['-hs_lastmodifieddate'],
 				filterGroups: [
@@ -71,27 +73,43 @@ const polling: Polling<PiecePropValueSchema<typeof hubspotAuth>, Props> = {
 			});
 			after = response.paging?.next?.after;
 			updatedCustomObjects.push(...response.results);
+
+			// Stop fetching if it exceeds max search results or will encounter 400 status
+			if (
+				!isNil(after) &&
+				parseInt(after) + MAX_SEARCH_PAGE_SIZE > MAX_SEARCH_TOTAL_RESULTS
+			) {
+				break;
+			}
 		} while (after);
 
 		if (updatedCustomObjects.length === 0) {
 			return [];
 		}
 
-		// Fetch custom objects with property history
-		const updatedCustomObjectsWithPropertyHistory = await client.crm.objects.batchApi.read(
-			customObjectType,
-			{
-				propertiesWithHistory: [propertyToCheck],
-				properties: propertiesToRetrieve,
-				inputs: updatedCustomObjects.map((customObject) => {
-					return {
-						id: customObject.id,
-					};
-				}),
-			},
-		);
+    // Avoid VALIDATION_ERROR: The maximum number of inputs supported in a batch request for property histories is 50
+    const batchApiChunks = chunk(updatedCustomObjects, 50);
 
-		for (const customObject of updatedCustomObjectsWithPropertyHistory.results) {
+    // Fetch custom objects with property history
+    const batchApiResps = await Promise.all(
+      batchApiChunks.map((batch) => {
+        return client.crm.objects.batchApi.read(customObjectType, {
+          propertiesWithHistory: [propertyToCheck],
+          properties: propertiesToRetrieve,
+          inputs: batch.map((customObject) => {
+            return {
+              id: customObject.id,
+            };
+          }),
+        });
+      })
+    );
+
+    const updatedCustomObjectsWithPropertyHistory = batchApiResps.flatMap(
+      (resp) => resp.results
+    );
+
+		for (const customObject of updatedCustomObjectsWithPropertyHistory) {
 			const history = customObject.propertiesWithHistory?.[propertyToCheck];
 			if (!history || history.length === 0) {
 				continue;

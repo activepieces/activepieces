@@ -28,7 +28,7 @@ export const getMessageAction = createAction({
 
 		return await client.conversations.history({
 			channel: propsValue.channel,
-			latest: messageTimestamp,
+			oldest: messageTimestamp,
 			limit: 1,
 			inclusive: true,
 		});

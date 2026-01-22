@@ -1,13 +1,14 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
+import { authenticationSession } from '@/lib/authentication-session';
 import {
-  Action,
-  ActionType,
+  FlowAction,
+  FlowActionType,
+  FlowTriggerType,
   LocalesEnum,
   SuggestionType,
-  Trigger,
-  TriggerType,
+  FlowTrigger,
 } from '@activepieces/shared';
 
 import {
@@ -23,7 +24,7 @@ import {
 } from './step-utils';
 
 export const stepsHooks = {
-  useStepMetadata: ({ step, enabled = true }: UseStepMetadata) => {
+  useStepMetadata: ({ step }: UseStepMetadata) => {
     const { i18n } = useTranslation();
     const query = useQuery<
       StepMetadataWithActionOrTriggerOrAgentDisplayName,
@@ -31,14 +32,13 @@ export const stepsHooks = {
     >({
       queryKey: getQueryKeyForStepMetadata(step, i18n.language as LocalesEnum),
       queryFn: () => stepUtils.getMetadata(step, i18n.language as LocalesEnum),
-      enabled,
     });
     return {
       stepMetadata: query.data,
       isLoading: query.isLoading,
     };
   },
-  useStepsMetadata: (props: (Action | Trigger)[]) => {
+  useStepsMetadata: (props: (FlowAction | FlowTrigger)[]) => {
     const { i18n } = useTranslation();
     return useQueries({
       queries: props.map((step) => {
@@ -60,6 +60,7 @@ export const stepsHooks = {
       queryKey: ['pieces-metadata', searchQuery, type],
       queryFn: async () => {
         const pieces = await piecesApi.list({
+          projectId: authenticationSession.getProjectId()!,
           searchQuery,
           suggestionType:
             type === 'action' ? SuggestionType.ACTION : SuggestionType.TRIGGER,
@@ -118,8 +119,7 @@ function passSearch(
 }
 
 type UseStepMetadata = {
-  step: Action | Trigger;
-  enabled?: boolean;
+  step: FlowAction | FlowTrigger;
 };
 
 type UseMetadataProps = {
@@ -129,15 +129,26 @@ type UseMetadataProps = {
 };
 
 const getQueryKeyForStepMetadata = (
-  step: Action | Trigger,
+  step: FlowAction | FlowTrigger,
   locale: LocalesEnum,
 ): (string | undefined)[] => {
   const isPieceStep =
-    step.type === ActionType.PIECE || step.type === TriggerType.PIECE;
+    step.type === FlowActionType.PIECE || step.type === FlowTriggerType.PIECE;
   const pieceName = isPieceStep ? step.settings.pieceName : undefined;
   const pieceVersion = isPieceStep ? step.settings.pieceVersion : undefined;
   const customLogoUrl =
-    'customLogoUrl' in step ? step.customLogoUrl : undefined;
-  const agentId = stepUtils.getAgentId(step);
-  return [pieceName, pieceVersion, customLogoUrl, agentId, locale, step.type];
+    'customLogoUrl' in step ? (step.customLogoUrl as string) : undefined;
+  const actionName =
+    step.type === FlowActionType.PIECE ? step.settings.actionName : undefined;
+  const triggerName =
+    step.type === FlowTriggerType.PIECE ? step.settings.triggerName : undefined;
+  return [
+    actionName,
+    triggerName,
+    pieceName,
+    pieceVersion,
+    customLogoUrl,
+    locale,
+    step.type,
+  ];
 };

@@ -2,7 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 import { t } from 'i18next';
 import { LockIcon, MailIcon, Earth } from 'lucide-react';
 import React from 'react';
+import { toast } from 'sonner';
 
+import { DashboardPageHeader } from '@/app/components/dashboard-page-header';
 import LockedFeatureGuard from '@/app/components/locked-feature-guard';
 import { AllowedDomainDialog } from '@/app/routes/platform/security/sso/allowed-domain';
 import { NewOAuth2Dialog } from '@/app/routes/platform/security/sso/oauth2-dialog';
@@ -10,7 +12,6 @@ import { ConfigureSamlDialog } from '@/app/routes/platform/security/sso/saml-dia
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { toast } from '@/components/ui/use-toast';
 import { platformHooks } from '@/hooks/platform-hooks';
 import { platformApi } from '@/lib/platforms-api';
 import { isNil } from '@activepieces/shared';
@@ -37,7 +38,7 @@ const ProviderCard = ({
         <div className="flex flex-col gap-2 text-center mr-2">
           {providerIcon}
         </div>
-        <div className="flex flex-grow  flex-col">
+        <div className="flex grow  flex-col">
           <div className="text-lg">{providerName}</div>
           <div className="text-sm text-muted-foreground">
             {providerDescription ??
@@ -82,9 +83,7 @@ const SSOPage = () => {
       await refetch();
     },
     onSuccess: () => {
-      toast({
-        title: t('Success'),
-        description: t('Email authentication updated'),
+      toast.success(t('Email authentication updated'), {
         duration: 3000,
       });
     },
@@ -100,15 +99,10 @@ const SSOPage = () => {
       )}
     >
       <div className="flex-col w-full">
-        <div className="mb-4 flex">
-          <div className="flex justify-between flex-row w-full">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-2xl font-bold w-full">
-                {t('Single Sign On')}
-              </h1>
-            </div>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title={t('Single Sign On')}
+          description={t('Manage signle sign on providers')}
+        ></DashboardPageHeader>
         <div className="flex flex-col gap-4">
           <ProviderCard
             providerName={t('Allowed Domains')}

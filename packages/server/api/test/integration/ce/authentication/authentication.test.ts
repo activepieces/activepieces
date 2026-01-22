@@ -16,10 +16,10 @@ beforeAll(async () => {
 })
 
 beforeEach(async () => {
-    await databaseConnection().getRepository('flag').delete({})
-    await databaseConnection().getRepository('project').delete({})
-    await databaseConnection().getRepository('platform').delete({})
-    await databaseConnection().getRepository('user').delete({})
+    await databaseConnection().getRepository('flag').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('project').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('platform').createQueryBuilder().delete().execute()
+    await databaseConnection().getRepository('user').createQueryBuilder().delete().execute()
 })
 
 afterAll(async () => {

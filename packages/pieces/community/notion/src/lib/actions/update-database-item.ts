@@ -36,11 +36,16 @@ export const updateDatabaseItem = createAction({
     });
 
     Object.keys(databaseFields).forEach((key) => {
-      if (databaseFields[key] !== '') {
+      const value = databaseFields[key];
+      if (
+        value !== '' &&
+        value !== undefined &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+      ) {
         const fieldType: string = properties[key].type;
-        notionFields[key] = NotionFieldMapping[fieldType].buildNotionType(
-          databaseFields[key]
-        );
+        notionFields[key] =
+          NotionFieldMapping[fieldType].buildNotionType(value);
       }
     });
     return await notion.pages.update({

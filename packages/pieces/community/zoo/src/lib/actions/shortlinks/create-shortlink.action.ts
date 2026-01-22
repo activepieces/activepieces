@@ -25,7 +25,7 @@ export const createShortlinkAction = createAction({
       method: HttpMethod.POST,
       url: 'https://api.zoo.dev/user/shortlinks',
       headers: {
-        Authorization: `Bearer ${auth}`,
+        Authorization: `Bearer ${auth.secret_text}`,
       },
       body: {
         url: propsValue.url,

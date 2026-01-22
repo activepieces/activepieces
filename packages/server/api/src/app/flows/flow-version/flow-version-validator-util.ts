@@ -1,24 +1,25 @@
 import {
+    PieceAuthProperty,
+    piecePropertiesUtils,
     PiecePropertyMap,
-    PropertyType,
 } from '@activepieces/pieces-framework'
 import {
-    ActionType,
+    FlowActionType,
     FlowOperationRequest,
     FlowOperationType,
+    FlowTriggerType,
     isNil,
     LoopOnItemsActionSettings,
     PieceActionSettings,
     PieceTriggerSettings,
     PlatformId,
-    ProjectId,
     RouterActionSettingsWithValidation,
-    TriggerType,
+    UserId,
 } from '@activepieces/shared'
-import { TSchema, Type } from '@sinclair/typebox'
+import { Type } from '@sinclair/typebox'
 import { TypeCompiler } from '@sinclair/typebox/compiler'
 import { FastifyBaseLogger } from 'fastify'
-import { pieceMetadataService } from '../../pieces/piece-metadata-service'
+import { pieceMetadataService } from '../../pieces/metadata/piece-metadata-service'
 
 const loopSettingsValidator = TypeCompiler.Compile(Type.Intersect([LoopOnItemsActionSettings, Type.Object({
     items: Type.String({
@@ -33,27 +34,20 @@ type ValidationResult = {
 }
 
 export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
-    async prepareRequest(
-        projectId: ProjectId,
-        platformId: PlatformId,
-        request: FlowOperationRequest,
-    ): Promise<FlowOperationRequest> {
+    async prepareRequest({ platformId, request, userId }: PrepareRequestParams): Promise<FlowOperationRequest> {
         const clonedRequest: FlowOperationRequest = JSON.parse(JSON.stringify(request))
 
         switch (clonedRequest.type) {
             case FlowOperationType.ADD_ACTION:
                 switch (clonedRequest.request.action.type) {
-                    case ActionType.LOOP_ON_ITEMS:
+                    case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.action.valid = loopSettingsValidator.Check(
                             clonedRequest.request.action.settings,
                         ) 
                         break
-                    case ActionType.PIECE: {
+                    case FlowActionType.PIECE: {
                         const result = await validateAction(
-                            clonedRequest.request.action.settings,
-                            projectId,
-                            platformId,
-                            log,
+                            { settings: clonedRequest.request.action.settings, platformId, log },
                         )
                         clonedRequest.request.action.valid = result.valid
                         if (!isNil(result.cleanInput)) {
@@ -61,29 +55,26 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         }
                         break
                     }
-                    case ActionType.ROUTER:
+                    case FlowActionType.ROUTER:
                         clonedRequest.request.action.valid = routerSettingsValidator.Check(
                             clonedRequest.request.action.settings,
                         )
                         break
-                    case ActionType.CODE: {
+                    case FlowActionType.CODE: {
                         break
                     }
                 }
                 break
             case FlowOperationType.UPDATE_ACTION:
                 switch (clonedRequest.request.type) {
-                    case ActionType.LOOP_ON_ITEMS:
+                    case FlowActionType.LOOP_ON_ITEMS:
                         clonedRequest.request.valid = loopSettingsValidator.Check(
                             clonedRequest.request.settings,
                         )
                         break
-                    case ActionType.PIECE: {
+                    case FlowActionType.PIECE: {
                         const result = await validateAction(
-                            clonedRequest.request.settings,
-                            projectId,
-                            platformId,
-                            log,
+                            { settings: clonedRequest.request.settings, platformId, log },
                         )
                         clonedRequest.request.valid = result.valid
                         if (!isNil(result.cleanInput)) {
@@ -91,27 +82,24 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                         }
                         break
                     }
-                    case ActionType.ROUTER:
+                    case FlowActionType.ROUTER:
                         clonedRequest.request.valid = routerSettingsValidator.Check(
                             clonedRequest.request.settings,
                         )
                         break
-                    case ActionType.CODE: {
+                    case FlowActionType.CODE: {
                         break
                     }
                 }
                 break
             case FlowOperationType.UPDATE_TRIGGER:
                 switch (clonedRequest.request.type) {
-                    case TriggerType.EMPTY:
+                    case FlowTriggerType.EMPTY:
                         clonedRequest.request.valid = false
                         break
-                    case TriggerType.PIECE: {
+                    case FlowTriggerType.PIECE: {
                         const result = await validateTrigger(
-                            clonedRequest.request.settings,
-                            projectId,
-                            platformId,
-                            log,
+                            { settings: clonedRequest.request.settings, platformId, log },
                         )
                         clonedRequest.request.valid = result.valid
                         if (result.valid && result.cleanInput) {
@@ -121,6 +109,16 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
                     }
                 }
                 break
+            case FlowOperationType.IMPORT_FLOW:{
+                const notes = clonedRequest.request.notes
+                if (!isNil(notes)) {
+                    clonedRequest.request.notes = notes.map(note => ({
+                        ...note,
+                        ownerId: userId,
+                    }))
+                }
+                break
+            }
             default:
                 break
         }
@@ -128,12 +126,7 @@ export const flowVersionValidationUtil = (log: FastifyBaseLogger) => ({
     },
 })
 
-async function validateAction(
-    settings: PieceActionSettings,
-    projectId: ProjectId,
-    platformId: PlatformId,
-    log: FastifyBaseLogger,
-): Promise<ValidationResult> {
+async function validateAction({ settings, platformId, log }: ValidateActionParams): Promise<ValidationResult> {
     if (
         isNil(settings.pieceName) ||
         isNil(settings.pieceVersion) ||
@@ -144,7 +137,6 @@ async function validateAction(
     }
 
     const piece = await pieceMetadataService(log).getOrThrow({
-        projectId,
         platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,
@@ -159,19 +151,12 @@ async function validateAction(
         return { valid: false }
     }
 
-    const props = action.props
-    if (!isNil(piece.auth) && action.requireAuth !== false) {
-        props.auth = piece.auth
-    }
-    return validateProps(props, settings.input)
+    const props = { ...action.props }
+  
+    return validateProps(props, settings.input, piece.auth, action.requireAuth)
 }
 
-async function validateTrigger(
-    settings: PieceTriggerSettings,
-    projectId: ProjectId,
-    platformId: PlatformId,
-    log: FastifyBaseLogger,
-): Promise<ValidationResult> {
+async function validateTrigger({ settings, platformId, log }: ValidateTriggerParams): Promise<ValidationResult> {
     if (
         isNil(settings.pieceName) ||
         isNil(settings.pieceVersion) ||
@@ -182,7 +167,6 @@ async function validateTrigger(
     }
 
     const piece = await pieceMetadataService(log).getOrThrow({
-        projectId,
         platformId,
         name: settings.pieceName,
         version: settings.pieceVersion,
@@ -194,103 +178,44 @@ async function validateTrigger(
     if (isNil(trigger)) {
         return { valid: false }
     }
-    const props = trigger.props
-    if (!isNil(piece.auth) && trigger.requireAuth !== false) {
-        props.auth = piece.auth
-    }
-    return validateProps(props, settings.input)
+    const props = { ...trigger.props } 
+   
+    return validateProps(props, settings.input, piece.auth, trigger.requireAuth)
 }
 
 function validateProps(
     props: PiecePropertyMap,
     input: Record<string, unknown> | undefined,
+    auth: PieceAuthProperty | PieceAuthProperty[] | undefined,
+    //if require auth is not defined, we default to true, because at first all auth was required
+    requireAuth: boolean | undefined = true,
 ): ValidationResult {
-    const propsSchema = buildSchema(props)
-    const propsValidator = TypeCompiler.Compile(propsSchema)
-    const valid = propsValidator.Check(input)
+    const propsWithAuthSchema = piecePropertiesUtils.buildSchema(props, auth,  requireAuth)
+    const inputValidator = TypeCompiler.Compile(propsWithAuthSchema)
     const cleanInput = !isNil(input) ? Object.fromEntries(
-        Object.keys(props).map(key => [key, input?.[key]]),
+        Object.keys(propsWithAuthSchema.properties).map(key => [key, input?.[key]]),
     ) : undefined
-
     return {
-        valid,
+        valid: inputValidator.Check(cleanInput),
         cleanInput,
     }
 }
 
-function buildSchema(props: PiecePropertyMap): TSchema {
-    const entries = Object.entries(props)
-    const nonNullableUnknownPropType = Type.Not(
-        Type.Union([Type.Null(), Type.Undefined()]),
-        Type.Unknown(),
-    )
-    const propsSchema: Record<string, TSchema> = {}
-    for (const [name, property] of entries) {
-        switch (property.type) {
-            case PropertyType.MARKDOWN:
-                propsSchema[name] = Type.Optional(
-                    Type.Union([Type.Null(), Type.Undefined(), Type.Never(), Type.Unknown()]),
-                )
-                break
-            case PropertyType.DATE_TIME:
-            case PropertyType.SHORT_TEXT:
-            case PropertyType.LONG_TEXT:
-            case PropertyType.FILE:
-                propsSchema[name] = Type.String({
-                    minLength: property.required ? 1 : undefined,
-                })
-                break
-            case PropertyType.CHECKBOX:
-                propsSchema[name] = Type.Union([Type.Boolean(), Type.String({})])
-                break
-            case PropertyType.NUMBER:
-                propsSchema[name] = Type.Union([Type.String({}), Type.Number({})])
-                break
-            case PropertyType.STATIC_DROPDOWN:
-            case PropertyType.DROPDOWN:
-                propsSchema[name] = nonNullableUnknownPropType
-                break
-            case PropertyType.BASIC_AUTH:
-            case PropertyType.CUSTOM_AUTH:
-            case PropertyType.SECRET_TEXT:
-            case PropertyType.OAUTH2:
-            case PropertyType.COLOR:
-                propsSchema[name] = Type.String()
-                break
-            case PropertyType.ARRAY:
-                propsSchema[name] = Type.Union([Type.Array(Type.Unknown({})), Type.String(), Type.Record(Type.String(), Type.Unknown())])
-                break
-            case PropertyType.OBJECT:
-                propsSchema[name] = Type.Union([
-                    Type.Record(Type.String(), Type.Any()),
-                    Type.String(),
-                ])
-                break
-            case PropertyType.JSON:
-                propsSchema[name] = Type.Union([
-                    Type.Record(Type.String(), Type.Any()),
-                    Type.Array(Type.Any()),
-                    Type.String(),
-                ])
-                break
-            case PropertyType.MULTI_SELECT_DROPDOWN:
-            case PropertyType.STATIC_MULTI_SELECT_DROPDOWN:
-                propsSchema[name] = Type.Union([Type.Array(Type.Any()), Type.String()])
-                break
-            case PropertyType.DYNAMIC:
-                propsSchema[name] = Type.Record(Type.String(), Type.Any())
-                break
-            case PropertyType.CUSTOM:
-                propsSchema[name] = Type.Unknown()
-                break
-        }
 
-        if (!property.required) {
-            propsSchema[name] = Type.Optional(
-                Type.Union([Type.Null(), Type.Undefined(), propsSchema[name]]),
-            )
-        }
-    }
+type PrepareRequestParams = {
+    platformId?: PlatformId
+    request: FlowOperationRequest
+    userId: UserId | null
+}
 
-    return Type.Object(propsSchema)
-} 
+type ValidateActionParams = {
+    settings: PieceActionSettings
+    platformId?: PlatformId
+    log: FastifyBaseLogger
+}
+
+type ValidateTriggerParams = {
+    settings: PieceTriggerSettings
+    platformId?: PlatformId
+    log: FastifyBaseLogger
+}

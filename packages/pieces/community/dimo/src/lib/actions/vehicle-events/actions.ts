@@ -1,59 +1,45 @@
 import { ActionContext, createAction, CustomAuthProperty, Property } from "@activepieces/pieces-framework";
-import { AuthenticationType, httpClient, HttpMethod } from "@activepieces/pieces-common";
+import { AuthenticationType, httpClient } from "@activepieces/pieces-common";
 import { VEHICLE_EVENTS_OPERATIONS } from "./constant";
 import { VehicleEventsParams, VehicleEventsBodyType } from "./type";
 import { dimoAuth } from '../../../index';
 import { DimoClient, vehicleEventTriggerToText } from "../../common/helpers";
 import { operatorStaticDropdown, verificationTokenInput } from '../../common/props';
 import { TriggerField } from '../../common/constants';
-import type { CreateWebhookParams, VehicleEventTrigger } from '../../common/types';
 
 async function sendVehicleEventsRequest({ ctx, opKey }: { ctx: ActionContext<CustomAuthProperty<any>>, opKey: keyof typeof VEHICLE_EVENTS_OPERATIONS }) {
   const op = VEHICLE_EVENTS_OPERATIONS[opKey];
-  const { webhookId, tokenId, data, operator, value, triggerFrequency, targetUri, status, verificationToken, description } = ctx.propsValue;
-  const { clientId, apiKey, redirectUri } = ctx.auth;
+  const { webhookId, tokenId, data, operator, triggerNumber, triggerExpression, coolDownPeriod, targetURL, status, verificationToken, description, displayName } = ctx.propsValue;
+  const { clientId, apiKey, redirectUri } = ctx.auth.props;
   const dimo = new DimoClient({ clientId, apiKey, redirectUri });
 
   const developerJwt = await dimo.getDeveloperJwt();
 
-  let webhookDefinition: CreateWebhookParams | undefined = undefined;
-
-  if (op.bodyType === VehicleEventsBodyType.WebhookDefinition) {
-    const trigger = { field: data, operator, value } as VehicleEventTrigger;
-    webhookDefinition = {
-      service: 'Telemetry',
-      data,
-      trigger: trigger,
-      setup: triggerFrequency,
-      description,
-      target_uri: targetUri,
-      status,
-      verification_token: verificationToken,
-    };
-  }
   if (op.requiredFields) {
     for (const field of op.requiredFields) {
-      if (field === 'webhookDefinition') {
-        if (webhookDefinition === undefined || webhookDefinition === null) {
-          throw new Error(`webhookDefinition is required for this operation.`);
-        }
-      } else {
-        if (ctx.propsValue[field] === undefined || ctx.propsValue[field] === null || ctx.propsValue[field] === "") {
-          throw new Error(`${field} is required for this operation.`);
-        }
+      if (ctx.propsValue[field] === undefined || ctx.propsValue[field] === null || ctx.propsValue[field] === "") {
+        throw new Error(`${field} is required for this operation.`);
       }
     }
   }
+
   const params: VehicleEventsParams = { webhookId, tokenId };
   const url = op.url(params);
   const method = op.method;
+
   let body: unknown = undefined;
   switch (op.bodyType) {
     case VehicleEventsBodyType.WebhookDefinition: {
-        const { trigger, ...rest } = webhookDefinition!;
         body = {
-          ...rest,
-          trigger: vehicleEventTriggerToText(trigger)
+          service: 'telemetry.signals',
+          metricName: data,
+          condition: vehicleEventTriggerToText(data, operator, triggerNumber, triggerExpression),
+          coolDownPeriod,
+          ...(displayName ? { displayName } : {}),
+          ...(description ? { description } : {}),
+          targetURL,
+          status,
+          verificationToken,
         }
       break;
     }
@@ -90,130 +76,262 @@ const listWebhooksAction = createAction({
   },
 });
 
-const createWebhookAction = createAction({
+const upsertWebhookNumericAction = createAction({
   auth: dimoAuth,
-  name: "vehicle-events-create-webhook-action",
-  displayName: "Vehicle Events: Create Webhook",
-  description: "Create a new webhook.",
+  name: "vehicle-events-upsert-webhook-numeric-action",
+  displayName: "Vehicle Events: Create/Update Webhook (Numeric)",
+  description: "Create a new webhook or update existing one for numeric vehicle signals. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
   props: {
+    webhookId: Property.ShortText({
+      displayName: "Webhook ID (Optional)",
+      description: "ID of the webhook to update. Leave empty to create a new webhook.",
+      required: false,
+    }),
     data: Property.StaticDropdown({
       displayName: 'Signal/Data',
-      description: 'Which vehicle signal to monitor',
+      description: 'Which numeric vehicle signal to monitor',
       required: true,
-      options: {
-        options: Object.values(TriggerField).map((field) => ({ label: field, value: field })),
-      },
-    }),
-    operator: operatorStaticDropdown,
-    value: Property.ShortText({
-      displayName: 'Trigger Value',
-      description: 'Value to compare against (number, boolean için true/false, string için text)',
-      required: true,
-    }),
-    triggerFrequency: Property.StaticDropdown({
-      displayName: 'Trigger Frequency',
-      description: 'How often the webhook should fire when condition is met',
-      required: true,
-      defaultValue: 'Realtime',
       options: {
         options: [
-          { label: 'Real-time (continuous)', value: 'Realtime' },
-          { label: 'Hourly', value: 'Hourly' },
+          { label: 'Speed', value: TriggerField.Speed },
+          { label: 'Travelled Distance', value: TriggerField.PowertrainTransmissionTravelledDistance },
+          { label: 'Fuel Level (Relative)', value: TriggerField.PowertrainFuelSystemRelativeLevel },
+          { label: 'Fuel Level (Absolute)', value: TriggerField.PowertrainFuelSystemAbsoluteLevel },
+          { label: 'Battery Power', value: TriggerField.PowertrainTractionBatteryCurrentPower },
+          { label: 'Battery State of Charge', value: TriggerField.PowertrainTractionBatteryStateOfChargeCurrent },
+          { label: 'Tire Pressure (Front Left)', value: TriggerField.ChassisAxleRow1WheelLeftTirePressure },
+          { label: 'Tire Pressure (Front Right)', value: TriggerField.ChassisAxleRow1WheelRightTirePressure },
+          { label: 'Tire Pressure (Rear Left)', value: TriggerField.ChassisAxleRow2WheelLeftTirePressure },
+          { label: 'Tire Pressure (Rear Right)', value: TriggerField.ChassisAxleRow2WheelRightTirePressure },
         ],
       },
     }),
-    targetUri: Property.ShortText({
-      displayName: 'Target URI',
-      description: 'Webhook endpoint to send events to',
+    operator: operatorStaticDropdown,
+    triggerNumber: Property.Number({
+      displayName: 'Trigger Value',
+      description: 'Numeric value to compare against (e.g., speed in km/h, fuel percentage, battery watts, tire pressure in PSI)',
+      required: true,
+    }),
+    coolDownPeriod: Property.Number({
+      displayName: 'Cool Down Period (seconds)',
+      description: 'Minimum number of seconds between successive webhook firings',
+      required: true,
+      defaultValue: 30,
+    }),
+    targetURL: Property.ShortText({
+      displayName: 'Target URL',
+      description: 'HTTPS endpoint URL that will receive webhook callbacks',
       required: true,
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
       description: 'Webhook status',
       required: true,
-      defaultValue: 'Active',
+      defaultValue: 'enabled',
       options: {
         options: [
-          { label: 'Active', value: 'Active' },
-          { label: 'Inactive', value: 'Inactive' },
+          { label: 'Enabled', value: 'enabled' },
+          { label: 'Disabled', value: 'disabled' },
         ],
       },
     }),
     verificationToken: verificationTokenInput,
+    displayName: Property.ShortText({
+      displayName: 'Display Name',
+      description: 'Optional name to easily identify your webhook (defaults to webhook ID if not provided)',
+      required: false,
+    }),
     description: Property.ShortText({
       displayName: 'Description',
-      description: 'Webhook description (optional)',
+      description: 'Brief description of the webhook conditions for your reference (optional)',
       required: false,
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "createWebhook" });
+    const { webhookId } = ctx.propsValue;
+    const opKey = webhookId ? "updateWebhook" : "createWebhook";
+    return sendVehicleEventsRequest({ ctx, opKey });
   },
 });
 
-const updateWebhookAction = createAction({
+const upsertWebhookBooleanAction = createAction({
   auth: dimoAuth,
-  name: "vehicle-events-update-webhook-action",
-  displayName: "Vehicle Events: Update Webhook",
-  description: "Update an existing webhook.",
+  name: "vehicle-events-upsert-webhook-boolean-action",
+  displayName: "Vehicle Events: Create/Update Webhook (Boolean)",
+  description: "Create a new webhook or update existing one for boolean vehicle signals. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
   props: {
     webhookId: Property.ShortText({
-      displayName: "Webhook ID",
-      description: "ID of the webhook.",
-      required: true,
+      displayName: "Webhook ID (Optional)",
+      description: "ID of the webhook to update. Leave empty to create a new webhook.",
+      required: false,
     }),
     data: Property.StaticDropdown({
       displayName: 'Signal/Data',
-      description: 'Which vehicle signal to monitor',
+      description: 'Which boolean vehicle signal to monitor',
       required: true,
-      options: {
-        options: Object.values(TriggerField).map((field) => ({ label: field, value: field })),
-      },
-    }),
-    operator: operatorStaticDropdown,
-    value: Property.ShortText({
-      displayName: 'Trigger Value',
-      description: 'Value to compare against (number, boolean için true/false, string için text)',
-      required: true,
-    }),
-    triggerFrequency: Property.StaticDropdown({
-      displayName: 'Trigger Frequency',
-      description: 'How often the webhook should fire when condition is met',
-      required: true,
-      defaultValue: 'Realtime',
       options: {
         options: [
-          { label: 'Real-time (continuous)', value: 'Realtime' },
-          { label: 'Hourly', value: 'Hourly' },
+          { label: 'Battery Charging Status', value: TriggerField.PowertrainTractionBatteryChargingIsCharging },
+           { label: 'Ignition Status', value: TriggerField.IsIgnitionOn },
         ],
       },
     }),
-    targetUri: Property.ShortText({
-      displayName: 'Target URI',
-      description: 'Webhook endpoint to send events to',
+    operator: Property.StaticDropdown({
+      displayName: 'Operator',
+      description: 'Comparison operator',
+      required: true,
+      defaultValue: 'equal',
+      options: {
+        options: [
+          { label: 'Is', value: 'equal' },
+        ],
+      },
+    }),
+    triggerExpression: Property.Checkbox({
+      displayName: 'Trigger Value',
+      description: 'Boolean value to compare against (checked = true/charging, unchecked = false/not charging)',
+      required: true,
+    }),
+    coolDownPeriod: Property.Number({
+      displayName: 'Cool Down Period (seconds)',
+      description: 'Minimum number of seconds between successive webhook firings',
+      required: true,
+      defaultValue: 30,
+    }),
+    targetURL: Property.ShortText({
+      displayName: 'Target URL',
+      description: 'HTTPS endpoint URL that will receive webhook callbacks',
       required: true,
     }),
     status: Property.StaticDropdown({
       displayName: 'Status',
       description: 'Webhook status',
       required: true,
-      defaultValue: 'Active',
+      defaultValue: 'enabled',
       options: {
         options: [
-          { label: 'Active', value: 'Active' },
-          { label: 'Inactive', value: 'Inactive' },
+          { label: 'Enabled', value: 'enabled' },
+          { label: 'Disabled', value: 'disabled' },
         ],
       },
     }),
     verificationToken: verificationTokenInput,
+    displayName: Property.ShortText({
+      displayName: 'Display Name',
+      description: 'Optional name to easily identify your webhook (defaults to webhook ID if not provided)',
+      required: false,
+    }),
     description: Property.ShortText({
       displayName: 'Description',
-      description: 'Webhook description (optional)',
+      description: 'Brief description of the webhook conditions for your reference (optional)',
       required: false,
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "updateWebhook" });
+    const { webhookId } = ctx.propsValue;
+    const opKey = webhookId ? "updateWebhook" : "createWebhook";
+    return sendVehicleEventsRequest({ ctx, opKey });
+  },
+});
+
+const upsertWebhookEventAction = createAction({
+  auth: dimoAuth,
+  name: "vehicle-events-upsert-webhook-event-action",
+  displayName: "Vehicle Events: Create/Update Webhook (Events)",
+  description: "Create a new webhook or update existing one for vehicle events like harsh braking, acceleration, etc. If Webhook ID is provided, it will update; otherwise, it will create a new webhook.",
+  props: {
+    webhookId: Property.ShortText({
+      displayName: "Webhook ID (Optional)",
+      description: "ID of the webhook to update. Leave empty to create a new webhook.",
+      required: false,
+    }),
+    eventType: Property.StaticDropdown({
+      displayName: 'Event Type',
+      description: 'Which vehicle event to monitor',
+      required: true,
+      options: {
+        options: [
+          { label: 'Extreme Braking', value: 'ExtremeBraking' },
+          { label: 'Harsh Acceleration', value: 'HarshAcceleration' },
+          { label: 'Harsh Braking', value: 'HarshBraking' },
+          { label: 'Harsh Cornering', value: 'HarshCornering' },
+        ],
+      },
+    }),
+    coolDownPeriod: Property.Number({
+      displayName: 'Cool Down Period (seconds)',
+      description: 'Minimum number of seconds between successive webhook firings',
+      required: true,
+      defaultValue: 30,
+    }),
+    targetURL: Property.ShortText({
+      displayName: 'Target URL',
+      description: 'HTTPS endpoint URL that will receive webhook callbacks',
+      required: true,
+    }),
+    status: Property.StaticDropdown({
+      displayName: 'Status',
+      description: 'Webhook status',
+      required: true,
+      defaultValue: 'enabled',
+      options: {
+        options: [
+          { label: 'Enabled', value: 'enabled' },
+          { label: 'Disabled', value: 'disabled' },
+        ],
+      },
+    }),
+    verificationToken: verificationTokenInput,
+    displayName: Property.ShortText({
+      displayName: 'Display Name',
+      description: 'Optional name to easily identify your webhook (defaults to webhook ID if not provided)',
+      required: false,
+    }),
+    description: Property.ShortText({
+      displayName: 'Description',
+      description: 'Brief description of the webhook conditions for your reference (optional)',
+      required: false,
+    }),
+  },
+  async run(ctx) {
+    const { webhookId, eventType, coolDownPeriod, targetURL, status, verificationToken, displayName, description } = ctx.propsValue;
+    const { clientId, apiKey, redirectUri } = ctx.auth.props;
+    const dimo = new DimoClient({ clientId, apiKey, redirectUri });
+
+    const developerJwt = await dimo.getDeveloperJwt();
+
+    const op = VEHICLE_EVENTS_OPERATIONS[webhookId ? "updateWebhook" : "createWebhook"];
+    const params: VehicleEventsParams = { webhookId };
+    const url = op.url(params);
+    const method = op.method;
+
+    const body = {
+      service: 'telemetry.events',
+      metricName: eventType,
+      condition: 'true',  // Events always trigger when they occur
+      coolDownPeriod,
+      ...(displayName ? { displayName } : {}),
+      ...(description ? { description } : {}),
+      targetURL,
+      status,
+      verificationToken,
+    };
+
+    const response = await httpClient.sendRequest({
+      method,
+      url,
+      body,
+      authentication: {
+        type: AuthenticationType.BEARER_TOKEN,
+        token: developerJwt,
+      },
+    });
+
+    if(response.status > 299) {
+      throw new Error(`Error calling Vehicle Events API: ${response.body?.message || response.status}`);
+    }
+
+    return response.body;
   },
 });
 
@@ -297,7 +415,18 @@ const subscribeVehicleAction = createAction({
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "subscribeVehicle" });
+    const { webhookId, tokenId } = ctx.propsValue;
+    const { clientId, apiKey, redirectUri } = ctx.auth.props;
+    const dimo = new DimoClient({ clientId, apiKey, redirectUri });
+
+    const developerJwt = await dimo.getDeveloperJwt();
+    const tokenDID = await dimo.getVehicleTokenDID({ tokenId });
+
+    return await dimo.subscribeVehicle({ 
+      developerJwt, 
+      webhookId, 
+      tokenDID 
+    });
   },
 });
 
@@ -336,7 +465,18 @@ const unsubscribeVehicleAction = createAction({
     }),
   },
   async run(ctx) {
-    return sendVehicleEventsRequest({ ctx, opKey: "unsubscribeVehicle" });
+    const { webhookId, tokenId } = ctx.propsValue;
+    const { clientId, apiKey, redirectUri } = ctx.auth.props;
+    const dimo = new DimoClient({ clientId, apiKey, redirectUri });
+
+    const developerJwt = await dimo.getDeveloperJwt();
+    const tokenDID = await dimo.getVehicleTokenDID({ tokenId });
+
+    return await dimo.unsubscribeVehicle({ 
+      developerJwt, 
+      webhookId, 
+      tokenDID 
+    });
   },
 });
 
@@ -361,8 +501,9 @@ const unsubscribeAllVehiclesAction = createAction({
 
 export const vehicleEventsApiActions = [
   listWebhooksAction,
-  createWebhookAction,
-  updateWebhookAction,
+  upsertWebhookNumericAction,
+  upsertWebhookBooleanAction,
+  upsertWebhookEventAction,
   deleteWebhookAction,
   listSignalsAction,
   listSubscribedVehiclesAction,

@@ -1,6 +1,6 @@
 import { t } from 'i18next';
 
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { pieceSelectorUtils } from '@/features/pieces/lib/piece-selector-utils';
 import {
   CORE_STEP_METADATA,
@@ -13,8 +13,7 @@ import {
   PieceStepMetadataWithSuggestions,
 } from '@/lib/types';
 import {
-  ActionType,
-  Agent,
+  FlowActionType,
   BranchExecutionType,
   BranchOperator,
   FlowOperationType,
@@ -44,7 +43,7 @@ const getActionFromPieceMetadata = (
     (action) => action.name === actionName,
   );
   if (isNil(result)) {
-    toast(INTERNAL_ERROR_TOAST);
+    internalErrorToast();
     console.error(`Action ${actionName} not found in piece metadata`);
     return null;
   }
@@ -82,11 +81,10 @@ export const createRouterStep = ({
       },
     ],
     executionType: RouterExecutionType.EXECUTE_FIRST_MATCH,
-    inputUiInfo: {},
   };
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: {
-      ...CORE_STEP_METADATA[ActionType.ROUTER],
+      ...CORE_STEP_METADATA[FlowActionType.ROUTER],
       displayName: t('Check Todo Status'),
     },
     operation: {
@@ -124,7 +122,7 @@ export const createTodoStep = ({
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: {
       actionOrTrigger: createTodoAction,
-      type: ActionType.PIECE,
+      type: FlowActionType.PIECE,
       pieceMetadata: pieceMetadata,
     },
     operation,
@@ -150,7 +148,7 @@ export const createWaitForApprovalStep = ({
   }
   const pieceSelectorItem: PieceSelectorItem = {
     actionOrTrigger: waitForApprovalAction,
-    type: ActionType.PIECE,
+    type: FlowActionType.PIECE,
     pieceMetadata: pieceMetadata,
   };
   const waitForApprovalStep = {
@@ -170,7 +168,7 @@ export const createWaitForApprovalStep = ({
     stepName: waitForApprovalStepName,
     pieceSelectorItem: {
       actionOrTrigger: waitForApprovalAction,
-      type: ActionType.PIECE,
+      type: FlowActionType.PIECE,
       pieceMetadata: pieceMetadata,
     },
   });
@@ -186,30 +184,11 @@ export const createWaitForApprovalStep = ({
   });
 };
 
-export const overrideDisplayInfoForPieceSelectorItemWithAgentInfo = (
-  pieceSelectorItem: PieceSelectorPieceItem,
-  agent: Agent,
-): PieceSelectorPieceItem => {
-  const agentPieceSelectorItem: PieceSelectorPieceItem = JSON.parse(
-    JSON.stringify(pieceSelectorItem),
-  );
-  agentPieceSelectorItem.pieceMetadata.logoUrl = agent.profilePictureUrl;
-  agentPieceSelectorItem.actionOrTrigger.description = agent.description;
-  agentPieceSelectorItem.actionOrTrigger.displayName = agent.displayName;
-  return agentPieceSelectorItem;
-};
-
 export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
-  pieceSelectorItem: PieceSelectorPieceItem,
-  agent: Agent,
+  agentPieceSelectorItem: PieceSelectorPieceItem,
   operation: PieceSelectorOperation,
   handleAddingOrUpdatingStep: BuilderState['handleAddingOrUpdatingStep'],
 ) => {
-  const agentPieceSelectorItem =
-    overrideDisplayInfoForPieceSelectorItemWithAgentInfo(
-      pieceSelectorItem,
-      agent,
-    );
   const stepName = handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation,
@@ -219,7 +198,6 @@ export const handleAddingOrUpdatingCustomAgentPieceSelectorItem = (
     stepName,
     pieceSelectorItem: agentPieceSelectorItem,
   });
-  defaultValues.settings.input.agentId = agent.id;
   return handleAddingOrUpdatingStep({
     pieceSelectorItem: agentPieceSelectorItem,
     operation: {

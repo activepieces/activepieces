@@ -35,10 +35,10 @@ More Information at [Sandboxing & Workers](../architecture/workers#sandboxing)
 For licensing inquiries regarding the self-hosted enterprise edition, please reach out to `sales@activepieces.com`, as the code and Docker image are not covered by the MIT license.
 </Tip>
 
-<Note>You can request a trial key from within the app or in the cloud by filling out the form. Alternatively, you can contact sales at [https://www.activepieces.com/sales](https://www.activepieces.com/sales).<br></br>Please know that when your trial runs out, all enterprise [features](/about/editions#feature-comparison) will be shut down meaning any user other than the platform admin will be deactivated, and your private pieces will be deleted, which could result in flows using them to fail.</Note>
+<Note>You can request a trial key from within the app or in the cloud by filling out the form. Alternatively, you can contact sales at [https://www.activepieces.com/sales](https://www.activepieces.com/sales).<br></br>Please know that when your trial runs out, all enterprise [features](https://www.activepieces.com/pricing) will be shut down meaning any user other than the platform admin will be deactivated, and your private pieces will be deleted, which could result in flows using them to fail.</Note>
 
 <Warning>
-Enterprise Edition only works on Fresh Installation as the database migration scripts are different from the community edition.
+Before version 0.73.0, you cannot switch from CE to EE directly We suggest upgrading to 0.73.0 with the same edition first, then switch `AP_EDITION`.
 </Warning>
 
 <Warning>
@@ -57,29 +57,9 @@ Enterprise edition must use `PostgreSQL` as the database backend and `Redis` as 
 <Accordion title="Setup HTTPS" icon="lock">
 Setting up HTTPS is highly recommended because many services require webhook URLs to be secure (HTTPS). This helps prevent potential errors.
 
-To set up SSL, you can use any reverse proxy. For a step-by-step guide, check out our example using [Nginx](./setup-ssl).
-</Accordion>
-<Accordion title="Configure S3 (Optional)" icon="cloud">
-Run logs and files are stored in the database by default, but you can switch to S3 later without any migration; for most cases, the database is enough.
-
-It's recommended to start with the database and switch to S3 if needed. After switching, expired files in the database will be deleted, and everything will be stored in S3. No manual migration is needed.
-
-Configure the following environment variables:
-
-- `AP_S3_ACCESS_KEY_ID`
-- `AP_S3_SECRET_ACCESS_KEY`
-- `AP_S3_ENDPOINT`
-- `AP_S3_BUCKET`
-- `AP_S3_REGION`
-- `AP_MAX_FILE_SIZE_MB`
-- `AP_FILE_STORAGE_LOCATION` (set to `S3`)
-- `AP_S3_USE_SIGNED_URLS`
-<Tip>
-**Friendly Tip #1**: If the S3 bucket supports signed URLs but needs to be accessible over a public network, you can set `AP_S3_USE_SIGNED_URLS` to `true` to route traffic directly to S3 and reduce heavy traffic on your API server.
-</Tip>
-
+To set up SSL, you can use any reverse proxy. For a step-by-step guide, check out our example using [Nginx](../guides/setup-ssl).
 </Accordion>
 <Accordion title="Troubleshooting (Optional)" icon="wrench">
-    If you encounter any issues, check out our [Troubleshooting](./troubleshooting) guide.
+    If you encounter any issues, check out our [Troubleshooting](../troubleshooting/websocket-issues) guide.
 </Accordion>
 </AccordionGroup>

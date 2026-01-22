@@ -1,156 +1,72 @@
-import { exceptionHandler, JobData, JobStatus, OneTimeJobData, QueueName, rejectedPromiseHandler, RepeatingJobData, UserInteractionJobData, WebhookJobData } from '@activepieces/server-shared'
-import { isNil } from '@activepieces/shared'
+import { rejectedPromiseHandler, RunsMetadataQueueConfig, runsMetadataQueueFactory } from '@activepieces/server-shared'
+import { WebsocketServerEvent, WorkerSettingsResponse } from '@activepieces/shared'
 import { FastifyBaseLogger } from 'fastify'
-import { engineApiService, workerApiService } from './api/server-api.service'
-import { flowJobExecutor } from './executors/flow-job-executor'
-import { repeatingJobExecutor } from './executors/repeating-job-executor'
-import { userInteractionJobExecutor } from './executors/user-interaction-job-executor'
-import { webhookExecutor } from './executors/webhook-job-executor'
-import { jobPoller } from './job-polling'
-import { engineRunner } from './runner'
-import { engineRunnerSocket } from './runner/engine-runner-socket'
+import { appSocket } from './app-socket'
+import { registryPieceManager } from './cache/pieces/production/registry-piece-manager'
+import { workerCache } from './cache/worker-cache'
+import { sandboxPool } from './compute/sandbox/sandbox-pool'
+import { sandboxWebsocketServer } from './compute/sandbox/websocket-server'
+import { jobQueueWorker } from './consume/job-queue-worker'
 import { workerMachine } from './utils/machine'
+import { workerDistributedLock, workerDistributedStore, workerRedisConnections } from './utils/worker-redis'
 
-let closed = true
-let workerToken: string
-let heartbeatInterval: NodeJS.Timeout
+export const runsMetadataQueue = runsMetadataQueueFactory({ 
+    createRedisConnection: workerRedisConnections.create,
+    distributedStore: workerDistributedStore,
+})
 
 export const flowWorker = (log: FastifyBaseLogger) => ({
-    async init({ workerToken: token }: { workerToken: string }): Promise<void> {
+    async init({ workerToken: token, markAsHealthy }: FlowWorkerInitParams): Promise<void> {
+        rejectedPromiseHandler(workerCache(log).deleteStaleCache(), log)
 
-        await engineRunnerSocket(log).init()
+        sandboxWebsocketServer.init(log)
 
-        closed = false
-        workerToken = token
-        await initializeWorker(log)
-        heartbeatInterval = setInterval(() => {
-            rejectedPromiseHandler(workerApiService(workerToken).heartbeat(), log)
-        }, 15000)
-
-        const FLOW_WORKER_CONCURRENCY = workerMachine.getSettings().FLOW_WORKER_CONCURRENCY
-        const SCHEDULED_WORKER_CONCURRENCY = workerMachine.getSettings().SCHEDULED_WORKER_CONCURRENCY
-        log.info({
-            FLOW_WORKER_CONCURRENCY,
-            SCHEDULED_WORKER_CONCURRENCY,
-        }, 'Starting worker')
-        for (const queueName of Object.values(QueueName)) {
-            const times = queueName === QueueName.SCHEDULED ? SCHEDULED_WORKER_CONCURRENCY : FLOW_WORKER_CONCURRENCY
-            log.info({
-                queueName,
-                times,
-            }, 'Starting polling queue with concurrency')
-            for (let i = 0; i < times; i++) {
-                rejectedPromiseHandler(run(queueName, log), log)
-            }
-        }
+        await appSocket(log).init({
+            workerToken: token,
+            onConnect: async () => {
+                const request = await workerMachine.getSystemInfo(log)
+                const response = await appSocket(log).emitWithAck<WorkerSettingsResponse>(WebsocketServerEvent.FETCH_WORKER_SETTINGS, request)
+                await workerMachine.init(response, token, log)
+                sandboxPool.init(log)
+                await registryPieceManager(log).warmup()
+                await jobQueueWorker(log).start()
+                await initRunsMetadataQueue(log)
+                await markAsHealthy()
+                await registryPieceManager(log).distributedWarmup()
+            },
+        })
     },
+
     async close(): Promise<void> {
-        await engineRunnerSocket(log).disconnect()
-        closed = true
-        clearTimeout(heartbeatInterval)
-        if (workerMachine.hasSettings()) {
-            await engineRunner(log).shutdownAllWorkers()
+        await sandboxPool.drain()
+        await sandboxWebsocketServer.shutdown()
+        appSocket(log).disconnect()
+
+        if (runsMetadataQueue.isInitialized()) {
+            await runsMetadataQueue.get().close()
         }
+
+        await workerRedisConnections.destroy()
+        await workerDistributedLock(log).destroy()
+        
+        await jobQueueWorker(log).close()
     },
 })
 
-async function initializeWorker(log: FastifyBaseLogger): Promise<void> {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-        try {
-            const heartbeatResponse = await workerApiService(workerToken).heartbeat()
-            if (isNil(heartbeatResponse)) {
-                throw new Error('The worker is unable to reach the server')
-            }
-            await workerMachine.init(heartbeatResponse)
-            break
-        }
-        catch (error) {
-            log.error({
-                error,
-            }, 'The worker is unable to reach the server')
-            await new Promise(resolve => setTimeout(resolve, 5000))
-        }
+async function initRunsMetadataQueue(log: FastifyBaseLogger): Promise<void> {
+    const settings = workerMachine.getSettings()
+    const config: RunsMetadataQueueConfig = {
+        isOtelEnabled: settings.OTEL_ENABLED ?? false,
+        redisFailedJobRetentionDays: settings.REDIS_FAILED_JOB_RETENTION_DAYS,
+        redisFailedJobRetentionMaxCount: settings.REDIS_FAILED_JOB_RETENTION_MAX_COUNT,
     }
+    await runsMetadataQueue.init(config)
+    log.info({
+        message: 'Initialized runs metadata queue for worker',
+    }, '[flowWorker#init]')
 }
 
-async function run<T extends QueueName>(queueName: T, log: FastifyBaseLogger): Promise<void> {
-    while (!closed) {
-        let engineToken: string | undefined
-        try {
-            const job = await jobPoller.poll(workerToken, queueName)
-            log.trace({
-                job: {
-                    queueName,
-                    jobId: job?.id,
-                    attempsStarted: job?.attempsStarted,
-                },
-            }, 'Job polled')
-            if (isNil(job)) {
-                continue
-            }
-            const { data, engineToken: jobEngineToken, attempsStarted } = job
-            engineToken = jobEngineToken
-            await consumeJob(queueName, data, attempsStarted, engineToken, log)
-            await markJobAsCompleted(queueName, engineToken, log)
-            log.debug({
-                job: {
-                    queueName,
-                    jobId: job?.id,
-                },
-            }, 'Job completed')
-        }
-        catch (e) {
-            exceptionHandler.handle(e, log)
-            if (engineToken) {
-                rejectedPromiseHandler(
-                    engineApiService(engineToken, log).updateJobStatus({
-                        status: JobStatus.FAILED,
-                        queueName,
-                        message: (e as Error)?.message ?? 'Unknown error',
-                    }),
-                    log,
-                )
-            }
-        }
-    }
-}
-
-async function consumeJob(queueName: QueueName, jobData: JobData, attempsStarted: number, engineToken: string, log: FastifyBaseLogger): Promise<void> {
-    switch (queueName) {
-        case QueueName.USERS_INTERACTION:
-            await userInteractionJobExecutor(log).execute(jobData as UserInteractionJobData, engineToken, workerToken)
-            break
-        case QueueName.ONE_TIME:
-            await flowJobExecutor(log).executeFlow(jobData as OneTimeJobData, attempsStarted, engineToken)
-            break
-        case QueueName.SCHEDULED:
-            await repeatingJobExecutor(log).executeRepeatingJob({
-                data: jobData as RepeatingJobData,
-                engineToken,
-                workerToken,
-            })
-            break
-        case QueueName.WEBHOOK: {
-            await webhookExecutor(log).consumeWebhook(jobData as WebhookJobData, engineToken, workerToken)
-            break
-        }
-    }
-}
-
-async function markJobAsCompleted(queueName: QueueName, engineToken: string, log: FastifyBaseLogger): Promise<void> {
-    switch (queueName) {
-        case QueueName.ONE_TIME: {
-            // This is will be marked as completed in update-run endpoint
-            break
-        }
-        case QueueName.USERS_INTERACTION:
-        case QueueName.SCHEDULED:
-        case QueueName.WEBHOOK: {
-            await engineApiService(engineToken, log).updateJobStatus({
-                status: JobStatus.COMPLETED,
-                queueName,
-            })
-        }
-    }
+type FlowWorkerInitParams = {
+    workerToken: string
+    markAsHealthy: () => Promise<void>
 }

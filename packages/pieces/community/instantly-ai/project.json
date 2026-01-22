@@ -4,36 +4,58 @@
   "sourceRoot": "packages/pieces/community/instantly-ai/src",
   "projectType": "library",
   "release": {
-      "version": {
-          "generatorOptions": {
-              "packageRoot": "dist/{projectRoot}",
-              "currentVersionResolver": "git-tag"
-          }
-      }
+    "version": {
+      "currentVersionResolver": "git-tag",
+      "preserveLocalDependencyProtocols": false,
+      "manifestRootsToUpdate": [
+        "dist/{projectRoot}"
+      ]
+    }
   },
   "tags": [],
   "targets": {
-      "build": {
-          "executor": "@nx/js:tsc",
-          "outputs": ["{options.outputPath}"],
-          "options": {
-              "outputPath": "dist/packages/pieces/community/instantly-ai",
-              "tsConfig": "packages/pieces/community/instantly-ai/tsconfig.lib.json",
-              "packageJson": "packages/pieces/community/instantly-ai/package.json",
-              "main": "packages/pieces/community/instantly-ai/src/index.ts",
-              "assets": ["packages/pieces/community/instantly-ai/*.md"],
-              "buildableProjectDepsInPackageJsonType": "dependencies",
-              "updateBuildableProjectDepsInPackageJson": true
-          }
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/packages/pieces/community/instantly-ai",
+        "tsConfig": "packages/pieces/community/instantly-ai/tsconfig.lib.json",
+        "packageJson": "packages/pieces/community/instantly-ai/package.json",
+        "main": "packages/pieces/community/instantly-ai/src/index.ts",
+        "assets": [
+          "packages/pieces/community/instantly-ai/*.md"
+        ],
+        "buildableProjectDepsInPackageJsonType": "dependencies",
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
-      "nx-release-publish": {
-          "options": {
-              "packageRoot": "dist/{projectRoot}"
-          }
-      },
-      "lint": {
-          "executor": "@nx/eslint:lint",
-          "outputs": ["{options.outputFile}"]
+      "dependsOn": [
+        "^build",
+        "prebuild"
+      ]
+    },
+    "nx-release-publish": {
+      "options": {
+        "packageRoot": "dist/{projectRoot}"
       }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": [
+        "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/instantly-ai",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
+      ]
+    }
   }
 }

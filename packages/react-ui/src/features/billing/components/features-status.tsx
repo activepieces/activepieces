@@ -8,11 +8,7 @@ import {
 } from '@activepieces/shared';
 
 const LICENSE_PROPS_MAP = {
-  agentsEnabled: {
-    label: 'Agents',
-    description: 'AI assistants that can help automate tasks and workflows',
-  },
-  environmentEnabled: {
+  environmentsEnabled: {
     label: 'Team Collaboration via Git',
     description:
       'Work together on projects with version control and team features',
@@ -45,9 +41,9 @@ const LICENSE_PROPS_MAP = {
     label: 'Brand Activepieces',
     description: 'Customize the look and feel with your company branding',
   },
-  manageProjectsEnabled: {
-    label: 'Manage Projects',
-    description: 'Organize workflows into separate projects and workspaces',
+  teamProjectsLimit: {
+    label: 'Team Projects Limit',
+    description: 'Control the number of projects your team can create',
   },
   projectRolesEnabled: {
     label: 'Project Roles',

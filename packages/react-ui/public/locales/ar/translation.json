@@ -1120,7 +1120,7 @@
   "An internal error occurred, please contact support": "An internal error occurred, please contact support",
   "Custom Javascript Code": "Custom Javascript Code",
   "Router": "Router",
-  "recordsCount": "{recordsCount, plural, =0 {0 Records} =1 {1 Record} other {# Records}}",
+  "recordsCount": "{{recordsCount, plural, =0 {0 Records} =1 {1 Record} other {# Records}}",
   "selected": "selected",
   "All records selected": "All records selected",
   "fieldsCount": "{fieldsCount, plural, =0 {0 Fields} =1 {1 Field} other {# Fields}}",

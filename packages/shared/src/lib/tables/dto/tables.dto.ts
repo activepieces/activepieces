@@ -1,8 +1,12 @@
 import { Static, Type } from '@sinclair/typebox'
+import { FieldState } from '../../project-release/project-state'
+import { TableAutomationStatus, TableAutomationTrigger } from '../table'
 import { TableWebhookEventType } from '../table-webhook'
 
 export const CreateTableRequest = Type.Object({
+    projectId: Type.String(),
     name: Type.String(),
+    fields: Type.Optional(Type.Array(FieldState)),
     externalId: Type.Optional(Type.String()),
 })
 
@@ -25,13 +29,16 @@ export const CreateTableWebhookRequest = Type.Object({
 export type CreateTableWebhookRequest = Static<typeof CreateTableWebhookRequest>
 
 export const UpdateTableRequest = Type.Object({
-    name: Type.String(),
+    name: Type.Optional(Type.String()),
+    trigger: Type.Optional(Type.Enum(TableAutomationTrigger)),
+    status: Type.Optional(Type.Enum(TableAutomationStatus)),
 })
 
 export type UpdateTableRequest = Static<typeof UpdateTableRequest>
 
 
 export const ListTablesRequest = Type.Object({
+    projectId: Type.String(),
     limit: Type.Optional(Type.Number({})),
     cursor: Type.Optional(Type.String({})),
     name: Type.Optional(Type.String({})),
@@ -39,3 +46,4 @@ export const ListTablesRequest = Type.Object({
 })
 
 export type ListTablesRequest = Static<typeof ListTablesRequest>
+

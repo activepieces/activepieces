@@ -1,5 +1,5 @@
+import { securityAccess } from '@activepieces/server-shared'
 import {
-    ALL_PRINCIPAL_TYPES,
     ApId,
     USE_DRAFT_QUERY_PARAM_NAME,
 } from '@activepieces/shared'
@@ -14,7 +14,7 @@ export const chatController: FastifyPluginAsyncTypebox = async (app) => {
 
 const GetChatRequest = {
     config: {
-        allowedPrincipals: ALL_PRINCIPAL_TYPES,
+        security: securityAccess.public(),
     },
     schema: {
         description: 'Get a chat UI by flow id',

@@ -111,10 +111,6 @@ type FlowShared = {
 type OpenedFromDashboard = {
     location: 'sidenav' | 'tasks-progress'
 }
-type CopilotGeneratedCode = {
-    code: string
-    prompt: string
-}
 
 type FormsViewed = {
     flowId: string
@@ -145,6 +141,11 @@ type McpToolCalled = {
     toolName: string
 }
 
+type PieceSelectorSearch = {
+    search: string
+    isTrigger: boolean
+    selectedActionOrTriggerName: string | null
+}
 export enum TelemetryEventName {
     SIGNED_UP = 'signed.up',
     QUOTA_ALERT = 'quota.alert',
@@ -168,7 +169,6 @@ export enum TelemetryEventName {
     REFERRAL_LINK_COPIED = 'referral.link.copied',
     FLOW_SHARED = 'flow.shared',
     TEMPLATE_SEARCH = 'template.search',
-    COPILOT_GENERATED_CODE = 'copilot.code.generated',
     FORMS_VIEWED = 'forms.viewed',
     FORMS_SUBMITTED = 'forms.submitted',
     REWARDS_OPENED = 'rewards.opened',
@@ -181,6 +181,7 @@ export enum TelemetryEventName {
     UPGRADE_POPUP_OPENED = 'upgrade.popup.opened',
     UPGRADE_CLICKED = 'upgrade.clicked',
     OPENED_PRICING_FROM_DASHBOARD = 'opened.pricing.from.dashboard',
+    PIECE_SELECTOR_SEARCH = 'piece.selector.search',
 }
 
 type BaseTelemetryEvent<T, P> = {
@@ -228,10 +229,6 @@ export type TelemetryEvent =
   TelemetryEventName.OPENED_PRICING_FROM_DASHBOARD,
   OpenedFromDashboard
   >
-  | BaseTelemetryEvent<
-  TelemetryEventName.COPILOT_GENERATED_CODE,
-  CopilotGeneratedCode
-  >
   | BaseTelemetryEvent<TelemetryEventName.FORMS_VIEWED, FormsViewed>
   | BaseTelemetryEvent<TelemetryEventName.USER_INVITED, UserInvited>
   | BaseTelemetryEvent<TelemetryEventName.FORMS_SUBMITTED, FormsViewed>
@@ -253,3 +250,4 @@ export type TelemetryEvent =
   AiProviderConfiguredOrUsed
   >
   | BaseTelemetryEvent<TelemetryEventName.MCP_TOOL_CALLED, McpToolCalled>
+  | BaseTelemetryEvent<TelemetryEventName.PIECE_SELECTOR_SEARCH, PieceSelectorSearch>

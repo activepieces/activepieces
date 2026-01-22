@@ -4,11 +4,11 @@ import { githubDark, githubLight } from '@uiw/codemirror-theme-github';
 import CodeMirror, { EditorState, EditorView } from '@uiw/react-codemirror';
 import { t } from 'i18next';
 import { Code, Package } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
-import { INTERNAL_ERROR_TOAST, toast } from '@/components/ui/use-toast';
+import { internalErrorToast } from '@/components/ui/sonner';
 import { flagsHooks } from '@/hooks/flags-hooks';
 import { cn } from '@/lib/utils';
 import { ApFlagId, SourceCode, deepMergeAndCast } from '@activepieces/shared';
@@ -26,7 +26,6 @@ type CodeEditorProps = {
   onChange: (sourceCode: SourceCode) => void;
   readonly: boolean;
   applyCodeToCurrentStep?: () => void;
-  animateBorderColorToggle: boolean;
   minHeight?: string;
 };
 
@@ -35,7 +34,6 @@ const CodeEditor = ({
   readonly,
   onChange,
   applyCodeToCurrentStep,
-  animateBorderColorToggle,
   minHeight,
 }: CodeEditorProps) => {
   const { code, packageJson } = sourceCode;
@@ -44,21 +42,6 @@ const CodeEditor = ({
   const codeApplicationEnabled = typeof applyCodeToCurrentStep === 'function';
   const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [borderColor, setBorderColor] = useState('border');
-  const isFirstRenderRef = useRef(true);
-  useEffect(() => {
-    if (borderColor === 'border' && !isFirstRenderRef.current) {
-      setBorderColor('border-primary shadow-add-button');
-      setTimeout(() => setBorderColor('border'), 1000);
-      if (containerRef.current) {
-        containerRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
-      }
-    }
-    isFirstRenderRef.current = false;
-  }, [animateBorderColorToggle]);
 
   const codeEditorTheme = theme === 'dark' ? githubDark : githubLight;
 
@@ -100,16 +83,13 @@ const CodeEditor = ({
       onChange({ code, packageJson: JSON.stringify(json, null, 2) });
     } catch (e) {
       console.error(e);
-      toast(INTERNAL_ERROR_TOAST);
+      internalErrorToast();
     }
   }
 
   return (
     <div
-      className={cn(
-        'flex flex-col gap-2 border rounded py-2 px-2 transition-all ',
-        borderColor,
-      )}
+      className="flex flex-col gap-2 border rounded py-2 px-2 transition-all"
       ref={containerRef}
     >
       <div className="flex flex-row justify-center items-center h-full">
@@ -133,7 +113,7 @@ const CodeEditor = ({
             </div>
           )}
         </div>
-        <div className="flex flex-grow"></div>
+        <div className="flex grow"></div>
         {codeApplicationEnabled ? (
           <Button
             variant="outline"
@@ -185,7 +165,7 @@ const CodeEditor = ({
         }}
         theme={codeEditorTheme}
         readOnly={readonly}
-        extensions={extensions}
+        extensions={[...extensions, EditorView.lineWrapping]}
       />
     </div>
   );

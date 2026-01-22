@@ -48,9 +48,7 @@ describe('User API', () => {
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/users',
-                query: {
-                    platformId: mockPlatformOne.id,
-                },
+                query: {},
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },
@@ -70,10 +68,16 @@ describe('User API', () => {
             // arrange
             const { mockPlatform } = await mockAndSaveBasicSetup()
 
-            const { mockOwner: otherMockUser } = await mockAndSaveBasicSetup()
 
+            const { mockUser: normalUser } = await mockBasicUser({
+                user: {
+                    platformId: mockPlatform.id,
+                    platformRole: PlatformRole.MEMBER,
+                    status: UserStatus.ACTIVE,
+                },
+            })
             const testToken = await generateMockToken({
-                id: otherMockUser.id,
+                id: normalUser.id,
                 type: PrincipalType.USER,
                 platform: {
                     id: mockPlatform.id,
@@ -84,9 +88,7 @@ describe('User API', () => {
             const response = await app?.inject({
                 method: 'GET',
                 url: '/v1/users',
-                query: {
-                    platformId: mockPlatform.id,
-                },
+                query: {},
                 headers: {
                     authorization: `Bearer ${testToken}`,
                 },

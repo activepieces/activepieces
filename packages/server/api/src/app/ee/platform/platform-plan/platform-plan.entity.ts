@@ -18,24 +18,27 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        tasksLimit: {
-            type: Number,
-            nullable: true,
-        },
         includedAiCredits: {
             type: Number,
         },
-        aiCreditsOverageLimit: {
+        aiCreditsAutoTopUpCreditsToAdd: {
             type: Number,
             nullable: true,
         },
-        aiCreditsOverageState: {
-            type: String,
+        lastFreeAiCreditsRenewalDate: {
+            type: 'timestamp with time zone',
             nullable: true,
         },
-        eligibleForTrial: {
-            type: Boolean,
-            nullable: false,
+        maxAutoTopUpCreditsMonthly: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpThreshold: {
+            type: Number,
+            nullable: true,
+        },
+        aiCreditsAutoTopUpState: {
+            type: String,
         },
         stripeSubscriptionStartDate: {
             type: Number,
@@ -47,10 +50,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         },
         stripeSubscriptionCancelDate: {
             type: Number,
-            nullable: true,
-        },
-        stripePaymentMethod: {
-            type: String,
             nullable: true,
         },
         environmentsEnabled: {
@@ -77,8 +76,8 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         customAppearanceEnabled: {
             type: Boolean,
         },
-        manageProjectsEnabled: {
-            type: Boolean,
+        teamProjectsLimit: {
+            type: String,
         },
         projectRolesEnabled: {
             type: Boolean,
@@ -110,10 +109,6 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
             type: String,
             nullable: true,
         },
-        agentsLimit: {
-            type: Number,
-            nullable: true,
-        },
         stripeSubscriptionStatus: {
             type: String,
             nullable: true,
@@ -124,24 +119,12 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         todosEnabled: {
             type: Boolean,
         },
-        userSeatsLimit: {
-            type: Number,
-            nullable: true,
-        },
         projectsLimit: {
-            type: Number,
-            nullable: true,
-        },
-        tablesLimit: {
             type: Number,
             nullable: true,
         },
         agentsEnabled: {
             type: Boolean,
-        },
-        mcpLimit: {
-            type: Number,
-            nullable: true,
         },
         activeFlowsLimit: {
             type: Number,
@@ -149,6 +132,10 @@ export const PlatformPlanEntity = new EntitySchema<PlatformPlanSchema>({
         },
         mcpsEnabled: {
             type: Boolean,
+        },
+        dedicatedWorkers: {
+            type: 'jsonb',
+            nullable: true,
         },
     },
     indices: [

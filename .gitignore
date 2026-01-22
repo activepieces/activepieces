@@ -8,6 +8,7 @@ tmp
 firebase-admin-sdk.json
 dev
 /cache
+/logs/
 .env
 
 # SDK Build
@@ -71,3 +72,4 @@ scratch.md
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+/redis-binaries/

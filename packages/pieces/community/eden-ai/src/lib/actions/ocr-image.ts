@@ -3,6 +3,7 @@ import { HttpMethod, propsValidation } from '@activepieces/pieces-common';
 import { edenAiApiCall } from '../common/client';
 import { createStaticDropdown } from '../common/providers';
 import { z } from 'zod';
+import { edenAiAuth } from '../..';
 
 const OCR_PROVIDERS = [
   { label: 'Amazon', value: 'amazon' },
@@ -250,10 +251,12 @@ function normalizeOcrResponse(provider: string, response: any) {
 
 export const ocrImageAction = createAction({
   name: 'ocr_image',
+  auth: edenAiAuth,
   displayName: 'Extract Text in Image (OCR)',
   description: 'Extract text from images (OCR) using Eden AI. Supports multiple providers, languages, and bounding box coordinates.',
   props: {
     provider: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Provider',
       description: 'The AI provider to use for text extraction.',
       required: true,
@@ -266,6 +269,7 @@ export const ocrImageAction = createAction({
       required: true,
     }),
     language: Property.Dropdown({
+      auth: edenAiAuth,
       displayName: 'Document Language',
       description: 'The language of the text in the image. Choose "Auto Detection" if unsure.',
       required: false,
@@ -285,6 +289,7 @@ export const ocrImageAction = createAction({
       defaultValue: false,
     }),
     fallback_providers: Property.MultiSelectDropdown({
+      auth: edenAiAuth,
       displayName: 'Fallback Providers',
       description: 'Alternative providers to try if the main provider fails (up to 5).',
       required: false,
@@ -335,7 +340,7 @@ export const ocrImageAction = createAction({
 
     try {
       const response = await edenAiApiCall({
-        apiKey: auth as string,
+        apiKey: auth.secret_text,
         method: HttpMethod.POST,
         resourceUri: '/ocr/ocr',
         body,

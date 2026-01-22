@@ -38,7 +38,7 @@ export const websocketSubscriptionTrigger = createTrigger({
       context.propsValue.headers,
       context.propsValue.message,
       context.webhookUrl,
-      context.auth.proxyBaseUrl
+      context.auth.props.proxyBaseUrl
     );
 
     // Store subscription info
@@ -47,7 +47,7 @@ export const websocketSubscriptionTrigger = createTrigger({
   async onDisable(context) {
     const subscriptionId: string = (await context.store.get('websocket_subscription_trigger')) as string;
     if (subscriptionId) {
-      await deleteWebsocketSubscription(subscriptionId, context.auth.proxyBaseUrl);
+      await deleteWebsocketSubscription(subscriptionId, context.auth.props.proxyBaseUrl);
       await context.store.delete('websocket_subscription_trigger');
     }
   },

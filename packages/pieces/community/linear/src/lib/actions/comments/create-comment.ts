@@ -25,7 +25,7 @@ export const linearCreateComment = createAction({
       body: propsValue.body,
     };
 
-    const client = makeClient(auth as string);
+    const client = makeClient(auth);
     const result = await client.createComment(comment);
     if (result.success) {
       const createdComment = await result.comment;

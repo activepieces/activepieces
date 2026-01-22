@@ -266,6 +266,36 @@ export const recordService = {
         return formatRecordsAndFetchField({ records, tableId: firstRecord.tableId, projectId })
     },
 
+    async deleteAll({
+        tableId,
+        projectId,
+    }: DeleteAllParams): Promise<PopulatedRecord[]> {
+        const deletedRecords = await transaction(async (entityManager: EntityManager) => {
+            const records = await entityManager.getRepository(RecordEntity).find({
+                where: { projectId, tableId },
+                relations: ['cells'],
+            })
+
+            const recordIds = records.map((record) => record.id)
+
+            if (recordIds.length > 0) {
+                await entityManager.getRepository(RecordEntity).delete({
+                    id: In(recordIds),
+                    projectId,
+                    tableId,
+                })
+            }
+
+            return records
+        })
+
+        if (deletedRecords.length === 0) {
+            return []
+        }
+
+        return formatRecordsAndFetchField({ records: deletedRecords, tableId, projectId })
+    },
+
     async triggerWebhooks({
         projectId,
         tableId,
@@ -299,6 +329,7 @@ export const recordService = {
                 }),
                 execute: true,
                 logger,
+                failParentOnFailure: true,
             })
         }))
     },
@@ -348,6 +379,11 @@ type UpdateParams = {
 
 type DeleteParams = {
     ids: string[]
+    projectId: string
+}
+
+type DeleteAllParams = {
+    tableId: string
     projectId: string
 }
 

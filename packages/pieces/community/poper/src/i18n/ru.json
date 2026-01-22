@@ -1,0 +1,8 @@
+{
+  "Poper": "Популярный",
+  "AI Driven Pop-up Builder that can convert visitors into customers,increase subscriber count, and skyrocket sales.": "AI Driven Pop-up Builder, который может конвертировать посетителей в клиентов, увеличить количество абонентов и продажу ракет.",
+  "New Lead": "Новый предв. контакт",
+  "Triggers when a new lead is obtained from popup.": "Триггеры при получении нового свинца из всплывающего окна.",
+  "Markdown": "Markdown",
+  "\n1. Log in to your [Poper Account](https://app.poper.ai/).\n2. Click on the popup for which you want to set up a trigger.\n3. On the left-side menu, click on Integrations and search for **Webhook**.\n4. Enter an appropriate webhook name and paste the following URL:\n  ```text\n  {{webhookUrl}}\n  ```\n": "\n1. Войдите в [Poper Account](https://app.poper.ai/).\n2. Нажмите на всплывающее окно, для которого вы хотите настроить триггер.\n3. В меню слева нажмите на Интеграции и ищите **Webhook**.\n4. Введите соответствующее имя вебхука и вставьте следующий URL:\n  ```text\n  {{webhookUrl}}\n  ```\n"
+}

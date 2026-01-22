@@ -14,8 +14,10 @@ import { system } from './helper/system/system'
 import { setupWorker } from './worker'
 
 
+export let app: FastifyInstance | undefined = undefined
+
 export const setupServer = async (): Promise<FastifyInstance> => {
-    const app = await setupBaseApp()
+    app = await setupBaseApp()
 
     if (system.isApp()) {
         await setupApp(app)
@@ -27,15 +29,16 @@ export const setupServer = async (): Promise<FastifyInstance> => {
 }
 
 async function setupBaseApp(): Promise<FastifyInstance> {
-    const MAX_FILE_SIZE_MB = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
-    const fileSizeLimit =  Math.max(25 * 1024 * 1024, (MAX_FILE_SIZE_MB + 4) * 1024 * 1024)
+    const fileSizeLimit = system.getNumberOrThrow(AppSystemProp.MAX_FILE_SIZE_MB)
+    const flowRunLogSizeLimit = system.getNumberOrThrow(AppSystemProp.MAX_FLOW_RUN_LOG_SIZE_MB)
     const app = fastify({
+        disableRequestLogging: true,
         querystringParser: qs.parse,
         loggerInstance: system.globalLogger(),
         ignoreTrailingSlash: true,
         pluginTimeout: 30000,
         // Default 100MB, also set in nginx.conf
-        bodyLimit: fileSizeLimit,
+        bodyLimit: Math.max(fileSizeLimit + 4, flowRunLogSizeLimit + 4, 25) * 1024 * 1024,
         genReqId: () => {
             return `req_${apId()}`
         },
@@ -48,7 +51,8 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 formats: {},
             },
         },
-    }) 
+    })
+
     await app.register(fastifyFavicon)
     await app.register(fastifyMultipart, {
         attachFieldsToBody: 'keyValues',
@@ -57,6 +61,7 @@ async function setupBaseApp(): Promise<FastifyInstance> {
                 filename: part.filename,
                 data: await part.toBuffer(),
                 type: 'file',
+                mimetype: part.mimetype,
             };
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (part as any).value = apFile
@@ -87,7 +92,6 @@ async function setupBaseApp(): Promise<FastifyInstance> {
         app.getDefaultJsonParser('ignore', 'ignore'),
     )
     await app.register(healthModule)
-
     return app
 }
 

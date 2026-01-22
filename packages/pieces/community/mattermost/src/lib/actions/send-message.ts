@@ -27,14 +27,14 @@ export const sendMessage = createAction({
   },
   async run(context) {
     // Remove trailing slash from workspace URL
-    const baseUrl = context.auth.workspace_url.replace(/\/$/, '');
+    const baseUrl = context.auth.props.workspace_url.replace(/\/$/, '');
     try {
       return await httpClient.sendRequest({
         url: `${baseUrl}/api/v4/posts`,
         method: HttpMethod.POST,
         authentication: {
           type: AuthenticationType.BEARER_TOKEN,
-          token: context.auth.token,
+          token: context.auth.props.token,
         },
         body: {
           channel_id: context.propsValue.channel_id,

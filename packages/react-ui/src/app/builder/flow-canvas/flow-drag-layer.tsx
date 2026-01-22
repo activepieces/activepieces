@@ -8,44 +8,52 @@ import {
   rectIntersection,
   useSensor,
   useSensors,
+  PointerSensorOptions,
 } from '@dnd-kit/core';
-import { useViewport } from '@xyflow/react';
+import { ReactFlowInstance, useReactFlow } from '@xyflow/react';
 import { t } from 'i18next';
-import { useCallback, useState } from 'react';
+import type { PointerEvent } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
-import { toast } from '@/components/ui/use-toast';
 import {
   FlowOperationType,
   StepLocationRelativeToParent,
   flowStructureUtil,
+  isNil,
 } from '@activepieces/shared';
 
-import { useBuilderStateContext } from '../builder-hooks';
+import { BuilderState, useBuilderStateContext } from '../builder-hooks';
+import { NoteDragOverlayMode } from '../state/notes-state';
 
-import StepDragOverlay from './step-drag-overlay';
+import NoteDragOverlay from './nodes/note-node/note-drag-overlay';
+import StepDragOverlay from './nodes/step-node/step-drag-overlay';
+import { flowCanvasConsts } from './utils/consts';
 import { ApButtonData } from './utils/types';
 
-const FlowDragLayer = ({
-  children,
-  lefSideBarContainerWidth,
-  cursorPosition,
-}: {
-  children: React.ReactNode;
-  lefSideBarContainerWidth: number;
-  cursorPosition: { x: number; y: number };
-}) => {
-  const viewport = useViewport();
-  const [previousViewPort, setPreviousViewPort] = useState(viewport);
+const FlowDragLayer = ({ children }: { children: React.ReactNode }) => {
+  const reactFlow = useReactFlow();
+  const previousViewPortRef = useRef({ x: 0, y: 0, zoom: 1 });
+  const [cursorPositionOnActivation, setCursorPositionOnActivation] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 0, y: 0 });
   const [
     setActiveDraggingStep,
     applyOperation,
     flowVersion,
     activeDraggingStep,
+    setDraggedNote,
+    getNoteById,
+    moveNote,
   ] = useBuilderStateContext((state) => [
     state.setActiveDraggingStep,
     state.applyOperation,
     state.flowVersion,
     state.activeDraggingStep,
+    state.setDraggedNote,
+    state.getNoteById,
+    state.moveNote,
   ]);
 
   const fixCursorSnapOffset = useCallback(
@@ -56,9 +64,11 @@ const FlowDragLayer = ({
       }
       const { x, y } = args.pointerCoordinates;
       const { width, height } = args.collisionRect;
+      const currentViewport = reactFlow.getViewport();
+      const previousViewPort = previousViewPortRef.current;
       const deltaViewport = {
-        x: previousViewPort.x - viewport.x,
-        y: previousViewPort.y - viewport.y,
+        x: previousViewPort.x - currentViewport.x,
+        y: previousViewPort.y - currentViewport.y,
       };
       const updated = {
         ...args,
@@ -75,72 +85,54 @@ const FlowDragLayer = ({
       };
       return rectIntersection(updated);
     },
-    [viewport.x, viewport.y, previousViewPort.x, previousViewPort.y],
+    [reactFlow],
   );
   const draggedStep = activeDraggingStep
     ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
     : undefined;
-
   const handleDragStart = (e: DragStartEvent) => {
-    setActiveDraggingStep(e.active.id.toString());
-    setPreviousViewPort(viewport);
+    if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_STEP_TAG) {
+      setActiveDraggingStep(e.active.id.toString());
+    }
+    if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
+      const draggedNote = getNoteById(e.active.id.toString());
+      if (draggedNote) {
+        const noteElement = document.getElementById(e.active.id.toString());
+        let offset: { x: number; y: number } | undefined;
+        if (noteElement) {
+          const rect = noteElement.getBoundingClientRect();
+          offset = {
+            x: cursorPositionOnActivation.x - rect.left,
+            y: cursorPositionOnActivation.y - rect.top,
+          };
+        }
+        setDraggedNote(draggedNote, NoteDragOverlayMode.MOVE, offset);
+      }
+    }
+    previousViewPortRef.current = reactFlow.getViewport();
   };
 
-  const handleDragCancel = () => {
+  const handleDragCancel = useCallback(() => {
     setActiveDraggingStep(null);
-  };
+    setDraggedNote(null, null);
+  }, [setActiveDraggingStep, setDraggedNote]);
 
   const handleDragEnd = (e: DragEndEvent) => {
     setActiveDraggingStep(null);
-    if (
-      e.over &&
-      e.over.data.current &&
-      e.over.data.current.accepts === e.active.data?.current?.type
-    ) {
-      const droppedAtNodeData: ApButtonData = e.over.data
-        .current as ApButtonData;
-      if (
-        droppedAtNodeData &&
-        droppedAtNodeData.parentStepName &&
-        draggedStep &&
-        draggedStep.name !== droppedAtNodeData.parentStepName
-      ) {
-        const isPartOfInnerFlow = flowStructureUtil.isChildOf(
-          draggedStep,
-          droppedAtNodeData.parentStepName,
-        );
-        if (isPartOfInnerFlow) {
-          toast({
-            title: t('Invalid Move'),
-            description: t(
-              'The destination location is a child of the dragged step',
-            ),
-            duration: 3000,
-          });
-          return;
-        }
-        applyOperation({
-          type: FlowOperationType.MOVE_ACTION,
-          request: {
-            name: draggedStep.name,
-            newParentStep: droppedAtNodeData.parentStepName,
-            stepLocationRelativeToNewParent:
-              droppedAtNodeData.stepLocationRelativeToParent,
-            branchIndex:
-              droppedAtNodeData.stepLocationRelativeToParent ===
-              StepLocationRelativeToParent.INSIDE_BRANCH
-                ? droppedAtNodeData.branchIndex
-                : undefined,
-          },
-        });
-      }
-    }
+    setDraggedNote(null, null);
+    handleStepDragEnd({ e, applyOperation, activeDraggingStep, flowVersion });
+    handleNoteDragEnd({ e, getNoteById, moveNote, reactFlow });
   };
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(PointerSensorIgnoringInteractiveItems, {
       activationConstraint: {
         distance: 10,
+      },
+      onActivation: ({ event }) => {
+        if (event instanceof PointerEvent) {
+          setCursorPositionOnActivation({ x: event.clientX, y: event.clientY });
+        }
       },
     }),
     useSensor(TouchSensor),
@@ -158,15 +150,133 @@ const FlowDragLayer = ({
         <DragOverlay dropAnimation={{ duration: 0 }}></DragOverlay>
       </DndContext>
 
-      {draggedStep && (
-        <StepDragOverlay
-          cursorPosition={cursorPosition}
-          lefSideBarContainerWidth={lefSideBarContainerWidth}
-          step={draggedStep}
-        ></StepDragOverlay>
-      )}
+      {draggedStep && <StepDragOverlay step={draggedStep}></StepDragOverlay>}
+      <NoteDragOverlay />
     </>
   );
 };
 
 export { FlowDragLayer };
+
+function handleStepDragEnd({
+  e,
+  applyOperation,
+  activeDraggingStep,
+  flowVersion,
+}: { e: DragEndEvent } & Pick<
+  BuilderState,
+  'applyOperation' | 'activeDraggingStep' | 'flowVersion'
+>) {
+  const draggedStep = activeDraggingStep
+    ? flowStructureUtil.getStep(activeDraggingStep, flowVersion.trigger)
+    : undefined;
+  const isOverSomething =
+    !isNil(e.over?.data?.current) &&
+    e.over.data.current.accepts === e.active.data?.current?.type;
+  if (isOverSomething) {
+    const droppedAtNodeData: ApButtonData | undefined = e.over?.data
+      .current as unknown as ApButtonData | undefined;
+    if (
+      droppedAtNodeData?.parentStepName &&
+      draggedStep &&
+      draggedStep.name !== droppedAtNodeData.parentStepName
+    ) {
+      const isPartOfInnerFlow = flowStructureUtil.isChildOf(
+        draggedStep,
+        droppedAtNodeData.parentStepName,
+      );
+      if (isPartOfInnerFlow) {
+        toast(t('Invalid Move'), {
+          description: t(
+            'The destination location is a child of the dragged step',
+          ),
+          duration: 3000,
+        });
+        return;
+      }
+      applyOperation({
+        type: FlowOperationType.MOVE_ACTION,
+        request: {
+          name: draggedStep.name,
+          newParentStep: droppedAtNodeData.parentStepName,
+          stepLocationRelativeToNewParent:
+            droppedAtNodeData.stepLocationRelativeToParent,
+          branchIndex:
+            droppedAtNodeData.stepLocationRelativeToParent ===
+            StepLocationRelativeToParent.INSIDE_BRANCH
+              ? droppedAtNodeData.branchIndex
+              : undefined,
+        },
+      });
+    }
+  }
+}
+
+function handleNoteDragEnd({
+  e,
+  getNoteById,
+  moveNote,
+  reactFlow,
+}: { e: DragEndEvent } & Pick<BuilderState, 'getNoteById' | 'moveNote'> & {
+    reactFlow: ReactFlowInstance;
+  }) {
+  if (e.active.data.current?.type === flowCanvasConsts.DRAGGED_NOTE_TAG) {
+    const draggedNote = getNoteById(e.active.id.toString());
+    if (draggedNote) {
+      const element = document.getElementById(e.active.id.toString());
+      if (element) {
+        const positionOnCanvas = reactFlow.screenToFlowPosition({
+          x: element.getBoundingClientRect().left,
+          y: element.getBoundingClientRect().top,
+        });
+        moveNote(draggedNote.id, positionOnCanvas);
+      }
+    }
+  }
+}
+
+class PointerSensorIgnoringInteractiveItems extends PointerSensor {
+  static activators = [
+    {
+      eventName: 'onPointerDown' as const,
+      handler: (
+        { nativeEvent: event }: PointerEvent,
+        { onActivation }: PointerSensorOptions,
+      ) => {
+        const target = event.target as HTMLElement;
+        if (target?.closest('[contenteditable="true"]')) {
+          return false;
+        }
+
+        if (
+          !event.isPrimary ||
+          event.button !== 0 ||
+          isInteractiveElement(event.target as Element)
+        ) {
+          return false;
+        }
+        onActivation?.({ event });
+        return true;
+      },
+    },
+  ];
+}
+
+function isInteractiveElement(element: Element | null): boolean {
+  const interactiveElements = [
+    'button',
+    'input',
+    'textarea',
+    'select',
+    'option',
+  ];
+
+  if (
+    element?.tagName &&
+    interactiveElements.includes(element.tagName.toLowerCase())
+  ) {
+    return true;
+  }
+
+  return false;
+}

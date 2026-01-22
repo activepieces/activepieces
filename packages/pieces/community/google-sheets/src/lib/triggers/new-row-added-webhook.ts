@@ -1,6 +1,5 @@
 import {
 	DEDUPE_KEY_PROPERTY,
-	PiecePropValueSchema,
 	Property,
 	TriggerStrategy,
 	WebhookRenewStrategy,
@@ -15,14 +14,13 @@ import {
 	hashObject,
 	isChangeContentMessage,
 	isSyncMessage,
-	transformWorkSheetValues,
+	mapRowsToColumnLabels,
 	WebhookInformation,
 } from './helpers';
 
-import { googleSheetsAuth } from '../..';
+import { googleSheetsAuth } from '../common/common';
 import { commonProps } from '../common/props';
-import { isNil } from '@activepieces/shared';
-import { areSheetIdsValid } from '../common/common';
+import { areSheetIdsValid,  } from '../common/common';
 
 export const newRowAddedTrigger = createTrigger({
 	auth: googleSheetsAuth,
@@ -51,11 +49,9 @@ export const newRowAddedTrigger = createTrigger({
 		const sheetId = Number(inputSheetId);
 		const spreadsheetId = inputSpreadsheetId as string;
 
-		// fetch current sheet values
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const currentSheetValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 
-		// store current sheet row count
 		await context.store.put(`${sheetId}`, currentSheetValues.length);
 
 		const fileNotificationRes = await createFileNotification(
@@ -65,7 +61,6 @@ export const newRowAddedTrigger = createTrigger({
 			context.propsValue.includeTeamDrives,
 		);
 
-		// store channel response
 		await context.store.put<WebhookInformation>(
 			'googlesheets_new_row_added',
 			fileNotificationRes.data,
@@ -74,11 +69,16 @@ export const newRowAddedTrigger = createTrigger({
 	async onDisable(context) {
 		const webhook = await context.store.get<WebhookInformation>(`googlesheets_new_row_added`);
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
+			try
+			{
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
+			}
+			catch(err){
+  				console.debug("deleteFileNotification failed :",JSON.stringify(err));
+			}
 		}
 	},
 	async run(context) {
-		// check if notification is a sync message
 		if (isSyncMessage(context.payload.headers)) {
 			return [];
 		}
@@ -95,10 +95,8 @@ export const newRowAddedTrigger = createTrigger({
 		const sheetId = Number(inputSheetId);
 		const spreadsheetId = inputSpreadsheetId as string;
 
-		// fetch old row count for worksheet
 		const oldRowCount = (await context.store.get(`${sheetId}`)) as number;
 
-		// fetch current row count for worksheet
 		const sheetName = await getWorkSheetName(context.auth, spreadsheetId, sheetId);
 		const currentRowValues = await getWorkSheetValues(context.auth, spreadsheetId, sheetName);
 		const currentRowCount = currentRowValues.length;
@@ -106,10 +104,8 @@ export const newRowAddedTrigger = createTrigger({
 		const headers =  currentRowValues[0] ?? [];
 		const headerCount = headers.length;
 
-		// if no new rows return
 		if (oldRowCount >= currentRowCount) {
 			if (oldRowCount > currentRowCount) {
-				// Some rows were deleted
 				await context.store.put(`${sheetId}`, currentRowCount);
 			}
 			return [];
@@ -119,16 +115,14 @@ export const newRowAddedTrigger = createTrigger({
 		const range = `${sheetName}!${oldRowCount + 1}:${currentRowCount}`;
 
 		const newRowValues = await getWorkSheetValues(
-			context.auth as PiecePropValueSchema<typeof googleSheetsAuth>,
+			context.auth,
 			spreadsheetId,
 			range,
 		);
 
-		// update row count value
 		await context.store.put(`${sheetId}`, currentRowCount);
 
-		// transform row values
-		const transformedRowValues = transformWorkSheetValues(newRowValues, oldRowCount,headerCount);
+		const transformedRowValues = mapRowsToColumnLabels(newRowValues, oldRowCount,headerCount);
 		return transformedRowValues.map((row) => {
 			return {
 				...row,
@@ -146,11 +140,9 @@ export const newRowAddedTrigger = createTrigger({
 					throw new Error('Please select a spreadsheet and sheet first.');
 				}
 		
-		const sheetId = Number(inputSheetId);
 		const spreadsheetId = inputSpreadsheetId as string;
 
 		if (webhook != null && webhook.id != null && webhook.resourceId != null) {
-			// delete current channel
 			await deleteFileNotification(context.auth, webhook.id, webhook.resourceId);
 			const fileNotificationRes = await createFileNotification(
 				context.auth,
@@ -158,7 +150,6 @@ export const newRowAddedTrigger = createTrigger({
 				context.webhookUrl,
 				context.propsValue.includeTeamDrives,
 			);
-			// store channel response
 			await context.store.put<WebhookInformation>(
 				'googlesheets_new_row_added',
 				fileNotificationRes.data,
@@ -181,8 +172,7 @@ export const newRowAddedTrigger = createTrigger({
 		const headers =  currentSheetValues[0] ?? [];
 		const headerCount = headers.length;
 
-		// transform row values
-		const transformedRowValues = transformWorkSheetValues(currentSheetValues, 0,headerCount)
+		const transformedRowValues = mapRowsToColumnLabels(currentSheetValues, 0,headerCount)
 			.slice(-5)
 			.reverse();
 

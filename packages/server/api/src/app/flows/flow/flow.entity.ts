@@ -1,5 +1,6 @@
 import {
     Flow,
+    FlowOperationStatus,
     FlowRun,
     FlowStatus,
     FlowVersion,
@@ -7,12 +8,12 @@ import {
     Project,
     TableWebhook,
     TriggerEvent,
+    User,
 } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import {
     ApIdSchema,
     BaseColumnSchemaPart,
-    JSONB_COLUMN_TYPE,
 } from '../../database/database-common'
 
 export type FlowSchema = Flow & {
@@ -20,6 +21,7 @@ export type FlowSchema = Flow & {
     project: Project
     runs: FlowRun[]
     folder?: Folder
+    owner?: User
     events: TriggerEvent[]
     publishedVersion?: FlowVersion
     tableWebhooks: TableWebhook[]
@@ -43,14 +45,6 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             nullable: false,
             default: FlowStatus.DISABLED,
         },
-        handshakeConfiguration: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
-        },
-        schedule: {
-            type: JSONB_COLUMN_TYPE,
-            nullable: true,
-        },
         externalId: {
             type: String,
             nullable: false,
@@ -61,7 +55,24 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             unique: true,
         },
         metadata: {
-            type: JSONB_COLUMN_TYPE,
+            type: 'jsonb',
+            nullable: true,
+        },
+        operationStatus: {
+            type: String,
+            nullable: false,
+            default: FlowOperationStatus.NONE,
+        },
+        timeSavedPerRun: {
+            type: Number,
+            nullable: true,
+        },
+        ownerId: {
+            type: String,
+            nullable: true,
+        },
+        templateId: {
+            type: String,
             nullable: true,
         },
     },
@@ -69,6 +80,11 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
         {
             name: 'idx_flow_project_id',
             columns: ['projectId'],
+            unique: false,
+        },
+        {
+            name: 'idx_flow_owner_id',
+            columns: ['ownerId'],
             unique: false,
         },
         {
@@ -82,6 +98,17 @@ export const FlowEntity = new EntitySchema<FlowSchema>({
             type: 'one-to-many',
             target: 'flow_run',
             inverseSide: 'flow',
+        },
+        owner: {
+            type: 'many-to-one',
+            target: 'user',
+            cascade: true,
+            onDelete: 'SET NULL',
+            nullable: false,
+            joinColumn: {
+                name: 'ownerId',
+                foreignKeyConstraintName: 'fk_flow_owner_id',
+            },
         },
         folder: {
             type: 'many-to-one',

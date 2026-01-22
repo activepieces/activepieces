@@ -21,7 +21,6 @@ export const updateSubscriberInList = createAction({
       displayName: 'Status',
       required: true,
       options: {
-        disabled: false,
         options: [
           { label: 'Subscribed', value: 'subscribed' },
           { label: 'Unsubscribed', value: 'unsubscribed' },
@@ -33,6 +32,7 @@ export const updateSubscriberInList = createAction({
     }),
   },
   async run(context) {
+    const { list_id, email, status } = context.propsValue;
     const access_token = context.auth.access_token;
     const mailChimpServerPrefix =
       await mailchimpCommon.getMailChimpServerPrefix(access_token);
@@ -41,10 +41,10 @@ export const updateSubscriberInList = createAction({
       server: mailChimpServerPrefix,
     });
     return await mailchimp.lists.updateListMember(
-      context.propsValue.list_id!,
-      context.propsValue.email!,
+      list_id as string,
+      email!,
       {
-        status: context.propsValue.status!,
+        status: status!,
       }
     );
   },

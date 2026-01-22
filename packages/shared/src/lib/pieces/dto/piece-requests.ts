@@ -1,7 +1,7 @@
 import { Static, Type } from '@sinclair/typebox'
 import { ApMultipartFile } from '../../common'
 import { ApEdition } from '../../flag/flag'
-import { PackageType, PieceCategory, PieceType } from '../piece'
+import { PackageType, PieceCategory } from '../piece'
 
 export const EXACT_VERSION_PATTERN = '^[0-9]+\\.[0-9]+\\.[0-9]+$'
 export const EXACT_VERSION_REGEX = new RegExp(EXACT_VERSION_PATTERN)
@@ -45,6 +45,7 @@ export const GetPieceRequestParams = Type.Object({
 export type GetPieceRequestParams = Static<typeof GetPieceRequestParams>
 
 export const ListPiecesRequestQuery = Type.Object({
+    projectId: Type.Optional(Type.String()),
     release: Type.Optional(ExactVersionType),
     includeTags: Type.Optional(Type.Boolean()),
     includeHidden: Type.Optional(Type.Boolean()),
@@ -59,7 +60,16 @@ export const ListPiecesRequestQuery = Type.Object({
 
 export type ListPiecesRequestQuery = Static<typeof ListPiecesRequestQuery>
 
+
+export const RegistryPiecesRequestQuery = Type.Object({
+    release: ExactVersionType,
+    edition: Type.Enum(ApEdition),
+})
+
+export type RegistryPiecesRequestQuery = Static<typeof RegistryPiecesRequestQuery>
+
 export const ListVersionRequestQuery = Type.Object({
+    projectId: Type.Optional(Type.String()),
     release: ExactVersionType,
     name: Type.String(),
     edition: Type.Optional(Type.Enum(ApEdition)),
@@ -79,8 +89,7 @@ export type ListVersionsResponse = Static<typeof ListVersionsResponse>
 export type GetPieceRequestQuery = Static<typeof GetPieceRequestQuery>
 
 export const PieceOptionRequest = Type.Object({
-    packageType: Type.Enum(PackageType),
-    pieceType: Type.Enum(PieceType),
+    projectId: Type.String(),
     pieceName: Type.String({}),
     pieceVersion: VersionType,
     actionOrTriggerName: Type.String({}),
@@ -95,10 +104,6 @@ export type PieceOptionRequest = Static<typeof PieceOptionRequest>
 
 export enum PieceScope {
     PLATFORM = 'PLATFORM',
-    // TODO: all users have their own platform, so we can remove this
-    // @deprecated
-    PROJECT = 'PROJECT',
-
 }
 
 export const AddPieceRequestBody = Type.Union([
@@ -114,6 +119,7 @@ export const AddPieceRequestBody = Type.Union([
         title: 'Private Piece',
     }),
     Type.Object({
+        projectId: Type.String(),
         packageType: Type.Literal(PackageType.REGISTRY),
         scope: Type.Literal(PieceScope.PLATFORM),
         pieceName: Type.String({

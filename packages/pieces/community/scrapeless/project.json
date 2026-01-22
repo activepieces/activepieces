@@ -33,35 +33,13 @@
           }
         ],
         "buildableProjectDepsInPackageJsonType": "dependencies",
-        "updateBuildableProjectDepsInPackageJson": true
+        "updateBuildableProjectDepsInPackageJson": true,
+        "clean": false
       },
-      "dependsOn": ["prebuild", "^build"]
-
-    },
-        "prebuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "packages/pieces/community/scrapeless",
-        "command": "npm ci"
-      }
-    },
-    "build-with-deps": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "nx run pieces-scrapeless:prebuild",
-          "nx run pieces-scrapeless:build",
-          "nx run pieces-scrapeless:postbuild"
-        ],
-        "parallel": false
-      }
-    },
-    "postbuild": {
-      "executor": "nx:run-commands",
-      "options": {
-        "cwd": "dist/packages/pieces/community/scrapeless",
-        "command": "npm install"
-      }
+      "dependsOn": [
+        "prebuild",
+        "^build"
+      ]
     },
     "nx-release-publish": {
       "options": {
@@ -72,6 +50,16 @@
       "executor": "@nx/eslint:lint",
       "outputs": [
         "{options.outputFile}"
+      ]
+    },
+    "prebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "cwd": "packages/pieces/community/scrapeless",
+        "command": "bun install --no-save --silent"
+      },
+      "dependsOn": [
+        "^build"
       ]
     }
   }

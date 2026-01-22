@@ -16,7 +16,7 @@ export const getBoardItemValuesAction = createAction({
   async run(context) {
     const { board_id, column_ids } = context.propsValue;
 
-    const client = makeClient(context.auth as string);
+    const client = makeClient(context.auth);
     const res = await client.getBoardItemValues({
       boardId: board_id as string,
       columnIds: column_ids as string[],

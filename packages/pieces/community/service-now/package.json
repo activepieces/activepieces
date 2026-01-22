@@ -1,0 +1,12 @@
+{
+  "name": "@activepieces/piece-service-now",
+  "version": "0.1.0",
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "types": "./src/index.d.ts",
+  "dependencies": {
+    "tslib": "^2.3.0",
+    "zod": "^3.22.4",
+    "form-data": "^4.0.0"
+  }
+}

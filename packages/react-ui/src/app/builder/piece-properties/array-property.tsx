@@ -14,7 +14,7 @@ import {
   PropertyType,
 } from '@activepieces/pieces-framework';
 
-import { AutoPropertiesFormComponent } from './auto-properties-form';
+import { GenericPropertiesForm } from './generic-properties-form';
 import { TextInputWithMentions } from './text-input-with-mentions';
 
 type ArrayPropertyProps = {
@@ -70,6 +70,7 @@ const ArrayPieceProperty = React.memo(
     arrayProperty,
   }: ArrayPropertyProps) => {
     const form = useFormContext();
+
     const [fields, setFields] = useState<ArrayField[]>(() => {
       const formValues = form.getValues(inputName);
       if (formValues) {
@@ -148,13 +149,17 @@ const ArrayPieceProperty = React.memo(
                       <span className="sr-only">{t('Remove')}</span>
                     </Button>
                   </div>
-                  <AutoPropertiesFormComponent
+                  <GenericPropertiesForm
                     prefixValue={`${inputName}.[${index}]`}
                     props={arrayProperty.properties!}
                     useMentionTextInput={useMentionTextInput}
-                    allowDynamicValues={false}
+                    propertySettings={null}
+                    dynamicPropsInfo={null}
                     disabled={disabled}
-                  ></AutoPropertiesFormComponent>
+                    onValueChange={() => {
+                      form.trigger(inputName);
+                    }}
+                  ></GenericPropertiesForm>
                 </div>
               ))}
             </div>
