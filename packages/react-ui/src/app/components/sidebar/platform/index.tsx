@@ -176,7 +176,7 @@ export function PlatformSidebar() {
           to: '/platform/infrastructure/event-destinations',
           label: t('Event Streaming'),
           icon: Webhook,
-          locked: !platform.plan.auditLogEnabled,
+          locked: !platform.plan.eventStreamingEnabled,
         },
       ],
     },

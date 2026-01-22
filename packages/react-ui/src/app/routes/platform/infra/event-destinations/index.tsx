@@ -27,27 +27,21 @@ const EventDestinationsPage = () => {
         'Configure destination URL to receive events from your platform to your external system',
       )}
     >
-      <div className="flex flex-col w-full gap-4">
+      <div className="flex-col w-full">
         <DashboardPageHeader
           title={t('Event Streaming')}
           description={t('Configure event destinations for your platform')}
-        />
-
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-2xl font-semibold">{t('Event Streaming')}</h2>
-            <p className="text-muted-foreground">
-              {t('Manage destinations that receive platform events')}
-            </p>
-          </div>
+        >
           <EventDestinationDialog destination={null}>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('Create Destination')}
+            <Button
+              size="sm"
+              className="flex items-center justify-center gap-2"
+            >
+              <Plus className="size-4" />
+              {t('New Destination')}
             </Button>
           </EventDestinationDialog>
-        </div>
-
+        </DashboardPageHeader>
         <EventDestinationsTable destinations={destinations} />
       </div>
     </LockedFeatureGuard>
