@@ -40,7 +40,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             metadata: request.body.metadata,
             pieceVersion: request.body.pieceVersion,
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_UPSERTED,
             data: {
                 connection: appConnection,
@@ -119,7 +119,7 @@ export const appConnectionController: FastifyPluginCallbackTypebox = (app, _opts
             platformId: request.principal.platform.id,
             projectId: request.projectId,
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.CONNECTION_DELETED,
             data: {
                 connection,

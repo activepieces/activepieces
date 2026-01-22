@@ -112,6 +112,7 @@ export const WorkerSettingsResponse = Type.Object({
     PROJECT_RATE_LIMITER_ENABLED: Type.Boolean(),
     MAX_CONCURRENT_JOBS_PER_PROJECT: Type.Number(),
     JWT_SECRET: Type.String(),
+    EVENT_DESTINATION_TIMEOUT_SECONDS: Type.Number(),
     PLATFORM_ID_FOR_DEDICATED_WORKER: Type.Optional(Type.String()),
     EDITION: Type.String(),
 })
