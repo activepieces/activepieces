@@ -53,10 +53,17 @@ export const progressService = {
                 ignoreInternalError: false,
             })
 
+            const step = stepNameToUpdate ? flowExecutorContext.getStepOutput(stepNameToUpdate) : undefined
+
             if (isFinished) {
                 contructedFlowRun.finishTime = dayjs().toISOString()
                 await sendUpdateProgress({
                     flowRun: contructedFlowRun,
+                    step: step ? {
+                        name: stepNameToUpdate!,
+                        path: flowExecutorContext.currentPath.path,
+                        output: step,
+                    } : undefined,
                 })
                 return
             }
@@ -65,7 +72,6 @@ export const progressService = {
                 return
             }
 
-            const step = flowExecutorContext.getStepOutput(stepNameToUpdate)
             if (isNil(step)) {
                 return
             }

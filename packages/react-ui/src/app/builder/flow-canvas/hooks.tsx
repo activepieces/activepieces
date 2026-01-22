@@ -81,13 +81,14 @@ const useShowBuilderIsSavingWarningBeforeLeaving = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, clearRun, setFlow] =
-    useBuilderStateContext((state) => [
+  const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
+    (state) => [
       state.flowVersion,
       state.setVersion,
       state.clearRun,
       state.setFlow,
-    ]);
+    ],
+  );
   const socket = useSocket();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);

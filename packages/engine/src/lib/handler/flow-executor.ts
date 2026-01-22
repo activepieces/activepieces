@@ -85,13 +85,13 @@ export const flowExecutor = {
                 constants,
             })
             const shouldBreakExecution = flowExecutionContext.verdict.status !== FlowRunStatus.RUNNING || testSingleStepMode
+            previousAction = currentAction
+            currentAction = currentAction.nextAction
 
             if (shouldBreakExecution) {
                 break
             }
 
-            previousAction = currentAction
-            currentAction = currentAction.nextAction
         }
 
         await progressService.sendUpdate({
