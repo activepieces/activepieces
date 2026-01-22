@@ -22,7 +22,6 @@ export const requestApprovalDirectMessage = createAction({
     }),
   },
   async run(context) {
-    let messageId: string;
     if (context.executionType === ExecutionType.BEGIN) {
       const { chatId, message } = context.propsValue;
       const token = context.auth.access_token;
@@ -87,7 +86,7 @@ export const requestApprovalDirectMessage = createAction({
       const response = await client
         .api(`/chats/${chatId}/messages`)
         .post(chatMessage);
-      messageId = response.id! || '';
+
       context.run.pause({
         pauseMetadata: {
           type: PauseType.WEBHOOK,
@@ -97,12 +96,10 @@ export const requestApprovalDirectMessage = createAction({
 
       return {
         approved: false, // default approval is false
-        messageId: messageId,
       };
     } else {
       return {
         approved: context.resumePayload.queryParams['action'] === 'approve',
-        messageId: messageId!,
       };
     }
   },

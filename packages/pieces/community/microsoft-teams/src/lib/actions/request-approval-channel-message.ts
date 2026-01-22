@@ -23,7 +23,6 @@ export const requestApprovalInChannel = createAction({
     }),
   },
   async run(context) {
-    let messageId: string;
     if (context.executionType === ExecutionType.BEGIN) {
       const { teamId, channelId, message } = context.propsValue;
       const token = context.auth.access_token;
@@ -98,15 +97,12 @@ export const requestApprovalInChannel = createAction({
           response: {},
         },
       });
-      messageId = response.id! || '';
       return {
         approved: false, // default approval is false
-        messageId: messageId,
       };
     } else {
       return {
         approved: context.resumePayload.queryParams['action'] === 'approve',
-        messageId: messageId!,
       };
     }
   },
