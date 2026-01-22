@@ -72,7 +72,6 @@ import {
 } from './project-route-wrapper';
 import { TemplateDetailsWrapper } from './template-details-wrapper';
 
-
 const SettingsRerouter = () => {
   const { hash } = useLocation();
   const fragmentWithoutHash = hash.slice(1).toLowerCase();
