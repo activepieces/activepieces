@@ -187,7 +187,6 @@ export const useFocusOnStep = () => {
 
   const focusCurrentStep = useDebouncedCallback(() => {
     if (!isNil(currentStep)) {
-      console.log('focusing on step', currentStep);
       fitView(flowCanvasUtils.createFocusStepInGraphParams(currentStep));
       selectStep(currentStep);
     }
