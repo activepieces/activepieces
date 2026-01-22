@@ -397,6 +397,7 @@ export const flowHooks = {
       for (const templateFlow of flows) {
         const flow = await flowsApi.create({
           displayName: templateFlow.displayName,
+          templateId: template.id,
           projectId,
           folderName,
         });

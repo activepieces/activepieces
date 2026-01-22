@@ -39,6 +39,7 @@ export const Flow = Type.Object({
     metadata: Nullable(Metadata),
     operationStatus: Type.Enum(FlowOperationStatus),
     timeSavedPerRun: Nullable(Type.Number()),
+    templateId: Nullable(Type.String()),
 })
 
 export type Flow = Static<typeof Flow>
