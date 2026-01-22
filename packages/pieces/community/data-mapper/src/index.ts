@@ -7,7 +7,7 @@ export const dataMapper = createPiece({
   description: 'tools to manipulate data structure',
 
   minimumSupportedRelease: '0.30.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/data-mapper.png',
+  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/data-mapper.svg',
   auth: PieceAuth.None(),
   categories: [PieceCategory.CORE],
   authors: ["kishanprmr","MoShizzle","AbdulTheActivePiecer","khaledmashaly","abuaboud"],

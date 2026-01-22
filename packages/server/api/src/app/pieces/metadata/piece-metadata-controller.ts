@@ -1,8 +1,7 @@
 import { PieceMetadataModel, PieceMetadataModelSummary } from '@activepieces/pieces-framework'
-import { apVersionUtil, ProjectResourceType, securityAccess } from '@activepieces/server-shared'
+import { ProjectResourceType, securityAccess } from '@activepieces/server-shared'
 import {
     ALL_PRINCIPAL_TYPES,
-    ApEdition,
     GetPieceRequestParams,
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
@@ -37,10 +36,7 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
         return pieceMetadataService(req.log).getVersions({
             name: req.query.name,
-            projectId: req.query.projectId,
             release: req.query.release,
-            edition: req.query.edition ?? ApEdition.COMMUNITY,
-            platformId: getPlatformId(req.principal),
         })
     })
 
@@ -53,19 +49,14 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     )
 
     app.get('/', ListPiecesRequest, async (req): Promise<PieceMetadataModelSummary[]> => {
-        const latestRelease = await apVersionUtil.getCurrentRelease()
         const query = req.query
         const includeTags = query.includeTags ?? false
-        const release = query.release ?? latestRelease
-        const edition = query.edition ?? ApEdition.COMMUNITY
         const platformId = getPlatformId(req.principal)
         const projectId = req.query.projectId
         const pieceMetadataSummary = await pieceMetadataService(req.log).list({
-            release,
             includeHidden: query.includeHidden ?? false,
             projectId,
             platformId,
-            edition,
             includeTags,
             categories: query.categories,
             searchQuery: query.searchQuery,
@@ -121,8 +112,6 @@ const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
     app.get('/registry', RegistryPiecesRequest, async (req) => {
         const pieces = await pieceMetadataService(req.log).registry({
             release: req.query.release,
-            edition: req.query.edition,
-            platformId: getPlatformId(req.principal),
         })
         return pieces
     })

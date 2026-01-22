@@ -11,19 +11,19 @@ import {
 import { cn } from '@/lib/utils';
 
 const pieceIconVariants = cva(
-  'flex rounded-md items-center justify-center   ',
+  'flex rounded-md items-center justify-center bg-background  ',
   {
     variants: {
       circle: {
-        true: 'rounded-full p-2',
+        true: 'rounded-full p-1.25',
         false: '',
       },
       size: {
-        xxl: 'size-[64px] p-4',
+        xxl: 'size-[64px]',
         xl: 'size-[48px]',
         lg: 'size-[40px]',
-        md: 'size-[36px] p-1.5',
-        sm: 'size-[25px]',
+        md: 'size-[36px]',
+        sm: 'size-[30px]',
         xs: 'size-[18px]',
       },
       border: {
@@ -33,6 +33,19 @@ const pieceIconVariants = cva(
     defaultVariants: {},
   },
 );
+
+const pieceIconVariantsWithPadding = cva('', {
+  variants: {
+    size: {
+      xxl: 'p-4',
+      xl: 'p-3',
+      lg: 'p-2',
+      md: 'p-0.75',
+      sm: 'p-1.25',
+      xs: '',
+    },
+  },
+});
 
 interface PieceIconCircleProps extends VariantProps<typeof pieceIconVariants> {
   displayName?: string;
@@ -62,7 +75,10 @@ const PieceIcon = React.memo(
               <ImageWithColorBackground
                 src={logoUrl}
                 alt={displayName}
-                className="object-contain w-full h-full"
+                className={cn(
+                  pieceIconVariantsWithPadding({ size }),
+                  'object-contain w-full h-full',
+                )}
                 key={logoUrl}
                 fallback={<Skeleton className="rounded-full w-full h-full" />}
               />
