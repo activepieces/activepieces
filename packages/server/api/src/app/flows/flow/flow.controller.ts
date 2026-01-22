@@ -51,7 +51,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             templateId: request.body.templateId,
         })
 
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_CREATED,
             data: {
                 flow: newFlow,
@@ -120,7 +120,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             projectId: request.projectId,
             operation: cleanOperation(request.body),
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_UPDATED,
             data: {
                 request: request.body,
@@ -187,7 +187,7 @@ export const flowController: FastifyPluginAsyncTypebox = async (app) => {
             id: request.params.id,
             projectId: request.projectId,
         })
-        applicationEvents.sendUserEvent(request, {
+        applicationEvents(request.log).sendUserEvent(request, {
             action: ApplicationEventName.FLOW_DELETED,
             data: {
                 flow,
