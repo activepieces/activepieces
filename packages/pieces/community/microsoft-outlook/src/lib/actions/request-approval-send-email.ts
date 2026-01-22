@@ -8,35 +8,28 @@ import {
 } from '@activepieces/shared';
 import { microsoftOutlookAuth } from '../common/auth';
 
-export const requestApprovalSendEmail = createAction({
+export const requestApprovalInMail = createAction({
   auth: microsoftOutlookAuth,
-  name: 'requestApprovalSendEmail',
+  name: 'request_approval_in_mail',
   displayName: 'Request Approval in Email',
   description:
     'Send approval request email and then wait until the email is approved or disapproved',
   props: {
     recipients: Property.ShortText({
-      displayName: 'To Email(s)',
+      displayName: 'To Email Address',
+      description:
+        'The email address of the recipient who will receive the approval request.',
       required: true,
     }),
     subject: Property.ShortText({
       displayName: 'Subject',
+      description: 'The subject of the approval request email.',
       required: true,
     }),
-    // bodyFormat: Property.StaticDropdown({
-    //   displayName: 'Body Format',
-    //   required: true,
-    //   defaultValue: 'html',
-    //   options: {
-    //     disabled: false,
-    //     options: [
-    //       { label: 'HTML', value: 'html' },
-    //       { label: 'Text', value: 'text' },
-    //     ],
-    //   },
-    // }),
     body: Property.LongText({
       displayName: 'Body',
+      description:
+        'The main content of the email. You can include details about the approval request here in the html format or plain text.',
       required: true,
     }),
   },
