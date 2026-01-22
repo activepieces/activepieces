@@ -20,7 +20,7 @@ export type FlowVerdict = {
 
 export class FlowExecutorContext {
     tags: readonly string[]
-    steps: Record<string, StepOutput>
+    steps: Readonly<Record<string, StepOutput>>
     pauseRequestId: string
     verdict: FlowVerdict
     currentPath: StepExecutionPath
