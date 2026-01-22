@@ -2,6 +2,7 @@ import path from 'path'
 import { pieceTranslation } from '@activepieces/pieces-framework'
 import { AppSystemProp, filePiecesUtils, memoryLock, rejectedPromiseHandler } from '@activepieces/server-shared'
 import { ApEnvironment, apId, isEmpty, isNil, LocalesEnum, PackageType, PieceType } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
 import { Level } from 'level'
 import cron from 'node-cron'
@@ -145,7 +146,7 @@ async function updateCache(log: FastifyBaseLogger): Promise<void> {
                 .getRawOne()
 
             if (!isNil(newestState) && !isNil(cacheInstance)) {
-                const needUpdate = await checkIfUpdateNeeded(newestState, cacheInstance.db)
+                const needUpdate = await checkIfUpdateNeeded(newestState)
                 if (!needUpdate) {
                     log.debug('[pieceKVCache] Cache is up to date, skipping refresh')
                     return
@@ -160,15 +161,18 @@ async function updateCache(log: FastifyBaseLogger): Promise<void> {
     })
 }
 
-async function checkIfUpdateNeeded(state: State, db: Level<string, unknown>): Promise<boolean> {
+async function checkIfUpdateNeeded(state: State): Promise<boolean> {
     const metaKey = 'meta:state'
-    const stored = await db.get<string, State>(metaKey, { valueEncoding: 'json' })
+    const stored = await (await getCache()).db.get<string, State>(metaKey, { valueEncoding: 'json' })
     
     if (!stored) {
         return true
     }
     
-    return stored.recentUpdate !== state.recentUpdate || stored.count !== state.count
+    const storedUpdate = stored.recentUpdate ? dayjs(stored.recentUpdate).unix() : undefined
+    const stateUpdate = state.recentUpdate ? dayjs(state.recentUpdate).unix() : undefined
+    
+    return storedUpdate !== stateUpdate || String(stored.count) !== String(state.count)
 }
 
 async function fetchPiecesFromDb(): Promise<PieceMetadataSchema[]> {
