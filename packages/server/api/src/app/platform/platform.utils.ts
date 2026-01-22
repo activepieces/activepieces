@@ -13,6 +13,11 @@ export const platformUtils = {
         if (!isNil(platformIdFromHostName)) {
             return platformIdFromHostName
         }
+        // For Community Edition without custom domains, always return null
+        // This allows both open sign-ups and proper sign-ins (where the service finds the user's personal platform)
+        if (system.getEdition() === ApEdition.COMMUNITY) {
+            return null
+        }
         if (system.getEdition() === ApEdition.CLOUD) {
             return null
         }
