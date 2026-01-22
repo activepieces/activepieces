@@ -74,13 +74,12 @@ export const scrapeSingleUrl = createAction({
       // Fetch dataset items if available
       if (run.defaultDatasetId) {
         const result = await client.dataset(run.defaultDatasetId).listItems();
+        const firstResultItem = result.items[0];
 
         return {
-          url: url,
-          crawlerType: crawlerType,
-          runId: run.id,
-          status: run.status,
-          items: result.items
+          url: firstResultItem['url'] ?? url,
+          markdown: firstResultItem['markdown'] ?? '',
+          html: firstResultItem['html'] ?? '',
         };
       }
 

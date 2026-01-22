@@ -4,7 +4,7 @@ import {
   createApifyClient,
   createBuildProperty,
   createRunOptions,
-  handleRunResult,
+  handleRun,
   createActorSourceProperty,
   createActorIdProperty,
   createActorInputProperty,
@@ -36,8 +36,14 @@ export const runActor = createAction({
     const client = createApifyClient(apifyToken);
 
     const runOptions = createRunOptions({ timeout, memory, build });
-    const run = await client.actor(actorid).call(body, runOptions);
+    const resourceClient = client.actor(actorid);
 
-    return handleRunResult(run, waitForFinish || false, client);
+    return handleRun({
+      resourceClient,
+      body,
+      runOptions,
+      waitForFinish: waitForFinish || false,
+      client
+    });
   },
 });
