@@ -29,7 +29,39 @@ export const progressService = {
         return updateLock.runExclusive(async () => {
             const { engineConstants, flowExecutorContext, stepNameToUpdate } = params
             latestUpdateParams = params
-            if (!stepNameToUpdate || !engineConstants.isTestFlow) { // live runs are updated by backup job
+            if (!engineConstants.isTestFlow) { // live runs are updated by backup job
+                return
+            }
+
+            const contructedFlowRun: UpdateRunProgressRequest['flowRun'] = {
+                projectId: engineConstants.projectId,
+                flowId: engineConstants.flowId,
+                flowVersionId: engineConstants.flowVersionId,
+                id: engineConstants.flowRunId,
+                created: dayjs().toISOString(),
+                updated: dayjs().toISOString(),
+                status: flowExecutorContext.verdict.status,
+                environment: RunEnvironment.TESTING,
+                failParentOnFailure: false,
+                triggeredBy: engineConstants.triggerPieceName,
+                tags: Array.from(flowExecutorContext.tags),
+                startTime: params.startTime,
+            }
+
+            const isFinished = isFlowRunStateTerminal({
+                status: flowExecutorContext.verdict.status,
+                ignoreInternalError: false,
+            })
+
+            if (isFinished) {
+                contructedFlowRun.finishTime = dayjs().toISOString()
+                await sendUpdateProgress({
+                    flowRun: contructedFlowRun,
+                })
+                return
+            }
+
+            if (!stepNameToUpdate) {
                 return
             }
 
@@ -44,19 +76,7 @@ export const progressService = {
                     path: flowExecutorContext.currentPath.path,
                     output: step,
                 },
-                flowRun: {
-                    projectId: engineConstants.projectId,
-                    flowId: engineConstants.flowId,
-                    flowVersionId: engineConstants.flowVersionId,
-                    id: engineConstants.flowRunId,
-                    created: dayjs().toISOString(),
-                    updated: dayjs().toISOString(),
-                    status: flowExecutorContext.verdict.status,
-                    environment: RunEnvironment.TESTING,
-                    failParentOnFailure: false,
-                    triggeredBy: engineConstants.triggerPieceName,
-                    tags: Array.from(flowExecutorContext.tags),
-                },
+                flowRun: contructedFlowRun,
             })
         })
     },
@@ -128,9 +148,7 @@ export const progressService = {
                 tags: Array.from(flowExecutorContext.tags),
                 stepsCount: flowExecutorContext.stepsCount,
             }
-            if (params.sendSocketUpdate) {
-                await sendLogsUpdate(request)
-            }
+            await sendLogsUpdate(request)
         })
     },
     shutdown: () => {
@@ -208,13 +226,13 @@ type UpdateStepProgressParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepNameToUpdate?: string
+    startTime?: string
 }
 
 type BackUpLogsParams = {
     engineConstants: EngineConstants
     flowExecutorContext: FlowExecutorContext
     stepNameToUpdate?: string
-    sendSocketUpdate?: boolean
 }
 
 type ExtractStepResponse = {

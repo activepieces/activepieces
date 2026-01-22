@@ -1,5 +1,6 @@
 import { performance } from 'node:perf_hooks'
 import { EngineGenericError, ExecuteFlowOperation, ExecutionType, FlowAction, FlowActionType, FlowRunStatus, isNil } from '@activepieces/shared'
+import dayjs from 'dayjs'
 import { triggerHelper } from '../helper/trigger-helper'
 import { progressService } from '../services/progress.service'
 import { BaseExecutor } from './base-executor'
@@ -42,6 +43,7 @@ export const flowExecutor = {
                 engineConstants: constants,
                 flowExecutorContext: executionState,
                 stepNameToUpdate: trigger.name,
+                startTime: dayjs().toISOString(),
             })
         }
         return flowExecutor.execute({
@@ -59,9 +61,9 @@ export const flowExecutor = {
         let flowExecutionContext = executionState
         let previousAction: FlowAction | null | undefined = action
         let currentAction: FlowAction | null | undefined = action
+        const testSingleStepMode = !isNil(constants.stepNameToTest)
 
         while (!isNil(currentAction)) {
-            const testSingleStepMode = !isNil(constants.stepNameToTest)
             if (currentAction.skip && !testSingleStepMode) {
                 previousAction = currentAction
                 currentAction = currentAction.nextAction

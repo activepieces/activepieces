@@ -54,7 +54,15 @@ export const flowRunsApi = {
       flowRun: initialRun,
     });
     const handleUpdateRunProgress = (response: UpdateRunProgressRequest) => {
-      onUpdate(response);
+      if (response.flowRun.id === initialRun.id) {
+        onUpdate(response);
+        if (response.flowRun.finishTime) {
+          socket.off(
+            WebsocketClientEvent.UPDATE_RUN_PROGRESS,
+            handleUpdateRunProgress,
+          );
+        }
+      }
     };
     socket.on(
       WebsocketClientEvent.UPDATE_RUN_PROGRESS,

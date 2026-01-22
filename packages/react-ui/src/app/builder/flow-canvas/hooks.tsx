@@ -9,7 +9,6 @@ import { useDebouncedCallback } from 'use-debounce';
 import { useEmbedding } from '@/components/embed-provider';
 import { useSocket } from '@/components/socket-provider';
 import { flowRunUtils } from '@/features/flow-runs/lib/flow-run-utils';
-import { flowRunsApi } from '@/features/flow-runs/lib/flow-runs-api';
 import { flowsApi } from '@/features/flows/lib/flows-api';
 import { useAuthorization } from '@/hooks/authorization-hooks';
 import { RightSideBarType } from '@/lib/types';
@@ -41,31 +40,13 @@ export const useAnimateSidebar = (sidebarValue: RightSideBarType) => {
 
 const useSetSocketListener = (refetchPiece: () => void) => {
   const socket = useSocket();
-  const { mutate: fetchAndUpdateRun } = useMutation({
-    mutationFn: flowRunsApi.getPopulated,
-  });
-  const [run, setRun, flowVersion] = useBuilderStateContext((state) => [
-    state.run,
-    state.setRun,
-    state.flowVersion,
-  ]);
+  const [run] = useBuilderStateContext((state) => [state.run]);
   useEffect(() => {
     socket.on(WebsocketClientEvent.REFRESH_PIECE, () => {
       refetchPiece();
     });
-    socket.on(WebsocketClientEvent.FLOW_RUN_PROGRESS, (data) => {
-      const runId = data?.runId;
-      if (run && run?.id === runId) {
-        fetchAndUpdateRun(runId, {
-          onSuccess: (run) => {
-            setRun(run, flowVersion);
-          },
-        });
-      }
-    });
     return () => {
       socket.removeAllListeners(WebsocketClientEvent.REFRESH_PIECE);
-      socket.removeAllListeners(WebsocketClientEvent.FLOW_RUN_PROGRESS);
     };
   }, [socket.id, run?.id]);
 };
@@ -100,16 +81,17 @@ const useShowBuilderIsSavingWarningBeforeLeaving = () => {
 };
 
 export const useSwitchToDraft = () => {
-  const [flowVersion, setVersion, clearRun, setFlow] = useBuilderStateContext(
-    (state) => [
+  const [flowVersion, setVersion, clearRun, setFlow] =
+    useBuilderStateContext((state) => [
       state.flowVersion,
       state.setVersion,
       state.clearRun,
       state.setFlow,
-    ],
-  );
+    ]);
+  const socket = useSocket();
   const { checkAccess } = useAuthorization();
   const userHasPermissionToEditFlow = checkAccess(Permission.WRITE_FLOW);
+
   const { mutate: switchToDraft, isPending: isSwitchingToDraftPending } =
     useMutation({
       mutationFn: async () => {
@@ -120,6 +102,7 @@ export const useSwitchToDraft = () => {
         setFlow(flow);
         setVersion(flow.version);
         clearRun(userHasPermissionToEditFlow);
+        socket.removeAllListeners(WebsocketClientEvent.UPDATE_RUN_PROGRESS);
       },
     });
   return {

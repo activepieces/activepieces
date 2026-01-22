@@ -49,6 +49,7 @@ const TestFlowWidget = () => {
     onUpdateRun: (response: UpdateRunProgressRequest) => {
       assertNotNullOrUndefined(response.flowRun, 'flowRun');
       const steps = runRef.current?.steps ?? {};
+      const startTime = response.flowRun.startTime ?? runRef.current?.startTime;
       if (!isNil(response.step)) {
         const updatedSteps = flowRunUtils.updateRunSteps(
           steps,
@@ -56,8 +57,12 @@ const TestFlowWidget = () => {
           response.step?.path,
           response.step?.output,
         );
-        setRun({ ...response.flowRun, steps: updatedSteps }, flowVersion);
+        setRun(
+          { ...response.flowRun, startTime, steps: updatedSteps },
+          flowVersion,
+        );
       }
+      setRun({ ...response.flowRun, startTime, steps }, flowVersion);
     },
   });
 
