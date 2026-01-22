@@ -22,8 +22,10 @@ import { findChannelAction } from './lib/actions/find-channel';
 import { findTeamMemberAction } from './lib/actions/find-team-member';
 import { createGraphClient, withGraphRetry } from './lib/common/graph';
 import { deleteChatMessageAction } from './lib/actions/delete-chat-message';
+import { requestApprovalDirectMessage } from './lib/actions/request-approval-direct-message';
+import { requestApprovalInChannel } from './lib/actions/request-approval-channel-message';
 
-const authDesc = `
+const authDesc = `./lib/actions/request-approval-direct-message
 1. Sign in to [Microsoft Azure Portal](https://portal.azure.com/).
 2. From the left sidebar, go to **Microsoft Enfra ID**.
 3. Under **Manage**, click on **App registrations**.
@@ -114,6 +116,8 @@ export const microsoftTeams = createPiece({
 		getChannelMessageAction,
 		findChannelAction,
 		findTeamMemberAction,
+		requestApprovalInChannel,
+		requestApprovalDirectMessage,
 		createCustomApiCallAction({
 			auth: microsoftTeamsAuth,
 			baseUrl: () => 'https://graph.microsoft.com/v1.0/teams',
