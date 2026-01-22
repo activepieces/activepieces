@@ -159,7 +159,7 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
     await db.put(META_REGISTRY_KEY, cache.registry, { valueEncoding: 'json' })
 
 
-    await storePieces(sortedPieces, log)
+    await storePieces(sortedPieces)
     for (const piece of sortedPieces) {
         await storePiece(piece)
     }
@@ -174,7 +174,7 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
     }, '[populateCache] Stored pieces cache')
 }
 
-async function storePieces(sortedPieces: PieceMetadataSchema[], log: FastifyBaseLogger): Promise<void> {
+async function storePieces(sortedPieces: PieceMetadataSchema[]): Promise<void> {
     const { db } = await getOrCreateCache()
     const latestVersions = sortedPieces.filter((piece, index, self) => index === self.findIndex((t) => t.name === piece.name))
 
