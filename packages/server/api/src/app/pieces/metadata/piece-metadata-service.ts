@@ -58,7 +58,7 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
         },
         async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
-            
+
             const registry = await localPieceCache(log).getRegistry()
             const matchingRegistryEntries = registry.filter((entry) => {
                 if (entry.name !== name) {
@@ -70,19 +70,19 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 return semVer.compare(entry.version, versionToSearch.nextExcludedVersion) < 0
                     && semVer.compare(entry.version, versionToSearch.baseVersion) >= 0
             })
-            
+
             if (matchingRegistryEntries.length === 0) {
                 return undefined
             }
-            
+
             const sortedEntries = matchingRegistryEntries.sort(sortByVersionDescending)
             const bestMatch = sortedEntries[0]
             const piece = await localPieceCache(log).getPieceVersion(bestMatch.name, bestMatch.version)
-            
+
             if (isNil(piece)) {
                 return undefined
             }
-            
+
             const isFiltered = await enterpriseFilteringUtils.isFiltered({
                 piece,
                 projectId,
@@ -215,7 +215,7 @@ export const getPiecePackageWithoutArchive = async (
             const piecePlatformId = pieceMetadata.platformId
             if (pieceMetadata.pieceType === PieceType.CUSTOM) {
                 assertNotNullOrUndefined(piecePlatformId, 'platformId is required')
-                return {  
+                return {
                     pieceName: pieceMetadata.name,
                     pieceVersion: pieceMetadata.version,
                     packageType: pieceMetadata.packageType,
@@ -223,7 +223,7 @@ export const getPiecePackageWithoutArchive = async (
                     platformId: piecePlatformId,
                 }
             }
-            return {  
+            return {
                 pieceName: pieceMetadata.name,
                 pieceVersion: pieceMetadata.version,
                 packageType: pieceMetadata.packageType,
