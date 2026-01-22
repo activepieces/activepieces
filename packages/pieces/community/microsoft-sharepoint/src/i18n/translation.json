@@ -66,6 +66,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Parent folder,like \"/demo/\" or \"/docs/assignment/\".Leave it default if you want to create folder at the root (**/**) level.": "Parent folder,like \"/demo/\" or \"/docs/assignment/\".Leave it default if you want to create folder at the root (**/**) level.",
   "Item title to search": "Item title to search",
   "The file or url you want to upload": "The file or url you want to upload",

@@ -10,7 +10,7 @@ export const todos = createPiece({
     'Create tasks for project members to take actions, useful for approvals, reviews, and manual actions performed by humans',
   auth: PieceAuth.None(),
   minimumSupportedRelease: '0.49.0',
-  logoUrl: 'https://cdn.activepieces.com/pieces/manual-tasks.svg',
+  logoUrl: 'https://cdn.activepieces.com/pieces/new-core/todos.svg',
   authors: ['hazemadelkhalel'],
   categories: [PieceCategory.CORE, PieceCategory.FLOW_CONTROL],
   actions: [createTodo, waitForApproval, createTodoAndWait],

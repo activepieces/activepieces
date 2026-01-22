@@ -91,6 +91,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Turn this on to also see spreadsheets from Shared Drives.": "Turn this on to also see spreadsheets from Shared Drives.",
   "The ID of the spreadsheet to use.": "The ID of the spreadsheet to use.",
   "The ID of the worksheet to use.": "The ID of the worksheet to use.",

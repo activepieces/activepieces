@@ -24,6 +24,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "The user's full name": "The user's full name",
   "The user's email. Must be unique to the community": "The user's email. Must be unique to the community",
   "The role the user should have": "The role the user should have",
