@@ -1,7 +1,7 @@
 import { Action, DropdownOption, ExecutePropsResult, PieceProperty, PropertyType } from '@activepieces/pieces-framework'
 import { AgentPieceTool, ExecuteToolOperation, ExecuteToolResponse, ExecutionToolStatus, FieldControlMode, FlowActionType, isNil, PieceAction, PropertyExecutionType, StepOutputStatus } from '@activepieces/shared'
-import { generateObject, LanguageModel, Tool } from 'ai'
-import { z } from 'zod/v4'
+import { generateText, LanguageModel, Output, Tool } from 'ai'
+import { z } from 'zod/v3'
 import { EngineConstants } from '../handler/context/engine-constants'
 import { FlowExecutorContext } from '../handler/context/flow-execution-context'
 import { flowExecutor } from '../handler/flow-executor'
@@ -92,9 +92,7 @@ async function resolveProperties(
                 operation,
                 result,
             )
-            propertyToFill[property] = propertyFromAction.required
-                ? propertySchema
-                : propertySchema.nullish()
+            propertyToFill[property] = propertySchema
 
             const propertyDetail = await buildPropertyDetail(
                 property,
@@ -117,17 +115,19 @@ async function resolveProperties(
             result,
         )
 
-        const { object } = await generateObject({
+        const { output } = await generateText({
             model,
-            schema: schemaObject,
             prompt: extractionPrompt,
-            mode: 'json',
-            output: 'object',
+            output: Output.object({
+                schema: schemaObject,
+            }),
         })
+
         result = {
             ...result,
-            ...(object as Record<string, unknown>),
+            ...(output as Record<string, unknown>),
         }
+
     }
     return result
 }
@@ -226,6 +226,7 @@ type ExecuteToolOperationWithModel = ExecuteToolOperation & {
 
 async function propertyToSchema(propertyName: string, property: PieceProperty, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
     let schema: z.ZodTypeAny
+
     switch (property.type) {
         case PropertyType.SHORT_TEXT:
         case PropertyType.LONG_TEXT:
@@ -249,7 +250,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
             schema = z.number()
             break
         case PropertyType.ARRAY:
-            return z.array(z.unknown())
+            return z.array(z.string())
         case PropertyType.OBJECT:
             schema = z.record(z.string(), z.unknown())
             break
@@ -278,7 +279,7 @@ async function propertyToSchema(propertyName: string, property: PieceProperty, o
     if (property.description) {
         schema = schema.describe(property.description)
     }
-    return property.required ? schema : schema.nullish()
+    return property.required ? schema : schema.nullable()
 }
 
 async function buildDynamicSchema(propertyName: string, operation: ExecuteToolOperation, resolvedInput: Record<string, unknown>): Promise<z.ZodTypeAny> {
