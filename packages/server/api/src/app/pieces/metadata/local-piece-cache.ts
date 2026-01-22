@@ -17,10 +17,10 @@ const environment = system.get<ApEnvironment>(AppSystemProp.ENVIRONMENT)
 
 export const REDIS_REFRESH_LOCAL_PIECES_CHANNEL = 'refresh-local-pieces-cache'
 
-const META_REGISTRY_KEY = 'meta:registry'
-const META_STATE_KEY = 'meta:state'
-const META_LIST_KEY = (locale: LocalesEnum) => `meta:list:${locale}`
-const META_PIECE_KEY = (pieceName: string, version: string, locale: LocalesEnum) => `meta:piece:${pieceName}:${version}:${locale}`
+const META_REGISTRY_KEY = 'pieces:registry'
+const META_STATE_KEY = 'pieces:state'
+const META_LIST_KEY = (locale: LocalesEnum) => `pieces:list:${locale}`
+const META_PIECE_KEY = (pieceName: string, version: string, locale: LocalesEnum) => `pieces:piece:${pieceName}:${version}:${locale}`
 const DEFAULT_LOCALE = LocalesEnum.ENGLISH
 
 let cacheInstance: KVCacheInstance | null = null
@@ -48,7 +48,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
             return lastVersionOfEachPiece(pieces).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
         }
         const cache = await getOrCreateCache()
-        const list = await cache.db.get<string, PieceMetadataSchema[]>(`list:${locale ?? DEFAULT_LOCALE}`, { valueEncoding: 'json' })
+        const list = await cache.db.get<string, PieceMetadataSchema[]>(META_LIST_KEY(locale ?? DEFAULT_LOCALE), { valueEncoding: 'json' })
         const devPieces = (await loadDevPiecesIfEnabled(log)).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
         return [...(list ?? []), ...devPieces]
     },
@@ -62,17 +62,13 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
             return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale) : piece
         }
         const cache = await getOrCreateCache()
-        const key = `${pieceName}:${version}:${locale ?? DEFAULT_LOCALE}`
-        const piece = await cache.db.get<string, PieceMetadataSchema>(key, { valueEncoding: 'json' })
-        if (piece) {
-            return piece
-        }
+        const piece = await cache.db.get<string, PieceMetadataSchema>(META_PIECE_KEY(pieceName, version, locale ?? DEFAULT_LOCALE), { valueEncoding: 'json' })
         const devPieces = await loadDevPiecesIfEnabled(log)
         const devPiece = devPieces.find(p => p.name === pieceName && p.version === version)
-        if (!devPiece) {
-            return null
+        if (!isNil(devPiece)) {
+            return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(devPiece, locale ?? DEFAULT_LOCALE) : devPiece
         }
-        return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(devPiece, locale) : devPiece
+        return piece
     },
     async getRegistry(): Promise<PieceRegistryEntry[]> {
         if (environment === ApEnvironment.TESTING) {
@@ -106,15 +102,16 @@ async function updateCache(log: FastifyBaseLogger): Promise<void> {
                 .addSelect('count(*)', 'count')
                 .getRawOne()
 
-            if (!isNil(newestState) && !isNil(cacheInstance)) {
-                const needUpdate = await checkIfUpdateNeeded(newestState)
-                if (!needUpdate) {
-                    log.debug('[pieceKVCache] Cache is up to date, skipping refresh')
-                    return
-                }
+            const cacheInstance = await getOrCreateCache()
+            const stored = await cacheInstance.db.get<string, State>(META_STATE_KEY, { valueEncoding: 'json' })
+            if (!isNil(stored) && !isNil(newestState) && stored.recentUpdate === newestState.recentUpdate && stored.count === newestState.count) {
+                log.debug('[pieceKVCache] Cache is up to date, skipping refresh')
+                return
             }
-
-            log.info('[pieceKVCache] Updating cache...')
+            log.info({
+                newestState: JSON.stringify(newestState),
+                stored: JSON.stringify(stored),
+            }, '[updateCache] Cache is out of date, updating')
             const pieces = await fetchPiecesFromDB()
             await populateCache(pieces, log)
             log.info('[pieceKVCache] Cache update complete')
@@ -122,19 +119,6 @@ async function updateCache(log: FastifyBaseLogger): Promise<void> {
     })
 }
 
-async function checkIfUpdateNeeded(state: State): Promise<boolean> {
-    const { db } = await getOrCreateCache()
-    const stored = await db.get<string, State>(META_STATE_KEY, { valueEncoding: 'json' })
-
-    if (!stored) {
-        return true
-    }
-
-    const storedUpdate = stored.recentUpdate ? dayjs(stored.recentUpdate).unix() : undefined
-    const stateUpdate = state.recentUpdate ? dayjs(state.recentUpdate).unix() : undefined
-
-    return storedUpdate !== stateUpdate || String(stored.count) !== String(state.count)
-}
 
 function lastVersionOfEachPiece(pieces: PieceMetadataSchema[]): PieceMetadataSchema[] {
     return pieces.filter((piece, index, self) => index === self.findIndex((t) => t.name === piece.name))
@@ -181,7 +165,7 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
     }
 
     const state: State = {
-        recentUpdate:  String(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).unix()))),
+        recentUpdate: new Date(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).valueOf()))).toISOString(),
         count: sortedPieces.length.toString(),
     }
     await db.put(META_STATE_KEY, state, { valueEncoding: 'json' })
@@ -198,10 +182,6 @@ async function storePieces(sortedPieces: PieceMetadataSchema[], log: FastifyBase
     for (const locale of locales) {
         const translatedLatestVersions = latestVersions.map((p) => pieceTranslation.translatePiece<PieceMetadataSchema>(p, locale))
         await db.put(META_LIST_KEY(locale), translatedLatestVersions, { valueEncoding: 'json' })
-        log.info({
-            count: translatedLatestVersions.length,
-            locale,
-        }, '[populateCache] Stored pieces cache')
     }
 }
 
