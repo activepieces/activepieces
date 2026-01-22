@@ -42,7 +42,8 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
     async refresh(): Promise<void> {
         await updateCache(log)
     },
-    async getList(locale: LocalesEnum | undefined): Promise<PieceMetadataSchema[]> {
+    async getList(params: GetListParams): Promise<PieceMetadataSchema[]> {
+        const { locale, platformId } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
             return lastVersionOfEachPiece(pieces).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
@@ -50,9 +51,10 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         const cache = await getOrCreateCache()
         const list = await cache.db.get<string, PieceMetadataSchema[]>(META_LIST_KEY(locale ?? DEFAULT_LOCALE), { valueEncoding: 'json' })
         const devPieces = (await loadDevPiecesIfEnabled(log)).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
-        return [...(list ?? []), ...devPieces]
+        return [...(list ?? []), ...devPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
     },
-    async getPieceVersion(pieceName: string, version: string, locale?: LocalesEnum): Promise<PieceMetadataSchema | null> {
+    async getPieceVersion(params: GetPieceVersionParams): Promise<PieceMetadataSchema | null> {
+        const { pieceName, version, locale, platformId } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
             const piece = pieces.find(p => p.name === pieceName && p.version === version)
@@ -68,9 +70,10 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
         if (!isNil(devPiece)) {
             return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(devPiece, locale ?? DEFAULT_LOCALE) : devPiece
         }
-        return piece
+        return filterPieceBasedOnType(platformId, piece) ? piece : null
     },
-    async getRegistry(): Promise<PieceRegistryEntry[]> {
+    async getRegistry(params: GetRegistryParams): Promise<PieceRegistryEntry[]> {
+        const { release } = params
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDB()
             return pieces.map(piece => ({
@@ -78,16 +81,18 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
                 version: piece.version,
                 minimumSupportedRelease: piece.minimumSupportedRelease,
                 maximumSupportedRelease: piece.maximumSupportedRelease,
+                platformId: piece.platformId,
             }))
         }
         const cache = await getOrCreateCache()
-        const devPieces = await loadDevPiecesIfEnabled(log)
-        return [...cache.registry, ...devPieces.map(piece => ({
+        const devPieces = (await loadDevPiecesIfEnabled(log)).map(piece => ({
             name: piece.name,
             version: piece.version,
             minimumSupportedRelease: piece.minimumSupportedRelease,
             maximumSupportedRelease: piece.maximumSupportedRelease,
-        }))]
+            platformId: piece.platformId,
+        }))
+        return [...cache.registry, ...devPieces].filter((piece) => isNil(release) || isSupportedRelease(release, piece))
     },
 })
 
@@ -242,9 +247,51 @@ async function getOrCreateCache(): Promise<KVCacheInstance> {
     })
 }
 
+
+function filterPieceBasedOnType(platformId: string | undefined, piece: PieceMetadataSchema): boolean {
+    return isOfficialPiece(piece) || isCustomPiece(platformId, piece)
+}
+
+function isOfficialPiece(piece: PieceMetadataSchema): boolean {
+    return piece.pieceType === PieceType.OFFICIAL && isNil(piece.projectId) && isNil(piece.platformId)
+}
+
+function isCustomPiece(platformId: string | undefined, piece: PieceMetadataSchema): boolean {
+    if (isNil(platformId)) {
+        return false
+    }
+    return piece.platformId === platformId && isNil(piece.projectId) && piece.pieceType === PieceType.CUSTOM
+}
+
+
+function isSupportedRelease(release: string | undefined, piece: { minimumSupportedRelease?: string, maximumSupportedRelease?: string }): boolean {
+    if (isNil(release)) {
+        return true
+    }
+    if (!semVer.valid(release) || !semVer.valid(piece.minimumSupportedRelease) || !semVer.valid(piece.maximumSupportedRelease)) {
+        return false
+    }
+
+    if (!isNil(piece.maximumSupportedRelease) && semVer.compare(release, piece.maximumSupportedRelease) == 1) {
+        return false
+    }
+    if (!isNil(piece.minimumSupportedRelease) && semVer.compare(release, piece.minimumSupportedRelease) == -1) {
+        return false
+    }
+    return true
+}
+
+
 type State = {
     recentUpdate: string | undefined
     count: string
+}
+
+type GetPieceVersionParams = {
+    pieceName: string
+    version: string
+    platformId?: string
+    locale?: LocalesEnum
 }
 
 type PieceRegistryEntry = {
@@ -252,6 +299,15 @@ type PieceRegistryEntry = {
     version: string
     minimumSupportedRelease?: string
     maximumSupportedRelease?: string
+}
+
+type GetListParams = {
+    platformId?: string
+    locale: LocalesEnum
+}
+
+type GetRegistryParams = {
+    release: string  | undefined
 }
 
 type KVCacheInstance = {
