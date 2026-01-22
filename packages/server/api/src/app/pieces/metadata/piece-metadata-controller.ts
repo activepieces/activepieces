@@ -6,8 +6,6 @@ import {
     GetPieceRequestQuery,
     GetPieceRequestWithScopeParams,
     ListPiecesRequestQuery,
-    ListVersionRequestQuery,
-    ListVersionsResponse,
     LocalesEnum,
     PieceCategory,
     PieceOptionRequest,
@@ -32,13 +30,6 @@ export const pieceModule: FastifyPluginAsyncTypebox = async (app) => {
 }
 
 const basePiecesController: FastifyPluginAsyncTypebox = async (app) => {
-
-    app.get('/versions', ListVersionsRequest, async (req): Promise<ListVersionsResponse> => {
-        return pieceMetadataService(req.log).getVersions({
-            name: req.query.name,
-            release: req.query.release,
-        })
-    })
 
     app.get(
         '/categories',
@@ -208,16 +199,6 @@ const OptionsPieceRequest = {
         security: securityAccess.project([PrincipalType.USER], undefined, {
             type: ProjectResourceType.BODY,
         }),
-    },
-}
-
-
-const ListVersionsRequest = {
-    config: {
-        security: securityAccess.unscoped(ALL_PRINCIPAL_TYPES),
-    },
-    schema: {
-        querystring: ListVersionRequestQuery,
     },
 }
 

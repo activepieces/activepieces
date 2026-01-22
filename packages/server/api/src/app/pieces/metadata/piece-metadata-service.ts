@@ -6,7 +6,6 @@ import {
     ErrorCode,
     EXACT_VERSION_REGEX,
     isNil,
-    ListVersionsResponse,
     LocalesEnum,
     PackageType,
     PieceCategory,
@@ -38,7 +37,10 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             await localPieceCache(log).setup()
         },
         async list(params: ListParams): Promise<PieceMetadataModelSummary[]> {
-            const originalPieces = await localPieceCache(log).getList(params.locale)
+            const originalPieces = await localPieceCache(log).getList({
+                locale: params.locale ?? LocalesEnum.ENGLISH,
+                platformId: params.platformId,
+            })
             const piecesWithTags = await enrichTags(params.platformId, originalPieces, params.includeTags)
             const translatedPieces = piecesWithTags.map((piece) => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, params.locale))
             const filteredPieces = await pieceListUtils.filterPieces({
@@ -50,16 +52,15 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
             return toPieceMetadataModelSummary(filteredPieces, piecesWithTags, params.suggestionType)
         },
         async registry(params: RegistryParams): Promise<PiecePackageInformation[]> {
-            const registry = await localPieceCache(log).getRegistry()
-            return registry.filter((piece) => isSupportedRelease(params.release, piece)).map((piece) => ({
+            const registry = await localPieceCache(log).getRegistry({ release: params.release })
+            return registry.map((piece) => ({
                 name: piece.name,
                 version: piece.version,
             }))
         },
         async get({ projectId, platformId, version, name }: GetOrThrowParams): Promise<PieceMetadataModel | undefined> {
             const versionToSearch = findNextExcludedVersion(version)
-
-            const registry = await localPieceCache(log).getRegistry()
+            const registry = await localPieceCache(log).getRegistry({ release: undefined })
             const matchingRegistryEntries = registry.filter((entry) => {
                 if (entry.name !== name) {
                     return false
@@ -77,7 +78,11 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
 
             const sortedEntries = matchingRegistryEntries.sort(sortByVersionDescending)
             const bestMatch = sortedEntries[0]
-            const piece = await localPieceCache(log).getPieceVersion(bestMatch.name, bestMatch.version)
+            const piece = await localPieceCache(log).getPieceVersion({
+                pieceName: bestMatch.name,
+                version: bestMatch.version,
+                platformId,
+            })
 
             if (isNil(piece)) {
                 return undefined
@@ -104,20 +109,6 @@ export const pieceMetadataService = (log: FastifyBaseLogger) => {
                 })
             }
             return pieceTranslation.translatePiece<PieceMetadataModel>(piece, locale)
-        },
-        async getVersions({ name, release }: ListVersionsParams): Promise<ListVersionsResponse> {
-            const registry = await localPieceCache(log).getRegistry()
-            const matchingEntries = registry.filter((entry) => {
-                if (entry.name !== name) {
-                    return false
-                }
-                return isSupportedRelease(release, entry)
-            })
-            const sortedEntries = matchingEntries.sort(sortByVersionDescending)
-            return sortedEntries.reduce((record, entry) => {
-                record[entry.version] = {}
-                return record
-            }, {} as ListVersionsResponse)
         },
         async updateUsage({ id, usage }: UpdateUsage): Promise<void> {
             const existingMetadata = await pieceRepos().findOneByOrFail({
@@ -342,22 +333,6 @@ const increaseMajorVersion = (version: string): string => {
     return incrementedVersion
 }
 
-function isSupportedRelease(release: string | undefined, piece: { minimumSupportedRelease?: string, maximumSupportedRelease?: string }): boolean {
-    if (isNil(release)) {
-        return true
-    }
-    if (!semVer.valid(release) || !semVer.valid(piece.minimumSupportedRelease) || !semVer.valid(piece.maximumSupportedRelease)) {
-        return false
-    }
-
-    if (!isNil(piece.maximumSupportedRelease) && semVer.compare(release, piece.maximumSupportedRelease) == 1) {
-        return false
-    }
-    if (!isNil(piece.minimumSupportedRelease) && semVer.compare(release, piece.minimumSupportedRelease) == -1) {
-        return false
-    }
-    return true
-}
 
 // Types
 
@@ -382,11 +357,6 @@ type GetOrThrowParams = {
     projectId?: string
     platformId?: string
     locale?: LocalesEnum
-}
-
-type ListVersionsParams = {
-    name: string
-    release?: string
 }
 
 type CreateParams = {
