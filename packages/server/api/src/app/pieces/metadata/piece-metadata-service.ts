@@ -346,6 +346,10 @@ function isSupportedRelease(release: string | undefined, piece: { minimumSupport
     if (isNil(release)) {
         return true
     }
+    if (!semVer.valid(release) || !semVer.valid(piece.minimumSupportedRelease) || !semVer.valid(piece.maximumSupportedRelease)) {
+        return false
+    }
+
     if (!isNil(piece.maximumSupportedRelease) && semVer.compare(release, piece.maximumSupportedRelease) == 1) {
         return false
     }
