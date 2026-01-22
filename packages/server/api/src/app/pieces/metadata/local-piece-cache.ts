@@ -4,7 +4,8 @@ import { AppSystemProp, filePiecesUtils, memoryLock, rejectedPromiseHandler } fr
 import { ApEnvironment, apId, isEmpty, isNil, LocalesEnum, PackageType, PieceType } from '@activepieces/shared'
 import dayjs from 'dayjs'
 import { FastifyBaseLogger } from 'fastify'
-import { Level } from 'level'
+import Keyv from 'keyv'
+import KeyvSqlite from '@keyv/sqlite'
 import cron from 'node-cron'
 import semVer from 'semver'
 import { repoFactory } from '../../core/db/repo-factory'
@@ -29,7 +30,7 @@ let cacheInstance: KVCacheInstance | null = null
 export const localPieceCache = (log: FastifyBaseLogger) => ({
     async setup(): Promise<void> {
         await getOrCreateCache()
-        await updateCache(log)
+        rejectedPromiseHandler(updateCache(log), log)
         cron.schedule('*/15 * * * *', () => {
             log.info('[localPieceCache] Refreshing pieces cache via cron job')
             rejectedPromiseHandler(updateCache(log), log)
@@ -49,7 +50,7 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
             return lastVersionOfEachPiece(pieces).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
         }
         const cache = await getOrCreateCache()
-        const list = await cache.db.get<string, PieceMetadataSchema[]>(META_LIST_KEY(locale ?? DEFAULT_LOCALE), { valueEncoding: 'json' })
+        const list = (await cache.db.get(META_LIST_KEY(locale ?? DEFAULT_LOCALE))) as PieceMetadataSchema[] | undefined
         const devPieces = (await loadDevPiecesIfEnabled(log)).map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale))
         return [...(list ?? []), ...devPieces].filter((piece) => filterPieceBasedOnType(platformId, piece))
     },
@@ -64,11 +65,14 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
             return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale) : piece
         }
         const cache = await getOrCreateCache()
-        const piece = await cache.db.get<string, PieceMetadataSchema>(META_PIECE_KEY(pieceName, version, locale ?? DEFAULT_LOCALE), { valueEncoding: 'json' })
+        const piece = (await cache.db.get(META_PIECE_KEY(pieceName, version, locale ?? DEFAULT_LOCALE))) as PieceMetadataSchema | undefined
         const devPieces = await loadDevPiecesIfEnabled(log)
         const devPiece = devPieces.find(p => p.name === pieceName && p.version === version)
         if (!isNil(devPiece)) {
             return locale ? pieceTranslation.translatePiece<PieceMetadataSchema>(devPiece, locale ?? DEFAULT_LOCALE) : devPiece
+        }
+        if (isNil(piece)) {
+            return null
         }
         return filterPieceBasedOnType(platformId, piece) ? piece : null
     },
@@ -108,7 +112,7 @@ async function updateCache(log: FastifyBaseLogger): Promise<void> {
                 .getRawOne()
 
             const cacheInstance = await getOrCreateCache()
-            const stored = await cacheInstance.db.get<string, State>(META_STATE_KEY, { valueEncoding: 'json' })
+            const stored = (await cacheInstance.db.get(META_STATE_KEY)) as State | undefined
             if (!isNil(stored) && !isNil(newestState) && stored.recentUpdate === newestState.recentUpdate && stored.count === newestState.count) {
                 log.debug('[pieceKVCache] Cache is up to date, skipping refresh')
                 return
@@ -161,7 +165,7 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
         minimumSupportedRelease: piece.minimumSupportedRelease,
         maximumSupportedRelease: piece.maximumSupportedRelease,
     }))
-    await db.put(META_REGISTRY_KEY, cache.registry, { valueEncoding: 'json' })
+    await db.set(META_REGISTRY_KEY, cache.registry)
 
 
     await storePieces(sortedPieces)
@@ -173,7 +177,7 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
         recentUpdate: sortedPieces.length > 0 ? new Date(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).valueOf()))).toISOString() : undefined,
         count: sortedPieces.length.toString(),
     }
-    await db.put(META_STATE_KEY, state, { valueEncoding: 'json' })
+    await db.set(META_STATE_KEY, state)
     log.info({
         count: sortedPieces.length,
     }, '[populateCache] Stored pieces cache')
@@ -186,7 +190,7 @@ async function storePieces(sortedPieces: PieceMetadataSchema[]): Promise<void> {
     const locales = Object.values(LocalesEnum) as LocalesEnum[]
     for (const locale of locales) {
         const translatedLatestVersions = latestVersions.map((p) => pieceTranslation.translatePiece<PieceMetadataSchema>(p, locale))
-        await db.put(META_LIST_KEY(locale), translatedLatestVersions, { valueEncoding: 'json' })
+        await db.set(META_LIST_KEY(locale), translatedLatestVersions)
     }
 }
 
@@ -195,7 +199,7 @@ async function storePiece(piece: PieceMetadataSchema): Promise<void> {
     const locales = Object.values(LocalesEnum) as LocalesEnum[]
     for (const locale of locales) {
         const translatedPiece = pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale)
-        await db.put(META_PIECE_KEY(piece.name, piece.version, locale), translatedPiece, { valueEncoding: 'json' })
+        await db.set(META_PIECE_KEY(piece.name, piece.version, locale), translatedPiece)
     }
 }
 
@@ -229,15 +233,12 @@ async function getOrCreateCache(): Promise<KVCacheInstance> {
                 return cacheInstance
             }
             const baseDir = system.getOrThrow(AppSystemProp.CONFIG_PATH)
-            const dbPath = path.join(baseDir, 'pieces-cache-db')
-            const db = new Level<string, unknown>(dbPath, {
-                valueEncoding: 'json',
-                keyEncoding: 'utf8',
+            const dbPath = path.join(baseDir, 'pieces-cache-db.sqlite')
+            const db = new Keyv({
+                store: new KeyvSqlite(`sqlite://${dbPath}`),
             })
 
-            await db.open()
-
-            const registry = (await db.get<string, PieceRegistryEntry[]>(META_REGISTRY_KEY, { valueEncoding: 'json' })) ?? []
+            const registry = ((await db.get(META_REGISTRY_KEY)) as PieceRegistryEntry[] | undefined) ?? []
             cacheInstance = {
                 db,
                 registry,
@@ -311,6 +312,6 @@ type GetRegistryParams = {
 }
 
 type KVCacheInstance = {
-    db: Level<string, unknown>
+    db: Keyv
     registry: PieceRegistryEntry[]
 }
