@@ -309,7 +309,7 @@ export const createTimeoutProperty = (runType: RunType) => Property.Number({
 
 export const createWaitForFinishProperty = (runType: RunType) => Property.Checkbox({
   displayName: 'Wait for finish',
-  description: `If checked, the step waits for the ${runType} run to finish and returns the run’s dataset items as the step output.`,
+  description: `If enabled, the step waits for the ${runType} run to finish and returns the run’s dataset items as the step output.`,
   required: false,
   defaultValue: true,
 });
