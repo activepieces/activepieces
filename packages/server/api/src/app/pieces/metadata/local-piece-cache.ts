@@ -170,7 +170,7 @@ async function populateCache(sortedPieces: PieceMetadataSchema[], log: FastifyBa
     }
 
     const state: State = {
-        recentUpdate: new Date(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).valueOf()))).toISOString(),
+        recentUpdate: sortedPieces.length > 0 ? new Date(Math.max(...sortedPieces.map(piece => dayjs(piece.updated).valueOf()))).toISOString() : undefined,
         count: sortedPieces.length.toString(),
     }
     await db.put(META_STATE_KEY, state, { valueEncoding: 'json' })
@@ -307,7 +307,7 @@ type GetListParams = {
 }
 
 type GetRegistryParams = {
-    release: string  | undefined
+    release: string | undefined
 }
 
 type KVCacheInstance = {
