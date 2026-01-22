@@ -1,38 +1,38 @@
-import { CreatePlatformOutgoingWebhookRequestBody, ListPlatformOutgoingWebhooksRequestBody, OutgoingWebhook, TestPlatformOutgoingWebhookRequestBody, UpdatePlatformOutgoingWebhookRequestBody } from '@activepieces/ee-shared'
+import { CreatePlatformEventDestinationRequestBody, EventDestination, ListPlatformEventDestinationsRequestBody, TestPlatformEventDestinationRequestBody, UpdatePlatformEventDestinationRequestBody } from '@activepieces/ee-shared'
 import { securityAccess } from '@activepieces/server-shared'
 import { PrincipalType, SeekPage } from '@activepieces/shared'
 import { FastifyPluginAsyncTypebox, Type } from '@fastify/type-provider-typebox'
 import { StatusCodes } from 'http-status-codes'
-import { outgoingWebhookService } from '../../outgoing-webhooks/outgoing-webhooks.service'
+import { eventDestinationService } from '../../event-destinations/event-destinations.service'
 
 export const platformWebhooksController: FastifyPluginAsyncTypebox = async (app) => {
-    app.post('/', CreateOutgoingWebhookRequest, async (req) => {
-        return outgoingWebhookService(req.log).create(req.body, req.principal.platform.id)
+    app.post('/', CreateEventDestinationRequest, async (req) => {
+        return eventDestinationService(req.log).create(req.body, req.principal.platform.id)
     })
 
-    app.patch('/:id', UpdateOutgoingWebhookRequest, async (req) => {
-        return outgoingWebhookService(req.log).update({
+    app.patch('/:id', UpdateEventDestinationRequest, async (req) => {
+        return eventDestinationService(req.log).update({
             id: req.params.id,
             platformId: req.principal.platform.id,
             request: req.body,
         })
     })
-    app.get('/', ListOutgoingWebhooksRequest, async (req) => {
-        return outgoingWebhookService(req.log).list({
+    app.get('/', ListEventDestinationsRequest, async (req) => {
+        return eventDestinationService(req.log).list({
             platformId: req.principal.platform.id,
             cursorRequest: req.query.cursor ?? null,
             limit: req.query.limit ?? 10,
         })
     })
-    app.delete('/:id', DeleteOutgoingWebhookRequest, async (req) => {
-        return outgoingWebhookService(req.log).delete({
+    app.delete('/:id', DeleteEventDestinationRequest, async (req) => {
+        return eventDestinationService(req.log).delete({
             id: req.params.id,
             platformId: req.principal.platform.id,
         })
     })
 
-    app.post('/test', TestPlatformOutgoingWebhookRequest, async (req) => {
-        return outgoingWebhookService(req.log).test({
+    app.post('/test', TestPlatformEventDestinationRequest, async (req) => {
+        return eventDestinationService(req.log).test({
             platformId: req.principal.platform.id,
             projectId: undefined,
             url: req.body.url,
@@ -40,18 +40,18 @@ export const platformWebhooksController: FastifyPluginAsyncTypebox = async (app)
     })
 }
 
-export const CreateOutgoingWebhookRequest = {
+export const CreateEventDestinationRequest = {
     schema: {
-        body: CreatePlatformOutgoingWebhookRequestBody,
+        body: CreatePlatformEventDestinationRequestBody,
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
-export const UpdateOutgoingWebhookRequest = {
+export const UpdateEventDestinationRequest = {
     schema: {
-        body: UpdatePlatformOutgoingWebhookRequestBody,
+        body: UpdatePlatformEventDestinationRequestBody,
         params: Type.Object({
             id: Type.String(),
         }),
@@ -61,24 +61,24 @@ export const UpdateOutgoingWebhookRequest = {
     },
 }
 
-export const ListOutgoingWebhooksRequest = {
+export const ListEventDestinationsRequest = {
     schema: {
-        querystring: ListPlatformOutgoingWebhooksRequestBody,
+        querystring: ListPlatformEventDestinationsRequestBody,
         response: {
-            [StatusCodes.OK]: SeekPage(OutgoingWebhook),
+            [StatusCodes.OK]: SeekPage(EventDestination),
         },
-        tags: ['outgoing-webhooks'],
-        description: 'List outgoing webhooks',
+        tags: ['event-destinations'],
+        description: 'List event destinations',
     },
     response: {
-        [StatusCodes.OK]: SeekPage(OutgoingWebhook),
+        [StatusCodes.OK]: SeekPage(EventDestination),
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER, PrincipalType.SERVICE]),
     },
 }
 
-export const DeleteOutgoingWebhookRequest = {
+export const DeleteEventDestinationRequest = {
     schema: {
         params: Type.Object({
             id: Type.String(),
@@ -89,9 +89,9 @@ export const DeleteOutgoingWebhookRequest = {
     },
 }
 
-export const TestPlatformOutgoingWebhookRequest = {
+export const TestPlatformEventDestinationRequest = {
     schema: {
-        body: TestPlatformOutgoingWebhookRequestBody,
+        body: TestPlatformEventDestinationRequestBody,
     },
     config: {
         security: securityAccess.platformAdminOnly([PrincipalType.USER]),

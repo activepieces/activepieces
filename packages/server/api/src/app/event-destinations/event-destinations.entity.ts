@@ -1,15 +1,15 @@
-import { OutgoingWebhook, OutgoingWebhookScope } from '@activepieces/ee-shared'
+import { EventDestination, EventDestinationScope } from '@activepieces/ee-shared'
 import { Platform, Project } from '@activepieces/shared'
 import { EntitySchema } from 'typeorm'
 import { ApIdSchema, BaseColumnSchemaPart } from '../database/database-common'
 
-export type OutgoingWebhookSchema = OutgoingWebhook & {
+export type EventDestinationSchema = EventDestination & {
     platform: Platform
     project: Project
 }
 
-export const OutgoingWebhookEntity = new EntitySchema<OutgoingWebhookSchema>({
-    name: 'outgoing_webhook',
+export const EventDestinationEntity = new EntitySchema<EventDestinationSchema>({
+    name: 'event_destination',
     columns: {
         ...BaseColumnSchemaPart,
         platformId: {
@@ -36,14 +36,14 @@ export const OutgoingWebhookEntity = new EntitySchema<OutgoingWebhookSchema>({
     },
     indices: [
         {
-            name: 'idx_outgoing_webhook_platform_scope',
+            name: 'idx_event_destination_platform_scope',
             columns: ['platformId'],
-            where: `scope = '${OutgoingWebhookScope.PLATFORM}'`,
+            where: `scope = '${EventDestinationScope.PLATFORM}'`,
         },
         {
-            name: 'idx_outgoing_webhook_project_scope',
+            name: 'idx_event_destination_project_scope',
             columns: ['projectId'],
-            where: `scope = '${OutgoingWebhookScope.PROJECT}'`,
+            where: `scope = '${EventDestinationScope.PROJECT}'`,
         },
     ],
     relations: {
@@ -54,7 +54,7 @@ export const OutgoingWebhookEntity = new EntitySchema<OutgoingWebhookSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'platformId',
-                foreignKeyConstraintName: 'fk_outgoing_webhook_platform_id',
+                foreignKeyConstraintName: 'fk_event_destination_platform_id',
             },
         },
         project: {
@@ -64,7 +64,7 @@ export const OutgoingWebhookEntity = new EntitySchema<OutgoingWebhookSchema>({
             onDelete: 'CASCADE',
             joinColumn: {
                 name: 'projectId',
-                foreignKeyConstraintName: 'fk_outgoing_webhook_project_id',
+                foreignKeyConstraintName: 'fk_event_destination_project_id',
             },
         },
     },

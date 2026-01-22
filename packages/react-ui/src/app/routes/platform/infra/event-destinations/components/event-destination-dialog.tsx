@@ -1,6 +1,7 @@
 import { t } from 'i18next';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -24,39 +25,38 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   ApplicationEventName,
-  OutgoingWebhook,
-  CreatePlatformOutgoingWebhookRequestBody,
+  EventDestination,
+  CreatePlatformEventDestinationRequestBody,
 } from '@activepieces/ee-shared';
 
-import { outgoingWebhooksCollectionUtils } from '../lib/outgoing-webhooks-collection';
-import { toast } from 'sonner';
+import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 
-interface OutgoingWebhookDialogProps {
+interface EventDestinationDialogProps {
   children: React.ReactNode;
-  webhook: OutgoingWebhook | null;
+  destination: EventDestination | null;
 }
 
-export const OutgoingWebhookDialog = ({
+export const EventDestinationDialog = ({
   children,
-  webhook,
-}: OutgoingWebhookDialogProps) => {
+  destination,
+}: EventDestinationDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
-  const form = useForm<CreatePlatformOutgoingWebhookRequestBody>({
+  const form = useForm<CreatePlatformEventDestinationRequestBody>({
     defaultValues: {
-      url: webhook?.url || '',
-      events: webhook?.events || [],
+      url: destination?.url || '',
+      events: destination?.events || [],
     },
   });
 
-  const { mutate: testWebhook, isPending: isTesting } =
-    outgoingWebhooksCollectionUtils.useTestOutgoingWebhook();
-  
-  const { mutate: createWebhook, isPending: isCreating } =
-    outgoingWebhooksCollectionUtils.useCreateOutgoingWebhook(
+  const { mutate: testDestination, isPending: isTesting } =
+    eventDestinationsCollectionUtils.useTestEventDestination();
+
+  const { mutate: createDestination, isPending: isCreating } =
+    eventDestinationsCollectionUtils.useCreateEventDestination(
       () => {
         toast.success(t('Success'), {
-          description: t('Outgoing webhook created successfully'),
+          description: t('Event destination created successfully'),
         });
         setIsOpen(false);
         form.reset();
@@ -68,7 +68,7 @@ export const OutgoingWebhookDialog = ({
       },
     );
 
-  const handleSubmit = (data: CreatePlatformOutgoingWebhookRequestBody) => {
+  const handleSubmit = (data: CreatePlatformEventDestinationRequestBody) => {
     // Basic validation
     if (!data.url || data.url.trim() === '') {
       toast.error(t('Error'), {
@@ -84,12 +84,12 @@ export const OutgoingWebhookDialog = ({
       return;
     }
 
-    if (webhook) {
-      // Update existing webhook
+    if (destination) {
+      // Update existing destination
       try {
-        outgoingWebhooksCollectionUtils.update(webhook.id, data);
+        eventDestinationsCollectionUtils.update(destination.id, data);
         toast.success(t('Success'), {
-          description: t('Outgoing webhook updated successfully'),
+          description: t('Event destination updated successfully'),
         });
         setIsOpen(false);
         form.reset();
@@ -99,8 +99,8 @@ export const OutgoingWebhookDialog = ({
         });
       }
     } else {
-      // Create new webhook
-      createWebhook(data);
+      // Create new destination
+      createDestination(data);
     }
   };
 
@@ -112,7 +112,9 @@ export const OutgoingWebhookDialog = ({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {webhook ? t('Update Outgoing Webhook') : t('Create Outgoing Webhook')}
+            {destination
+              ? t('Update Event Destination')
+              : t('Create Event Destination')}
           </DialogTitle>
         </DialogHeader>
         <Form {...form}>
@@ -197,17 +199,17 @@ export const OutgoingWebhookDialog = ({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => testWebhook({ url: form.getValues('url') })}
+                onClick={() => testDestination({ url: form.getValues('url') })}
                 disabled={form.getValues('url') === '' || isTesting}
               >
-                {isTesting ? t('Testing...') : t('Test Webhook')}
+                {isTesting ? t('Testing...') : t('Test Destination')}
               </Button>
               <Button type="submit" disabled={isCreating}>
                 {isCreating
                   ? t('...')
-                  : webhook
-                  ? t('Update Webhook')
-                  : t('Create Webhook')}
+                  : destination
+                  ? t('Update Destination')
+                  : t('Create Destination')}
               </Button>
             </DialogFooter>
           </form>

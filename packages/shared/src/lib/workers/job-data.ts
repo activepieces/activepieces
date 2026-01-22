@@ -40,7 +40,7 @@ export function getDefaultJobPriority(job: JobData): keyof typeof JOB_PRIORITY {
         case WorkerJobType.RENEW_WEBHOOK:
             return 'veryLow'
         case WorkerJobType.EXECUTE_WEBHOOK:
-        case WorkerJobType.OUTGOING_WEBHOOK:
+        case WorkerJobType.EVENT_DESTINATION:
             return 'medium'
         case WorkerJobType.EXECUTE_FLOW:
             return getExecuteFlowPriority(job.environment, job.synchronousHandlerId)
@@ -62,7 +62,7 @@ export enum WorkerJobType {
     EXECUTE_TRIGGER_HOOK = 'EXECUTE_TRIGGER_HOOK',
     EXECUTE_PROPERTY = 'EXECUTE_PROPERTY',
     EXECUTE_EXTRACT_PIECE_INFORMATION = 'EXECUTE_EXTRACT_PIECE_INFORMATION',
-    OUTGOING_WEBHOOK = 'OUTGOING_WEBHOOK',
+    EVENT_DESTINATION = 'EVENT_DESTINATION',
 }
 
 export const NON_SCHEDULED_JOB_TYPES: WorkerJobType[] = [
@@ -210,17 +210,17 @@ export const UserInteractionJobDataWithoutWatchingInformation = Type.Union([
 ])
 export type UserInteractionJobDataWithoutWatchingInformation = Static<typeof UserInteractionJobDataWithoutWatchingInformation>
 
-export const OutgoingWebhookJobData = Type.Object({
+export const EventDestinationJobData = Type.Object({
     schemaVersion: Type.Number(),
     platformId: Type.String(),
     projectId: Type.Optional(Type.String()),
     webhookId: Type.String(),
     webhookUrl: Type.String(),
     payload: Type.Unknown(),
-    jobType: Type.Literal(WorkerJobType.OUTGOING_WEBHOOK),
+    jobType: Type.Literal(WorkerJobType.EVENT_DESTINATION),
 })
 
-export type OutgoingWebhookJobData = Static<typeof OutgoingWebhookJobData>
+export type EventDestinationJobData = Static<typeof EventDestinationJobData>
 
 export const JobData = Type.Union([
     PollingJobData,
@@ -228,6 +228,6 @@ export const JobData = Type.Union([
     ExecuteFlowJobData,
     WebhookJobData,
     UserInteractionJobData,
-    OutgoingWebhookJobData,
+    EventDestinationJobData,
 ])
 export type JobData = Static<typeof JobData>

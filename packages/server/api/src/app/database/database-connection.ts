@@ -24,6 +24,7 @@ import { GitRepoEntity } from '../ee/projects/project-release/git-sync/git-sync.
 import { ProjectReleaseEntity } from '../ee/projects/project-release/project-release.entity'
 import { ProjectRoleEntity } from '../ee/projects/project-role/project-role.entity'
 import { SigningKeyEntity } from '../ee/signing-key/signing-key-entity'
+import { EventDestinationEntity } from '../event-destinations/event-destinations.entity'
 import { FileEntity } from '../file/file.entity'
 import { FlagEntity } from '../flags/flag.entity'
 import { FlowEntity } from '../flows/flow/flow.entity'
@@ -32,7 +33,6 @@ import { FlowVersionEntity } from '../flows/flow-version/flow-version-entity'
 import { FolderEntity } from '../flows/folder/folder.entity'
 import { system } from '../helper/system/system'
 import { McpServerEntity } from '../mcp/mcp-entity'
-import { OutgoingWebhookEntity } from '../outgoing-webhooks/outgoing-webhooks.entity'
 import { PieceMetadataEntity } from '../pieces/metadata/piece-metadata-entity'
 import { PieceTagEntity } from '../pieces/tags/pieces/piece-tag.entity'
 import { TagEntity } from '../pieces/tags/tag-entity'
@@ -109,7 +109,7 @@ function getEntities(): EntitySchema<unknown>[] {
         ConnectionKeyEntity,
         AppCredentialEntity,
         PlatformPlanEntity,
-        OutgoingWebhookEntity,
+        EventDestinationEntity,
 
     ]
 }

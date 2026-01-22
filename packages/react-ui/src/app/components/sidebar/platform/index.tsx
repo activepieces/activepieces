@@ -173,8 +173,8 @@ export function PlatformSidebar() {
           icon: MousePointerClick,
         },
         {
-          to: '/platform/infrastructure/outgoing-webhooks',
-          label: t('Outgoing Webhooks'),
+          to: '/platform/infrastructure/event-destinations',
+          label: t('Event Destinations'),
           icon: Webhook,
           locked: !platform.plan.auditLogEnabled,
         },

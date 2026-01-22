@@ -1,14 +1,14 @@
-import { OutgoingWebhookJobData } from '@activepieces/shared'
+import { EventDestinationJobData } from '@activepieces/shared'
 import axios from 'axios'
 import { FastifyBaseLogger } from 'fastify'
 
-export const outgoingWebhookExecutor = (log: FastifyBaseLogger) => ({
-    async execute(jobId: string, jobData: OutgoingWebhookJobData, timeoutInSeconds: number): Promise<void> {
+export const eventDestinationExecutor = (log: FastifyBaseLogger) => ({
+    async execute(jobId: string, jobData: EventDestinationJobData, timeoutInSeconds: number): Promise<void> {
         const { webhookUrl, payload } = jobData
         log.info({
             jobId,
             webhookUrl,
-        }, 'Consuming outgoing webhook job')
+        }, 'Consuming event destination job')
 
         const response = await axios.post(webhookUrl, payload, {
             timeout: timeoutInSeconds,
@@ -19,6 +19,6 @@ export const outgoingWebhookExecutor = (log: FastifyBaseLogger) => ({
             response: {
                 status: response.status,
             },
-        }, 'Outgoing webhook job consumed')
+        }, 'Event destination job consumed')
     },
 })

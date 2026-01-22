@@ -1,11 +1,11 @@
 import {
     ApplicationEvent,
     ApplicationEventName,
-    CreatePlatformOutgoingWebhookRequestBody,
+    CreatePlatformEventDestinationRequestBody,
+    EventDestination,
+    EventDestinationScope,
     FlowCreatedEvent,
-    OutgoingWebhook,
-    OutgoingWebhookScope,
-    UpdatePlatformOutgoingWebhookRequestBody,
+    UpdatePlatformEventDestinationRequestBody,
 } from '@activepieces/ee-shared'
 import { WorkerSystemProp } from '@activepieces/server-shared'
 import { ActivepiecesError, apId, assertNotNullOrUndefined, Cursor, ErrorCode, isNil, LATEST_JOB_DATA_SCHEMA_VERSION, PlatformId, ProjectId, SeekPage, WorkerJobType } from '@activepieces/shared'
@@ -19,28 +19,28 @@ import { system } from '../helper/system/system'
 import { jobQueue } from '../workers/queue/job-queue'
 import { JobType } from '../workers/queue/queue-manager'
 import {
-    OutgoingWebhookEntity,
-    OutgoingWebhookSchema,
-} from './outgoing-webhooks.entity'
+    EventDestinationEntity,
+    EventDestinationSchema,
+} from './event-destinations.entity'
 
-const outgoingWebhookRepo = repoFactory<OutgoingWebhookSchema>(
-    OutgoingWebhookEntity,
+const eventDestinationRepo = repoFactory<EventDestinationSchema>(
+    EventDestinationEntity,
 )
 
 const PROJECT_SCOPE_EVENTS = [ ApplicationEventName.FLOW_RUN_FINISHED ]
 
-export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
+export const eventDestinationService = (log: FastifyBaseLogger) => ({
     setup(): void {
         applicationEvents(log).registerListeners(log, {
             userEvent: () => async (event) => {
-                await outgoingWebhookService(log).trigger({
+                await eventDestinationService(log).trigger({
                     platformId: event.platformId,
                     projectId: event.projectId,
                     event,
                 })
             },
             workerEvent: () => async (projectId, event) => {
-                await outgoingWebhookService(log).trigger({
+                await eventDestinationService(log).trigger({
                     platformId: event.platformId,
                     projectId,
                     event,
@@ -49,28 +49,28 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
         })
     },
     create: async (
-        request: CreatePlatformOutgoingWebhookRequestBody,
+        request: CreatePlatformEventDestinationRequestBody,
         platformId: string,
-    ): Promise<OutgoingWebhook> => {
+    ): Promise<EventDestination> => {
         assertUrlIsExternal(request.url)
-        const entity: OutgoingWebhook = {
+        const entity: EventDestination = {
             id: apId(),
             created: new Date().toISOString(),
             updated: new Date().toISOString(),
             platformId,
-            scope: OutgoingWebhookScope.PLATFORM,
+            scope: EventDestinationScope.PLATFORM,
             events: request.events,
             url: request.url,
         }
-        return outgoingWebhookRepo().save(entity)
+        return eventDestinationRepo().save(entity)
     },
-    update: async ({ id, platformId, request }: UpdateParams): Promise<OutgoingWebhook> => {
+    update: async ({ id, platformId, request }: UpdateParams): Promise<EventDestination> => {
         assertUrlIsExternal(request.url)
-        await outgoingWebhookRepo().update({ id, platformId }, request)
-        return outgoingWebhookRepo().findOneByOrFail({ id, platformId })
+        await eventDestinationRepo().update({ id, platformId }, request)
+        return eventDestinationRepo().findOneByOrFail({ id, platformId })
     },
     delete: async ({ id, platformId }: DeleteParams): Promise<void> => {
-        await outgoingWebhookRepo().delete({
+        await eventDestinationRepo().delete({
             id,
             platformId,
         })
@@ -79,10 +79,10 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
         platformId,
         cursorRequest,
         limit,
-    }: ListParams): Promise<SeekPage<OutgoingWebhook>> => {
+    }: ListParams): Promise<SeekPage<EventDestination>> => {
         const decodedCursor = paginationHelper.decodeCursor(cursorRequest)
         const paginator = buildPaginator({
-            entity: OutgoingWebhookEntity,
+            entity: EventDestinationEntity,
             query: {
                 limit,
                 afterCursor: decodedCursor.nextCursor,
@@ -90,32 +90,32 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
             },
         })
 
-        const queryBuilder = outgoingWebhookRepo()
-            .createQueryBuilder('outgoing_webhook')
+        const queryBuilder = eventDestinationRepo()
+            .createQueryBuilder('event_destination')
             .where({
                 platformId,
             })
 
         const { data, cursor } = await paginator.paginate(queryBuilder)
 
-        return paginationHelper.createPage<OutgoingWebhook>(data, cursor)
+        return paginationHelper.createPage<EventDestination>(data, cursor)
     },
     trigger: async ({ platformId, projectId, event }: TriggerParams): Promise<void> => {
-        const conditions: FindOptionsWhere<OutgoingWebhookSchema>[] = [{
+        const conditions: FindOptionsWhere<EventDestinationSchema>[] = [{
             platformId,
             events: ArrayContains([event]),
-            scope: OutgoingWebhookScope.PLATFORM,
+            scope: EventDestinationScope.PLATFORM,
         }]
         const broadcastToProject = !isNil(projectId) && PROJECT_SCOPE_EVENTS.includes(event.action)
         if (broadcastToProject) {
             conditions.push({
                 projectId,
                 events: ArrayContains([event]),
-                scope: OutgoingWebhookScope.PROJECT,
+                scope: EventDestinationScope.PROJECT,
             })
         }
-        const webhooks = await outgoingWebhookRepo().findBy(conditions)
-        await Promise.all(webhooks.map(webhook =>
+        const destinations = await eventDestinationRepo().findBy(conditions)
+        await Promise.all(destinations.map(destination =>
             jobQueue(log).add({
                 type: JobType.ONE_TIME,
                 id: apId(),
@@ -123,10 +123,10 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
                     schemaVersion: LATEST_JOB_DATA_SCHEMA_VERSION,
                     platformId,
                     projectId,
-                    webhookId: webhook.id,
-                    webhookUrl: webhook.url,
+                    webhookId: destination.id,
+                    webhookUrl: destination.url,
                     payload: event.data,
-                    jobType: WorkerJobType.OUTGOING_WEBHOOK,
+                    jobType: WorkerJobType.EVENT_DESTINATION,
                 },
             }),
         ))
@@ -163,7 +163,7 @@ export const outgoingWebhookService = (log: FastifyBaseLogger) => ({
                 webhookId: apId(),
                 webhookUrl: url,
                 payload: mockEvent,
-                jobType: WorkerJobType.OUTGOING_WEBHOOK,
+                jobType: WorkerJobType.EVENT_DESTINATION,
             },
         })
     },
@@ -191,7 +191,7 @@ type DeleteParams = {
 type UpdateParams = {
     id: string
     platformId: string
-    request: UpdatePlatformOutgoingWebhookRequestBody
+    request: UpdatePlatformEventDestinationRequestBody
 }
 
 type ListParams = {

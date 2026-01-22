@@ -12,7 +12,7 @@ export type FeatureKey =
   | 'TEAM'
   | 'GLOBAL_CONNECTIONS'
   | 'USERS'
-  | 'OUTGOING_WEBHOOKS'
+  | 'EVENT_DESTINATIONS'
   | 'API'
   | 'SSO'
   | 'AUDIT_LOGS'

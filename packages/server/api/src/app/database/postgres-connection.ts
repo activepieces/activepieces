@@ -271,7 +271,6 @@ import { RemoveAgentRelationToTables1755954192258 } from './migration/postgres/1
 import { AddTriggerNameToTriggerSource1757018269905 } from './migration/postgres/1757018269905-AddTriggerNameToTriggerSource'
 import { AddIndexOnTriggerRun1757557714045 } from './migration/postgres/1757557714045-AddIndexOnTriggerRun'
 import { DeleteHandshakeFromTriggerSource1758108135968 } from './migration/postgres/1758108135968-DeleteHandshakeFromTriggerSource'
-import { AddOutgoingWebhooks1759332023650 } from './migration/postgres/1759332023650-AddOutgoingWebhooks'
 import { RemoveFlowRunDisplayName1759772332795 } from './migration/postgres/1759772332795-RemoveFlowRunDisplayName'
 import { AddFlowVersionBackupFile1759964470862 } from './migration/postgres/1759964470862-AddFlowVersionBackupFile'
 import { AddRunFlowVersionIdForForeignKeyPostgres1760346454506 } from './migration/postgres/1760346454506-AddRunFlowVersionIdForForeignKeyPostgres'
@@ -328,6 +327,7 @@ import { MigrateOldTemplateCategoriesToDynamicOne1767624311536 } from './migrati
 import { AddTriggeredBy1767697998391 } from './migration/postgres/1767697998391-AddTriggeredBy'
 import { UpdateCacheStructure1767904545112 } from './migration/postgres/1767904545112-UpdateCacheStructure'
 import { AddOutdatedToReport1767994436597 } from './migration/postgres/1767994436597-AddOutdatedToReport'
+import { AddEventStreaming1769084311004 } from './migration/postgres/1769084311004-AddEventStreaming'
 
 const getSslConfig = (): boolean | TlsOptions => {
     const useSsl = system.get(AppSystemProp.POSTGRES_USE_SSL)
@@ -671,7 +671,7 @@ export const getMigrations = (): (new () => MigrationInterface)[] => {
         UpdateCacheStructure1767904545112,
         AddOutdatedToReport1767994436597,
         MigrateOldTemplateCategoriesToDynamicOne1767624311536,
-        AddOutgoingWebhooks1759332023650,
+        AddEventStreaming1769084311004,
     ]
     return migrations
 }

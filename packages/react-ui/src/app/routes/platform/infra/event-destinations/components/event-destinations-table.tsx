@@ -1,21 +1,23 @@
 import { ColumnDef } from '@tanstack/react-table';
 import { t } from 'i18next';
 import { Globe } from 'lucide-react';
+
 import { Badge } from '@/components/ui/badge';
 import { DataTable, RowDataWithActions } from '@/components/ui/data-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table/data-table-column-header';
 import { formatUtils } from '@/lib/utils';
-import { OutgoingWebhook } from '@activepieces/ee-shared';
-import OutgoingWebhookActions from './outgoing-webhook-actions';
+import { EventDestination } from '@activepieces/ee-shared';
 
-interface OutgoingWebhooksTableProps {
-  webhooks: OutgoingWebhook[];
+import EventDestinationActions from './event-destination-actions';
+
+interface EventDestinationsTableProps {
+  destinations: EventDestination[];
 }
 
-export const OutgoingWebhooksTable = ({
-  webhooks,
-}: OutgoingWebhooksTableProps) => {
-  const columns: ColumnDef<RowDataWithActions<OutgoingWebhook>>[] = [
+export const EventDestinationsTable = ({
+  destinations,
+}: EventDestinationsTableProps) => {
+  const columns: ColumnDef<RowDataWithActions<EventDestination>>[] = [
     {
       accessorKey: 'url',
       header: ({ column }) => (
@@ -60,14 +62,12 @@ export const OutgoingWebhooksTable = ({
     },
     {
       id: 'actions',
-      cell: ({ row }) => (
-        <OutgoingWebhookActions webhook={row.original} />
-      ),
+      cell: ({ row }) => <EventDestinationActions destination={row.original} />,
     },
   ];
 
   const page = {
-    data: webhooks,
+    data: destinations,
     next: null,
     previous: null,
   };
@@ -78,8 +78,10 @@ export const OutgoingWebhooksTable = ({
       page={page}
       clientPagination={true}
       isLoading={false}
-      emptyStateTextTitle={t('No webhooks found')}
-      emptyStateTextDescription={t('Create your first webhook to get started')}
+      emptyStateTextTitle={t('No destinations found')}
+      emptyStateTextDescription={t(
+        'Create your first destination to get started',
+      )}
       emptyStateIcon={<Globe />}
     />
   );

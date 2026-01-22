@@ -10,15 +10,16 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { OutgoingWebhook } from '@activepieces/ee-shared';
+import { EventDestination } from '@activepieces/ee-shared';
 
-import { outgoingWebhooksCollectionUtils } from '../lib/outgoing-webhooks-collection';
-import { OutgoingWebhookDialog } from './outgoing-webhook-dialog';
+import { eventDestinationsCollectionUtils } from '../lib/event-destinations-collection';
 
-const OutgoingWebhookActions = ({
-  webhook,
+import { EventDestinationDialog } from './event-destination-dialog';
+
+const EventDestinationActions = ({
+  destination,
 }: {
-  webhook: OutgoingWebhook;
+  destination: EventDestination;
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -35,7 +36,7 @@ const OutgoingWebhookActions = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <OutgoingWebhookDialog webhook={webhook}>
+          <EventDestinationDialog destination={destination}>
             <DropdownMenuItem
               onSelect={(e) => {
                 e.preventDefault();
@@ -44,16 +45,16 @@ const OutgoingWebhookActions = ({
               <Pencil className="h-4 w-4 mr-2" />
               {t('Edit')}
             </DropdownMenuItem>
-          </OutgoingWebhookDialog>
+          </EventDestinationDialog>
 
           <ConfirmationDeleteDialog
-            title={t('Delete Webhook')}
-            message={t('Are you sure you want to delete this webhook?')}
-            entityName="webhook"
+            title={t('Delete Destination')}
+            message={t('Are you sure you want to delete this destination?')}
+            entityName="destination"
             showToast
             mutationFn={async () => {
-              if (webhook) {
-                outgoingWebhooksCollectionUtils.delete([webhook.id]);
+              if (destination) {
+                eventDestinationsCollectionUtils.delete([destination.id]);
               }
             }}
             isDanger
@@ -74,5 +75,4 @@ const OutgoingWebhookActions = ({
   );
 };
 
-export default OutgoingWebhookActions;
-
+export default EventDestinationActions;
