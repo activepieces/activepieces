@@ -19,8 +19,8 @@ export const getKeyValueStoreRecord = createAction({
       auth: apifyAuth,
       required: true,
       refreshers: ['auth'],
-      displayName: 'Store',
-      description: 'The ID of the Key-Value Store',
+      displayName: 'Key-Value Store ID',
+      description: 'The ID of the Key-Value Store.',
       options: async (props) => {
         return createDropdownOptions(props['auth'], listStores);
       }
@@ -30,7 +30,7 @@ export const getKeyValueStoreRecord = createAction({
       required: true,
       refreshers: ['auth', 'store'],
       displayName: 'Key-Value Store Record Key',
-      description: 'The key of the record to be retrieved',
+      description: 'The key of the record to be retrieved.',
       options: async (props) => {
         if (!props['auth'] || !props['store']) {
           return {

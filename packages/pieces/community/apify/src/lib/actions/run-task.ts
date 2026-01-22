@@ -16,8 +16,8 @@ import {
 export const runTask = createAction({
   name: 'runTask',
   auth: apifyAuth,
-  displayName: 'Run task',
-  description: 'Starts an Apify task run.',
+  displayName: 'Run Task',
+  description: 'Runs an Actor task and returns all associated details.',
   props: {
     taskid: createTaskIdProperty(),
     input: createTaskInputProperty(),

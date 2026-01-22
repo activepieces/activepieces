@@ -294,7 +294,7 @@ export const createBuildProperty = () => Property.ShortText({
 
 export const createMemoryProperty = (runType: RunType) => Property.StaticDropdown({
   displayName: 'Memory',
-  description: `Memory limit for the run, in megabytes. By default, the run uses a memory limit specified in the ${runType === RunType.ACTOR ? 'default run configuration for the Actor' : 'task settings'}.`,
+  description: `Memory limit for the run, in megabytes. The amount of memory can be set to one of the available options. By default, the run uses a memory limit specified in the ${runType === RunType.ACTOR ? 'default run configuration for the Actor' : 'task settings'}.`,
   required: false,
   options: {
     options: MEMORY_OPTIONS
@@ -381,7 +381,7 @@ export const createActorSourceProperty = () => Property.StaticDropdown({
 export const createActorIdProperty = () => Property.Dropdown({
   displayName: 'Actor',
   auth: apifyAuth,
-  description: 'Select an Actor from the list',
+  description: 'Select an Actor from the list.',
   required: true,
   refreshers: ['auth', 'actorSource'],
   options: async (props) => {
@@ -391,9 +391,9 @@ export const createActorIdProperty = () => Property.Dropdown({
 });
 
 export const createTaskIdProperty = () => Property.Dropdown({
-  displayName: 'Actor task',
+  displayName: 'Actor Task',
   auth: apifyAuth,
-  description: 'Select a task from the list',
+  description: 'Select a task from the list.',
   required: true,
   refreshers: ['auth'],
   options: async (props) => {
@@ -487,7 +487,7 @@ export const generateIdempotencyKey = (
 
 export const createStatusesProperty = () => Property.StaticMultiSelectDropdown({
   displayName: 'Statuses',
-  description: 'Run statuses to watch',
+  description: 'Run statuses to watch.',
   required: true,
   defaultValue: TERMINAL_STATUSES,
   options: {

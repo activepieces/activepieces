@@ -8,7 +8,7 @@ export const scrapeSingleUrl = createAction({
   name: 'scrapeSingleUrl',
   auth: apifyAuth,
   displayName: 'Scrape Single URL',
-  description: 'Scrape a single URL using the Apify Website Content Crawler Actor.',
+  description: 'Scrape a single URL using the Apify Website Content Crawler Actor and get its content as markdown and HTML.',
   props: {
     url: Property.ShortText({
       displayName: 'URL',

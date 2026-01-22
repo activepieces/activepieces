@@ -18,7 +18,7 @@ export const runActor = createAction({
   name: 'runActor',
   auth: apifyAuth,
   displayName: 'Run Actor',
-  description: 'Starts an Apify Actor run.',
+  description: 'Runs an Actor and returns all associated details.',
   props: {
     actorSource: createActorSourceProperty(),
     actorid: createActorIdProperty(),
