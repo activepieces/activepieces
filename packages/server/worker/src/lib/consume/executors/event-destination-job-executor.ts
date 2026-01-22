@@ -5,13 +5,14 @@ import { FastifyBaseLogger } from 'fastify'
 export const eventDestinationExecutor = (log: FastifyBaseLogger) => ({
     async execute(jobId: string, jobData: EventDestinationJobData, timeoutInSeconds: number): Promise<void> {
         const { webhookUrl, payload } = jobData
+
         log.info({
             jobId,
             webhookUrl,
         }, 'Consuming event destination job')
 
         const response = await axios.post(webhookUrl, payload, {
-            timeout: timeoutInSeconds,
+            timeout: timeoutInSeconds * 1000,
         })
 
         log.info({

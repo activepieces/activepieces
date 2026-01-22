@@ -13,7 +13,7 @@ import { platformHooks } from '@/hooks/platform-hooks';
 const EventDestinationsPage = () => {
   const { platform } = platformHooks.useCurrentPlatform();
 
-  const isEnabled = platform.plan.auditLogEnabled;
+  const isEnabled = platform.plan.eventStreamingEnabled;
   const { data: destinations } = eventDestinationsCollectionUtils.useAll(
     platform.plan.eventStreamingEnabled,
   );
