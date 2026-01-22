@@ -218,6 +218,7 @@
     "jszip": "3.10.1",
     "jwks-rsa": "3.1.0",
     "jwt-decode": "4.0.0",
+    "level": "10.0.0",
     "lottie-web": "5.12.2",
     "lucide-react": "0.407.0",
     "mime": "4.0.1",
