@@ -51,16 +51,6 @@ export const localPieceCache = (log: FastifyBaseLogger) => ({
     async refresh(): Promise<void> {
         await updateCache(log)
     },
-    async getLatestVersions(locale: LocalesEnum): Promise<PieceMetadataSchema[]> {
-        if (environment === ApEnvironment.TESTING) {
-            const pieces = await fetchPiecesFromDb()
-            return pieces
-        }
-        const cache = await getCache()
-        const pieces = await cache.db.get<string, PieceMetadataSchema[]>(`list:${locale ?? DEFAULT_LOCALE}`, { valueEncoding: 'json' })
-        const devPieces = await loadDevPiecesIfEnabled(log)
-        return [...(pieces ?? []), ...(devPieces.map(piece => pieceTranslation.translatePiece<PieceMetadataSchema>(piece, locale)))]
-    },
     async getList(locale: LocalesEnum | undefined): Promise<PieceMetadataSchema[]> {
         if (environment === ApEnvironment.TESTING) {
             const pieces = await fetchPiecesFromDb()
