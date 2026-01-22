@@ -44,6 +44,7 @@
   "Response is Binary ?": "Response is Binary ?",
   "No Error on Failure": "No Error on Failure",
   "Timeout (in seconds)": "Timeout (in seconds)",
+  "Follow redirects": "Follow redirects",
   "Select a Wufoo form to work with.": "Select a Wufoo form to work with.",
   "Choose the format for the API response. JSON is recommended for most use cases.": "Choose the format for the API response. JSON is recommended for most use cases.",
   "Fill out the form fields with the data you want to submit. Field types and validation are automatically configured based on your form structure.": "Fill out the form fields with the data you want to submit. Field types and validation are automatically configured based on your form structure.",
