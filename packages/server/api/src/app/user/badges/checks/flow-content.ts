@@ -1,4 +1,4 @@
-import { ApplicationEventName, FlowUpdatedEvent } from '@activepieces/ee-shared'
+import { ApplicationEvent, ApplicationEventName, FlowUpdatedEvent } from '@activepieces/ee-shared'
 import { BADGES, FlowActionType, FlowOperationType, flowStructureUtil, FlowTriggerType, isNil } from '@activepieces/shared'
 import { flowVersionRepo } from '../../../flows/flow-version/flow-version.service'
 import { BadgeCheck, BadgeCheckResult } from '../badge-check'
@@ -7,7 +7,8 @@ const WEBHOOK_PIECE_NAME = '@activepieces/piece-webhook'
 const AI_PIECE_NAME = '@activepieces/piece-ai'
 
 export const flowContentBadgesCheck: BadgeCheck = {
-    eval: async ({ event, userId }): Promise<BadgeCheckResult> => {
+    eval: async (event: ApplicationEvent): Promise<BadgeCheckResult> => {
+        const userId = event.userId
         if (isNil(userId)) {
             return { userId: null, badges: [] }
         }

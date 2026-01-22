@@ -526,6 +526,9 @@
       ],
       "@activepieces/piece-week-done": [
         "packages/pieces/community/week-done/src/index.ts"
+      ],
+      "@activepieces/piece-manual-trigger": [
+        "packages/pieces/community/manual-trigger/src/index.ts"
       ]
     },
     "resolveJsonModule": true
